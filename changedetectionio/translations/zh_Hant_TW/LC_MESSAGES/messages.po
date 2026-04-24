@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 02:48+0900\n"
+"POT-Creation-Date: 2026-04-24 19:50+1000\n"
 "PO-Revision-Date: 2026-01-15 12:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -3157,7 +3157,7 @@ msgstr ""
 
 #: changedetectionio/templates/_helpers.html
 msgid "Entry"
-msgstr ""
+msgstr "項目"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Actions"
@@ -3165,27 +3165,27 @@ msgstr "操作"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Add a row/rule after"
-msgstr ""
+msgstr "在後方新增一行 / 規則"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Remove this row/rule"
-msgstr ""
+msgstr "移除此行 / 規則"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Verify this rule against current snapshot"
-msgstr ""
+msgstr "針對目前快照驗證此規則"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
-msgstr ""
+msgstr "錯誤 - 此監測任務需要 Chrome（搭配 playwright / sockpuppetbrowser），但未啟用基於 Chrome 的抓取功能。"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Alternatively try our"
-msgstr ""
+msgstr "或者嘗試我們"
 
 #: changedetectionio/templates/_helpers.html
 msgid "very affordable subscription based service which has all this setup for you"
-msgstr ""
+msgstr "非常實惠的訂閱服務，為您準備好所有設定"
 
 #: changedetectionio/templates/_helpers.html
 #, python-format
@@ -3193,10 +3193,12 @@ msgid ""
 "You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
 "<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
 msgstr ""
+"您可能需要 <a href=\"%(url_pinned)s\">啟用 playwright 環境變數</a> 並取消註解 <strong>sockpuppetbrowser</strong> 在 <a "
+"href=\"%(url_master)s\">docker-compose.yml</a> 檔案."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
-msgstr ""
+msgstr "設定每小時 / 平日排程"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Schedule time limits"
@@ -3204,7 +3206,7 @@ msgstr "排程時間限制"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Business hours"
-msgstr ""
+msgstr "營業時間"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Weekends"
@@ -3216,11 +3218,11 @@ msgstr "重設"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
-msgstr ""
+msgstr "警告，您設定的一個或多個「天」持續時間將延伸至隔天。"
 
 #: changedetectionio/templates/_helpers.html
 msgid "This could have unintended consequences."
-msgstr ""
+msgstr "這可能會產生非預期的後果。"
 
 #: changedetectionio/templates/_helpers.html
 msgid "More help and examples about using the scheduler"
@@ -3232,11 +3234,11 @@ msgstr "使用時間排程器"
 
 #: changedetectionio/templates/_helpers.html
 msgid "First confirm/save your Time Zone Settings"
-msgstr ""
+msgstr "請先確認 / 儲存您的時區設定"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Triggers a change if this text appears, AND something changed in the document."
-msgstr ""
+msgstr "如果出現此文字，且文件中有些內容變更，則觸發變更。"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Triggered text"
@@ -3244,7 +3246,7 @@ msgstr "觸發文字"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Ignored for calculating changes, but still shown."
-msgstr ""
+msgstr "計算變更時忽略，但仍會顯示。"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Ignored text"
@@ -3293,15 +3295,15 @@ msgstr "搜尋"
 #: changedetectionio/templates/base.html
 #, python-format
 msgid "URL or Title in '%(title)s'"
-msgstr ""
+msgstr "URL 或標題 在 '%(title)s'"
 
 #: changedetectionio/templates/base.html
 msgid "URL or Title"
-msgstr ""
+msgstr "URL 或標題"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
-msgstr ""
+msgstr "輸入搜尋關鍵字 ..."
 
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
@@ -3538,105 +3540,6 @@ msgstr "否"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "主設定"
-
-#~ msgid "Entry"
-#~ msgstr "項目"
-
-#~ msgid "Actions"
-#~ msgstr "動作"
-
-#~ msgid "Add a row/rule after"
-#~ msgstr "在後方新增一行 / 規則"
-
-#~ msgid "Remove this row/rule"
-#~ msgstr "移除此行 / 規則"
-
-#~ msgid "Verify this rule against current snapshot"
-#~ msgstr "針對目前快照驗證此規則"
-
-#~ msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
-#~ msgstr "錯誤 - 此監測任務需要 Chrome（搭配 playwright / sockpuppetbrowser），但未啟用基於 Chrome 的抓取功能。"
-
-#~ msgid "Alternatively try our"
-#~ msgstr "或者嘗試我們"
-
-#~ msgid "very affordable subscription based service which has all this setup for you"
-#~ msgstr "非常實惠的訂閱服務，為您準備好所有設定"
-
-#~ msgid "You may need to"
-#~ msgstr "您可能需要"
-
-#~ msgid "Enable playwright environment variable"
-#~ msgstr ""
-
-#~ msgid "and uncomment the"
-#~ msgstr ""
-
-#~ msgid "in the"
-#~ msgstr "在"
-
-#~ msgid "file"
-#~ msgstr "檔案"
-
-#~ msgid "Set a hourly/week day schedule"
-#~ msgstr "設定每小時 / 平日排程"
-
-#~ msgid "Schedule time limits"
-#~ msgstr "排程時間限制"
-
-#~ msgid "Business hours"
-#~ msgstr "營業時間"
-
-#~ msgid "Weekends"
-#~ msgstr "週末"
-
-#~ msgid "Reset"
-#~ msgstr "重置"
-
-#~ msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
-#~ msgstr "警告，您設定的一個或多個「天」持續時間將延伸至隔天。"
-
-#~ msgid "This could have unintended consequences."
-#~ msgstr "這可能會產生非預期的後果。"
-
-#~ msgid "More help and examples about using the scheduler"
-#~ msgstr "關於使用排程器的更多幫助和範例"
-
-#~ msgid "Want to use a time schedule?"
-#~ msgstr "想要使用時間排程嗎？"
-
-#~ msgid "First confirm/save your Time Zone Settings"
-#~ msgstr "請先確認 / 儲存您的時區設定"
-
-#~ msgid "Triggers a change if this text appears, AND something changed in the document."
-#~ msgstr "如果出現此文字，且文件中有些內容變更，則觸發變更。"
-
-#~ msgid "Triggered text"
-#~ msgstr "觸發的文字"
-
-#~ msgid "Ignored for calculating changes, but still shown."
-#~ msgstr "計算變更時忽略，但仍會顯示。"
-
-#~ msgid "Ignored text"
-#~ msgstr "忽略的文字"
-
-#~ msgid "No change-detection will occur because this text exists."
-#~ msgstr "因為存在此文字，將不會進行變更檢測。"
-
-#~ msgid "Blocked text"
-#~ msgstr "被阻擋的文字"
-
-#~ msgid "Search"
-#~ msgstr "搜尋"
-
-#~ msgid "URL or Title"
-#~ msgstr "URL 或標題"
-
-#~ msgid "in"
-#~ msgstr "在"
-
-#~ msgid "Enter search term..."
-#~ msgstr "輸入搜尋關鍵字 ..."
 
 #~ msgid "Watch List"
 #~ msgstr "監測列表"

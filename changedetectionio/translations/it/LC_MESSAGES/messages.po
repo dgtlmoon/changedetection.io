@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 02:48+0900\n"
+"POT-Creation-Date: 2026-04-24 19:50+1000\n"
 "PO-Revision-Date: 2026-01-02 15:32+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -3536,45 +3536,6 @@ msgstr "No"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Impostazioni principali"
-
-#~ msgid "Actions"
-#~ msgstr "Condizioni"
-
-#~ msgid "in the"
-#~ msgstr "nel"
-
-#~ msgid "file"
-#~ msgstr "file"
-
-#~ msgid "Schedule time limits"
-#~ msgstr "Tempo di ricontrollo (minuti)"
-
-#~ msgid "Weekends"
-#~ msgstr "Settimane"
-
-#~ msgid "Reset"
-#~ msgstr "Richiesta"
-
-#~ msgid "Want to use a time schedule?"
-#~ msgstr "Usa pianificazione oraria"
-
-#~ msgid "Triggered text"
-#~ msgstr "Ignora testo"
-
-#~ msgid "Ignored text"
-#~ msgstr "Ignora testo"
-
-#~ msgid "No change-detection will occur because this text exists."
-#~ msgstr "Blocca rilevamento modifiche quando il testo corrisponde"
-
-#~ msgid "Blocked text"
-#~ msgstr "Ignora testo"
-
-#~ msgid "Search"
-#~ msgstr "Ricerca in corso"
-
-#~ msgid "in"
-#~ msgstr "in"
 
 #~ msgid "Watch List"
 #~ msgstr "Lista Monitoraggi"

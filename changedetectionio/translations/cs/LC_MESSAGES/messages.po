@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 02:48+0900\n"
+"POT-Creation-Date: 2026-04-24 19:50+1000\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: cs\n"
@@ -2773,7 +2773,7 @@ msgstr "Vizuální / Obrazová detekce změny snímku obrazovky"
 
 #: changedetectionio/processors/image_ssim_diff/processor.py
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
-msgstr ""
+msgstr "Porovnává snímky obrazovky pomocí rychlého algoritmu OpenCV, 10-100x rychlejší než SSIM"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
@@ -2806,7 +2806,7 @@ msgstr "Vyšší cena pro spuštění upozornění"
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
 msgid "Threshold in %% for price changes since the original price"
-msgstr "Prahová hodnota v % pro změny ceny od původní ceny"
+msgstr "Prahová hodnota v %% pro změny ceny od původní ceny"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"
@@ -3540,54 +3540,6 @@ msgstr "Ne"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Hlavní nastavení"
-
-#~ msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
-#~ msgstr "Porovnává snímky obrazovky pomocí rychlého algoritmu OpenCV, 10-100x rychlejší než SSIM"
-
-#~ msgid "Actions"
-#~ msgstr "Podmínky"
-
-#~ msgid "You may need to"
-#~ msgstr "Možná budete muset"
-
-#~ msgid "in the"
-#~ msgstr "v"
-
-#~ msgid "file"
-#~ msgstr "soubor"
-
-#~ msgid "Schedule time limits"
-#~ msgstr "Znovu zkontrolovat čas (minuty)"
-
-#~ msgid "Weekends"
-#~ msgstr "týdny"
-
-#~ msgid "Reset"
-#~ msgstr "Žádost"
-
-#~ msgid "More help and examples about using the scheduler"
-#~ msgstr "Další nápověda a příklady zde"
-
-#~ msgid "Want to use a time schedule?"
-#~ msgstr "Použijte časový plánovač"
-
-#~ msgid "Triggered text"
-#~ msgstr "Text chyby"
-
-#~ msgid "Ignored text"
-#~ msgstr "Text chyby"
-
-#~ msgid "No change-detection will occur because this text exists."
-#~ msgstr "Blokovat detekci změn, když se text shoduje"
-
-#~ msgid "Blocked text"
-#~ msgstr "Text chyby"
-
-#~ msgid "Search"
-#~ msgstr "Hledání"
-
-#~ msgid "in"
-#~ msgstr "v"
 
 #~ msgid "Visual"
 #~ msgstr "Vizuální"

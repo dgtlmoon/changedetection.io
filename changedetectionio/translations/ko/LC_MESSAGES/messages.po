@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 02:48+0900\n"
+"POT-Creation-Date: 2026-04-24 19:50+1000\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ko\n"
@@ -2770,7 +2770,7 @@ msgstr "시각적/이미지 스크린샷 변경 감지"
 
 #: changedetectionio/processors/image_ssim_diff/processor.py
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
-msgstr ""
+msgstr "SSIM보다 10~100배 빠른 빠른 OpenCV 알고리즘을 사용하여 스크린샷을 비교합니다."
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
@@ -2803,7 +2803,7 @@ msgstr "가격보다 높으면 알림이 실행됩니다."
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
 msgid "Threshold in %% for price changes since the original price"
-msgstr "원래 가격 이후 가격 변동에 대한 기준점(%)"
+msgstr "원래 가격 이후 가격 변동에 대한 기준점(%%)"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"
@@ -3239,7 +3239,7 @@ msgstr ""
 
 #: changedetectionio/templates/_helpers.html
 msgid "Triggered text"
-msgstr ""
+msgstr "오류 텍스트"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Ignored for calculating changes, but still shown."
@@ -3255,7 +3255,7 @@ msgstr "이 텍스트 존재 시 변경 감지 안 함."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Blocked text"
-msgstr ""
+msgstr "오류 텍스트"
 
 #: changedetectionio/templates/base.html
 msgid "A new version is available"
@@ -3537,159 +3537,6 @@ msgstr "아니오"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "기본 설정"
-
-#~ msgid "not set"
-#~ msgstr "아직 아님"
-
-#~ msgid "Start At"
-#~ msgstr "설정"
-
-#~ msgid "Run duration"
-#~ msgstr "정보 없음"
-
-#~ msgid "Hours"
-#~ msgstr "비밀번호"
-
-#~ msgid "Minutes"
-#~ msgstr "무음"
-
-#~ msgid "Seconds"
-#~ msgstr "초"
-
-#~ msgid "Fetch Method"
-#~ msgstr "가져오기 방법 설정"
-
-#~ msgid "Notification Body"
-#~ msgstr "정보 없음"
-
-#~ msgid "Notification format"
-#~ msgstr "정보 없음"
-
-#~ msgid "Notification Title"
-#~ msgstr "정보 없음"
-
-#~ msgid "Notification URL List"
-#~ msgstr "정보 없음"
-
-#~ msgid "Wait seconds before extracting text"
-#~ msgstr "텍스트를 추출하기 몇 초 전입니다."
-
-#~ msgid "URLs"
-#~ msgstr "URL"
-
-#~ msgid "File mapping"
-#~ msgstr "파일 매핑 유형."
-
-#~ msgid "Operation"
-#~ msgstr "UI 옵션"
-
-#~ msgid "Selector"
-#~ msgstr "선택 모드:"
-
-#~ msgid "value"
-#~ msgstr "정지시키다"
-
-#~ msgid "CSS/JSONPath/JQ/XPath Filters"
-#~ msgstr "CSS/xPath 필터"
-
-#~ msgid "Remove elements"
-#~ msgstr "제거됨"
-
-#~ msgid "Extract text"
-#~ msgstr "데이터 추출"
-
-#~ msgid "Ignore lines containing"
-#~ msgstr "일치하는 줄을 무시하세요."
-
-#~ msgid "Request body"
-#~ msgstr "요구"
-
-#~ msgid "Request method"
-#~ msgstr "요구"
-
-#~ msgid "Only trigger when unique lines appear in all history"
-#~ msgstr "고유한 줄이 나타날 때만 트리거됩니다."
-
-#~ msgid "Trim whitespace before and after text"
-#~ msgstr "각 텍스트 줄 앞과 뒤의 공백을 제거하세요."
-
-#~ msgid "Added lines"
-#~ msgstr "로그인"
-
-#~ msgid "Removed lines"
-#~ msgstr "제거됨"
-
-#~ msgid "Realtime UI Updates Enabled"
-#~ msgstr "실시간 업데이트 오프라인"
-
-#~ msgid "Favicons Enabled"
-#~ msgstr "활성화하는 것을 고려해보세요"
-
-#~ msgid "Ignore Text"
-#~ msgstr "오류 텍스트"
-
-#~ msgid "Ignore whitespace"
-#~ msgstr "공백 무시"
-
-#~ msgid "Extract as CSV"
-#~ msgstr "데이터 추출"
-
-#~ msgid "Use global default"
-#~ msgstr "시스템 기본값 사용"
-
-#~ msgid "Selection Mode"
-#~ msgstr "선택 모드:"
-
-#~ msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
-#~ msgstr "SSIM보다 10~100배 빠른 빠른 OpenCV 알고리즘을 사용하여 스크린샷을 비교합니다."
-
-#~ msgid "Restock & Price Detection"
-#~ msgstr "재입고 및 가격"
-
-#~ msgid "Actions"
-#~ msgstr "정황"
-
-#~ msgid "You may need to"
-#~ msgstr "필요할 수 있음:"
-
-#~ msgid "in the"
-#~ msgstr "에서"
-
-#~ msgid "file"
-#~ msgstr "파일"
-
-#~ msgid "Schedule time limits"
-#~ msgstr "재확인 시간(분)"
-
-#~ msgid "Weekends"
-#~ msgstr "주"
-
-#~ msgid "Reset"
-#~ msgstr "요구"
-
-#~ msgid "More help and examples about using the scheduler"
-#~ msgstr "여기에 더 많은 도움말과 예시가 있습니다."
-
-#~ msgid "Want to use a time schedule?"
-#~ msgstr "시간 스케줄러 사용"
-
-#~ msgid "Triggered text"
-#~ msgstr "오류 텍스트"
-
-#~ msgid "Ignored text"
-#~ msgstr "오류 텍스트"
-
-#~ msgid "No change-detection will occur because this text exists."
-#~ msgstr "텍스트가 일치하는 동안 변경 감지 차단"
-
-#~ msgid "Blocked text"
-#~ msgstr "오류 텍스트"
-
-#~ msgid "Search"
-#~ msgstr "수색"
-
-#~ msgid "in"
-#~ msgstr "내"
 
 #~ msgid "Visual"
 #~ msgstr "시각적"

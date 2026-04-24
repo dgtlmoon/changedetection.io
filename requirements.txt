@@ -9,7 +9,7 @@ flask_cors # For the Chrome extension to operate
 flask_restful
 flask_wtf~=1.2
 inscriptis~=2.2
-python-engineio>=4.9.0,<5
+python-engineio>=4.13.1,<5
 python-socketio>=5.11.0,<6
 pytz
 timeago~=1.0
@@ -106,7 +106,7 @@ loguru
 extruct
 
 # For cleaning up unknown currency formats
-babel
+babel==2.18.0
 # For internationalization (i18n) support
 Flask-Babel>=4.0.0
 

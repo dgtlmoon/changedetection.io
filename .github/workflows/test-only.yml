@@ -20,10 +20,34 @@ jobs:
           pip install openapi-spec-validator
           python3 -c "from openapi_spec_validator import validate_spec; import yaml; validate_spec(yaml.safe_load(open('docs/api-spec.yaml')))"
 
+  lint-translations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check .po files with msgfmt
+        run: |
+          sudo apt-get install -y gettext
+          find changedetectionio/translations -name "*.po" | while read f; do
+            echo "Checking $f"
+            msgfmt --check-format -o /dev/null "$f"
+          done
+      - name: Check translation catalog is up-to-date
+        run: |
+          pip install "$(grep -E '^babel==' requirements.txt)"
+          python setup.py extract_messages
+          python setup.py update_catalog
+          python setup.py compile_catalog
+          # Ignore POT-Creation-Date timestamp lines — they change on every extract_messages run
+          if git diff changedetectionio/translations | grep -v 'POT-Creation-Date' | grep -qE '^[+-][^+-]'; then
+            echo "ERROR: Translation catalog is out of sync. Run: python setup.py extract_messages && python setup.py update_catalog && python setup.py compile_catalog"
+            git diff --stat changedetectionio/translations
+            exit 1
+          fi
+
   test-application-3-10:
     # Only run on push to master (including PR merges)
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: lint-code
+    needs: [lint-code, lint-translations]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.10'
@@ -31,7 +55,7 @@ jobs:
 
   test-application-3-11:
     # Always run
-    needs: lint-code
+    needs: [lint-code, lint-translations]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.11'
@@ -39,7 +63,7 @@ jobs:
   test-application-3-12:
     # Only run on push to master (including PR merges)
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: lint-code
+    needs: [lint-code, lint-translations]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.12'
@@ -48,7 +72,7 @@ jobs:
   test-application-3-13:
     # Only run on push to master (including PR merges)
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: lint-code
+    needs: [lint-code, lint-translations]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.13'
@@ -57,7 +81,7 @@ jobs:
 
   test-application-3-14:
     #if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: lint-code
+    needs: [lint-code, lint-translations]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.14'

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 02:48+0900\n"
+"POT-Creation-Date: 2026-04-24 19:50+1000\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -2780,7 +2780,7 @@ msgstr "Détection des changements de capture d'écran visuel/image"
 
 #: changedetectionio/processors/image_ssim_diff/processor.py
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
-msgstr ""
+msgstr "Compare les captures d'écran à l'aide de l'algorithme OpenCV rapide, 10 à 100 fois plus rapide que SSIM"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
@@ -2813,7 +2813,7 @@ msgstr "Au-dessus du prix pour déclencher une notification"
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
 msgid "Threshold in %% for price changes since the original price"
-msgstr "Seuil en % pour les changements de prix depuis le prix initial"
+msgstr "Seuil en %% pour les changements de prix depuis le prix initial"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"
@@ -3549,54 +3549,6 @@ msgstr "Non"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Paramètres principaux"
-
-#~ msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
-#~ msgstr "Compare les captures d'écran à l'aide de l'algorithme OpenCV rapide, 10 à 100 fois plus rapide que SSIM"
-
-#~ msgid "Actions"
-#~ msgstr "Conditions"
-
-#~ msgid "You may need to"
-#~ msgstr "Vous devrez peut-être"
-
-#~ msgid "in the"
-#~ msgstr "dans le"
-
-#~ msgid "file"
-#~ msgstr "fichier"
-
-#~ msgid "Schedule time limits"
-#~ msgstr "Temps de revérification (minutes)"
-
-#~ msgid "Weekends"
-#~ msgstr "Semaines"
-
-#~ msgid "Reset"
-#~ msgstr "Demande"
-
-#~ msgid "More help and examples about using the scheduler"
-#~ msgstr "Plus d'aide et d'exemples ici"
-
-#~ msgid "Want to use a time schedule?"
-#~ msgstr "Utiliser le planificateur de temps"
-
-#~ msgid "Triggered text"
-#~ msgstr "Texte d'erreur"
-
-#~ msgid "Ignored text"
-#~ msgstr "Texte d'erreur"
-
-#~ msgid "No change-detection will occur because this text exists."
-#~ msgstr "Bloquer la détection des modifications lorsque le texte correspond"
-
-#~ msgid "Blocked text"
-#~ msgstr "Texte d'erreur"
-
-#~ msgid "Search"
-#~ msgstr "Recherche"
-
-#~ msgid "in"
-#~ msgstr "dans"
 
 #~ msgid "Visual"
 #~ msgstr "Visuel"

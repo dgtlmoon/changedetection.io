@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-22 02:48+0900\n"
+"POT-Creation-Date: 2026-04-24 19:50+1000\n"
 "PO-Revision-Date: 2026-01-14 03:57+0100\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -3213,7 +3213,7 @@ msgstr ""
 
 #: changedetectionio/templates/_helpers.html
 msgid "Entry"
-msgstr ""
+msgstr "Eintrag"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Actions"
@@ -3221,27 +3221,29 @@ msgstr "Aktionen"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Add a row/rule after"
-msgstr ""
+msgstr "Füge eine Zeile/Regel nach"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Remove this row/rule"
-msgstr ""
+msgstr "Diese Zeile/Regel entfernen"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Verify this rule against current snapshot"
-msgstr ""
+msgstr "Überprüfen Sie diese Regel anhand des aktuellen Snapshots."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
 msgstr ""
+"Fehler – Diese Überwachung benötigt Chrome (mit Playwright/Sockpuppetbrowser), aber das Abrufen über Chrome ist nicht"
+" aktiviert."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Alternatively try our"
-msgstr ""
+msgstr "Alternativ können Sie auch unser"
 
 #: changedetectionio/templates/_helpers.html
 msgid "very affordable subscription based service which has all this setup for you"
-msgstr ""
+msgstr "ein sehr günstiges Abonnement-basiertes Angebot, das all diese Einstellungen für Sie übernimmt"
 
 #: changedetectionio/templates/_helpers.html
 #, python-format
@@ -3249,10 +3251,12 @@ msgid ""
 "You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
 "<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
 msgstr ""
+"Sie müssen möglicherweise <a href=\"%(url_pinned)s\">Aktivieren der Umgebungsvariable „Playwright“</a> und entferne "
+"den Kommentar von <strong>sockpuppetbrowser</strong> in der <a href=\"%(url_master)s\">docker-compose.yml</a> Datei."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
-msgstr ""
+msgstr "Legen Sie einen Stunden-/Wochenplan fest."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Schedule time limits"
@@ -3260,7 +3264,7 @@ msgstr "Zeitliche Begrenzungen des Zeitplans"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Business hours"
-msgstr ""
+msgstr "Geschäftszeiten"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Weekends"
@@ -3272,11 +3276,11 @@ msgstr "Zurücksetzen"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
-msgstr ""
+msgstr "Achtung, einer oder mehrere Ihrer „Tage“ haben eine Dauer, die sich bis in den nächsten Tag erstreckt."
 
 #: changedetectionio/templates/_helpers.html
 msgid "This could have unintended consequences."
-msgstr ""
+msgstr "Dies könnte unbeabsichtigte Folgen haben."
 
 #: changedetectionio/templates/_helpers.html
 msgid "More help and examples about using the scheduler"
@@ -3288,11 +3292,11 @@ msgstr "Möchten Sie einen Zeitplan verwenden?"
 
 #: changedetectionio/templates/_helpers.html
 msgid "First confirm/save your Time Zone Settings"
-msgstr ""
+msgstr "Bestätigen/speichern Sie zunächst Ihre Einstellungen für die Zeitzone."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Triggers a change if this text appears, AND something changed in the document."
-msgstr ""
+msgstr "Löst eine Änderung aus, wenn dieser Text erscheint UND sich etwas im Dokument geändert hat."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Triggered text"
@@ -3300,7 +3304,7 @@ msgstr "Auslösender Text"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Ignored for calculating changes, but still shown."
-msgstr ""
+msgstr "Wird für die Berechnung von Änderungen ignoriert, aber dennoch angezeigt."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Ignored text"
@@ -3351,15 +3355,15 @@ msgstr "Suchen"
 #: changedetectionio/templates/base.html
 #, python-format
 msgid "URL or Title in '%(title)s'"
-msgstr ""
+msgstr "URL oder Titel in '%(title)s'"
 
 #: changedetectionio/templates/base.html
 msgid "URL or Title"
-msgstr ""
+msgstr "URL oder Titel"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
-msgstr ""
+msgstr "Suchbegriff eingeben..."
 
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
@@ -3596,108 +3600,6 @@ msgstr "Nein"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Haupteinstellungen"
-
-#~ msgid "Entry"
-#~ msgstr "Eintrag"
-
-#~ msgid "Actions"
-#~ msgstr "Maßnahmen"
-
-#~ msgid "Add a row/rule after"
-#~ msgstr "Füge eine Zeile/Regel nach"
-
-#~ msgid "Remove this row/rule"
-#~ msgstr "Diese Zeile/Regel entfernen"
-
-#~ msgid "Verify this rule against current snapshot"
-#~ msgstr "Überprüfen Sie diese Regel anhand des aktuellen Snapshots."
-
-#~ msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
-#~ msgstr ""
-#~ "Fehler – Diese Überwachung benötigt Chrome (mit "
-#~ "Playwright/Sockpuppetbrowser), aber das Abrufen über Chrome ist nicht"
-#~ " aktiviert."
-
-#~ msgid "Alternatively try our"
-#~ msgstr "Alternativ können Sie auch unser"
-
-#~ msgid "very affordable subscription based service which has all this setup for you"
-#~ msgstr "ein sehr günstiges Abonnement-basiertes Angebot, das all diese Einstellungen für Sie übernimmt"
-
-#~ msgid "You may need to"
-#~ msgstr "Sie müssen möglicherweise"
-
-#~ msgid "Enable playwright environment variable"
-#~ msgstr ""
-
-#~ msgid "and uncomment the"
-#~ msgstr ""
-
-#~ msgid "in the"
-#~ msgstr "in der"
-
-#~ msgid "file"
-#~ msgstr "Datei"
-
-#~ msgid "Set a hourly/week day schedule"
-#~ msgstr "Legen Sie einen Stunden-/Wochenplan fest."
-
-#~ msgid "Schedule time limits"
-#~ msgstr "Zeitlimits festlegen"
-
-#~ msgid "Business hours"
-#~ msgstr "Geschäftszeiten"
-
-#~ msgid "Weekends"
-#~ msgstr "Wochenenden"
-
-#~ msgid "Reset"
-#~ msgstr "Zurücksetzen"
-
-#~ msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
-#~ msgstr "Achtung, einer oder mehrere Ihrer „Tage“ haben eine Dauer, die sich bis in den nächsten Tag erstreckt."
-
-#~ msgid "This could have unintended consequences."
-#~ msgstr "Dies könnte unbeabsichtigte Folgen haben."
-
-#~ msgid "More help and examples about using the scheduler"
-#~ msgstr "Weitere Hilfe und Beispiele finden Sie hier"
-
-#~ msgid "Want to use a time schedule?"
-#~ msgstr "Möchten Sie einen Zeitplan verwenden?"
-
-#~ msgid "First confirm/save your Time Zone Settings"
-#~ msgstr "Bestätigen/speichern Sie zunächst Ihre Einstellungen für die Zeitzone."
-
-#~ msgid "Triggers a change if this text appears, AND something changed in the document."
-#~ msgstr "Löst eine Änderung aus, wenn dieser Text erscheint UND sich etwas im Dokument geändert hat."
-
-#~ msgid "Triggered text"
-#~ msgstr "Fehlertext"
-
-#~ msgid "Ignored for calculating changes, but still shown."
-#~ msgstr "Wird für die Berechnung von Änderungen ignoriert, aber dennoch angezeigt."
-
-#~ msgid "Ignored text"
-#~ msgstr "Fehlertext"
-
-#~ msgid "No change-detection will occur because this text exists."
-#~ msgstr "Blockieren Sie die Änderungserkennung, während der Text übereinstimmt"
-
-#~ msgid "Blocked text"
-#~ msgstr "Fehlertext"
-
-#~ msgid "Search"
-#~ msgstr "Suchen"
-
-#~ msgid "URL or Title"
-#~ msgstr "URL oder Titel"
-
-#~ msgid "in"
-#~ msgstr "in"
-
-#~ msgid "Enter search term..."
-#~ msgstr "Suchbegriff eingeben..."
 
 #~ msgid "Watch List"
 #~ msgstr "Überwachungsliste"
