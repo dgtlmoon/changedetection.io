@@ -15,7 +15,7 @@ _MAX_COMPLETION_TOKENS = 400
 
 def completion(model: str, messages: list, api_key: str = None,
                api_base: str = None, timeout: int = 30,
-               max_tokens: int = None) -> tuple[str, int, int, int]:
+               max_tokens: int = None, extra_body: dict = None) -> tuple[str, int, int, int]:
     """
     Call the LLM and return (response_text, total_tokens, input_tokens, output_tokens).
     Token counts are 0 if the provider doesn't return usage data.
@@ -37,6 +37,8 @@ def completion(model: str, messages: list, api_key: str = None,
         kwargs['api_key'] = api_key
     if api_base:
         kwargs['api_base'] = api_base
+    if extra_body:
+        kwargs['extra_body'] = extra_body
 
     try:
         response = litellm.completion(**kwargs)

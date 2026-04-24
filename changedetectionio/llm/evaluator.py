@@ -56,6 +56,18 @@ def _check_input_size(text: str, max_chars: int) -> None:
         )
 
 
+LLM_DEFAULT_THINKING_BUDGET = 0  # 0 = thinking disabled by default
+
+def _thinking_extra_body(model: str, budget: int) -> dict | None:
+    """Return litellm extra_body to control thinking for models that support it.
+    For Gemini 2.5+: passes thinkingConfig with the given budget (0 = disabled).
+    For all other models: returns None (no-op).
+    """
+    if not model.startswith('gemini/gemini-2.5'):
+        return None
+    return {'generationConfig': {'thinkingConfig': {'thinkingBudget': budget}}}
+
+
 def _cached_system(text: str, model: str = '') -> dict:
     """Wrap a system prompt, adding Anthropic prompt-caching headers only for Anthropic models.
     Gemini and other providers have their own caching APIs that break when they receive
@@ -67,12 +79,15 @@ def _cached_system(text: str, model: str = '') -> dict:
     return {'role': 'system', 'content': text}
 
 
-def _summary_max_tokens(diff: str) -> int:
-    """Scale completion tokens to diff size: floor 400, ~1 token per 4 chars, ceiling 3000."""
-    return max(400, min(len(diff) // 4, 3000))
+LLM_DEFAULT_MAX_SUMMARY_TOKENS = 3000
 
 # Default prompt used when the user hasn't configured llm_change_summary
 DEFAULT_CHANGE_SUMMARY_PROMPT = "Describe in plain English what changed — list what was added or removed as bullet points, including key details for each item. Be careful of content that merely just moved around, you should mention that it moved but dont report that it was added/removed etc. Be considerate of the style content you are summarising the change of, adjust your report accordingly. Do not quote non-English text verbatim; translate and summarise all content into English. Your entire response must be in English."
+
+
+def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS) -> int:
+    """Scale completion tokens to diff size: floor 400, ~1 token per 4 chars, ceiling max_cap."""
+    return max(400, min(len(diff) // 4, max_cap))
 
 
 # ---------------------------------------------------------------------------
@@ -323,6 +338,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
         )
         _check_token_budget(watch, cfg, tokens)
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
@@ -403,6 +419,9 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         title=title,
     )
 
+    _thinking_budget = int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)
+    _extra_body = _thinking_extra_body(cfg['model'], _thinking_budget)
+
     try:
         _resp = llm_client.completion(
             model=cfg['model'],
@@ -412,7 +431,11 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
-            max_tokens=_summary_max_tokens(diff),
+            max_tokens=_summary_max_tokens(
+                diff,
+                max_cap=int(datastore.data['settings']['application'].get('llm_max_summary_tokens', LLM_DEFAULT_MAX_SUMMARY_TOKENS) or LLM_DEFAULT_MAX_SUMMARY_TOKENS),
+            ),
+            extra_body=_extra_body,
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0
@@ -473,6 +496,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
         )
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
         result = parse_preview_response(raw)
@@ -555,6 +579,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0

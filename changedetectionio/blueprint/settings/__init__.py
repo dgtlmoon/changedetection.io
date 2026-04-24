@@ -40,6 +40,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'llm_override_diff_with_summary':    datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
             'llm_restock_use_fallback_extract':  datastore.data['settings']['application'].get('llm_restock_use_fallback_extract', True),
             'llm_budget_action':                 datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm'),
+            'llm_thinking_budget':               str(datastore.data['settings']['application'].get('llm_thinking_budget', 0)),
+            'llm_max_summary_tokens':            str(datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)),
             'llm_token_budget_month':            _stored_llm.get('token_budget_month', 0),
             'llm_max_input_chars':               _stored_llm.get('max_input_chars', 0),
         }
@@ -123,6 +125,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 )
                 datastore.data['settings']['application']['llm_budget_action'] = (
                     llm_data.get('llm_budget_action') or 'skip_llm'
+                )
+                datastore.data['settings']['application']['llm_thinking_budget'] = (
+                    int(llm_data.get('llm_thinking_budget') or 0)
+                )
+                datastore.data['settings']['application']['llm_max_summary_tokens'] = (
+                    int(llm_data.get('llm_max_summary_tokens') or 3000)
                 )
 
                 # Monthly token budget — only save if env var is not set

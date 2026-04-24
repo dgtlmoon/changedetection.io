@@ -6,7 +6,7 @@ from flask_babel import lazy_gettext as _l, gettext
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
-from changedetectionio.llm.evaluator import DEFAULT_CHANGE_SUMMARY_PROMPT
+from changedetectionio.llm.evaluator import DEFAULT_CHANGE_SUMMARY_PROMPT, LLM_DEFAULT_MAX_SUMMARY_TOKENS, LLM_DEFAULT_THINKING_BUDGET
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
 from changedetectionio.strtobool import strtobool
@@ -1134,6 +1134,30 @@ class globalSettingsLLMForm(Form):
     llm_restock_use_fallback_extract = BooleanField(
         _l('Use LLM as a fallback for extracting price and restock info'),
         default=True,
+    )
+    llm_thinking_budget = SelectField(
+        _l('AI thinking budget (tokens)'),
+        choices=[
+            ('0',    _l('Off (no thinking)')),
+            ('100',  '100'),
+            ('500',  '500'),
+            ('2000', '2000'),
+        ],
+        default=str(LLM_DEFAULT_THINKING_BUDGET),
+        validators=[validators.Optional()],
+    )
+    llm_max_summary_tokens = SelectField(
+        _l('Max AI summary length (tokens)'),
+        choices=[
+            ('500',   '500'),
+            ('1000',  '1000'),
+            ('3000',  '3000'),
+            ('5000',  '5000'),
+            ('10000', '10000'),
+            ('15000', '15000'),
+        ],
+        default=str(LLM_DEFAULT_MAX_SUMMARY_TOKENS),
+        validators=[validators.Optional()],
     )
     llm_budget_action = RadioField(
         _l('When monthly token budget is reached'),

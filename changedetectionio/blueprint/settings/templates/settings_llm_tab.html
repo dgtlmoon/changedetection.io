@@ -195,6 +195,18 @@
   </div>
 
   <div class="pure-control-group">
+    <label for="{{ form.llm.form.llm_thinking_budget.id }}">{{ form.llm.form.llm_thinking_budget.label.text }}</label>
+    {{ form.llm.form.llm_thinking_budget() }}
+    <span class="pure-form-message-inline">{{ _('For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to Off if summaries are being cut short.') }}</span>
+  </div>
+
+  <div class="pure-control-group">
+    <label for="{{ form.llm.form.llm_max_summary_tokens.id }}">{{ form.llm.form.llm_max_summary_tokens.label.text }}</label>
+    {{ form.llm.form.llm_max_summary_tokens() }}
+    <span class="pure-form-message-inline">{{ _('Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost more.') }}</span>
+  </div>
+
+  <div class="pure-control-group">
     <label>{{ form.llm.form.llm_budget_action.label.text }}</label>
     <div>
       {% for subfield in form.llm.form.llm_budget_action %}
