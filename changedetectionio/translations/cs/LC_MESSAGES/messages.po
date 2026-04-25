@@ -77,7 +77,7 @@ msgstr "Soubor musí být .zip soubor zálohy!"
 #: changedetectionio/blueprint/backups/restore.py
 #, python-format
 msgid "Backup file is too large (max %(mb)s MB)"
-msgstr ""
+msgstr "Záložní soubor moc velký (max %(mb)s MB)"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Invalid or corrupted zip file"
@@ -136,7 +136,7 @@ msgstr "Pozn.: Nepřepíše hlavní nastavení aplikaci, pouze sledování a sku
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 #, python-format
 msgid "Max upload size: %(upload)s MB, Max decompressed size: %(decomp)s MB"
-msgstr ""
+msgstr "Max velikost uploadu: %(upload)s MB, Max rozbalená velikost: %(decomp)s MB"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Include all groups found in backup?"
@@ -214,7 +214,7 @@ msgstr ".XLSX a Wachete"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Backup Restore"
-msgstr ""
+msgstr "Obnova zálohy"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
@@ -376,12 +376,12 @@ msgstr "Všechna oznámení odtlumena."
 
 #: changedetectionio/blueprint/settings/llm.py
 msgid "AI / LLM configuration removed."
-msgstr ""
+msgstr "AI / LLM konfigurace odstraněna."
 
 #: changedetectionio/blueprint/settings/llm.py
 #, python-format
 msgid "AI summary cache cleared (%(n)s file(s) removed)."
-msgstr ""
+msgstr "AI souhrná cache vyčištěna (%(n)s soubor(ů) odstraněno)."
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
@@ -427,7 +427,7 @@ msgstr "CAPTCHA a proxy"
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
-msgstr ""
+msgstr "AI / LLM"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Info"
@@ -459,15 +459,15 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Set to empty to disable / no limit"
-msgstr ""
+msgstr "Nastavit prázdnou hodnotu pro vypnutí / bez limitu"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password protection for your changedetection.io application."
-msgstr ""
+msgstr "Chránit heslem tuto changedetection.io applikaci"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password is locked."
-msgstr ""
+msgstr "Heslo je uzamčeno."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
@@ -475,7 +475,7 @@ msgstr "Povolit přístup na stránku historie změn monitoru, když je povoleno
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
-msgstr ""
+msgstr "Pokud požadavek vrátí prázdný obsah, nebo pokud HTML neobsahuje žádný text, má být označeno jako změna?"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
@@ -483,7 +483,7 @@ msgstr "Vyberte výchozí proxy pro všechna sledování"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Base URL used for the"
-msgstr ""
+msgstr "Základní URL použita pro"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "token in notification links."
@@ -491,7 +491,7 @@ msgstr "token v odkazech oznámení."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default value is the system environment variable"
-msgstr ""
+msgstr "Výchozí hodnota je systémová proměnná prostředí"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
 msgid "read more here"
@@ -499,7 +499,7 @@ msgstr "přečtěte si více zde"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "method (default) where your watched sites don't need Javascript to render."
-msgstr ""
+msgstr "metoda (výchozí), kdy sledované stránky nevyžadují Javascript pro renderování."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the"
@@ -511,7 +511,7 @@ msgstr "Základní"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "method requires a network connection to a running WebDriver+Chrome server, set by the ENV var"
-msgstr ""
+msgstr "metoda vyžaduje síťové připojení k běžícímu WebDriver+Chrome serveru, nastaveno pomocí ENV var"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The"
@@ -526,6 +526,8 @@ msgid ""
 "If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time"
 " here."
 msgstr ""
+"Pokud máte potíže při čekání na plné vykreslení stránky (chybějící text atp.), zkuste navýšit čas 'prodlevy'"
+" zde."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will wait"
@@ -533,11 +535,11 @@ msgstr "Toto počká"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "seconds before extracting the text."
-msgstr "sekund před extrahováním textu."
+msgstr "sekund před načtením textu."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
-msgstr ""
+msgstr "Počet souběžných pracovních procesů sledování. Více procesů = rychlejší zpracování, ale vyšší spotřeba paměti."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
@@ -557,27 +559,27 @@ msgstr "aktivně zpracovává"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later"
-msgstr ""
+msgstr "Příklad - 3 sekundový náhodný rozptyl může spustit o 3 sekundy dříve nebo až 3 sekundy později"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
-msgstr ""
+msgstr "Pro běžné základní požadavky (bez použití chrome), maximální počet sekund do vypršení, 1-999."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Applied to all requests."
-msgstr ""
+msgstr "Nastaveno pro všechny požadavky."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
-msgstr ""
+msgstr "Pozn.: Pouhá změna hodnoty User-Agent často neobejde technologie zamezující přístup robotů, je třeba vzít v potaz"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "all of the ways that the browser is detected"
-msgstr ""
+msgstr "všechny možnosti jak lze prohlížeč rozpoznat."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Connect using Bright Data proxies, find out more here."
-msgstr ""
+msgstr "Připojit pomocí Bright Data proxy, více se lze dozvědět zde."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
 #: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
@@ -586,7 +588,7 @@ msgstr "Tip:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected."
-msgstr ""
+msgstr "Ignorovat mezery, tabulátory a nové řádky/odřádkování, při odhadu zda došlo ke změně."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note:"
@@ -594,35 +596,35 @@ msgstr "Poznámka:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Changing this will change the status of your existing watches, possibly trigger alerts etc."
-msgstr ""
+msgstr "Při změně této hodnoty se změní stav existujících sledování a to pravděpodobně spustí upozornění atp."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Render anchor tag content, default disabled, when enabled renders links as"
-msgstr ""
+msgstr "Vykreslit obsah kotvícího tagu, výchozí vypnuto, při zapnutí vykresluje odkazu jako"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Changing this could affect the content of your existing watches, possibly trigger alerts etc."
-msgstr ""
+msgstr "Při změně této hodnoty se nejspíše změní stav existujících sledování a to nejspíše spustí upozornění atp."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/include_subtract.html
 msgid "Remove HTML element(s) by CSS and XPath selectors before text conversion."
-msgstr ""
+msgstr "Odstranit HTML element(y) pomocí CSS a XPath značek před konverzí textu."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/include_subtract.html
 msgid "Don't paste HTML here, use only CSS and XPath selectors"
-msgstr ""
+msgstr "Nevkládat HTML, ale pouze CSS a XPath značky"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/include_subtract.html
 msgid "Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML."
-msgstr ""
+msgstr "Přidat vícero elementů, CSS nebo XPath značky vždy na novou řádku, aby bylo postupně ignorováno více částí HTML."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: This is applied globally in addition to the per-watch rules."
-msgstr ""
+msgstr "Pozn.: Toto je aplikováno globálně dodatečně k pravidlům nastaveným pro jednotlivá sledování."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Matching text will be"
-msgstr ""
+msgstr "Text shody bude"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "ignored"
@@ -630,51 +632,51 @@ msgstr "ignorováno"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "in the text snapshot (you can still see it but it wont trigger a change)"
-msgstr ""
+msgstr "ve snímku textu (bude i nadále vidět, ale nebude spouštět upozornění na změnu)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Each line processed separately, any line matching will be ignored (removed before creating the checksum)"
-msgstr ""
+msgstr "Každá řádka zpracována samostatně, odpovídající řádky budou ignorovány (odstraněny před založením kontrolního součtu)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Regular Expression support, wrap the entire line in forward slash"
-msgstr ""
+msgstr "Podpora regulárních výrazů, ohraničit celé řádky lomítkem"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
 msgid "Changing this will affect the comparison checksum which may trigger an alert"
-msgstr ""
+msgstr "Změna této hodnoty ovlivní porovnávací kontrolní součet, což může spustit upozornění"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Remove any text that appears in the \"Ignore text\" from the output (otherwise its just ignored for change-detection)"
-msgstr ""
+msgstr "Odstranit všechen text z výstupu zadaný pod \"Ignorovat text\" (jinak bude ignorováno pouze pro detekci změn)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "API Access"
-msgstr ""
+msgstr "API Přístup"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Drive your changedetection.io via API, More about"
-msgstr ""
+msgstr "Ovládejte svou changedetection.io pomocí API, Více o"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "API access and examples here"
-msgstr "Přístup k API a příklady zde"
+msgstr "přístupu k API a příklady zde"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
-msgstr ""
+msgstr "Omezit API přístupový limit použitím"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "header - required for the Chrome Extension to work"
-msgstr ""
+msgstr "hlavičky - vyžadováno pro správné fungování Chrome rozšíření"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "copy"
-msgstr ""
+msgstr "kopírovat"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
-msgstr ""
+msgstr "Obnovit API klíč"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Chrome Extension"
@@ -682,43 +684,43 @@ msgstr "Rozšíření pro Chrome"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Easily add any web-page to your changedetection.io installation from within Chrome."
-msgstr ""
+msgstr "Přidávejte jakékoliv webové stránky do své changedetection.io instalace přímo z prohlížeče Chrome."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Step 1"
-msgstr ""
+msgstr "Krok 1"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Install the extension,"
-msgstr ""
+msgstr "Nainstalovat rozšíření,"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Step 2"
-msgstr ""
+msgstr "Krok 2"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Navigate to this page,"
-msgstr ""
+msgstr "Navigovat na tuto stránku,"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Step 3"
-msgstr ""
+msgstr "Krok 3"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Open the extension from the toolbar and click"
-msgstr ""
+msgstr "Otevřít rozšíření z lišty a kliknout"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Sync API Access"
-msgstr ""
+msgstr "Synchronizovat API přístup"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Try our new Chrome Extension!"
-msgstr ""
+msgstr "Ozkoušet naše nové Chrom rozšíření"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Chrome store icon"
-msgstr ""
+msgstr "ikona obchodu Chrome"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Chrome Webstore"
@@ -726,15 +728,15 @@ msgstr "Chrome Webstore"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Maximum number of history snapshots to include in the watch specific RSS feed."
-msgstr ""
+msgstr "Maximální počet snímků historie přiřazených ke sledování specifického RSS zdroje."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection."
-msgstr ""
+msgstr "Sledování dalších RSS zdrojů - Při sledování RSS/Atom zdrojů, převádět na obyčejný text pro lepší sledování změn."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Does your reader support HTML? Set it here"
-msgstr ""
+msgstr "Máte čtečku podporující HTML? Nastavit zde"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "'System default' for the same template for all items, or re-use your \"Notification Body\" as the template."
@@ -742,23 +744,23 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches."
-msgstr ""
+msgstr "Ujistěte se, že nastavení níže je správně, je použito pro časové rozestupy kontrol sledování webových stránek."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UTC Time & Date from Server:"
-msgstr ""
+msgstr "UTC Čas a Datum Serveru:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Local Time & Date in Browser:"
-msgstr ""
+msgstr "Místní Čas a Datum prohlížeče:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab."
-msgstr ""
+msgstr "Po povolení tohoto nastavení bude stránka rozdílů otevřena v novém tabu. Při vypnutí bude použit aktuální tab."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
-msgstr ""
+msgstr "Povolit aktualizace UI v reálném čase - (změna vyžaduje restart)"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Enable or Disable Favicons next to the watch list"
@@ -3138,7 +3140,7 @@ msgstr "Základní URL pro upozornění"
 
 #: changedetectionio/forms.py
 msgid "Not set"
-msgstr ""
+msgstr "Nenastaveno"
 
 #: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"
@@ -3146,7 +3148,7 @@ msgstr "Považovat prázdné stránky za změnu?"
 
 #: changedetectionio/forms.py
 msgid "Ignore Text"
-msgstr "Text chyby"
+msgstr "Ignorovat text"
 
 #: changedetectionio/forms.py
 msgid "Ignore whitespace"
