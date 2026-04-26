@@ -25,7 +25,7 @@
                 <div class="pure-control-group">
                         {{ _('Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):') }}
                         <br>
-                        <p><strong>{{ _('Example:') }}  </strong><code>https://example.com tag1, tag2, last tag</code></p>
+                        <p><strong>{{ _('Example') }}:  </strong><code>https://example.com tag1, tag2, last tag</code></p>
                         {{ _('URLs which do not pass validation will stay in the textarea.') }}
                 </div>
                 {{ render_field(form.processor, class="processor") }}
@@ -45,7 +45,7 @@
             <div class="tab-pane-inner" id="distill-io">
                     <div class="pure-control-group">
                         {{ _('Copy and Paste your Distill.io watch \'export\' file, this should be a JSON file.') }}<br>
-                        {{ _('This is') }} <i>{{ _('experimental') }}</i>, {{ _('supported fields are') }} <code>name</code>, <code>uri</code>, <code>tags</code>, <code>config:selections</code>, {{ _('the rest (including') }} <code>schedule</code>) {{ _('are ignored.') }}
+                        {{ _('This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, <code>config:selections</code>, the rest (including <code>schedule</code>) are ignored.')|safe }}
                         <br>
                         <p>
                         {{ _('How to export?') }} <a href="https://distill.io/docs/web-monitor/how-export-and-import-monitors/">https://distill.io/docs/web-monitor/how-export-and-import-monitors/</a><br>

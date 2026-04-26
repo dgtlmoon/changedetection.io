@@ -162,7 +162,8 @@
                             }}
                             <div class="pure-form-message-inline">
                                 <p>
-                                <strong>{{ _('Tip:') }}</strong> {{ _('Use') }} <a target="newwindow" href="https://github.com/caronc/apprise">{{ _('AppRise Notification URLs') }}</a> {{ _('for notification to just about any service!') }} <i><a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{{ _('Please read the notification services wiki here for important configuration notes') }}</a></i>.<br>
+                                <strong>{{ _('Tip:') }}</strong> {{ _('Use <a target="newwindow" href="%(url)s">AppRise Notification URLs</a> for notification to just about any service!',
+                                    url='https://github.com/caronc/apprise')|safe }} <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{{ _('<i>Please read the notification services wiki here for important configuration notes</i>')|safe }}</a>.<br>
 </p>
                                 <div data-target="#advanced-help-notifications" class="toggle-show pure-button button-tag button-xsmall">{{ _('Show advanced help and tips') }}</div>
                                 <ul style="display: none" id="advanced-help-notifications">
@@ -170,7 +171,7 @@
                                 <li><code><a target="newwindow" href="https://github.com/caronc/apprise/wiki/Notify_telegram">tgram://</a></code> {{ _('bots can\'t send messages to other bots, so you should specify chat ID of non-bot user.') }}</li>
                                 <li><code><a target="newwindow" href="https://github.com/caronc/apprise/wiki/Notify_telegram">tgram://</a></code> {{ _('only supports very limited HTML and can fail when extra tags are sent,') }} <a href="https://core.telegram.org/bots/api#html-style">{{ _('read more here') }}</a> {{ _('(or use plaintext/markdown format)') }}</li>
                                 <li><code>gets://</code>, <code>posts://</code>, <code>puts://</code>, <code>deletes://</code> {{ _('for direct API calls (or omit the') }} "<code>s</code>" {{ _('for non-SSL ie') }} <code>get://</code>) <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes#postposts">{{ _('more help here') }}</a></li>
-                                  <li>{{ _('Accepts the') }} <code>{{ '{{token}}' }}</code> {{ _('placeholders listed below') }}</li>
+                                  <li>{{ _('Accepts the <code>%(token)s</code> placeholders listed below', token='{{token}}')|safe }}</li>
                               </ul>
                             </div>
                             <div class="notifications-wrapper">
