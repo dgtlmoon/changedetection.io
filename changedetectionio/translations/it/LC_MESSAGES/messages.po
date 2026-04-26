@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-25 01:52+0900\n"
+"POT-Creation-Date: 2026-04-26 20:03+1000\n"
 "PO-Revision-Date: 2026-01-02 15:32+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -3689,25 +3689,6 @@ msgstr ""
 
 #: changedetectionio/templates/_helpers.html
 msgid "Verify this rule against current snapshot"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "Alternatively try our"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "very affordable subscription based service which has all this setup for you"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-#, python-format
-msgid ""
-"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
-"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html

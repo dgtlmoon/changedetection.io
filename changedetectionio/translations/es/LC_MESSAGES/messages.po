@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-25 01:52+0900\n"
+"POT-Creation-Date: 2026-04-26 20:03+1000\n"
 "PO-Revision-Date: 2026-03-20 18:13+0100\n"
 "Last-Translator: Adrian Gonzalez <adrian@example.com>\n"
 "Language: es\n"
@@ -3763,29 +3763,6 @@ msgstr "Eliminar esta fila/regla"
 #: changedetectionio/templates/_helpers.html
 msgid "Verify this rule against current snapshot"
 msgstr "Verifique esta regla con la instantánea actual"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
-msgstr ""
-"Error: este monitor necesita Chrome (con playwright/sockpuppetbrowser), pero la obtención basada en Chrome no está "
-"habilitada."
-
-#: changedetectionio/templates/_helpers.html
-msgid "Alternatively try our"
-msgstr "Alternativamente prueba nuestro"
-
-#: changedetectionio/templates/_helpers.html
-msgid "very affordable subscription based service which has all this setup for you"
-msgstr "servicio basado en suscripción muy asequible que tiene toda esta configuración para usted."
-
-#: changedetectionio/templates/_helpers.html
-#, python-format
-msgid ""
-"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
-"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
-msgstr ""
-"Es posible que necesites <a href=\"%(url_pinned)s\">Habilitar la variable de entorno de playwright</a> y descomentar "
-"el <strong>sockpuppetbrowser</strong> en el fichero <a href=\"%(url_master)s\">docker-compose.yml</a>."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"

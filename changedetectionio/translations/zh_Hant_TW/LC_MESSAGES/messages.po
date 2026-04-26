@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-25 01:52+0900\n"
+"POT-Creation-Date: 2026-04-26 20:03+1000\n"
 "PO-Revision-Date: 2026-01-15 12:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hant_TW\n"
@@ -3692,27 +3692,6 @@ msgstr "移除此行 / 規則"
 #: changedetectionio/templates/_helpers.html
 msgid "Verify this rule against current snapshot"
 msgstr "針對目前快照驗證此規則"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled."
-msgstr "錯誤 - 此監測任務需要 Chrome（搭配 playwright / sockpuppetbrowser），但未啟用基於 Chrome 的抓取功能。"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Alternatively try our"
-msgstr "或者嘗試我們"
-
-#: changedetectionio/templates/_helpers.html
-msgid "very affordable subscription based service which has all this setup for you"
-msgstr "非常實惠的訂閱服務，為您準備好所有設定"
-
-#: changedetectionio/templates/_helpers.html
-#, python-format
-msgid ""
-"You may need to <a href=\"%(url_pinned)s\">Enable playwright environment variable</a> and uncomment the "
-"<strong>sockpuppetbrowser</strong> in the <a href=\"%(url_master)s\">docker-compose.yml</a> file."
-msgstr ""
-"您可能需要 <a href=\"%(url_pinned)s\">啟用 playwright 環境變數</a> 並取消註解 <strong>sockpuppetbrowser</strong> 在 <a "
-"href=\"%(url_master)s\">docker-compose.yml</a> 檔案."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
