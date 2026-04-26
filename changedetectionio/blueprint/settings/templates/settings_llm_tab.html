@@ -7,12 +7,14 @@
 <div class="tab-pane-inner" id="ai">
 <script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
 
+{# TRANSLATORS: 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide #}
+{% set _usage_label = pgettext('AI usage stats', 'Usage') %}
 {% call stab_shell('ai-settings', [
     {'id': 'overview',  'label': _('Overview'),  'icon': '✦'},
     {'id': 'provider',  'label': _('Provider'),  'icon': '⚙'},
     {'id': 'prompts',   'label': _('Prompts'),   'icon': '≡'},
     {'id': 'behaviour', 'label': _('Behaviour'), 'icon': '⚑'},
-    {'id': 'usage',     'label': _('Usage'),     'icon': '$'},
+    {'id': 'usage',     'label': _usage_label,   'icon': '$'},
 ]) %}
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}

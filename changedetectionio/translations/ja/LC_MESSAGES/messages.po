@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-26 20:03+1000\n"
+"POT-Creation-Date: 2026-04-26 22:34+1000\n"
 "PO-Revision-Date: 2026-03-31 23:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -774,6 +774,12 @@ msgstr "戻る"
 msgid "Clear Snapshot History"
 msgstr "スナップショット履歴をクリア"
 
+#. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgctxt "AI usage stats"
+msgid "Usage"
+msgstr "使用量"
+
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Overview"
 msgstr ""
@@ -788,10 +794,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Behaviour"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Usage"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
