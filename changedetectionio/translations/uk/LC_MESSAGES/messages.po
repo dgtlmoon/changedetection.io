@@ -2244,7 +2244,7 @@ msgstr "Перевірено"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Last Checked"
-msgstr ""
+msgstr "Останній Перевірено"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
@@ -2252,7 +2252,7 @@ msgstr "Змінено"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Last Changed"
-msgstr ""
+msgstr "Останній Змінено"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
