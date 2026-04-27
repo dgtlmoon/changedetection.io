@@ -213,6 +213,9 @@ Never fix one language and move on.
 pybabel init -i changedetectionio/translations/messages.pot \
              -d changedetectionio/translations \
              -l NEW_LANG_CODE
+# Reset POT-Creation-Date to the sentinel so it matches the other catalogs
+sed -i 's|^"POT-Creation-Date: .*\\n"$|"POT-Creation-Date: 1970-01-01 00:00+0000\\n"|' \
+  changedetectionio/translations/NEW_LANG_CODE/LC_MESSAGES/messages.po
 python setup.py compile_catalog
 ```
 
