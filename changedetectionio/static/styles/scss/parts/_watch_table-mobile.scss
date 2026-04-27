@@ -181,3 +181,9 @@ $grid-gap: 0.5rem;
     padding: 3px !important;
   }
 }
+
+@media (min-width: 768px) {
+  .watch-table thead tr th .hide-on-desktop {
+    display: none;
+  }
+}
