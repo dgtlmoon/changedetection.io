@@ -1429,7 +1429,7 @@ msgstr "已將 1 個監測任務排入複查佇列。"
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "已將 {} 個監測任務排入複查佇列。"
+msgstr "已將 {} 個監測任務排入複查佇列（{} 個已在佇列中或正在執行）。"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -4154,4 +4154,3 @@ msgstr "否"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "主設定"
-
