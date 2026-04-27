@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
-"POT-Creation-Date: 2026-04-26 22:34+1000\n"
+"POT-Creation-Date: 2026-04-27 12:40+0900\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: limeade23 <admin@limeade.me>\n"
 "Language: ko\n"
@@ -2223,12 +2223,16 @@ msgid "Checked"
 msgstr "확인됨"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last"
-msgstr "최근"
+msgid "Last Checked"
+msgstr "최근 확인"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
 msgstr "변경됨"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last Changed"
+msgstr "최근 변경"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
@@ -2278,17 +2282,9 @@ msgstr "가격"
 msgid "No information"
 msgstr "정보 없음"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Checked"
-msgstr "최근 확인"
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Checking now"
 msgstr "지금 확인 중"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Changed"
-msgstr "최근 변경"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued"
@@ -4170,3 +4166,4 @@ msgstr "아니오"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "기본 설정"
+

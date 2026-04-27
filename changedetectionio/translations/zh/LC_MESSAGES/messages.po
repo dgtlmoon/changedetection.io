@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-26 22:34+1000\n"
+"POT-Creation-Date: 2026-04-27 12:40+0900\n"
 "PO-Revision-Date: 2026-01-18 21:31+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
 "Language: zh\n"
@@ -2218,12 +2218,16 @@ msgid "Checked"
 msgstr "检查"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last"
-msgstr "最近"
+msgid "Last Checked"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
 msgstr "变更"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last Changed"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
@@ -2273,17 +2277,9 @@ msgstr "价格"
 msgid "No information"
 msgstr "暂无信息"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Checked"
-msgstr ""
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Checking now"
 msgstr "正在检查"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Changed"
-msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued"

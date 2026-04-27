@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.53.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-26 22:34+1000\n"
+"POT-Creation-Date: 2026-04-27 12:40+0900\n"
 "PO-Revision-Date: 2026-04-10 20:38+0300\n"
 "Last-Translator: \n"
 "Language: tr\n"
@@ -2266,12 +2266,16 @@ msgid "Checked"
 msgstr "Kontrol Edildi"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last"
-msgstr "Son"
+msgid "Last Checked"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
 msgstr "Değiştirildi"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last Changed"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
@@ -2321,17 +2325,9 @@ msgstr "Fiyat"
 msgid "No information"
 msgstr "Bilgi yok"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Checked"
-msgstr ""
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Checking now"
 msgstr "Şimdi kontrol ediliyor"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Changed"
-msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued"
