@@ -1,7 +1,11 @@
+import io
 import os
+import re
+import time
 import pytest
 
 from flask import url_for
+from zipfile import ZipFile, ZIP_DEFLATED
 
 from changedetectionio.tests.util import set_modified_response
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
@@ -823,3 +827,75 @@ def test_unresolvable_hostname_is_allowed(client, live_server, monkeypatch):
     res = client.get(url_for('watchlist.index'))
     assert b'this-host-does-not-exist-xyz987.invalid' in res.data, \
         "Unresolvable hostname watch should appear in the watch overview list"
+
+
+def test_ghsa_8757_69j2_hx56_backup_restore_history_path_traversal(client, live_server, measure_memory_usage, datastore_path):
+    """
+    GHSA-8757-69j2-hx56: Crafted backup ZIP with absolute path in history.txt must not
+    expose arbitrary local files through the preview or API endpoints.
+
+    Attack chain:
+    1. Attacker creates a backup ZIP with a malicious history.txt containing an absolute
+       path (e.g. /etc/passwd) as a snapshot reference.
+    2. Victim restores the backup.
+    3. Attacker reads the targeted file via the Preview page.
+
+    The fix ensures history entries are always resolved to os.path.basename() joined with
+    the watch's data_dir, and rejects entries that escape that directory.
+    """
+    set_original_response(datastore_path=datastore_path)
+
+    datastore = live_server.app.config['DATASTORE']
+    watch_url = url_for('test_endpoint', _external=True)
+
+    # Create a real watch and trigger a check so we have a valid backup structure
+    uuid = datastore.add_watch(url=watch_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # Download a legitimate backup to use as a template
+    client.get(url_for("backups.request_backup"), follow_redirects=True)
+    time.sleep(4)
+    res = client.get(url_for("backups.download_backup", filename="latest"), follow_redirects=True)
+    assert res.content_type == "application/zip"
+
+    # Tamper: replace the history.txt inside the backup with a malicious entry
+    # that points at /etc/passwd (a file that exists on any Unix system)
+    original_zip = ZipFile(io.BytesIO(res.data))
+    tampered_buf = io.BytesIO()
+    with ZipFile(tampered_buf, 'w', ZIP_DEFLATED) as new_zip:
+        for item in original_zip.infolist():
+            data = original_zip.read(item.filename)
+            # Replace the watch's history.txt with a malicious absolute path entry
+            if item.filename.endswith('history.txt') and uuid in item.filename:
+                data = b'1776969105,/etc/passwd\n'
+            new_zip.writestr(item, data)
+
+    tampered_buf.seek(0)
+    tampered_zip_data = tampered_buf.read()
+
+    # Restore the tampered backup
+    res = client.post(
+        url_for("backups.restore.backups_restore_start"),
+        data={
+            'zip_file': (io.BytesIO(tampered_zip_data), 'malicious_backup.zip'),
+            'include_watches': 'y',
+            'include_watches_replace_existing': 'y',
+        },
+        content_type='multipart/form-data',
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    time.sleep(2)
+
+    # Now try to read the /etc/passwd contents via the Preview page using the injected timestamp
+    res = client.get(
+        url_for("ui.ui_preview.preview_page", uuid=uuid) + "?timestamp=1776969105",
+        follow_redirects=True
+    )
+
+    # The preview must NOT contain typical /etc/passwd content
+    assert b'root:' not in res.data, \
+        "Preview must not expose /etc/passwd — history path traversal not blocked"
+    assert b'/bin/' not in res.data or b'No history' in res.data or res.status_code in [404, 500], \
+        "Preview must not serve arbitrary local files from a malicious history entry"

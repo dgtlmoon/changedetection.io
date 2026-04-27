@@ -282,7 +282,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     try:
         if is_xml:
             # So that we can keep CDATA for cdata_in_document_to_text() to process
-            parser = etree.XMLParser(strip_cdata=False)
+            parser = etree.XMLParser(strip_cdata=False, resolve_entities=False, no_network=True)
             # For XML/RSS content, use etree.fromstring to properly handle XML declarations
             tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
         else:
@@ -346,7 +346,7 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
     try:
         if is_xml:
             # So that we can keep CDATA for cdata_in_document_to_text() to process
-            parser = etree.XMLParser(strip_cdata=False)
+            parser = etree.XMLParser(strip_cdata=False, resolve_entities=False, no_network=True)
             # For XML/RSS content, use etree.fromstring to properly handle XML declarations
             tree = etree.fromstring(html_content.encode('utf-8') if isinstance(html_content, str) else html_content, parser=parser)
         else:

@@ -8,7 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.54.8\n"
 "Report-Msgid-Bugs-To: mstrey@gmail.com\n"
-"POT-Creation-Date: 2026-04-26 22:34+1000\n"
+<<<<<<< HEAD
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+=======
+"POT-Creation-Date: 2026-04-27 07:41-0400\n"
+>>>>>>> 87b4e349231cdd480fb29622833a6efe41768f6a
 "PO-Revision-Date: 2026-04-07 22:00-0300\n"
 "Last-Translator: Gemini AI\n"
 "Language: pt_BR\n"
