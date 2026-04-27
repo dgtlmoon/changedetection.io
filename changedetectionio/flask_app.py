@@ -981,6 +981,11 @@ def changedetection_app(config=None, datastore_o=None):
                     "queued_data": all_queued
                 })
 
+    if strtobool(os.getenv('HISTORY_SNAPSHOT_FILE_ALLOW_OUTSIDE_WATCH_DATADIR', 'False')):
+        logger.warning("SECURITY WARNING: HISTORY_SNAPSHOT_FILE_ALLOW_OUTSIDE_WATCH_DATADIR is enabled — "
+                       "snapshot reads are NOT confined to the watch data directory. "
+                       "This disables protection against path traversal via restored backups (GHSA-8757-69j2-hx56).")
+
     # Start the async workers during app initialization
     # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))

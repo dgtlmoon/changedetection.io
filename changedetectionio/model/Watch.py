@@ -465,22 +465,21 @@ class model(EntityPersistenceMixin, watch_base):
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
 
-                        # The index history could contain a relative path, so we need to make the fullpath
-                        # so that python can read it
-                        # Cross-platform: check for any path separator (works on Windows and Unix)
-                        if os.sep not in v and '/' not in v and '\\' not in v:
-                            # Relative filename only, no path separators
-                            v = os.path.join(self.data_dir, v)
-                        else:
-                            # It's possible that they moved the datadir on older versions
-                            # So the snapshot exists but is in a different path
-                            # Cross-platform: use os.path.basename instead of split('/')
-                            snapshot_fname = os.path.basename(v)
-                            proposed_new_path = os.path.join(self.data_dir, snapshot_fname)
-                            if not os.path.exists(v) and os.path.exists(proposed_new_path):
-                                v = proposed_new_path
+                        # Always resolve history entries to within the watch's own data directory.
+                        # Entries restored from backup could contain absolute or traversal paths —
+                        # never trust them. Use realpath to also block symlink-based escapes.
+                        safe_data_dir = os.path.realpath(self.data_dir)
+                        snapshot_fname = os.path.basename(v.strip())
+                        resolved_path = os.path.realpath(os.path.join(self.data_dir, snapshot_fname))
 
-                        tmp_history[k] = v
+                        if not resolved_path.startswith(safe_data_dir + os.sep) and resolved_path != safe_data_dir:
+                            logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                            continue
+
+                        if not os.path.exists(resolved_path):
+                            continue
+
+                        tmp_history[k] = resolved_path
 
         if len(tmp_history):
             self.__newest_history_key = list(tmp_history.keys())[-1]
@@ -562,6 +561,15 @@ class model(EntityPersistenceMixin, watch_base):
 
         if not filepath:
             filepath = self.history[timestamp]
+
+        # Confine every read to the watch's own data directory — defence in depth
+        # against any path that bypasses the history parser (e.g. direct filepath= callers).
+        # Set HISTORY_SNAPSHOT_FILE_ALLOW_OUTSIDE_WATCH_DATADIR=true to disable (not recommended).
+        if self.data_dir and not strtobool(os.getenv('HISTORY_SNAPSHOT_FILE_ALLOW_OUTSIDE_WATCH_DATADIR', 'False')):
+            safe_data_dir = os.path.realpath(self.data_dir)
+            resolved = os.path.realpath(filepath)
+            if not (resolved.startswith(safe_data_dir + os.sep) or resolved == safe_data_dir):
+                raise PermissionError(f"Snapshot path {filepath!r} is outside the watch data directory")
 
         # Check if binary file (image, PDF, etc.)
         # Binary files are NEVER saved with .br compression, only text files are
