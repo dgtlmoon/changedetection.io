@@ -35,9 +35,9 @@ jobs:
         run: |
           pip install "$(grep -E '^dennis ?>=' requirements.txt)"
           dennis-cmd lint --errorsonly changedetectionio/translations/
-      # - name: Lint .pot template with dennis (warnings, informational)
-      #   run: |
-      #     dennis-cmd lint changedetectionio/translations/messages.pot
+      - name: Lint .pot template with dennis (warnings, informational)
+        run: |
+          dennis-cmd lint changedetectionio/translations/messages.pot
       - name: Lint .po files with dennis (warnings, informational)
         # W302 (unchanged) and W303 (html mismatch) are excluded due to
         # high false-positive rate in this codebase:
