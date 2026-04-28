@@ -20,10 +20,11 @@ exclude = [
 select = [
     "B", # flake8-bugbear
     "B9",
-    "C", 
+    "C",
     "E", # pycodestyle
     "F", # Pyflakes
     "I", # isort
+    "INT", # flake8-gettext
     "N", # pep8-naming
     "UP", # pyupgrade
     "W", # pycodestyle
@@ -42,6 +43,9 @@ ignore = [
 
 [lint.mccabe]
 max-complexity = 12
+
+[lint.flake8-gettext]
+extend-function-names = ["_l", "lazy_gettext", "pgettext", "npgettext"]
 
 [format]
 indent-style = "space"
