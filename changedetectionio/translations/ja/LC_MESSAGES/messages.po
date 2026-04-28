@@ -2232,12 +2232,16 @@ msgid "Checked"
 msgstr "チェック済み"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last"
-msgstr "最終"
+msgid "Last Checked"
+msgstr "前回チェック"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
 msgstr "変更済み"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last Changed"
+msgstr "前回更新"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
@@ -2287,17 +2291,9 @@ msgstr "価格"
 msgid "No information"
 msgstr "情報なし"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Checked"
-msgstr "前回チェック"
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Checking now"
 msgstr "今すぐチェック"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Changed"
-msgstr "前回更新"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued"
