@@ -11,8 +11,8 @@ jobs:
       - name: Lint with Ruff
         run: |
           pip install ruff
-          # Check for syntax errors and undefined names
-          ruff check . --select E9,F63,F7,F82
+          # Check for syntax errors and undefined names, and gettext misuse
+          ruff check . --select E9,F63,F7,F82,INT
           # Complete check with errors treated as warnings
           ruff check . --exit-zero
       - name: Validate OpenAPI spec
