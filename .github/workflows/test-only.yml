@@ -37,6 +37,18 @@ jobs:
           dennis-cmd lint --errorsonly \
             changedetectionio/translations/messages.pot \
             changedetectionio/translations/*/LC_MESSAGES/messages.po
+      # - name: Lint .pot template with dennis (warnings, informational)
+      #   run: |
+      #     dennis-cmd lint changedetectionio/translations/messages.pot
+      - name: Lint .po files with dennis (warnings, informational)
+        # W302 (unchanged) and W303 (html mismatch) are excluded due to
+        # high false-positive rate in this codebase:
+        # many msgstrs intentionally match msgid (units like "Mb", proper nouns),
+        # and many msgids contain literal "<title>"/"<description>" text that isn't actual HTML.
+        run: |
+          dennis-cmd lint \
+            --excluderules=W302,W303 \
+            changedetectionio/translations/*/LC_MESSAGES/messages.po
       - name: Check translation catalog is up-to-date
         run: |
           pip install "$(grep -E '^babel==' requirements.txt)"
