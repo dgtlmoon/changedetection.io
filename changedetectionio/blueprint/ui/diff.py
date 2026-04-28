@@ -283,6 +283,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)
         cached = watch.get_llm_diff_summary(from_version, to_version, prompt=cache_prompt)
         if cached:
+            import time
+            datastore.set_last_viewed(uuid, int(time.time()))
             return jsonify({'summary': cached, 'error': None, 'cached': True})
 
         # Check global monthly token budget before making an LLM call
@@ -316,6 +318,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         except Exception as e:
             logger.warning(f"Could not cache llm summary for {uuid}: {e}")
 
+        import time
+        datastore.set_last_viewed(uuid, int(time.time()))
         return jsonify({'summary': summary, 'error': None, 'cached': False})
 
     @diff_blueprint.route("/diff/<uuid_str:uuid>/extract", methods=['GET'])
