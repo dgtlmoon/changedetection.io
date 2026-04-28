@@ -34,9 +34,7 @@ jobs:
       - name: Lint .po/.pot files with dennis (errors only)
         run: |
           pip install "$(grep -E '^dennis ?>=' requirements.txt)"
-          dennis-cmd lint --errorsonly \
-            changedetectionio/translations/messages.pot \
-            changedetectionio/translations/*/LC_MESSAGES/messages.po
+          dennis-cmd lint --errorsonly changedetectionio/translations/
       # - name: Lint .pot template with dennis (warnings, informational)
       #   run: |
       #     dennis-cmd lint changedetectionio/translations/messages.pot
