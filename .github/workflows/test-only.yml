@@ -31,6 +31,12 @@ jobs:
             echo "Checking $f"
             msgfmt --check-format -o /dev/null "$f"
           done
+      - name: Lint .po/.pot files with dennis (errors only)
+        run: |
+          pip install "$(grep -E '^dennis ?>=' requirements.txt)"
+          dennis-cmd lint --errorsonly \
+            changedetectionio/translations/messages.pot \
+            changedetectionio/translations/*/LC_MESSAGES/messages.po
       - name: Check translation catalog is up-to-date
         run: |
           pip install "$(grep -E '^babel==' requirements.txt)"
