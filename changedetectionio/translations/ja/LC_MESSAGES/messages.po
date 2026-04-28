@@ -3443,8 +3443,8 @@ msgstr "changedetection.io が生成したプレビューページのURL。"
 
 #: changedetectionio/templates/_common_fields.html
 #, python-format
-msgid "Date/time of the change, accepts format=, change_datetime(format='%A')', default is '%Y-%m-%d %H:%M:%S %Z'"
-msgstr "変更の日時。format= を受け付けます（例: change_datetime(format='%A')）。デフォルトは '%Y-%m-%d %H:%M:%S %Z'。"
+msgid "Date/time of the change, accepts format=, %(call)s, default is '%(default)s'"
+msgstr "変更の日時。format= を受け付けます（例: %(call)s）。デフォルトは '%(default)s'。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The URL of the diff output for the watch."

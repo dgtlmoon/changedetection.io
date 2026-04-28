@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-28 15:26+1000\n"
+"POT-Creation-Date: 2026-04-28 16:31+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3423,7 +3423,7 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 #, python-format
-msgid "Date/time of the change, accepts format=, change_datetime(format='%A')', default is '%Y-%m-%d %H:%M:%S %Z'"
+msgid "Date/time of the change, accepts format=, %(call)s, default is '%(default)s'"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
