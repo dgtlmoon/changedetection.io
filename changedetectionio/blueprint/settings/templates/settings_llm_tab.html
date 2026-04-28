@@ -377,7 +377,7 @@
 
 <script>
 (function () {
-  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama'];
+  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openrouter'];
   const BASE_DEFAULTS  = { ollama: 'http://localhost:11434' };
   const KEY_HINTS = {
     openai:     '{{ _("platform.openai.com → API keys") }}',
@@ -401,7 +401,7 @@
 
     fetchGroup.style.display = LIVE_PROVIDERS.includes(provider) ? '' : 'none';
 
-    const needsBase = provider === 'ollama' || provider === 'openrouter';
+    const needsBase = provider === 'ollama';
     baseGroup.style.display = needsBase ? '' : 'none';
     if (BASE_DEFAULTS[provider] !== undefined) {
       if (!baseField.value) baseField.value = BASE_DEFAULTS[provider];
