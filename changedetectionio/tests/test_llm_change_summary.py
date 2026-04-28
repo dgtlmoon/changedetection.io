@@ -336,6 +336,58 @@ def test_hardcoded_fallback_when_nothing_set(
     delete_all_watches(client)
 
 
+def test_llm_summary_ajax_sets_last_viewed(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Calling /diff/<uuid>/llm-summary via AJAX should mark the watch as viewed
+    (set last_viewed) for both fresh and cached responses.
+    """
+    from unittest.mock import patch, MagicMock
+
+    _configure_llm(client)
+    ds = client.application.config.get('DATASTORE')
+
+    test_url = url_for('test_endpoint', content_type='text/html', content='v1', _external=True)
+    uuid = ds.add_watch(url=test_url)
+    watch = ds.data['watching'][uuid]
+
+    watch.save_history_blob('old content\n', '4000000000', 'snap-old')
+    watch.save_history_blob('new content\n', '4000000001', 'snap-new')
+
+    assert watch['last_viewed'] == 0, "last_viewed should start at 0"
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = 'Content changed from old to new.'
+    mock_response.usage = MagicMock(total_tokens=50, prompt_tokens=40, completion_tokens=10)
+
+    with patch('litellm.completion', return_value=mock_response):
+        res = client.get(
+            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='4000000000', to_version='4000000001'),
+        )
+
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['summary'] == 'Content changed from old to new.'
+    assert watch['last_viewed'] > 0, "last_viewed should be set after fresh LLM summary"
+
+    # Reset and verify the cached path also sets last_viewed
+    watch['last_viewed'] = 0
+    with patch('litellm.completion', return_value=mock_response):
+        res2 = client.get(
+            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='4000000000', to_version='4000000001'),
+        )
+
+    assert res2.status_code == 200
+    data2 = res2.get_json()
+    assert data2.get('cached') is True
+    assert watch['last_viewed'] > 0, "last_viewed should be set even when returning cached summary"
+
+    delete_all_watches(client)
+
+
 def test_global_default_saved_and_loaded_via_settings_form(
         client, live_server, measure_memory_usage, datastore_path):
     """
