@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.6
+  version: 0.1.7
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
