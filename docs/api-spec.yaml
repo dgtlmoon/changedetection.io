@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.6
+  version: 0.1.7
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -727,6 +727,37 @@ components:
               description: Number of history snapshots available
               readOnly: true
               x-computed: true
+            processor_config_restock_diff:
+              type: object
+              readOnly: true
+              x-computed: true
+              description: |
+                Resolved restock/price processor config for this watch.
+                If a tag with `overrides_watch: true` is assigned to this watch, the tag's config is
+                returned here instead of the watch's own config. Use `processor_config_restock_diff_source`
+                to determine where the config originated.
+              properties:
+                in_stock_processing:
+                  type: string
+                  enum: [in_stock_only, all_changes, 'off']
+                follow_price_changes:
+                  type: boolean
+                price_change_min:
+                  type: [number, 'null']
+                price_change_max:
+                  type: [number, 'null']
+                price_change_threshold_percent:
+                  type: [number, 'null']
+                  minimum: 0
+                  maximum: 100
+            processor_config_restock_diff_source:
+              type: string
+              readOnly: true
+              x-computed: true
+              description: |
+                Indicates the origin of `processor_config_restock_diff`.
+                - `watch`: config comes from the watch itself
+                - `tag:<uuid>`: config is overridden by the tag with the given UUID
 
     CreateWatch:
       allOf:
