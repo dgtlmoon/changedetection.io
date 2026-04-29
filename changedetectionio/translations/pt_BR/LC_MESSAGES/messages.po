@@ -3472,8 +3472,8 @@ msgstr "A URL da página de pré-visualização gerada pelo changedetection.io."
 
 #: changedetectionio/templates/_common_fields.html
 #, python-format
-msgid "Date/time of the change, accepts format=, change_datetime(format='%A')', default is '%Y-%m-%d %H:%M:%S %Z'"
-msgstr "Data/hora da mudança, aceita format=, change_datetime(format='%A')', o padrão é '%Y-%m-%d %H:%M:%S %Z'"
+msgid "Date/time of the change, accepts format=, %(call)s, default is '%(default)s'"
+msgstr "Data/hora da mudança, aceita format=, %(call)s, o padrão é '%(default)s'"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The URL of the diff output for the watch."

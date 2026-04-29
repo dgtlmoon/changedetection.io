@@ -3434,8 +3434,8 @@ msgstr "changedetection.io가 생성한 미리보기 페이지의 URL입니다."
 
 #: changedetectionio/templates/_common_fields.html
 #, python-format
-msgid "Date/time of the change, accepts format=, change_datetime(format='%A')', default is '%Y-%m-%d %H:%M:%S %Z'"
-msgstr "변경 발생 일시입니다. format= 인자를 사용할 수 있으며 change_datetime(format='%A') 형식입니다. 기본값은 '%Y-%m-%d %H:%M:%S %Z'입니다."
+msgid "Date/time of the change, accepts format=, %(call)s, default is '%(default)s'"
+msgstr "변경 발생 일시입니다. format= 인자를 사용할 수 있으며 %(call)s 형식입니다. 기본값은 '%(default)s'입니다."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The URL of the diff output for the watch."

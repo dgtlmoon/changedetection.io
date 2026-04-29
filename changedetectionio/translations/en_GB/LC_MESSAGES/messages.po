@@ -3424,7 +3424,7 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 #, python-format
-msgid "Date/time of the change, accepts format=, change_datetime(format='%A')', default is '%Y-%m-%d %H:%M:%S %Z'"
+msgid "Date/time of the change, accepts format=, %(call)s, default is '%(default)s'"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
