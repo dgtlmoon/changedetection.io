@@ -147,7 +147,7 @@ tzdata
 pluggy ~= 1.6
 
 # LLM intent-based change evaluation (multi-provider via litellm)
-litellm>=1.40.0,<2.0
+litellm>=1.40.0,<1.83.1  # 1.83.1–1.83.14 exact-pin jsonschema==4.23.0, conflicting with openapi-spec-validator's >=4.24.0 floor; re-evaluate when litellm fixes this
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 
