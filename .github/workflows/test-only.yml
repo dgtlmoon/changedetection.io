@@ -35,9 +35,26 @@ jobs:
         run: |
           pip install "$(grep -E '^dennis ?>=' requirements.txt)"
           dennis-cmd lint --errorsonly changedetectionio/translations/
-      - name: Lint .pot template with dennis (warnings, informational)
+      - name: Lint .pot template with dennis (baseline-limited warnings)
+        # BASELINE: this limit reflects pre-existing dennis warnings present
+        # when this check was introduced.
+        # It must only ever go DOWN. Each time you fix a warning,
+        # lower BASELINE_LIMIT below so the improvement is locked in.
+        # When the count reaches 0, replace this step with `dennis-cmd lint --errorsonly`
+        # plus a strict warnings>0 fail check.
+        env:
+          BASELINE_LIMIT: 11
         run: |
-          dennis-cmd lint changedetectionio/translations/messages.pot
+          output=$(dennis-cmd lint changedetectionio/translations/messages.pot)
+          echo "$output"
+          warnings=$(echo "$output" | awk '/Warnings:/ {print $2; exit}')
+          warnings=${warnings:-0}
+          echo "dennis warnings in messages.pot: ${warnings} (limit: ${BASELINE_LIMIT})"
+          if (( warnings > BASELINE_LIMIT )); then
+            echo "ERROR: ${warnings} warnings exceed baseline of ${BASELINE_LIMIT}."
+            echo "Fix new warnings in source code, or lower BASELINE_LIMIT if you fixed some."
+            exit 1
+          fi
       - name: Lint .po files with dennis (warnings, informational)
         # W302 (unchanged) and W303 (html mismatch) are excluded due to
         # high false-positive rate in this codebase:
