@@ -47,7 +47,7 @@ jobs:
         run: |
           output=$(dennis-cmd lint changedetectionio/translations/messages.pot)
           echo "$output"
-          warnings=$(echo "$output" | awk '/Warnings:/ {print $2; exit}')
+          warnings=$(echo "$output" | awk '/Warnings:/ {print $NF; exit}')
           warnings=${warnings:-0}
           echo "dennis warnings in messages.pot: ${warnings} (limit: ${BASELINE_LIMIT})"
           if (( warnings > BASELINE_LIMIT )); then
@@ -55,15 +55,21 @@ jobs:
             echo "Fix new warnings in source code, or lower BASELINE_LIMIT if you fixed some."
             exit 1
           fi
-      - name: Lint .po files with dennis (warnings, informational)
+      - name: Lint .po files with dennis (warnings)
         # W302 (unchanged) and W303 (html mismatch) are excluded due to
         # high false-positive rate in this codebase:
         # many msgstrs intentionally match msgid (units like "Mb", proper nouns),
         # and many msgids contain literal "<title>"/"<description>" text that isn't actual HTML.
         run: |
-          dennis-cmd lint \
+          output=$(dennis-cmd lint \
             --excluderules=W302,W303 \
-            changedetectionio/translations/*/LC_MESSAGES/messages.po
+            changedetectionio/translations/*/LC_MESSAGES/messages.po)
+          echo "$output"
+          warnings=$(echo "$output" | awk '/Total number of warnings:/ {print $NF; exit}')
+          if (( ${warnings:-0} > 0 )); then
+            echo "ERROR: dennis reported ${warnings} warning(s) in .po files."
+            exit 1
+          fi
       - name: Check translation catalog is up-to-date
         run: |
           pip install "$(grep -E '^babel==' requirements.txt)"
