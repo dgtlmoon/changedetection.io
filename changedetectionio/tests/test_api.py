@@ -903,6 +903,101 @@ def test_api_restock_processor_config(client, live_server, measure_memory_usage,
     delete_all_watches(client)
 
 
+def test_api_watch_get_returns_resolved_restock_processor_config(client, live_server, measure_memory_usage, datastore_path):
+    """
+    GET /api/v1/watch/{uuid} must include processor_config_restock_diff and
+    processor_config_restock_diff_source in the response.
+
+    Two cases:
+    - Watch-level config only: source == 'watch', config reflects the watch's own settings.
+    - Tag with overrides_watch=True: source == 'tag:<uuid>', config reflects the tag's settings
+      regardless of what the watch itself has stored.
+    """
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    test_url = url_for('test_endpoint', _external=True)
+
+    # --- Case 1: watch-level config, no tag override ---
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({
+            "url": test_url,
+            "processor": "restock_diff",
+            "processor_config_restock_diff": {
+                "in_stock_processing": "all_changes",
+                "follow_price_changes": False,
+                "price_change_min": 1.23,
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201
+    watch_uuid = res.json.get('uuid')
+
+    res = client.get(url_for("watch", uuid=watch_uuid), headers={'x-api-key': api_key})
+    assert res.status_code == 200
+    data = res.json
+    assert 'processor_config_restock_diff' in data, "GET should include processor_config_restock_diff"
+    assert 'processor_config_restock_diff_source' in data, "GET should include processor_config_restock_diff_source"
+    assert data['processor_config_restock_diff_source'] == 'watch'
+    assert data['processor_config_restock_diff'].get('in_stock_processing') == 'all_changes'
+    assert data['processor_config_restock_diff'].get('follow_price_changes') == False
+    assert data['processor_config_restock_diff'].get('price_change_min') == 1.23
+
+    # --- Case 2: tag with overrides_watch=True overrides watch-level config ---
+    res = client.post(
+        url_for("tag"),
+        data=json.dumps({
+            "title": "Override tag",
+            "overrides_watch": True,
+            "processor_config_restock_diff": {
+                "in_stock_processing": "in_stock_only",
+                "follow_price_changes": True,
+                "price_change_min": 999.0,
+            }
+        }),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201
+    tag_uuid = res.json.get('uuid')
+
+    # Assign the tag to the watch
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        data=json.dumps({"tags": [tag_uuid]}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 200
+
+    res = client.get(url_for("watch", uuid=watch_uuid), headers={'x-api-key': api_key})
+    assert res.status_code == 200
+    data = res.json
+    assert data['processor_config_restock_diff_source'] == f'tag:{tag_uuid}', \
+        "Source should show the overriding tag UUID"
+    assert data['processor_config_restock_diff'].get('in_stock_processing') == 'in_stock_only', \
+        "Tag config should override watch-level config"
+    assert data['processor_config_restock_diff'].get('price_change_min') == 999.0, \
+        "Tag price_change_min should override watch-level value"
+
+    # processor_config_restock_diff is readonly — PUT attempts to set the resolved field should be
+    # silently ignored (the field is stripped before the watch is updated, same as other readOnly fields)
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        data=json.dumps({"processor_config_restock_diff": {"in_stock_processing": "off"}}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    # PUT with processor_config_restock_diff is still valid (sets watch-level config),
+    # but the GET response continues to reflect the tag override
+    assert res.status_code == 200
+    res = client.get(url_for("watch", uuid=watch_uuid), headers={'x-api-key': api_key})
+    data = res.json
+    assert data['processor_config_restock_diff_source'] == f'tag:{tag_uuid}', \
+        "Tag override should still be active after PUT"
+    assert data['processor_config_restock_diff'].get('in_stock_processing') == 'in_stock_only', \
+        "Tag config should still win after PUT attempted to change watch-level config"
+
+    delete_all_watches(client)
+
+
 def test_api_conflict_UI_password(client, live_server, measure_memory_usage, datastore_path):
 
 

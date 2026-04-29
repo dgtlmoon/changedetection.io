@@ -105,6 +105,27 @@ class Watch(Resource):
         watch['viewed'] = watch_obj.viewed
         watch['link'] = watch_obj.link,
 
+        # Resolved processor config: tag override wins over watch-level config (mirrors restock processor logic)
+        import json
+        _restock_path = os.path.join(watch_obj.data_dir, 'restock_diff.json') if watch_obj.data_dir else None
+        restock_config = {}
+        if _restock_path and os.path.isfile(_restock_path):
+            try:
+                with open(_restock_path, 'r', encoding='utf-8') as _f:
+                    restock_config = json.load(_f).get('restock_diff') or {}
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning(f"Failed to read restock_diff.json for watch {uuid}: {e}")
+        restock_source = 'watch'
+        tags = self.datastore.data['settings']['application'].get('tags', {})
+        for tag_uuid in (watch_obj.get('tags') or []):
+            tag = tags.get(tag_uuid, {})
+            if tag.get('overrides_watch'):
+                restock_config = tag.get('processor_config_restock_diff') or {}
+                restock_source = f'tag:{tag_uuid}'
+                break
+        watch['processor_config_restock_diff'] = restock_config
+        watch['processor_config_restock_diff_source'] = restock_source
+
         return watch
 
     @auth.check_token
