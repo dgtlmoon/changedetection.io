@@ -120,7 +120,7 @@ class Watch(Resource):
         for tag_uuid in (watch_obj.get('tags') or []):
             tag = tags.get(tag_uuid, {})
             if tag.get('overrides_watch'):
-                restock_config = tag.get('processor_config_restock_diff') or {}
+                restock_config = dict(tag.get('processor_config_restock_diff') or {})
                 restock_source = f'tag:{tag_uuid}'
                 break
         watch['processor_config_restock_diff'] = restock_config
