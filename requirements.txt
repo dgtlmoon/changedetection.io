@@ -120,7 +120,7 @@ greenlet >= 3.0.3
 # Default SOCKETIO_MODE=threading is recommended for better compatibility
 gevent
 
-referencing  # Don't pin — jsonschema-path (required by openapi-core>=0.18) caps referencing<0.37.0, so pinning 0.37.0 forces openapi-core back to 0.17.2. Revisit once jsonschema-path>=0.3.5 relaxes the cap.
+referencing==0.37.0  # jsonschema-path>=0.4.x allows <0.38.0; 0.37.0 is current latest
 
 # For conditions
 panzi-json-logic
@@ -131,7 +131,7 @@ price-parser
 
 # Lightweight MIME type detection (saves ~14MB memory vs python-magic/libmagic)
 # Used for detecting correct favicon type and content-type detection
-puremagic
+puremagic<2.0  # 2.x requires Python >=3.12; unpin once 3.10/3.11 support is dropped
 
 # Scheduler - Windows seemed to miss a lot of default timezone info (even "UTC" !)
 tzdata
@@ -141,7 +141,7 @@ tzdata
 pluggy ~= 1.6
 
 # LLM intent-based change evaluation (multi-provider via litellm)
-litellm>=1.40.0
+litellm>=1.40.0,<2.0
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 
