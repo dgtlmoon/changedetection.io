@@ -36,23 +36,19 @@ jobs:
           pip install "$(grep -E '^dennis ?>=' requirements.txt)"
           dennis-cmd lint --errorsonly changedetectionio/translations/
       - name: Lint .pot template with dennis (baseline-limited warnings)
-        # BASELINE: this limit reflects pre-existing dennis warnings present
-        # when this check was introduced.
-        # It must only ever go DOWN. Each time you fix a warning,
-        # lower BASELINE_LIMIT below so the improvement is locked in.
-        # When the count reaches 0, replace this step with `dennis-cmd lint --errorsonly`
-        # plus a strict warnings>0 fail check.
+        # BASELINE: dennis warnings present when this check was introduced. Ratchet down only.
+        # Each time a warning is fixed, lower BASELINE_LIMIT to lock in the improvement.
+        # Once it reaches 0, replace this step with a strict (`warnings > 0` fails) check,
+        # matching the `.po` step.
         env:
           BASELINE_LIMIT: 12
         run: |
           output=$(dennis-cmd lint changedetectionio/translations/messages.pot)
           echo "$output"
           warnings=$(echo "$output" | awk '/Warnings:/ {print $NF; exit}')
-          warnings=${warnings:-0}
-          echo "dennis warnings in messages.pot: ${warnings} (limit: ${BASELINE_LIMIT})"
-          if (( warnings > BASELINE_LIMIT )); then
-            echo "ERROR: ${warnings} warnings exceed baseline of ${BASELINE_LIMIT}."
-            echo "Fix new warnings in source code, or lower BASELINE_LIMIT if you fixed some."
+          if (( ${warnings:-0} > BASELINE_LIMIT )); then
+            echo "ERROR: ${warnings} dennis warning(s) exceed baseline of ${BASELINE_LIMIT} in messages.pot"
+            echo "Fix the new warning(s). BASELINE_LIMIT may only ratchet downward."
             exit 1
           fi
       - name: Lint .po files with dennis (warnings)
@@ -67,7 +63,8 @@ jobs:
           echo "$output"
           warnings=$(echo "$output" | awk '/Total number of warnings:/ {print $NF; exit}')
           if (( ${warnings:-0} > 0 )); then
-            echo "ERROR: dennis reported ${warnings} warning(s) in .po files."
+            echo "ERROR: ${warnings} dennis warning(s) detected in .po files"
+            echo "Fix the warning(s)."
             exit 1
           fi
       - name: Check translation catalog is up-to-date
