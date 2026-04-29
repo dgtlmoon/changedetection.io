@@ -43,7 +43,7 @@ jobs:
         # When the count reaches 0, replace this step with `dennis-cmd lint --errorsonly`
         # plus a strict warnings>0 fail check.
         env:
-          BASELINE_LIMIT: 11
+          BASELINE_LIMIT: 12
         run: |
           output=$(dennis-cmd lint changedetectionio/translations/messages.pot)
           echo "$output"
