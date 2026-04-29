@@ -102,6 +102,8 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     #705 `last_changed` should be zero on the first check
     assert before_recheck_info['last_changed'] == 0
     assert before_recheck_info['title'] == 'My test URL'
+    assert isinstance(before_recheck_info['link'], str), "link must be a plain string, not a tuple or list"
+    assert before_recheck_info['link'] == test_url
 
     # Check the limit by tag doesnt return anything when nothing found
     res = client.get(
