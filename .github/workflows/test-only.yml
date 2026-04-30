@@ -41,7 +41,7 @@ jobs:
         # Once it reaches 0, replace this step with a strict (`warnings > 0` fails) check,
         # matching the `.po` step.
         env:
-          BASELINE_LIMIT: 12
+          BASELINE_LIMIT: 10
         run: |
           output=$(dennis-cmd lint changedetectionio/translations/messages.pot)
           echo "$output"
