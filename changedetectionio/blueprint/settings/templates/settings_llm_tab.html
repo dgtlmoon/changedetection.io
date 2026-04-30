@@ -7,12 +7,14 @@
 <div class="tab-pane-inner" id="ai">
 <script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
 
+{# TRANSLATORS: 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide #}
+{% set _usage_label = pgettext('AI usage stats', 'Usage') %}
 {% call stab_shell('ai-settings', [
     {'id': 'overview',  'label': _('Overview'),  'icon': '✦'},
     {'id': 'provider',  'label': _('Provider'),  'icon': '⚙'},
     {'id': 'prompts',   'label': _('Prompts'),   'icon': '≡'},
     {'id': 'behaviour', 'label': _('Behaviour'), 'icon': '⚑'},
-    {'id': 'usage',     'label': _('Usage'),     'icon': '$'},
+    {'id': 'usage',     'label': _usage_label,   'icon': '$'},
 ]) %}
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}
@@ -88,9 +90,9 @@
   {% if llm_env_configured %}
   <div class="inline-warning" style="margin-bottom: 1em;">
     <img class="inline-warning-icon" src="{{ url_for('static_content', group='images', filename='notice.svg') }}" alt="{{ _('Note') }}">
-    {{ _('AI / LLM is configured via environment variables') }}
-    (<code>LLM_MODEL={{ llm_config.get('model', '') }}</code>{% if llm_config.get('api_base') %}, <code>LLM_API_BASE={{ llm_config.get('api_base') }}</code>{% endif %}).
-    {{ _('Remove the') }} <code>LLM_MODEL</code> {{ _('environment variable to configure via this form instead.') }}
+    {{ _('AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the <code>LLM_MODEL</code> environment variable to configure via this form instead.',
+         model=llm_config.get('model', '')|e,
+         api_base=(', <code>LLM_API_BASE=' ~ (llm_config.get('api_base')|e) ~ '</code>') if llm_config.get('api_base') else '') | safe }}
   </div>
   {% else %}
 
@@ -226,7 +228,8 @@
       {{ form.llm.form.llm_override_diff_with_summary.label.text }}
     </label>
     <span class="pure-form-message-inline">
-      {{ _('When enabled, the') }} <code>{{ '{{diff}}' }}</code> {{ _('notification token shows the AI summary instead of the raw diff. Use') }} <code>{{ '{{raw_diff}}' }}</code> {{ _('to always get the original.') }}
+      {{ _('When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use <code>%(raw_diff)s</code> to always get the original.',
+           diff='{{diff}}', raw_diff='{{raw_diff}}') | safe }}
     </span>
   </div>
 
@@ -287,7 +290,7 @@
         <div class="llm-stat-bar-fill {% if pct >= 100 %}bar-over{% elif pct >= 80 %}bar-warn{% else %}bar-ok{% endif %}"
              style="width:{{ [pct, 100]|min }}%"></div>
       </div>
-      <div class="llm-stat-budget-text">{{ pct }}% {{ _('of') }} {{ '{:,}'.format(llm_token_budget_month) }}</div>
+      <div class="llm-stat-budget-text">{{ _('%(percent)s%% of %(budget)s', percent=pct, budget='{:,}'.format(llm_token_budget_month)) }}</div>
       {% endif %}
     </div>
 
@@ -308,7 +311,7 @@
       <span class="llm-usage-row-value">
         {% if llm_token_budget_month_env %}
           <strong>{{ '{:,}'.format(llm_token_budget_month_env) }}</strong>
-          <span class="llm-env-badge">({{ _('set via') }} <code>LLM_TOKEN_BUDGET_MONTH</code>)</span>
+          <span class="llm-env-badge">{{ _('(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)') | safe }}</span>
           <input type="hidden" name="llm-llm_token_budget_month" value="{{ llm_token_budget_month_env }}">
         {% else %}
           {{ form.llm.form.llm_token_budget_month(placeholder=_('0 = unlimited'), value=llm_stored.get('token_budget_month', 0) or '') }}
@@ -327,7 +330,7 @@
       <span class="llm-usage-row-value">
         {% if llm_max_input_chars_env %}
           {{ form.llm.form.llm_max_input_chars(value=llm_max_input_chars_env, readonly=True, style="width:10em;opacity:0.6;cursor:not-allowed;") }}
-          <span class="llm-env-badge">({{ _('set via') }} <code>LLM_MAX_INPUT_CHARS</code>)</span>
+          <span class="llm-env-badge">{{ _('(set via <code>LLM_MAX_INPUT_CHARS</code>)') | safe }}</span>
         {% else %}
           {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
           <span class="llm-field-hint">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
@@ -345,7 +348,7 @@
       <span class="llm-usage-row-value">
         {% if llm_token_budget_month_env %}
           <strong>{{ '{:,}'.format(llm_token_budget_month_env) }}</strong>
-          <span class="llm-env-badge">({{ _('set via') }} <code>LLM_TOKEN_BUDGET_MONTH</code>)</span>
+          <span class="llm-env-badge">{{ _('(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)') | safe }}</span>
           <input type="hidden" name="llm-llm_token_budget_month" value="{{ llm_token_budget_month_env }}">
         {% else %}
           {{ form.llm.form.llm_token_budget_month(placeholder=_('0 = unlimited'), value=llm_stored.get('token_budget_month', 0) or '') }}
@@ -358,7 +361,7 @@
       <span class="llm-usage-row-value">
         {% if llm_max_input_chars_env %}
           {{ form.llm.form.llm_max_input_chars(value=llm_max_input_chars_env, readonly=True, style="width:10em;opacity:0.6;cursor:not-allowed;") }}
-          <span class="llm-env-badge">({{ _('set via') }} <code>LLM_MAX_INPUT_CHARS</code>)</span>
+          <span class="llm-env-badge">{{ _('(set via <code>LLM_MAX_INPUT_CHARS</code>)') | safe }}</span>
         {% else %}
           {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
           <span class="llm-field-hint">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
@@ -374,7 +377,7 @@
 
 <script>
 (function () {
-  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama'];
+  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openrouter'];
   const BASE_DEFAULTS  = { ollama: 'http://localhost:11434' };
   const KEY_HINTS = {
     openai:     '{{ _("platform.openai.com → API keys") }}',
@@ -398,7 +401,7 @@
 
     fetchGroup.style.display = LIVE_PROVIDERS.includes(provider) ? '' : 'none';
 
-    const needsBase = provider === 'ollama' || provider === 'openrouter';
+    const needsBase = provider === 'ollama';
     baseGroup.style.display = needsBase ? '' : 'none';
     if (BASE_DEFAULTS[provider] !== undefined) {
       if (!baseField.value) baseField.value = BASE_DEFAULTS[provider];

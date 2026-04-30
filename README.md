@@ -352,4 +352,6 @@ changedetectionio.html_tools.elementpath_tostring: Copyright (c), 2018-2021, SIS
 
 Recognition of fantastic contributors to the project
 
+<sub>Developer note: see [translation guide](changedetectionio/translations/README.md) for i18n template patterns and workflow.</sub>
+
 - Constantin Hong https://github.com/Constantin1489

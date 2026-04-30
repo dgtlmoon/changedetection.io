@@ -179,13 +179,6 @@
   </div>
 {% endmacro %}
 
-
-{% macro playwright_warning() %}
-    <p><strong>{{ _('Error - This watch needs Chrome (with playwright/sockpuppetbrowser), but Chrome based fetching is not enabled.') }}</strong> {{ _('Alternatively try our') }} <a href="https://changedetection.io">{{ _('very affordable subscription based service which has all this setup for you') }}</a>.</p>
-    <p>{{ _('You may need to') }} <a href="https://github.com/dgtlmoon/changedetection.io/blob/09ebc6ec6338545bdd694dc6eee57f2e9d2b8075/docker-compose.yml#L31">{{ _('Enable playwright environment variable') }}</a> {{ _('and uncomment the') }} <strong>sockpuppetbrowser</strong> {{ _('in the') }} <a href="https://github.com/dgtlmoon/changedetection.io/blob/master/docker-compose.yml">docker-compose.yml</a> {{ _('file') }}.</p>
-    <br>
-{% endmacro %}
-
 {% macro render_time_schedule_form(form, available_timezones, timezone_default_config) %}
     <style>
     .day-schedule *, .day-schedule select {

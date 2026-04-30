@@ -11,8 +11,8 @@ jobs:
       - name: Lint with Ruff
         run: |
           pip install ruff
-          # Check for syntax errors and undefined names
-          ruff check . --select E9,F63,F7,F82
+          # Check for syntax errors and undefined names, and gettext misuse
+          ruff check . --select E9,F63,F7,F82,INT
           # Complete check with errors treated as warnings
           ruff check . --exit-zero
       - name: Validate OpenAPI spec
@@ -31,6 +31,42 @@ jobs:
             echo "Checking $f"
             msgfmt --check-format -o /dev/null "$f"
           done
+      - name: Lint .po/.pot files with dennis (errors only)
+        run: |
+          pip install "$(grep -E '^dennis ?>=' requirements.txt)"
+          dennis-cmd lint --errorsonly changedetectionio/translations/
+      - name: Lint .pot template with dennis (baseline-limited warnings)
+        # BASELINE: dennis warnings present when this check was introduced. Ratchet down only.
+        # Each time a warning is fixed, lower BASELINE_LIMIT to lock in the improvement.
+        # Once it reaches 0, replace this step with a strict (`warnings > 0` fails) check,
+        # matching the `.po` step.
+        env:
+          BASELINE_LIMIT: 12
+        run: |
+          output=$(dennis-cmd lint changedetectionio/translations/messages.pot)
+          echo "$output"
+          warnings=$(echo "$output" | awk '/Warnings:/ {print $NF; exit}')
+          if (( ${warnings:-0} > BASELINE_LIMIT )); then
+            echo "ERROR: ${warnings} dennis warning(s) exceed baseline of ${BASELINE_LIMIT} in messages.pot"
+            echo "Fix the new warning(s). BASELINE_LIMIT may only ratchet downward."
+            exit 1
+          fi
+      - name: Lint .po files with dennis (warnings)
+        # W302 (unchanged) and W303 (html mismatch) are excluded due to
+        # high false-positive rate in this codebase:
+        # many msgstrs intentionally match msgid (units like "Mb", proper nouns),
+        # and many msgids contain literal "<title>"/"<description>" text that isn't actual HTML.
+        run: |
+          output=$(dennis-cmd lint \
+            --excluderules=W302,W303 \
+            changedetectionio/translations/*/LC_MESSAGES/messages.po)
+          echo "$output"
+          warnings=$(echo "$output" | awk '/Total number of warnings:/ {print $NF; exit}')
+          if (( ${warnings:-0} > 0 )); then
+            echo "ERROR: ${warnings} dennis warning(s) detected in .po files"
+            echo "Fix the warning(s)."
+            exit 1
+          fi
       - name: Check translation catalog is up-to-date
         run: |
           pip install "$(grep -E '^babel==' requirements.txt)"
@@ -44,10 +80,60 @@ jobs:
             exit 1
           fi
 
+  lint-template-i18n:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check for fragmented gettext calls in templates
+        run: |
+          python3 << 'PYEOF'
+          import re, sys
+          from pathlib import Path
+
+          # Detects adjacent {{ _(...) }} calls on the same line separated only by HTML
+          # tags, whitespace, or non-translating Jinja2 variables — the anti-pattern of
+          # splitting a single sentence across multiple msgids.
+          # See https://github.com/dgtlmoon/changedetection.io/issues/4074 for background.
+          #
+          # The correct fix is to consolidate fragments into one entire-sentence msgid,
+          # injecting dynamic values via %(name)s kwargs — per the GNU gettext manual
+          # sections "Entire sentences" and "No string concatenation". See PR #4076 for
+          # worked examples of each consolidation pattern.
+          #
+          # BASELINE: this limit reflects pre-existing violations present when this check
+          # was introduced. It must only ever go DOWN. Each time you fix a template, lower
+          # the limit by the number of lines fixed so the improvement is locked in.
+          # When the count reaches 0, replace the baseline check with a hard sys.exit(1).
+          BASELINE_LIMIT = 44
+
+          FRAGMENT_RE = re.compile(
+              r'\{\{[^{}]*\b_\s*\([^)]*\)[^{}]*\}\}'
+              r'(?:\s*(?:<[^>]+>|\{\{(?![^}]*\b_\s*\()[^}]*\}\})\s*)+'
+              r'\{\{[^{}]*\b_\s*\([^)]*\)[^{}]*\}\}'
+          )
+
+          violations = []
+          for f in sorted(Path('changedetectionio').rglob('*.html')):
+              for lineno, line in enumerate(f.read_text().splitlines(), 1):
+                  if FRAGMENT_RE.search(line):
+                      violations.append(f"{f}:{lineno}: {line.strip()[:120]}")
+
+          count = len(violations)
+          print(f"Fragmented i18n calls found: {count} (limit: {BASELINE_LIMIT})")
+          for v in violations:
+              print(v)
+
+          if count > BASELINE_LIMIT:
+              print(f"\nERROR: {count} fragmented gettext calls exceed the baseline of {BASELINE_LIMIT}.")
+              print("Consolidate adjacent _() calls into a single entire-sentence msgid.")
+              print("See https://github.com/dgtlmoon/changedetection.io/issues/4074 for patterns.")
+              sys.exit(1)
+          PYEOF
+
   test-application-3-10:
     # Only run on push to master (including PR merges)
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [lint-code, lint-translations]
+    needs: [lint-code, lint-translations, lint-template-i18n]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.10'
@@ -55,7 +141,7 @@ jobs:
 
   test-application-3-11:
     # Always run
-    needs: [lint-code, lint-translations]
+    needs: [lint-code, lint-translations, lint-template-i18n]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.11'
@@ -63,7 +149,7 @@ jobs:
   test-application-3-12:
     # Only run on push to master (including PR merges)
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [lint-code, lint-translations]
+    needs: [lint-code, lint-translations, lint-template-i18n]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.12'
@@ -72,7 +158,7 @@ jobs:
   test-application-3-13:
     # Only run on push to master (including PR merges)
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [lint-code, lint-translations]
+    needs: [lint-code, lint-translations, lint-template-i18n]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.13'
@@ -81,7 +167,7 @@ jobs:
 
   test-application-3-14:
     #if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [lint-code, lint-translations]
+    needs: [lint-code, lint-translations, lint-template-i18n]
     uses: ./.github/workflows/test-stack-reusable-workflow.yml
     with:
       python-version: '3.14'

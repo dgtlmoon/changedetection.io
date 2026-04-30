@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, playwright_warning, only_playwright_type_watches_warning, highlight_trigger_ignored_explainer, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, only_playwright_type_watches_warning, highlight_trigger_ignored_explainer, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -142,8 +142,8 @@
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.fetch_backend, class="fetch-backend") }}
                         <span class="pure-form-message-inline">
-                            <p>{{ _('Use the') }} <strong>{{ _('Basic') }}</strong> {{ _('method (default) where your watched site doesn\'t need Javascript to render.') }}</p>
-                            <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.') }} </p>
+                            <p>{{ _('Use the <strong>Basic</strong> method (default) where your watched sites don\'t need Javascript to render.')|safe }}</p>
+                            <p>{{ _('The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.')|safe }}</p>
                             {{ _('Tip:') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">{{ _('Connect using Bright Data and Oxylabs Proxies, find out more here.') }}</a>
                         </span>
                     </div>
@@ -164,7 +164,7 @@
                         <div class="pure-form-message-inline">
                             <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                             <br>
-                            {{ _('This will wait') }} <i>n</i> {{ _('seconds before extracting the text.') }}
+                            {{ _('This will wait <i>n</i> seconds before extracting the text.')|safe }}
                             {% if using_global_webdriver_wait %}
                             <br><strong>{{ _('Using the current global default settings') }}</strong>
                             {% endif %}
@@ -297,7 +297,7 @@ Math: {{ 1 + 1 }}") }}
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
                             <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="{{ _('Look out!') }}" title="{{ _('Lookout!') }}" >
-                            {{ _('There are') }} <a href="{{ url_for('settings.settings_page')}}#notifications">{{ _('system-wide notification URLs enabled') }}</a>, {{ _('this form will override notification settings for this watch only') }} &dash; {{ _('an empty Notification URL list here will still send notifications.') }}
+                            {{ _('There are <a href="%(url)s">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.', url=url_for('settings.settings_page') ~ '#notifications')|safe }}
                         </div>
                         {% endif %}
                         <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">{{ _('Use system defaults') }}</a>
@@ -351,7 +351,7 @@ Math: {{ 1 + 1 }}") }}
                         {{ render_checkbox_field(form.filter_text_added) }}
                         {{ render_checkbox_field(form.filter_text_replaced) }}
                         {{ render_checkbox_field(form.filter_text_removed) }}
-                    <span class="pure-form-message-inline">{{ _('Note: Depending on the length and similarity of the text on each line, the algorithm may consider an') }} <strong>{{ _('addition') }}</strong> {{ _('instead of') }} <strong>{{ _('replacement') }}</strong> {{ _('for example.') }}</span><br>
+                    <span class="pure-form-message-inline">{{ _('Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.')|safe }}</span><br>
                     <span class="pure-form-message-inline">&nbsp;{{ _('So it\'s always better to select') }} <strong>{{ _('Added') }}</strong>+<strong>{{ _('Replaced') }}</strong> {{ _('when you\'re interested in new content.') }}</span><br>
                     <span class="pure-form-message-inline">&nbsp;{{ _('When content is merely moved in a list, it will also trigger an') }} <strong>{{ _('addition') }}</strong>, {{ _('consider enabling') }} <code><strong>{{ _('Only trigger when unique lines appear') }}</strong></code></span>
                 </fieldset>
@@ -365,7 +365,7 @@ Math: {{ 1 + 1 }}") }}
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.sort_text_alphabetically) }}
-                    <span class="pure-form-message-inline">{{ _('Helps reduce changes detected caused by sites shuffling lines around, combine with') }} <i>{{ _('check unique lines') }}</i> {{ _('below.') }}</span>
+                    <span class="pure-form-message-inline">{{ _('Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.')|safe }}</span>
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.trim_text_whitespace) }}

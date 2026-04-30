@@ -58,7 +58,7 @@
                         {{ render_field(form.application.form.filter_failure_notification_threshold_attempts, class="filter_failure_notification_threshold_attempts") }}
                         <span class="pure-form-message-inline">{{ _('After this many consecutive times that the CSS/xPath filter is missing, send a notification') }}
                             <br>
-                        {{ _('Set to') }} <strong>0</strong> {{ _('to disable') }}
+                        {{ _('Set to <strong>0</strong> to disable')|safe }}
                         </span>
                     </div>
                     <div class="pure-control-group">
@@ -120,15 +120,15 @@
                 <div class="pure-control-group inline-radio">
                     {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
                     <span class="pure-form-message-inline">
-                        <p>{{ _('Use the') }} <strong>{{ _('Basic') }}</strong> {{ _('method (default) where your watched sites don\'t need Javascript to render.') }}</p>
-                        <p>{{ _('The') }} <strong>{{ _('Chrome/Javascript') }}</strong> {{ _('method requires a network connection to a running WebDriver+Chrome server, set by the ENV var') }} 'WEBDRIVER_URL'. </p>
+                        <p>{{ _('Use the <strong>Basic</strong> method (default) where your watched sites don\'t need Javascript to render.')|safe }}</p>
+                        <p>{{ _('The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.')|safe }}</p>
                     </span>
                 </div>
                 <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">
                     <div class="pure-form-message-inline">
                         <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                         <br>
-                        {{ _('This will wait') }} <i>n</i> {{ _('seconds before extracting the text.') }}
+                        {{ _('This will wait <i>n</i> seconds before extracting the text.')|safe }}
                     </div>
                     <div class="pure-control-group">
                         {{ render_field(form.application.form.webdriver_delay) }}
@@ -197,7 +197,7 @@ nav
                     <span class="pure-form-message-inline">{{ _('Note: This is applied globally in addition to the per-watch rules.') }}</span><br>
                     <span class="pure-form-message-inline">
                         <ul>
-                            <li>{{ _('Matching text will be') }} <strong>{{ _('ignored') }}</strong> {{ _('in the text snapshot (you can still see it but it wont trigger a change)') }}</li>
+                            <li>{{ _('Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)') }}</li>
                             <li>{{ _('Note: This is applied globally in addition to the per-watch rules.') }}</li>
                             <li>{{ _('Each line processed separately, any line matching will be ignored (removed before creating the checksum)') }}</li>
                             <li>{{ _('Regular Expression support, wrap the entire line in forward slash') }} <code>/regex/</code></li>
