@@ -618,8 +618,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     elementpath.select(tree, line.strip(), parser=SafeXPath3Parser)
                 except elementpath.ElementPathError as e:
-                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
-                    raise ValidationError(message % (line, str(e)))
+                    message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
+                    raise ValidationError(message % {'expression': line, 'error': str(e)})
                 except:
                     raise ValidationError("A system-error occurred when validating your XPath expression")
 
@@ -633,8 +633,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     tree.xpath(line.strip())
                 except etree.XPathEvalError as e:
-                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
-                    raise ValidationError(message % (line, str(e)))
+                    message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
+                    raise ValidationError(message % {'expression': line, 'error': str(e)})
                 except:
                     raise ValidationError("A system-error occurred when validating your XPath expression")
 
@@ -653,8 +653,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     parse(input)
                 except (JsonPathParserError, JsonPathLexerError) as e:
-                    message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
-                    raise ValidationError(message % (input, str(e)))
+                    message = field.gettext('\'%(expression)s\' is not a valid JSONPath expression. (%(error)s)')
+                    raise ValidationError(message % {'expression': input, 'error': str(e)})
                 except:
                     raise ValidationError("A system-error occurred when validating your JSONPath expression")
 
@@ -677,8 +677,8 @@ class ValidateCSSJSONXPATHInput(object):
                     validate_jq_expression(input)
                     jq.compile(input)
                 except (ValueError) as e:
-                    message = field.gettext('\'%s\' is not a valid jq expression. (%s)')
-                    raise ValidationError(message % (input, str(e)))
+                    message = field.gettext('\'%(expression)s\' is not a valid jq expression. (%(error)s)')
+                    raise ValidationError(message % {'expression': input, 'error': str(e)})
                 except:
                     raise ValidationError("A system-error occurred when validating your jq expression")
 

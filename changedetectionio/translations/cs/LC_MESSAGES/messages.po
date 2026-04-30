@@ -160,8 +160,8 @@ msgstr "Importuje se prvních 5000 URL adres, další lze načíst opakovaným i
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} Imported from list in {:.2f}s, {} Skipped."
-msgstr "{} importováno ze seznamu za {:.2f}s, {} přeskočeno."
+msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
+msgstr "{count} importováno ze seznamu za {duration:.2f}s, {skipped_count} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -173,8 +173,8 @@ msgstr "Strukturovaný JSON text je neplatný, byl poškozen?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
-msgstr "{} importováno z Distill.io za {:.2f}s, {} přeskočeno."
+msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
+msgstr "{count} importováno z Distill.io za {duration:.2f}s, {skipped_count} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -192,13 +192,13 @@ msgstr "Chyba při zpracování řádku {}, zkontrolujte že všechny typy dat v
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} imported from Wachete .xlsx in {:.2f}s"
-msgstr "{} importováno z Wachete .xlsx za {:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
+msgstr "{count} importováno z Wachete .xlsx za {duration:.2f}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} imported from custom .xlsx in {:.2f}s"
-msgstr "{} importováno z vlastního .xlsx za {:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration:.2f}s"
+msgstr "{count} importováno z vlastního .xlsx za {duration:.2f}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
@@ -313,8 +313,8 @@ msgstr "Ochrana heslem odebrána."
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
-msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
-msgstr "Upozornění: Počet pracovních procesů ({}) se blíží nebo překračuje počet CPU jader ({})"
+msgid "Warning: Worker count ({worker_count}) is close to or exceeds available CPU cores ({cpu_count})"
+msgstr "Upozornění: Počet pracovních procesů ({worker_count}) se blíží nebo překračuje počet CPU jader ({cpu_count})"
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
@@ -1429,8 +1429,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
-msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "Do fronty přidáno {} sledování k opětovné kontrole ({} již ve frontě nebo běží)."
+msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
+msgstr "Do fronty přidáno {count} sledování k opětovné kontrole ({skipped_count} již ve frontě nebo běží)."
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -2668,18 +2668,18 @@ msgstr "RegEx '%s' není platný regulární výraz."
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid XPath expression. (%s)"
-msgstr "'%s' není platný výraz XPath. (%s)"
+msgid "'%(expression)s' is not a valid XPath expression. (%(error)s)"
+msgstr "'%(expression)s' není platný výraz XPath. (%(error)s)"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid JSONPath expression. (%s)"
-msgstr "'%s' není platný výraz JSONPath. (%s)"
+msgid "'%(expression)s' is not a valid JSONPath expression. (%(error)s)"
+msgstr "'%(expression)s' není platný výraz JSONPath. (%(error)s)"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid jq expression. (%s)"
-msgstr "'%s' není platný výraz jq. (%s)"
+msgid "'%(expression)s' is not a valid jq expression. (%(error)s)"
+msgstr "'%(expression)s' není platný výraz jq. (%(error)s)"
 
 #: changedetectionio/forms.py
 msgid "Empty value not allowed."
@@ -3381,7 +3381,7 @@ msgstr ""
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
-msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html

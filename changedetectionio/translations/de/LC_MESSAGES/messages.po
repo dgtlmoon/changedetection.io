@@ -162,8 +162,8 @@ msgstr "Es werden 5.000 der ersten URLs aus Ihrer Liste importiert, der Rest kan
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} Imported from list in {:.2f}s, {} Skipped."
-msgstr "{} aus Liste importiert in {:.2f}s, {} übersprungen."
+msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
+msgstr "{count} aus Liste importiert in {duration:.2f}s, {skipped_count} übersprungen."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -175,8 +175,8 @@ msgstr "JSON-Struktur sieht ungültig aus, ist sie beschädigt?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
-msgstr "{} aus Distill.io importiert in {:.2f}s, {} übersprungen."
+msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
+msgstr "{count} aus Distill.io importiert in {duration:.2f}s, {skipped_count} übersprungen."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -194,13 +194,13 @@ msgstr "Fehler bei der Verarbeitung von Zeile {}, prüfen Sie, ob alle Zelldaten
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} imported from Wachete .xlsx in {:.2f}s"
-msgstr "{} aus Wachete .xlsx importiert in {:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
+msgstr "{count} aus Wachete .xlsx importiert in {duration:.2f}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} imported from custom .xlsx in {:.2f}s"
-msgstr "{} aus benutzerdefinierter .xlsx importiert in {:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration:.2f}s"
+msgstr "{count} aus benutzerdefinierter .xlsx importiert in {duration:.2f}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
@@ -319,8 +319,8 @@ msgstr "Passwortschutz entfernt."
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
-msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
-msgstr "Warnung: Anzahl der Worker ({}) nähert sich oder überschreitet die verfügbaren CPU-Kerne ({})"
+msgid "Warning: Worker count ({worker_count}) is close to or exceeds available CPU cores ({cpu_count})"
+msgstr "Warnung: Anzahl der Worker ({worker_count}) nähert sich oder überschreitet die verfügbaren CPU-Kerne ({cpu_count})"
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
@@ -1452,8 +1452,8 @@ msgstr "1 Überwachung zur erneuten Überprüfung in Warteschlange gestellt."
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
-msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "{} Überwachungen zur erneuten Überprüfung eingereiht ({} bereits in Warteschlange oder laufend)."
+msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
+msgstr "{count} Überwachungen zur erneuten Überprüfung eingereiht ({skipped_count} bereits in Warteschlange oder laufend)."
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -2719,18 +2719,18 @@ msgstr "RegEx „%s“ ist kein gültiger regulärer Ausdruck."
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid XPath expression. (%s)"
-msgstr "„%s“ ist kein gültiger XPath-Ausdruck. (%s)"
+msgid "'%(expression)s' is not a valid XPath expression. (%(error)s)"
+msgstr "„%(expression)s“ ist kein gültiger XPath-Ausdruck. (%(error)s)"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid JSONPath expression. (%s)"
-msgstr "„%s“ ist kein gültiger JSONPath-Ausdruck. (%s)"
+msgid "'%(expression)s' is not a valid JSONPath expression. (%(error)s)"
+msgstr "„%(expression)s“ ist kein gültiger JSONPath-Ausdruck. (%(error)s)"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid jq expression. (%s)"
-msgstr "„%s“ ist kein gültiger JQ-Ausdruck. (%s)"
+msgid "'%(expression)s' is not a valid jq expression. (%(error)s)"
+msgstr "„%(expression)s“ ist kein gültiger JQ-Ausdruck. (%(error)s)"
 
 #: changedetectionio/forms.py
 msgid "Empty value not allowed."
@@ -3435,7 +3435,7 @@ msgstr "Das Protokoll wird nicht unterstützt oder das URL-Format ist ungültig.
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
-msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html

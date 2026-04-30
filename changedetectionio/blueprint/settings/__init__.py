@@ -181,8 +181,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     # Check CPU core availability and warn if worker count is high
                     cpu_count = os.cpu_count()
                     if cpu_count and new_worker_count >= (cpu_count * 0.9):
-                        flash(gettext("Warning: Worker count ({}) is close to or exceeds available CPU cores ({})").format(
-                            new_worker_count, cpu_count), 'warning')
+                        flash(gettext("Warning: Worker count ({worker_count}) is close to or exceeds available CPU cores ({cpu_count})").format(
+                            worker_count=new_worker_count, cpu_count=cpu_count), 'warning')
 
                     result = worker_pool.adjust_async_worker_count(
                         new_count=new_worker_count,
