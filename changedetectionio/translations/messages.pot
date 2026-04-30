@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-28 16:31+0900\n"
+"POT-Creation-Date: 2026-04-30 18:48+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -366,7 +366,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
 #, python-format
-msgid "AI summary cache cleared (%(n)s file(s) removed)."
+msgid "AI summary cache cleared (%(count)s file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -1068,7 +1068,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 #, python-format
-msgid "characters — currently enforcing: %(n)s"
+msgid "characters — currently enforcing: %(limit)s"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html

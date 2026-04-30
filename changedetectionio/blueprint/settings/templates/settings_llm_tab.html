@@ -333,7 +333,7 @@
           <span class="llm-env-badge">{{ _('(set via <code>LLM_MAX_INPUT_CHARS</code>)') | safe }}</span>
         {% else %}
           {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
-          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
+          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(limit)s', limit='{:,}'.format(llm_effective_max_input_chars)) }}</span>
         {% endif %}
       </span>
     </div>
@@ -364,7 +364,7 @@
           <span class="llm-env-badge">{{ _('(set via <code>LLM_MAX_INPUT_CHARS</code>)') | safe }}</span>
         {% else %}
           {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
-          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
+          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(limit)s', limit='{:,}'.format(llm_effective_max_input_chars)) }}</span>
         {% endif %}
       </span>
     </div>

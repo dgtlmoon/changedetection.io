@@ -369,8 +369,8 @@ msgstr "AI / LLM 설정이 제거되었습니다."
 
 #: changedetectionio/blueprint/settings/llm.py
 #, python-format
-msgid "AI summary cache cleared (%(n)s file(s) removed)."
-msgstr "AI 요약 캐시가 지워졌습니다(%(n)s개 파일 제거됨)."
+msgid "AI summary cache cleared (%(count)s file(s) removed)."
+msgstr "AI 요약 캐시가 지워졌습니다(%(count)s개 파일 제거됨)."
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
@@ -1077,8 +1077,8 @@ msgstr "(<code>LLM_MAX_INPUT_CHARS</code>로 설정됨)"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 #, python-format
-msgid "characters — currently enforcing: %(n)s"
-msgstr "문자 - 현재 적용 중: %(n)s"
+msgid "characters — currently enforcing: %(limit)s"
+msgstr "문자 - 현재 적용 중: %(limit)s"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "No AI usage recorded yet."

@@ -376,7 +376,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
 #, python-format
-msgid "AI summary cache cleared (%(n)s file(s) removed)."
+msgid "AI summary cache cleared (%(count)s file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -1104,7 +1104,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 #, python-format
-msgid "characters — currently enforcing: %(n)s"
+msgid "characters — currently enforcing: %(limit)s"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
