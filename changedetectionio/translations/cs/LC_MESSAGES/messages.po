@@ -136,7 +136,7 @@ msgstr "Pozn.: Nepřepíše hlavní nastavení aplikaci, pouze sledování a sku
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 #, python-format
 msgid "Max upload size: %(upload)s MB, Max decompressed size: %(decomp)s MB"
-msgstr "Max velikost uploadu: %(upload)s MB, Max rozbalená velikost: %(decomp)s MB"
+msgstr "Max. velikost nahrání: %(upload)s MB, Max. velikost k rozbalení: %(decomp)s MB"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Include all groups found in backup?"
@@ -381,7 +381,7 @@ msgstr "AI / LLM konfigurace odstraněna."
 #: changedetectionio/blueprint/settings/llm.py
 #, python-format
 msgid "AI summary cache cleared (%(n)s file(s) removed)."
-msgstr "AI souhrná cache vyčištěna (%(n)s soubor(ů) odstraněno)."
+msgstr "AI cache souhrnů vyčištěna (%(n)s soubor(ů) odstraněno)."
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
@@ -2428,31 +2428,31 @@ msgstr ""
 
 #: changedetectionio/conditions/__init__.py
 msgid "Greater Than"
-msgstr ""
+msgstr "Větší než"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Less Than"
-msgstr ""
+msgstr "Menší než"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Greater Than or Equal To"
-msgstr ""
+msgstr "Větší než nebo shodný s"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Less Than or Equal To"
-msgstr ""
+msgstr "Menší než nebo shodný s"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Equals"
-msgstr ""
+msgstr "Shoduje se s"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Not Equals"
-msgstr ""
+msgstr "Neshoduje se"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Contains"
-msgstr ""
+msgstr "Obsahuje"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Field"
@@ -2898,12 +2898,12 @@ msgstr "Použít globální nastavení pro čas mezi kontrolou a plánovačem."
 
 #: changedetectionio/forms.py
 msgid "AI Change Intent"
-msgstr ""
+msgstr "AI záměr změny"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
 #: changedetectionio/forms.py changedetectionio/templates/edit/include_llm_intent.html
 msgid "AI Change Summary"
-msgstr ""
+msgstr "AI souhrn změny"
 
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
@@ -2915,7 +2915,7 @@ msgstr "Odstranit prvky"
 
 #: changedetectionio/forms.py
 msgid "Extract lines containing"
-msgstr ""
+msgstr "Extrahovat řádky obsahující"
 
 #: changedetectionio/forms.py
 msgid "Extract text"
@@ -3156,7 +3156,7 @@ msgstr "Ignorujte mezery"
 
 #: changedetectionio/forms.py
 msgid "Screenshot: Minimum Change Percentage"
-msgstr ""
+msgstr "Screenshot: minimální procento změny"
 
 #: changedetectionio/forms.py changedetectionio/processors/image_ssim_diff/forms.py
 msgid "Must be between 0 and 100"
@@ -3220,7 +3220,7 @@ msgstr "Kolikrát může filtr chybět před odesláním upozornění"
 
 #: changedetectionio/forms.py
 msgid "Model"
-msgstr ""
+msgstr "Model"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/forms.py
 msgid "API Key"
@@ -3248,7 +3248,7 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Monthly token budget"
-msgstr ""
+msgstr "Měsíční rozpočet tokenů"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
 msgid "Max input characters"
@@ -3264,7 +3264,7 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "AI thinking budget (tokens)"
-msgstr ""
+msgstr "AI pracovní rozpočet (tokeny)"
 
 #: changedetectionio/forms.py
 msgid "Off (no thinking)"
@@ -3276,7 +3276,7 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "When monthly token budget is reached"
-msgstr ""
+msgstr "Při dosažení měsíčního rozpočtu tokenů"
 
 #: changedetectionio/forms.py
 msgid "Skip AI summarisation only (watch still checks)"
@@ -3362,7 +3362,7 @@ msgstr "Porovnání snímků obrazovky"
 
 #: changedetectionio/processors/image_ssim_diff/preview.py
 msgid "Preview unavailable - No snapshots captured yet"
-msgstr ""
+msgstr "Náhled nedostupný - Zatím nebyly pořízeny žádné snapshoty"
 
 #: changedetectionio/processors/image_ssim_diff/processor.py
 msgid "Visual / Image screenshot change detection"
@@ -3904,7 +3904,7 @@ msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "A new version is available"
-msgstr ""
+msgstr "Je dostupná nová verze"
 
 #: changedetectionio/templates/base.html
 msgid "Search, or Use Alt+S Key"
@@ -3912,7 +3912,7 @@ msgstr "Vyhledejte nebo použijte klávesu Alt+S"
 
 #: changedetectionio/templates/base.html
 msgid "Share this link:"
-msgstr ""
+msgstr "Sdílet tento odkaz:"
 
 #: changedetectionio/templates/base.html
 msgid "Real-time updates offline"
@@ -3964,7 +3964,7 @@ msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "AI"
-msgstr ""
+msgstr "AI"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -4253,23 +4253,23 @@ msgstr "IMPORTOVAT"
 
 #: changedetectionio/templates/menu.html
 msgid "Resume automatic scheduling"
-msgstr ""
+msgstr "Pokračovat s automatickým naplánováním"
 
 #: changedetectionio/templates/menu.html
 msgid "Pause auto-queue scheduling of watches"
-msgstr ""
+msgstr "Pozastavit automatické řazení plánovaných sledovaní"
 
 #: changedetectionio/templates/menu.html
 msgid "Scheduling is paused - click to resume"
-msgstr ""
+msgstr "Naplánování je pozastaveno - klikněte pro opětovné spuštění"
 
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
-msgstr "Odtlumit oznámení"
+msgstr "Opět povolit oznámení"
 
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"
-msgstr "Oznámení jsou ztlumena - klikněte pro odtlumení"
+msgstr "Oznámení jsou ztlumena - klikněte pro opětovné povolení"
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
@@ -4285,11 +4285,11 @@ msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle AI Mode"
-msgstr ""
+msgstr "Přepnout AI Mód"
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle AI mode"
-msgstr ""
+msgstr "Přepnout AI mód"
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle Light/Dark Mode"
