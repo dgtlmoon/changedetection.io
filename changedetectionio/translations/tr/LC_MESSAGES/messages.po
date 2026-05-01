@@ -2230,8 +2230,8 @@ msgid "Delete Watches?"
 msgstr "İzleyiciler Silinsin mi?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
-msgstr "<p>Seçili izleyicileri silmek istediğinizden emin misiniz?</p><p>Bu işlem geri alınamaz.</p>"
+msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+msgstr "<p><strong>Seçili izleyicileri silmek istediğinizden emin misiniz?</strong></p><p>Bu işlem geri alınamaz.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
