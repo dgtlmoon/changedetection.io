@@ -2929,6 +2929,7 @@ msgstr "以下のすべてに一致"
 msgid "Match any of the following"
 msgstr "以下のいずれかに一致"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "リストでページの <title> を使用"
@@ -3028,6 +3029,7 @@ msgstr "リアルタイムUI更新を有効化"
 msgid "Favicons Enabled"
 msgstr "ファビコンを有効化"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "ウォッチ一覧リストでページの <title> を使用"
@@ -3417,6 +3419,7 @@ msgstr "監視中のURL。"
 msgid "The UUID of the watch."
 msgstr "ウォッチのUUID。"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr "ウォッチのページタイトル。設定されていない場合は <title> を使用し、それもなければURLにフォールバックします。"

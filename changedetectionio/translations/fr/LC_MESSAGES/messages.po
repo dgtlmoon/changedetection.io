@@ -2923,9 +2923,10 @@ msgstr "Faites correspondre tous les éléments suivants"
 msgid "Match any of the following"
 msgstr "Faites correspondre l'un des éléments suivants"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
-msgstr "Utiliser la page <titre> dans la liste"
+msgstr "Utiliser la page <title> dans la liste"
 
 #: changedetectionio/forms.py
 msgid "Number of history items per watch to keep"
@@ -3022,9 +3023,10 @@ msgstr "Mises à jour en temps réel hors ligne"
 msgid "Favicons Enabled"
 msgstr "Favicons Activés"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
-msgstr "Utiliser la page <titre> dans la liste de présentation des moniteurs"
+msgstr "Utiliser la page <title> dans la liste de présentation des moniteurs"
 
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
@@ -3411,6 +3413,7 @@ msgstr ""
 msgid "The UUID of the watch."
 msgstr "L'UUID du moniteur."
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""

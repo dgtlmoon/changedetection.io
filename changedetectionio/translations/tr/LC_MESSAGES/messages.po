@@ -2963,6 +2963,7 @@ msgstr "Aşağıdakilerin tümünü eşleştir"
 msgid "Match any of the following"
 msgstr "Aşağıdakilerden herhangi birini eşleştir"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "Listede sayfa <title>'ını kullan"
@@ -3062,6 +3063,7 @@ msgstr "Gerçek Zamanlı Arayüz Güncellemeleri Etkin"
 msgid "Favicons Enabled"
 msgstr "Favicon'lar Etkin"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "İzleyici genel bakış listesinde sayfa <title>'ını kullan"
@@ -3451,6 +3453,7 @@ msgstr "İzlenen URL."
 msgid "The UUID of the watch."
 msgstr "İzleyicinin UUID'si."
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr "İzleyicinin sayfa başlığı, ayarlanmamışsa <title> kullanır, URL'ye geri döner"

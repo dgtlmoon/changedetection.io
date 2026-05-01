@@ -2920,6 +2920,7 @@ msgstr "다음 모두와 일치"
 msgid "Match any of the following"
 msgstr "다음 중 하나와 일치"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "목록에 페이지 <title> 사용"
@@ -3019,6 +3020,7 @@ msgstr "실시간 UI 업데이트 활성화"
 msgid "Favicons Enabled"
 msgstr "파비콘 활성화"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "모니터링 목록에 페이지 <title> 사용"
@@ -3408,9 +3410,10 @@ msgstr "모니터링 중인 URL입니다."
 msgid "The UUID of the watch."
 msgstr "모니터링 UUID입니다."
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
-msgstr "모니터링의 페이지 제목입니다. 설정되지 않았으면 <title>을 사용하고, 없으면 URL을 사용합니다."
+msgstr "모니터링의 페이지 제목입니다. 설정되지 않았으면 <title> 을 사용하고, 없으면 URL을 사용합니다."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The watch group / tag"

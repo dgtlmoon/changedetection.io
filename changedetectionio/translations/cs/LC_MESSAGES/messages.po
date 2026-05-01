@@ -2916,6 +2916,7 @@ msgstr "Spojit všechny následující položky"
 msgid "Match any of the following"
 msgstr "Přiřaďte kteroukoli z následujících možností"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "V seznamu použijte stránku <title>"
@@ -3015,6 +3016,7 @@ msgstr "Aktualizace UI v reálném čase"
 msgid "Favicons Enabled"
 msgstr "Povolit favikony"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "Použijte stránku <title> v přehledu sledování"
@@ -3404,6 +3406,7 @@ msgstr ""
 msgid "The UUID of the watch."
 msgstr "UUID monitoru."
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""
