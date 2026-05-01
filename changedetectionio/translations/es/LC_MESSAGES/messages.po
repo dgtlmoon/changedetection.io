@@ -2232,6 +2232,7 @@ msgstr ""
 "<p>¿Está seguro de que desea borrar el historial de los elementos seleccionados?</p><p>Esta acción no se puede "
 "deshacer.</p>"
 
+#. Universally recognized; typically left as-is. dennis-ignore: W302
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "OK"

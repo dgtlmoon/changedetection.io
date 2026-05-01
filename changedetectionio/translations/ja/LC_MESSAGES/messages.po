@@ -2182,6 +2182,7 @@ msgstr "履歴をすべてクリア"
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
 msgstr "<p>選択した項目の履歴をクリアしてもよいですか？</p><p>この操作は元に戻せません。</p>"
 
+#. Universally recognized; typically left as-is. dennis-ignore: W302
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "OK"

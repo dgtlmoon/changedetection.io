@@ -2216,6 +2216,7 @@ msgstr "Geçmişleri Temizle"
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
 msgstr "<p>Seçili öğeler için geçmişi temizlemek istediğinizden emin misiniz?</p><p>Bu işlem geri alınamaz.</p>"
 
+#. Universally recognized; typically left as-is. dennis-ignore: W302
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "Tamam"
