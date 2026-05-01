@@ -242,6 +242,7 @@ msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON
 msgstr "复制并粘贴 Distill.io 监控的“导出”文件（JSON）。"
 
 # TN: CJK scripts degrade when italicized; emphasis is rendered with <strong> instead.
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ""
 "This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
@@ -1215,6 +1216,7 @@ msgstr ""
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
 msgstr "这些设置会<strong><i>应用</i></strong>到现有的所有监控项配置中。"
@@ -1920,6 +1922,7 @@ msgid ""
 msgstr "适合仅移动内容的网站，想知道新增内容时使用，会将新行与该监控项的全部历史进行比对。"
 
 # TN: CJK scripts degrade when italicized; reference is wrapped in “” instead.
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr "有助于减少因行顺序变化导致的变更，可结合下方的“检查唯一行”一起使用。"
@@ -3552,6 +3555,7 @@ msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a
 msgstr "使用 <a target=\"newwindow\" href=\"%(url)s\">AppRise通知URL</a>，向几乎任何服务发送通知！"
 
 # TN: CJK scripts degrade when italicized; emphasis is rendered with <strong> instead.
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<strong>请阅读通知服务 Wiki 以了解重要配置说明</strong>"
@@ -3913,6 +3917,7 @@ msgstr ""
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
 msgstr ""

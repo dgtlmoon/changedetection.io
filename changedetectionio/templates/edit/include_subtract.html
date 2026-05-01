@@ -9,6 +9,7 @@ xpath://body/div/span[contains(@class, 'example-class')]",
                         {% if '/text()' in  field %}
                           <span class="pure-form-message-inline"><strong>{{ _('Note!: //text() function does not work where the <element> contains <![CDATA[]]>') }}</strong></span><br>
                         {% endif %}
+                        {# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}
                         <span class="pure-form-message-inline">{{ _('One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used.') | safe }}<br>
                         <span data-target="#advanced-help-selectors" class="toggle-show pure-button button-tag button-xsmall">{{ _('Show advanced help and tips') }}</span><br>
                     <ul id="advanced-help-selectors" style="display: none;">

@@ -243,6 +243,7 @@ msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON
 msgstr "Distill.io ウォッチの「エクスポート」ファイルをコピーして貼り付けてください。JSONファイルである必要があります。"
 
 # 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ""
 "This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
@@ -1219,6 +1220,7 @@ msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr "タグ名に基づく自動生成色を使用する場合はチェックを外してください。"
 
 # 訳注: 日本語を斜体にすると字形が崩れるため、<strong> のみで強調し <i> は外す
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
 msgstr "これらの設定は既存のすべてのウォッチ設定に<strong>追加</strong>されます。"
@@ -1930,6 +1932,7 @@ msgid ""
 msgstr "コンテンツを移動させるだけのウェブサイトに適しています。新しいコンテンツが追加されたときに知りたい場合に便利で、このウォッチのすべての履歴と新しい行を比較します。"
 
 # 訳注: 日本語を斜体にすると字形が崩れるため、参照は「」で囲む。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr "サイトが行を並べ替えることで発生する不要な変更検知を減らすのに役立ちます。下の「ユニーク行をチェック」と組み合わせてください。"
@@ -3572,6 +3575,7 @@ msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a
 msgstr "<a target=\"newwindow\" href=\"%(url)s\">AppRise 通知URL</a> を使えば、ほぼすべてのサービスへの通知に対応できます！"
 
 # 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<strong>重要な設定に関するメモについては、通知サービスのWikiをこちらでお読みください</strong>"
@@ -3941,6 +3945,7 @@ msgid "Note!: //text() function does not work where the <element> contains <![CD
 msgstr "注意: <element> が <![CDATA[]]> を含む場合、//text() 関数は動作しません"
 
 # 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
 msgstr "1行につき1つのCSS、xPath 1 & 2、JSON Path/JQセレクタを指定してください。一致した<strong>すべての</strong>ルールが使用されます。"
