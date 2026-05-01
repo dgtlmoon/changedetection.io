@@ -1329,7 +1329,7 @@ msgid ""
 "watches will be removed from it.</p>"
 msgstr ""
 "<p>Möchten Sie wirklich alle Beobachtungen aus der Gruppe <strong>%(title)s</strong> entfernen?</p><p>Das Tag bleibt "
-"erhalten, aber die Beobachtungen werden daraus entfernt."
+"erhalten, aber die Beobachtungen werden daraus entfernt.</p>"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Unlink"
@@ -3123,7 +3123,7 @@ msgstr "RSS-Inhaltsformat"
 
 #: changedetectionio/forms.py
 msgid "RSS <description> body built from"
-msgstr "RSS-<Beschreibung>-Körper erstellt aus"
+msgstr "RSS-<description>-Körper erstellt aus"
 
 #: changedetectionio/forms.py
 msgid "RSS \"System default\" template override"

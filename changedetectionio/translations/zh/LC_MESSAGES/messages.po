@@ -3082,7 +3082,7 @@ msgstr "移除密码"
 
 #: changedetectionio/forms.py
 msgid "Render anchor tag content"
-msgstr "渲染 <a> 标签内容"
+msgstr "渲染 a 标签内容"
 
 #: changedetectionio/forms.py
 msgid "Allow anonymous access to watch history page when password is enabled"
