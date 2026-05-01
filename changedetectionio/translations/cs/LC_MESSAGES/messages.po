@@ -205,10 +205,6 @@ msgid "URL List"
 msgstr "Seznam adres URL"
 
 #: changedetectionio/blueprint/imports/templates/import.html
-msgid "Distill.io"
-msgstr "Distill.io"
-
-#: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
 msgstr ".XLSX a Wachete"
 
@@ -393,14 +389,6 @@ msgstr "Globální filtry"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UI Options"
 msgstr "Možnosti uživatelského rozhraní"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "API"
-msgstr "API"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "RSS"
-msgstr "RSS"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Backups"
@@ -2691,10 +2679,6 @@ msgstr "Prázdná hodnota není povolena."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Neplatná hodnota."
-
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
-msgid "URL"
-msgstr "URL"
 
 #: changedetectionio/forms.py
 msgid "Group tag"

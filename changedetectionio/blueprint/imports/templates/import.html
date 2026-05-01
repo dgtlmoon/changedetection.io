@@ -7,7 +7,7 @@
     <div class="tabs collapsable">
         <ul>
             <li class="tab" id=""><a href="#url-list">{{ _('URL List') }}</a></li>
-            <li class="tab"><a href="#distill-io">{{ _('Distill.io') }}</a></li>
+            <li class="tab"><a href="#distill-io">Distill.io</a></li>
             <li class="tab"><a href="#xlsx">{{ _('.XLSX & Wachete') }}</a></li>
             <li class="tab"><a href="{{url_for('backups.restore.restore')}}">{{ _('Backup Restore') }}</a></li>
         </ul>
@@ -104,7 +104,7 @@
                             {% for n in range(4) %}
                                 <td><select name="custom_xlsx[col_type_{{n}}]">
                                     <option value="" style="color: #aaa"> -- {{ _('none') }} --</option>
-                                    <option value="url">{{ _('URL') }}</option>
+                                    <option value="url">URL</option>
                                     <option value="title">{{ _('Title') }}</option>
                                     <option value="include_filters">{{ _('CSS/xPath filter') }}</option>
                                     <option value="tag">{{ _('Group / Tag name(s)') }}</option>
