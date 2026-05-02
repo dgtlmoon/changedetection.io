@@ -17,6 +17,7 @@ from wtforms import (
     Form,
     Field,
     FloatField,
+    HiddenField,
     IntegerField,
     PasswordField,
     RadioField,
@@ -1083,6 +1084,24 @@ class globalSettingsLLMForm(Form):
             "placeholder": "http://localhost:11434  (Ollama / custom endpoints only)",
             "style": "width: 24em;",
         },
+    )
+    # Persisted by the Provider dropdown JS — lets the backend distinguish a self-hosted
+    # OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp) from cloud OpenAI, so we can
+    # apply reasoning-friendly token caps only when the user opted in.
+    llm_provider_kind = HiddenField(
+        validators=[validators.Optional()],
+        default='',
+    )
+    # Multiplier applied to LLM max_tokens caps when provider_kind == 'openai_compatible'.
+    # Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought into
+    # message.reasoning_content before the final answer lands in message.content.
+    # Local self-hosted models cost no per-token money, so giving them headroom is cheap;
+    # cloud providers stay on the original tight caps so existing users see no cost change.
+    llm_local_token_multiplier = IntegerField(
+        _l('Token multiplier for local reasoning models'),
+        validators=[validators.Optional(), validators.NumberRange(min=1, max=20)],
+        default=5,
+        render_kw={"placeholder": "5", "style": "width: 6em;"},
     )
     llm_change_summary_default = TextAreaField(
         _l('Default AI Change Summary prompt'),

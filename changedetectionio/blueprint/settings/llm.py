@@ -30,15 +30,20 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             api_key = (datastore.data['settings']['application'].get('llm') or {}).get('api_key', '')
             logger.debug("LLM model list: no api_key in request, using stored key")
 
-        _PREFIXES = {'gemini': 'gemini/', 'ollama': 'ollama/', 'openrouter': 'openrouter/'}
+        _PREFIXES = {'gemini': 'gemini/', 'ollama': 'ollama/', 'openrouter': 'openrouter/',
+                     'openai_compatible': 'openai/'}
+        # vLLM / LM Studio / llama.cpp speak OpenAI's wire format — route through litellm's
+        # 'openai' provider but keep the UI-level name distinct from cloud OpenAI.
+        _LITELLM_PROVIDER = {'openai_compatible': 'openai'}
         prefix = _PREFIXES.get(provider, '')
+        litellm_provider = _LITELLM_PROVIDER.get(provider, provider)
 
         try:
             import litellm
-            logger.debug(f"LLM model list: calling litellm.get_valid_models provider={provider!r} api_base={api_base!r}")
+            logger.debug(f"LLM model list: calling litellm.get_valid_models provider={provider!r} (litellm={litellm_provider!r}) api_base={api_base!r}")
             raw = litellm.get_valid_models(
                 check_provider_endpoint=True,
-                custom_llm_provider=provider,
+                custom_llm_provider=litellm_provider,
                 api_key=api_key or None,
                 api_base=api_base or None,
             ) or []
@@ -67,14 +72,18 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
 
         try:
             logger.debug(f"LLM connection test: sending test prompt to model={model!r}")
+            # Reuse the same multiplier path the production calls use, so cloud providers
+            # stay on a small base cap (matching upstream's pre-existing behavior) and only
+            # 'openai_compatible' endpoints opt into the reasoning-friendly headroom.
+            from changedetectionio.llm.evaluator import apply_local_token_multiplier
             text, total_tokens, input_tokens, output_tokens = completion(
                 model=model,
                 messages=[{'role': 'user', 'content':
-                    'Reply with exactly five words confirming you are ready.'}],
+                    'Respond with just the word: ready'}],
                 api_key=llm_cfg.get('api_key') or None,
                 api_base=api_base or None,
-                timeout=20,
-                max_tokens=200,
+                timeout=30,
+                max_tokens=apply_local_token_multiplier(200, llm_cfg),
             )
             reply = text.strip()
             if not reply:
