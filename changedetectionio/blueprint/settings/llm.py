@@ -72,6 +72,10 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
 
         try:
             logger.debug(f"LLM connection test: sending test prompt to model={model!r}")
+            # Reuse the same multiplier path the production calls use, so cloud providers
+            # stay on a small base cap (matching upstream's pre-existing behavior) and only
+            # 'openai_compatible' endpoints opt into the reasoning-friendly headroom.
+            from changedetectionio.llm.evaluator import apply_local_token_multiplier
             text, total_tokens, input_tokens, output_tokens = completion(
                 model=model,
                 messages=[{'role': 'user', 'content':
@@ -79,10 +83,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 api_key=llm_cfg.get('api_key') or None,
                 api_base=api_base or None,
                 timeout=30,
-                # Sized for reasoning models (Qwen3, DeepSeek-R1, o1/o3, Gemini 2.5 thinking)
-                # which emit chain-of-thought into message.reasoning_content before the answer
-                # lands in message.content — a small cap truncates mid-thought and yields no answer.
-                max_tokens=4000,
+                max_tokens=apply_local_token_multiplier(200, llm_cfg),
             )
             reply = text.strip()
             if not reply:

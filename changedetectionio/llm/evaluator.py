@@ -118,7 +118,12 @@ def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
         multiplier = int(llm_cfg.get('local_token_multiplier') or 5)
     except (TypeError, ValueError):
         multiplier = 5
-    return base_max_tokens * max(1, multiplier)
+    # Clamp to the same 1-20 range the form enforces. Defense-in-depth against
+    # corrupted datastore values that bypassed form validation (manual JSON edits,
+    # future migrations, plugins): a runaway multiplier could otherwise produce
+    # absurdly large max_tokens caps and exhaust local-endpoint memory.
+    multiplier = max(1, min(multiplier, 20))
+    return base_max_tokens * multiplier
 
 
 # ---------------------------------------------------------------------------
