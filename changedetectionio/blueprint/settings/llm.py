@@ -122,7 +122,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 except OSError as e:
                     logger.warning(f"Could not remove LLM summary cache file {f}: {e}")
         logger.info(f"LLM summary cache cleared: {count} file(s) removed")
-        flash(gettext("AI summary cache cleared (%(count)s file(s) removed).", count=count), 'notice')
+        flash(gettext("AI summary cache cleared ({} file(s) removed).").format(count), 'notice')
         return redirect(url_for('settings.settings_page') + '#ai')
 
     return llm_blueprint

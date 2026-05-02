@@ -75,7 +75,7 @@ class import_url_list(Importer):
                 self.remaining_data = []
             self.remaining_data.append(url)
 
-        flash(gettext("{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped.").format(count=good, duration=time.time() - now, skipped_count=len(self.remaining_data)))
+        flash(gettext("{count} Imported from list in {duration}s, {skipped_count} Skipped.").format(count=good, duration=f"{time.time() - now:.2f}", skipped_count=len(self.remaining_data)))
 
 
 class import_distill_io_json(Importer):
@@ -136,7 +136,7 @@ class import_distill_io_json(Importer):
                     self.new_uuids.append(new_uuid)
                     good += 1
 
-        flash(gettext("{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped.").format(count=len(self.new_uuids), duration=time.time() - now, skipped_count=len(self.remaining_data)))
+        flash(gettext("{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped.").format(count=len(self.new_uuids), duration=f"{time.time() - now:.2f}", skipped_count=len(self.remaining_data)))
 
 
 class import_xlsx_wachete(Importer):
@@ -212,7 +212,7 @@ class import_xlsx_wachete(Importer):
                 logger.error(e)
                 flash(gettext("Error processing row number {}, check all cell data types are correct, row was skipped.").format(row_id), 'error')
 
-        flash(gettext("{count} imported from Wachete .xlsx in {duration:.2f}s").format(count=len(self.new_uuids), duration=time.time() - now))
+        flash(gettext("{count} imported from Wachete .xlsx in {duration}s").format(count=len(self.new_uuids), duration=f"{time.time() - now:.2f}"))
 
 
 class import_xlsx_custom(Importer):
@@ -293,4 +293,4 @@ class import_xlsx_custom(Importer):
             logger.error(e)
             flash(gettext("Error processing row number {}, check all cell data types are correct, row was skipped.").format(row_i), 'error')
 
-        flash(gettext("{count} imported from custom .xlsx in {duration:.2f}s").format(count=len(self.new_uuids), duration=time.time() - now))
+        flash(gettext("{count} imported from custom .xlsx in {duration}s").format(count=len(self.new_uuids), duration=f"{time.time() - now:.2f}"))

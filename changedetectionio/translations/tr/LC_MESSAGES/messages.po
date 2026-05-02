@@ -165,8 +165,8 @@ msgstr "Listenizden ilk 5.000 URL içe aktarılıyor, geri kalanı daha sonra te
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} kayıt listeden {duration:.2f} saniyede içe aktarıldı, {skipped_count} atlandı."
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "{count} kayıt listeden {duration} saniyede içe aktarıldı, {skipped_count} atlandı."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -178,8 +178,8 @@ msgstr "JSON yapısı geçersiz görünüyor, bozuk olabilir mi?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} kayıt Distill.io'dan {duration:.2f} saniyede içe aktarıldı, {skipped_count} atlandı."
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "{count} kayıt Distill.io'dan {duration} saniyede içe aktarıldı, {skipped_count} atlandı."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -197,13 +197,13 @@ msgstr "Satır numarası {} işlenirken hata oluştu, tüm hücre veri tiplerini
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
-msgstr "{count} kayıt Wachete .xlsx dosyasından {duration:.2f} saniyede içe aktarıldı"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} kayıt Wachete .xlsx dosyasından {duration} saniyede içe aktarıldı"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from custom .xlsx in {duration:.2f}s"
-msgstr "{count} kayıt özel .xlsx dosyasından {duration:.2f} saniyede içe aktarıldı"
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} kayıt özel .xlsx dosyasından {duration} saniyede içe aktarıldı"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
@@ -372,8 +372,8 @@ msgid "AI / LLM configuration removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(count)s file(s) removed)."
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html

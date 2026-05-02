@@ -160,7 +160,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
@@ -173,7 +173,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
@@ -192,12 +192,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from custom .xlsx in {duration:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration}s"
 msgstr ""
 
 #: changedetectionio/blueprint/imports/templates/import.html
@@ -363,8 +363,8 @@ msgid "AI / LLM configuration removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(count)s file(s) removed)."
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html

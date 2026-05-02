@@ -162,8 +162,8 @@ msgstr "Es werden 5.000 der ersten URLs aus Ihrer Liste importiert, der Rest kan
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} aus Liste importiert in {duration:.2f}s, {skipped_count} übersprungen."
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "{count} aus Liste importiert in {duration}s, {skipped_count} übersprungen."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -175,8 +175,8 @@ msgstr "JSON-Struktur sieht ungültig aus, ist sie beschädigt?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} aus Distill.io importiert in {duration:.2f}s, {skipped_count} übersprungen."
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "{count} aus Distill.io importiert in {duration}s, {skipped_count} übersprungen."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -194,13 +194,13 @@ msgstr "Fehler bei der Verarbeitung von Zeile {}, prüfen Sie, ob alle Zelldaten
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
-msgstr "{count} aus Wachete .xlsx importiert in {duration:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} aus Wachete .xlsx importiert in {duration}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from custom .xlsx in {duration:.2f}s"
-msgstr "{count} aus benutzerdefinierter .xlsx importiert in {duration:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} aus benutzerdefinierter .xlsx importiert in {duration}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
@@ -371,8 +371,8 @@ msgid "AI / LLM configuration removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(count)s file(s) removed)."
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html

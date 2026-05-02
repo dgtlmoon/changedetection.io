@@ -160,8 +160,8 @@ msgstr "Importuje se prvních 5000 URL adres, další lze načíst opakovaným i
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} importováno ze seznamu za {duration:.2f}s, {skipped_count} přeskočeno."
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "{count} importováno ze seznamu za {duration}s, {skipped_count} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -173,8 +173,8 @@ msgstr "Strukturovaný JSON text je neplatný, byl poškozen?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} importováno z Distill.io za {duration:.2f}s, {skipped_count} přeskočeno."
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "{count} importováno z Distill.io za {duration}s, {skipped_count} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -192,13 +192,13 @@ msgstr "Chyba při zpracování řádku {}, zkontrolujte že všechny typy dat v
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
-msgstr "{count} importováno z Wachete .xlsx za {duration:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} importováno z Wachete .xlsx za {duration}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from custom .xlsx in {duration:.2f}s"
-msgstr "{count} importováno z vlastního .xlsx za {duration:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} importováno z vlastního .xlsx za {duration}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
@@ -365,8 +365,8 @@ msgid "AI / LLM configuration removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(count)s file(s) removed)."
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
