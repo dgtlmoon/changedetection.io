@@ -75,7 +75,7 @@ class import_url_list(Importer):
                 self.remaining_data = []
             self.remaining_data.append(url)
 
-        flash(gettext("{} Imported from list in {:.2f}s, {} Skipped.").format(good, time.time() - now, len(self.remaining_data)))
+        flash(gettext("{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped.").format(count=good, duration=time.time() - now, skipped_count=len(self.remaining_data)))
 
 
 class import_distill_io_json(Importer):
@@ -136,7 +136,7 @@ class import_distill_io_json(Importer):
                     self.new_uuids.append(new_uuid)
                     good += 1
 
-        flash(gettext("{} Imported from Distill.io in {:.2f}s, {} Skipped.").format(len(self.new_uuids), time.time() - now, len(self.remaining_data)))
+        flash(gettext("{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped.").format(count=len(self.new_uuids), duration=time.time() - now, skipped_count=len(self.remaining_data)))
 
 
 class import_xlsx_wachete(Importer):
@@ -212,7 +212,7 @@ class import_xlsx_wachete(Importer):
                 logger.error(e)
                 flash(gettext("Error processing row number {}, check all cell data types are correct, row was skipped.").format(row_id), 'error')
 
-        flash(gettext("{} imported from Wachete .xlsx in {:.2f}s").format(len(self.new_uuids), time.time() - now))
+        flash(gettext("{count} imported from Wachete .xlsx in {duration:.2f}s").format(count=len(self.new_uuids), duration=time.time() - now))
 
 
 class import_xlsx_custom(Importer):
@@ -293,4 +293,4 @@ class import_xlsx_custom(Importer):
             logger.error(e)
             flash(gettext("Error processing row number {}, check all cell data types are correct, row was skipped.").format(row_i), 'error')
 
-        flash(gettext("{} imported from custom .xlsx in {:.2f}s").format(len(self.new_uuids), time.time() - now))
+        flash(gettext("{count} imported from custom .xlsx in {duration:.2f}s").format(count=len(self.new_uuids), duration=time.time() - now))

@@ -160,8 +160,8 @@ msgstr "仅导入列表前 5,000 个 URL，其余可稍后继续导入。"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} Imported from list in {:.2f}s, {} Skipped."
-msgstr "从列表导入 {} 条，用时 {:.2f} 秒，跳过 {} 条。"
+msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
+msgstr "从列表导入 {count} 条，用时 {duration:.2f} 秒，跳过 {skipped_count} 条。"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -173,8 +173,8 @@ msgstr "JSON 结构无效，文件是否损坏？"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
-msgstr "从 Distill.io 导入 {} 条，用时 {:.2f} 秒，跳过 {} 条。"
+msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
+msgstr "从 Distill.io 导入 {count} 条，用时 {duration:.2f} 秒，跳过 {skipped_count} 条。"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -192,13 +192,13 @@ msgstr "处理第 {} 行时出错，请检查单元格数据类型是否正确�
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} imported from Wachete .xlsx in {:.2f}s"
-msgstr "从 Wachete .xlsx 导入 {} 条，用时 {:.2f} 秒"
+msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
+msgstr "从 Wachete .xlsx 导入 {count} 条，用时 {duration:.2f} 秒"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} imported from custom .xlsx in {:.2f}s"
-msgstr "从自定义 .xlsx 导入 {} 条，用时 {:.2f} 秒"
+msgid "{count} imported from custom .xlsx in {duration:.2f}s"
+msgstr "从自定义 .xlsx 导入 {count} 条，用时 {duration:.2f} 秒"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
@@ -315,8 +315,8 @@ msgstr "已移除密码保护。"
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
-msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
-msgstr "警告：工作线程数（{}）接近或超过可用CPU核心数（{}）"
+msgid "Warning: Worker count ({worker_count}) is close to or exceeds available CPU cores ({cpu_count})"
+msgstr "警告：工作线程数（{worker_count}）接近或超过可用CPU核心数（{cpu_count}）"
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
@@ -371,7 +371,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
 #, python-format
-msgid "AI summary cache cleared (%(n)s file(s) removed)."
+msgid "AI summary cache cleared (%(count)s file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -1073,7 +1073,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 #, python-format
-msgid "characters — currently enforcing: %(n)s"
+msgid "characters — currently enforcing: %(limit)s"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1429,8 +1429,8 @@ msgstr "已将 1 个监控项加入重新检查队列。"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
-msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "{}个监视器已加入队列({}个已在队列中)。"
+msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
+msgstr "{count}个监视器已加入队列({skipped_count}个已在队列中)。"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -2667,18 +2667,18 @@ msgstr "正则表达式“%s”无效。"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid XPath expression. (%s)"
-msgstr "“%s”不是有效的 XPath 表达式。（%s）"
+msgid "'%(expression)s' is not a valid XPath expression. (%(error)s)"
+msgstr "“%(expression)s”不是有效的 XPath 表达式。（%(error)s）"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid JSONPath expression. (%s)"
-msgstr "“%s”不是有效的 JSONPath 表达式。（%s）"
+msgid "'%(expression)s' is not a valid JSONPath expression. (%(error)s)"
+msgstr "“%(expression)s”不是有效的 JSONPath 表达式。（%(error)s）"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid jq expression. (%s)"
-msgstr "“%s”不是有效的 jq 表达式。（%s）"
+msgid "'%(expression)s' is not a valid jq expression. (%(error)s)"
+msgstr "“%(expression)s”不是有效的 jq 表达式。（%(error)s）"
 
 #: changedetectionio/forms.py
 msgid "Empty value not allowed."
@@ -3380,7 +3380,7 @@ msgstr "监控协议不允许或 URL 格式无效"
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
-msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
