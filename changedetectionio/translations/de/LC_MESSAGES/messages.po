@@ -162,8 +162,8 @@ msgstr "Es werden 5.000 der ersten URLs aus Ihrer Liste importiert, der Rest kan
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} aus Liste importiert in {duration:.2f}s, {skipped_count} übersprungen."
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "{count} aus Liste importiert in {duration}s, {skipped_count} übersprungen."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -175,8 +175,8 @@ msgstr "JSON-Struktur sieht ungültig aus, ist sie beschädigt?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} aus Distill.io importiert in {duration:.2f}s, {skipped_count} übersprungen."
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "{count} aus Distill.io importiert in {duration}s, {skipped_count} übersprungen."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -194,21 +194,17 @@ msgstr "Fehler bei der Verarbeitung von Zeile {}, prüfen Sie, ob alle Zelldaten
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
-msgstr "{count} aus Wachete .xlsx importiert in {duration:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} aus Wachete .xlsx importiert in {duration}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from custom .xlsx in {duration:.2f}s"
-msgstr "{count} aus benutzerdefinierter .xlsx importiert in {duration:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} aus benutzerdefinierter .xlsx importiert in {duration}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
 msgstr "URL-Liste"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Distill.io"
-msgstr "Distill.io"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
@@ -247,6 +243,7 @@ msgstr ""
 "Kopieren Sie Ihre Distill.io-Watch-„Export“-Datei und fügen Sie sie ein. Dabei sollte es sich um eine JSON-Datei "
 "handeln."
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ""
 "This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
@@ -374,8 +371,8 @@ msgid "AI / LLM configuration removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(count)s file(s) removed)."
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -398,14 +395,6 @@ msgstr "Globale Filter"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UI Options"
 msgstr "UI-Optionen"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "API"
-msgstr "API"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "RSS"
-msgstr "RSS"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Backups"
@@ -1229,6 +1218,7 @@ msgstr ""
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
 msgstr "Diese Einstellungen werden zu allen vorhandenen Überwachungskonfigurationen <strong><i>hinzugefügt</i></strong>."
@@ -1339,7 +1329,7 @@ msgid ""
 "watches will be removed from it.</p>"
 msgstr ""
 "<p>Möchten Sie wirklich alle Beobachtungen aus der Gruppe <strong>%(title)s</strong> entfernen?</p><p>Das Tag bleibt "
-"erhalten, aber die Beobachtungen werden daraus entfernt."
+"erhalten, aber die Beobachtungen werden daraus entfernt.</p>"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Unlink"
@@ -1960,6 +1950,7 @@ msgstr ""
 "Gut geeignet für Websites, auf denen nur Inhalte verschoben werden und Sie wissen möchten, wann NEUE Inhalte "
 "hinzugefügt werden. Vergleicht neue Zeilen mit dem gesamten Verlauf dieser Überwachung."
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr ""
@@ -2225,6 +2216,7 @@ msgstr ""
 "<p>Möchten Sie den Verlauf für die ausgewählten Elemente wirklich löschen?</p><p>Diese Aktion kann nicht rückgängig "
 "gemacht werden.</p>"
 
+#. Universally recognized; typically left as-is. dennis-ignore: W302
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "OK"
@@ -2238,10 +2230,10 @@ msgid "Delete Watches?"
 msgstr "Überwachungen löschen?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr ""
-"<p>Möchten Sie die ausgewählten Überwachungen wirklich löschen?</strong></p><p>Diese Aktion kann nicht rückgängig "
-"gemacht werden.</p>"
+"<p><strong>Möchten Sie die ausgewählten Überwachungen wirklich löschen?</strong></p><p>Diese Aktion kann nicht "
+"rückgängig gemacht werden.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
@@ -2740,10 +2732,6 @@ msgstr "Leerer Wert nicht zulässig."
 msgid "Invalid value."
 msgstr "Ungültiger Wert."
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
-msgid "URL"
-msgstr "URL"
-
 #: changedetectionio/forms.py
 msgid "Group tag"
 msgstr "Gruppe / Label"
@@ -2980,9 +2968,10 @@ msgstr "Passen Sie alle folgenden Punkte an"
 msgid "Match any of the following"
 msgstr "Entspricht einer der folgenden Bedingungen"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
-msgstr "Verwenden Sie Seite <Titel> in der Liste"
+msgstr "Verwenden Sie Seite <title> in der Liste"
 
 #: changedetectionio/forms.py
 msgid "Number of history items per watch to keep"
@@ -3079,9 +3068,10 @@ msgstr "Echtzeit-UI-Updates aktiviert"
 msgid "Favicons Enabled"
 msgstr "Favicons Aktiviert"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
-msgstr "Verwenden Sie die Seite <Titel> in der Übersichtsliste der Beobachtungen"
+msgstr "Verwenden Sie die Seite <title> in der Übersichtsliste der Beobachtungen"
 
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
@@ -3133,7 +3123,7 @@ msgstr "RSS-Inhaltsformat"
 
 #: changedetectionio/forms.py
 msgid "RSS <description> body built from"
-msgstr "RSS-<Beschreibung>-Körper erstellt aus"
+msgstr "RSS-<description>-Körper erstellt aus"
 
 #: changedetectionio/forms.py
 msgid "RSS \"System default\" template override"
@@ -3470,6 +3460,7 @@ msgstr ""
 msgid "The UUID of the watch."
 msgstr "Die UUID der Überwachung."
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""
@@ -3606,6 +3597,7 @@ msgstr "Mehr hier"
 msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr ""
@@ -3969,6 +3961,7 @@ msgstr ""
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
 msgstr ""

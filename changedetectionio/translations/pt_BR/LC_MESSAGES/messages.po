@@ -161,8 +161,8 @@ msgstr "Importando as primeiras 5.000 URLs da sua lista, o restante pode ser imp
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} Importados da lista em {duration:.2f}s, {skipped_count} Ignorados."
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "{count} Importados da lista em {duration}s, {skipped_count} Ignorados."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -174,8 +174,8 @@ msgstr "A estrutura do JSON parece inválida, ele está corrompido?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} Importados do Distill.io em {duration:.2f}s, {skipped_count} Ignorados."
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "{count} Importados do Distill.io em {duration}s, {skipped_count} Ignorados."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -193,21 +193,17 @@ msgstr "Erro ao processar a linha {}, verifique se os tipos de dados das célula
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
-msgstr "{count} importados do Wachete .xlsx em {duration:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} importados do Wachete .xlsx em {duration}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from custom .xlsx in {duration:.2f}s"
-msgstr "{count} importados do .xlsx personalizado em {duration:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} importados do .xlsx personalizado em {duration}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
 msgstr "Lista de URLs"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Distill.io"
-msgstr "Distill.io"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
@@ -242,6 +238,7 @@ msgstr "URLs que não passarem na validação permanecerão na caixa de texto."
 msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
 msgstr "Copie e cole seu arquivo de 'exportação' do Distill.io, que deve ser um arquivo JSON."
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ""
 "This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
@@ -371,8 +368,8 @@ msgid "AI / LLM configuration removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(count)s file(s) removed)."
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -395,14 +392,6 @@ msgstr "Filtros Globais"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UI Options"
 msgstr "Opções de Interface"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "API"
-msgstr "API"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "RSS"
-msgstr "RSS"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Backups"
@@ -1236,6 +1225,7 @@ msgstr ""
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
 msgstr "Estas configurações são <strong><i>adicionadas</i></strong> a quaisquer configurações de monitoramento existentes."
@@ -1959,6 +1949,7 @@ msgstr ""
 "Útil para sites que apenas movem o conteúdo de lugar. Se você quer saber quando um NOVO conteúdo é adicionado, isso "
 "compara novas linhas contra todo o histórico."
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr ""
@@ -2220,6 +2211,7 @@ msgstr "Limpar Históricos"
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
 msgstr "<p>Tem certeza que deseja limpar o histórico para os itens selecionados?</p><p>Esta ação não pode ser desfeita.</p>"
 
+#. Universally recognized; typically left as-is. dennis-ignore: W302
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "OK"
@@ -2233,8 +2225,10 @@ msgid "Delete Watches?"
 msgstr "Excluir Monitoramentos?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
-msgstr "<p>Tem certeza que deseja excluir os monitoramentos selecionados?</strong></p><p>Esta ação não pode ser desfeita.</p>"
+msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+msgstr ""
+"<p><strong>Tem certeza que deseja excluir os monitoramentos selecionados?</strong></p><p>Esta ação não pode ser "
+"desfeita.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
@@ -2731,10 +2725,6 @@ msgstr "Valor vazio não permitido."
 msgid "Invalid value."
 msgstr "Valor inválido."
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
-msgid "URL"
-msgstr "URL"
-
 #: changedetectionio/forms.py
 msgid "Group tag"
 msgstr "Tag de grupo"
@@ -2970,6 +2960,7 @@ msgstr "Corresponder a TODOS os seguintes"
 msgid "Match any of the following"
 msgstr "Corresponder a QUALQUER um dos seguintes"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "Usar <title> da página na lista"
@@ -3069,6 +3060,7 @@ msgstr "Atualizações de Interface em Tempo Real Ativadas"
 msgid "Favicons Enabled"
 msgstr "Favicons Ativados"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "Usar <title> da página na lista de visão geral"
@@ -3458,6 +3450,7 @@ msgstr "A URL que está sendo monitorada."
 msgid "The UUID of the watch."
 msgstr "O UUID do monitoramento."
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr "O título da página do monitoramento, usa <title> se não definido, ou a URL"
@@ -3596,6 +3589,7 @@ msgstr ""
 "Use as <a target=\"newwindow\" href=\"%(url)s\">URLs de Notificação AppRise</a> para enviar notificações para quase "
 "qualquer serviço!"
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<i>Por favor, leia a wiki dos serviços de notificação aqui para notas importantes de configuração</i>"
@@ -3957,6 +3951,7 @@ msgstr ""
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
 msgstr ""

@@ -160,8 +160,8 @@ msgstr "仅导入列表前 5,000 个 URL，其余可稍后继续导入。"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "从列表导入 {count} 条，用时 {duration:.2f} 秒，跳过 {skipped_count} 条。"
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "从列表导入 {count} 条，用时 {duration} 秒，跳过 {skipped_count} 条。"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -173,8 +173,8 @@ msgstr "JSON 结构无效，文件是否损坏？"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "从 Distill.io 导入 {count} 条，用时 {duration:.2f} 秒，跳过 {skipped_count} 条。"
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "从 Distill.io 导入 {count} 条，用时 {duration} 秒，跳过 {skipped_count} 条。"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -192,21 +192,17 @@ msgstr "处理第 {} 行时出错，请检查单元格数据类型是否正确�
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
-msgstr "从 Wachete .xlsx 导入 {count} 条，用时 {duration:.2f} 秒"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "从 Wachete .xlsx 导入 {count} 条，用时 {duration} 秒"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from custom .xlsx in {duration:.2f}s"
-msgstr "从自定义 .xlsx 导入 {count} 条，用时 {duration:.2f} 秒"
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "从自定义 .xlsx 导入 {count} 条，用时 {duration} 秒"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
 msgstr "URL 列表"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Distill.io"
-msgstr "Distill.io"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
@@ -242,6 +238,7 @@ msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON
 msgstr "复制并粘贴 Distill.io 监控的“导出”文件（JSON）。"
 
 # TN: CJK scripts degrade when italicized; emphasis is rendered with <strong> instead.
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ""
 "This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
@@ -370,8 +367,8 @@ msgid "AI / LLM configuration removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(count)s file(s) removed)."
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -394,14 +391,6 @@ msgstr "全局过滤器"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UI Options"
 msgstr "界面选项"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "API"
-msgstr "API"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "RSS"
-msgstr "RSS"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Backups"
@@ -1215,6 +1204,7 @@ msgstr ""
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
 msgstr "这些设置会<strong><i>应用</i></strong>到现有的所有监控项配置中。"
@@ -1920,6 +1910,7 @@ msgid ""
 msgstr "适合仅移动内容的网站，想知道新增内容时使用，会将新行与该监控项的全部历史进行比对。"
 
 # TN: CJK scripts degrade when italicized; reference is wrapped in “” instead.
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr "有助于减少因行顺序变化导致的变更，可结合下方的“检查唯一行”一起使用。"
@@ -2177,6 +2168,7 @@ msgstr "清除历史记录"
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
 msgstr "<p>确定要清除所选项的历史记录吗？</p><p>此操作不可撤销。</p>"
 
+#. Universally recognized; typically left as-is. dennis-ignore: W302
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "确定"
@@ -2190,8 +2182,8 @@ msgid "Delete Watches?"
 msgstr "删除监控项？"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
-msgstr "<p>确定要删除所选监控项吗？</p><p>此操作不可撤销。</p>"
+msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+msgstr "<p><strong>确定要删除所选监控项吗？</strong></p><p>此操作不可撤销。</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
@@ -2688,10 +2680,6 @@ msgstr "不允许为空。"
 msgid "Invalid value."
 msgstr "值无效。"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
-msgid "URL"
-msgstr "URL"
-
 #: changedetectionio/forms.py
 msgid "Group tag"
 msgstr "分组 / 标签"
@@ -2927,6 +2915,7 @@ msgstr "匹配以下全部"
 msgid "Match any of the following"
 msgstr "匹配以下任意"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "列表中使用页面 <title>"
@@ -3026,6 +3015,7 @@ msgstr "启用实时界面更新"
 msgid "Favicons Enabled"
 msgstr "启用站点图标"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "在监控概览列表中使用页面 <title>"
@@ -3092,7 +3082,7 @@ msgstr "移除密码"
 
 #: changedetectionio/forms.py
 msgid "Render anchor tag content"
-msgstr "渲染 <a> 标签内容"
+msgstr "渲染 a 标签内容"
 
 #: changedetectionio/forms.py
 msgid "Allow anonymous access to watch history page when password is enabled"
@@ -3415,6 +3405,7 @@ msgstr "被监控的 URL。"
 msgid "The UUID of the watch."
 msgstr "监视器的UUID。"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr "监控项的页面标题，未设置时使用 <title>，否则回退为 URL"
@@ -3552,6 +3543,7 @@ msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a
 msgstr "使用 <a target=\"newwindow\" href=\"%(url)s\">AppRise通知URL</a>，向几乎任何服务发送通知！"
 
 # TN: CJK scripts degrade when italicized; emphasis is rendered with <strong> instead.
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<strong>请阅读通知服务 Wiki 以了解重要配置说明</strong>"
@@ -3913,6 +3905,7 @@ msgstr ""
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
 msgstr ""

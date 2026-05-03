@@ -160,8 +160,8 @@ msgstr "Importuje se prvních 5000 URL adres, další lze načíst opakovaným i
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from list in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} importováno ze seznamu za {duration:.2f}s, {skipped_count} přeskočeno."
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "{count} importováno ze seznamu za {duration}s, {skipped_count} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -173,8 +173,8 @@ msgstr "Strukturovaný JSON text je neplatný, byl poškozen?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} Imported from Distill.io in {duration:.2f}s, {skipped_count} Skipped."
-msgstr "{count} importováno z Distill.io za {duration:.2f}s, {skipped_count} přeskočeno."
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "{count} importováno z Distill.io za {duration}s, {skipped_count} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -192,21 +192,17 @@ msgstr "Chyba při zpracování řádku {}, zkontrolujte že všechny typy dat v
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from Wachete .xlsx in {duration:.2f}s"
-msgstr "{count} importováno z Wachete .xlsx za {duration:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} importováno z Wachete .xlsx za {duration}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{count} imported from custom .xlsx in {duration:.2f}s"
-msgstr "{count} importováno z vlastního .xlsx za {duration:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} importováno z vlastního .xlsx za {duration}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
 msgstr "Seznam adres URL"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Distill.io"
-msgstr "Distill.io"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
@@ -241,6 +237,7 @@ msgstr "URL, které neprojdou validací, zůstanou v textové oblasti."
 msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
 msgstr "Nakopírujte a vložte exportovaný Distill.io soubor, měl by být ve formátu JSON."
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ""
 "This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
@@ -368,8 +365,8 @@ msgid "AI / LLM configuration removed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(count)s file(s) removed)."
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -392,14 +389,6 @@ msgstr "Globální filtry"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UI Options"
 msgstr "Možnosti uživatelského rozhraní"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "API"
-msgstr "API"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "RSS"
-msgstr "RSS"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Backups"
@@ -1213,6 +1202,7 @@ msgstr ""
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
 msgstr ""
@@ -1919,6 +1909,7 @@ msgid ""
 "lines against all history for this watch."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr ""
@@ -2176,6 +2167,7 @@ msgstr "Vymazat historie"
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
 msgstr "<p>Opravdu chcete vyčistit historii u vybraných položek?</p><p>Tuto akci nelze vzít zpět.</p>"
 
+#. Universally recognized; typically left as-is. dennis-ignore: W302
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "OK"
@@ -2189,8 +2181,8 @@ msgid "Delete Watches?"
 msgstr "Smazat sledování?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
-msgstr "<p>Opravdu chcete smazat vybraná sledování?</p><p>Tuto akci nelze vzít zpět.</p>"
+msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+msgstr "<p><strong>Opravdu chcete smazat vybraná sledování?</strong></p><p>Tuto akci nelze vzít zpět.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
@@ -2689,10 +2681,6 @@ msgstr "Prázdná hodnota není povolena."
 msgid "Invalid value."
 msgstr "Neplatná hodnota."
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
-msgid "URL"
-msgstr "URL"
-
 #: changedetectionio/forms.py
 msgid "Group tag"
 msgstr "Skupina / Značka"
@@ -2928,6 +2916,7 @@ msgstr "Spojit všechny následující položky"
 msgid "Match any of the following"
 msgstr "Přiřaďte kteroukoli z následujících možností"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "V seznamu použijte stránku <title>"
@@ -3027,6 +3016,7 @@ msgstr "Aktualizace UI v reálném čase"
 msgid "Favicons Enabled"
 msgstr "Povolit favikony"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "Použijte stránku <title> v přehledu sledování"
@@ -3416,6 +3406,7 @@ msgstr ""
 msgid "The UUID of the watch."
 msgstr "UUID monitoru."
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""
@@ -3552,6 +3543,7 @@ msgstr "Více zde"
 msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr ""
@@ -3913,6 +3905,7 @@ msgstr ""
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
 msgstr ""

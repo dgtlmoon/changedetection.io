@@ -728,7 +728,7 @@ class ValidateStartsWithRegex(object):
                 raise ValidationError(self.message or _l("Invalid value."))
 
 class quickWatchForm(Form):
-    url = StringField(_l('URL'), validators=[validateURL()])
+    url = StringField('URL', validators=[validateURL()])
     tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
@@ -843,6 +843,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     conditions_match_logic = RadioField(_l('Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
+    # dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
     use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
 
     history_snapshot_max_length = IntegerField(_l('Number of history items per watch to keep'), render_kw={"style": "width: 5em;"}, validators=[validators.Optional(), validators.NumberRange(min=2)])
@@ -991,6 +992,7 @@ class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField(_l("Open 'History' page in a new tab"), default=True, validators=[validators.Optional()])
     socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
+    # dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
 
 # datastore.data['settings']['application']..
