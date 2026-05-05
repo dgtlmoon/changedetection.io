@@ -635,3 +635,63 @@ def test_html_color_notifications(client, live_server, measure_memory_usage, dat
     _test_color_notifications(client, '{{diff}}',datastore_path=datastore_path)
     _test_color_notifications(client, '{{diff_full}}',datastore_path=datastore_path)
 
+
+def test_plaintext_watch_custom_html_in_notification_body_not_escaped(client, live_server, measure_memory_usage, datastore_path):
+    """
+    #4121 - When the watched URL returns text/plain content-type and the notification body
+    contains custom HTML (e.g. <a href="{{watch_url}}">), that HTML must NOT be HTML-escaped
+    in the output. Only the diff content (from the text/plain page) should be escaped.
+    """
+    set_original_response(datastore_path=datastore_path)
+
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt"))
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')
+
+    # Watch a URL that returns text/plain content-type
+    test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            # Custom HTML in notification body — these tags must NOT be escaped in the output
+            "application-notification_body": '<a href="{{watch_url}}">Watch Link</a> had changes\n\n{{diff}}',
+            "application-notification_format": "htmlcolor",
+            "application-notification_urls": test_notification_url,
+            "application-notification_title": "Change detected",
+        },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": ''},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+
+    wait_for_all_checks(client)
+    set_modified_response(datastore_path=datastore_path)
+
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+
+    wait_for_all_checks(client)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
+
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
+        x = f.read()
+
+    # The custom <a href="..."> from the notification template must NOT be HTML-escaped
+    assert '&lt;a href=' not in x, "Custom HTML <a> tag in notification body was incorrectly HTML-escaped"
+    assert '<a href=' in x, "Custom HTML <a> tag not found unescaped in notification output"
+
+    # The diff color spans must still be present (placemarkers correctly replaced with HTML spans)
+    assert '<span' in x, "Expected color <span> tags from htmlcolor format not found in notification"
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+

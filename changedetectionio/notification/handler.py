@@ -382,6 +382,19 @@ def process_notification(n_object: NotificationContextData, datastore):
         n_object['llm_summary'] = _llm_change_summary or (n_object.get('_llm_result') or {}).get('summary', '')
         n_object['llm_intent'] = n_object.get('_llm_intent', '')
 
+    # Re #3529: diff content from text/plain pages may contain raw '<' chars that break HTML emails.
+    # Escape only the diff variables before Jinja2 renders them into the template, so the user's
+    # own HTML in the notification body (e.g. <a href="{{watch_url}}">) is never touched.
+    # Diff placemarkers (e.g. @removed_PLACEMARKER_OPEN) contain no HTML chars so they survive
+    # html_escape and are still replaced with <span> tags by apply_service_tweaks later.
+    watch_mime_type = n_object.get('watch_mime_type')
+    if (watch_mime_type and 'text/' in watch_mime_type.lower() and 'html' not in watch_mime_type.lower()
+            and 'html' in requested_output_format):
+        from markupsafe import escape as html_escape
+        for key in [k for k in notification_parameters if k.startswith('diff') or k == 'raw_diff']:
+            if notification_parameters.get(key):
+                notification_parameters[key] = str(html_escape(str(notification_parameters[key])))
+
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:
 
@@ -398,13 +411,6 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             logger.info(f">> Process Notification: AppRise start notifying '{url}'")
             url = jinja_render(template_str=url, **notification_parameters)
-
-            # If it's a plaintext document, and they want HTML type email/alerts, so it needs to be escaped
-            watch_mime_type = n_object.get('watch_mime_type')
-            if watch_mime_type and 'text/' in watch_mime_type.lower() and not 'html' in watch_mime_type.lower():
-                if 'html' in requested_output_format:
-                    from markupsafe import escape
-                    n_body = str(escape(n_body))
 
             if 'html' in requested_output_format:
                 # Since the n_body is always some kind of text from the 'diff' engine, attempt to preserve whitespaces that get sent to the HTML output
