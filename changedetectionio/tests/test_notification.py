@@ -541,6 +541,39 @@ def test_single_send_test_notification_on_watch(client, live_server, measure_mem
         assert 'Current snapshot: Example text: example test' in x
     os.unlink(os.path.join(datastore_path, "notification.txt"))
 
+# Regression test for #4119 - sending a test notification with 'System default' format caused a crash
+def test_send_test_notification_with_system_default_format(client, live_server, measure_memory_usage, datastore_path):
+
+    set_original_response(datastore_path=datastore_path)
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt"))
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://') + "?status_code=204"
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # New watches default to USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH.
+    # The JS sends this value verbatim from the select; it must not crash.
+    res = client.post(
+        url_for("ui.ui_notification.ajax_callback_send_notification_test") + f"/{uuid}",
+        data={
+            "notification_urls": test_notification_url,
+            "notification_body": default_notification_body,
+            "notification_title": default_notification_title,
+            "notification_format": USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
+        },
+        follow_redirects=True
+    )
+
+    assert res.status_code != 400
+    assert res.status_code != 500
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+
 def _test_color_notifications(client, notification_body_token, datastore_path):
 
     set_original_response(datastore_path=datastore_path)

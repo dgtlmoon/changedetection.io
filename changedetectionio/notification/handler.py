@@ -65,6 +65,9 @@ def notification_format_align_with_apprise(n_format : str):
     :return:
     """
 
+    if not n_format:
+        return NotifyFormat.TEXT.value
+
     if n_format.startswith('html'):
         # Apprise only knows 'html' not 'htmlcolor' etc, which shouldnt matter here
         n_format = NotifyFormat.HTML.value
