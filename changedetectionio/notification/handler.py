@@ -391,7 +391,8 @@ def process_notification(n_object: NotificationContextData, datastore):
     if (watch_mime_type and 'text/' in watch_mime_type.lower() and 'html' not in watch_mime_type.lower()
             and 'html' in requested_output_format):
         from markupsafe import escape as html_escape
-        for key in [k for k in notification_parameters if k.startswith('diff') or k == 'raw_diff']:
+        _page_content_keys = {'raw_diff', 'current_snapshot', 'prev_snapshot', 'triggered_text'}
+        for key in [k for k in notification_parameters if k.startswith('diff') or k in _page_content_keys]:
             if notification_parameters.get(key):
                 notification_parameters[key] = str(html_escape(str(notification_parameters[key])))
 
