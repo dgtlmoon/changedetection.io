@@ -790,3 +790,79 @@ def test_html_watch_diff_content_escaped_in_html_notification(client, live_serve
         f"Diff content from text/html page was NOT escaped — tracking pixel reached HTML notification: {body!r}"
 
     client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+
+def test_source_url_diff_content_escaped_in_html_notification(client, live_server, measure_memory_usage, datastore_path):
+    """
+    GHSA-q8xq-qg4x-wphg — companion to the inscriptis test. `source:`-prefixed
+    URLs short-circuit the HTML→text step (processor.py:509-511) and store the
+    raw HTML body verbatim as the snapshot. That gives an attacker who controls
+    a watched page a *direct* injection path — no entity-encoding tricks needed,
+    any live `<a>` / `<img>` / `<script>` on the page lands straight into
+    current_snapshot / raw_diff. The escape pass must catch this too.
+    """
+    from .util import write_test_file_and_sync
+
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt"))
+
+    # Baseline: innocuous raw HTML.
+    baseline_html = "<html><body><p>nothing to see here</p></body></html>"
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), baseline_html)
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')
+    # `source:` prefix → raw HTML body is stored as-is in the snapshot (no inscriptis).
+    test_url = 'source:' + url_for('test_endpoint', _external=True, content_type='text/html')
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            "application-notification_body": 'Watch had changes:\n{{current_snapshot}}',
+            "application-notification_format": "html",
+            "application-notification_urls": test_notification_url,
+            "application-notification_title": "Change detected",
+        },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": ''},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+
+    wait_for_all_checks(client)
+
+    # Modified page contains LIVE HTML directly — no entity encoding. With source:
+    # this lands in the snapshot verbatim.
+    attacker_html = (
+        '<html><body>'
+        '<a href="https://attacker.example/payment">ACTION REQUIRED</a>'
+        '<img src="https://attacker.example/track" width="1" height="1">'
+        '</body></html>'
+    )
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), attacker_html)
+
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+
+    wait_for_all_checks(client)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
+
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
+        body = f.read()
+
+    # Sanity: snapshot really did carry the markup through. Escaped form must show up.
+    assert '&lt;a href=' in body or '&amp;lt;a href=' in body, \
+        f"Expected escaped attacker markup in notification body, got: {body!r}"
+
+    assert '<a href="https://attacker.example/payment"' not in body, \
+        f"source: URL raw HTML was NOT escaped — phishing link reached HTML notification: {body!r}"
+    assert '<img src="https://attacker.example/track"' not in body, \
+        f"source: URL raw HTML was NOT escaped — tracking pixel reached HTML notification: {body!r}"
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
