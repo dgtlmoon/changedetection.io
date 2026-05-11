@@ -414,7 +414,7 @@ def _jinja2_filter_sanitize_tag_class(tag_title):
     return sanitized if sanitized else 'tag'
 
 # Import login_optionally_required from auth_decorator
-from changedetectionio.auth_decorator import login_optionally_required
+from changedetectionio.auth_decorator import SHARED_DIFF_READ_ONLY_ENDPOINTS, login_optionally_required
 
 # When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
@@ -541,7 +541,7 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted
             elif request.endpoint and 'login' in request.endpoint:
                 return None
-            elif request.endpoint and 'diff_history_page' in request.endpoint and datastore.data['settings']['application'].get('shared_diff_access'):
+            elif request.endpoint in SHARED_DIFF_READ_ONLY_ENDPOINTS and datastore.data['settings']['application'].get('shared_diff_access'):
                 return None
             elif request.method in flask_login.config.EXEMPT_METHODS:
                 return None

@@ -34,6 +34,7 @@
             </tr>
             <tr>
                 <td><code>{{ '{{watch_title}}' }}</code></td>
+                {# TRANSLATORS: dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213 #}
                 <td>{{ _('The page title of the watch, uses <title> if not set, falls back to URL') }}</td>
             </tr>
             <tr>
@@ -159,7 +160,7 @@
                             <div class="pure-form-message-inline">
                                 <p>
                                 <strong>{{ _('Tip:') }}</strong> {{ _('Use <a target="newwindow" href="%(url)s">AppRise Notification URLs</a> for notification to just about any service!',
-                                    url='https://github.com/caronc/apprise')|safe }} <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{{ _('<i>Please read the notification services wiki here for important configuration notes</i>')|safe }}</a>.<br>
+                                    url='https://github.com/caronc/apprise')|safe }} <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}{{ _('<i>Please read the notification services wiki here for important configuration notes</i>')|safe }}</a>.<br>
 </p>
                                 <div data-target="#advanced-help-notifications" class="toggle-show pure-button button-tag button-xsmall">{{ _('Show advanced help and tips') }}</div>
                                 <ul style="display: none" id="advanced-help-notifications">

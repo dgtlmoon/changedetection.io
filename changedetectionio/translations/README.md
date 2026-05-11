@@ -223,6 +223,58 @@ Babel auto-discovers the new language on subsequent runs.
 
 ---
 
+## Dennis linter
+
+We use [mozilla/dennis](https://github.com/mozilla/dennis) to enforce technical correctness in `.po` and `.pot` files.
+See the [Table of Warnings and Errors](https://dennis.readthedocs.io/en/latest/linting.html#table-of-warnings-and-errors)
+for the full list of rules.
+
+### Running the linter locally
+
+To match the CI checks, run the following commands:
+
+```bash
+# Check for errors only (always enforced)
+dennis-cmd lint --errorsonly changedetectionio/translations/
+
+# Check for warnings (excluding W302 unchanged translations)
+dennis-cmd lint --excluderules=W302 changedetectionio/translations/
+```
+
+### Common problems and resolutions
+
+#### HTML tag mismatch (`W303`)
+
+The `W303` rule ensures that HTML tags in the `msgstr` match the `msgid`. This is crucial for catching broken markup (e.g., missing closing tags).
+
+##### Handling intentional deviations and false positives
+
+Some W303 warnings are intentional or result from upstream false positives.
+Use the `dennis-ignore: W303` comment in the source files (templates or Python code) within a `TRANSLATORS` comment to suppress these warnings.
+This ensures the ignore instruction is extracted into the `.po` files.
+
+- **CJK italic policy**: When replacing `<i>` with locale-conventional quotation marks, tags will no longer match.
+- **Upstream false positive**: Dennis misinterprets certain HTML tags (e.g., `<title>`) within `msgstr`. See https://github.com/mozilla/dennis/issues/213.
+
+**Examples in Jinja2 templates:**
+
+```jinja
+{# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}
+<p>{{ _('These settings are <strong><i>added</i></strong> to any existing watch configurations.')|safe }}</p>
+
+{# TRANSLATORS: dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213 #}
+<td>{{ _('The page title of the watch, uses <title> if not set, falls back to URL') }}</td>
+```
+
+**Example in Python source:**
+
+```python
+# dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
+use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list'))
+```
+
+---
+
 ## CI linter
 
 A GitHub Actions job (`lint-template-i18n`) checks for adjacent `{{ _(...) }}` calls on the same line

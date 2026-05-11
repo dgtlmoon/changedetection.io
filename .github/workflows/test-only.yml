@@ -46,13 +46,10 @@ jobs:
             exit 1
           fi
       - name: Lint .po files with dennis (warnings)
-        # W302 (unchanged) and W303 (html mismatch) are excluded due to
-        # high false-positive rate in this codebase:
-        # many msgstrs intentionally match msgid (units like "Mb", proper nouns),
-        # and many msgids contain literal "<title>"/"<description>" text that isn't actual HTML.
+        # W302 (unchanged) is excluded due to high false-positive rate in this codebase:
+        # many msgstrs intentionally match msgid (units like "AI", "LLM", and proper nouns).
         run: |
-          output=$(dennis-cmd lint \
-            --excluderules=W302,W303 \
+          output=$(dennis-cmd lint --excluderules=W302 \
             changedetectionio/translations/*/LC_MESSAGES/messages.po)
           echo "$output"
           warnings=$(echo "$output" | awk '/Total number of warnings:/ {print $NF; exit}')

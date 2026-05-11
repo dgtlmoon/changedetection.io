@@ -65,6 +65,9 @@ def notification_format_align_with_apprise(n_format : str):
     :return:
     """
 
+    if not n_format:
+        return NotifyFormat.TEXT.value
+
     if n_format.startswith('html'):
         # Apprise only knows 'html' not 'htmlcolor' etc, which shouldnt matter here
         n_format = NotifyFormat.HTML.value
@@ -379,6 +382,23 @@ def process_notification(n_object: NotificationContextData, datastore):
         n_object['llm_summary'] = _llm_change_summary or (n_object.get('_llm_result') or {}).get('summary', '')
         n_object['llm_intent'] = n_object.get('_llm_intent', '')
 
+    # Escape diff/snapshot variables before Jinja renders them into an HTML notification.
+    # GHSA-q8xq-qg4x-wphg: inscriptis decodes HTML entities when converting text/html
+    # pages to snapshot text, so a page that visibly displays "&lt;a href...&gt;" yields
+    # literal "<a href...>" in the snapshot — which would otherwise render as live
+    # markup in HTML emails / Telegram (parse_mode=html) / Discord embeds, letting a
+    # watched page inject phishing links into the operator's notification channel.
+    # Also covers #3529 — raw '<' chars from text/plain pages breaking HTML email layout.
+    # The operator's own template HTML (e.g. <a href="{{watch_url}}">) is outside the
+    # variable values so it stays untouched. Diff placemarkers contain no HTML chars,
+    # so they survive escape and are still replaced with <span> tags later.
+    if 'html' in requested_output_format:
+        from markupsafe import escape as html_escape
+        _page_content_keys = {'raw_diff', 'current_snapshot', 'prev_snapshot', 'triggered_text'}
+        for key in [k for k in notification_parameters if k.startswith('diff') or k in _page_content_keys]:
+            if notification_parameters.get(key):
+                notification_parameters[key] = str(html_escape(str(notification_parameters[key])))
+
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:
 
@@ -395,13 +415,6 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             logger.info(f">> Process Notification: AppRise start notifying '{url}'")
             url = jinja_render(template_str=url, **notification_parameters)
-
-            # If it's a plaintext document, and they want HTML type email/alerts, so it needs to be escaped
-            watch_mime_type = n_object.get('watch_mime_type')
-            if watch_mime_type and 'text/' in watch_mime_type.lower() and not 'html' in watch_mime_type.lower():
-                if 'html' in requested_output_format:
-                    from markupsafe import escape
-                    n_body = str(escape(n_body))
 
             if 'html' in requested_output_format:
                 # Since the n_body is always some kind of text from the 'diff' engine, attempt to preserve whitespaces that get sent to the HTML output

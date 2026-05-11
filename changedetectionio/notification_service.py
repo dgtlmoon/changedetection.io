@@ -29,7 +29,7 @@ def _check_cascading_vars(datastore, var_name, watch):
     v = watch.get(var_name)
     if v and not watch.get('notification_muted'):
         if var_name == 'notification_format' and v == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
-            return datastore.data['settings']['application'].get('notification_format')
+            return datastore.data['settings']['application'].get('notification_format') or default_notification_format
 
         return v
 
@@ -457,7 +457,7 @@ Thanks - Your omniscient changedetection.io installation.
             'notification_body': body,
             'notification_format': _check_cascading_vars(self.datastore, 'notification_format', watch),
         })
-        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
+        n_object['markup_text_links_to_html_links'] = (n_object.get('notification_format') or '').startswith('html')
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']
@@ -506,7 +506,7 @@ Thanks - Your omniscient changedetection.io installation.
             'notification_body': body,
             'notification_format': _check_cascading_vars(self.datastore, 'notification_format', watch),
         })
-        n_object['markup_text_links_to_html_links'] = n_object.get('notification_format').startswith('html')
+        n_object['markup_text_links_to_html_links'] = (n_object.get('notification_format') or '').startswith('html')
 
         if len(watch['notification_urls']):
             n_object['notification_urls'] = watch['notification_urls']
