@@ -1127,8 +1127,8 @@ msgid "Loading…"
 msgstr "불러오는 중..."
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No models returned — check your API key."
-msgstr "반환된 모델이 없습니다. API 키를 확인하세요."
+msgid "No models returned by the provider."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "— choose a model —"
@@ -3137,10 +3137,6 @@ msgstr "모델"
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/forms.py
 msgid "API Key"
 msgstr "API 키"
-
-#: changedetectionio/forms.py
-msgid "Leave blank to use LITELLM_API_KEY env var"
-msgstr "LITELLM_API_KEY 환경 변수를 사용하려면 비워 두세요"
 
 #: changedetectionio/forms.py
 msgid "API Base URL"

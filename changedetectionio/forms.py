@@ -1106,7 +1106,6 @@ class globalSettingsLLMForm(Form):
         _l('API Key'),
         validators=[validators.Optional()],
         render_kw={
-            "placeholder": _l('Leave blank to use LITELLM_API_KEY env var'),
             "autocomplete": "off",
             "style": "width: 24em;",
         },

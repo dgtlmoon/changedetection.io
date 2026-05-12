@@ -1,4 +1,7 @@
+import json
+import logging
 import os
+import re
 
 from flask import Blueprint, jsonify, redirect, url_for, flash
 from flask_babel import gettext
@@ -6,6 +9,44 @@ from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
+
+
+class _LiteLLMWarningCapture(logging.Handler):
+    """Capture warnings emitted on the 'LiteLLM' stdlib logger during a single call.
+
+    litellm.get_valid_models() catches HTTP/auth errors internally, logs a warning,
+    and returns []. Without capturing that warning we can't tell the user *why*
+    no models came back (bad key vs. offline vs. genuinely empty model list).
+    """
+    def __init__(self):
+        super().__init__(level=logging.WARNING)
+        self.messages = []
+
+    def emit(self, record):
+        try:
+            self.messages.append(record.getMessage())
+        except Exception:
+            pass
+
+
+def _humanize_litellm_error(raw: str) -> str:
+    # litellm warnings typically look like:
+    #   "Error getting valid models: Failed to get models: { 'error': { 'message': '...' } }"
+    # Pull the inner provider message when present; otherwise trim the boilerplate.
+    if not raw:
+        return raw
+    m = re.search(r'\{.*\}', raw, re.DOTALL)
+    if m:
+        try:
+            body = json.loads(m.group(0))
+            inner = (body.get('error') or {}).get('message') or body.get('message')
+            if inner:
+                return inner
+        except Exception:
+            pass
+    cleaned = re.sub(r'^Error getting valid models:\s*', '', raw)
+    cleaned = re.sub(r'^Failed to get models:\s*', '', cleaned).strip()
+    return cleaned[:500]
 
 
 def construct_llm_blueprint(datastore: ChangeDetectionStore):
@@ -41,13 +82,27 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         try:
             import litellm
             logger.debug(f"LLM model list: calling litellm.get_valid_models provider={provider!r} (litellm={litellm_provider!r}) api_base={api_base!r}")
-            raw = litellm.get_valid_models(
-                check_provider_endpoint=True,
-                custom_llm_provider=litellm_provider,
-                api_key=api_key or None,
-                api_base=api_base or None,
-            ) or []
+
+            capture = _LiteLLMWarningCapture()
+            litellm_logger = logging.getLogger('LiteLLM')
+            litellm_logger.addHandler(capture)
+            try:
+                raw = litellm.get_valid_models(
+                    check_provider_endpoint=True,
+                    custom_llm_provider=litellm_provider,
+                    api_key=api_key or None,
+                    api_base=api_base or None,
+                ) or []
+            finally:
+                litellm_logger.removeHandler(capture)
+
             models = sorted({(m if m.startswith(prefix) else prefix + m) for m in raw})
+
+            if not models and capture.messages:
+                err = _humanize_litellm_error(capture.messages[-1])
+                logger.debug(f"LLM model list: 0 models, surfacing captured litellm warning: {err!r}")
+                return jsonify({'models': [], 'error': err}), 400
+
             logger.debug(f"LLM model list: got {len(models)} models for provider={provider!r}")
             return jsonify({'models': models, 'error': None})
         except Exception as e:

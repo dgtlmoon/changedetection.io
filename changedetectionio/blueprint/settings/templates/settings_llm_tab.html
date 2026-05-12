@@ -469,7 +469,7 @@
 
       if (!data.models || data.models.length === 0) {
         statusEl.style.color = '#e67e22';
-        statusEl.textContent = '{{ _("No models returned — check your API key.") }}';
+        statusEl.textContent = '{{ _("No models returned by the provider.") }}';
         selGroup.style.display = 'none';
         return;
       }

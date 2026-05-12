@@ -1119,7 +1119,7 @@ msgid "Loading…"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No models returned — check your API key."
+msgid "No models returned by the provider."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -3126,10 +3126,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/forms.py
 msgid "API Key"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Leave blank to use LITELLM_API_KEY env var"
 msgstr ""
 
 #: changedetectionio/forms.py
