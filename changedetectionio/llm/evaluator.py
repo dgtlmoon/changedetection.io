@@ -16,6 +16,7 @@ Environment variable overrides (take priority over datastore settings):
 
 import hashlib
 import os
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from loguru import logger
 
@@ -414,6 +415,58 @@ def compute_summary_cache_key(diff_text: str, prompt: str) -> str:
     h.update(b'\x00')
     h.update(prompt.encode('utf-8', errors='replace'))
     return h.hexdigest()[:16]
+
+
+@dataclass(frozen=True)
+class DiffPrefs:
+    """
+    User-facing diff display preferences. Part of the LLM summary cache key so
+    that toggling a preference produces a fresh summary.
+
+    Field defaults are the single source of truth — the UI query-arg defaults in
+    diff.py's from_request_args() and the worker pre-cache's bare DiffPrefs()
+    both rely on these.
+    """
+    all_changes:       bool = False
+    ignore_whitespace: bool = False
+    show_removed:      bool = True
+    show_added:        bool = True
+
+    @classmethod
+    def from_request_args(cls, args) -> 'DiffPrefs':
+        """Parse from a Flask request.args (or any .get(key, default)-shaped mapping)."""
+        return cls(
+            all_changes       = args.get('all_changes', '0') == '1',
+            ignore_whitespace = args.get('ignore_whitespace', '0') == '1',
+            show_removed      = args.get('removed', '1') == '1',
+            show_added        = args.get('added', '1') == '1',
+        )
+
+    def cache_key_suffix(self) -> str:
+        return (
+            f'\x00prefs:all={int(self.all_changes)},ws={int(self.ignore_whitespace)}'
+            f',rm={int(self.show_removed)},add={int(self.show_added)}'
+        )
+
+
+def build_summary_cache_prompt(effective_prompt: str, max_summary_tokens: int,
+                                prefs: DiffPrefs = None) -> str:
+    """
+    Compose the full cache-key string passed to save/get_llm_diff_summary.
+
+    Default prefs are DiffPrefs() — must match the UI's query-arg defaults so a
+    worker-side pre-cache is hit by an unmodified UI request. Same helper must
+    be used by both the worker pre-cache write and the UI diff route read,
+    otherwise the prompt hashes diverge and the cache file isn't found.
+    """
+    if prefs is None:
+        prefs = DiffPrefs()
+    return (
+        effective_prompt
+        + prefs.cache_key_suffix()
+        + f'\x00sys:{build_change_summary_system_prompt()}'
+        + f'\x00max_tokens:{max_summary_tokens}'
+    )
 
 
 def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') -> str:

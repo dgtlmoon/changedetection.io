@@ -1024,8 +1024,10 @@ class model(EntityPersistenceMixin, watch_base):
         prompt_hash = self._llm_summary_prompt_hash(prompt)
         fname = os.path.join(self.data_dir, f'change-summary-{from_version}-to-{to_version}-{prompt_hash}.txt')
         if not os.path.isfile(fname):
+            logger.debug(f"LLM cached diff summary '{fname}' NOT found")
             return ''
         with open(fname, 'r', encoding='utf-8') as f:
+            logger.debug(f"LLM cached diff summary '{fname}' FOUND")
             return f.read().strip()
 
     def save_llm_diff_summary(self, summary: str, from_version, to_version, prompt: str = ''):

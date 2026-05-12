@@ -478,22 +478,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                         datastore.update_watch(uuid=uuid, update_obj=update_obj)
 
-                        # Save AI summary file now that the new snapshot has been committed
-                        # and its version timestamp is the last key in history
-                        if update_obj.get('_llm_change_summary') and _llm_from_version:
-                            try:
-                                from changedetectionio.llm.evaluator import get_effective_summary_prompt
-                                _llm_to_version = list(watch.history.keys())[-1]
-                                _llm_prompt = get_effective_summary_prompt(watch, datastore)
-                                watch.save_llm_diff_summary(
-                                    update_obj['_llm_change_summary'],
-                                    _llm_from_version,
-                                    _llm_to_version,
-                                    prompt=_llm_prompt,
-                                )
-                            except Exception as _fe:
-                                logger.warning(f"Could not write change-summary file for {uuid}: {_fe}")
-
                         if changed_detected or not watch.history_n:
                             if update_handler.screenshot:
                                 watch.save_screenshot(screenshot=update_handler.screenshot)
@@ -518,6 +502,31 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             watch.save_history_blob(contents=contents,
                                                     timestamp=int(fetch_start_time),
                                                     snapshot_id=update_obj.get('previous_md5', 'none'))
+
+                            # Save AI summary file now that the new snapshot is committed —
+                            # watch.history.keys()[-1] now reflects the just-saved version,
+                            # so the cache filename matches what the UI will later look up.
+                            # Cache key must use build_summary_cache_prompt() with UI defaults so
+                            # the worker write and the UI read hash to the same prompt_hash.
+                            if update_obj.get('_llm_change_summary') and _llm_from_version:
+                                try:
+                                    from changedetectionio.llm.evaluator import (
+                                        get_effective_summary_prompt, build_summary_cache_prompt,
+                                    )
+                                    _llm_to_version = list(watch.history.keys())[-1]
+                                    _llm_max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
+                                    _llm_cache_prompt = build_summary_cache_prompt(
+                                        effective_prompt=get_effective_summary_prompt(watch, datastore),
+                                        max_summary_tokens=_llm_max_summary_tokens,
+                                    )
+                                    watch.save_llm_diff_summary(
+                                        update_obj['_llm_change_summary'],
+                                        _llm_from_version,
+                                        _llm_to_version,
+                                        prompt=_llm_cache_prompt,
+                                    )
+                                except Exception as _fe:
+                                    logger.warning(f"Could not write change-summary file for {uuid}: {_fe}")
 
                             empty_pages_are_a_change = datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
                             if update_handler.fetcher.content or (not update_handler.fetcher.content and empty_pages_are_a_change):
