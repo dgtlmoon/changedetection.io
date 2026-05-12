@@ -9,8 +9,15 @@ from changedetectionio.pluggy_interface import apply_update_handler_alter, apply
 
 import asyncio
 import os
+import re
 import sys
 import time
+
+# Allow alphanumerics, space, and a small set of punctuation that appears in legitimate
+# status strings ("Querying AI/LLM (intent)..", "Fetching page.."). Anything that could
+# be HTML-active (<, >, &, ", ', =, ;, {, }, `, \) is stripped.
+_MINITEXT_STATUS_SAFE_RE = re.compile(r'[^A-Za-z0-9 ().,/:\-]')
+_MINITEXT_STATUS_MAX_LEN = 80
 
 from loguru import logger
 
@@ -19,6 +26,22 @@ from loguru import logger
 
 IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 DEFER_SLEEP_TIME_ALREADY_QUEUED = 0.3 if IN_PYTEST else 10.0
+
+
+def set_watch_minitext_status(watch, status):
+    """
+    Set a transient status line for a watch (e.g. "Fetching page..", "Querying AI/LLM..").
+
+    Writes to watch['__check_status'] so a client reloading the page can render the
+    last known status, and fires the realtime signal so already-connected clients
+    update live. __-prefixed key is filtered from disk by Watch._get_commit_data().
+
+    Status is sanitized to alphanumerics, space, and safe punctuation only.
+    """
+    safe_status = _MINITEXT_STATUS_SAFE_RE.sub('', str(status))[:_MINITEXT_STATUS_MAX_LEN]
+    watch['__check_status'] = safe_status
+    signal('watch_small_status_comment').send(watch_uuid=watch['uuid'], status=safe_status)
+
 
 async def async_update_worker(worker_id, q, notification_q, app, datastore, executor=None):
     """
@@ -159,8 +182,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
 
-                    update_signal = signal('watch_small_status_comment')
-                    update_signal.send(watch_uuid=uuid, status="Fetching page..")
+                    set_watch_minitext_status(watch, "Fetching page..")
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
@@ -446,6 +468,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                     # Step 1: AI Change Intent — may suppress notification
                                     _llm_intent, _llm_intent_source = resolve_intent(watch, datastore)
                                     if _llm_intent:
+                                        set_watch_minitext_status(watch, "AI/LLM (rules)..")
                                         _llm_result = await loop.run_in_executor(
                                             executor,
                                             lambda diff=_diff_text, snap=contents: evaluate_change(
@@ -465,6 +488,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                                     # Step 2: AI Change Summary — runs for any LLM-configured watch with a change
                                     if changed_detected:
+                                        set_watch_minitext_status(watch, "AI/LLM (summary)..")
                                         _change_summary = await loop.run_in_executor(
                                             executor,
                                             lambda diff=_diff_text, snap=contents: summarise_change(
@@ -669,6 +693,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 finally:
                     # Send completion signal - retrieve by name to ensure thread-safe access
                     if watch:
+                        # Clear transient in-memory status — check is done
+                        watch.pop('__check_status', None)
                         watch_check_update = signal('watch_check_update')
                         watch_check_update.send(watch_uuid=watch['uuid'])
 

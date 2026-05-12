@@ -356,7 +356,7 @@ window.watchOverviewI18n = {
             {#last_checked becomes fetch-start-time#}
                 <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ _('Last Checked') }}">
                     <div class="spinner-wrapper" style="display:none;" >
-                        <span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span>
+                        <span class="spinner"></span><span class="status-text">&nbsp;{{ watch['__check_status'] or _('Checking now') }}</span>
                     </div>
                     <span class="innertext">{{watch|format_last_checked_time|safe}}</span>
                 </td>
