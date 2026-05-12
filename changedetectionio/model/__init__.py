@@ -335,6 +335,13 @@ class watch_base(dict):
         if self.__watch_was_edited:
             return  # Already marked as edited
 
+        # __-prefixed keys are transient in-memory state (e.g. __check_status set by
+        # set_watch_minitext_status). They never persist to disk and must not trigger
+        # the edited flag — otherwise just observing a check in progress would force
+        # the next run to bypass the unchanged-content skip.
+        if isinstance(key, str) and key.startswith('__'):
+            return
+
         # Import from shared schema utilities (no circular dependency)
         from .schema_utils import get_readonly_watch_fields
         readonly_fields = get_readonly_watch_fields()

@@ -49,6 +49,9 @@ def completion(model: str, messages: list, api_key: str = None,
 
     _retryable = (litellm.Timeout, litellm.APIConnectionError)
 
+    logger.trace("Sending payload to LLM.. ")
+    logger.trace(messages)
+
     for attempt in range(1, DEFAULT_RETRIES + 1):
         try:
             response = litellm.completion(**kwargs)
