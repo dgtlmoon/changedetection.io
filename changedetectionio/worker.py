@@ -539,9 +539,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                     )
                                     _llm_to_version = list(watch.history.keys())[-1]
                                     _llm_max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
+                                    _llm_model = (datastore.data['settings']['application'].get('llm') or {}).get('model', '')
                                     _llm_cache_prompt = build_summary_cache_prompt(
                                         effective_prompt=get_effective_summary_prompt(watch, datastore),
                                         max_summary_tokens=_llm_max_summary_tokens,
+                                        model=_llm_model,
                                     )
                                     watch.save_llm_diff_summary(
                                         update_obj['_llm_change_summary'],

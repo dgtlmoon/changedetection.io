@@ -1125,11 +1125,14 @@ class globalSettingsLLMForm(Form):
         validators=[validators.Optional()],
         default='',
     )
-    # Multiplier applied to LLM max_tokens caps when provider_kind == 'openai_compatible'.
-    # Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought into
+    # Multiplier applied to LLM max_tokens caps when provider_kind is 'ollama' or
+    # 'openai_compatible' — endpoints that commonly serve reasoning models (Qwen3,
+    # DeepSeek-R1, Gemma 3, etc.) which emit chain-of-thought into
     # message.reasoning_content before the final answer lands in message.content.
-    # Local self-hosted models cost no per-token money, so giving them headroom is cheap;
-    # cloud providers stay on the original tight caps so existing users see no cost change.
+    # Cloud providers with non-reasoning defaults (OpenAI, Anthropic, Gemini,
+    # OpenRouter) stay on the original tight caps so existing users see no
+    # behavior or cost change. Users on paid Ollama / openai_compatible endpoints
+    # who care about cost can dial this down to 1x.
     llm_local_token_multiplier = IntegerField(
         _l('Token multiplier for local reasoning models'),
         validators=[validators.Optional(), validators.NumberRange(min=1, max=20)],

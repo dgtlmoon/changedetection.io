@@ -218,9 +218,11 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
             # Must match the cache_prompt the worker writes and the UI ajax route reads —
             # using UI default diff prefs so the initial render finds the worker's pre-cache.
             _max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
+            _llm_model = (datastore.data['settings']['application'].get('llm') or {}).get('model', '')
             _cache_prompt = build_summary_cache_prompt(
                 effective_prompt=_prompt,
                 max_summary_tokens=_max_summary_tokens,
+                model=_llm_model,
             )
             llm_diff_summary = watch.get_llm_diff_summary(from_version, to_version, prompt=_cache_prompt)
         except Exception as e:

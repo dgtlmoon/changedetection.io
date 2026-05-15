@@ -270,12 +270,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             LLMInputTooLargeError,
         )
 
-        # Diff-pref flags + system prompt are part of the cache key so prompt changes bust the cache.
+        # Diff-pref flags + system prompt + active model are part of the cache key
+        # so prompt or model changes bust the cache.
         _max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
+        _llm_model = (datastore.data['settings']['application'].get('llm') or {}).get('model', '')
         cache_prompt = build_summary_cache_prompt(
             effective_prompt=get_effective_summary_prompt(watch, datastore),
             max_summary_tokens=_max_summary_tokens,
             prefs=prefs,
+            model=_llm_model,
         )
 
         # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)

@@ -113,23 +113,43 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @llm_blueprint.route("/test", methods=['GET'])
     @login_optionally_required
     def llm_test():
+        from flask import request
         from changedetectionio.llm.client import completion
 
-        llm_cfg = datastore.data['settings']['application'].get('llm') or {}
-        model    = llm_cfg.get('model', '').strip()
-        api_base = llm_cfg.get('api_base', '') or ''
+        # Pull stored config as the fallback, then override with anything the
+        # form-driven JS sent as query params. Lets users test config changes
+        # without first hitting Save (matching how /settings/llm/models works).
+        stored = datastore.data['settings']['application'].get('llm') or {}
+        llm_cfg = {
+            'model':                   (request.args.get('model')                   or stored.get('model', '')).strip(),
+            'api_key':                 (request.args.get('api_key')                 or stored.get('api_key', '')).strip(),
+            'api_base':                (request.args.get('api_base')                or stored.get('api_base', '')).strip(),
+            'provider_kind':           (request.args.get('provider_kind')           or stored.get('provider_kind', '')).strip(),
+            'local_token_multiplier':   request.args.get('local_token_multiplier')  or stored.get('local_token_multiplier'),
+        }
+        model    = llm_cfg['model']
+        api_base = llm_cfg['api_base']
 
-        logger.debug(f"LLM connection test requested: model={model!r} api_base={api_base!r}")
+        logger.debug(
+            f"LLM connection test requested: model={model!r} api_base={api_base!r} "
+            f"provider_kind={llm_cfg['provider_kind']!r} "
+            f"source={'form' if request.args.get('model') else 'datastore'}"
+        )
 
         if not model:
-            logger.error("LLM connection test failed: no model configured in datastore")
+            logger.error("LLM connection test failed: no model configured")
             return jsonify({'ok': False, 'error': 'No model configured.'}), 400
 
         try:
             logger.debug(f"LLM connection test: sending test prompt to model={model!r}")
             # Reuse the same multiplier path the production calls use, so cloud providers
             # stay on a small base cap (matching upstream's pre-existing behavior) and only
-            # 'openai_compatible' endpoints opt into the reasoning-friendly headroom.
+            # reasoning-capable endpoints (Ollama, openai_compatible) opt into the extra
+            # headroom needed for chain-of-thought to complete.
+            # Timeout: omit the override so the test inherits DEFAULT_TIMEOUT (60s, tunable
+            # via LLM_TIMEOUT). A shorter test-only timeout falsely fails on cold-starting
+            # cloud reasoning models (e.g. ollama.com hosting qwen3.5:397b takes ~60s on
+            # first hit) even though the same call succeeds in production.
             from changedetectionio.llm.evaluator import apply_local_token_multiplier
             text, total_tokens, input_tokens, output_tokens = completion(
                 model=model,
@@ -137,7 +157,6 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                     'Respond with just the word: ready'}],
                 api_key=llm_cfg.get('api_key') or None,
                 api_base=api_base or None,
-                timeout=30,
                 max_tokens=apply_local_token_multiplier(200, llm_cfg),
             )
             reply = text.strip()

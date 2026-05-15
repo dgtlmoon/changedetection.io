@@ -123,14 +123,15 @@
   </div>
 
   {# Hidden field carrying the dropdown selection so the backend knows when to apply
-     reasoning-friendly token caps (only for self-hosted OpenAI-compatible endpoints). #}
+     reasoning-friendly token caps (Ollama and OpenAI-compatible endpoints, which commonly
+     serve reasoning models that need headroom for chain-of-thought to complete). #}
   {{ form.llm.form.llm_provider_kind() }}
 
   <div class="pure-control-group" id="llm-local-advanced-group" style="display:none">
     <label for="{{ form.llm.form.llm_local_token_multiplier.id }}">{{ form.llm.form.llm_local_token_multiplier.label.text }}</label>
     {{ form.llm.form.llm_local_token_multiplier() }}
     <span class="pure-form-message-inline">
-      {{ _('Local reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it if responses come back truncated, lower it if you want tighter limits. Only applied to self-hosted OpenAI-compatible endpoints — cloud providers (OpenAI, Anthropic, Gemini) keep their original tight caps.', default='5x') | safe }}
+      {{ _('Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their original tight caps.', default='5x') | safe }}
     </span>
   </div>
 
@@ -417,13 +418,14 @@
     }
 
     // Persist the dropdown selection so the backend can branch on provider kind
-    // (currently only 'openai_compatible' triggers the local-multiplier code path).
+    // (self-hosted endpoints — 'ollama' and 'openai_compatible' — trigger the
+    // local-multiplier code path; cloud providers do not).
     if (kindField) kindField.value = provider || '';
 
-    // Show the local-endpoint advanced settings (token multiplier) only for the
-    // OpenAI-compatible self-hosted option. Cloud providers and Ollama get the
-    // original tight caps and don't see this section at all.
-    if (localAdvGrp) localAdvGrp.style.display = (provider === 'openai_compatible') ? '' : 'none';
+    // Show the local-endpoint advanced settings (token multiplier) for self-hosted
+    // endpoints. Cloud providers get the original tight caps and don't see this
+    // section at all.
+    if (localAdvGrp) localAdvGrp.style.display = (provider === 'ollama' || provider === 'openai_compatible') ? '' : 'none';
 
     hint.textContent = KEY_HINTS[provider] || '';
     modelSelGrp.style.display = 'none';
@@ -502,8 +504,23 @@
     btn.textContent = '⏳ {{ _("Testing…") }}';
     result.style.display = 'none';
 
+    // Send the form's current values so the user doesn't have to hit Save before
+    // testing a config change. Endpoint falls back to the stored datastore values
+    // for any field we don't send.
+    const params = new URLSearchParams();
+    const model   = (document.querySelector('[name="llm-llm_model"]')    || {}).value || '';
+    const apiKey  = (document.querySelector('[name="llm-llm_api_key"]')  || {}).value || '';
+    const apiBase = (document.querySelector('[name="llm-llm_api_base"]') || {}).value || '';
+    const kind    = (document.querySelector('[name="llm-llm_provider_kind"]') || {}).value || '';
+    const mult    = (document.querySelector('[name="llm-llm_local_token_multiplier"]') || {}).value || '';
+    if (model.trim())   params.set('model',    model.trim());
+    if (apiKey.trim())  params.set('api_key',  apiKey.trim());
+    if (apiBase.trim()) params.set('api_base', apiBase.trim());
+    if (kind.trim())    params.set('provider_kind', kind.trim());
+    if (mult.trim())    params.set('local_token_multiplier', mult.trim());
+
     try {
-      const resp = await fetch('{{ url_for("settings.llm.llm_test") }}');
+      const resp = await fetch('{{ url_for("settings.llm.llm_test") }}?' + params);
       const data = await resp.json();
       if (data.ok) {
         result.style.cssText = 'display:block; background:rgba(39,174,96,0.08); border:1px solid rgba(39,174,96,0.3); border-radius:5px; padding:0.6em 0.85em; font-size:0.88em; line-height:1.45;';
@@ -519,7 +536,7 @@
       result.innerHTML = '<span style="color:#c0392b; font-weight:600;">&#10007; {{ _("Request failed") }}</span>: ' + e.message.replace(/</g,'&lt;');
     } finally {
       btn.disabled = false;
-      btn.textContent = '&#9654; {{ _("Test connection") }}';
+      btn.textContent = '▶ {{ _("Test connection") }}';
     }
   };
 
