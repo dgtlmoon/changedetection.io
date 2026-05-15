@@ -12,7 +12,7 @@ from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-from . import validate_openapi_request, get_readonly_watch_fields
+from . import validate_openapi_request, get_readonly_watch_fields, strip_internal_api_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 
@@ -126,7 +126,8 @@ class Watch(Resource):
         watch['processor_config_restock_diff'] = restock_config
         watch['processor_config_restock_diff_source'] = restock_source
 
-        return watch
+        # Never expose `__`-prefixed transient/internal fields (e.g. __check_status)
+        return strip_internal_api_fields(watch)
 
     @auth.check_token
     @validate_openapi_request('deleteWatch')
@@ -187,8 +188,10 @@ class Watch(Resource):
         # Handle processor-config-* fields separately (save to JSON, not datastore)
         from changedetectionio import processors
 
-        # Make a mutable copy of request.json for modification
-        json_data = dict(request.json)
+        # Make a mutable copy of request.json for modification.
+        # Silently discard `__`-prefixed transient/internal keys — they are not part of the
+        # public schema and must never be writable (e.g. clients that round-trip GET → PUT).
+        json_data = strip_internal_api_fields(dict(request.json))
 
         # Extract and remove processor config fields from json_data
         processor_config_data = processors.extract_processor_config_from_form_data(json_data)
@@ -443,7 +446,8 @@ class CreateWatch(Resource):
     def post(self):
         """Create a single watch."""
 
-        json_data = request.get_json()
+        # Silently discard `__`-prefixed transient/internal keys (not part of the public schema).
+        json_data = strip_internal_api_fields(request.get_json())
         url = json_data['url'].strip()
 
         if not is_safe_valid_url(url):

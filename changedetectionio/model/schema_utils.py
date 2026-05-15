@@ -8,6 +8,35 @@ Shared by both the model layer and API layer to avoid circular dependencies.
 import functools
 
 
+# Watch fields written by workers/processors that are NOT part of the public OpenAPI spec.
+#
+# These fields exist on a watch dict at runtime but are internal implementation details
+# (skip-cache hashes, last-check status strings, LLM runtime state, etc.). Used by:
+#   - model/__init__.py: don't trigger the "edited" flag when these are written internally
+#   - api/Watch.py: strip from GET responses and silently discard from PUT/POST inputs
+#                   so that a GET → PUT round trip doesn't trip the unknown-field validator
+#
+# `last_viewed` is intentionally NOT included: it's set internally by mark_all_viewed BUT
+# is also explicitly writable via the UpdateWatch schema (see api/Watch.py valid_fields).
+SYSTEM_MANAGED_NON_SPEC_FIELDS = frozenset({
+    'last_check_status',           # Set by processors
+    'last_filter_config_hash',     # text_json_diff internal skip-cache
+    'restock',                     # Set by restock processor
+    '_llm_result',                 # LLM runtime — populated by evaluator
+    '_llm_intent',
+    '_llm_change_summary',
+    'llm_prefilter',
+    'llm_evaluation_cache',
+    'llm_last_tokens_used',
+    'llm_tokens_used_cumulative',
+})
+
+
+def get_system_managed_non_spec_fields():
+    """Return the set of internal fields not in the public OpenAPI spec."""
+    return SYSTEM_MANAGED_NON_SPEC_FIELDS
+
+
 @functools.cache
 def get_openapi_schema_dict():
     """

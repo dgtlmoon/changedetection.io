@@ -343,28 +343,14 @@ class watch_base(dict):
             return
 
         # Import from shared schema utilities (no circular dependency)
-        from .schema_utils import get_readonly_watch_fields
-        readonly_fields = get_readonly_watch_fields()
+        from .schema_utils import get_readonly_watch_fields, SYSTEM_MANAGED_NON_SPEC_FIELDS
 
-        # Additional system-managed fields not in OpenAPI spec (yet)
-        # These are set by processors/workers and should not trigger edited flag
-        additional_system_fields = {
-            'last_check_status',  # Set by processors
-            'last_filter_config_hash',  # Set by text_json_diff processor, internal skip-cache
-            'restock',  # Set by restock processor
-            'last_viewed',  # Set by mark_all_viewed endpoint
-            # LLM runtime fields written back by worker/evaluator
-            '_llm_result',
-            '_llm_intent',
-            '_llm_change_summary',
-            'llm_prefilter',
-            'llm_evaluation_cache',
-            'llm_last_tokens_used',
-            'llm_tokens_used_cumulative',
-        }
-
-        # Only mark as edited if this is a user-writable field
-        if key not in readonly_fields and key not in additional_system_fields:
+        # `last_viewed` is set internally by mark_all_viewed and shouldn't flag the watch as
+        # edited, but is not in SYSTEM_MANAGED_NON_SPEC_FIELDS because it IS user-writable via
+        # the UpdateWatch schema (the API path).
+        if (key not in get_readonly_watch_fields()
+                and key != 'last_viewed'
+                and key not in SYSTEM_MANAGED_NON_SPEC_FIELDS):
             self.__watch_was_edited = True
 
     def __setitem__(self, key, value):
