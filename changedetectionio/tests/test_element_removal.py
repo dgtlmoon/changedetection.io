@@ -251,3 +251,41 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
         # First column should exist
         assert b"Emil" in res.data
 
+
+# Re PR #978: subtractive_selectors must run BEFORE include_filters so that selectors
+# relying on ancestor context (e.g. ".main .ad") can still match. If include runs first,
+# the ancestor wrapper is stripped and the subtractive selector matches nothing.
+def test_subtractive_selectors_applied_before_include_filters(client, live_server, measure_memory_usage, datastore_path):
+    page_html = """<html><body>
+<div class="main">
+  <p class="keep">first kept paragraph</p>
+  <p class="advertisement">noisy advertisement text</p>
+  <p class="keep">second kept paragraph</p>
+</div>
+</body></html>
+"""
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(page_html)
+
+    test_url = url_for("test_endpoint", _external=True)
+    client.application.config.get('DATASTORE').add_watch(
+        url=test_url,
+        extras={
+            # Include filter strips the .main wrapper from the output
+            "include_filters": [".main p"],
+            # Subtractive selector depends on the .main ancestor — only effective if it runs first
+            "subtractive_selectors": [".main .advertisement"],
+        },
+    )
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for("ui.ui_preview.preview_page", uuid="first"),
+        follow_redirects=True,
+    )
+
+    assert b"first kept paragraph" in res.data
+    assert b"second kept paragraph" in res.data
+    # The bug: ad survives if include filter runs first
+    assert b"noisy advertisement text" not in res.data
