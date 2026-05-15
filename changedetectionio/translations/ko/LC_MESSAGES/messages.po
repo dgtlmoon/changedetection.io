@@ -912,10 +912,11 @@ msgstr "Ollama 또는 사용자 지정/자체 호스팅 엔드포인트에만 �
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 #, python-format
 msgid ""
-"Local reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This "
-"multiplier scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to "
-"%(default)s; raise it if responses come back truncated, lower it if you want tighter limits. Only applied to self-"
-"hosted OpenAI-compatible endpoints — cloud providers (OpenAI, Anthropic, Gemini) keep their original tight caps."
+"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
+"scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it"
+" if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
+"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
+"original tight caps."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -988,6 +989,12 @@ msgstr "모든 요약 캐시 지우기"
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
 msgstr "모든 모니터링에 저장된 AI 변경 요약 캐시를 제거합니다. 다음 확인 시 다시 생성됩니다."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
+"Leave off in production — generates a lot of log volume."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Default AI Change Summary"
@@ -3176,6 +3183,10 @@ msgstr "{{diff}} 알림 토큰을 AI 요약으로 대체"
 #: changedetectionio/forms.py
 msgid "Use LLM as a fallback for extracting price and restock info"
 msgstr "가격 및 재입고 정보 추출의 대체 수단으로 LLM 사용"
+
+#: changedetectionio/forms.py
+msgid "Enable LLM debug logging"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "AI thinking budget (tokens)"
