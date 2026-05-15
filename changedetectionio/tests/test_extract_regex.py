@@ -559,3 +559,78 @@ def test_extract_lines_containing_with_include_filters_css(client, live_server, 
     assert b'forecast' not in res.data
 
     delete_all_watches(client)
+
+
+# Re issue #4138: ignore_text must take effect BEFORE extract_text regex, otherwise the
+# regex transforms line content (e.g. "v.1.2.1" -> "1.2.1") and ignore_text patterns
+# like "v"/"rc" can no longer match — causing changes to ignored lines to incorrectly
+# trigger change-detection.
+def test_ignore_text_applied_before_extract_text_regex(client, live_server, measure_memory_usage, datastore_path):
+    initial_data = """<html><body>
+      <p>0.8.9</p>
+      <p>v.1.2.1</p>
+      <p>rc-1.0.0</p>
+    </body></html>"""
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(initial_data)
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'paused': True})
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        data={
+            'ignore_text': 'v\r\nrc',
+            'extract_text': r'/(\d+\.\d+\.\d+)/',
+            "url": test_url,
+            "tags": "",
+            "headers": "",
+            'fetch_backend': "html_requests",
+            "time_between_check_use_default": "y",
+        },
+        follow_redirects=True
+    )
+    assert b"unpaused" in res.data
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # Bump only the IGNORED lines — these should not move the checksum
+    changed_data = """<html><body>
+      <p>0.8.9</p>
+      <p>v.1.3.0</p>
+      <p>rc-2.0.0</p>
+    </body></html>"""
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(changed_data)
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("watchlist.index"))
+    assert b'has-unread-changes' not in res.data, \
+        "Changing only ignored lines should not trigger a change even when extract_text regex is set"
+
+    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    time.sleep(1)
+
+    # Now bump the non-ignored line — this SHOULD trigger
+    triggered_data = """<html><body>
+      <p>0.9.0</p>
+      <p>v.1.3.0</p>
+      <p>rc-2.0.0</p>
+    </body></html>"""
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(triggered_data)
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("watchlist.index"))
+    assert b'has-unread-changes' in res.data, \
+        "Changing a non-ignored line should still trigger a change"
+
+    delete_all_watches(client)

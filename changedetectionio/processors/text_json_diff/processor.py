@@ -550,30 +550,43 @@ class perform_site_check(difference_detection_processor):
 
         update_obj["last_check_status"] = self.fetcher.get_last_status_code()
 
+        # Snapshot an ignore-applied stream BEFORE extract operations so line-level
+        # ignore patterns still match original content (#4138). Otherwise an extract_text
+        # regex like /(\d+\.\d+\.\d+)/ would transform "v.1.2.1" into "1.2.1" and the
+        # ignore_text pattern "v" would no longer match — meaning changes to ignored
+        # lines would incorrectly affect the checksum.
+        text_for_checksuming = None
+        if filter_config.ignore_text:
+            text_for_checksuming = html_tools.strip_ignore_text(stripped_text, filter_config.ignore_text)
+
         # === LINE FILTER (plain-text substring) ===
         if filter_config.extract_lines_containing:
             stripped_text = transformer.extract_lines_containing(stripped_text, filter_config.extract_lines_containing)
+            if text_for_checksuming is not None:
+                text_for_checksuming = transformer.extract_lines_containing(text_for_checksuming, filter_config.extract_lines_containing)
 
         # === REGEX EXTRACTION ===
         if filter_config.extract_text:
-            extracted = transformer.extract_by_regex(stripped_text, filter_config.extract_text)
-            stripped_text = extracted
+            stripped_text = transformer.extract_by_regex(stripped_text, filter_config.extract_text)
+            if text_for_checksuming is not None:
+                text_for_checksuming = transformer.extract_by_regex(text_for_checksuming, filter_config.extract_text)
 
         # === MORE TEXT TRANSFORMATIONS ===
         if watch.get('remove_duplicate_lines'):
             stripped_text = transformer.remove_duplicate_lines(stripped_text)
+            if text_for_checksuming is not None:
+                text_for_checksuming = transformer.remove_duplicate_lines(text_for_checksuming)
 
         if watch.get('sort_text_alphabetically'):
             stripped_text = transformer.sort_alphabetically(stripped_text)
+            if text_for_checksuming is not None:
+                text_for_checksuming = transformer.sort_alphabetically(text_for_checksuming)
 
         # === CHECKSUM CALCULATION ===
-        text_for_checksuming = stripped_text
-
-        # Apply ignore_text for checksum calculation
-        if filter_config.ignore_text:
-            text_for_checksuming = html_tools.strip_ignore_text(stripped_text, filter_config.ignore_text)
-
-            # Optionally remove ignored lines from output
+        if text_for_checksuming is None:
+            text_for_checksuming = stripped_text
+        else:
+            # Optionally remove ignored lines from displayed output too
             strip_ignored_lines = watch.get('strip_ignored_lines')
             if strip_ignored_lines is None:
                 strip_ignored_lines = self.datastore.data['settings']['application'].get('strip_ignored_lines')
