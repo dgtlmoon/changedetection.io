@@ -7,7 +7,7 @@ import threading
 from flask import request
 from . import auth
 
-from . import validate_openapi_request
+from . import validate_openapi_request, strip_internal_api_fields
 
 
 class Tag(Resource):
@@ -85,7 +85,8 @@ class Tag(Resource):
         # Create clean tag dict without Watch-specific fields
         clean_tag = {k: v for k, v in tag.items() if k not in watch_only_fields}
 
-        return clean_tag
+        # Never expose `__`-prefixed transient/internal fields
+        return strip_internal_api_fields(clean_tag)
 
     @auth.check_token
     @validate_openapi_request('deleteTag')
@@ -113,8 +114,9 @@ class Tag(Resource):
         if not tag:
             abort(404, message='No tag exists with the UUID of {}'.format(uuid))
 
-        # Make a mutable copy of request.json for modification
-        json_data = dict(request.json)
+        # Make a mutable copy of request.json for modification.
+        # Silently discard `__`-prefixed transient/internal keys (not part of the public schema).
+        json_data = strip_internal_api_fields(dict(request.json))
 
         # Validate notification_urls if provided
         if 'notification_urls' in json_data:
@@ -162,7 +164,8 @@ class Tag(Resource):
     def post(self):
         """Create a single tag/group."""
 
-        json_data = request.get_json()
+        # Silently discard `__`-prefixed transient/internal keys (not part of the public schema).
+        json_data = strip_internal_api_fields(request.get_json())
         title = json_data.get("title",'').strip()
 
         # Validate that only valid fields are provided

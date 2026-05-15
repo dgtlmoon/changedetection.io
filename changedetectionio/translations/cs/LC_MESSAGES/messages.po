@@ -160,8 +160,8 @@ msgstr "Importuje se prvních 5000 URL adres, další lze načíst opakovaným i
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} Imported from list in {:.2f}s, {} Skipped."
-msgstr "{} importováno ze seznamu za {:.2f}s, {} přeskočeno."
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "{count} importováno ze seznamu za {duration}s, {skipped_count} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read JSON file, was it broken?"
@@ -173,8 +173,8 @@ msgstr "Strukturovaný JSON text je neplatný, byl poškozen?"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} Imported from Distill.io in {:.2f}s, {} Skipped."
-msgstr "{} importováno z Distill.io za {:.2f}s, {} přeskočeno."
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "{count} importováno z Distill.io za {duration}s, {skipped_count} přeskočeno."
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Unable to read export XLSX file, something wrong with the file?"
@@ -192,21 +192,17 @@ msgstr "Chyba při zpracování řádku {}, zkontrolujte že všechny typy dat v
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} imported from Wachete .xlsx in {:.2f}s"
-msgstr "{} importováno z Wachete .xlsx za {:.2f}s"
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} importováno z Wachete .xlsx za {duration}s"
 
 #: changedetectionio/blueprint/imports/importer.py
 #, python-brace-format
-msgid "{} imported from custom .xlsx in {:.2f}s"
-msgstr "{} importováno z vlastního .xlsx za {:.2f}s"
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} importováno z vlastního .xlsx za {duration}s"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "URL List"
 msgstr "Seznam adres URL"
-
-#: changedetectionio/blueprint/imports/templates/import.html
-msgid "Distill.io"
-msgstr "Distill.io"
 
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ".XLSX & Wachete"
@@ -241,6 +237,7 @@ msgstr "URL, které neprojdou validací, zůstanou v textové oblasti."
 msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
 msgstr "Nakopírujte a vložte exportovaný Distill.io soubor, měl by být ve formátu JSON."
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid ""
 "This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
@@ -313,8 +310,8 @@ msgstr "Ochrana heslem odebrána."
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
-msgid "Warning: Worker count ({}) is close to or exceeds available CPU cores ({})"
-msgstr "Upozornění: Počet pracovních procesů ({}) se blíží nebo překračuje počet CPU jader ({})"
+msgid "Warning: Worker count ({worker_count}) is close to or exceeds available CPU cores ({cpu_count})"
+msgstr "Upozornění: Počet pracovních procesů ({worker_count}) se blíží nebo překračuje počet CPU jader ({cpu_count})"
 
 #: changedetectionio/blueprint/settings/__init__.py
 #, python-brace-format
@@ -368,9 +365,8 @@ msgid "AI / LLM configuration removed."
 msgstr "AI / LLM konfigurace odstraněna."
 
 #: changedetectionio/blueprint/settings/llm.py
-#, python-format
-msgid "AI summary cache cleared (%(n)s file(s) removed)."
-msgstr "AI cache souhrnů vyčištěna (%(n)s soubor(ů) odstraněno)."
+msgid "AI summary cache cleared ({} file(s) removed)."
+msgstr "AI cache souhrnů vyčištěna ({}s soubor(ů) odstraněno)."
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
@@ -392,14 +388,6 @@ msgstr "Globální filtry"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "UI Options"
 msgstr "Možnosti uživatelského rozhraní"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "API"
-msgstr "API"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "RSS"
-msgstr "RSS"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Backups"
@@ -815,6 +803,13 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 #, python-format
 msgid ""
+"Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
+"small models (≤3B) may misjudge numeric comparisons."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
 "Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
 "prompt here, or override per watch or tag."
 msgstr ""
@@ -906,7 +901,20 @@ msgid "Local / Self-hosted"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Local reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This "
+"multiplier scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to "
+"%(default)s; raise it if responses come back truncated, lower it if you want tighter limits. Only applied to self-"
+"hosted OpenAI-compatible endpoints — cloud providers (OpenAI, Anthropic, Gemini) keep their original tight caps."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1073,7 +1081,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 #, python-format
-msgid "characters — currently enforcing: %(n)s"
+msgid "characters — currently enforcing: %(limit)s"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1105,6 +1113,10 @@ msgid "No API key needed for local Ollama"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "openrouter.ai → Keys"
 msgstr ""
 
@@ -1117,7 +1129,7 @@ msgid "Loading…"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No models returned — check your API key."
+msgid "No models returned by the provider."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1215,6 +1227,7 @@ msgstr ""
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
 msgstr ""
@@ -1431,8 +1444,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
-msgid "Queued {} watches for rechecking ({} already queued or running)."
-msgstr "Do fronty přidáno {} sledování k opětovné kontrole ({} již ve frontě nebo běží)."
+msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
+msgstr "Do fronty přidáno {count} sledování k opětovné kontrole ({skipped_count} již ve frontě nebo běží)."
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -1921,6 +1934,7 @@ msgid ""
 "lines against all history for this watch."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
 msgstr ""
@@ -2178,6 +2192,7 @@ msgstr "Vymazat historie"
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
 msgstr "<p>Opravdu chcete vyčistit historii u vybraných položek?</p><p>Tuto akci nelze vzít zpět.</p>"
 
+#. Universally recognized; typically left as-is. dennis-ignore: W302
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "OK"
 msgstr "OK"
@@ -2191,8 +2206,8 @@ msgid "Delete Watches?"
 msgstr "Smazat sledování?"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "<p>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
-msgstr "<p>Opravdu chcete smazat vybraná sledování?</p><p>Tuto akci nelze vzít zpět.</p>"
+msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+msgstr "<p><strong>Opravdu chcete smazat vybraná sledování?</strong></p><p>Tuto akci nelze vzít zpět.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Queued size"
@@ -2670,18 +2685,18 @@ msgstr "RegEx '%s' není platný regulární výraz."
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid XPath expression. (%s)"
-msgstr "'%s' není platný výraz XPath. (%s)"
+msgid "'%(expression)s' is not a valid XPath expression. (%(error)s)"
+msgstr "'%(expression)s' není platný výraz XPath. (%(error)s)"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid JSONPath expression. (%s)"
-msgstr "'%s' není platný výraz JSONPath. (%s)"
+msgid "'%(expression)s' is not a valid JSONPath expression. (%(error)s)"
+msgstr "'%(expression)s' není platný výraz JSONPath. (%(error)s)"
 
 #: changedetectionio/forms.py
 #, python-format
-msgid "'%s' is not a valid jq expression. (%s)"
-msgstr "'%s' není platný výraz jq. (%s)"
+msgid "'%(expression)s' is not a valid jq expression. (%(error)s)"
+msgstr "'%(expression)s' není platný výraz jq. (%(error)s)"
 
 #: changedetectionio/forms.py
 msgid "Empty value not allowed."
@@ -2690,10 +2705,6 @@ msgstr "Prázdná hodnota není povolena."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Neplatná hodnota."
-
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
-msgid "URL"
-msgstr "URL"
 
 #: changedetectionio/forms.py
 msgid "Group tag"
@@ -2930,6 +2941,7 @@ msgstr "Spojit všechny následující položky"
 msgid "Match any of the following"
 msgstr "Přiřaďte kteroukoli z následujících možností"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "V seznamu použijte stránku <title>"
@@ -3029,6 +3041,7 @@ msgstr "Aktualizace UI v reálném čase"
 msgid "Favicons Enabled"
 msgstr "Povolit favikony"
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "Použijte stránku <title> v přehledu sledování"
@@ -3130,11 +3143,11 @@ msgid "API Key"
 msgstr "API klíč"
 
 #: changedetectionio/forms.py
-msgid "Leave blank to use LITELLM_API_KEY env var"
+msgid "API Base URL"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "API Base URL"
+msgid "Token multiplier for local reasoning models"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -3383,7 +3396,7 @@ msgstr ""
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
-msgid "Watch limit reached ({}/{} watches). Cannot add more watches."
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
@@ -3418,6 +3431,7 @@ msgstr ""
 msgid "The UUID of the watch."
 msgstr "UUID monitoru."
 
+#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""
@@ -3554,6 +3568,7 @@ msgstr "Více zde"
 msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr ""
@@ -3915,6 +3930,7 @@ msgstr ""
 msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
 msgstr ""

@@ -36,6 +36,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         default['llm'] = {
             'llm_model':                         _stored_llm.get('model', ''),
             'llm_api_base':                      _stored_llm.get('api_base', ''),
+            'llm_provider_kind':                 _stored_llm.get('provider_kind', ''),
+            'llm_local_token_multiplier':        _stored_llm.get('local_token_multiplier', 5),
             'llm_change_summary_default':        datastore.data['settings']['application'].get('llm_change_summary_default', ''),
             'llm_override_diff_with_summary':    datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
             'llm_restock_use_fallback_extract':  datastore.data['settings']['application'].get('llm_restock_use_fallback_extract', True),
@@ -148,6 +150,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     'model': (llm_data.get('llm_model') or '').strip(),
                     'api_key': effective_api_key,
                     'api_base': (llm_data.get('llm_api_base') or '').strip(),
+                    # Identifies a self-hosted OpenAI-compatible endpoint so reasoning-friendly
+                    # token caps can be applied conditionally (cloud-LLM defaults stay tight).
+                    'provider_kind': (llm_data.get('llm_provider_kind') or '').strip(),
+                    'local_token_multiplier': int(llm_data.get('llm_local_token_multiplier') or 5),
                     'token_budget_month': existing_llm.get('token_budget_month', 0),
                     'max_input_chars': existing_llm.get('max_input_chars', 0),
                     **preserved_counters,
@@ -181,8 +187,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     # Check CPU core availability and warn if worker count is high
                     cpu_count = os.cpu_count()
                     if cpu_count and new_worker_count >= (cpu_count * 0.9):
-                        flash(gettext("Warning: Worker count ({}) is close to or exceeds available CPU cores ({})").format(
-                            new_worker_count, cpu_count), 'warning')
+                        flash(gettext("Warning: Worker count ({worker_count}) is close to or exceeds available CPU cores ({cpu_count})").format(
+                            worker_count=new_worker_count, cpu_count=cpu_count), 'warning')
 
                     result = worker_pool.adjust_async_worker_count(
                         new_count=new_worker_count,

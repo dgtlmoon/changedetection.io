@@ -743,7 +743,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 current_watch_count = len(self.__data['watching'])
                 if current_watch_count >= page_watch_limit:
                     logger.error(f"Watch limit reached: {current_watch_count}/{page_watch_limit} watches. Cannot add {url}")
-                    flash(gettext("Watch limit reached ({}/{} watches). Cannot add more watches.").format(current_watch_count, page_watch_limit), 'error')
+                    flash(gettext("Watch limit reached ({current}/{limit} watches). Cannot add more watches.").format(current=current_watch_count, limit=page_watch_limit), 'error')
                     return None
             except ValueError:
                 logger.warning(f"Invalid PAGE_WATCH_LIMIT value: {page_watch_limit}, ignoring limit check")

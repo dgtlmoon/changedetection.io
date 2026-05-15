@@ -16,6 +16,7 @@ Environment variable overrides (take priority over datastore settings):
 
 import hashlib
 import os
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from loguru import logger
 
@@ -81,13 +82,71 @@ def _cached_system(text: str, model: str = '') -> dict:
 
 LLM_DEFAULT_MAX_SUMMARY_TOKENS = 3000
 
-# Default prompt used when the user hasn't configured llm_change_summary
-DEFAULT_CHANGE_SUMMARY_PROMPT = "Describe in plain English what changed — list what was added or removed as bullet points, including key details for each item. Be careful of content that merely just moved around, you should mention that it moved but dont report that it was added/removed etc. Be considerate of the style content you are summarising the change of, adjust your report accordingly. Do not quote non-English text verbatim; translate and summarise all content into English. Your entire response must be in English."
+# Output-token cap for the JSON-returning calls (intent eval, preview, setup/prefilter).
+# Mirrors client.py's _MAX_COMPLETION_TOKENS so the multiplier helper has a base value
+# to scale; cloud-LLM users hit this default unmodified, preserving prior cost defaults.
+JSON_RESPONSE_MAX_TOKENS = 400
+
+# Default prompt used when the user hasn't configured llm_change_summary.
+# This owns the OUTPUT FORMAT (structure, sections, style, language). The system prompt
+# in prompt_builder.build_change_summary_system_prompt() only covers how to READ the diff.
+# Users can replace this entirely (e.g. "Just tell me the new timestamp.") without
+# fighting hard-coded structure rules from the system prompt.
+DEFAULT_CHANGE_SUMMARY_PROMPT = (
+    "Describe what changed in plain English using these sections, in this fixed order — "
+    "omit a section entirely if there is nothing to report for it:\n"
+    "  Added: ...\n"
+    "  Changed: ...\n"
+    "  Removed: ...\n"
+    "The Removed section MUST always be last. Never place removals before additions or changes.\n\n"
+    "List items as bullet points with key details for each one. Be considerate of the style "
+    "of content you are summarising and adjust your report accordingly.\n"
+    "Do not list standalone timestamps like '3 hours ago', 'Yesterday', '2 minutes ago' as added "
+    "or removed items — they are not meaningful content changes.\n"
+    "For content-heavy pages (news, listings, feeds): quote or paraphrase the specific new "
+    "headlines, items, or entries that were added — do not collapse them into vague phrases "
+    "like 'new articles were added' or 'section was expanded'.\n"
+    "For large blocks of new text (full articles, documents, long paragraphs): briefly summarise "
+    "the substance in 1-2 sentences capturing the key point — do not just repeat the title.\n\n"
+    "Do not quote non-English text verbatim; translate and summarise all content into English. "
+    "Your entire response must be in English."
+)
 
 
 def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS) -> int:
     """Scale completion tokens to diff size: floor 400, ~1 token per 4 chars, ceiling max_cap."""
     return max(400, min(len(diff) // 4, max_cap))
+
+
+def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
+    """
+    Scale max_tokens for self-hosted OpenAI-compatible endpoints (vLLM, LM Studio, llama.cpp).
+
+    Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought into
+    `message.reasoning_content` BEFORE the final answer lands in `message.content`.
+    Without enough headroom the request truncates mid-thought (`finish_reason='length'`)
+    and the answer never lands — callers see an empty string and silently fall through
+    to safe defaults, hiding the problem.
+
+    Local self-hosted models cost no per-token money, so headroom is cheap; cloud
+    providers (OpenAI, Anthropic, Gemini, OpenRouter) keep their original tight caps
+    so existing users see no cost change.
+
+    Activated only when `llm_cfg['provider_kind'] == 'openai_compatible'`.
+    Multiplier defaults to 5x and is user-configurable in Settings → AI → Provider.
+    """
+    if (llm_cfg or {}).get('provider_kind') != 'openai_compatible':
+        return base_max_tokens
+    try:
+        multiplier = int(llm_cfg.get('local_token_multiplier') or 5)
+    except (TypeError, ValueError):
+        multiplier = 5
+    # Clamp to the same 1-20 range the form enforces. Defense-in-depth against
+    # corrupted datastore values that bypassed form validation (manual JSON edits,
+    # future migrations, plugins): a runaway multiplier could otherwise produce
+    # absurdly large max_tokens caps and exhaust local-endpoint memory.
+    multiplier = max(1, min(multiplier, 20))
+    return base_max_tokens * multiplier
 
 
 # ---------------------------------------------------------------------------
@@ -338,6 +397,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
         )
         _check_token_budget(watch, cfg, tokens)
@@ -377,6 +437,58 @@ def compute_summary_cache_key(diff_text: str, prompt: str) -> str:
     h.update(b'\x00')
     h.update(prompt.encode('utf-8', errors='replace'))
     return h.hexdigest()[:16]
+
+
+@dataclass(frozen=True)
+class DiffPrefs:
+    """
+    User-facing diff display preferences. Part of the LLM summary cache key so
+    that toggling a preference produces a fresh summary.
+
+    Field defaults are the single source of truth — the UI query-arg defaults in
+    diff.py's from_request_args() and the worker pre-cache's bare DiffPrefs()
+    both rely on these.
+    """
+    all_changes:       bool = False
+    ignore_whitespace: bool = False
+    show_removed:      bool = True
+    show_added:        bool = True
+
+    @classmethod
+    def from_request_args(cls, args) -> 'DiffPrefs':
+        """Parse from a Flask request.args (or any .get(key, default)-shaped mapping)."""
+        return cls(
+            all_changes       = args.get('all_changes', '0') == '1',
+            ignore_whitespace = args.get('ignore_whitespace', '0') == '1',
+            show_removed      = args.get('removed', '1') == '1',
+            show_added        = args.get('added', '1') == '1',
+        )
+
+    def cache_key_suffix(self) -> str:
+        return (
+            f'\x00prefs:all={int(self.all_changes)},ws={int(self.ignore_whitespace)}'
+            f',rm={int(self.show_removed)},add={int(self.show_added)}'
+        )
+
+
+def build_summary_cache_prompt(effective_prompt: str, max_summary_tokens: int,
+                                prefs: DiffPrefs = None) -> str:
+    """
+    Compose the full cache-key string passed to save/get_llm_diff_summary.
+
+    Default prefs are DiffPrefs() — must match the UI's query-arg defaults so a
+    worker-side pre-cache is hit by an unmodified UI request. Same helper must
+    be used by both the worker pre-cache write and the UI diff route read,
+    otherwise the prompt hashes diverge and the cache file isn't found.
+    """
+    if prefs is None:
+        prefs = DiffPrefs()
+    return (
+        effective_prompt
+        + prefs.cache_key_suffix()
+        + f'\x00sys:{build_change_summary_system_prompt()}'
+        + f'\x00max_tokens:{max_summary_tokens}'
+    )
 
 
 def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') -> str:
@@ -431,9 +543,12 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
-            max_tokens=_summary_max_tokens(
-                diff,
-                max_cap=int(datastore.data['settings']['application'].get('llm_max_summary_tokens', LLM_DEFAULT_MAX_SUMMARY_TOKENS) or LLM_DEFAULT_MAX_SUMMARY_TOKENS),
+            max_tokens=apply_local_token_multiplier(
+                _summary_max_tokens(
+                    diff,
+                    max_cap=int(datastore.data['settings']['application'].get('llm_max_summary_tokens', LLM_DEFAULT_MAX_SUMMARY_TOKENS) or LLM_DEFAULT_MAX_SUMMARY_TOKENS),
+                ),
+                cfg,
             ),
             extra_body=_extra_body,
         )
@@ -496,6 +611,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
         )
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
@@ -579,6 +695,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
         )
         raw, tokens = _resp[0], _resp[1]

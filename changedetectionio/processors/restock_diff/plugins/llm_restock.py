@@ -13,6 +13,7 @@ import json
 import re
 from loguru import logger
 from changedetectionio.pluggy_interface import hookimpl
+from changedetectionio.llm.evaluator import apply_local_token_multiplier
 
 # Injected at startup by inject_datastore_into_plugins()
 datastore = None
@@ -234,7 +235,10 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             ],
             api_key=llm_cfg.get('api_key'),
             api_base=llm_cfg.get('api_base'),
-            max_tokens=80,
+            # 80 fits a {price, currency, availability} JSON answer comfortably for cloud
+            # models. Local reasoning models burn most of that on chain-of-thought before
+            # the JSON lands — the multiplier scales it up only when provider_kind says so.
+            max_tokens=apply_local_token_multiplier(80, llm_cfg),
         )
 
         accumulate_global_tokens(

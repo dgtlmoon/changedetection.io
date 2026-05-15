@@ -48,6 +48,32 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
         assert b'Random content' in res.data
 
+        # GHSA-vwgh-2hvh-4xm5: shared_diff_access only covers the read-only
+        # diff page — the extract endpoints (which run an attacker-supplied
+        # regex against history and write a CSV to disk) must still require
+        # auth even when the share flag is enabled.
+        res = c.get(url_for("ui.ui_diff.diff_history_page_extract_GET", uuid="first"))
+        assert res.status_code == 302, "Extract form GET must redirect to login for anonymous users"
+        assert b'/login' in res.data or b'login' in res.headers.get('Location', '').encode()
+
+        res = c.post(
+            url_for("ui.ui_diff.diff_history_page_extract_POST", uuid="first"),
+            data={"extract_regex": ".*", "extract_submit_button": "Extract as CSV"},
+        )
+        assert res.status_code == 302, "Extract POST must redirect to login for anonymous users"
+        assert b'login' in res.headers.get('Location', '').encode()
+
+        # But sub-resources the diff page legitimately loads should still pass the gate.
+        # download_patch is linked from diff.html — anonymous viewers must be able to fetch it.
+        # (We don't care about the body here, just that auth doesn't block it.)
+        res = c.get(url_for("ui.ui_diff.download_patch", uuid="first"))
+        assert res.status_code != 302, "download_patch must be reachable for shared diff viewers"
+
+        # processor_asset (used for screenshots embedded in image_ssim_diff watches) must also be reachable.
+        # For a text watch the processor has no such asset so 404 is fine — what matters is no auth redirect.
+        res = c.get(url_for("ui.ui_diff.processor_asset", uuid="first", asset_name="before"))
+        assert res.status_code != 302, "processor_asset must be reachable for shared diff viewers"
+
         # access to assets should work (check_authentication)
         res = c.get(url_for('static_content', group='js', filename='jquery-3.6.0.min.js'))
         assert res.status_code == 200

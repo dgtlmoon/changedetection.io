@@ -307,8 +307,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 # Provide feedback about skipped watches
                 skipped_count = len(watches_to_queue) - len(watches_to_queue_filtered)
                 if skipped_count > 0:
-                    flash(gettext("Queued {} watches for rechecking ({} already queued or running).").format(
-                        len(watches_to_queue_filtered), skipped_count))
+                    flash(gettext("Queued {count} watches for rechecking ({skipped_count} already queued or running).").format(
+                        count=len(watches_to_queue_filtered), skipped_count=skipped_count))
                 else:
                     if len(watches_to_queue_filtered) == 1:
                         flash(gettext("Queued 1 watch for rechecking."))

@@ -210,10 +210,19 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
     llm_summary_prompt = ''
     if llm_configured:
         try:
-            from changedetectionio.llm.evaluator import get_effective_summary_prompt
+            from changedetectionio.llm.evaluator import (
+                get_effective_summary_prompt, build_summary_cache_prompt,
+            )
             _prompt = get_effective_summary_prompt(watch, datastore)
             llm_summary_prompt = _prompt
-            llm_diff_summary = watch.get_llm_diff_summary(from_version, to_version, prompt=_prompt)
+            # Must match the cache_prompt the worker writes and the UI ajax route reads —
+            # using UI default diff prefs so the initial render finds the worker's pre-cache.
+            _max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
+            _cache_prompt = build_summary_cache_prompt(
+                effective_prompt=_prompt,
+                max_summary_tokens=_max_summary_tokens,
+            )
+            llm_diff_summary = watch.get_llm_diff_summary(from_version, to_version, prompt=_cache_prompt)
         except Exception as e:
             logger.warning(f"Could not load llm-diff-summary for {uuid}: {e}")
 

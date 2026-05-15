@@ -541,6 +541,39 @@ def test_single_send_test_notification_on_watch(client, live_server, measure_mem
         assert 'Current snapshot: Example text: example test' in x
     os.unlink(os.path.join(datastore_path, "notification.txt"))
 
+# Regression test for #4119 - sending a test notification with 'System default' format caused a crash
+def test_send_test_notification_with_system_default_format(client, live_server, measure_memory_usage, datastore_path):
+
+    set_original_response(datastore_path=datastore_path)
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt"))
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://') + "?status_code=204"
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # New watches default to USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH.
+    # The JS sends this value verbatim from the select; it must not crash.
+    res = client.post(
+        url_for("ui.ui_notification.ajax_callback_send_notification_test") + f"/{uuid}",
+        data={
+            "notification_urls": test_notification_url,
+            "notification_body": default_notification_body,
+            "notification_title": default_notification_title,
+            "notification_format": USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
+        },
+        follow_redirects=True
+    )
+
+    assert res.status_code != 400
+    assert res.status_code != 500
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+
 def _test_color_notifications(client, notification_body_token, datastore_path):
 
     set_original_response(datastore_path=datastore_path)
@@ -602,3 +635,234 @@ def test_html_color_notifications(client, live_server, measure_memory_usage, dat
     _test_color_notifications(client, '{{diff}}',datastore_path=datastore_path)
     _test_color_notifications(client, '{{diff_full}}',datastore_path=datastore_path)
 
+
+def _test_custom_html_in_notification_body_not_escaped(client, datastore_path, content_type=None):
+    """
+    #4121 - The operator's own HTML in the notification body template (e.g.
+    <a href="{{watch_url}}">) must survive unescaped regardless of the watched page's
+    Content-Type. The escape pass in handler.py only touches the variable *values*
+    (diff/snapshot content from the page — see GHSA-q8xq-qg4x-wphg) — it leaves the
+    surrounding template HTML alone.
+    """
+    set_original_response(datastore_path=datastore_path)
+
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt"))
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')
+
+    kwargs = {'content_type': content_type} if content_type else {}
+    test_url = url_for('test_endpoint', _external=True, **kwargs)
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            "application-notification_body": '<a href="{{watch_url}}">Watch Link</a> had changes\n\n{{diff}}',
+            "application-notification_format": "htmlcolor",
+            "application-notification_urls": test_notification_url,
+            "application-notification_title": "Change detected",
+        },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": ''},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+
+    wait_for_all_checks(client)
+    set_modified_response(datastore_path=datastore_path)
+
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+
+    wait_for_all_checks(client)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
+
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
+        x = f.read()
+
+    assert '&lt;a href=' not in x, f"Custom HTML <a> tag was incorrectly escaped (content_type={content_type})"
+    assert '<a href=' in x, f"Custom HTML <a> tag not found unescaped (content_type={content_type})"
+    assert '<span' in x, f"Expected color <span> tags not found (content_type={content_type})"
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+
+def test_plaintext_watch_custom_html_in_notification_body_not_escaped(client, live_server, measure_memory_usage, datastore_path):
+    # Diff/snapshot values are escaped for HTML notifications (covered by
+    # test_html_watch_diff_content_escaped_in_html_notification). What this test
+    # locks in is that the *surrounding* template HTML is left alone in every case.
+    _test_custom_html_in_notification_body_not_escaped(client, datastore_path, content_type="text/plain")
+    _test_custom_html_in_notification_body_not_escaped(client, datastore_path, content_type="text/html")
+    _test_custom_html_in_notification_body_not_escaped(client, datastore_path, content_type=None)
+
+
+def test_html_watch_diff_content_escaped_in_html_notification(client, live_server, measure_memory_usage, datastore_path):
+    """
+    GHSA-q8xq-qg4x-wphg — diff/snapshot content from the watched page must be
+    HTML-escaped before it is rendered into an HTML-format notification, regardless
+    of the watched page's Content-Type.
+
+    Inscriptis (used to convert text/html pages to snapshot text) decodes HTML
+    entities — so a page that visibly displays "&lt;a href=...&gt;" produces snapshot
+    text containing literal "<a href=...>". The previous gate at handler.py:391
+    only escaped when watch_mime_type matched 'text/' and not 'html', which let
+    that decoded markup through to HTML emails / Telegram (parse_mode=html) /
+    Discord embeds, where it renders as a real clickable link — i.e. an attacker
+    who controls a watched page can inject phishing links into the operator's
+    trusted notification channel.
+    """
+    from .util import write_test_file_and_sync
+
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt"))
+
+    # Baseline: an innocuous text/html page.
+    baseline_html = "<html><body><p>nothing to see here</p></body></html>"
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), baseline_html)
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')
+    # Pass content_type=text/html so the watch records 'text/html' as its content-type
+    # — this is the branch the previous gate skipped escaping for.
+    test_url = url_for('test_endpoint', _external=True, content_type='text/html')
+
+    # HTML-format notification body that embeds the snapshot directly. Operators do this
+    # when they want the full changed content in the alert (e.g. an email digest).
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            "application-notification_body": 'Watch had changes:\n{{current_snapshot}}',
+            "application-notification_format": "html",
+            "application-notification_urls": test_notification_url,
+            "application-notification_title": "Change detected",
+        },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": ''},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+
+    wait_for_all_checks(client)
+
+    # Now flip the page to something whose *visible* text contains entity-encoded
+    # angle brackets — exactly the pattern a forum / pastebin / code-sample site uses
+    # to display literal HTML on the page. Inscriptis will decode &lt;/&gt; back to
+    # literal < / > in the stored snapshot.
+    attacker_html = (
+        '<html><body><pre>'
+        '&lt;a href="https://attacker.example/payment"&gt;ACTION REQUIRED&lt;/a&gt;'
+        '&lt;img src="https://attacker.example/track" width="1" height="1"&gt;'
+        '</pre></body></html>'
+    )
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), attacker_html)
+
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+
+    wait_for_all_checks(client)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
+
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
+        body = f.read()
+
+    # Sanity: the snapshot really did contain the decoded markup (otherwise the test
+    # would pass for the wrong reason). The escaped form must appear somewhere.
+    assert '&lt;a href=' in body or '&amp;lt;a href=' in body, \
+        f"Expected escaped attacker markup in notification body, got: {body!r}"
+
+    # The bug: a live <a href="https://attacker..."> ends up in the HTML notification.
+    assert '<a href="https://attacker.example/payment"' not in body, \
+        f"Diff content from text/html page was NOT escaped — phishing link reached HTML notification: {body!r}"
+    assert '<img src="https://attacker.example/track"' not in body, \
+        f"Diff content from text/html page was NOT escaped — tracking pixel reached HTML notification: {body!r}"
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+
+def test_source_url_diff_content_escaped_in_html_notification(client, live_server, measure_memory_usage, datastore_path):
+    """
+    GHSA-q8xq-qg4x-wphg — companion to the inscriptis test. `source:`-prefixed
+    URLs short-circuit the HTML→text step (processor.py:509-511) and store the
+    raw HTML body verbatim as the snapshot. That gives an attacker who controls
+    a watched page a *direct* injection path — no entity-encoding tricks needed,
+    any live `<a>` / `<img>` / `<script>` on the page lands straight into
+    current_snapshot / raw_diff. The escape pass must catch this too.
+    """
+    from .util import write_test_file_and_sync
+
+    if os.path.isfile(os.path.join(datastore_path, "notification.txt")):
+        os.unlink(os.path.join(datastore_path, "notification.txt"))
+
+    # Baseline: innocuous raw HTML.
+    baseline_html = "<html><body><p>nothing to see here</p></body></html>"
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), baseline_html)
+
+    test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')
+    # `source:` prefix → raw HTML body is stored as-is in the snapshot (no inscriptis).
+    test_url = 'source:' + url_for('test_endpoint', _external=True, content_type='text/html')
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+            "application-fetch_backend": "html_requests",
+            "application-minutes_between_check": 180,
+            "application-notification_body": 'Watch had changes:\n{{current_snapshot}}',
+            "application-notification_format": "html",
+            "application-notification_urls": test_notification_url,
+            "application-notification_title": "Change detected",
+        },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": ''},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+
+    wait_for_all_checks(client)
+
+    # Modified page contains LIVE HTML directly — no entity encoding. With source:
+    # this lands in the snapshot verbatim.
+    attacker_html = (
+        '<html><body>'
+        '<a href="https://attacker.example/payment">ACTION REQUIRED</a>'
+        '<img src="https://attacker.example/track" width="1" height="1">'
+        '</body></html>'
+    )
+    write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), attacker_html)
+
+    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    assert b'Queued 1 watch for rechecking.' in res.data
+
+    wait_for_all_checks(client)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
+
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
+        body = f.read()
+
+    # Sanity: snapshot really did carry the markup through. Escaped form must show up.
+    assert '&lt;a href=' in body or '&amp;lt;a href=' in body, \
+        f"Expected escaped attacker markup in notification body, got: {body!r}"
+
+    assert '<a href="https://attacker.example/payment"' not in body, \
+        f"source: URL raw HTML was NOT escaped — phishing link reached HTML notification: {body!r}"
+    assert '<img src="https://attacker.example/track"' not in body, \
+        f"source: URL raw HTML was NOT escaped — tracking pixel reached HTML notification: {body!r}"
+
+    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

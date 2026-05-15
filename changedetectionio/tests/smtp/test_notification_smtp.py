@@ -108,7 +108,9 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     html_content = html_part.get_content()
     assert 'some text<br>' in html_content  # We converted \n from the notification body
     assert 'fallback-body<br>' in html_content  # kept the original <br>
-    assert '(added) So let\'s see what happens.<br>' in html_content  # the html part
+    # GHSA-q8xq-qg4x-wphg: apostrophes in diff content are escaped (&#39;) for HTML notifications.
+    # Renders as ' in the recipient's email client; only the byte-source differs.
+    assert '(added) So let&#39;s see what happens.<br>' in html_content  # the html part
     delete_all_watches(client)
 
 
@@ -452,7 +454,8 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     html_part = parts[1]
     assert html_part.get_content_type() == 'text/html'
     html_content = html_part.get_content()
-    assert '(removed) So let\'s see what happens.' in html_content  # the html part
+    # GHSA-q8xq-qg4x-wphg: apostrophes in diff content are escaped (&#39;) for HTML notifications.
+    assert '(removed) So let&#39;s see what happens.' in html_content  # the html part
     assert '&lt;!DOCTYPE html' not in html_content
     assert '<!DOCTYPE html' in html_content # Our original template is working correctly
 
@@ -792,5 +795,6 @@ def test_check_html_notification_with_apprise_format_is_html(client, live_server
     html_content = html_part.get_content()
     assert 'some text<br>' in html_content  # We converted \n from the notification body
     assert 'fallback-body<br>' in html_content  # kept the original <br>
-    assert '(added) So let\'s see what happens.<br>' in html_content  # the html part
+    # GHSA-q8xq-qg4x-wphg: apostrophes in diff content are escaped (&#39;) for HTML notifications.
+    assert '(added) So let&#39;s see what happens.<br>' in html_content  # the html part
     delete_all_watches(client)

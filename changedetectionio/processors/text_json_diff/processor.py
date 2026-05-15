@@ -495,15 +495,16 @@ class perform_site_check(difference_detection_processor):
         # Start with content reference, avoid copy until modification
         html_content = content
 
-        # Apply include filters (CSS, XPath, JSON)
-        # Except for plaintext (incase they tried to confuse the system, it will HTML escape
-        #if not stream_content_type.is_plaintext:
-        if filter_config.has_include_filters:
-            html_content = content_processor.apply_include_filters(content, stream_content_type)
-
-        # Apply subtractive selectors
+        # Apply subtractive selectors first so include filters operate on already-cleaned content.
+        # Otherwise a subtractive selector that relies on ancestor context (e.g. ".main .ads")
+        # cannot match after the include filter has extracted the inner element and stripped
+        # the parent wrapper.
         if filter_config.has_subtractive_selectors:
             html_content = content_processor.apply_subtractive_selectors(html_content)
+
+        # Apply include filters (CSS, XPath, JSON)
+        if filter_config.has_include_filters:
+            html_content = content_processor.apply_include_filters(html_content, stream_content_type)
 
         # === TEXT EXTRACTION ===
         if watch.is_source_type_url:

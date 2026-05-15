@@ -365,6 +365,7 @@ Math: {{ 1 + 1 }}") }}
                 </fieldset>
                 <fieldset class="pure-control-group">
                     {{ render_checkbox_field(form.sort_text_alphabetically) }}
+                    {# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}
                     <span class="pure-form-message-inline">{{ _('Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below.')|safe }}</span>
                 </fieldset>
                 <fieldset class="pure-control-group">

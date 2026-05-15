@@ -1024,8 +1024,10 @@ class model(EntityPersistenceMixin, watch_base):
         prompt_hash = self._llm_summary_prompt_hash(prompt)
         fname = os.path.join(self.data_dir, f'change-summary-{from_version}-to-{to_version}-{prompt_hash}.txt')
         if not os.path.isfile(fname):
+            logger.debug(f"LLM cached diff summary '{fname}' NOT found")
             return ''
         with open(fname, 'r', encoding='utf-8') as f:
+            logger.debug(f"LLM cached diff summary '{fname}' FOUND")
             return f.read().strip()
 
     def save_llm_diff_summary(self, summary: str, from_version, to_version, prompt: str = ''):
@@ -1064,6 +1066,7 @@ class model(EntityPersistenceMixin, watch_base):
         Prepare watch data for commit.
 
         Excludes processor_config_* keys (stored in separate files).
+        Excludes __-prefixed keys (transient in-memory state — must not persist to disk).
         Normalizes browser_steps to empty list if no meaningful steps.
         """
         import copy
@@ -1077,8 +1080,11 @@ class model(EntityPersistenceMixin, watch_base):
         else:
             snapshot = dict(self)
 
-        # Exclude processor config keys (stored separately)
-        watch_dict = {k: copy.deepcopy(v) for k, v in snapshot.items() if not k.startswith('processor_config_')}
+        # Exclude processor config keys (stored separately) and __-prefixed transient keys
+        watch_dict = {
+            k: copy.deepcopy(v) for k, v in snapshot.items()
+            if not k.startswith('processor_config_') and not k.startswith('__')
+        }
 
         # Normalize browser_steps: if no meaningful steps, save as empty list
         if not self.has_browser_steps:

@@ -30,6 +30,10 @@
       <div class="stab-overview-text">
         <strong>{{ _('Intent filtering') }}</strong>
         <p>{{ _('Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the diff against it and suppresses irrelevant noise.', ex1='<strong>"notify me only when the price drops"</strong>', ex2='<strong>"alert when the item goes out of stock"</strong>') | safe }}</p>
+        <p><small>{{ _('Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very small models (≤3B) may misjudge numeric comparisons.',
+              local='<code>qwen2.5:7b</code>',
+              gpt='<code>gpt-4o-mini</code>',
+              gemini='<code>gemini-2.0-flash</code>') | safe }}</small></p>
       </div>
     </div>
     <div class="stab-overview-feature">
@@ -111,6 +115,7 @@
       </optgroup>
       <optgroup label="{{ _('Local / Self-hosted') }}">
         <option value="ollama">Ollama (local)</option>
+        <option value="openai_compatible">{{ _('OpenAI-compatible (vLLM, LM Studio, llama.cpp)') }}</option>
       </optgroup>
       <optgroup label="OpenRouter">
         <option value="openrouter">OpenRouter (200+ models)</option>
@@ -125,6 +130,18 @@
   <div class="pure-control-group" id="llm-base-group" style="display:none">
     {{ render_field(form.llm.form.llm_api_base) }}
     <span class="pure-form-message-inline">{{ _('Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers.') }}</span>
+  </div>
+
+  {# Hidden field carrying the dropdown selection so the backend knows when to apply
+     reasoning-friendly token caps (only for self-hosted OpenAI-compatible endpoints). #}
+  {{ form.llm.form.llm_provider_kind() }}
+
+  <div class="pure-control-group" id="llm-local-advanced-group" style="display:none">
+    <label for="{{ form.llm.form.llm_local_token_multiplier.id }}">{{ form.llm.form.llm_local_token_multiplier.label.text }}</label>
+    {{ form.llm.form.llm_local_token_multiplier() }}
+    <span class="pure-form-message-inline">
+      {{ _('Local reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it if responses come back truncated, lower it if you want tighter limits. Only applied to self-hosted OpenAI-compatible endpoints — cloud providers (OpenAI, Anthropic, Gemini) keep their original tight caps.', default='5x') | safe }}
+    </span>
   </div>
 
   <div class="pure-control-group" id="llm-fetch-group" style="display:none">
@@ -333,7 +350,7 @@
           <span class="llm-env-badge">{{ _('(set via <code>LLM_MAX_INPUT_CHARS</code>)') | safe }}</span>
         {% else %}
           {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
-          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
+          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(limit)s', limit='{:,}'.format(llm_effective_max_input_chars)) }}</span>
         {% endif %}
       </span>
     </div>
@@ -364,7 +381,7 @@
           <span class="llm-env-badge">{{ _('(set via <code>LLM_MAX_INPUT_CHARS</code>)') | safe }}</span>
         {% else %}
           {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
-          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(n)s', n='{:,}'.format(llm_effective_max_input_chars)) }}</span>
+          <span class="llm-field-hint">{{ _('characters — currently enforcing: %(limit)s', limit='{:,}'.format(llm_effective_max_input_chars)) }}</span>
         {% endif %}
       </span>
     </div>
@@ -377,14 +394,15 @@
 
 <script>
 (function () {
-  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openrouter'];
+  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openai_compatible', 'openrouter'];
   const BASE_DEFAULTS  = { ollama: 'http://localhost:11434' };
   const KEY_HINTS = {
-    openai:     '{{ _("platform.openai.com → API keys") }}',
-    anthropic:  '{{ _("console.anthropic.com → API keys") }}',
-    gemini:     '{{ _("aistudio.google.com → Get API key") }}',
-    ollama:     '{{ _("No API key needed for local Ollama") }}',
-    openrouter: '{{ _("openrouter.ai → Keys") }}',
+    openai:             '{{ _("platform.openai.com → API keys") }}',
+    anthropic:          '{{ _("console.anthropic.com → API keys") }}',
+    gemini:             '{{ _("aistudio.google.com → Get API key") }}',
+    ollama:             '{{ _("No API key needed for local Ollama") }}',
+    openai_compatible:  '{{ _("Bearer token for your self-hosted server (vLLM, LM Studio, etc.)") }}',
+    openrouter:         '{{ _("openrouter.ai → Keys") }}',
   };
 
   window.llmDisclaimerToggle = function (cb) {
@@ -393,19 +411,30 @@
   };
 
   window.llmOnProviderChange = function (provider) {
-    const fetchGroup  = document.getElementById('llm-fetch-group');
-    const baseGroup   = document.getElementById('llm-base-group');
-    const modelSelGrp = document.getElementById('llm-model-select-group');
-    const baseField   = document.querySelector('[name="llm-llm_api_base"]');
-    const hint        = document.getElementById('llm-key-hint');
+    const fetchGroup    = document.getElementById('llm-fetch-group');
+    const baseGroup     = document.getElementById('llm-base-group');
+    const modelSelGrp   = document.getElementById('llm-model-select-group');
+    const localAdvGrp   = document.getElementById('llm-local-advanced-group');
+    const baseField     = document.querySelector('[name="llm-llm_api_base"]');
+    const kindField     = document.querySelector('[name="llm-llm_provider_kind"]');
+    const hint          = document.getElementById('llm-key-hint');
 
     fetchGroup.style.display = LIVE_PROVIDERS.includes(provider) ? '' : 'none';
 
-    const needsBase = provider === 'ollama';
+    const needsBase = provider === 'ollama' || provider === 'openai_compatible';
     baseGroup.style.display = needsBase ? '' : 'none';
     if (BASE_DEFAULTS[provider] !== undefined) {
       if (!baseField.value) baseField.value = BASE_DEFAULTS[provider];
     }
+
+    // Persist the dropdown selection so the backend can branch on provider kind
+    // (currently only 'openai_compatible' triggers the local-multiplier code path).
+    if (kindField) kindField.value = provider || '';
+
+    // Show the local-endpoint advanced settings (token multiplier) only for the
+    // OpenAI-compatible self-hosted option. Cloud providers and Ollama get the
+    // original tight caps and don't see this section at all.
+    if (localAdvGrp) localAdvGrp.style.display = (provider === 'openai_compatible') ? '' : 'none';
 
     hint.textContent = KEY_HINTS[provider] || '';
     modelSelGrp.style.display = 'none';
@@ -444,7 +473,7 @@
 
       if (!data.models || data.models.length === 0) {
         statusEl.style.color = '#e67e22';
-        statusEl.textContent = '{{ _("No models returned — check your API key.") }}';
+        statusEl.textContent = '{{ _("No models returned by the provider.") }}';
         selGroup.style.display = 'none';
         return;
       }
@@ -516,6 +545,11 @@
     if (m.startsWith('gemini/'))       guessed = 'gemini';
     else if (m.startsWith('ollama/'))  guessed = 'ollama';
     else if (m.startsWith('openrouter/')) guessed = 'openrouter';
+    else if (m.startsWith('openai/')) {
+      // openai/<model> + custom api_base = self-hosted OpenAI-compatible (vLLM etc.)
+      const baseField = document.querySelector('[name="llm-llm_api_base"]');
+      guessed = (baseField && baseField.value.trim()) ? 'openai_compatible' : 'openai';
+    }
     else if (m.startsWith('claude'))   guessed = 'anthropic';
     else if (m.startsWith('gpt') || m.startsWith('o1') || m.startsWith('o3')) guessed = 'openai';
 

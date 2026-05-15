@@ -79,7 +79,13 @@ def build_eval_system_prompt() -> str:
         "Rules:\n"
         "- important=true ONLY when the diff clearly and specifically matches the intent — be strict\n"
         "- Pay close attention to direction: an intent about price drops means removed (-) prices and added (+) lower prices\n"
-        "- Empty, trivial, or cosmetic diffs (timestamps, counters, whitespace, navigation) → important=false\n"
+        "- The user's intent always wins. If the intent explicitly asks about timestamps, numbers, counters, "
+        "thresholds, or any specific value (e.g. 'when the timestamp is greater than 1778599592', "
+        "'when stock count > 5'), evaluate the diff against that intent — do NOT dismiss it as cosmetic.\n"
+        "- Otherwise: empty, trivial, or genuinely cosmetic diffs (heartbeat timestamps, view counters, "
+        "whitespace, navigation tweaks) default to important=false\n"
+        "- For numeric comparisons in the intent, parse the values explicitly and compare them — "
+        "do not eyeball or round\n"
         "- If the same text appears in both removed (-) and added (+) lines the content has likely just "
         "shifted or been reordered. Treat pure reordering as important=false unless the intent "
         "explicitly asks about order or position.\n"
@@ -130,7 +136,14 @@ def build_change_summary_prompt(diff: str, custom_prompt: str,
     """
     Build the user message for an AI Change Summary call.
     The user supplies their own instructions (custom_prompt); this wraps them
-    with the diff and optional page context.
+    with the diff (which carries its own surrounding context via unified_diff's
+    n=3 context lines, marked '~' by _annotate_moved_lines).
+
+    NOTE: current_snapshot is accepted for caller compatibility but intentionally
+    unused. A wholesale page excerpt caused the LLM to report unchanged page
+    content (e.g. old release-note bullets) as "what changed" — hallucinations
+    drawn from the excerpt rather than the diff. The in-diff context lines give
+    the model enough surrounding text to describe each change accurately.
     """
     parts = []
     if url:
@@ -138,42 +151,33 @@ def build_change_summary_prompt(diff: str, custom_prompt: str,
     if title:
         parts.append(f"Page title: {title}")
     parts.append(f"Instructions: {custom_prompt}")
-    if current_snapshot:
-        excerpt = trim_to_relevant(current_snapshot, custom_prompt, max_chars=2_000)
-        if excerpt:
-            parts.append(f"\nCurrent page (excerpt):\n{excerpt}")
     parts.append(f"\nWhat changed (diff):\n{_annotate_moved_lines(diff)}")
     return '\n'.join(parts)
 
 
 def build_change_summary_system_prompt() -> str:
+    """
+    Universal, format-agnostic instructions: how to READ a diff and accuracy rules.
+    All output-format choices (prose vs JSON, sections, bullets, language, length)
+    are owned by the user prompt — including the default in
+    DEFAULT_CHANGE_SUMMARY_PROMPT — so that a user replacing the user-prompt
+    (e.g. asking for raw JSON) is not overridden by hard-coded format rules here.
+    """
     return (
-        "You are a meticulous, accurate summariser of website changes for monitoring notifications.\n"
-        "Your goal is to describe exactly what changed — never omit significant details, "
-        "never add information that isn't in the diff, and never speculate.\n\n"
+        "You analyse a unified-diff document showing how a monitored web page changed, "
+        "and produce exactly the output the user asks for.\n\n"
         "Rules for reading the diff:\n"
-        "- Lines starting with + are genuinely new content. List them specifically.\n"
-        "- Lines starting with - are genuinely removed content. List them specifically.\n"
+        "- Lines starting with + are genuinely new content.\n"
+        "- Lines starting with - are genuinely removed content.\n"
         "- Lines starting with ~ have been PRE-IDENTIFIED as moved/reordered or trivial — "
         "the same text exists on both sides of the diff, or the line is a standalone timestamp. "
-        "Do NOT report ~ lines as added or removed. "
-        "If many ~ lines exist, note briefly that some content was reordered.\n"
-        "- Never list standalone timestamps like '3 hours ago', 'Yesterday', '2 minutes ago' "
-        "as added or removed items — they are not meaningful content changes.\n"
-        "For content-heavy pages (news, listings, feeds): quote or paraphrase the specific new "
-        "headlines, items, or entries that were added — do not collapse them into vague phrases "
-        "like 'new articles were added' or 'section was expanded'.\n"
-        "For large blocks of new text (full articles, documents, long paragraphs): briefly summarise "
-        "the substance in 1-2 sentences capturing the key point — do not just repeat the title.\n\n"
-        "Structure your response using these sections, in this fixed order — "
-        "omit a section entirely if there is nothing to report for it:\n"
-        "  Added: ...\n"
-        "  Changed: ...\n"
-        "  Removed: ...\n"
-        "The Removed section MUST always be last. Never place removals before additions or changes.\n\n"
-        "Follow the user's formatting instructions exactly for structure, language, and length.\n"
-        "Respond with ONLY the summary text — no JSON, no markdown code fences, no preamble. "
-        "Just the description."
+        "Do NOT treat ~ lines as added or removed.\n\n"
+        "Accuracy: only report what the +/- lines actually contain. Never invent details, "
+        "never speculate, never add information that isn't in the diff.\n\n"
+        "Follow the user's instructions exactly — including the requested output format "
+        "(plain text, JSON, Markdown, single value, etc.), structure, language, and length. "
+        "Do not add preamble, meta-commentary, or self-introduction. Produce only the output "
+        "the user asked for — nothing before it, nothing after it."
     )
 
 

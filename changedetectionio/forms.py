@@ -17,6 +17,7 @@ from wtforms import (
     Form,
     Field,
     FloatField,
+    HiddenField,
     IntegerField,
     PasswordField,
     RadioField,
@@ -279,11 +280,43 @@ class TimeBetweenCheckForm(Form):
         return True
 
 
+class LabelAfterInputTableWidget(widgets.TableWidget):
+    """
+    Variant of WTForms' TableWidget that renders the input cell before the label cell,
+    so each row is <td>input</td><th>label</th> instead of the default <th>label</th><td>input</td>.
+    """
+
+    def __call__(self, field, **kwargs):
+        from markupsafe import Markup
+        from wtforms.widgets import html_params
+
+        html = []
+        if self.with_table_tag:
+            kwargs.setdefault("id", field.id)
+            html.append(f"<table {html_params(**kwargs)}>")
+        hidden = ""
+        for subfield in field:
+            if subfield.type in ("HiddenField", "CSRFTokenField"):
+                hidden += str(subfield)
+            else:
+                html.append(
+                    f"<tr><td>{hidden}{subfield}</td><th>{subfield.label}</th></tr>"
+                )
+                hidden = ""
+        if self.with_table_tag:
+            html.append("</table>")
+        if hidden:
+            html.append(hidden)
+        return Markup("".join(html))
+
+
 class EnhancedFormField(FormField):
     """
     An enhanced FormField that supports conditional validation with top-level error messages.
     Adds a 'top_errors' property for validation errors at the FormField level.
     """
+
+    widget = LabelAfterInputTableWidget()
 
     def __init__(self, form_class, label=None, validators=None, separator="-",
                  conditional_field=None, conditional_message=None, conditional_test_function=None, **kwargs):
@@ -618,8 +651,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     elementpath.select(tree, line.strip(), parser=SafeXPath3Parser)
                 except elementpath.ElementPathError as e:
-                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
-                    raise ValidationError(message % (line, str(e)))
+                    message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
+                    raise ValidationError(message % {'expression': line, 'error': str(e)})
                 except:
                     raise ValidationError("A system-error occurred when validating your XPath expression")
 
@@ -633,8 +666,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     tree.xpath(line.strip())
                 except etree.XPathEvalError as e:
-                    message = field.gettext('\'%s\' is not a valid XPath expression. (%s)')
-                    raise ValidationError(message % (line, str(e)))
+                    message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
+                    raise ValidationError(message % {'expression': line, 'error': str(e)})
                 except:
                     raise ValidationError("A system-error occurred when validating your XPath expression")
 
@@ -653,8 +686,8 @@ class ValidateCSSJSONXPATHInput(object):
                 try:
                     parse(input)
                 except (JsonPathParserError, JsonPathLexerError) as e:
-                    message = field.gettext('\'%s\' is not a valid JSONPath expression. (%s)')
-                    raise ValidationError(message % (input, str(e)))
+                    message = field.gettext('\'%(expression)s\' is not a valid JSONPath expression. (%(error)s)')
+                    raise ValidationError(message % {'expression': input, 'error': str(e)})
                 except:
                     raise ValidationError("A system-error occurred when validating your JSONPath expression")
 
@@ -677,8 +710,8 @@ class ValidateCSSJSONXPATHInput(object):
                     validate_jq_expression(input)
                     jq.compile(input)
                 except (ValueError) as e:
-                    message = field.gettext('\'%s\' is not a valid jq expression. (%s)')
-                    raise ValidationError(message % (input, str(e)))
+                    message = field.gettext('\'%(expression)s\' is not a valid jq expression. (%(error)s)')
+                    raise ValidationError(message % {'expression': input, 'error': str(e)})
                 except:
                     raise ValidationError("A system-error occurred when validating your jq expression")
 
@@ -728,7 +761,7 @@ class ValidateStartsWithRegex(object):
                 raise ValidationError(self.message or _l("Invalid value."))
 
 class quickWatchForm(Form):
-    url = StringField(_l('URL'), validators=[validateURL()])
+    url = StringField('URL', validators=[validateURL()])
     tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
@@ -843,6 +876,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     conditions_match_logic = RadioField(_l('Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
+    # dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
     use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
 
     history_snapshot_max_length = IntegerField(_l('Number of history items per watch to keep'), render_kw={"style": "width: 5em;"}, validators=[validators.Optional(), validators.NumberRange(min=2)])
@@ -991,6 +1025,7 @@ class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField(_l("Open 'History' page in a new tab"), default=True, validators=[validators.Optional()])
     socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
+    # dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
 
 # datastore.data['settings']['application']..
@@ -1071,7 +1106,6 @@ class globalSettingsLLMForm(Form):
         _l('API Key'),
         validators=[validators.Optional()],
         render_kw={
-            "placeholder": _l('Leave blank to use LITELLM_API_KEY env var'),
             "autocomplete": "off",
             "style": "width: 24em;",
         },
@@ -1083,6 +1117,24 @@ class globalSettingsLLMForm(Form):
             "placeholder": "http://localhost:11434  (Ollama / custom endpoints only)",
             "style": "width: 24em;",
         },
+    )
+    # Persisted by the Provider dropdown JS — lets the backend distinguish a self-hosted
+    # OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp) from cloud OpenAI, so we can
+    # apply reasoning-friendly token caps only when the user opted in.
+    llm_provider_kind = HiddenField(
+        validators=[validators.Optional()],
+        default='',
+    )
+    # Multiplier applied to LLM max_tokens caps when provider_kind == 'openai_compatible'.
+    # Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought into
+    # message.reasoning_content before the final answer lands in message.content.
+    # Local self-hosted models cost no per-token money, so giving them headroom is cheap;
+    # cloud providers stay on the original tight caps so existing users see no cost change.
+    llm_local_token_multiplier = IntegerField(
+        _l('Token multiplier for local reasoning models'),
+        validators=[validators.Optional(), validators.NumberRange(min=1, max=20)],
+        default=5,
+        render_kw={"placeholder": "5", "style": "width: 6em;"},
     )
     llm_change_summary_default = TextAreaField(
         _l('Default AI Change Summary prompt'),

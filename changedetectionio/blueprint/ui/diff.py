@@ -198,10 +198,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         best_from = watch.get_from_version_based_on_last_viewed
         from_version      = request.args.get('from_version', best_from if best_from else dates[-2])
         to_version        = request.args.get('to_version', dates[-1])
-        all_changes       = request.args.get('all_changes', '0') == '1'
-        ignore_whitespace = request.args.get('ignore_whitespace', '0') == '1'
-        show_removed      = request.args.get('removed', '1') == '1'
-        show_added        = request.args.get('added', '1') == '1'
+        from changedetectionio.llm.evaluator import DiffPrefs
+        prefs             = DiffPrefs.from_request_args(request.args)
+        all_changes       = prefs.all_changes
+        ignore_whitespace = prefs.ignore_whitespace
+        show_removed      = prefs.show_removed
+        show_added        = prefs.show_added
 
         def _prep(text):
             """Optionally normalise whitespace on each line before diffing."""
@@ -263,21 +265,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return jsonify({'summary': None, 'error': 'No differences found'})
 
         from changedetectionio.llm.evaluator import (
-            summarise_change, get_effective_summary_prompt,
+            summarise_change, get_effective_summary_prompt, build_summary_cache_prompt,
             is_global_token_budget_exceeded, get_global_token_budget_month,
             LLMInputTooLargeError,
         )
 
-        effective_prompt = get_effective_summary_prompt(watch, datastore)
-        from changedetectionio.llm.prompt_builder import build_change_summary_system_prompt
-        # Diff-pref flags + system prompt are part of the cache key so prompt changes bust the cache
+        # Diff-pref flags + system prompt are part of the cache key so prompt changes bust the cache.
         _max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
-        cache_prompt = (
-            effective_prompt
-            + f'\x00prefs:all={int(all_changes)},ws={int(ignore_whitespace)}'
-              f',rm={int(show_removed)},add={int(show_added)}'
-            + f'\x00sys:{build_change_summary_system_prompt()}'
-            + f'\x00max_tokens:{_max_summary_tokens}'
+        cache_prompt = build_summary_cache_prompt(
+            effective_prompt=get_effective_summary_prompt(watch, datastore),
+            max_summary_tokens=_max_summary_tokens,
+            prefs=prefs,
         )
 
         # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)
