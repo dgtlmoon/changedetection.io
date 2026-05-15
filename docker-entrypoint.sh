@@ -1,27 +1,24 @@
 #!/bin/bash
 set -e
 
-# Install additional packages from EXTRA_PACKAGES env var
-# Uses a marker file to avoid reinstalling on every container restart
-INSTALLED_MARKER="/datastore/.extra_packages_installed"
-CURRENT_PACKAGES="$EXTRA_PACKAGES"
-
+# Install additional Python packages from the EXTRA_PACKAGES env var.
+#
+# Why no marker / skip-cache:
+# A previous version of this script wrote a marker file to
+# /datastore/.extra_packages_installed and skipped pip when it was present.
+# That marker lived on the persistent /datastore volume, but the pip-installed
+# packages live in the container's writable layer — so after a `docker compose
+# down && up` (or any container recreation) the packages were gone while the
+# marker remained, and the script wrongly believed everything was installed.
+# See: https://github.com/dgtlmoon/changedetection.io/issues/4140
+#
+# Running pip on every start is correct by construction: when the requirements
+# are already satisfied, pip is a fast no-op ("Requirement already satisfied"),
+# adding ~1s per package. That's a small price for not lying about the install
+# state — and pip's own resolver is the authoritative check, not a flat file.
 if [ -n "$EXTRA_PACKAGES" ]; then
-    # Check if we need to install/update packages
-    if [ ! -f "$INSTALLED_MARKER" ] || [ "$(cat $INSTALLED_MARKER 2>/dev/null)" != "$CURRENT_PACKAGES" ]; then
-        echo "Installing extra packages: $EXTRA_PACKAGES"
-        pip3 install --no-cache-dir $EXTRA_PACKAGES
-
-        if [ $? -eq 0 ]; then
-            echo "$CURRENT_PACKAGES" > "$INSTALLED_MARKER"
-            echo "Extra packages installed successfully"
-        else
-            echo "ERROR: Failed to install extra packages"
-            exit 1
-        fi
-    else
-        echo "Extra packages already installed: $EXTRA_PACKAGES"
-    fi
+    echo "Ensuring extra packages installed: $EXTRA_PACKAGES"
+    pip3 install --no-cache-dir $EXTRA_PACKAGES
 fi
 
 # Execute the main command
