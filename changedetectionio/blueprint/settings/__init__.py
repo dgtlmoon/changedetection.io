@@ -41,6 +41,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'llm_change_summary_default':        datastore.data['settings']['application'].get('llm_change_summary_default', ''),
             'llm_override_diff_with_summary':    datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
             'llm_restock_use_fallback_extract':  datastore.data['settings']['application'].get('llm_restock_use_fallback_extract', True),
+            'llm_debug':                         datastore.data['settings']['application'].get('llm_debug', False),
             'llm_budget_action':                 datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm'),
             'llm_thinking_budget':               str(datastore.data['settings']['application'].get('llm_thinking_budget', 0)),
             'llm_max_summary_tokens':            str(datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)),
@@ -124,6 +125,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 )
                 datastore.data['settings']['application']['llm_restock_use_fallback_extract'] = (
                     bool(llm_data.get('llm_restock_use_fallback_extract', True))
+                )
+                datastore.data['settings']['application']['llm_debug'] = (
+                    bool(llm_data.get('llm_debug', False))
                 )
                 datastore.data['settings']['application']['llm_budget_action'] = (
                     llm_data.get('llm_budget_action') or 'skip_llm'

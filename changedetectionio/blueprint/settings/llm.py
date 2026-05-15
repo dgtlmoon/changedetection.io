@@ -158,6 +158,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 api_key=llm_cfg.get('api_key') or None,
                 api_base=api_base or None,
                 max_tokens=apply_local_token_multiplier(200, llm_cfg),
+                debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
             )
             reply = text.strip()
             if not reply:

@@ -402,6 +402,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
             api_base=cfg.get('api_base'),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
+            debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
         )
         _check_token_budget(watch, cfg, tokens)
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
@@ -559,6 +560,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
                 cfg,
             ),
             extra_body=_extra_body,
+            debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0
@@ -621,6 +623,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
             api_base=cfg.get('api_base'),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
+            debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
         )
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
         result = parse_preview_response(raw)
@@ -705,6 +708,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             api_base=cfg.get('api_base'),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
+            debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0

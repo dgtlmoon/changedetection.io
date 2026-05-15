@@ -1190,6 +1190,10 @@ class globalSettingsLLMForm(Form):
         _l('Use LLM as a fallback for extracting price and restock info'),
         default=True,
     )
+    llm_debug = BooleanField(
+        _l('Enable LLM debug logging'),
+        default=False,
+    )
     llm_thinking_budget = SelectField(
         _l('AI thinking budget (tokens)'),
         choices=[

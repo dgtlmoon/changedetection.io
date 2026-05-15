@@ -202,6 +202,17 @@
     </a>
     <span class="pure-form-message-inline">{{ _('Removes all cached AI change summaries across all watches. They will be regenerated on the next check.') }}</span>
   </div>
+
+  <div class="pure-control-group">
+    <label></label>
+    {{ form.llm.form.llm_debug() }}
+    <label for="{{ form.llm.form.llm_debug.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.llm_debug.label.text }}
+    </label>
+    <span class="pure-form-message-inline">
+      {{ _('Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. Leave off in production — generates a lot of log volume.') }}
+    </span>
+  </div>
   {% endif %}{# llm_env_configured #}
 
   {% if not llm_env_configured and not (llm_config and llm_config.get('model')) %}
