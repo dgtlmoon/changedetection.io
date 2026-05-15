@@ -365,6 +365,7 @@ msgid "AI / LLM configuration removed."
 msgstr "AI / LLM konfigurace odstraněna."
 
 #: changedetectionio/blueprint/settings/llm.py
+#, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI cache souhrnů vyčištěna ({}s soubor(ů) odstraněno)."
 
@@ -484,9 +485,7 @@ msgstr ""
 msgid ""
 "If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time"
 " here."
-msgstr ""
-"Pokud máte potíže při čekání na plné vykreslení stránky (chybějící text atp.), zkuste navýšit čas 'prodlevy'"
-" zde."
+msgstr "Pokud máte potíže při čekání na plné vykreslení stránky (chybějící text atp.), zkuste navýšit čas 'prodlevy' zde."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will wait <i>n</i> seconds before extracting the text."
