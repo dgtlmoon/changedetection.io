@@ -133,6 +133,43 @@ def get_tag_schema_properties():
     """
     return _resolve_schema_properties('Tag')
 
+def strip_private_keys(data):
+    """
+    Remove `__`-prefixed keys from a watch/tag dict at the API boundary.
+
+    These are transient in-memory fields (e.g. `__check_status` set by the worker to
+    surface "Fetching page..." in the UI) and are not part of the public OpenAPI
+    contract. They must never appear in GET responses (otherwise a client that
+    round-trips GET → PUT trips the unknown-field validator), and must be silently
+    discarded from incoming PUT/POST payloads.
+
+    Returns a new dict; the input is not mutated.
+    """
+    if not isinstance(data, dict):
+        return data
+    return {k: v for k, v in data.items() if not (isinstance(k, str) and k.startswith('__'))}
+
+
+def strip_internal_api_fields(data):
+    """
+    Strip both `__`-prefixed keys AND system-managed fields that aren't in the public
+    OpenAPI spec (skip-cache hashes, LLM runtime state, processor-set status, etc.).
+
+    Use this at every public API boundary so GET responses and PUT/POST payloads agree
+    on what's part of the contract. The set of system-managed fields lives in
+    model/schema_utils.py:SYSTEM_MANAGED_NON_SPEC_FIELDS — extend it there, not here.
+
+    Returns a new dict; the input is not mutated.
+    """
+    if not isinstance(data, dict):
+        return data
+    from changedetectionio.model.schema_utils import SYSTEM_MANAGED_NON_SPEC_FIELDS
+    return {
+        k: v for k, v in data.items()
+        if not (isinstance(k, str) and (k.startswith('__') or k in SYSTEM_MANAGED_NON_SPEC_FIELDS))
+    }
+
+
 def validate_openapi_request(operation_id):
     """Decorator to validate incoming requests against OpenAPI spec."""
     def decorator(f):
