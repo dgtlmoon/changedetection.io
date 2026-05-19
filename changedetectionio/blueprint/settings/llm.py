@@ -72,10 +72,24 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             logger.warning(f"LLM model list refused: api_base failed SSRF check ({reason})")
             return jsonify({'models': [], 'error': reason}), 400
 
-        # Fall back to the stored key if the user hasn't typed one yet
+        # Credential-exfiltration guard (GHSA-g36r-fm2p-87xm).
+        # Only substitute the stored api_key when api_base matches the stored
+        # api_base. If the caller pointed at a different destination, refuse —
+        # otherwise a CSRF / unauthenticated request can ship the operator's
+        # long-lived provider key (sent as Authorization: Bearer …) to an
+        # attacker-controlled URL.
+        stored_llm     = datastore.data['settings']['application'].get('llm') or {}
+        stored_api_base = (stored_llm.get('api_base') or '').strip()
         if not api_key:
-            api_key = (datastore.data['settings']['application'].get('llm') or {}).get('api_key', '')
-            logger.debug("LLM model list: no api_key in request, using stored key")
+            if api_base == stored_api_base:
+                api_key = (stored_llm.get('api_key') or '')
+                logger.debug("LLM model list: no api_key in request, using stored key (api_base matches saved)")
+            elif api_base:
+                logger.warning("LLM model list refused: api_base differs from saved config but no api_key supplied")
+                return jsonify({'models': [], 'error': gettext(
+                    "api_key is required when api_base differs from the saved configuration. "
+                    "Refusing to send the stored API key to a different endpoint."
+                )}), 400
 
         _PREFIXES = {'gemini': 'gemini/', 'ollama': 'ollama/', 'openrouter': 'openrouter/',
                      'openai_compatible': 'openai/'}
@@ -127,10 +141,15 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         # form-driven JS sent as query params. Lets users test config changes
         # without first hitting Save (matching how /settings/llm/models works).
         stored = datastore.data['settings']['application'].get('llm') or {}
+        # Keep the raw request-supplied values around so we can detect whether
+        # the caller explicitly steered api_base / api_key (credential-exfil guard below).
+        req_api_key  = (request.args.get('api_key')  or '').strip()
+        req_api_base = (request.args.get('api_base') or '').strip()
+        stored_api_base = (stored.get('api_base') or '').strip()
         llm_cfg = {
             'model':                   (request.args.get('model')                   or stored.get('model', '')).strip(),
-            'api_key':                 (request.args.get('api_key')                 or stored.get('api_key', '')).strip(),
-            'api_base':                (request.args.get('api_base')                or stored.get('api_base', '')).strip(),
+            'api_key':                 (req_api_key  or stored.get('api_key', '')).strip(),
+            'api_base':                (req_api_base or stored_api_base).strip(),
             'provider_kind':           (request.args.get('provider_kind')           or stored.get('provider_kind', '')).strip(),
             'local_token_multiplier':   request.args.get('local_token_multiplier')  or stored.get('local_token_multiplier'),
         }
@@ -151,6 +170,18 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         if not ok:
             logger.warning(f"LLM connection test refused: api_base failed SSRF check ({reason})")
             return jsonify({'ok': False, 'error': reason}), 400
+
+        # Credential-exfiltration guard (GHSA-g36r-fm2p-87xm).
+        # If the caller specified an api_base that differs from the saved one but
+        # did NOT supply a matching api_key, refuse to substitute the stored key.
+        # Otherwise a CSRF / unauthenticated request can route the operator's
+        # long-lived provider key to an attacker-controlled endpoint.
+        if req_api_base and req_api_base != stored_api_base and not req_api_key:
+            logger.warning("LLM connection test refused: api_base differs from saved config but no api_key supplied")
+            return jsonify({'ok': False, 'error': gettext(
+                "api_key is required when api_base differs from the saved configuration. "
+                "Refusing to send the stored API key to a different endpoint."
+            )}), 400
 
         try:
             logger.debug(f"LLM connection test: sending test prompt to model={model!r}")
@@ -193,7 +224,12 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             logger.exception("LLM connection test full traceback:")
             return jsonify({'ok': False, 'error': str(e)}), 400
 
-    @llm_blueprint.route("/clear", methods=['GET'])
+    # Both clear endpoints accept POST only — GET would let an attacker fire them via
+    # <img src="...">, wiping LLM configuration / cached summaries on a logged-in
+    # operator's browser (GHSA-g36r-fm2p-87xm). Flask-WTF CSRFProtect enforces a
+    # CSRF token on POST automatically; the template renders csrf_token() inside the
+    # surrounding <form>.
+    @llm_blueprint.route("/clear", methods=['POST'])
     @login_optionally_required
     def llm_clear():
         logger.debug("LLM configuration cleared by user")
@@ -202,7 +238,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("AI / LLM configuration removed."), 'notice')
         return redirect(url_for('settings.settings_page') + '#ai')
 
-    @llm_blueprint.route("/clear-summary-cache", methods=['GET'])
+    @llm_blueprint.route("/clear-summary-cache", methods=['POST'])
     @login_optionally_required
     def llm_clear_summary_cache():
         import glob

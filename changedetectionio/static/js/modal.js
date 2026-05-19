@@ -187,6 +187,30 @@ $(document).ready(function() {
       confirmText: $element.attr('data-confirm-button') || 'Confirm',
       cancelText: $element.attr('data-cancel-button') || 'Cancel',
       onConfirm: function() {
+        // data-method="POST" — build a body-level hidden form with the CSRF
+        // token and submit it. Avoids nested-form HTML invalidity when the
+        // anchor lives inside an outer <form> (e.g. settings tabs). The CSRF
+        // token comes from the global `csrftoken` set in base.html.
+        // GHSA-g36r-fm2p-87xm: anchors that mutate server state must not fire
+        // on a bare GET, since <img src=...> CSRF relies on GET firing.
+        const method = ($element.attr('data-method') || 'GET').toUpperCase();
+        if (method === 'POST') {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = url;
+          form.style.display = 'none';
+          if (typeof csrftoken !== 'undefined' && csrftoken) {
+            const tok = document.createElement('input');
+            tok.type = 'hidden';
+            tok.name = 'csrf_token';
+            tok.value = csrftoken;
+            form.appendChild(tok);
+          }
+          document.body.appendChild(form);
+          form.submit();
+          return;
+        }
+
         // If it's a link, navigate to the URL
         if ($element.is('a')) {
           window.location.href = url;

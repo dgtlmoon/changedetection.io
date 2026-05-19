@@ -361,6 +361,12 @@ msgid "All notifications unmuted."
 msgstr "모든 알림의 음소거가 해제되었습니다."
 
 #: changedetectionio/blueprint/settings/llm.py
+msgid ""
+"api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
+"different endpoint."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm.py
 msgid "AI / LLM configuration removed."
 msgstr "AI / LLM 설정이 제거되었습니다."
 

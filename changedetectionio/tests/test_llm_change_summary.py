@@ -437,7 +437,7 @@ def test_global_default_survives_llm_clear(
     ds = client.application.config.get('DATASTORE')
     _set_global_default(ds, 'Surviving prompt.')
 
-    res = client.get(url_for('settings.llm.llm_clear'), follow_redirects=True)
+    res = client.post(url_for('settings.llm.llm_clear'), follow_redirects=True)
     assert res.status_code == 200
 
     assert ds.data['settings']['application'].get('llm_change_summary_default') == 'Surviving prompt.'

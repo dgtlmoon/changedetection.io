@@ -363,6 +363,12 @@ msgid "All notifications unmuted."
 msgstr "すべての通知のミュートを解除しました。"
 
 #: changedetectionio/blueprint/settings/llm.py
+msgid ""
+"api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
+"different endpoint."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm.py
 msgid "AI / LLM configuration removed."
 msgstr ""
 
