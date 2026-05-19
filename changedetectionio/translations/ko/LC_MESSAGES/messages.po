@@ -845,6 +845,10 @@ msgid "AI Provider"
 msgstr "AI 프로바이더"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Third-party data transfer — please read"
 msgstr "제3자 데이터 전송 - 읽어 주세요"
 
@@ -3181,6 +3185,10 @@ msgstr "월간 토큰 예산"
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
 msgid "Max input characters"
 msgstr "최대 입력 문자 수"
+
+#: changedetectionio/forms.py
+msgid "Enable AI / LLM features"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Replace {{diff}} notification token with AI summary"

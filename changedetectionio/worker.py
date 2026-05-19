@@ -432,9 +432,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         update_obj['_llm_result'] = None
                         update_obj['_llm_intent'] = ''
                         update_obj['_llm_change_summary'] = ''
-                        # skip_check: when budget exceeded, don't run LLM or the check
+                        # skip_check: when budget exceeded, don't run LLM or the check.
+                        # Also gated on llm_enabled — a disabled LLM can't be spending tokens,
+                        # so the budget enforcement shouldn't suppress changes when the user
+                        # has explicitly switched LLM off.
+                        _llm_master_enabled = bool(datastore.data['settings']['application'].get('llm_enabled', True))
                         _llm_budget_action = datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm')
-                        if _llm_budget_action == 'skip_check':
+                        if _llm_master_enabled and _llm_budget_action == 'skip_check':
                             from changedetectionio.llm.evaluator import is_global_token_budget_exceeded
                             if is_global_token_budget_exceeded(datastore):
                                 logger.info(f"LLM monthly budget exceeded — skipping check for {uuid} (budget_action=skip_check)")
@@ -444,9 +448,14 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             try:
                                 from changedetectionio.llm.evaluator import (
                                     evaluate_change, resolve_intent, resolve_llm_field,
-                                    summarise_change, get_llm_config,
+                                    summarise_change, _runtime_llm_config,
                                 )
-                                _llm_cfg = get_llm_config(datastore)
+                                # _runtime_llm_config returns None (and logs a debug skip
+                                # message) when the master 'llm_enabled' toggle is off, so
+                                # the whole block — diff computation, status minitext, and
+                                # the two executor dispatches — is skipped, not just the
+                                # inner LLM lookups.
+                                _llm_cfg = _runtime_llm_config(datastore)
                                 if _llm_cfg:
                                     # Compute unified diff once — used by both intent and summary
                                     _watch_dates = list(watch.history.keys())

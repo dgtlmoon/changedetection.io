@@ -39,6 +39,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'llm_provider_kind':                 _stored_llm.get('provider_kind', ''),
             'llm_local_token_multiplier':        _stored_llm.get('local_token_multiplier', 5),
             'llm_change_summary_default':        datastore.data['settings']['application'].get('llm_change_summary_default', ''),
+            'llm_enabled':                       datastore.data['settings']['application'].get('llm_enabled', True),
             'llm_override_diff_with_summary':    datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
             'llm_restock_use_fallback_extract':  datastore.data['settings']['application'].get('llm_restock_use_fallback_extract', True),
             'llm_debug':                         datastore.data['settings']['application'].get('llm_debug', False),
@@ -120,6 +121,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 datastore.data['settings']['application']['llm_change_summary_default'] = (
                     llm_data.get('llm_change_summary_default') or ''
                 ).strip()
+                datastore.data['settings']['application']['llm_enabled'] = (
+                    bool(llm_data.get('llm_enabled', True))
+                )
                 datastore.data['settings']['application']['llm_override_diff_with_summary'] = (
                     bool(llm_data.get('llm_override_diff_with_summary', True))
                 )

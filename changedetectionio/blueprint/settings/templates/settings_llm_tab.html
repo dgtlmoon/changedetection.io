@@ -69,6 +69,17 @@
   {% call stab_pane('provider') %}
   <p class="stab-section-title">{{ _('AI Provider') }}</p>
 
+  <div class="pure-control-group">
+    <label></label>
+    {{ form.llm.form.llm_enabled() }}
+    <label for="{{ form.llm.form.llm_enabled.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.llm_enabled.label.text }}
+    </label>
+    <span class="pure-form-message-inline">
+      {{ _('Master switch — when off, all AI lookups are skipped even if a provider is configured below.') }}
+    </span>
+  </div>
+
   {% if not llm_env_configured and not (llm_config and llm_config.get('model')) %}
   <div class="stab-overview-disclaimer">
     <div class="stab-disclaimer-icon">⚠</div>

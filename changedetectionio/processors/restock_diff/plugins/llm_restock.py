@@ -203,15 +203,17 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         return None
 
     try:
-        from changedetectionio.llm.evaluator import get_llm_config, accumulate_global_tokens
+        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens
         from changedetectionio.llm import client as llm_client
     except ImportError as e:
         logger.debug(f"LLM restock fallback: LLM libraries not available ({e})")
         return None
 
-    llm_cfg = get_llm_config(datastore)
+    # _runtime_llm_config returns None (with a debug log) when the master 'llm_enabled'
+    # toggle is off, so this path is gated for free.
+    llm_cfg = _runtime_llm_config(datastore)
     if not llm_cfg or not llm_cfg.get('model'):
-        logger.debug("LLM restock fallback: no LLM model configured, skipping")
+        logger.debug("LLM restock fallback: no LLM model configured or LLM disabled, skipping")
         return None
 
     text_content = _strip_html(content) if content else ''

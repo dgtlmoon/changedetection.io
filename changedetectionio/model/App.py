@@ -71,6 +71,7 @@ class model(dict):
                     'shared_diff_access': False,
                     'strip_ignored_lines': False,
                     'tags': None,  # Initialized in __init__ with real datastore_path
+                    'llm_enabled': True,
                     'llm_thinking_budget': LLM_DEFAULT_THINKING_BUDGET,
                     'llm_max_summary_tokens': LLM_DEFAULT_MAX_SUMMARY_TOKENS,
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
