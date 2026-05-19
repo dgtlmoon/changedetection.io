@@ -1,4 +1,5 @@
 import os
+import re
 import threading
 
 from changedetectionio.validate_url import is_safe_valid_url
@@ -291,7 +292,15 @@ class WatchSingleHistory(Resource):
                 response = make_response(content, 200)
                 response.headers['Content-Type'] = 'text/plain; charset=utf-8'
                 response.headers['X-Content-Type-Options'] = 'nosniff'
-                response.headers['Content-Disposition'] = 'attachment; filename="snapshot.html"'
+                # Include the timestamp in the download name so downloading multiple
+                # snapshots doesn't collide. No extension — the stored bytes are
+                # "whatever the fetcher captured" (HTML, JSON, XML, text…), so
+                # claiming .html on the download would be a false content-type label
+                # for non-HTML watches. The user/curl can rename if needed.
+                # Strip to safe filename chars (timestamp is already validated as a
+                # watch.history key — this is defense in depth against header injection).
+                safe_ts = re.sub(r'[^0-9A-Za-z_-]', '', str(timestamp))[:32] or 'snapshot'
+                response.headers['Content-Disposition'] = f'attachment; filename="snapshot-{safe_ts}"'
             else:
                 response = make_response("No content found", 404)
                 response.mimetype = "text/plain"

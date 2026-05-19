@@ -711,6 +711,12 @@ def test_api_history_html_does_not_serve_as_text_html(client, live_server, measu
     assert nosniff.lower() == 'nosniff', \
         f"X-Content-Type-Options: nosniff required to defeat MIME-sniffing (got {nosniff!r})"
 
+    # Download filename should include the timestamp so multiple snapshots from
+    # the same watch don't overwrite each other on disk.
+    disp = res.headers.get('Content-Disposition', '')
+    assert 'attachment' in disp and ts in disp, \
+        f"Content-Disposition should be attachment + per-timestamp filename (got {disp!r})"
+
     # API contract: the raw bytes must still be the original HTML — programmatic
     # consumers depend on getting the stored snapshot back.
     assert b'<script>' in res.data, \
