@@ -278,8 +278,20 @@ class WatchSingleHistory(Resource):
         if request.args.get('html'):
             content = watch.get_fetched_html(timestamp)
             if content:
+                # XSS mitigation (GHSA-cgj8-g98g-4p9x): this is an API endpoint, not a
+                # browser-rendered view. The bytes ARE HTML (that's what the caller asked
+                # for) but a programmatic client doesn't need text/html — and serving
+                # text/html lets attacker-planted <script> in a monitored site execute
+                # in our origin if someone opens the URL in a browser.
+                #
+                # text/plain + explicit utf-8 + nosniff = browser shows inert text,
+                # sniffing can't re-classify it as HTML, an absent charset can't be
+                # auto-detected as UTF-7 (an alternative XSS vector). API clients
+                # still get the raw bytes — they don't care about Content-Type.
                 response = make_response(content, 200)
-                response.mimetype = "text/html"
+                response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+                response.headers['X-Content-Type-Options'] = 'nosniff'
+                response.headers['Content-Disposition'] = 'attachment; filename="snapshot.html"'
             else:
                 response = make_response("No content found", 404)
                 response.mimetype = "text/plain"
