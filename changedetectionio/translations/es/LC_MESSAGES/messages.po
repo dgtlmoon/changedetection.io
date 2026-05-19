@@ -2314,11 +2314,11 @@ msgstr "Último Comprobado"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
-msgstr "Cambiadp"
+msgstr "Cambiado"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Last Changed"
-msgstr "Último Cambiadp"
+msgstr "Último Cambiado"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
