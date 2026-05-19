@@ -163,9 +163,14 @@
       &#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}
     </span>
     &nbsp;
+    {# data-method="POST" tells modal.js to POST with the CSRF token instead of
+       navigating — GET previously allowed <img>-based CSRF wipe (GHSA-g36r-fm2p-87xm).
+       Stays as <a> because we're inside the outer settings <form> — nested forms are
+       invalid HTML, so modal.js builds a body-level hidden form for the POST. #}
     <a href="{{ url_for('settings.llm.llm_clear') }}"
        class="pure-button button-xsmall"
        style="background:#c0392b;color:#fff;"
+       data-method="POST"
        data-requires-confirm
        data-confirm-type="danger"
        data-confirm-title="{{ _('Remove AI / LLM configuration?') }}"
@@ -189,9 +194,11 @@
 
   <div class="pure-control-group" style="margin-top:1.2em; padding-top:1em; border-top:1px solid rgba(128,128,128,0.15);">
     <label style="color:#888; font-size:0.85em;">{{ _('Cache') }}</label>
+    {# See comment above on data-method="POST"+modal.js (GHSA-g36r-fm2p-87xm). #}
     <a href="{{ url_for('settings.llm.llm_clear_summary_cache') }}"
        class="pure-button button-xsmall"
        style="background:#7f8c8d;color:#fff;"
+       data-method="POST"
        data-requires-confirm
        data-confirm-type="warning"
        data-confirm-title="{{ _('Clear all summary cache?') }}"

@@ -584,6 +584,17 @@ def validate_url(test_url):
         raise ValidationError('Watch protocol is not permitted or invalid URL format')
 
 
+class validateLLMApiBaseSafe(object):
+    """Block private/loopback/reserved api_base values (SSRF) unless the operator
+    has opted in via ALLOW_IANA_RESTRICTED_ADDRESSES=true."""
+
+    def __call__(self, form, field):
+        from changedetectionio.validate_url import is_llm_api_base_safe
+        ok, reason = is_llm_api_base_safe(field.data)
+        if not ok:
+            raise ValidationError(reason)
+
+
 class ValidateSinglePythonRegexString(object):
     def __init__(self, message=None):
         self.message = message
@@ -1112,7 +1123,7 @@ class globalSettingsLLMForm(Form):
     )
     llm_api_base = StringField(
         _l('API Base URL'),
-        validators=[validators.Optional()],
+        validators=[validators.Optional(), validateLLMApiBaseSafe()],
         render_kw={
             "placeholder": "http://localhost:11434  (Ollama / custom endpoints only)",
             "style": "width: 24em;",

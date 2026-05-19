@@ -80,6 +80,45 @@ def is_private_hostname(hostname):
     return False
 
 
+def is_llm_api_base_safe(api_base):
+    """SSRF guard for the LLM `api_base` setting (GHSA-jrxm-qjfh-g54f).
+
+    Returns (ok: bool, reason: str). Empty/None api_base is allowed (cloud providers
+    don't need it). When ALLOW_IANA_RESTRICTED_ADDRESSES=true the check is bypassed
+    so operators can intentionally point at local Ollama / vLLM / LM Studio.
+
+    Call this from EVERY write path that accepts `llm.api_base` from the user —
+    form validation, AJAX endpoints, and any future REST/import endpoint. The
+    existing call sites are forms.py (validateLLMApiBaseSafe) and
+    blueprint/settings/llm.py (both /models and /test).
+    """
+    import os
+    from changedetectionio.strtobool import strtobool
+    from flask_babel import gettext
+
+    if not api_base or not api_base.strip():
+        return True, ''
+
+    if strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')):
+        return True, ''
+
+    api_base = api_base.strip()
+
+    if not is_safe_valid_url(api_base):
+        return False, gettext("API Base URL is not a valid http(s) URL.")
+
+    hostname = urlparse(api_base).hostname
+    if hostname and is_private_hostname(hostname):
+        return False, gettext(
+            "API Base URL resolves to a private, loopback, link-local or reserved "
+            "IP address and was blocked to prevent SSRF. To allow LLM endpoints on private networks "
+            "(e.g. a local Ollama server) set the environment variable "
+            "ALLOW_IANA_RESTRICTED_ADDRESSES=true and restart."
+        )
+
+    return True, ''
+
+
 def is_safe_valid_url(test_url):
     from changedetectionio import strtobool
     from changedetectionio.jinja2_custom import render as jinja_render

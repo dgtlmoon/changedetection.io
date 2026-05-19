@@ -351,3 +351,313 @@ def test_settings_form_preserves_api_key_when_submitted_blank(
         f"Blank PasswordField submission must not clear the existing API key (got '{saved_key}')"
 
     delete_all_watches(client)
+
+
+# ---------------------------------------------------------------------------
+# SSRF — api_base must reject private/loopback/reserved hosts (GHSA-jrxm-qjfh-g54f)
+# ---------------------------------------------------------------------------
+
+# Hosts that is_private_hostname() must classify as restricted.
+# 169.254.169.254 is the cloud metadata service (AWS/GCP IMDSv1).
+_SSRF_PRIVATE_HOSTS = [
+    'http://127.0.0.1:6379',
+    'http://localhost:11434',
+    'http://10.0.0.5:8080',
+    'http://192.168.1.1',
+    'http://169.254.169.254',
+]
+
+
+def test_llm_models_endpoint_blocks_private_api_base(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """GET /settings/llm/models must refuse api_base pointing at private/loopback
+    hosts and must never reach litellm."""
+    # Default state — protection ON
+    monkeypatch.delenv('ALLOW_IANA_RESTRICTED_ADDRESSES', raising=False)
+
+    for bad in _SSRF_PRIVATE_HOSTS:
+        res = client.get(
+            url_for('settings.llm.llm_get_models'),
+            query_string={'provider': 'openai_compatible', 'api_base': bad},
+        )
+        assert res.status_code == 400, \
+            f"api_base={bad!r} should have been rejected by SSRF guard"
+        body = res.get_json()
+        assert body['models'] == []
+        assert 'ALLOW_IANA_RESTRICTED_ADDRESSES' in body['error'], \
+            f"Error message should mention the env-var bypass: {body['error']!r}"
+        # The raw attacker-controlled api_base must never be reflected back
+        # (avoids XSS when JS renders the error into the DOM).
+        assert bad not in body['error']
+
+
+def test_llm_test_endpoint_blocks_private_api_base(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """GET /settings/llm/test must refuse api_base pointing at private/loopback
+    hosts and must never reach litellm.completion()."""
+    monkeypatch.delenv('ALLOW_IANA_RESTRICTED_ADDRESSES', raising=False)
+
+    for bad in _SSRF_PRIVATE_HOSTS:
+        res = client.get(
+            url_for('settings.llm.llm_test'),
+            query_string={'model': 'openai/gpt-4', 'api_base': bad},
+        )
+        assert res.status_code == 400, \
+            f"api_base={bad!r} should have been rejected by SSRF guard"
+        body = res.get_json()
+        assert body['ok'] is False
+        assert 'ALLOW_IANA_RESTRICTED_ADDRESSES' in body['error']
+        assert bad not in body['error']
+
+
+def test_llm_endpoints_allow_api_base_when_iana_bypass_enabled(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """When ALLOW_IANA_RESTRICTED_ADDRESSES=true the SSRF guard is bypassed so
+    operators can intentionally point at a local Ollama / vLLM endpoint.
+    We patch litellm so the test doesn't actually need a live model server —
+    we only need to confirm the guard didn't short-circuit."""
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')
+
+    # Stub get_valid_models so the call returns successfully without network.
+    import litellm
+    monkeypatch.setattr(litellm, 'get_valid_models',
+                        lambda **kwargs: ['llama3.2'])
+
+    # Supply api_key explicitly so we aren't tripped by the credential-exfil
+    # guard (which refuses to substitute the stored key for a non-stored api_base).
+    res = client.get(
+        url_for('settings.llm.llm_get_models'),
+        query_string={'provider': 'openai_compatible',
+                      'api_base': 'http://127.0.0.1:11434',
+                      'api_key': 'sk-test-explicit'},
+    )
+    assert res.status_code == 200, \
+        "With ALLOW_IANA_RESTRICTED_ADDRESSES=true, private api_base must be allowed"
+    body = res.get_json()
+    assert body['error'] is None
+    assert body['models'], "Stubbed model list should be returned"
+
+
+def test_settings_form_rejects_private_api_base(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """The globalSettingsLLMForm validator must block private api_base values
+    when ALLOW_IANA_RESTRICTED_ADDRESSES is not set, and must NOT persist them
+    to the datastore."""
+    monkeypatch.delenv('ALLOW_IANA_RESTRICTED_ADDRESSES', raising=False)
+
+    ds = client.application.config.get('DATASTORE')
+    # Make sure no stale api_base exists from previous tests.
+    ds.data['settings']['application'].pop('llm', None)
+
+    res = client.post(
+        url_for('settings.settings_page'),
+        data={
+            'llm-llm_model':    'gpt-4o',
+            'llm-llm_api_key':  '',
+            'llm-llm_api_base': 'http://127.0.0.1:11434',
+            'application-pager_size': '50',
+            'application-notification_format': 'System default',
+            'requests-time_between_check-days': '0',
+            'requests-time_between_check-hours': '0',
+            'requests-time_between_check-minutes': '5',
+            'requests-time_between_check-seconds': '0',
+            'requests-time_between_check-weeks': '0',
+            'requests-workers': '10',
+            'requests-timeout': '60',
+        },
+        follow_redirects=True,
+    )
+    # Form re-renders with the validation error — page itself returns 200.
+    assert res.status_code == 200
+    body = res.data.decode('utf-8', errors='replace')
+    assert 'ALLOW_IANA_RESTRICTED_ADDRESSES' in body, \
+        "Settings page should surface the SSRF guard's bypass-env-var hint"
+
+    saved = ds.data['settings']['application'].get('llm', {}).get('api_base', '')
+    assert saved != 'http://127.0.0.1:11434', \
+        f"Private api_base must not have been persisted (got {saved!r})"
+
+
+# ---------------------------------------------------------------------------
+# Credential exfiltration — stored api_key must NOT be auto-substituted when
+# the caller points api_base at a different (potentially attacker-controlled)
+# endpoint. GHSA-g36r-fm2p-87xm.
+# ---------------------------------------------------------------------------
+
+def test_llm_models_refuses_to_leak_stored_key_to_different_api_base(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """If the request supplies an api_base that differs from the saved one but
+    omits api_key, the endpoint must refuse — otherwise CSRF can ship the
+    stored Authorization: Bearer <key> to an attacker-controlled URL."""
+    monkeypatch.delenv('ALLOW_IANA_RESTRICTED_ADDRESSES', raising=False)
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds)   # stores CANARY_KEY, leaves api_base unset
+
+    # Patch litellm.get_valid_models so that if the guard ever lets us through
+    # we'd see it called — and we can assert it wasn't.
+    import litellm
+    calls = []
+    monkeypatch.setattr(litellm, 'get_valid_models',
+                        lambda **kwargs: calls.append(kwargs) or [])
+
+    res = client.get(
+        url_for('settings.llm.llm_get_models'),
+        query_string={
+            'provider': 'openai',
+            'api_base': 'https://attacker.example/v1',
+            # api_key intentionally omitted — this is the CSRF case
+        },
+    )
+    assert res.status_code == 400, \
+        "Endpoint should refuse to substitute stored key to a mismatched api_base"
+    body = res.get_json()
+    assert 'api_key' in body['error'], \
+        f"Error should call out that api_key is required: {body['error']!r}"
+    assert calls == [], "litellm must not have been invoked at all"
+
+
+def test_llm_test_refuses_to_leak_stored_key_to_different_api_base(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """Same guard on /settings/llm/test — attacker-supplied api_base + missing
+    api_key must not result in the stored key being sent to that URL."""
+    monkeypatch.delenv('ALLOW_IANA_RESTRICTED_ADDRESSES', raising=False)
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds)   # stores CANARY_KEY, no stored api_base
+
+    calls = []
+    # Patch the completion wrapper so we'd notice if litellm were invoked.
+    import changedetectionio.llm.client as llm_client
+    monkeypatch.setattr(llm_client, 'completion',
+                        lambda **kw: calls.append(kw) or ('', 0, 0, 0))
+
+    res = client.get(
+        url_for('settings.llm.llm_test'),
+        query_string={
+            'model': 'gpt-4o-mini',
+            'api_base': 'https://attacker.example/v1',
+            # api_key intentionally omitted
+        },
+    )
+    assert res.status_code == 400
+    body = res.get_json()
+    assert body['ok'] is False
+    assert 'api_key' in body['error']
+    assert calls == [], "completion() must not have been invoked"
+
+
+def test_llm_models_allows_stored_key_when_api_base_matches_saved(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """Regression: the legit UI flow (test saved config without retyping the key)
+    must still work — i.e. when request api_base matches the stored api_base,
+    the stored key IS substituted."""
+    monkeypatch.delenv('ALLOW_IANA_RESTRICTED_ADDRESSES', raising=False)
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')  # so localhost passes SSRF
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds)
+    ds.data['settings']['application']['llm']['api_base'] = 'http://localhost:11434'
+
+    received = []
+    import litellm
+    monkeypatch.setattr(litellm, 'get_valid_models',
+                        lambda **kwargs: (received.append(kwargs), ['llama3.2'])[1])
+
+    res = client.get(
+        url_for('settings.llm.llm_get_models'),
+        query_string={
+            'provider': 'openai_compatible',
+            'api_base': 'http://localhost:11434',  # matches saved
+            # api_key omitted — should fall back to stored CANARY_KEY
+        },
+    )
+    assert res.status_code == 200, res.get_json()
+    assert received and received[0].get('api_key') == CANARY_KEY, \
+        "When api_base matches saved, the stored api_key should be used"
+
+
+# ---------------------------------------------------------------------------
+# CSRF — /clear and /clear-summary-cache must not mutate state on GET
+# (GHSA-g36r-fm2p-87xm). The <img src=...> CSRF vector relies on GET firing the
+# mutation; the production guard is "POST only + Flask-WTF CSRF token". The
+# test config disables WTF_CSRF_ENABLED, so we verify the GET vector by
+# asserting the mutation didn't happen, and verify POST routing by exercising
+# the legit confirm-then-POST flow.
+#
+# NB: the app registers a catch-all '/<path:filename>' static route, which
+# intercepts any GET that isn't claimed by a method-matching rule and returns
+# 404 — so we can't simply assert on status code. The behaviour test below is
+# the actual security property.
+# ---------------------------------------------------------------------------
+
+def test_llm_clear_get_does_not_wipe_config(
+        client, live_server, measure_memory_usage, datastore_path):
+    """The CSRF surface is GET → mutation. After this fix the endpoint is
+    POST-only, so a GET must leave LLM config intact."""
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds)
+    assert ds.data['settings']['application'].get('llm', {}).get('api_key') == CANARY_KEY
+
+    client.get(url_for('settings.llm.llm_clear'))
+
+    # Mutation must not have happened — that's what defeats <img src=...> CSRF.
+    assert ds.data['settings']['application'].get('llm', {}).get('api_key') == CANARY_KEY, \
+        "GET /settings/llm/clear must not wipe LLM config (CSRF guard)"
+
+
+def test_llm_clear_summary_cache_get_does_not_wipe_cache(
+        client, live_server, measure_memory_usage, datastore_path):
+    """Same property for the cache wipe endpoint — GET must not delete the
+    change-summary-*.txt files the endpoint targets. To exercise the actual
+    deletion path we have to create a real watch (so a real data_dir exists)
+    and drop a real change-summary-*.txt inside it. POST should remove it;
+    GET must not."""
+    import os
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds)
+    api_token = _api_token(client)
+
+    # Create a real watch — required to exercise llm_clear_summary_cache's
+    # iteration over datastore.data['watching'].values().
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        '/api/v1/watch',
+        data=json.dumps({'url': test_url}),
+        headers={'content-type': 'application/json', 'x-api-key': api_token},
+        follow_redirects=True,
+    )
+    assert res.status_code == 201
+    uuid = res.json.get('uuid')
+
+    watch = ds.data['watching'][uuid]
+    data_dir = watch.data_dir
+    assert data_dir, "Watch must have a data_dir for this test to be meaningful"
+    os.makedirs(data_dir, exist_ok=True)
+
+    summary_file = os.path.join(data_dir, 'change-summary-csrf-canary.txt')
+    with open(summary_file, 'w') as f:
+        f.write('do-not-delete-via-GET')
+
+    # GET must NOT trigger the wipe — this is the CSRF surface that was open
+    # via <img src="/settings/llm/clear-summary-cache">.
+    client.get(url_for('settings.llm.llm_clear_summary_cache'))
+    assert os.path.exists(summary_file), \
+        "GET on /settings/llm/clear-summary-cache must not invoke the cache wipe"
+
+    # Sanity check: POST does remove it — confirms our test actually exercises
+    # the deletion path the GET test is guarding against.
+    client.post(url_for('settings.llm.llm_clear_summary_cache'))
+    assert not os.path.exists(summary_file), \
+        "POST on /settings/llm/clear-summary-cache should remove change-summary-*.txt"
+
+    delete_all_watches(client)
+
+
+def test_llm_clear_via_post_still_works(
+        client, live_server, measure_memory_usage, datastore_path):
+    """Confirm the legit confirm-then-POST flow still wipes LLM config."""
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds)
+    assert ds.data['settings']['application'].get('llm', {}).get('api_key') == CANARY_KEY
+
+    res = client.post(url_for('settings.llm.llm_clear'), follow_redirects=True)
+    assert res.status_code == 200
+    assert 'llm' not in ds.data['settings']['application']
