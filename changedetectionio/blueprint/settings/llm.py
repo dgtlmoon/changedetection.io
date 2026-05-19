@@ -56,6 +56,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def llm_get_models():
         from flask import request
+        from changedetectionio.validate_url import is_llm_api_base_safe
         provider = request.args.get('provider', '').strip()
         api_key  = request.args.get('api_key',  '').strip()
         api_base = request.args.get('api_base', '').strip()
@@ -65,6 +66,11 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         if not provider:
             logger.debug("LLM model list: no provider specified, returning 400")
             return jsonify({'models': [], 'error': 'No provider specified'}), 400
+
+        ok, reason = is_llm_api_base_safe(api_base)
+        if not ok:
+            logger.warning(f"LLM model list refused: api_base failed SSRF check ({reason})")
+            return jsonify({'models': [], 'error': reason}), 400
 
         # Fall back to the stored key if the user hasn't typed one yet
         if not api_key:
@@ -115,6 +121,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     def llm_test():
         from flask import request
         from changedetectionio.llm.client import completion
+        from changedetectionio.validate_url import is_llm_api_base_safe
 
         # Pull stored config as the fallback, then override with anything the
         # form-driven JS sent as query params. Lets users test config changes
@@ -139,6 +146,11 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         if not model:
             logger.error("LLM connection test failed: no model configured")
             return jsonify({'ok': False, 'error': 'No model configured.'}), 400
+
+        ok, reason = is_llm_api_base_safe(api_base)
+        if not ok:
+            logger.warning(f"LLM connection test refused: api_base failed SSRF check ({reason})")
+            return jsonify({'ok': False, 'error': reason}), 400
 
         try:
             logger.debug(f"LLM connection test: sending test prompt to model={model!r}")
