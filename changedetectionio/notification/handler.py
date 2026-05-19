@@ -364,6 +364,10 @@ def process_notification(n_object: NotificationContextData, datastore):
         # Should always be false for 'text' mode or its too hard to read
         # But otherwise, this could be some setting
         word_diff=False if requested_output_format_original == 'text' else True,
+        # HTML-format notifications must escape diff content (GHSA-q8xq-qg4x-wphg).
+        # FormattableDiff/Extract escape internally so {{ diff(...) }} stays callable —
+        # the post-Jinja escape loop below would otherwise convert them to plain str.
+        escape_output='html' in requested_output_format,
         )
     )
 
@@ -394,10 +398,19 @@ def process_notification(n_object: NotificationContextData, datastore):
     # so they survive escape and are still replaced with <span> tags later.
     if 'html' in requested_output_format:
         from markupsafe import escape as html_escape
+        from changedetectionio.notification_service import FormattableDiff, FormattableExtract
         _page_content_keys = {'raw_diff', 'current_snapshot', 'prev_snapshot', 'triggered_text'}
         for key in [k for k in notification_parameters if k.startswith('diff') or k in _page_content_keys]:
-            if notification_parameters.get(key):
-                notification_parameters[key] = str(html_escape(str(notification_parameters[key])))
+            value = notification_parameters.get(key)
+            if not value:
+                continue
+            # FormattableDiff / FormattableExtract are callable str subclasses — {{ diff(lines=5) }}
+            # etc. relies on __call__. Wrapping them with str(html_escape(...)) here would lose
+            # __call__ and break those tokens. They escape internally via escape_output=True
+            # (set by add_rendered_diff_to_notification_vars above) for both __str__ and __call__.
+            if isinstance(value, (FormattableDiff, FormattableExtract)):
+                continue
+            notification_parameters[key] = str(html_escape(str(value)))
 
     with (apprise.LogCapture(level=apprise.logging.DEBUG) as logs):
         for url in n_object['notification_urls']:

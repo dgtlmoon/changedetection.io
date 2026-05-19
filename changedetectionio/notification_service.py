@@ -99,7 +99,7 @@ class FormattableExtract(str):
     Multiple changed fragments are joined with newlines.
     Being a str subclass means it is natively JSON serializable.
     """
-    def __new__(cls, prev_snapshot, current_snapshot, extract_fn):
+    def __new__(cls, prev_snapshot, current_snapshot, extract_fn, escape_output=False):
         if prev_snapshot or current_snapshot:
             from changedetectionio import diff as diff_module
             # word_diff=True is required — placemarker extraction regexes only exist in word-diff output
@@ -107,6 +107,12 @@ class FormattableExtract(str):
             extracted = extract_fn(raw)
         else:
             extracted = ''
+        if escape_output and extracted:
+            # Placemarkers (@removed_PLACEMARKER_OPEN etc) contain no HTML chars,
+            # so html_escape leaves them intact — they still get swapped to <span>
+            # tags later by apply_service_tweaks. See GHSA-q8xq-qg4x-wphg.
+            from markupsafe import escape as html_escape
+            extracted = str(html_escape(extracted))
         instance = super().__new__(cls, extracted)
         return instance
 
@@ -128,16 +134,23 @@ class FormattableDiff(str):
 
     Being a str subclass means it is natively JSON serializable.
     """
-    def __new__(cls, prev_snapshot, current_snapshot, **base_kwargs):
+    def __new__(cls, prev_snapshot, current_snapshot, escape_output=False, **base_kwargs):
         if prev_snapshot or current_snapshot:
             from changedetectionio import diff as diff_module
             rendered = diff_module.render_diff(prev_snapshot, current_snapshot, **base_kwargs)
         else:
             rendered = ''
+        if escape_output and rendered:
+            # Placemarkers (@removed_PLACEMARKER_OPEN etc) contain no HTML chars,
+            # so html_escape leaves them intact — they still get swapped to <span>
+            # tags later by apply_service_tweaks. See GHSA-q8xq-qg4x-wphg.
+            from markupsafe import escape as html_escape
+            rendered = str(html_escape(rendered))
         instance = super().__new__(cls, rendered)
         instance._prev = prev_snapshot
         instance._current = current_snapshot
         instance._base_kwargs = base_kwargs
+        instance._escape_output = escape_output
         return instance
 
     def __call__(self, lines=None, added_only=False, removed_only=False, context=0,
@@ -162,6 +175,10 @@ class FormattableDiff(str):
 
         if lines is not None:
             result = '\n'.join(result.splitlines()[:int(lines)])
+
+        if self._escape_output and result:
+            from markupsafe import escape as html_escape
+            result = str(html_escape(result))
 
         return result
 
@@ -236,7 +253,7 @@ class NotificationContextData(dict):
 
         super().__setitem__(key, value)
 
-def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snapshot:str, current_snapshot:str, word_diff:bool):
+def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snapshot:str, current_snapshot:str, word_diff:bool, escape_output:bool=False):
     """
     Efficiently renders only the diff placeholders that are actually used in the notification text.
 
@@ -249,6 +266,9 @@ def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snap
         prev_snapshot: Previous version of content for diff comparison
         current_snapshot: Current version of content for diff comparison
         word_diff: Whether to use word-level (True) or line-level (False) diffing
+        escape_output: If True, the rendered diff output is HTML-escaped. Used for HTML-format
+            notifications so attacker-controlled page content can't inject live markup.
+            Both the cached str representation and the result of {{ diff(...) }} calls are escaped.
 
     Returns:
         dict: Only the diff placeholders that were found in notification_scan_text, with rendered content
@@ -287,10 +307,10 @@ def add_rendered_diff_to_notification_vars(notification_scan_text:str, prev_snap
         if not re.search(pattern, notification_scan_text, re.IGNORECASE):
             continue
         if key in diff_specs:
-            ret[key] = FormattableDiff(prev_snapshot, current_snapshot, **diff_specs[key])
+            ret[key] = FormattableDiff(prev_snapshot, current_snapshot, escape_output=escape_output, **diff_specs[key])
             rendered_count += 1
         elif key in extract_specs:
-            ret[key] = FormattableExtract(prev_snapshot, current_snapshot, extract_fn=extract_specs[key])
+            ret[key] = FormattableExtract(prev_snapshot, current_snapshot, extract_fn=extract_specs[key], escape_output=escape_output)
             rendered_count += 1
 
     if rendered_count:
