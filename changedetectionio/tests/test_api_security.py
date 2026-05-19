@@ -9,7 +9,7 @@ import json
 import threading
 import uuid as uuid_module
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, delete_all_watches
+from .util import live_server_setup, wait_for_all_checks, wait_for_watch_history, delete_all_watches
 import os
 
 
@@ -647,6 +647,80 @@ def test_api_history_edge_cases(client, live_server, measure_memory_usage, datas
         )
         # Should either work (show reverse diff) or return error
         assert res.status_code in [200, 400]
+
+    # Cleanup
+    client.delete(url_for("watch", uuid=watch_uuid), headers={'x-api-key': api_key})
+    delete_all_watches(client)
+
+
+def test_api_history_html_does_not_serve_as_text_html(client, live_server, measure_memory_usage, datastore_path):
+    """
+    GHSA-cgj8-g98g-4p9x: GET /api/v1/watch/<uuid>/history/<timestamp>?html=true
+    must not serve the stored snapshot with Content-Type: text/html. The bytes
+    are an external site's HTML — if the response is labelled text/html, a
+    <script> the attacker planted on that site executes in our origin when an
+    operator opens the URL in a browser (stored XSS).
+
+    The fix is text/plain; charset=utf-8 + X-Content-Type-Options: nosniff so
+    browsers render inert text and can't sniff back to HTML/UTF-7. API clients
+    don't care about Content-Type and still receive the same bytes.
+
+    This test injects the snapshot directly via Watch.save_history_blob() and
+    save_last_fetched_html() so we exercise the API endpoint's response
+    shaping without depending on the live-fetch pipeline.
+    """
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": test_url}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    watch_uuid = res.json.get('uuid')
+
+    # Plant a payload that would execute if the response were rendered as HTML.
+    malicious_html = (
+        "<html><body>"
+        "<script>window.__CD_XSS_PROBE = 1</script>"
+        "<img src=x onerror=\"window.__CD_XSS_PROBE = 1\">"
+        "</body></html>"
+    )
+    ts = '1700000000'
+    watch = live_server.app.config['DATASTORE'].data['watching'][watch_uuid]
+    watch.save_history_blob(contents=malicious_html, timestamp=ts, snapshot_id=ts)
+    watch.save_last_fetched_html(timestamp=ts, contents=malicious_html)
+
+    # The actual XSS-relevant assertion: how is the snapshot served?
+    res = client.get(
+        url_for("watchsinglehistory", uuid=watch_uuid, timestamp=ts) + '?html=true',
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 200, f"unexpected status {res.status_code}: {res.data!r}"
+
+    ctype = res.headers.get('Content-Type', '')
+    assert 'text/html' not in ctype, \
+        f"snapshot must not be served as text/html (got {ctype!r}) — see GHSA-cgj8-g98g-4p9x"
+    # Explicit utf-8 closes the UTF-7 sniffing bypass — without a charset, some
+    # browsers will auto-detect UTF-7 from byte patterns and a crafted snapshot
+    # can still execute via `+ADw-script+AD4-...`
+    assert 'charset=utf-8' in ctype.lower(), \
+        f"Content-Type must pin charset=utf-8 to defeat UTF-7 sniffing XSS (got {ctype!r})"
+
+    nosniff = res.headers.get('X-Content-Type-Options', '')
+    assert nosniff.lower() == 'nosniff', \
+        f"X-Content-Type-Options: nosniff required to defeat MIME-sniffing (got {nosniff!r})"
+
+    # Download filename should include the timestamp so multiple snapshots from
+    # the same watch don't overwrite each other on disk.
+    disp = res.headers.get('Content-Disposition', '')
+    assert 'attachment' in disp and ts in disp, \
+        f"Content-Disposition should be attachment + per-timestamp filename (got {disp!r})"
+
+    # API contract: the raw bytes must still be the original HTML — programmatic
+    # consumers depend on getting the stored snapshot back.
+    assert b'<script>' in res.data, \
+        "Response body must still contain the raw stored bytes (the API contract)"
 
     # Cleanup
     client.delete(url_for("watch", uuid=watch_uuid), headers={'x-api-key': api_key})
