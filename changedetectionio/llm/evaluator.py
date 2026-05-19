@@ -228,6 +228,28 @@ def llm_configured_via_env() -> bool:
     return bool(os.getenv('LLM_MODEL', '').strip())
 
 
+def _runtime_llm_config(datastore) -> dict | None:
+    """
+    Runtime gate used by every LLM entry point in this module (and the restock
+    fallback). Returns the resolved config dict only when both:
+      - the master 'llm_enabled' toggle is on (default True)
+      - a provider+model is actually configured
+
+    When the toggle is off but a config exists, logs a debug message and returns
+    None so callers fall through their existing "not configured" early-return path.
+
+    The settings UI deliberately still calls get_llm_config() directly so the
+    "AI / LLM configured: ..." badge keeps showing the saved provider even while
+    the toggle is off.
+    """
+    cfg = get_llm_config(datastore)
+    if not bool(datastore.data['settings']['application'].get('llm_enabled', True)):
+        if cfg:
+            logger.debug("LLM features disabled via settings (llm_enabled=False) — skipping LLM lookup")
+        return None
+    return cfg
+
+
 # ---------------------------------------------------------------------------
 # Global monthly token budget
 # ---------------------------------------------------------------------------
@@ -379,7 +401,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
     Stores result in watch['llm_prefilter'] (str selector or None).
     Called once when intent is first set, and again if pre-filter returns zero matches.
     """
-    cfg = get_llm_config(datastore)
+    cfg = _runtime_llm_config(datastore)
     if not cfg:
         return
 
@@ -509,7 +531,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
     The result replaces {{ diff }} in notifications so the user gets a
     readable description instead of raw +/- diff lines.
     """
-    cfg = get_llm_config(datastore)
+    cfg = _runtime_llm_config(datastore)
     if not cfg:
         return ''
 
@@ -597,7 +619,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
 
     Returns {'found': bool, 'answer': str} or None if LLM not configured / no intent.
     """
-    cfg = get_llm_config(datastore)
+    cfg = _runtime_llm_config(datastore)
     if not cfg:
         return None
 
@@ -648,7 +670,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
 
     Results are cached by (intent, diff) hash — each unique diff is evaluated exactly once.
     """
-    cfg = get_llm_config(datastore)
+    cfg = _runtime_llm_config(datastore)
     if not cfg:
         return None
 

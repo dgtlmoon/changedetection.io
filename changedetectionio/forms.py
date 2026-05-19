@@ -1193,6 +1193,14 @@ class globalSettingsLLMForm(Form):
             "style": "width: 10em;",
         },
     )
+    # Master on/off switch for ALL LLM lookups at runtime. When False, every entry point
+    # in evaluator.py (and the restock fallback) short-circuits with a logger.debug
+    # message — even if a provider+model is still configured. Saved config and the
+    # "configured" badge remain visible so the user can toggle back on without re-entering.
+    llm_enabled = BooleanField(
+        _l('Enable AI / LLM features'),
+        default=True,
+    )
     llm_override_diff_with_summary = BooleanField(
         _l('Replace {{diff}} notification token with AI summary'),
         default=True,
