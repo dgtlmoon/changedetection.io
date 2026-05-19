@@ -634,6 +634,12 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
 def test_html_color_notifications(client, live_server, measure_memory_usage, datastore_path):
     _test_color_notifications(client, '{{diff}}',datastore_path=datastore_path)
     _test_color_notifications(client, '{{diff_full}}',datastore_path=datastore_path)
+    # Regression: the html-output escape pass in handler.py used to convert
+    # FormattableDiff into a plain str, stripping its __call__ and breaking any
+    # {{ diff(...) }} / {{ diff_added(...) }} token on htmlcolor/html notifications
+    # with 'str' object is not callable (see commit 08d30c6 + #3923).
+    # word_diff=false reproduces the exact form the user-reported failure used.
+    _test_color_notifications(client, '{{diff(word_diff=false)}}', datastore_path=datastore_path)
 
 
 def _test_custom_html_in_notification_body_not_escaped(client, datastore_path, content_type=None):
