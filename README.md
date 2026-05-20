@@ -147,7 +147,7 @@ Easily add the current web page to your changedetection.io tool, simply install 
 
 ### Docker
 
-With Docker composer, just clone this repository and..
+With Docker Compose, just clone this repository and run:
 
 ```bash
 $ docker compose up -d
