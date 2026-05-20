@@ -9,6 +9,10 @@ function request_textpreview_update() {
     $('textarea:visible, input:visible').each(function () {
         const $element = $(this); // Cache the jQuery object for the current element
         const name = $element.attr('name'); // Get the name attribute of the element
+        // Radios share a name across multiple inputs; .val() returns the value
+        // attribute regardless of checked state, so iterating would let the last
+        // unchecked radio overwrite the user's actual selection. Skip unchecked.
+        if ($element.is(':radio') && !$element.is(':checked')) return;
         data[name] = $element.is(':checkbox') ? ($element.is(':checked') ? $element.val() : false) : $element.val();
     });
 

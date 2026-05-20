@@ -35,6 +35,50 @@ def _task(watch, update_handler):
     return text_after_filter
 
 
+def _compute_ignore_line_numbers_for_preview(text_pre_extract, ignore_patterns, extract_patterns):
+    """1-indexed output line numbers in the post-extract display that correspond
+    to input lines matching ignore_text patterns.
+
+    Needed because extract_text (#4138) transforms line content — e.g. "0.54.10"
+    becomes ".54.10" — so a substring match for "0.54.10" against the post-extract
+    text fails and the preview UI can no longer mark the line as ignored. We find
+    the ignored line numbers in the pre-extract text and replay extract_by_regex
+    line-by-line to map them forward.
+    """
+    from changedetectionio import html_tools
+    from changedetectionio.processors.text_json_diff.processor import ContentTransformer
+
+    if not text_pre_extract or not ignore_patterns:
+        return []
+
+    ignored_input_lines = set(
+        html_tools.strip_ignore_text(
+            content=text_pre_extract,
+            wordlist=ignore_patterns,
+            mode='line numbers'
+        )
+    )
+    if not ignored_input_lines:
+        return []
+
+    if not extract_patterns:
+        return sorted(ignored_input_lines)
+
+    # Replay extract_by_regex per-line. Each emitted match ends with exactly one
+    # '\n', so counting newlines tells us how many output lines this input produced.
+    output_line_counter = 0
+    result = []
+    for input_idx, line in enumerate(text_pre_extract.splitlines()):
+        is_ignored = (input_idx + 1) in ignored_input_lines
+        matches_in_line = ContentTransformer.extract_by_regex(line, extract_patterns).count('\n')
+        for _ in range(matches_in_line):
+            output_line_counter += 1
+            if is_ignored:
+                result.append(output_line_counter)
+
+    return result
+
+
 def prepare_filter_prevew(datastore, watch_uuid, form_data):
     '''Used by @app.route("/edit/<uuid_str:uuid>/preview-rendered", methods=['POST'])'''
     from changedetectionio import forms, html_tools
@@ -50,6 +94,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
 
     text_after_filter = ''
     text_before_filter = ''
+    text_pre_extract = ''
     trigger_line_numbers = []
     ignore_line_numbers = []
     blocked_line_numbers = []
@@ -89,15 +134,22 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
             update_handler.fetcher.content = str(decompressed_data) # str() because playwright/puppeteer/requests return string
             update_handler.fetcher.headers['content-type'] = tmp_watch.get('content-type')
 
-            # Process our watch with filters and the HTML from disk, and also a blank watch with no filters but also with the same HTML from disk
+            # Process our watch with filters and the HTML from disk, and also a blank watch with no filters but also with the same HTML from disk.
+            # The third task runs with extract_text cleared so we can compute ignore_line_numbers
+            # against the pre-extract text (extract_text transforms lines so post-extract substring
+            # matching for ignore patterns would otherwise fail — see #4138 follow-up).
             # Do this as parallel threads (not processes) to avoid pickle issues with Lock objects
+            tmp_watch_no_extract = deepcopy(tmp_watch)
+            tmp_watch_no_extract['extract_text'] = []
             try:
-                with ThreadPoolExecutor(max_workers=2) as executor:
+                with ThreadPoolExecutor(max_workers=3) as executor:
                     future1 = executor.submit(_task, tmp_watch, update_handler)
                     future2 = executor.submit(_task, blank_watch_no_filters, update_handler)
+                    future3 = executor.submit(_task, tmp_watch_no_extract, update_handler)
 
                     text_after_filter = future1.result()
                     text_before_filter = future2.result()
+                    text_pre_extract = future3.result()
             except Exception as e:
                 x=1
 
@@ -111,10 +163,11 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
 
     try:
         text_to_ignore = tmp_watch.get('ignore_text', []) + datastore.data['settings']['application'].get('global_ignore_text', [])
-        ignore_line_numbers = html_tools.strip_ignore_text(content=text_after_filter,
-                                                           wordlist=text_to_ignore,
-                                                           mode='line numbers'
-                                                           )
+        ignore_line_numbers = _compute_ignore_line_numbers_for_preview(
+            text_pre_extract=text_pre_extract,
+            ignore_patterns=text_to_ignore,
+            extract_patterns=tmp_watch.get('extract_text', [])
+        )
     except Exception as e:
         text_before_filter = f"Error: {str(e)}"
 
