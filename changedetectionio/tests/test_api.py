@@ -252,6 +252,78 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     assert b'(changed)' not in res.data
 
 
+def test_api_watch_history_diff_error_handling(client, live_server, datastore_path):
+    """Test error handling in the WatchHistoryDiff API endpoint."""
+    live_server_setup(live_server)
+
+    # Generate an API key
+    res = client.post(url_for("api.api_new_apikey"))
+    assert res.status_code == 200
+    api_key = res.json.get('api_key')
+    assert api_key
+
+    # Test with non-existent UUID
+    fake_uuid = "00000000-0000-0000-0000-000000000000"
+    res = client.get(
+        url_for("watchhistorydiff", uuid=fake_uuid, from_timestamp='previous', to_timestamp='latest'),
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 404
+    assert b'No watch exists with the UUID' in res.data
+
+    # Create a watch and add it
+    watch_uuid = create_app_record(client, live_server, datastore_path)
+
+    # Test with non-existent from_timestamp
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='9999999999', to_timestamp='latest'),
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 404
+    assert b'From timestamp 9999999999 not found in watch history' in res.data
+
+    # Test with non-existent to_timestamp
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='9999999999'),
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 404
+    assert b'To timestamp 9999999999 not found in watch history' in res.data
+
+    # Test with invalid format parameter
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest') + '?format=invalid_format',
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 400
+    assert b'Invalid format' in res.data
+
+    # Test with watch that has no history (should trigger "no history" error)
+    # First, create a fresh watch with no history
+    res = client.post(
+        url_for("createwatch"),
+        json={'url': 'http://example.com/no-history'},
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 201
+    no_history_uuid = res.json['uuid']
+
+    res = client.get(
+        url_for("watchhistorydiff", uuid=no_history_uuid, from_timestamp='previous', to_timestamp='latest'),
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 404
+    assert b'no history exists' in res.data.lower()
+
+    # Test 'previous' keyword when only 1 snapshot exists
+    res = client.get(
+        url_for("watchhistorydiff", uuid=no_history_uuid, from_timestamp='previous', to_timestamp='latest'),
+        headers={'x-api-key': api_key},
+    )
+    # Should fail because we need at least 2 snapshots for 'previous'
+    assert res.status_code == 404
+
+
     # Fetch the whole watch
     res = client.get(
         url_for("watch", uuid=watch_uuid),
