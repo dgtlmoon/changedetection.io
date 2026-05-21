@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from loguru import logger
 
+from changedetectionio.strtobool import strtobool
+
 from . import client as llm_client
 from .prompt_builder import (
     build_change_summary_prompt, build_change_summary_system_prompt,
@@ -30,6 +32,11 @@ from .prompt_builder import (
 from .response_parser import parse_eval_response, parse_preview_response, parse_setup_response
 
 _DEFAULT_MAX_INPUT_CHARS = 100_000
+
+
+def is_llm_features_disabled() -> bool:
+    """True when the LLM_FEATURES_DISABLED env var is set to a truthy value."""
+    return bool(strtobool(os.getenv('LLM_FEATURES_DISABLED', '')))
 
 def _get_max_input_chars(datastore) -> int:
     """Max input characters to send to the LLM. Resolution: env var → datastore → 100,000.
@@ -207,6 +214,8 @@ def get_llm_config(datastore) -> dict | None:
       1. Environment variables: LLM_MODEL, LLM_API_KEY, LLM_API_BASE
       2. Datastore settings (set via UI)
     """
+    if is_llm_features_disabled():
+        return None
     # 1. Environment variable override
     env_model = os.getenv('LLM_MODEL', '').strip()
     if env_model:
@@ -225,6 +234,8 @@ def get_llm_config(datastore) -> dict | None:
 
 def llm_configured_via_env() -> bool:
     """True when LLM config comes from environment variables, not the UI."""
+    if is_llm_features_disabled():
+        return False
     return bool(os.getenv('LLM_MODEL', '').strip())
 
 

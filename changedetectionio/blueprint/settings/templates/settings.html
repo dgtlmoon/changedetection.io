@@ -34,7 +34,9 @@
             <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
                 {% endfor %}
             {% endif %}
+            {% if not llm_features_disabled %}
             <li class="tab"><a href="#ai">{{ _('AI / LLM') }}</a></li>
+            {% endif %}
             <li class="tab"><a href="#info">{{ _('Info') }}</a></li>
         </ul>
     </div>
@@ -394,7 +396,9 @@ nav
             </div>
                 {% endfor %}
             {% endif %}
+            {% if not llm_features_disabled %}
             {% include 'settings_llm_tab.html' %}
+            {% endif %}
             <div class="tab-pane-inner" id="info">
                 <p><strong>{{ _('Uptime:') }}</strong> {{ uptime_seconds|format_duration }}</p>
                 <p><strong>{{ _('Python version:') }}</strong> {{ python_version }}</p>
