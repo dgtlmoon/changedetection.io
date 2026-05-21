@@ -522,6 +522,11 @@ def changedetection_app(config=None, datastore_o=None):
         available_languages=available_languages
     )
 
+    @app.context_processor
+    def inject_llm_features_disabled():
+        from changedetectionio.llm.evaluator import is_llm_features_disabled
+        return dict(llm_features_disabled=is_llm_features_disabled())
+
     # Set up a request hook to check authentication for all routes
     @app.before_request
     def check_authentication():

@@ -112,7 +112,7 @@
                 <td><code>{{ '{{triggered_text}}' }}</code></td>
                 <td>{{ _('Text that tripped the trigger from filters') }}</td>
             </tr>
-            {% if settings_application and settings_application.get('llm', {}).get('model') %}
+            {% if not llm_features_disabled and settings_application and settings_application.get('llm', {}).get('model') %}
             <tr>
                 <td><code>{{ '{{diff}}' }}</code> <small style="opacity:0.6">{{ _('(upgraded)') }}</small></td>
                 <td>{{ _('When AI Change Summary is configured, contains the AI-generated description instead of the raw diff. Falls back to raw diff when not configured.') }}</td>

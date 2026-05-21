@@ -281,6 +281,7 @@
       </div>
     </dialog>
 
+    {% if not llm_features_disabled %}
     <!-- LLM Not Configured Modal -->
     <dialog id="llm-not-configured-modal" class="modal-dialog" aria-labelledby="llm-not-configured-modal-title">
       <div class="modal-header">
@@ -294,6 +295,7 @@
         <button type="button" class="pure-button" id="close-llm-not-configured-modal">{{ _('Close') }}</button>
       </div>
     </dialog>
+    {% endif %}
 
     <!-- Search Modal -->
     {% if current_user.is_authenticated or not has_password %}

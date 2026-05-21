@@ -436,7 +436,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         # Also gated on llm_enabled — a disabled LLM can't be spending tokens,
                         # so the budget enforcement shouldn't suppress changes when the user
                         # has explicitly switched LLM off.
-                        _llm_master_enabled = bool(datastore.data['settings']['application'].get('llm_enabled', True))
+                        from changedetectionio.llm.evaluator import is_llm_features_disabled as _is_llm_features_disabled
+                        _llm_master_enabled = bool(datastore.data['settings']['application'].get('llm_enabled', True)) and not _is_llm_features_disabled()
                         _llm_budget_action = datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm')
                         if _llm_master_enabled and _llm_budget_action == 'skip_check':
                             from changedetectionio.llm.evaluator import is_global_token_budget_exceeded
