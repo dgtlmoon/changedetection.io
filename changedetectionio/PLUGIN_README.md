@@ -38,6 +38,66 @@ def ui_edit_stats_extras(watch):
 
 3. The HTML you return will be included in the Stats tab.
 
+## LLM Query Hooks
+
+External packages can observe and modify every LiteLLM call (intent evaluation,
+change summaries, restock extraction, connection tests, etc.).
+
+### `llm_query_alter` — before the request
+
+Return a dict of keys to merge into the call context (`messages`, `model`,
+`max_tokens`, `api_key`, `api_base`, `extra_body`, …).
+
+```python
+from changedetectionio.pluggy_interface import hookimpl
+
+@hookimpl
+def llm_query_alter(llm_context):
+    # llm_context includes:
+    #   purpose, watch, datastore, app_guid, watch_uuid, timestamp_utc,
+    #   settings (full application settings copy), model, messages, ...
+    if llm_context.get('purpose') != 'evaluate_change':
+        return None
+    messages = list(llm_context['messages'])
+    messages.append({'role': 'user', 'content': 'Extra auditing instruction.'})
+    return {'messages': messages}
+```
+
+### `llm_query_finalize` — after success or failure
+
+Use for token/cost accounting (MySQL, Prometheus, billing exports, etc.).
+
+```python
+@hookimpl
+def llm_query_finalize(llm_context, result, error):
+    if error:
+        log_failure(llm_context['app_guid'], llm_context['watch_uuid'], error)
+        return
+    # result keys: text, total_tokens, input_tokens, output_tokens,
+    #   cost_usd, litellm_response_cost_usd, model, finish_reason, duration_seconds
+    record_usage(
+        app_guid=llm_context['app_guid'],
+        watch_uuid=llm_context['watch_uuid'],
+        purpose=llm_context['purpose'],
+        tokens=result['total_tokens'],
+        cost_usd=result['cost_usd'],
+        at=llm_context['timestamp_utc'],
+    )
+```
+
+Register via setuptools entry point (namespace `changedetectionio`), same as other plugins:
+
+```python
+entry_points={
+    'changedetectionio': [
+        'llm_accounting = my_package.llm_plugin',
+    ],
+},
+```
+
+**Purpose values** (call-site identifiers): `evaluate_change`, `summarise_change`,
+`run_setup`, `preview_extract`, `restock_extract`, `connection_test`.
+
 ## Plugin Loading
 
 Plugins can be loaded from:

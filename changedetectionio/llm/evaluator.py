@@ -22,7 +22,7 @@ from loguru import logger
 
 from changedetectionio.strtobool import strtobool
 
-from . import client as llm_client
+from .invocation import llm_completion
 from .prompt_builder import (
     build_change_summary_prompt, build_change_summary_system_prompt,
     build_eval_prompt, build_eval_system_prompt,
@@ -425,7 +425,10 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
     user_prompt = build_setup_prompt(intent, snapshot_text, url=url)
 
     try:
-        raw, tokens, *_ = llm_client.completion(
+        raw, tokens, *_ = llm_completion(
+            'run_setup',
+            watch=watch,
+            datastore=datastore,
             model=cfg['model'],
             messages=[
                 _cached_system(system_prompt, model=cfg['model']),
@@ -577,7 +580,10 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
     _extra_body = _thinking_extra_body(cfg['model'], _thinking_budget)
 
     try:
-        _resp = llm_client.completion(
+        _resp = llm_completion(
+            'summarise_change',
+            watch=watch,
+            datastore=datastore,
             model=cfg['model'],
             messages=[
                 _cached_system(system_prompt, model=cfg['model']),
@@ -646,7 +652,10 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
     user_prompt = build_preview_prompt(intent, content, url=url, title=title)
 
     try:
-        raw, tokens, *_ = llm_client.completion(
+        raw, tokens, *_ = llm_completion(
+            'preview_extract',
+            watch=watch,
+            datastore=datastore,
             model=cfg['model'],
             messages=[
                 _cached_system(system_prompt, model=cfg['model']),
@@ -731,7 +740,10 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
     )
 
     try:
-        _resp = llm_client.completion(
+        _resp = llm_completion(
+            'evaluate_change',
+            watch=watch,
+            datastore=datastore,
             model=cfg['model'],
             messages=[
                 _cached_system(system_prompt, model=cfg['model']),

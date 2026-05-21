@@ -54,12 +54,26 @@ def _install_litellm_debug():
     logger.info("LLM client: litellm debug logging routed through loguru")
 
 
+def _litellm_response_cost_usd(response) -> float | None:
+    """Extract provider/litellm-reported cost from a completion response, if present."""
+    try:
+        from litellm.cost_calculator import get_response_cost_from_hidden_params
+        hidden = getattr(response, '_hidden_params', None) or {}
+        cost = get_response_cost_from_hidden_params(hidden)
+        if cost is not None:
+            return float(cost)
+    except Exception:
+        pass
+    return None
+
+
 def completion(model: str, messages: list, api_key: str = None,
                api_base: str = None, timeout: int = DEFAULT_TIMEOUT,
                max_tokens: int = None, extra_body: dict = None,
-               debug: bool = False) -> tuple[str, int, int, int]:
+               debug: bool = False, return_metadata: bool = False):
     """
     Call the LLM and return (response_text, total_tokens, input_tokens, output_tokens).
+    When return_metadata=True, appends a dict with finish_reason and litellm cost fields.
     Retries up to DEFAULT_RETRIES times on timeout or connection errors.
     Token counts are 0 if the provider doesn't return usage data.
     Raises on network/auth errors — callers handle gracefully.
@@ -134,6 +148,12 @@ def completion(model: str, messages: list, api_key: str = None,
                 f"tokens={total_tokens} (in={input_tokens} out={output_tokens}) "
                 f"text_len={len(text)}"
             )
+            if return_metadata:
+                metadata = {'finish_reason': finish}
+                litellm_cost = _litellm_response_cost_usd(response)
+                if litellm_cost is not None:
+                    metadata['litellm_response_cost_usd'] = litellm_cost
+                return text, total_tokens, input_tokens, output_tokens, metadata
             return text, total_tokens, input_tokens, output_tokens
 
         except _retryable as e:

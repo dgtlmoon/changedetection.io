@@ -204,7 +204,7 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
 
     try:
         from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens
-        from changedetectionio.llm import client as llm_client
+        from changedetectionio.llm.invocation import llm_completion
     except ImportError as e:
         logger.debug(f"LLM restock fallback: LLM libraries not available ({e})")
         return None
@@ -229,7 +229,10 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         user_prompt += f'\n\nUser notification intent: {llm_intent}'
 
     try:
-        raw, tokens, input_tokens, output_tokens = llm_client.completion(
+        raw, tokens, input_tokens, output_tokens = llm_completion(
+            'restock_extract',
+            watch=None,
+            datastore=datastore,
             model=llm_cfg['model'],
             messages=[
                 {'role': 'system', 'content': SYSTEM_PROMPT},

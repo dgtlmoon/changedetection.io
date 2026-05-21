@@ -134,7 +134,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def llm_test():
         from flask import request
-        from changedetectionio.llm.client import completion
+        from changedetectionio.llm.invocation import llm_completion
         from changedetectionio.validate_url import is_llm_api_base_safe
 
         # Pull stored config as the fallback, then override with anything the
@@ -194,7 +194,10 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             # cloud reasoning models (e.g. ollama.com hosting qwen3.5:397b takes ~60s on
             # first hit) even though the same call succeeds in production.
             from changedetectionio.llm.evaluator import apply_local_token_multiplier
-            text, total_tokens, input_tokens, output_tokens = completion(
+            text, total_tokens, input_tokens, output_tokens = llm_completion(
+                'connection_test',
+                watch=None,
+                datastore=datastore,
                 model=model,
                 messages=[{'role': 'user', 'content':
                     'Respond with just the word: ready'}],

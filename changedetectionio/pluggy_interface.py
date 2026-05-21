@@ -176,6 +176,75 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
+    def llm_query_alter(llm_context):
+        """Modify an LLM request before litellm.completion is called.
+
+        Called for every LLM invocation (intent evaluation, change summaries,
+        restock extraction, connection tests, etc.). Plugins can adjust messages,
+        model, max_tokens, or other completion kwargs.
+
+        Args:
+            llm_context: dict describing the call. Common keys:
+                purpose (str): call-site id, e.g. 'evaluate_change', 'summarise_change'
+                watch (dict|None): watch being processed, when applicable
+                datastore: ChangeDetectionStore instance, when available
+                app_guid (str|None): application GUID from datastore
+                watch_uuid (str|None): watch UUID
+                timestamp_utc (str): ISO-8601 UTC time when the call started
+                settings (dict): copy of datastore.data['settings'] when datastore set
+                model, messages, api_key, api_base, timeout, max_tokens, extra_body, debug
+
+        Returns:
+            dict or None: Keys to merge into llm_context (later plugins see merged state).
+                          Return None to leave the context unchanged.
+        """
+        pass
+
+    @hookspec
+    def llm_query_finalize(llm_context, result, error):
+        """Called after each litellm.completion attempt finishes (success or failure).
+
+        Use for external accounting (MySQL, Prometheus, billing exports, etc.).
+
+        Args:
+            llm_context: dict describing the call (same object passed to llm_query_alter,
+                         after any plugin merges). Keys always present when built by the app:
+
+                purpose (str): call-site id — one of:
+                    'evaluate_change', 'summarise_change', 'run_setup',
+                    'preview_extract', 'restock_extract', 'connection_test'
+                app_guid (str|None): stable application GUID (datastore.data['app_guid'])
+                watch_uuid (str|None): watch UUID, or None when no watch (e.g. connection test)
+                timestamp_utc (str): ISO-8601 UTC time when the request started
+                settings (dict|None): deep copy of datastore.data['settings'] (application,
+                                      tags, notification profiles, llm config, etc.)
+                watch (dict|None): watch dict under processing, when applicable
+                datastore: ChangeDetectionStore instance, when available
+                model (str): model string sent to litellm (after alter hooks)
+                messages (list): chat messages sent to litellm (after alter hooks)
+                api_key, api_base, timeout, max_tokens, extra_body, debug: completion kwargs
+
+            result: dict on success, None on failure:
+                {
+                    'text': str,                      # model response body
+                    'total_tokens': int,
+                    'input_tokens': int,
+                    'output_tokens': int,
+                    'cost_usd': float,                # litellm response cost if reported,
+                                                      # else litellm cost_per_token estimate
+                    'litellm_response_cost_usd': float|None,  # provider-reported only
+                    'model': str,
+                    'finish_reason': str|None,        # e.g. 'stop', 'length'
+                    'duration_seconds': float,        # wall time for the completion call
+                }
+            error: Exception instance if the call failed, else None
+
+        Returns:
+            None
+        """
+        pass
+
+    @hookspec
     def get_html_head_extras():
         """Return HTML to inject into the <head> of every page via base.html.
 
@@ -689,6 +758,47 @@ def apply_update_finalize(update_handler, watch, datastore, processing_exception
         # Don't let plugin errors crash the worker
         logger.error(f"Error in update_finalize hook: {e}")
         logger.exception(f"update_finalize hook exception details:")
+
+
+_LLM_CONTEXT_KEYS = frozenset({
+    'model', 'messages', 'api_key', 'api_base', 'timeout', 'max_tokens', 'extra_body', 'debug',
+})
+
+
+def apply_llm_query_alter(llm_context: dict) -> dict:
+    """Apply llm_query_alter hooks; merge plugin overrides into the call context."""
+    current = dict(llm_context)
+    try:
+        results = plugin_manager.hook.llm_query_alter(llm_context=current)
+    except Exception as e:
+        logger.error(f"Error in llm_query_alter hook: {e}")
+        logger.exception("llm_query_alter hook exception details:")
+        return current
+
+    if results:
+        for result in results:
+            if result and isinstance(result, dict):
+                for key, value in result.items():
+                    if key in _LLM_CONTEXT_KEYS or key in current:
+                        current[key] = value
+                logger.debug(
+                    f"LLM query altered by plugin (purpose={current.get('purpose')!r} "
+                    f"watch={current.get('watch_uuid')!r})"
+                )
+    return current
+
+
+def apply_llm_query_finalize(llm_context: dict, result: dict | None, error: Exception | None) -> None:
+    """Apply llm_query_finalize hooks from all plugins."""
+    try:
+        plugin_manager.hook.llm_query_finalize(
+            llm_context=llm_context,
+            result=result,
+            error=error,
+        )
+    except Exception as e:
+        logger.error(f"Error in llm_query_finalize hook: {e}")
+        logger.exception("llm_query_finalize hook exception details:")
 
 
 def collect_html_head_extras():
