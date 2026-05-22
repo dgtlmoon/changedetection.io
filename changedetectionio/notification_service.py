@@ -204,6 +204,8 @@ class NotificationContextData(dict):
             'diff_changed_from': FormattableExtract('', '', extract_fn=lambda x: x),
             'diff_changed_to': FormattableExtract('', '', extract_fn=lambda x: x),
             'diff_url': None,
+            # Always the raw +/- diff regardless of LLM summary override (populated in handler.py from {{diff}})
+            'raw_diff': FormattableDiff('', ''),
             'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
             'notification_timestamp': time.time(),
             'prev_snapshot': None,
