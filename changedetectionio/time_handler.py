@@ -100,11 +100,13 @@ def is_within_schedule(time_schedule_limit, default_tz="UTC"):
         # Get current day name in the target timezone
         now_day_name_in_tz = arrow.now(tz_name.strip()).format('dddd')
         selected_day_schedule = time_schedule_limit.get(now_day_name_in_tz.lower())
-        if not selected_day_schedule.get('enabled'):
+        if not selected_day_schedule or not selected_day_schedule.get('enabled'):
             return False
 
         duration = selected_day_schedule.get('duration')
-        selected_day_run_duration_m = int(duration.get('hours')) * 60 + int(duration.get('minutes'))
+        if not duration:
+            return False
+        selected_day_run_duration_m = int(duration.get('hours') or 0) * 60 + int(duration.get('minutes') or 0)
 
         is_valid = am_i_inside_time(day_of_week=now_day_name_in_tz,
                                     time_str=selected_day_schedule['start_time'],
