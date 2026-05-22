@@ -100,7 +100,7 @@ def is_within_schedule(time_schedule_limit, default_tz="UTC"):
         # Get current day name in the target timezone
         now_day_name_in_tz = arrow.now(tz_name.strip()).format('dddd')
         selected_day_schedule = time_schedule_limit.get(now_day_name_in_tz.lower())
-        if not selected_day_schedule.get('enabled'):
+        if not selected_day_schedule or not selected_day_schedule.get('enabled'):
             return False
 
         duration = selected_day_schedule.get('duration')
