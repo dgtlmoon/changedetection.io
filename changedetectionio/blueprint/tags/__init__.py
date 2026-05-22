@@ -17,7 +17,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from .form import SingleTag
         add_form = SingleTag(request.form)
 
-        sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
+        sorted_tags = sorted(datastore.data['settings']['application'].get('tags', {}).items(), key=lambda x: x[1]['title'])
 
         from collections import Counter
 

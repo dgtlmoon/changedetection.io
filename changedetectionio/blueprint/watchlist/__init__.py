@@ -79,7 +79,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                 display_msg=_('displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>'),
                                 record_name=_('records'))
 
-        sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
+        sorted_tags = sorted(datastore.data['settings']['application'].get('tags', {}).items(), key=lambda x: x[1]['title'])
 
         proxy_list = datastore.proxy_list
 
