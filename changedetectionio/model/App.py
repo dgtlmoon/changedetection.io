@@ -70,7 +70,7 @@ class model(dict):
                     'schema_version' : 0,
                     'shared_diff_access': False,
                     'strip_ignored_lines': False,
-                    'tags': None,  # Initialized in __init__ with real datastore_path
+                    'tags': {},  # Initialized in __init__ with real datastore_path
                     'llm_enabled': True,
                     'llm_thinking_budget': LLM_DEFAULT_THINKING_BUDGET,
                     'llm_max_summary_tokens': LLM_DEFAULT_MAX_SUMMARY_TOKENS,
