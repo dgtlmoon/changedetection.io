@@ -13,10 +13,10 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
-    from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
     from changedetectionio.llm.evaluator import is_llm_features_disabled
     settings_blueprint = Blueprint('settings', __name__, template_folder="templates")
     if not is_llm_features_disabled():
+        from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
         settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
 
     @settings_blueprint.route("", methods=['GET', "POST"])
