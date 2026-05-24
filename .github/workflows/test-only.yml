@@ -37,8 +37,7 @@ jobs:
           dennis-cmd lint --strict changedetectionio/translations/messages.pot
       - name: Lint .po files with dennis
         run: |
-          dennis-cmd lint --strict changedetectionio/translations/*/LC_MESSAGES/messages.po
-        # --excluderules=W302
+          dennis-cmd lint --strict --excluderules=W302 changedetectionio/translations/*/LC_MESSAGES/messages.po
         # W302 (unchanged) is excluded due to high false-positive rate in this codebase:
         # many msgstrs intentionally match msgid (units like "AI", "LLM", and proper nouns).
       - name: Check translation catalog is up-to-date
