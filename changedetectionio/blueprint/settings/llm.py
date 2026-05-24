@@ -193,7 +193,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             # via LLM_TIMEOUT). A shorter test-only timeout falsely fails on cold-starting
             # cloud reasoning models (e.g. ollama.com hosting qwen3.5:397b takes ~60s on
             # first hit) even though the same call succeeds in production.
-            from changedetectionio.llm.evaluator import apply_local_token_multiplier
+            from changedetectionio.llm.evaluator import apply_local_token_multiplier, get_llm_settings
             text, total_tokens, input_tokens, output_tokens = completion(
                 model=model,
                 messages=[{'role': 'user', 'content':
@@ -201,7 +201,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 api_key=llm_cfg.get('api_key') or None,
                 api_base=api_base or None,
                 max_tokens=apply_local_token_multiplier(200, llm_cfg),
-                debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
+                debug=get_llm_settings(datastore).debug,
             )
             reply = text.strip()
             if not reply:
@@ -233,7 +233,16 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def llm_clear():
         logger.debug("LLM configuration cleared by user")
-        datastore.data['settings']['application'].pop('llm', None)
+        # Strip only the credential / connection fields — user-set toggles, the
+        # global summary prompt, monthly budgets, and the system token counters
+        # all survive a "clear credentials" action.
+        llm = datastore.data['settings']['application'].get('llm') or {}
+        for key in ('model', 'api_key', 'api_base', 'provider_kind', 'local_token_multiplier'):
+            llm.pop(key, None)
+        if llm:
+            datastore.data['settings']['application']['llm'] = llm
+        else:
+            datastore.data['settings']['application'].pop('llm', None)
         datastore.commit()
         flash(gettext("AI / LLM configuration removed."), 'notice')
         return redirect(url_for('settings.settings_page') + '#ai')

@@ -436,9 +436,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         # Also gated on llm_enabled — a disabled LLM can't be spending tokens,
                         # so the budget enforcement shouldn't suppress changes when the user
                         # has explicitly switched LLM off.
-                        from changedetectionio.llm.evaluator import is_llm_features_disabled as _is_llm_features_disabled
-                        _llm_master_enabled = bool(datastore.data['settings']['application'].get('llm_enabled', True)) and not _is_llm_features_disabled()
-                        _llm_budget_action = datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm')
+                        from changedetectionio.llm.evaluator import is_llm_features_disabled as _is_llm_features_disabled, get_llm_settings as _get_llm_settings
+                        _llm_settings = _get_llm_settings(datastore)
+                        _llm_master_enabled = _llm_settings.enabled and not _is_llm_features_disabled()
+                        _llm_budget_action = _llm_settings.budget_action
                         if _llm_master_enabled and _llm_budget_action == 'skip_check':
                             from changedetectionio.llm.evaluator import is_global_token_budget_exceeded
                             if is_global_token_budget_exceeded(datastore):
@@ -548,8 +549,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                         get_effective_summary_prompt, build_summary_cache_prompt,
                                     )
                                     _llm_to_version = list(watch.history.keys())[-1]
-                                    _llm_max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
-                                    _llm_model = (datastore.data['settings']['application'].get('llm') or {}).get('model', '')
+                                    from changedetectionio.llm.evaluator import get_llm_settings as _get_llm_settings_inner
+                                    _ls = _get_llm_settings_inner(datastore)
+                                    _llm_max_summary_tokens = _ls.max_summary_tokens
+                                    _llm_model = _ls.model
                                     _llm_cache_prompt = build_summary_cache_prompt(
                                         effective_prompt=get_effective_summary_prompt(watch, datastore),
                                         max_summary_tokens=_llm_max_summary_tokens,

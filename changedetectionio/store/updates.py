@@ -775,3 +775,45 @@ class DatastoreUpdatesMixin:
             tag.commit()
             logger.info(f"update_30: migrated tag {tag_uuid} restock_settings → processor_config_restock_diff")
 
+    def update_31(self):
+        """Fold flat application.llm_* settings into nested application.llm.* (stripped).
+
+        Before: a handful of boolean toggles, the thinking budget, max summary tokens,
+        the budget action and the default summary prompt lived directly on
+        settings.application (llm_enabled, llm_thinking_budget, …). Every other LLM
+        field already lived under settings.application.llm.* with stripped names
+        (model, api_key, api_base, provider_kind, …). This unifies them so the new
+        LLMSettings pydantic model has a single home to read from / write to.
+
+        Flat key wins on conflict — it was the most recently form-saved value, while
+        anything under llm.* was either set at creation time or is a system counter
+        which doesn't collide with the names we're moving in.
+
+        Idempotent: skips when no flat keys are present.
+        """
+        application = self.data['settings']['application']
+        flat_to_nested = {
+            'llm_enabled': 'enabled',
+            'llm_debug': 'debug',
+            'llm_thinking_budget': 'thinking_budget',
+            'llm_max_summary_tokens': 'max_summary_tokens',
+            'llm_change_summary_default': 'change_summary_default',
+            'llm_override_diff_with_summary': 'override_diff_with_summary',
+            'llm_restock_use_fallback_extract': 'restock_use_fallback_extract',
+            'llm_budget_action': 'budget_action',
+        }
+
+        present = [k for k in flat_to_nested if k in application]
+        if not present:
+            return
+
+        nested = application.get('llm') or {}
+        for flat_key in present:
+            nested_key = flat_to_nested[flat_key]
+            nested[nested_key] = application[flat_key]
+            del application[flat_key]
+
+        application['llm'] = nested
+        logger.info(f"update_31: folded {len(present)} flat llm_* keys into application.llm.* "
+                    f"({', '.join(present)})")
+

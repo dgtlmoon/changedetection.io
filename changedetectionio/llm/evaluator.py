@@ -31,12 +31,29 @@ from .prompt_builder import (
 )
 from .response_parser import parse_eval_response, parse_preview_response, parse_setup_response
 
-_DEFAULT_MAX_INPUT_CHARS = 100_000
+from changedetectionio.model.LLMSettings import (
+    LLMSettings,
+    LLM_DEFAULT_MAX_INPUT_CHARS as _DEFAULT_MAX_INPUT_CHARS,
+    LLM_DEFAULT_MAX_SUMMARY_TOKENS,
+    LLM_DEFAULT_THINKING_BUDGET,
+)
 
 
 def is_llm_features_disabled() -> bool:
     """True when the LLM_FEATURES_DISABLED env var is set to a truthy value."""
     return bool(strtobool(os.getenv('LLM_FEATURES_DISABLED', '')))
+
+
+def get_llm_settings(datastore) -> LLMSettings:
+    """Hydrate the LLM config dict at settings.application.llm into a validated model.
+
+    Returns a default-constructed LLMSettings when the dict is missing or empty —
+    callers never have to None-check the result. The storage layer remains a plain
+    dict; this is only the validation/typing layer for reads.
+    """
+    cfg = datastore.data.get('settings', {}).get('application', {}).get('llm') or {}
+    return LLMSettings.model_validate(cfg)
+
 
 def _get_max_input_chars(datastore) -> int:
     """Max input characters to send to the LLM. Resolution: env var → datastore → 100,000.
@@ -45,10 +62,9 @@ def _get_max_input_chars(datastore) -> int:
     env_val = os.getenv('LLM_MAX_INPUT_CHARS', '').strip()
     if env_val.isdigit() and int(env_val) > 0:
         return int(env_val)
-    cfg = datastore.data.get('settings', {}).get('application', {}).get('llm') or {}
-    stored = cfg.get('max_input_chars')
-    if stored and int(stored) > 0:
-        return int(stored)
+    stored = get_llm_settings(datastore).max_input_chars
+    if stored and stored > 0:
+        return stored
     return _DEFAULT_MAX_INPUT_CHARS
 
 
@@ -63,8 +79,6 @@ def _check_input_size(text: str, max_chars: int) -> None:
             f"Change too large for AI summary ({len(text):,} chars, limit {max_chars:,})"
         )
 
-
-LLM_DEFAULT_THINKING_BUDGET = 0  # 0 = thinking disabled by default
 
 def _thinking_extra_body(model: str, budget: int) -> dict | None:
     """Return litellm extra_body to control thinking for models that support it.
@@ -86,8 +100,6 @@ def _cached_system(text: str, model: str = '') -> dict:
         return {'role': 'system', 'content': [{'type': 'text', 'text': text, 'cache_control': {'type': 'ephemeral'}}]}
     return {'role': 'system', 'content': text}
 
-
-LLM_DEFAULT_MAX_SUMMARY_TOKENS = 3000
 
 # Output-token cap for the JSON-returning calls (intent eval, preview, setup/prefilter).
 # Mirrors client.py's _MAX_COMPLETION_TOKENS so the multiplier helper has a base value
@@ -254,9 +266,9 @@ def _runtime_llm_config(datastore) -> dict | None:
     the toggle is off.
     """
     cfg = get_llm_config(datastore)
-    if not bool(datastore.data['settings']['application'].get('llm_enabled', True)):
+    if not get_llm_settings(datastore).enabled:
         if cfg:
-            logger.debug("LLM features disabled via settings (llm_enabled=False) — skipping LLM lookup")
+            logger.debug("LLM features disabled via settings (enabled=False) — skipping LLM lookup")
         return None
     return cfg
 
@@ -423,6 +435,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
     url = watch.get('url', '')
     system_prompt = build_setup_system_prompt()
     user_prompt = build_setup_prompt(intent, snapshot_text, url=url)
+    settings = get_llm_settings(datastore)
 
     try:
         raw, tokens, *_ = llm_client.completion(
@@ -434,8 +447,8 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
-            extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
-            debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
+            extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
+            debug=settings.debug,
         )
         _check_token_budget(watch, cfg, tokens)
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
@@ -459,11 +472,7 @@ def get_effective_summary_prompt(watch, datastore) -> str:
     prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
     if prompt:
         return prompt
-    global_default = (
-        datastore.data.get('settings', {})
-        .get('application', {})
-        .get('llm_change_summary_default', '') or ''
-    ).strip()
+    global_default = get_llm_settings(datastore).change_summary_default.strip()
     return global_default or DEFAULT_CHANGE_SUMMARY_PROMPT
 
 
@@ -573,8 +582,8 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         title=title,
     )
 
-    _thinking_budget = int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)
-    _extra_body = _thinking_extra_body(cfg['model'], _thinking_budget)
+    settings = get_llm_settings(datastore)
+    _extra_body = _thinking_extra_body(cfg['model'], settings.thinking_budget)
 
     try:
         _resp = llm_client.completion(
@@ -586,14 +595,11 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
             max_tokens=apply_local_token_multiplier(
-                _summary_max_tokens(
-                    diff,
-                    max_cap=int(datastore.data['settings']['application'].get('llm_max_summary_tokens', LLM_DEFAULT_MAX_SUMMARY_TOKENS) or LLM_DEFAULT_MAX_SUMMARY_TOKENS),
-                ),
+                _summary_max_tokens(diff, max_cap=settings.max_summary_tokens),
                 cfg,
             ),
             extra_body=_extra_body,
-            debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
+            debug=settings.debug,
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0
@@ -644,6 +650,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
 
     system_prompt = build_preview_system_prompt()
     user_prompt = build_preview_prompt(intent, content, url=url, title=title)
+    settings = get_llm_settings(datastore)
 
     try:
         raw, tokens, *_ = llm_client.completion(
@@ -655,8 +662,8 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
-            extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
-            debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
+            extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
+            debug=settings.debug,
         )
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
         result = parse_preview_response(raw)
@@ -730,6 +737,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         title=title,
     )
 
+    settings = get_llm_settings(datastore)
     try:
         _resp = llm_client.completion(
             model=cfg['model'],
@@ -740,8 +748,8 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
-            extra_body=_thinking_extra_body(cfg['model'], int(datastore.data['settings']['application'].get('llm_thinking_budget', LLM_DEFAULT_THINKING_BUDGET) or 0)),
-            debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
+            extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
+            debug=settings.debug,
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0

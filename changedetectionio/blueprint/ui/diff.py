@@ -272,8 +272,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Diff-pref flags + system prompt + active model are part of the cache key
         # so prompt or model changes bust the cache.
-        _max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
-        _llm_model = (datastore.data['settings']['application'].get('llm') or {}).get('model', '')
+        from changedetectionio.llm.evaluator import get_llm_settings
+        _ls = get_llm_settings(datastore)
+        _max_summary_tokens = _ls.max_summary_tokens
+        _llm_model = _ls.model
         cache_prompt = build_summary_cache_prompt(
             effective_prompt=get_effective_summary_prompt(watch, datastore),
             max_summary_tokens=_max_summary_tokens,

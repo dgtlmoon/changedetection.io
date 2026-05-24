@@ -196,17 +196,16 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         logger.debug("LLM restock fallback: no datastore injected yet, skipping")
         return None
 
-    # Gate on the user setting (default True — enabled out of the box)
-    app_settings = datastore.data.get('settings', {}).get('application', {})
-    if not app_settings.get('llm_restock_use_fallback_extract', True):
-        logger.debug("LLM restock fallback: disabled in settings")
-        return None
-
     try:
-        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens
+        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens, get_llm_settings
         from changedetectionio.llm import client as llm_client
     except ImportError as e:
         logger.debug(f"LLM restock fallback: LLM libraries not available ({e})")
+        return None
+
+    # Gate on the user setting (default True — enabled out of the box)
+    if not get_llm_settings(datastore).restock_use_fallback_extract:
+        logger.debug("LLM restock fallback: disabled in settings")
         return None
 
     # _runtime_llm_config returns None (with a debug log) when the master 'llm_enabled'
