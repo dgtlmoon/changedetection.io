@@ -124,8 +124,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 merged = LLMSettings.model_validate({**existing_llm.model_dump(by_alias=True), **llm_form_input})
 
                 # Clearing the model field strips only the provider-connection fields.
-                # User toggles, budgets, the summary prompt, and system counters survive
-                # (same semantics as /llm/clear).
+                # User toggles, budgets, prompts and system counters survive (matches /llm/clear).
                 exclude = set(LLMSettings.CONNECTION_FIELDS) if not merged.model.strip() else None
                 datastore.data['settings']['application']['llm'] = merged.model_dump(exclude=exclude)
 

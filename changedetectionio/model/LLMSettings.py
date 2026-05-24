@@ -19,7 +19,10 @@ LLM_DEFAULT_BUDGET_ACTION = 'skip_llm'
 
 
 class LLMSettings(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, extra='allow')
+    # extra='ignore' drops any key that isn't a declared field/alias — gives us a real
+    # gate on form submissions and prevents drift in the stored dict. New fields must be
+    # declared here before they can be persisted.
+    model_config = ConfigDict(populate_by_name=True, extra='ignore')
 
     enabled: bool = Field(default=True, alias='llm_enabled')
     debug: bool = Field(default=False, alias='llm_debug')

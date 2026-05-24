@@ -234,14 +234,15 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     def llm_clear():
         from changedetectionio.model.LLMSettings import LLMSettings
         logger.debug("LLM configuration cleared by user")
-        # Strip provider-connection fields only. Toggles, prompts, budgets and counters survive.
-        llm = datastore.data['settings']['application'].get('llm') or {}
-        for key in LLMSettings.CONNECTION_FIELDS:
-            llm.pop(key, None)
-        if llm:
-            datastore.data['settings']['application']['llm'] = llm
-        else:
-            datastore.data['settings']['application'].pop('llm', None)
+        # Read existing config, write back a dict that omits the connection fields —
+        # so the saved dict no longer has model/api_key/api_base/etc.
+        # Toggles, prompts, budgets and counters survive.
+        settings = LLMSettings.model_validate(
+            datastore.data['settings']['application'].get('llm') or {}
+        )
+        datastore.data['settings']['application']['llm'] = settings.model_dump(
+            exclude=set(LLMSettings.CONNECTION_FIELDS)
+        )
         datastore.commit()
         flash(gettext("AI / LLM configuration removed."), 'notice')
         return redirect(url_for('settings.settings_page') + '#ai')
