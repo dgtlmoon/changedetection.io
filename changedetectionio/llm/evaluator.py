@@ -343,25 +343,22 @@ def accumulate_global_tokens(datastore, tokens: int,
 
     current_month = _get_month_key()
     cost = _estimate_cost_usd(model, input_tokens, output_tokens)
-
-    # Work on the live dict in-place (or create a stub if llm key is absent)
-    app_settings = datastore.data['settings']['application']
-    if 'llm' not in app_settings:
-        app_settings['llm'] = {}
-    llm_cfg = app_settings['llm']
+    settings = get_llm_settings(datastore)
 
     # Month rollover: reset monthly counters
-    if llm_cfg.get('tokens_month_key') != current_month:
-        llm_cfg['tokens_this_month'] = 0
-        llm_cfg['cost_usd_this_month'] = 0.0
-        llm_cfg['tokens_month_key'] = current_month
+    if settings.tokens_month_key != current_month:
+        settings.tokens_this_month = 0
+        settings.cost_usd_this_month = 0.0
+        settings.tokens_month_key = current_month
 
-    llm_cfg['tokens_total_cumulative'] = (llm_cfg.get('tokens_total_cumulative') or 0) + tokens
-    llm_cfg['tokens_this_month']       = (llm_cfg.get('tokens_this_month') or 0) + tokens
-    llm_cfg['cost_usd_total_cumulative'] = (llm_cfg.get('cost_usd_total_cumulative') or 0.0) + cost
-    llm_cfg['cost_usd_this_month']       = (llm_cfg.get('cost_usd_this_month') or 0.0) + cost
+    settings.tokens_total_cumulative += tokens
+    settings.tokens_this_month       += tokens
+    settings.cost_usd_total_cumulative += cost
+    settings.cost_usd_this_month       += cost
 
-    # Persist immediately — token accounting must survive restarts
+    # Round-trip through model_dump so storage stays a plain dict and the schema
+    # contract (extra='forbid', type coercion) is re-enforced on every write.
+    datastore.data['settings']['application']['llm'] = settings.model_dump()
     datastore.commit()
 
 

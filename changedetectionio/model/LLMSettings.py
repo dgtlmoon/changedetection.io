@@ -19,10 +19,11 @@ LLM_DEFAULT_BUDGET_ACTION = 'skip_llm'
 
 
 class LLMSettings(BaseModel):
-    # extra='ignore' drops any key that isn't a declared field/alias — gives us a real
-    # gate on form submissions and prevents drift in the stored dict. New fields must be
-    # declared here before they can be persisted.
-    model_config = ConfigDict(populate_by_name=True, extra='ignore')
+    # extra='forbid' rejects any key that isn't a declared field/alias with a
+    # ValidationError. Loud failure forces new form fields to be declared here
+    # before they can land in storage — closes the CWE-915 mass-assignment class
+    # of bugs (see GHSA-h3x5-5j56-hm2j for the canonical example).
+    model_config = ConfigDict(populate_by_name=True, extra='forbid')
 
     enabled: bool = Field(default=True, alias='llm_enabled')
     debug: bool = Field(default=False, alias='llm_debug')
@@ -34,6 +35,10 @@ class LLMSettings(BaseModel):
     change_summary_default: str = Field(default='', alias='llm_change_summary_default')
     token_budget_month: int = Field(default=0, alias='llm_token_budget_month')
     max_input_chars: int = Field(default=LLM_DEFAULT_MAX_INPUT_CHARS, alias='llm_max_input_chars')
+    # Per-call and per-watch token caps; read by _check_token_budget() in evaluator.py.
+    # 0 means unlimited.
+    max_tokens_per_check: int = Field(default=0, alias='llm_max_tokens_per_check')
+    max_tokens_cumulative: int = Field(default=0, alias='llm_max_tokens_cumulative')
 
     model: str = Field(default='', alias='llm_model')
     api_key: str = Field(default='', alias='llm_api_key')
