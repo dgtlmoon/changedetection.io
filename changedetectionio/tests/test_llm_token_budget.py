@@ -168,9 +168,9 @@ def test_settings_form_preserves_token_counters(
         url_for('settings.settings_page'),
         data={
             # LLM sub-form fields
-            'llm-llm_model': 'gpt-4o',
-            'llm-llm_api_key': 'sk-different-key',
-            'llm-llm_api_base': '',
+            'llm-model': 'gpt-4o',
+            'llm-api_key': 'sk-different-key',
+            'llm-api_base': '',
             # Minimal required fields to pass form validation
             'application-pager_size': '50',
             'application-notification_format': 'System default',
@@ -209,9 +209,9 @@ def test_settings_form_cannot_inject_fake_token_counts(
     res = client.post(
         url_for('settings.settings_page'),
         data={
-            'llm-llm_model': 'gpt-4o-mini',
-            'llm-llm_api_key': 'sk-test',
-            'llm-llm_api_base': '',
+            'llm-model': 'gpt-4o-mini',
+            'llm-api_key': 'sk-test',
+            'llm-api_base': '',
             # Attempted injection of token counter fields
             'llm-tokens_this_month': '0',
             'llm-tokens_total_cumulative': '0',
@@ -471,9 +471,9 @@ def test_cost_fields_are_tamper_proof_via_settings_form(
     client.post(
         url_for('settings.settings_page'),
         data={
-            'llm-llm_model': 'gpt-4o',
-            'llm-llm_api_key': 'sk-test',
-            'llm-llm_api_base': '',
+            'llm-model': 'gpt-4o',
+            'llm-api_key': 'sk-test',
+            'llm-api_base': '',
             'llm-cost_usd_this_month': '0',       # injection attempt
             'llm-cost_usd_total_cumulative': '0',  # injection attempt
             'application-pager_size': '50',

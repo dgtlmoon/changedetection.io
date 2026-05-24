@@ -36,82 +36,57 @@ class TestLLMSettingsDefaults(unittest.TestCase):
         self.assertEqual(LLMSettings().model_dump(), LLMSettings.model_validate({}).model_dump())
 
 
-class TestLLMSettingsAliases(unittest.TestCase):
-    def test_stripped_storage_keys_validate(self):
+class TestLLMSettingsValidation(unittest.TestCase):
+    def test_stripped_keys_validate(self):
         s = LLMSettings.model_validate({'model': 'gpt-4o-mini', 'enabled': False})
         self.assertEqual(s.model, 'gpt-4o-mini')
         self.assertFalse(s.enabled)
-
-    def test_aliased_form_keys_validate(self):
-        s = LLMSettings.model_validate({'llm_model': 'claude-3-5-haiku-20251001', 'llm_enabled': False})
-        self.assertEqual(s.model, 'claude-3-5-haiku-20251001')
-        self.assertFalse(s.enabled)
-
-    def test_both_field_name_and_alias_in_same_dict_rejected(self):
-        # extra='forbid' makes the dict shape exclusive: a given field can be
-        # set via field name OR alias, but not both. This is why the settings
-        # POST handler dumps the existing model with by_alias=True before
-        # merging form input — keeps both sides on the alias shape so there's
-        # no duplicate key.
-        with self.assertRaises(ValidationError):
-            LLMSettings.model_validate({'model': 'A', 'llm_model': 'B'})
-
-    def test_dump_by_alias_then_merge_form_lets_form_value_win(self):
-        # The POST-handler merge pattern: dump existing as aliases so it lines
-        # up with form input (also aliases). Without by_alias=True we'd have
-        # mixed field-name + alias keys in the same dict — which extra='forbid'
-        # rejects (see test above).
-        existing = LLMSettings.model_validate({'model': 'gpt-4o-mini'})
-        form = {'llm_change_summary_default': 'Saved global prompt.', 'llm_model': 'gpt-4o-mini'}
-        merged = LLMSettings.model_validate({**existing.model_dump(by_alias=True), **form})
-        self.assertEqual(merged.change_summary_default, 'Saved global prompt.')
-        self.assertEqual(merged.model_dump()['change_summary_default'], 'Saved global prompt.')
 
 
 class TestLLMSettingsTypeCoercion(unittest.TestCase):
     def test_select_field_string_int_coerces_to_int(self):
         # WTForms SelectField returns the choice key as a string ('500');
-        # Pydantic must coerce to int so storage stays typed.
-        s = LLMSettings.model_validate({'llm_thinking_budget': '500', 'llm_max_summary_tokens': '5000'})
+        # Pydantic coerces to int so storage stays typed.
+        s = LLMSettings.model_validate({'thinking_budget': '500', 'max_summary_tokens': '5000'})
         self.assertEqual(s.thinking_budget, 500)
         self.assertEqual(s.max_summary_tokens, 5000)
 
     def test_invalid_int_raises(self):
         with self.assertRaises(ValidationError):
-            LLMSettings.model_validate({'llm_thinking_budget': 'not_a_number'})
+            LLMSettings.model_validate({'thinking_budget': 'not_a_number'})
 
 
 class TestLLMSettingsExtraForbid(unittest.TestCase):
     def test_unknown_key_raises(self):
         # extra='forbid' is the security gate against CWE-915 mass-assignment.
         with self.assertRaises(ValidationError) as ctx:
-            LLMSettings.model_validate({'llm_model': 'gpt-4o-mini', 'llm_evil_field': 'pwn'})
-        self.assertIn('llm_evil_field', str(ctx.exception))
+            LLMSettings.model_validate({'model': 'gpt-4o-mini', 'evil_field': 'pwn'})
+        self.assertIn('evil_field', str(ctx.exception))
 
     def test_dunder_key_raises(self):
         with self.assertRaises(ValidationError):
-            LLMSettings.model_validate({'llm_model': 'gpt-4o-mini', '__class__': 'attack'})
+            LLMSettings.model_validate({'model': 'gpt-4o-mini', '__class__': 'attack'})
 
     def test_legitimate_unknown_key_also_raises(self):
         # No "future-tolerant" silent acceptance — new fields must be declared.
         with self.assertRaises(ValidationError):
             LLMSettings.model_validate({'maybe_future_counter': 42})
 
+    def test_legacy_prefixed_key_raises(self):
+        # Pre-update_31 storage used flat application.llm_* keys (handled by the
+        # migration). After migration the prefix is gone — and any code path that
+        # still tries to write a prefixed key into the LLM dict must be rejected
+        # so the prefix can never reappear through any side channel.
+        with self.assertRaises(ValidationError):
+            LLMSettings.model_validate({'llm_model': 'gpt-4o-mini'})
+
 
 class TestLLMSettingsDumpShapes(unittest.TestCase):
-    def test_dump_uses_stripped_field_names(self):
-        s = LLMSettings.model_validate({'llm_model': 'gpt-4o-mini'})
-        out = s.model_dump()
-        self.assertIn('model', out)
-        self.assertNotIn('llm_model', out)
-        self.assertEqual(out['model'], 'gpt-4o-mini')
-
-    def test_dump_by_alias_uses_prefixed_names(self):
+    def test_dump_uses_field_names(self):
         s = LLMSettings.model_validate({'model': 'gpt-4o-mini'})
-        out = s.model_dump(by_alias=True)
-        self.assertIn('llm_model', out)
-        self.assertNotIn('model', out)
-        self.assertEqual(out['llm_model'], 'gpt-4o-mini')
+        out = s.model_dump()
+        self.assertEqual(out['model'], 'gpt-4o-mini')
+        self.assertNotIn('llm_model', out)
 
     def test_dump_exclude_connection_drops_provider_fields(self):
         s = LLMSettings.model_validate({
@@ -170,15 +145,13 @@ class TestLLMSettingsRoundTrip(unittest.TestCase):
             'model': 'gpt-4o-mini', 'tokens_total_cumulative': 99999,
         })
         form_input = {
-            'llm_model': 'claude-3-5-haiku-20251001',
-            'llm_enabled': False,
+            'model': 'claude-3-5-haiku-20251001',
+            'enabled': False,
         }
         # Strip protected fields from form input as the route handler does
         for protected in LLMSettings.PROTECTED_FIELDS:
             form_input.pop(protected, None)
-        merged = LLMSettings.model_validate(
-            {**existing.model_dump(by_alias=True), **form_input}
-        )
+        merged = LLMSettings.model_validate({**existing.model_dump(), **form_input})
         self.assertEqual(merged.model, 'claude-3-5-haiku-20251001')
         self.assertFalse(merged.enabled)
         self.assertEqual(merged.tokens_total_cumulative, 99999)

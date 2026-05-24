@@ -411,9 +411,9 @@ def test_global_default_saved_and_loaded_via_settings_form(
             'application-empty_pages_are_a_change': '',
             'requests-time_between_check-minutes': 180,
             'application-fetch_backend': 'html_requests',
-            'llm-llm_change_summary_default': 'Saved global prompt.',
+            'llm-change_summary_default': 'Saved global prompt.',
             # Keep existing model so llm block is retained
-            'llm-llm_model': 'gpt-4o-mini',
+            'llm-model': 'gpt-4o-mini',
         },
         follow_redirects=True,
     )

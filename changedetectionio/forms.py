@@ -1108,12 +1108,12 @@ class globalSettingsLLMForm(Form):
       gemini/gemini-2.0-flash               → Google Gemini
       azure/gpt-4o                          → Azure OpenAI
     """
-    llm_model = StringField(
+    model = StringField(
         _l('Model'),
         validators=[validators.Optional()],
         render_kw={"placeholder": "gpt-4o-mini", "style": "width: 24em;"},
     )
-    llm_api_key = PasswordField(
+    api_key = PasswordField(
         _l('API Key'),
         validators=[validators.Optional()],
         render_kw={
@@ -1121,7 +1121,7 @@ class globalSettingsLLMForm(Form):
             "style": "width: 24em;",
         },
     )
-    llm_api_base = StringField(
+    api_base = StringField(
         _l('API Base URL'),
         validators=[validators.Optional(), validateLLMApiBaseSafe()],
         render_kw={
@@ -1132,7 +1132,7 @@ class globalSettingsLLMForm(Form):
     # Persisted by the Provider dropdown JS — lets the backend distinguish a self-hosted
     # OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp) from cloud OpenAI, so we can
     # apply reasoning-friendly token caps only when the user opted in.
-    llm_provider_kind = HiddenField(
+    provider_kind = HiddenField(
         validators=[validators.Optional()],
         default='',
     )
@@ -1144,13 +1144,13 @@ class globalSettingsLLMForm(Form):
     # OpenRouter) stay on the original tight caps so existing users see no
     # behavior or cost change. Users on paid Ollama / openai_compatible endpoints
     # who care about cost can dial this down to 1x.
-    llm_local_token_multiplier = IntegerField(
+    local_token_multiplier = IntegerField(
         _l('Token multiplier for local reasoning models'),
         validators=[validators.Optional(), validators.NumberRange(min=1, max=20)],
         default=5,
         render_kw={"placeholder": "5", "style": "width: 6em;"},
     )
-    llm_change_summary_default = TextAreaField(
+    change_summary_default = TextAreaField(
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
         render_kw={
@@ -1160,7 +1160,7 @@ class globalSettingsLLMForm(Form):
         },
         default='',
     )
-    llm_max_tokens_per_check = IntegerField(
+    max_tokens_per_check = IntegerField(
         _l('Max tokens per check'),
         validators=[validators.Optional(), validators.NumberRange(min=0)],
         default=0,
@@ -1169,7 +1169,7 @@ class globalSettingsLLMForm(Form):
             "style": "width: 8em;",
         },
     )
-    llm_max_tokens_cumulative = IntegerField(
+    max_tokens_cumulative = IntegerField(
         _l('Max cumulative tokens (per watch)'),
         validators=[validators.Optional(), validators.NumberRange(min=0)],
         default=0,
@@ -1178,13 +1178,13 @@ class globalSettingsLLMForm(Form):
             "style": "width: 8em;",
         },
     )
-    llm_token_budget_month = IntegerField(
+    token_budget_month = IntegerField(
         _l('Monthly token budget'),
         validators=[validators.Optional(), validators.NumberRange(min=0)],
         default=0,
         render_kw={"style": "width: 10em;"},
     )
-    llm_max_input_chars = IntegerField(
+    max_input_chars = IntegerField(
         _l('Max input characters'),
         validators=[validators.Optional(), validators.NumberRange(min=1)],
         default=100000,
@@ -1197,23 +1197,23 @@ class globalSettingsLLMForm(Form):
     # in evaluator.py (and the restock fallback) short-circuits with a logger.debug
     # message — even if a provider+model is still configured. Saved config and the
     # "configured" badge remain visible so the user can toggle back on without re-entering.
-    llm_enabled = BooleanField(
+    enabled = BooleanField(
         _l('Enable AI / LLM features'),
         default=True,
     )
-    llm_override_diff_with_summary = BooleanField(
+    override_diff_with_summary = BooleanField(
         _l('Replace {{diff}} notification token with AI summary'),
         default=True,
     )
-    llm_restock_use_fallback_extract = BooleanField(
+    restock_use_fallback_extract = BooleanField(
         _l('Use LLM as a fallback for extracting price and restock info'),
         default=True,
     )
-    llm_debug = BooleanField(
+    debug = BooleanField(
         _l('Enable LLM debug logging'),
         default=False,
     )
-    llm_thinking_budget = SelectField(
+    thinking_budget = SelectField(
         _l('AI thinking budget (tokens)'),
         choices=[
             ('0',    _l('Off (no thinking)')),
@@ -1224,7 +1224,7 @@ class globalSettingsLLMForm(Form):
         default=str(LLM_DEFAULT_THINKING_BUDGET),
         validators=[validators.Optional()],
     )
-    llm_max_summary_tokens = SelectField(
+    max_summary_tokens = SelectField(
         _l('Max AI summary length (tokens)'),
         choices=[
             ('500',   '500'),
@@ -1237,7 +1237,7 @@ class globalSettingsLLMForm(Form):
         default=str(LLM_DEFAULT_MAX_SUMMARY_TOKENS),
         validators=[validators.Optional()],
     )
-    llm_budget_action = RadioField(
+    budget_action = RadioField(
         _l('When monthly token budget is reached'),
         choices=[
             ('skip_llm',   _l('Skip AI summarisation only (watch still checks)')),

@@ -33,13 +33,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         default = deepcopy(datastore.data['settings'])
 
-        # model_dump(by_alias=True) emits llm_-prefixed keys that line up with the
-        # WTForms field names. api_key is intentionally blanked on GET — PasswordField
-        # never re-renders its value, and a blank submission preserves the stored key.
+        # api_key is intentionally blanked on GET — PasswordField never re-renders
+        # its value, and a blank submission preserves the stored key.
         default['llm'] = LLMSettings.model_validate(
             datastore.data['settings']['application'].get('llm') or {}
-        ).model_dump(by_alias=True)
-        default['llm']['llm_api_key'] = ''
+        ).model_dump()
+        default['llm']['api_key'] = ''
 
         if datastore.proxy_list is not None:
             available_proxies = list(datastore.proxy_list.keys())
@@ -90,12 +89,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 datastore.data['settings']['application'].update(app_update)
 
-                # LLM config now lives under settings.application.llm.* (post update_31).
-                # Strategy: hydrate the stored dict into LLMSettings (preserves system
-                # counters and any forward-compat extras via extra='allow'), then merge
-                # the form input over it. Pydantic's populate_by_name accepts both the
-                # stripped names (existing storage) and the llm_-prefixed aliases
-                # (form field names) in the same call.
+                # LLM config lives under settings.application.llm.* (post update_31).
+                # Hydrate the stored dict into LLMSettings, then merge form input over it.
+                # WTForms field names match LLMSettings field names exactly, so both sides
+                # of the merge use the same key shape.
                 existing_llm = LLMSettings.model_validate(
                     datastore.data['settings']['application'].get('llm') or {}
                 )
@@ -104,24 +101,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 # PasswordField never re-renders, so a blank submitted value means
                 # "keep stored key" — drop it from the merge.
-                if not (llm_form_input.get('llm_api_key') or '').strip():
-                    llm_form_input.pop('llm_api_key', None)
+                if not (llm_form_input.get('api_key') or '').strip():
+                    llm_form_input.pop('api_key', None)
 
                 # Env-var overrides make these fields read-only in the UI — ignore form input.
                 if os.getenv('LLM_TOKEN_BUDGET_MONTH', '').strip():
-                    llm_form_input.pop('llm_token_budget_month', None)
+                    llm_form_input.pop('token_budget_month', None)
                 if os.getenv('LLM_MAX_INPUT_CHARS', '').strip():
-                    llm_form_input.pop('llm_max_input_chars', None)
+                    llm_form_input.pop('max_input_chars', None)
 
                 # System-managed counters must never come from the form.
                 for protected in LLMSettings.PROTECTED_FIELDS:
                     llm_form_input.pop(protected, None)
 
-                # by_alias=True so existing values appear under the same key shape as the
-                # form input (llm_*). Without this, extra='allow' would store the
-                # stripped-name version as a model_extra that shadows the field value on
-                # model_dump() — even though .attribute access reads the alias correctly.
-                merged = LLMSettings.model_validate({**existing_llm.model_dump(by_alias=True), **llm_form_input})
+                merged = LLMSettings.model_validate({**existing_llm.model_dump(), **llm_form_input})
 
                 # Clearing the model field strips only the provider-connection fields.
                 # User toggles, budgets, prompts and system counters survive (matches /llm/clear).

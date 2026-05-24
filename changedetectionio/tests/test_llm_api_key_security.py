@@ -329,9 +329,9 @@ def test_settings_form_preserves_api_key_when_submitted_blank(
     res = client.post(
         url_for('settings.settings_page'),
         data={
-            'llm-llm_model': 'gpt-4o',
-            'llm-llm_api_key': '',           # blank — PasswordField behaviour
-            'llm-llm_api_base': '',
+            'llm-model': 'gpt-4o',
+            'llm-api_key': '',           # blank — PasswordField behaviour
+            'llm-api_base': '',
             'application-pager_size': '50',
             'application-notification_format': 'System default',
             'requests-time_between_check-days': '0',
@@ -452,9 +452,9 @@ def test_settings_form_rejects_private_api_base(
     res = client.post(
         url_for('settings.settings_page'),
         data={
-            'llm-llm_model':    'gpt-4o',
-            'llm-llm_api_key':  '',
-            'llm-llm_api_base': 'http://127.0.0.1:11434',
+            'llm-model':    'gpt-4o',
+            'llm-api_key':  '',
+            'llm-api_base': 'http://127.0.0.1:11434',
             'application-pager_size': '50',
             'application-notification_format': 'System default',
             'requests-time_between_check-days': '0',

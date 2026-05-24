@@ -3,12 +3,12 @@ Validation/typing layer for the LLM config dict stored at
     datastore.data['settings']['application']['llm']
 
 Storage stays a plain dict (orjson-serialized). This model is hydrated on read
-(model_validate) and dumped on write (model_dump). Form-side WTForms field names
-keep the llm_-prefix; Field aliases bridge them to the stripped storage names.
+(model_validate) and dumped on write (model_dump). WTForms field names match
+the storage field names exactly — no aliases needed.
 """
 from typing import ClassVar, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 LLM_DEFAULT_THINKING_BUDGET = 0
@@ -19,32 +19,32 @@ LLM_DEFAULT_BUDGET_ACTION = 'skip_llm'
 
 
 class LLMSettings(BaseModel):
-    # extra='forbid' rejects any key that isn't a declared field/alias with a
+    # extra='forbid' rejects any key that isn't a declared field with a
     # ValidationError. Loud failure forces new form fields to be declared here
     # before they can land in storage — closes the CWE-915 mass-assignment class
     # of bugs (see GHSA-h3x5-5j56-hm2j for the canonical example).
-    model_config = ConfigDict(populate_by_name=True, extra='forbid')
+    model_config = ConfigDict(extra='forbid')
 
-    enabled: bool = Field(default=True, alias='llm_enabled')
-    debug: bool = Field(default=False, alias='llm_debug')
-    override_diff_with_summary: bool = Field(default=True, alias='llm_override_diff_with_summary')
-    restock_use_fallback_extract: bool = Field(default=True, alias='llm_restock_use_fallback_extract')
-    thinking_budget: int = Field(default=LLM_DEFAULT_THINKING_BUDGET, alias='llm_thinking_budget')
-    max_summary_tokens: int = Field(default=LLM_DEFAULT_MAX_SUMMARY_TOKENS, alias='llm_max_summary_tokens')
-    budget_action: str = Field(default=LLM_DEFAULT_BUDGET_ACTION, alias='llm_budget_action')
-    change_summary_default: str = Field(default='', alias='llm_change_summary_default')
-    token_budget_month: int = Field(default=0, alias='llm_token_budget_month')
-    max_input_chars: int = Field(default=LLM_DEFAULT_MAX_INPUT_CHARS, alias='llm_max_input_chars')
+    enabled: bool = True
+    debug: bool = False
+    override_diff_with_summary: bool = True
+    restock_use_fallback_extract: bool = True
+    thinking_budget: int = LLM_DEFAULT_THINKING_BUDGET
+    max_summary_tokens: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS
+    budget_action: str = LLM_DEFAULT_BUDGET_ACTION
+    change_summary_default: str = ''
+    token_budget_month: int = 0
+    max_input_chars: int = LLM_DEFAULT_MAX_INPUT_CHARS
     # Per-call and per-watch token caps; read by _check_token_budget() in evaluator.py.
     # 0 means unlimited.
-    max_tokens_per_check: int = Field(default=0, alias='llm_max_tokens_per_check')
-    max_tokens_cumulative: int = Field(default=0, alias='llm_max_tokens_cumulative')
+    max_tokens_per_check: int = 0
+    max_tokens_cumulative: int = 0
 
-    model: str = Field(default='', alias='llm_model')
-    api_key: str = Field(default='', alias='llm_api_key')
-    api_base: str = Field(default='', alias='llm_api_base')
-    provider_kind: str = Field(default='', alias='llm_provider_kind')
-    local_token_multiplier: int = Field(default=LLM_DEFAULT_LOCAL_TOKEN_MULTIPLIER, alias='llm_local_token_multiplier')
+    model: str = ''
+    api_key: str = ''
+    api_base: str = ''
+    provider_kind: str = ''
+    local_token_multiplier: int = LLM_DEFAULT_LOCAL_TOKEN_MULTIPLIER
 
     tokens_total_cumulative: int = 0
     tokens_this_month: int = 0
