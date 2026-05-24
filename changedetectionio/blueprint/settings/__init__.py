@@ -127,16 +127,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # model_dump() — even though .attribute access reads the alias correctly.
                 merged = LLMSettings.model_validate({**existing_llm.model_dump(by_alias=True), **llm_form_input})
 
-                # Clearing the model field drops the saved provider config but retains
-                # any historical counter values (so monthly usage charts don't reset).
+                # Clearing the model strips only the credential fields. User toggles
+                # (llm_enabled, debug, override_diff_with_summary, …), the global summary
+                # prompt, monthly budgets, and the system token counters all survive —
+                # matches the /llm/clear endpoint's semantics.
+                merged_dict = merged.model_dump()
                 if not merged.model.strip():
-                    counters = {k: getattr(merged, k) for k in LLMSettings.PROTECTED_FIELDS}
-                    if any(counters.values()):
-                        datastore.data['settings']['application']['llm'] = counters
-                    else:
-                        datastore.data['settings']['application'].pop('llm', None)
-                else:
-                    datastore.data['settings']['application']['llm'] = merged.model_dump()
+                    for key in ('model', 'api_key', 'api_base', 'provider_kind', 'local_token_multiplier'):
+                        merged_dict.pop(key, None)
+                datastore.data['settings']['application']['llm'] = merged_dict
 
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
