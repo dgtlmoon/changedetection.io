@@ -247,33 +247,30 @@ dennis-cmd lint --excluderules=W302 changedetectionio/translations/
 
 The `W303` rule ensures that HTML tags in the `msgstr` match the `msgid`. This is crucial for catching broken markup (e.g., missing closing tags).
 
-##### Handling intentional deviations and false positives
+##### Handling intentional deviations
 
-Some W303 warnings are intentional or result from upstream false positives.
+Some W303 warnings are intentional.
 Use the `dennis-ignore: W303` comment in the source files (templates or Python code) within a `TRANSLATORS` comment to suppress these warnings.
 This ensures the ignore instruction is extracted into the `.po` files.
 
 - **CJK italic policy**: When replacing `<i>` with locale-conventional quotation marks, tags will no longer match.
-- **Upstream false positive**: Dennis misinterprets certain HTML tags (e.g., `<title>`) within `msgstr`. See https://github.com/mozilla/dennis/issues/213.
 
 **Examples in Jinja2 templates:**
 
 ```jinja
 {# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}
 <p>{{ _('These settings are <strong><i>added</i></strong> to any existing watch configurations.')|safe }}</p>
-
-{# TRANSLATORS: dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213 #}
-<td>{{ _('The page title of the watch, uses <title> if not set, falls back to URL') }}</td>
 ```
 
 **Example in Python source:**
 
 ```python
-# dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
-use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list'))
+# dennis-ignore: W303 - CJK fonts lack native italics; allow substitution with conventional local styling.
+message = StringField(_l('This is <i>experimental</i> and may change'))
 ```
 
 ---
+
 
 ## CI linter
 
