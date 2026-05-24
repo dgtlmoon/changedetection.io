@@ -1160,17 +1160,8 @@ class globalSettingsLLMForm(Form):
         },
         default='',
     )
-    max_tokens_per_check = IntegerField(
-        _l('Max tokens per check'),
-        validators=[validators.Optional(), validators.NumberRange(min=0)],
-        default=0,
-        render_kw={
-            "placeholder": "0 = unlimited",
-            "style": "width: 8em;",
-        },
-    )
-    max_tokens_cumulative = IntegerField(
-        _l('Max cumulative tokens (per watch)'),
+    max_tokens_per_count_period = IntegerField(
+        _l('Max tokens per watch per period'),
         validators=[validators.Optional(), validators.NumberRange(min=0)],
         default=0,
         render_kw={

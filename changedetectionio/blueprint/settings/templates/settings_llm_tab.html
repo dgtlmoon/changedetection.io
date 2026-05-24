@@ -373,6 +373,13 @@
         {% endif %}
       </span>
     </div>
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Max tokens per watch per period') }}</span>
+      <span class="llm-usage-row-value">
+        {{ form.llm.form.max_tokens_per_count_period(placeholder=_('0 = unlimited'), value=llm_stored.get('max_tokens_per_count_period', 0) or '') }}
+        <span class="llm-field-hint">{{ _('tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = unlimited)') }}</span>
+      </span>
+    </div>
   </div>
 
   {% else %}
@@ -402,6 +409,13 @@
           {{ form.llm.form.max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
           <span class="llm-field-hint">{{ _('characters — currently enforcing: %(limit)s', limit='{:,}'.format(llm_effective_max_input_chars)) }}</span>
         {% endif %}
+      </span>
+    </div>
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Max tokens per watch per period') }}</span>
+      <span class="llm-usage-row-value">
+        {{ form.llm.form.max_tokens_per_count_period(placeholder=_('0 = unlimited'), value=llm_stored.get('max_tokens_per_count_period', 0) or '') }}
+        <span class="llm-field-hint">{{ _('tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = unlimited)') }}</span>
       </span>
     </div>
   </div>

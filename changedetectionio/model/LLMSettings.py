@@ -35,10 +35,12 @@ class LLMSettings(BaseModel):
     change_summary_default: str = ''
     token_budget_month: int = 0
     max_input_chars: int = LLM_DEFAULT_MAX_INPUT_CHARS
-    # Per-call and per-watch token caps; read by _check_token_budget() in evaluator.py.
-    # 0 means unlimited.
-    max_tokens_per_check: int = 0
-    max_tokens_cumulative: int = 0
+    # Per-watch per-period token cap; read by _check_token_budget() in evaluator.py.
+    # 0 means unlimited. Once a watch's usage within the current period hits this cap,
+    # AI evaluation is skipped for it until the period rolls over. Period is currently
+    # hard-coded to month (matches the global counter rollover); name is period-agnostic
+    # to leave room for a configurable period (day/week/month) later.
+    max_tokens_per_count_period: int = 0
 
     model: str = ''
     api_key: str = ''

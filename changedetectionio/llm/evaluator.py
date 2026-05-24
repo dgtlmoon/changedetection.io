@@ -386,31 +386,44 @@ def is_global_token_budget_exceeded(datastore) -> bool:
 
 def _check_token_budget(watch, cfg, tokens_this_call: int = 0) -> bool:
     """
-    Check token budget limits.  Returns True if within budget, False if exceeded.
-    Also accumulates tokens_this_call into watch['llm_tokens_used_cumulative'].
+    Per-watch per-period token cap.
+
+    Period is currently month (matches the global counter rollover); the field
+    name `max_tokens_per_count_period` is period-agnostic so a configurable
+    day/week/month can land later without renaming storage.
+
+    On non-zero tokens_this_call:
+      - rolls over watch['llm_tokens_this_period'] if a new period started
+      - increments the per-period counter
+      - also increments the existing lifetime counter (UI stat, unchanged)
+    Returns False once the per-period counter exceeds max_tokens_per_count_period
+    so subsequent evaluate_change calls bail out for this watch until rollover.
+
+    Note: only evaluate_change actually gates on the return value (the other
+    callers invoke this for the side-effect of accumulating tokens).
     """
     if tokens_this_call > 0:
-        current = watch.get('llm_tokens_used_cumulative') or 0
-        watch['llm_tokens_used_cumulative'] = current + tokens_this_call
+        current_period = _get_month_key()
+        # Rollover: new period zeroes the per-period counter
+        if watch.get('llm_tokens_period_key') != current_period:
+            watch['llm_tokens_this_period'] = 0
+            watch['llm_tokens_period_key'] = current_period
+        watch['llm_tokens_this_period'] = (watch.get('llm_tokens_this_period') or 0) + tokens_this_call
+        # Informational lifetime counter (UI shows this; not used for the cap)
+        watch['llm_tokens_used_cumulative'] = (watch.get('llm_tokens_used_cumulative') or 0) + tokens_this_call
 
-    max_per_check = int(cfg.get('max_tokens_per_check') or 0)
-    max_cumulative = int(cfg.get('max_tokens_cumulative') or 0)
-
-    if max_per_check and tokens_this_call > max_per_check:
-        logger.warning(
-            f"LLM token budget exceeded for {watch.get('uuid')}: "
-            f"{tokens_this_call} tokens > per-check limit {max_per_check}"
-        )
-        return False
-
-    if max_cumulative:
-        total = watch.get('llm_tokens_used_cumulative') or 0
-        if total > max_cumulative:
-            logger.warning(
-                f"LLM cumulative token budget exceeded for {watch.get('uuid')}: "
-                f"{total} tokens > limit {max_cumulative}"
-            )
-            return False
+    max_per_period = int(cfg.get('max_tokens_per_count_period') or 0)
+    if max_per_period:
+        # Pre-flight (tokens_this_call=0) and post-call paths both read the
+        # same counter — but a stale period key means "no usage yet this period".
+        if watch.get('llm_tokens_period_key') == _get_month_key():
+            total = watch.get('llm_tokens_this_period') or 0
+            if total > max_per_period:
+                logger.warning(
+                    f"LLM per-period token budget exceeded for {watch.get('uuid')}: "
+                    f"{total} tokens > limit {max_per_period}"
+                )
+                return False
 
     return True
 
