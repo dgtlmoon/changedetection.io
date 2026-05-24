@@ -33,17 +33,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         default = deepcopy(datastore.data['settings'])
 
-        # Pre-populate LLM sub-form fields. model_dump(by_alias=True) emits llm_-prefixed
-        # keys that line up with the WTForms field names. PasswordField for api_key is
-        # intentionally left blank on GET — submitting a blank value preserves the stored
-        # key (handled on POST below). SelectField needs its int values as strings.
-        _stored_llm_settings = LLMSettings.model_validate(
+        # model_dump(by_alias=True) emits llm_-prefixed keys that line up with the
+        # WTForms field names. api_key is intentionally blanked on GET — PasswordField
+        # never re-renders its value, and a blank submission preserves the stored key.
+        default['llm'] = LLMSettings.model_validate(
             datastore.data['settings']['application'].get('llm') or {}
-        )
-        default['llm'] = _stored_llm_settings.model_dump(by_alias=True)
+        ).model_dump(by_alias=True)
         default['llm']['llm_api_key'] = ''
-        default['llm']['llm_thinking_budget'] = str(default['llm']['llm_thinking_budget'])
-        default['llm']['llm_max_summary_tokens'] = str(default['llm']['llm_max_summary_tokens'])
 
         if datastore.proxy_list is not None:
             available_proxies = list(datastore.proxy_list.keys())
