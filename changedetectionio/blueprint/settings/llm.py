@@ -232,12 +232,11 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @llm_blueprint.route("/clear", methods=['POST'])
     @login_optionally_required
     def llm_clear():
+        from changedetectionio.model.LLMSettings import LLMSettings
         logger.debug("LLM configuration cleared by user")
-        # Strip only the credential / connection fields — user-set toggles, the
-        # global summary prompt, monthly budgets, and the system token counters
-        # all survive a "clear credentials" action.
+        # Strip provider-connection fields only. Toggles, prompts, budgets and counters survive.
         llm = datastore.data['settings']['application'].get('llm') or {}
-        for key in ('model', 'api_key', 'api_base', 'provider_kind', 'local_token_multiplier'):
+        for key in LLMSettings.CONNECTION_FIELDS:
             llm.pop(key, None)
         if llm:
             datastore.data['settings']['application']['llm'] = llm
