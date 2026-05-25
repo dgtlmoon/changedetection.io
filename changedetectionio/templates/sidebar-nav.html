@@ -1,0 +1,107 @@
+{# Shared left-rail / drawer navigation items #}
+{# Used by base.html (desktop left sidebar) and mobile hamburger drawer #}
+
+{%- set ep = request.endpoint or '' -%}
+<ul class="action-sidebar-list">
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('add_watch_ui.index') }}"
+           class="action-sidebar-item action-sidebar-item--accent {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
+           title="{{ _('Add a page watch') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="4" ry="4"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            <span class="action-label">{{ _('Add a page watch') }}</span>
+        </a>
+    </li>
+    {% if not current_diff_url %}
+    <li class="action-sidebar-li">
+        <button type="button"
+                class="action-sidebar-item action-sidebar-item--button js-open-search-modal"
+                title="{{ _('Search, or Use Alt+S Key') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span class="action-label">{{ _('Search') }}</span>
+        </button>
+    </li>
+    {% endif %}
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('watchlist.index') }}"
+           class="action-sidebar-item {% if ep == 'watchlist.index' or ep.startswith('ui.ui_views') or ep.startswith('ui.ui_edit') %}active{% endif %}"
+           title="{{ _('Page Watches') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <polyline points="12 7 12 12 15 14"/>
+            </svg>
+            <span class="action-label">{{ _('Page Watches') }}</span>
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('tags.tags_overview_page') }}"
+           class="action-sidebar-item {% if ep.startswith('tags.') %}active{% endif %}"
+           title="{{ _('Watch Groups') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                <polyline points="2 17 12 22 22 17"/>
+                <polyline points="2 12 12 17 22 12"/>
+            </svg>
+            <span class="action-label">{{ _('Watch Groups') }}</span>
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+        <a href="#"
+           class="action-sidebar-item is-disabled"
+           title="{{ _('Browsers (coming soon)') }}"
+           aria-disabled="true"
+           tabindex="-1">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <path d="M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18"/>
+            </svg>
+            <span class="action-label">{{ _('Browsers') }}</span>
+            <span class="action-badge">{{ _('soon') }}</span>
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('settings.settings_page') }}#notifications"
+           class="action-sidebar-item"
+           title="{{ _('Notifications') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="action-label">{{ _('Notifications') }}</span>
+        </a>
+    </li>
+
+    <li class="action-sidebar-divider" aria-hidden="true"></li>
+
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('settings.settings_page') }}"
+           class="action-sidebar-item {% if ep.startswith('settings.') %}active{% endif %}"
+           title="{{ _('Settings') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span class="action-label">{{ _('Settings') }}</span>
+        </a>
+    </li>
+
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('imports.import_page') }}"
+           class="action-sidebar-item {% if ep.startswith('imports.') %}active{% endif %}"
+           title="{{ _('Import') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 9 12 4 17 9"/>
+                <line x1="12" y1="4" x2="12" y2="16"/>
+            </svg>
+            <span class="action-label">{{ _('Import') }}</span>
+        </a>
+    </li>
+</ul>

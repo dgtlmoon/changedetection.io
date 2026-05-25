@@ -863,6 +863,9 @@ def changedetection_app(config=None, datastore_o=None):
     from changedetectionio.blueprint.imports import construct_blueprint as construct_import_blueprint
     app.register_blueprint(construct_import_blueprint(datastore, update_q, queuedWatchMetaData), url_prefix='/imports')
 
+    from changedetectionio.blueprint.add_watch_ui import construct_blueprint as construct_add_watch_ui_blueprint
+    app.register_blueprint(construct_add_watch_ui_blueprint(datastore), url_prefix='/add-watch-ui')
+
     import changedetectionio.blueprint.price_data_follower as price_data_follower
     app.register_blueprint(price_data_follower.construct_blueprint(datastore, update_q), url_prefix='/price_data_follower')
 

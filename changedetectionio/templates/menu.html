@@ -4,15 +4,7 @@
 
 {% if current_user.is_authenticated or not has_password %}
 {% if not current_diff_url %}
-    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('tags.') %}active{% endif %}">
-        <a href="{{ url_for('tags.tags_overview_page') }}" class="pure-menu-link">{{ _('GROUPS') }}</a>
-    </li>
-    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('settings.') %}active{% endif %}">
-        <a href="{{ url_for('settings.settings_page') }}" class="pure-menu-link">{{ _('SETTINGS') }}</a>
-    </li>
-    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('imports.') %}active{% endif %}">
-        <a href="{{ url_for('imports.import_page') }}" class="pure-menu-link">{{ _('IMPORT') }}</a>
-    </li>
+    {# GROUPS / SETTINGS / IMPORT moved to the left sidebar (sidebar-nav.html) #}
     <li class="pure-menu-item" id="menu-pause">
         <a href="{{ url_for('settings.toggle_all_paused') }}" ><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="{% if all_paused %}{{ _('Resume automatic scheduling') }}{% else %}{{ _('Pause auto-queue scheduling of watches') }}{% endif %}" title="{% if all_paused %}{{ _('Scheduling is paused - click to resume') }}{% else %}{{ _('Pause auto-queue scheduling of watches') }}{% endif %}" class="icon icon-pause"{% if not all_paused %} style="opacity: 0.3"{% endif %}></a>
     </li>

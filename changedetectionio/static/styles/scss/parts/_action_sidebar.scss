@@ -1,4 +1,5 @@
-// Action Sidebar - Minimal navigation icons with light grey aesthetic
+// Left-rail navigation - icon-only collapsed rail with label rollout on hover
+@use "../settings" as *;
 
 .content-wrapper {
   display: flex;
@@ -6,110 +7,314 @@
   width: 100%;
   max-width: 100%;
   position: relative;
+  align-items: flex-start;
 
-  @media only screen and (max-width: 900px) {
+  @media only screen and (max-width: $desktop-wide-breakpoint) {
     flex-direction: column;
   }
 }
 
+// Desktop left rail — fixed, full-height, overlays content on hover (does not push)
 .action-sidebar {
-  position: sticky;
-  top: 100px;
-  flex-shrink: 0;
-  width: 80px;
-  height: fit-content;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  z-index: 60;
+  overflow: hidden;
   background: transparent;
-  padding: 1.5rem 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  align-items: center;
-  z-index: 0;
+  justify-content: center;   // list block vertically centered
+  align-items: stretch;
+  transition:
+    width 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background-color 0.22s ease,
+    box-shadow 0.22s ease;
 
-  @media only screen and (max-width: 900px) {
-    position: relative;
-    top: 0;
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-around;
-    padding: 0;
-    overflow-x: auto;
+  &:hover,
+  &:focus-within {
+    width: 240px;
+  }
+
+  @media only screen and (max-width: $desktop-wide-breakpoint) {
+    // Hidden on mobile: the mobile drawer (hamburger) carries these items
+    display: none;
   }
 }
 
-.action-sidebar-item {
-  position: relative;
+.action-sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
+  gap: 0;
+}
+
+.action-sidebar-li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative; // anchor for rollout label
+}
+
+.action-sidebar-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+  margin: 6px 16px;
+  list-style: none;
+}
+
+// Rail item: flat row; soft pill only on the currently hovered item
+.action-sidebar .action-sidebar-item {
+  position: relative;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.75rem 0.5rem;
-  min-width: 64px;
+  width: 100%;
+  height: 50px;
+  padding: 0 20px;       // 20 = (64-24)/2 → icon stays centered in collapsed rail
+  border-radius: 8px;
+  color: var(--color-white);
   text-decoration: none;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  // Reset button defaults so <button> rail items match anchor rail items
+  background: transparent;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
 
   &:hover {
-    opacity: 1;
+    background-color: var(--color-sidebar-item-hover-bg);
+    .action-icon { stroke-width: 2.3; }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
   }
 
   &.active {
-    opacity: 1;
-
+    // Active conveyed by bold label + hairline icon glow only.
     .action-icon {
-      stroke: #fff;
-      stroke-width: 2.5;
+      stroke-width: 2.4;
+      filter: drop-shadow(0 0 0.4px currentColor);
     }
-
     .action-label {
-      color: #fff;
       font-weight: 700;
     }
+  }
+
+  &.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // The accent "+ Add" — distinguished by a slight icon weight, no background
+  &.action-sidebar-item--accent {
+    .action-icon {
+      stroke: #fff;
+      stroke-width: 2.6;
+    }
+  }
+
+  // Inline label revealed when the parent .action-sidebar is hovered
+  .action-label {
+    flex: 0 0 auto;
+    margin-left: 14px;
+    font-family: inherit;
+    font-size: 1rem;          // 16px
+    font-weight: 400;          // normal idle; 700 when .active
+    letter-spacing: 0;
+    text-transform: none;
+    color: inherit;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.18s ease 0.05s, transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s;
+  }
+
+  // 'soon' / placeholder badge — inline tag once expanded; hidden at rest
+  .action-badge {
+    margin-left: 10px;
+    font-size: 0.6rem;
+    line-height: 1;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease 0.05s;
+  }
+}
+
+// When the rail expands, reveal every label/badge together — text colour stays white
+.action-sidebar:hover,
+.action-sidebar:focus-within {
+  .action-sidebar-item {
+    .action-label { opacity: 1; transform: translateX(0); }
+    .action-badge { opacity: 1; }
   }
 }
 
 .action-icon {
-  width: 28px;
-  height: 28px;
-  stroke: #fff;
-  stroke-width: 2;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  stroke-width: 1.9;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: stroke 0.2s ease;
 }
 
+// Default label styles for places where it's rendered inline (mobile drawer)
 .action-label {
-  font-size: 0.65rem;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
   font-weight: 500;
-  text-align: center;
-  line-height: 1.1;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: #fff;
-  transition: color 0.2s ease;
-  max-width: 60px;
-  word-wrap: break-word;
+  color: inherit;
 }
 
+.action-badge {
+  flex: 0 0 auto;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+}
+
+// Main content: capped width, centered, with a 64px gutter for the fixed rail
 .content-main {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   width: 100%;
   min-width: 0;
+  max-width: 1164px;        // 1100px content + 64px rail gutter
+  margin: 0 auto;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  @media only screen and (min-width: ($desktop-wide-breakpoint + 1)) {
+    padding-left: 64px;
+  }
 }
 
-// Dark mode adjustments
-html[data-darkmode=true] {
-  .action-icon {
-/*    stroke: #666;*/
+// Dark-mode overrides handled via CSS vars in parts/_variables.scss
+
+// Mobile drawer reuses the markup but renders labels inline (full rows)
+.mobile-menu-section {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border-table-cell);
+
+  .action-sidebar-list {
+    gap: 1px;
   }
 
-  .action-label {
-/*    color: #666;*/
+  .action-sidebar-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    width: 100%;
+    height: auto;
+    padding: 0.75rem 0.75rem;
+    border-radius: 8px;
+    color: var(--color-text);
+
+    &:hover {
+      background-color: var(--color-background-menu-link-hover);
+      color: var(--color-text);
+    }
+
+    &.active {
+      background-color: var(--color-background-menu-link-hover);
+      color: var(--color-text);
+    }
+
+    // Force inline label rendering in the drawer (override rollout positioning)
+    .action-label {
+      position: static;
+      transform: none;
+      background: transparent;
+      box-shadow: none;
+      color: inherit;
+      opacity: 1;
+      pointer-events: auto;
+      padding: 0;
+      font-size: 0.92rem;
+      font-weight: 500;
+
+      &::before { display: none; }
+    }
+
+    .action-badge {
+      position: static;
+      margin-left: auto;
+      font-size: 0.62rem;
+      background: rgba(0, 0, 0, 0.08);
+      color: var(--color-text);
+    }
+
+    &.action-sidebar-item--accent {
+      background: var(--color-background-menu-link-hover);
+      box-shadow: inset 0 0 0 1px var(--color-border-table-cell);
+      color: var(--color-text);
+      .action-label { color: inherit; }
+    }
+  }
+
+  .action-sidebar-item--button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+  }
+}
+
+// Placeholder block on the add-watch page
+#add-watch-live-info {
+  width: 100%;
+  margin-top: 1rem;
+
+  .add-watch-live-placeholder {
+    border: 1px dashed rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 1.25rem;
+    color: var(--color-white);
+
+    h3 {
+      margin: 0 0 0.4rem 0;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .muted {
+      opacity: 0.7;
+      margin: 0 0 0.75rem 0;
+      font-size: 0.85rem;
+    }
+
+    .add-watch-live-stream {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      padding: 0.6rem 0;
+    }
   }
 }

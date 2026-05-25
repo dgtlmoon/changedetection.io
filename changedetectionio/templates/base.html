@@ -78,17 +78,6 @@
           <!-- Collapsible menu items (hidden on mobile, shown in drawer) -->
           {% include "menu.html" %}
 
-          {% if current_user.is_authenticated or not has_password %}
-            {% if not current_diff_url %}
-              <li class="pure-menu-item  menu-collapsible">
-                <button class="toggle-button" id="open-search-modal" type="button" title="{{ _('Search, or Use Alt+S Key') }}">
-                  {% include "svgs/search-icon.svg" %}
-                </button>
-              </li>
-
-            {% endif %}
-          {% endif %}
-
           <li class="pure-menu-item" id="heart-us">
                 <svg
                    fill="#ff0000"
@@ -117,6 +106,11 @@
       <!-- Mobile menu drawer -->
       <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
       <div class="mobile-menu-drawer" id="mobile-menu-drawer">
+        {% if current_user.is_authenticated or not has_password %}
+        <nav class="mobile-menu-section mobile-menu-section--primary" aria-label="{{ _('Main navigation') }}">
+          {% include "sidebar-nav.html" %}
+        </nav>
+        {% endif %}
         <ul class="mobile-menu-items">
           {% include "menu.html" %}
             <li class="pure-menu-item menu-collapsible">
@@ -193,31 +187,11 @@
         </div>
 
         <div class="content-wrapper">
-{#
           {% if current_user.is_authenticated or not has_password %}
-          <aside class="action-sidebar">
-            <a href="{{ url_for('watchlist.index') }}" class="action-sidebar-item {% if request.endpoint.startswith('watchlist.') or request.endpoint.startswith('ui.') %}active{% endif %}" title="{{ _('Watch List') }}">
-              <svg class="action-icon" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
-              </svg>
-              <span class="action-label">{{ _('Watches') }}</span>
-            </a>
-            <a href="{{ url_for('queue_status') }}" class="action-sidebar-item {% if request.endpoint == 'queue_status' %}active{% endif %}" id="queue-action-item" title="{{ _('Queue Status') }}">
-              <svg class="action-icon" viewBox="0 0 24 24">
-                <line x1="8" y1="6" x2="21" y2="6"/>
-                <line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/>
-                <line x1="3" y1="18" x2="3.01" y2="18"/>
-              </svg>
-              <span class="action-label">{{ _('Queue') }}</span>
-              <span class="notification-bubble blue-bubble" id="queue-bubble" data-count="0"></span>
-            </a>
+          <aside class="action-sidebar" aria-label="{{ _('Main navigation') }}">
+            {% include "sidebar-nav.html" %}
           </aside>
           {% endif %}
-#}
           <div class="content-main">
             <header>
               {% block header %}{% endblock %}

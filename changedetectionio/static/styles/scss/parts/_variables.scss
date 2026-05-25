@@ -106,6 +106,13 @@
   --highlight-trigger-text-bg-color: #1b98f8;
   --highlight-ignored-text-bg-color: var(--color-grey-700);
   --highlight-blocked-text-bg-color: rgb(202, 60, 60);
+
+  // Left rail — light mode defaults
+  --color-sidebar-bg: rgba(255, 255, 255, 0.97);
+  --color-sidebar-text: var(--color-text);
+  --color-sidebar-shadow: 6px 0 28px rgba(0, 0, 0, 0.18);
+  --color-sidebar-item-hover-bg: rgba(0, 0, 0, 0.06);
+  --color-sidebar-item-active-bg: rgba(0, 0, 0, 0.10);
 }
 
 html[data-darkmode="true"] {
@@ -146,6 +153,12 @@ html[data-darkmode="true"] {
   --color-watch-table-error: var(--color-light-red);
   --color-watch-table-row-text: var(--color-grey-800);
 
+  // Left rail — dark mode overrides
+  --color-sidebar-bg: rgba(8, 10, 14, 0.97);
+  --color-sidebar-text: var(--color-white);
+  --color-sidebar-shadow: 6px 0 28px rgba(0, 0, 0, 0.45);
+  --color-sidebar-item-hover-bg: rgba(255, 255, 255, 0.06);
+  --color-sidebar-item-active-bg: rgba(255, 255, 255, 0.10);
 
   .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5);

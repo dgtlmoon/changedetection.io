@@ -1,0 +1,43 @@
+{%- extends 'base.html' -%}
+{%- block content -%}
+{%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field -%}
+
+<div class="box" id="form-quick-watch-add">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
+        <fieldset>
+            <legend>{{ _('Add a new web page change detection watch') }}</legend>
+            <div id="watch-add-wrapper-zone">
+                {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
+                {{ render_nolabel_field(form.watch_submit_button, title=_("Watch this URL!") ) }}
+                {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Edit first then Watch") ) }}
+            </div>
+            {% if llm_configured %}
+            <div id="quick-watch-llm-intent" style="margin-top: 0.5em;">
+                <textarea name="llm_intent"
+                          id="quick_watch_llm_intent"
+                          rows="2"
+                          class="pure-input-1"
+                          placeholder="{{ _('AI — Notify when…') }} {{ llm_intent_watch_placeholder }}"></textarea>
+            </div>
+            {% endif %}
+            <div id="watch-group-tag">
+                {{ render_field(form.tags, value='', placeholder=_("Watch group / tag"), class="transparent-field") }}
+            </div>
+            <div id="quick-watch-processor-type">
+                {{ render_simple_field(form.processor) }}
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<div class="box" id="add-watch-live-info">
+    <div class="add-watch-live-placeholder">
+        <h3>{{ _('Live activity') }}</h3>
+        <p class="muted">{{ _('Recent additions and live check status will appear here.') }}</p>
+        <div class="add-watch-live-stream" data-placeholder="true">
+            <em>{{ _('Waiting for activity…') }}</em>
+        </div>
+    </div>
+</div>
+{%- endblock -%}
