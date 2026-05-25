@@ -82,10 +82,23 @@ def _check_input_size(text: str, max_chars: int) -> None:
 
 def _thinking_extra_body(model: str, budget: int) -> dict | None:
     """Return litellm extra_body to control thinking for models that support it.
-    For Gemini 2.5+: passes thinkingConfig with the given budget (0 = disabled).
-    For all other models: returns None (no-op).
+
+    The `thinkingConfig.thinkingBudget` payload is Gemini-specific (Anthropic and
+    OpenAI reasoning models use different parameters), so we gate on the gemini/
+    provider prefix first, then defer to litellm's model registry for the actual
+    "does this model think?" decision. That picks up new Gemini variants and
+    rolling aliases (`gemini-flash-latest`, etc.) as litellm's registry tracks
+    them, without us hardcoding model names here.
     """
-    if not model.startswith('gemini/gemini-2.5'):
+    if not model.startswith('gemini/'):
+        return None
+    try:
+        import litellm
+        if not litellm.get_model_info(model).get('supports_reasoning'):
+            return None
+    except Exception:
+        # Unknown model or registry lookup failed — skip the thinking config
+        # rather than guess. Worst case: thinking stays at the provider default.
         return None
     return {'generationConfig': {'thinkingConfig': {'thinkingBudget': budget}}}
 
