@@ -2214,7 +2214,7 @@ msgstr "Ekran görüntüsü, ekran görüntülerini destekleyen bir İçerik Get
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 #, python-format
-msgid "Worker %(n)s"
+msgid "Worker %(num)s"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html

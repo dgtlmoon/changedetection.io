@@ -2171,7 +2171,7 @@ msgstr "스크린샷을 사용하려면 스크린샷을 지원하는 방식(Sock
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 #, python-format
-msgid "Worker %(n)s"
+msgid "Worker %(num)s"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html

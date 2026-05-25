@@ -5,7 +5,7 @@
 // Server-rendered translation strings — keeps JS-built rows consistent with the
 // gettext catalog (matches the watchOverviewI18n pattern in watch-overview.html).
 window.queueI18n = {
-    workerLabel:  {{ _('Worker %(n)s', n='__N__')|tojson }},
+    workerLabel:  {{ _('Worker %(num)s', num='__NUM__')|tojson }},
     idle:         {{ _('— idle')|tojson }},
     statusRunning:{{ _('running')|tojson }},
     statusIdle:   {{ _('idle')|tojson }},
@@ -70,7 +70,7 @@ window.queueI18n = {
         {# Worker slot rows — JS replaces this with one row per FETCH_WORKERS slot. #}
         {% for w in snapshot.running %}
         <tr class="worker-slot worker-busy" data-uuid="{{ w.uuid }}">
-          <td><strong>{{ _('Worker %(n)s', n=loop.index) }}</strong></td>
+          <td><strong>{{ _('Worker %(num)s', num=loop.index) }}</strong></td>
           <td class="watch-cell">
             {% if w.gone %}
               <em>{{ _('Watch no longer exists') }}</em>
@@ -88,7 +88,7 @@ window.queueI18n = {
         {% endfor %}
         {% for idle_idx in range(snapshot.running|length, snapshot.worker_count) %}
         <tr class="worker-slot worker-idle">
-          <td><strong>{{ _('Worker %(n)s', n=idle_idx + 1) }}</strong></td>
+          <td><strong>{{ _('Worker %(num)s', num=idle_idx + 1) }}</strong></td>
           <td class="watch-cell"><small style="opacity:0.55;">{{ _('— idle') }}</small></td>
           <td class="time-cell"><small style="opacity:0.4;">—</small></td>
           <td><span class="inline-tag inline-tag--idle">{{ _('idle') }}</span></td>
@@ -180,8 +180,8 @@ $(function () {
   }
 
   function workerLabel(i) {
-    const tpl = I18N.workerLabel || 'Worker __N__';
-    return tpl.replace('__N__', i + 1);
+    const tpl = I18N.workerLabel || 'Worker __NUM__';
+    return tpl.replace('__NUM__', i + 1);
   }
 
   function elapsedText(since) {

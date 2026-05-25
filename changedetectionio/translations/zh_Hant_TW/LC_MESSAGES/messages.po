@@ -2165,7 +2165,7 @@ msgstr "截圖需要支援截圖的內容抓取器 (Sockpuppetbrowser, selenium 
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 #, python-format
-msgid "Worker %(n)s"
+msgid "Worker %(num)s"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html

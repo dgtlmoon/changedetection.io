@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.5\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-25 14:24+0200\n"
+"POT-Creation-Date: 2026-05-25 14:28+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2160,7 +2160,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 #, python-format
-msgid "Worker %(n)s"
+msgid "Worker %(num)s"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html

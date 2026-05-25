@@ -2209,7 +2209,7 @@ msgstr "Screenshot requer um Fetcher de Conteúdo (Sockpuppetbrowser, selenium, 
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 #, python-format
-msgid "Worker %(n)s"
+msgid "Worker %(num)s"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
