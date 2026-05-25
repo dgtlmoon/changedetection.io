@@ -14,8 +14,9 @@ def _make_datastore(llm_model='gpt-4o-mini', enabled=True):
     ds.data = {
         'settings': {
             'application': {
-                'llm_restock_use_fallback_extract': enabled,
                 'llm': {
+                    'enabled': True,
+                    'restock_use_fallback_extract': enabled,
                     'model': llm_model,
                     'api_key': 'test-key',
                     'api_base': '',
@@ -84,8 +85,8 @@ class TestLLMRestockPluginDisabled:
         ds.data = {
             'settings': {
                 'application': {
-                    'llm_restock_use_fallback_extract': True,
-                    # No 'llm' key → get_llm_config returns None
+                    # No 'llm' key → get_llm_config returns None;
+                    # restock_use_fallback_extract still defaults to True via LLMSettings
                 }
             }
         }

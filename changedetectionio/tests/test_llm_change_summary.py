@@ -28,7 +28,11 @@ def _set_response(datastore_path, content):
 
 def _configure_llm(client):
     ds = client.application.config.get('DATASTORE')
-    ds.data['settings']['application']['llm'] = {'model': 'gpt-4o-mini', 'api_key': 'sk-test'}
+    # Merge into the existing llm dict so other test setup (e.g. change_summary_default
+    # set via _set_global_default) survives.
+    existing = ds.data['settings']['application'].get('llm') or {}
+    existing.update({'model': 'gpt-4o-mini', 'api_key': 'sk-test'})
+    ds.data['settings']['application']['llm'] = existing
 
 
 # ---------------------------------------------------------------------------
@@ -238,7 +242,9 @@ def test_llm_summary_ajax_error_displayed_not_silenced(
 # ---------------------------------------------------------------------------
 
 def _set_global_default(ds, prompt):
-    ds.data['settings']['application']['llm_change_summary_default'] = prompt
+    llm = ds.data['settings']['application'].get('llm') or {}
+    llm['change_summary_default'] = prompt
+    ds.data['settings']['application']['llm'] = llm
 
 
 def test_global_default_used_when_watch_and_tag_have_none(
@@ -329,7 +335,7 @@ def test_hardcoded_fallback_when_nothing_set(
     watch['llm_change_summary'] = ''
 
     # Ensure global default is also empty
-    ds.data['settings']['application']['llm_change_summary_default'] = ''
+    _set_global_default(ds, '')
 
     assert get_effective_summary_prompt(watch, ds) == DEFAULT_CHANGE_SUMMARY_PROMPT
 
@@ -391,8 +397,8 @@ def test_llm_summary_ajax_sets_last_viewed(
 def test_global_default_saved_and_loaded_via_settings_form(
         client, live_server, measure_memory_usage, datastore_path):
     """
-    Submitting the settings form persists llm_change_summary_default at
-    settings.application level (not inside the llm credentials dict).
+    Submitting the settings form persists the global default prompt into
+    application.llm.change_summary_default (single nested home for all LLM settings).
     """
     from changedetectionio.tests.util import live_server_setup
     live_server_setup(live_server)
@@ -405,21 +411,20 @@ def test_global_default_saved_and_loaded_via_settings_form(
             'application-empty_pages_are_a_change': '',
             'requests-time_between_check-minutes': 180,
             'application-fetch_backend': 'html_requests',
-            'llm-llm_change_summary_default': 'Saved global prompt.',
+            'llm-change_summary_default': 'Saved global prompt.',
             # Keep existing model so llm block is retained
-            'llm-llm_model': 'gpt-4o-mini',
+            'llm-model': 'gpt-4o-mini',
         },
         follow_redirects=True,
     )
     assert b'Settings updated.' in res.data
 
     ds = client.application.config.get('DATASTORE')
-    stored = ds.data['settings']['application'].get('llm_change_summary_default', '')
-    assert stored == 'Saved global prompt.', f"Got: {stored!r}"
-
-    # Must NOT be buried inside the llm credentials dict
     llm_dict = ds.data['settings']['application'].get('llm', {})
-    assert 'change_summary_default' not in llm_dict
+    assert llm_dict.get('change_summary_default') == 'Saved global prompt.', f"Got: {llm_dict!r}"
+
+    # And the old flat key must not be re-introduced
+    assert 'llm_change_summary_default' not in ds.data['settings']['application']
 
     delete_all_watches(client)
 
@@ -440,7 +445,11 @@ def test_global_default_survives_llm_clear(
     res = client.post(url_for('settings.llm.llm_clear'), follow_redirects=True)
     assert res.status_code == 200
 
-    assert ds.data['settings']['application'].get('llm_change_summary_default') == 'Surviving prompt.'
+    llm_dict = ds.data['settings']['application'].get('llm') or {}
+    assert llm_dict.get('change_summary_default') == 'Surviving prompt.'
+    # The credential fields should be gone
+    assert 'model' not in llm_dict
+    assert 'api_key' not in llm_dict
 
     delete_all_watches(client)
 

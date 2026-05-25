@@ -217,8 +217,10 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
             llm_summary_prompt = _prompt
             # Must match the cache_prompt the worker writes and the UI ajax route reads —
             # using UI default diff prefs so the initial render finds the worker's pre-cache.
-            _max_summary_tokens = datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)
-            _llm_model = (datastore.data['settings']['application'].get('llm') or {}).get('model', '')
+            from changedetectionio.llm.evaluator import get_llm_settings
+            _ls = get_llm_settings(datastore)
+            _max_summary_tokens = _ls.max_summary_tokens
+            _llm_model = _ls.model
             _cache_prompt = build_summary_cache_prompt(
                 effective_prompt=_prompt,
                 max_summary_tokens=_max_summary_tokens,

@@ -294,78 +294,82 @@ class TestTokenBudget:
 
         assert _check_token_budget(watch, cfg, tokens_this_call=10_000) is True
 
-    def test_per_check_limit_exceeded_returns_false(self):
-        """Tokens on this call exceeding per-check limit → False."""
-        from changedetectionio.llm.evaluator import _check_token_budget
+    def test_per_period_limit_exceeded_returns_false(self):
+        """Per-period tokens exceeding the cap → False."""
+        from changedetectionio.llm.evaluator import _check_token_budget, _get_month_key
 
         watch = _make_watch()
-        cfg = {'max_tokens_per_check': 100}
-
-        result = _check_token_budget(watch, cfg, tokens_this_call=150)
-        assert result is False
-
-    def test_per_check_limit_not_exceeded_returns_true(self):
-        """Tokens on this call within per-check limit → True."""
-        from changedetectionio.llm.evaluator import _check_token_budget
-
-        watch = _make_watch()
-        cfg = {'max_tokens_per_check': 200}
-
-        result = _check_token_budget(watch, cfg, tokens_this_call=150)
-        assert result is True
-
-    def test_cumulative_limit_exceeded_returns_false(self):
-        """Total accumulated tokens exceeding cumulative limit → False."""
-        from changedetectionio.llm.evaluator import _check_token_budget
-
-        watch = _make_watch()
-        watch['llm_tokens_used_cumulative'] = 900
-        cfg = {'max_tokens_cumulative': 1000}
+        watch['llm_tokens_this_period'] = 900
+        watch['llm_tokens_period_key'] = _get_month_key()
+        cfg = {'max_tokens_per_count_period': 1000}
 
         # This call adds 200 → total 1100 > 1000
         result = _check_token_budget(watch, cfg, tokens_this_call=200)
         assert result is False
 
-    def test_cumulative_limit_not_yet_exceeded_returns_true(self):
-        """Total accumulated tokens within cumulative limit → True."""
-        from changedetectionio.llm.evaluator import _check_token_budget
+    def test_per_period_limit_not_yet_exceeded_returns_true(self):
+        """Per-period tokens within the cap → True."""
+        from changedetectionio.llm.evaluator import _check_token_budget, _get_month_key
 
         watch = _make_watch()
-        watch['llm_tokens_used_cumulative'] = 500
-        cfg = {'max_tokens_cumulative': 1000}
+        watch['llm_tokens_this_period'] = 500
+        watch['llm_tokens_period_key'] = _get_month_key()
+        cfg = {'max_tokens_per_count_period': 1000}
 
         result = _check_token_budget(watch, cfg, tokens_this_call=100)
         assert result is True
 
-    def test_tokens_accumulated_into_watch(self):
-        """tokens_this_call is added to watch['llm_tokens_used_cumulative']."""
-        from changedetectionio.llm.evaluator import _check_token_budget
+    def test_period_rollover_zeroes_counter(self):
+        """Stale period_key triggers rollover: counter resets before this call's tokens are added."""
+        from changedetectionio.llm.evaluator import _check_token_budget, _get_month_key
+
+        watch = _make_watch()
+        watch['llm_tokens_this_period'] = 999_999  # last period's giant total
+        watch['llm_tokens_period_key'] = '1970-01'  # ancient — guaranteed stale
+        cfg = {'max_tokens_per_count_period': 1000}
+
+        # This call adds 100 → after rollover should be 100, under the 1000 cap
+        result = _check_token_budget(watch, cfg, tokens_this_call=100)
+        assert result is True
+        assert watch['llm_tokens_this_period'] == 100
+        assert watch['llm_tokens_period_key'] == _get_month_key()
+
+    def test_tokens_accumulated_into_both_counters(self):
+        """tokens_this_call increments both the lifetime stat and the per-period counter."""
+        from changedetectionio.llm.evaluator import _check_token_budget, _get_month_key
 
         watch = _make_watch()
         watch['llm_tokens_used_cumulative'] = 300
+        watch['llm_tokens_this_period'] = 50
+        watch['llm_tokens_period_key'] = _get_month_key()
         cfg = {}
 
         _check_token_budget(watch, cfg, tokens_this_call=75)
         assert watch['llm_tokens_used_cumulative'] == 375
+        assert watch['llm_tokens_this_period'] == 125
 
-    def test_zero_tokens_call_does_not_change_cumulative(self):
-        """Calling with tokens_this_call=0 (pre-flight check) doesn't modify cumulative."""
-        from changedetectionio.llm.evaluator import _check_token_budget
+    def test_zero_tokens_call_does_not_change_counters(self):
+        """Calling with tokens_this_call=0 (pre-flight check) doesn't modify counters."""
+        from changedetectionio.llm.evaluator import _check_token_budget, _get_month_key
 
         watch = _make_watch()
         watch['llm_tokens_used_cumulative'] = 200
+        watch['llm_tokens_this_period'] = 80
+        watch['llm_tokens_period_key'] = _get_month_key()
         cfg = {}
 
         _check_token_budget(watch, cfg, tokens_this_call=0)
         assert watch['llm_tokens_used_cumulative'] == 200
+        assert watch['llm_tokens_this_period'] == 80
 
-    def test_evaluate_change_skips_call_when_cumulative_over_budget(self):
-        """Pre-flight cumulative check: if already over budget, skip LLM call and fail open."""
-        from changedetectionio.llm.evaluator import evaluate_change
+    def test_evaluate_change_skips_call_when_per_period_over_budget(self):
+        """Pre-flight check: if already over the period cap, skip the LLM call and fail open."""
+        from changedetectionio.llm.evaluator import evaluate_change, _get_month_key
 
-        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'max_tokens_cumulative': 100})
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'max_tokens_per_count_period': 100})
         watch = _make_watch(llm_intent='flag price drops')
-        watch['llm_tokens_used_cumulative'] = 500  # already far over
+        watch['llm_tokens_this_period'] = 500  # already far over
+        watch['llm_tokens_period_key'] = _get_month_key()
 
         with patch('changedetectionio.llm.client.completion') as mock_llm:
             result = evaluate_change(watch, ds, diff='- $500\n+ $400')
@@ -373,23 +377,6 @@ class TestTokenBudget:
 
         # Fail open: important=True so the notification is NOT suppressed
         assert result == {'important': True, 'summary': ''}
-
-    def test_evaluate_change_per_check_limit_fails_open(self):
-        """Per-check token exceeded after call → result still returned (fail open)."""
-        from changedetectionio.llm.evaluator import evaluate_change
-
-        # max_tokens_per_check is 50, but the call returns 150 tokens
-        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'max_tokens_per_check': 50})
-        watch = _make_watch(llm_intent='flag price drops')
-
-        llm_response = '{"important": false, "summary": "Only minor change"}'
-        with patch('changedetectionio.llm.client.completion', return_value=(llm_response, 150)):
-            result = evaluate_change(watch, ds, diff='- $500\n+ $499')
-
-        # LLM said not important, but even with per-check warning the result is returned
-        # (budget warning is logged but evaluation result is still used)
-        assert result is not None
-        assert 'important' in result
 
 
 # ---------------------------------------------------------------------------

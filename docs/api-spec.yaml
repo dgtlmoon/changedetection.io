@@ -621,6 +621,14 @@ components:
           type: [integer, 'null']
           readOnly: true
           description: Total tokens consumed by the AI across all checks for this watch.
+        llm_tokens_this_period:
+          type: [integer, 'null']
+          readOnly: true
+          description: Tokens consumed by the AI on this watch within the current rollover period (currently month). Used to enforce max_tokens_per_count_period.
+        llm_tokens_period_key:
+          type: [string, 'null']
+          readOnly: true
+          description: Identifier of the current rollover period (e.g. "2026-05"). Set automatically; resets llm_tokens_this_period when the period changes.
 
     DaySchedule:
       type: object

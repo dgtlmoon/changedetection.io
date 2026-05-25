@@ -775,3 +775,53 @@ class DatastoreUpdatesMixin:
             tag.commit()
             logger.info(f"update_30: migrated tag {tag_uuid} restock_settings → processor_config_restock_diff")
 
+    def update_31(self):
+        """Fold any flat application.llm_* key into nested application.llm.<stripped>.
+
+        Before: a handful of LLM settings (llm_enabled, llm_thinking_budget, …) lived
+        directly on settings.application alongside everything else, while the provider
+        config (model, api_key, …) was already nested under settings.application.llm.
+        Unifies them under one parent so the LLMSettings pydantic model has a single
+        home to read/write.
+
+        Flat key wins on conflict (most-recent form-saved value). Idempotent.
+        """
+        application = self.data['settings']['application']
+        present = [k for k in list(application) if k.startswith('llm_')]
+        if not present:
+            return
+
+        nested = application.get('llm') or {}
+        for flat in present:
+            nested[flat.removeprefix('llm_')] = application.pop(flat)
+        application['llm'] = nested
+        logger.info(f"update_31: folded {len(present)} flat llm_* keys into application.llm.* "
+                    f"({', '.join(present)})")
+
+    def update_32(self):
+        """Drop max_tokens_per_check and rename max_tokens_cumulative → max_tokens_per_count_period.
+
+        max_tokens_per_check was never reachable from the UI (form field declared but
+        never rendered or saved) and overlapped with the cumulative cap. Removing it.
+
+        max_tokens_cumulative was misleading — the field was used as a per-watch
+        per-period cap, not lifetime. Renamed so the semantic is clear and so a
+        future configurable period (day/week/month) doesn't force another rename.
+
+        Both keys are unreached from real installs (no UI path on prior releases);
+        this migration is mostly for branches and devs running pre-release commits.
+        """
+        llm = self.data['settings']['application'].get('llm') or {}
+        if not llm:
+            return
+        changed = False
+        if 'max_tokens_per_check' in llm:
+            del llm['max_tokens_per_check']
+            changed = True
+        if 'max_tokens_cumulative' in llm:
+            llm.setdefault('max_tokens_per_count_period', llm.pop('max_tokens_cumulative'))
+            changed = True
+        if changed:
+            self.data['settings']['application']['llm'] = llm
+            logger.info("update_32: cleaned up obsolete max_tokens_per_check / renamed max_tokens_cumulative")
+

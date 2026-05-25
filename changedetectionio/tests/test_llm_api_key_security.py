@@ -329,9 +329,9 @@ def test_settings_form_preserves_api_key_when_submitted_blank(
     res = client.post(
         url_for('settings.settings_page'),
         data={
-            'llm-llm_model': 'gpt-4o',
-            'llm-llm_api_key': '',           # blank — PasswordField behaviour
-            'llm-llm_api_base': '',
+            'llm-model': 'gpt-4o',
+            'llm-api_key': '',           # blank — PasswordField behaviour
+            'llm-api_base': '',
             'application-pager_size': '50',
             'application-notification_format': 'System default',
             'requests-time_between_check-days': '0',
@@ -452,9 +452,9 @@ def test_settings_form_rejects_private_api_base(
     res = client.post(
         url_for('settings.settings_page'),
         data={
-            'llm-llm_model':    'gpt-4o',
-            'llm-llm_api_key':  '',
-            'llm-llm_api_base': 'http://127.0.0.1:11434',
+            'llm-model':    'gpt-4o',
+            'llm-api_key':  '',
+            'llm-api_base': 'http://127.0.0.1:11434',
             'application-pager_size': '50',
             'application-notification_format': 'System default',
             'requests-time_between_check-days': '0',
@@ -653,11 +653,23 @@ def test_llm_clear_summary_cache_get_does_not_wipe_cache(
 
 def test_llm_clear_via_post_still_works(
         client, live_server, measure_memory_usage, datastore_path):
-    """Confirm the legit confirm-then-POST flow still wipes LLM config."""
+    """Confirm the legit confirm-then-POST flow wipes the provider credentials.
+
+    Post-LLMSettings: /llm/clear strips only the connection fields (model, api_key,
+    api_base, provider_kind, local_token_multiplier). User-set toggles, the global
+    summary prompt, monthly budgets, and system token counters survive. This matches
+    the settings-page "empty model" save semantic and the LLMSettings.CONNECTION_FIELDS
+    grouping — see PYDANTIC_MIGRATION.md.
+    """
     ds = client.application.config.get('DATASTORE')
     _configure_llm(ds)
     assert ds.data['settings']['application'].get('llm', {}).get('api_key') == CANARY_KEY
 
     res = client.post(url_for('settings.llm.llm_clear'), follow_redirects=True)
     assert res.status_code == 200
-    assert 'llm' not in ds.data['settings']['application']
+
+    # The api_key must be gone (this is what the test really cares about).
+    llm = ds.data['settings']['application'].get('llm') or {}
+    assert 'api_key' not in llm, f"api_key should have been wiped, got: {llm!r}"
+    assert 'model' not in llm
+    assert 'api_base' not in llm

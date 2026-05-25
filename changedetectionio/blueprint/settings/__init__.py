@@ -10,6 +10,7 @@ from flask_babel import gettext
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
+from changedetectionio.model.LLMSettings import LLMSettings
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -32,25 +33,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         default = deepcopy(datastore.data['settings'])
 
-        # Pre-populate LLM sub-form fields from stored config (text fields only —
-        # PasswordField for api_key is intentionally left blank on GET).
-        _stored_llm = datastore.data['settings']['application'].get('llm') or {}
-        default['llm'] = {
-            'llm_model':                         _stored_llm.get('model', ''),
-            'llm_api_base':                      _stored_llm.get('api_base', ''),
-            'llm_provider_kind':                 _stored_llm.get('provider_kind', ''),
-            'llm_local_token_multiplier':        _stored_llm.get('local_token_multiplier', 5),
-            'llm_change_summary_default':        datastore.data['settings']['application'].get('llm_change_summary_default', ''),
-            'llm_enabled':                       datastore.data['settings']['application'].get('llm_enabled', True),
-            'llm_override_diff_with_summary':    datastore.data['settings']['application'].get('llm_override_diff_with_summary', True),
-            'llm_restock_use_fallback_extract':  datastore.data['settings']['application'].get('llm_restock_use_fallback_extract', True),
-            'llm_debug':                         datastore.data['settings']['application'].get('llm_debug', False),
-            'llm_budget_action':                 datastore.data['settings']['application'].get('llm_budget_action', 'skip_llm'),
-            'llm_thinking_budget':               str(datastore.data['settings']['application'].get('llm_thinking_budget', 0)),
-            'llm_max_summary_tokens':            str(datastore.data['settings']['application'].get('llm_max_summary_tokens', 3000)),
-            'llm_token_budget_month':            _stored_llm.get('token_budget_month', 0),
-            'llm_max_input_chars':               _stored_llm.get('max_input_chars', 0),
-        }
+        # api_key is intentionally blanked on GET — PasswordField never re-renders
+        # its value, and a blank submission preserves the stored key.
+        default['llm'] = LLMSettings.model_validate(
+            datastore.data['settings']['application'].get('llm') or {}
+        ).model_dump()
+        default['llm']['api_key'] = ''
 
         if datastore.proxy_list is not None:
             available_proxies = list(datastore.proxy_list.keys())
@@ -101,82 +89,37 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 datastore.data['settings']['application'].update(app_update)
 
-                # Save LLM config separately under settings.application.llm.
-                # Token counters (tokens_total_cumulative, tokens_this_month, tokens_month_key)
-                # are system-managed and must never be overwritten by form submissions.
-                _LLM_PROTECTED_FIELDS = {
-                    'tokens_total_cumulative', 'tokens_this_month', 'tokens_month_key',
-                    'cost_usd_total_cumulative', 'cost_usd_this_month',
-                }
-                existing_llm = datastore.data['settings']['application'].get('llm') or {}
-                preserved_counters = {k: v for k, v in existing_llm.items() if k in _LLM_PROTECTED_FIELDS}
-
-                llm_data = form.data.get('llm') or {}
-
-                # PasswordField never re-populates its value on GET, so the submitted value
-                # is only non-empty when the user explicitly typed a new key.
-                # If blank, preserve the existing key so a settings save doesn't accidentally clear it.
-                submitted_api_key = (llm_data.get('llm_api_key') or '').strip()
-                effective_api_key = submitted_api_key if submitted_api_key else existing_llm.get('api_key', '')
-
-                # Application-level LLM settings (survive provider changes)
-                datastore.data['settings']['application']['llm_change_summary_default'] = (
-                    llm_data.get('llm_change_summary_default') or ''
-                ).strip()
-                datastore.data['settings']['application']['llm_enabled'] = (
-                    bool(llm_data.get('llm_enabled', True))
-                )
-                datastore.data['settings']['application']['llm_override_diff_with_summary'] = (
-                    bool(llm_data.get('llm_override_diff_with_summary', True))
-                )
-                datastore.data['settings']['application']['llm_restock_use_fallback_extract'] = (
-                    bool(llm_data.get('llm_restock_use_fallback_extract', True))
-                )
-                datastore.data['settings']['application']['llm_debug'] = (
-                    bool(llm_data.get('llm_debug', False))
-                )
-                datastore.data['settings']['application']['llm_budget_action'] = (
-                    llm_data.get('llm_budget_action') or 'skip_llm'
-                )
-                datastore.data['settings']['application']['llm_thinking_budget'] = (
-                    int(llm_data.get('llm_thinking_budget') or 0)
-                )
-                datastore.data['settings']['application']['llm_max_summary_tokens'] = (
-                    int(llm_data.get('llm_max_summary_tokens') or 3000)
+                # LLM config lives under settings.application.llm.* (post update_31).
+                # Hydrate the stored dict into LLMSettings, then merge form input over it.
+                # WTForms field names match LLMSettings field names exactly, so both sides
+                # of the merge use the same key shape.
+                existing_llm = LLMSettings.model_validate(
+                    datastore.data['settings']['application'].get('llm') or {}
                 )
 
-                # Monthly token budget — only save if env var is not set
-                import os as _os
-                if not _os.getenv('LLM_TOKEN_BUDGET_MONTH', '').strip():
-                    _budget = llm_data.get('llm_token_budget_month') or 0
-                    existing_llm['token_budget_month'] = int(_budget) if _budget else 0
+                llm_form_input = dict(form.data.get('llm') or {})
 
-                # Max input chars — only save if env var is not set
-                if not _os.getenv('LLM_MAX_INPUT_CHARS', '').strip():
-                    _max_chars = llm_data.get('llm_max_input_chars') or 0
-                    existing_llm['max_input_chars'] = int(_max_chars) if _max_chars else 0
+                # PasswordField never re-renders, so a blank submitted value means
+                # "keep stored key" — drop it from the merge.
+                if not (llm_form_input.get('api_key') or '').strip():
+                    llm_form_input.pop('api_key', None)
 
-                llm_config = {
-                    'model': (llm_data.get('llm_model') or '').strip(),
-                    'api_key': effective_api_key,
-                    'api_base': (llm_data.get('llm_api_base') or '').strip(),
-                    # Identifies a self-hosted OpenAI-compatible endpoint so reasoning-friendly
-                    # token caps can be applied conditionally (cloud-LLM defaults stay tight).
-                    'provider_kind': (llm_data.get('llm_provider_kind') or '').strip(),
-                    'local_token_multiplier': int(llm_data.get('llm_local_token_multiplier') or 5),
-                    'token_budget_month': existing_llm.get('token_budget_month', 0),
-                    'max_input_chars': existing_llm.get('max_input_chars', 0),
-                    **preserved_counters,
-                }
-                # Only store if a model is set
-                if llm_config['model']:
-                    datastore.data['settings']['application']['llm'] = llm_config
-                else:
-                    # Remove model config but retain counters for historical record
-                    if preserved_counters:
-                        datastore.data['settings']['application']['llm'] = preserved_counters
-                    else:
-                        datastore.data['settings']['application'].pop('llm', None)
+                # Env-var overrides make these fields read-only in the UI — ignore form input.
+                if os.getenv('LLM_TOKEN_BUDGET_MONTH', '').strip():
+                    llm_form_input.pop('token_budget_month', None)
+                if os.getenv('LLM_MAX_INPUT_CHARS', '').strip():
+                    llm_form_input.pop('max_input_chars', None)
+
+                # System-managed counters must never come from the form.
+                for protected in LLMSettings.PROTECTED_FIELDS:
+                    llm_form_input.pop(protected, None)
+
+                merged = LLMSettings.model_validate({**existing_llm.model_dump(), **llm_form_input})
+
+                # Clearing the model field strips only the provider-connection fields.
+                # User toggles, budgets, prompts and system counters survive (matches /llm/clear).
+                exclude = set(LLMSettings.CONNECTION_FIELDS) if not merged.model.strip() else None
+                datastore.data['settings']['application']['llm'] = merged.model_dump(exclude=exclude)
 
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)

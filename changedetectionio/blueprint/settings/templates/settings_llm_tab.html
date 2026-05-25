@@ -71,9 +71,9 @@
 
   <div class="pure-control-group">
     <label></label>
-    {{ form.llm.form.llm_enabled() }}
-    <label for="{{ form.llm.form.llm_enabled.id }}" style="display:inline; font-weight:normal;">
-      {{ form.llm.form.llm_enabled.label.text }}
+    {{ form.llm.form.enabled() }}
+    <label for="{{ form.llm.form.enabled.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.enabled.label.text }}
     </label>
     <span class="pure-form-message-inline">
       {{ _('Master switch — when off, all AI lookups are skipped even if a provider is configured below.') }}
@@ -125,22 +125,22 @@
   </div>
 
   <div class="pure-control-group">
-    {{ render_field(form.llm.form.llm_api_key) }}
+    {{ render_field(form.llm.form.api_key) }}
     <span class="pure-form-message-inline" id="llm-key-hint"></span>
   </div>
   <div class="pure-control-group" id="llm-base-group" style="display:none">
-    {{ render_field(form.llm.form.llm_api_base) }}
+    {{ render_field(form.llm.form.api_base) }}
     <span class="pure-form-message-inline">{{ _('Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers.') }}</span>
   </div>
 
   {# Hidden field carrying the dropdown selection so the backend knows when to apply
      reasoning-friendly token caps (Ollama and OpenAI-compatible endpoints, which commonly
      serve reasoning models that need headroom for chain-of-thought to complete). #}
-  {{ form.llm.form.llm_provider_kind() }}
+  {{ form.llm.form.provider_kind() }}
 
   <div class="pure-control-group" id="llm-local-advanced-group" style="display:none">
-    <label for="{{ form.llm.form.llm_local_token_multiplier.id }}">{{ form.llm.form.llm_local_token_multiplier.label.text }}</label>
-    {{ form.llm.form.llm_local_token_multiplier() }}
+    <label for="{{ form.llm.form.local_token_multiplier.id }}">{{ form.llm.form.local_token_multiplier.label.text }}</label>
+    {{ form.llm.form.local_token_multiplier() }}
     <span class="pure-form-message-inline">
       {{ _('Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their original tight caps.', default='5x') | safe }}
     </span>
@@ -163,7 +163,7 @@
   </div>
 
   <div class="pure-control-group">
-    {{ render_field(form.llm.form.llm_model,
+    {{ render_field(form.llm.form.model,
                     placeholder=_("Enter API key and click 'Load available models'")) }}
   </div>
 
@@ -223,9 +223,9 @@
 
   <div class="pure-control-group">
     <label></label>
-    {{ form.llm.form.llm_debug() }}
-    <label for="{{ form.llm.form.llm_debug.id }}" style="display:inline; font-weight:normal;">
-      {{ form.llm.form.llm_debug.label.text }}
+    {{ form.llm.form.debug() }}
+    <label for="{{ form.llm.form.debug.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.debug.label.text }}
     </label>
     <span class="pure-form-message-inline">
       {{ _('Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. Leave off in production — generates a lot of log volume.') }}
@@ -243,10 +243,10 @@
   <p class="stab-section-title">{{ _('Default AI Change Summary') }}</p>
 
   <div class="pure-control-group">
-    {{ render_field(form.llm.form.llm_change_summary_default) }}
+    {{ render_field(form.llm.form.change_summary_default) }}
     <span class="pure-form-message-inline">
       {{ _('Used for all watches unless overridden by the watch or its tag/group.') }}
-      &nbsp;<a href="#" class="pure-button button-small" onclick="var t=document.getElementById('llm-llm_change_summary_default'); if(!t.value && t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
+      &nbsp;<a href="#" class="pure-button button-small" onclick="var t=document.getElementById('llm-change_summary_default'); if(!t.value && t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
     </span>
   </div>
 
@@ -259,9 +259,9 @@
   {% if llm_config and llm_config.get('model') %}
   <div class="pure-control-group">
     <label></label>
-    {{ form.llm.form.llm_override_diff_with_summary() }}
-    <label for="{{ form.llm.form.llm_override_diff_with_summary.id }}" style="display:inline; font-weight:normal;">
-      {{ form.llm.form.llm_override_diff_with_summary.label.text }}
+    {{ form.llm.form.override_diff_with_summary() }}
+    <label for="{{ form.llm.form.override_diff_with_summary.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.override_diff_with_summary.label.text }}
     </label>
     <span class="pure-form-message-inline">
       {{ _('When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use <code>%(raw_diff)s</code> to always get the original.',
@@ -271,9 +271,9 @@
 
   <div class="pure-control-group">
     <label></label>
-    {{ form.llm.form.llm_restock_use_fallback_extract() }}
-    <label for="{{ form.llm.form.llm_restock_use_fallback_extract.id }}" style="display:inline; font-weight:normal;">
-      {{ form.llm.form.llm_restock_use_fallback_extract.label.text }}
+    {{ form.llm.form.restock_use_fallback_extract() }}
+    <label for="{{ form.llm.form.restock_use_fallback_extract.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.restock_use_fallback_extract.label.text }}
     </label>
     <span class="pure-form-message-inline">
       {{ _('When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no structured metadata (JSON-LD, microdata, OpenGraph) is found.') }}
@@ -281,21 +281,21 @@
   </div>
 
   <div class="pure-control-group">
-    <label for="{{ form.llm.form.llm_thinking_budget.id }}">{{ form.llm.form.llm_thinking_budget.label.text }}</label>
-    {{ form.llm.form.llm_thinking_budget() }}
+    <label for="{{ form.llm.form.thinking_budget.id }}">{{ form.llm.form.thinking_budget.label.text }}</label>
+    {{ form.llm.form.thinking_budget() }}
     <span class="pure-form-message-inline">{{ _('For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to Off if summaries are being cut short.') }}</span>
   </div>
 
   <div class="pure-control-group">
-    <label for="{{ form.llm.form.llm_max_summary_tokens.id }}">{{ form.llm.form.llm_max_summary_tokens.label.text }}</label>
-    {{ form.llm.form.llm_max_summary_tokens() }}
+    <label for="{{ form.llm.form.max_summary_tokens.id }}">{{ form.llm.form.max_summary_tokens.label.text }}</label>
+    {{ form.llm.form.max_summary_tokens() }}
     <span class="pure-form-message-inline">{{ _('Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost more.') }}</span>
   </div>
 
   <div class="pure-control-group">
-    <label>{{ form.llm.form.llm_budget_action.label.text }}</label>
+    <label>{{ form.llm.form.budget_action.label.text }}</label>
     <div>
-      {% for subfield in form.llm.form.llm_budget_action %}
+      {% for subfield in form.llm.form.budget_action %}
       <label class="pure-radio" style="display:block; font-weight:normal; margin-bottom:0.3em;">
         {{ subfield() }} {{ subfield.label.text }}
       </label>
@@ -348,9 +348,9 @@
         {% if llm_token_budget_month_env %}
           <strong>{{ '{:,}'.format(llm_token_budget_month_env) }}</strong>
           <span class="llm-env-badge">{{ _('(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)') | safe }}</span>
-          <input type="hidden" name="llm-llm_token_budget_month" value="{{ llm_token_budget_month_env }}">
+          <input type="hidden" name="llm-token_budget_month" value="{{ llm_token_budget_month_env }}">
         {% else %}
-          {{ form.llm.form.llm_token_budget_month(placeholder=_('0 = unlimited'), value=llm_stored.get('token_budget_month', 0) or '') }}
+          {{ form.llm.form.token_budget_month(placeholder=_('0 = unlimited'), value=llm_stored.get('token_budget_month', 0) or '') }}
           <span class="llm-field-hint">{{ _('tokens (0 = unlimited)') }}</span>
         {% endif %}
       </span>
@@ -365,12 +365,19 @@
       <span class="llm-usage-row-label">{{ _('Max input characters') }}</span>
       <span class="llm-usage-row-value">
         {% if llm_max_input_chars_env %}
-          {{ form.llm.form.llm_max_input_chars(value=llm_max_input_chars_env, readonly=True, style="width:10em;opacity:0.6;cursor:not-allowed;") }}
+          {{ form.llm.form.max_input_chars(value=llm_max_input_chars_env, readonly=True, style="width:10em;opacity:0.6;cursor:not-allowed;") }}
           <span class="llm-env-badge">{{ _('(set via <code>LLM_MAX_INPUT_CHARS</code>)') | safe }}</span>
         {% else %}
-          {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
+          {{ form.llm.form.max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
           <span class="llm-field-hint">{{ _('characters — currently enforcing: %(limit)s', limit='{:,}'.format(llm_effective_max_input_chars)) }}</span>
         {% endif %}
+      </span>
+    </div>
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Max tokens per watch per period') }}</span>
+      <span class="llm-usage-row-value">
+        {{ form.llm.form.max_tokens_per_count_period(placeholder=_('0 = unlimited'), value=llm_stored.get('max_tokens_per_count_period', 0) or '') }}
+        <span class="llm-field-hint">{{ _('tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = unlimited)') }}</span>
       </span>
     </div>
   </div>
@@ -385,9 +392,9 @@
         {% if llm_token_budget_month_env %}
           <strong>{{ '{:,}'.format(llm_token_budget_month_env) }}</strong>
           <span class="llm-env-badge">{{ _('(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)') | safe }}</span>
-          <input type="hidden" name="llm-llm_token_budget_month" value="{{ llm_token_budget_month_env }}">
+          <input type="hidden" name="llm-token_budget_month" value="{{ llm_token_budget_month_env }}">
         {% else %}
-          {{ form.llm.form.llm_token_budget_month(placeholder=_('0 = unlimited'), value=llm_stored.get('token_budget_month', 0) or '') }}
+          {{ form.llm.form.token_budget_month(placeholder=_('0 = unlimited'), value=llm_stored.get('token_budget_month', 0) or '') }}
           <span class="llm-field-hint">{{ _('tokens per month (0 = unlimited)') }}</span>
         {% endif %}
       </span>
@@ -396,12 +403,19 @@
       <span class="llm-usage-row-label">{{ _('Max input characters') }}</span>
       <span class="llm-usage-row-value">
         {% if llm_max_input_chars_env %}
-          {{ form.llm.form.llm_max_input_chars(value=llm_max_input_chars_env, readonly=True, style="width:10em;opacity:0.6;cursor:not-allowed;") }}
+          {{ form.llm.form.max_input_chars(value=llm_max_input_chars_env, readonly=True, style="width:10em;opacity:0.6;cursor:not-allowed;") }}
           <span class="llm-env-badge">{{ _('(set via <code>LLM_MAX_INPUT_CHARS</code>)') | safe }}</span>
         {% else %}
-          {{ form.llm.form.llm_max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
+          {{ form.llm.form.max_input_chars(placeholder='100000', value=llm_stored.get('max_input_chars', 100000) or '') }}
           <span class="llm-field-hint">{{ _('characters — currently enforcing: %(limit)s', limit='{:,}'.format(llm_effective_max_input_chars)) }}</span>
         {% endif %}
+      </span>
+    </div>
+    <div class="llm-usage-row">
+      <span class="llm-usage-row-label">{{ _('Max tokens per watch per period') }}</span>
+      <span class="llm-usage-row-value">
+        {{ form.llm.form.max_tokens_per_count_period(placeholder=_('0 = unlimited'), value=llm_stored.get('max_tokens_per_count_period', 0) or '') }}
+        <span class="llm-field-hint">{{ _('tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = unlimited)') }}</span>
       </span>
     </div>
   </div>
@@ -434,8 +448,8 @@
     const baseGroup     = document.getElementById('llm-base-group');
     const modelSelGrp   = document.getElementById('llm-model-select-group');
     const localAdvGrp   = document.getElementById('llm-local-advanced-group');
-    const baseField     = document.querySelector('[name="llm-llm_api_base"]');
-    const kindField     = document.querySelector('[name="llm-llm_provider_kind"]');
+    const baseField     = document.querySelector('[name="llm-api_base"]');
+    const kindField     = document.querySelector('[name="llm-provider_kind"]');
     const hint          = document.getElementById('llm-key-hint');
 
     fetchGroup.style.display = LIVE_PROVIDERS.includes(provider) ? '' : 'none';
@@ -463,8 +477,8 @@
 
   window.llmFetchModels = async function () {
     const provider  = document.getElementById('llm-provider').value;
-    const apiKey    = document.querySelector('[name="llm-llm_api_key"]').value.trim();
-    const apiBase   = document.querySelector('[name="llm-llm_api_base"]').value.trim();
+    const apiKey    = document.querySelector('[name="llm-api_key"]').value.trim();
+    const apiBase   = document.querySelector('[name="llm-api_base"]').value.trim();
     const btn       = document.getElementById('llm-fetch-btn');
     const statusEl  = document.getElementById('llm-fetch-status');
     const selGroup  = document.getElementById('llm-model-select-group');
@@ -499,7 +513,7 @@
       }
 
       modelSel.innerHTML = '<option value="">{{ _("— choose a model —") }}</option>';
-      const currentModel = document.querySelector('[name="llm-llm_model"]').value.trim();
+      const currentModel = document.querySelector('[name="llm-model"]').value.trim();
       for (const m of data.models) {
         const opt = document.createElement('option');
         opt.value = m;
@@ -521,7 +535,7 @@
   };
 
   window.llmOnModelPick = function (value) {
-    if (value) document.querySelector('[name="llm-llm_model"]').value = value;
+    if (value) document.querySelector('[name="llm-model"]').value = value;
   };
 
   window.llmRunTest = async function () {
@@ -537,11 +551,11 @@
     // testing a config change. Endpoint falls back to the stored datastore values
     // for any field we don't send.
     const params = new URLSearchParams();
-    const model   = (document.querySelector('[name="llm-llm_model"]')    || {}).value || '';
-    const apiKey  = (document.querySelector('[name="llm-llm_api_key"]')  || {}).value || '';
-    const apiBase = (document.querySelector('[name="llm-llm_api_base"]') || {}).value || '';
-    const kind    = (document.querySelector('[name="llm-llm_provider_kind"]') || {}).value || '';
-    const mult    = (document.querySelector('[name="llm-llm_local_token_multiplier"]') || {}).value || '';
+    const model   = (document.querySelector('[name="llm-model"]')    || {}).value || '';
+    const apiKey  = (document.querySelector('[name="llm-api_key"]')  || {}).value || '';
+    const apiBase = (document.querySelector('[name="llm-api_base"]') || {}).value || '';
+    const kind    = (document.querySelector('[name="llm-provider_kind"]') || {}).value || '';
+    const mult    = (document.querySelector('[name="llm-local_token_multiplier"]') || {}).value || '';
     if (model.trim())   params.set('model',    model.trim());
     if (apiKey.trim())  params.set('api_key',  apiKey.trim());
     if (apiBase.trim()) params.set('api_base', apiBase.trim());
@@ -571,7 +585,7 @@
 
   // On page load: detect and pre-select provider from current model
   (function detectCurrentProvider() {
-    const modelField = document.querySelector('[name="llm-llm_model"]');
+    const modelField = document.querySelector('[name="llm-model"]');
     if (!modelField) return;
     const m = modelField.value.trim();
     if (!m) return;
@@ -582,7 +596,7 @@
     else if (m.startsWith('openrouter/')) guessed = 'openrouter';
     else if (m.startsWith('openai/')) {
       // openai/<model> + custom api_base = self-hosted OpenAI-compatible (vLLM etc.)
-      const baseField = document.querySelector('[name="llm-llm_api_base"]');
+      const baseField = document.querySelector('[name="llm-api_base"]');
       guessed = (baseField && baseField.value.trim()) ? 'openai_compatible' : 'openai';
     }
     else if (m.startsWith('claude'))   guessed = 'anthropic';

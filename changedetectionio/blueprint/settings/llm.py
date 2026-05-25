@@ -193,7 +193,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             # via LLM_TIMEOUT). A shorter test-only timeout falsely fails on cold-starting
             # cloud reasoning models (e.g. ollama.com hosting qwen3.5:397b takes ~60s on
             # first hit) even though the same call succeeds in production.
-            from changedetectionio.llm.evaluator import apply_local_token_multiplier
+            from changedetectionio.llm.evaluator import apply_local_token_multiplier, get_llm_settings
             text, total_tokens, input_tokens, output_tokens = completion(
                 model=model,
                 messages=[{'role': 'user', 'content':
@@ -201,7 +201,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 api_key=llm_cfg.get('api_key') or None,
                 api_base=api_base or None,
                 max_tokens=apply_local_token_multiplier(200, llm_cfg),
-                debug=bool(datastore.data['settings']['application'].get('llm_debug', False)),
+                debug=get_llm_settings(datastore).debug,
             )
             reply = text.strip()
             if not reply:
@@ -232,8 +232,17 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @llm_blueprint.route("/clear", methods=['POST'])
     @login_optionally_required
     def llm_clear():
+        from changedetectionio.model.LLMSettings import LLMSettings
         logger.debug("LLM configuration cleared by user")
-        datastore.data['settings']['application'].pop('llm', None)
+        # Read existing config, write back a dict that omits the connection fields —
+        # so the saved dict no longer has model/api_key/api_base/etc.
+        # Toggles, prompts, budgets and counters survive.
+        settings = LLMSettings.model_validate(
+            datastore.data['settings']['application'].get('llm') or {}
+        )
+        datastore.data['settings']['application']['llm'] = settings.model_dump(
+            exclude=set(LLMSettings.CONNECTION_FIELDS)
+        )
         datastore.commit()
         flash(gettext("AI / LLM configuration removed."), 'notice')
         return redirect(url_for('settings.settings_page') + '#ai')

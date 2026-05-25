@@ -376,7 +376,8 @@ def process_notification(n_object: NotificationContextData, datastore):
 
     # AI Change Summary: optionally replace {{ diff }} with the AI summary
     _llm_change_summary = (n_object.get('_llm_change_summary') or '').strip()
-    _override_diff = datastore.data['settings']['application'].get('llm_override_diff_with_summary', True)
+    from changedetectionio.llm.evaluator import get_llm_settings
+    _override_diff = get_llm_settings(datastore).override_diff_with_summary
     if _llm_change_summary and _override_diff:
         n_object['diff'] = _llm_change_summary
 
