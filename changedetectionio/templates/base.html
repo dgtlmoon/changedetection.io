@@ -189,7 +189,9 @@
         <div class="content-wrapper">
           {% if current_user.is_authenticated or not has_password %}
           <aside class="action-sidebar" aria-label="{{ _('Main navigation') }}">
-            {% include "sidebar-nav.html" %}
+            <div class="action-sidebar-inner">
+              {% include "sidebar-nav.html" %}
+            </div>
           </aside>
           {% endif %}
           <div class="content-main">

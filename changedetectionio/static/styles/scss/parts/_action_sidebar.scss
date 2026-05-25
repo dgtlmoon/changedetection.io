@@ -14,34 +14,40 @@
   }
 }
 
-// Desktop left rail — fixed, full-height, overlays content on hover (does not push)
+// Desktop left rail — fixed positioning frame, full-height, but only the
+// inner item-list block captures hover. Empty area is pointer-events:none so
+// the top header stays clickable behind it.
 .action-sidebar {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 64px;
+  width: 240px;            // reserve enough to host the expanded inner block
   z-index: 60;
-  overflow: hidden;
-  background: transparent;
-  padding: 0;
+  pointer-events: none;    // empty space doesn't intercept clicks/hovers
   display: flex;
   flex-direction: column;
-  justify-content: center;   // list block vertically centered
-  align-items: stretch;
-  transition:
-    width 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
-    background-color 0.22s ease,
-    box-shadow 0.22s ease;
-
-  &:hover,
-  &:focus-within {
-    width: 240px;
-  }
+  justify-content: center; // vertically center the item block
 
   @media only screen and (max-width: $desktop-wide-breakpoint) {
     // Hidden on mobile: the mobile drawer (hamburger) carries these items
     display: none;
+  }
+}
+
+// The actual interactive item block — wraps only the items, not the whole height.
+.action-sidebar-inner {
+  pointer-events: auto;    // restore interactivity inside the block
+  width: 64px;
+  overflow: hidden;
+  // Exit (mouse-away) is fast — snaps back to icons.
+  transition: width 0.08s ease-out;
+
+  &:hover,
+  &:focus-within {
+    width: 240px;
+    // Enter is smoother.
+    transition: width 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
 }
 
@@ -123,7 +129,8 @@
     }
   }
 
-  // Inline label revealed when the parent .action-sidebar is hovered
+  // Inline label revealed when the inner block is hovered. Asymmetric timing:
+  // exit (no :hover) snaps fast; enter (matching :hover rule below) is smooth.
   .action-label {
     flex: 0 0 auto;
     margin-left: 14px;
@@ -135,7 +142,7 @@
     color: inherit;
     opacity: 0;
     transform: translateX(-4px);
-    transition: opacity 0.18s ease 0.05s, transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s;
+    transition: opacity 0.05s ease-out, transform 0.05s ease-out;
   }
 
   // 'soon' / placeholder badge — inline tag once expanded; hidden at rest
@@ -152,16 +159,23 @@
     font-weight: 700;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.18s ease 0.05s;
+    transition: opacity 0.05s ease-out;
   }
 }
 
-// When the rail expands, reveal every label/badge together — text colour stays white
-.action-sidebar:hover,
-.action-sidebar:focus-within {
+// When the inner block expands, reveal every label/badge together with a smooth enter.
+.action-sidebar-inner:hover,
+.action-sidebar-inner:focus-within {
   .action-sidebar-item {
-    .action-label { opacity: 1; transform: translateX(0); }
-    .action-badge { opacity: 1; }
+    .action-label {
+      opacity: 1;
+      transform: translateX(0);
+      transition: opacity 0.18s ease 0.05s, transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s;
+    }
+    .action-badge {
+      opacity: 1;
+      transition: opacity 0.18s ease 0.05s;
+    }
   }
 }
 
