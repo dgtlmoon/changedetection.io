@@ -1103,6 +1103,12 @@ msgid "characters — currently enforcing: %(limit)s"
 msgstr "문자 - 현재 적용 중: %(limit)s"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
+"unlimited)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "No AI usage recorded yet."
 msgstr "아직 기록된 AI 사용량이 없습니다."
 
@@ -3170,13 +3176,9 @@ msgstr ""
 msgid "Default AI Change Summary prompt"
 msgstr "기본 AI 변경 요약 프롬프트"
 
-#: changedetectionio/forms.py
-msgid "Max tokens per check"
-msgstr "확인당 최대 토큰 수"
-
-#: changedetectionio/forms.py
-msgid "Max cumulative tokens (per watch)"
-msgstr "최대 누적 토큰 수 (모니터링별)"
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+msgid "Max tokens per watch per period"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Monthly token budget"

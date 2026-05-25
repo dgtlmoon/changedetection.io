@@ -1097,6 +1097,12 @@ msgid "characters — currently enforcing: %(limit)s"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
+"unlimited)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "No AI usage recorded yet."
 msgstr ""
 
@@ -3166,12 +3172,8 @@ msgstr ""
 msgid "Default AI Change Summary prompt"
 msgstr ""
 
-#: changedetectionio/forms.py
-msgid "Max tokens per check"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Max cumulative tokens (per watch)"
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+msgid "Max tokens per watch per period"
 msgstr ""
 
 #: changedetectionio/forms.py
