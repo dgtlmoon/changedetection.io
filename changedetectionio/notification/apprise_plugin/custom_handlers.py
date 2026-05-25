@@ -60,7 +60,7 @@ from apprise.utils.logic import dict_full_update
 from loguru import logger
 from requests.structures import CaseInsensitiveDict
 
-from changedetectionio.validate_url import is_private_hostname
+from changedetectionio.validate_url import is_private_hostname, is_url_private_or_parser_confused
 
 SUPPORTED_HTTP_METHODS = {"get", "post", "put", "delete", "patch", "head"}
 
@@ -198,12 +198,14 @@ def apprise_http_custom_handler(
 
     url = re.sub(rf"^{schema}", "https" if schema.endswith("s") else "http", parsed_url.get("url"))
 
-    # SSRF protection — block private/loopback addresses unless explicitly allowed
+    # SSRF protection — block private/loopback addresses unless explicitly allowed.
+    # Uses parser-agnostic check so urlparse/urllib3 differentials (GHSA-rph4-96w6-q594)
+    # can't smuggle an internal target past the gate.
     if not os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', '').lower() in ('true', '1', 'yes'):
-        hostname = urlparse(url).hostname or ''
-        if hostname and is_private_hostname(hostname):
+        if is_url_private_or_parser_confused(url):
             raise ValueError(
-                f"Notification target '{hostname}' is a private/reserved address. "
+                f"Notification target '{url}' is a private/reserved address "
+                f"or contains a parser-differential payload. "
                 f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow."
             )
 

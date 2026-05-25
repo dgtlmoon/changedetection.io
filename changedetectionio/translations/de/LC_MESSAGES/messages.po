@@ -3127,7 +3127,6 @@ msgstr "Passen Sie alle folgenden Punkte an"
 msgid "Match any of the following"
 msgstr "Entspricht einer der folgenden Bedingungen"
 
-#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in list"
 msgstr "Verwenden Sie Seite <title> in der Liste"
@@ -3227,7 +3226,6 @@ msgstr "Echtzeit-UI-Updates aktiviert"
 msgid "Favicons Enabled"
 msgstr "Favicons Aktiviert"
 
-#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "Verwenden Sie die Seite <title> in der Übersichtsliste der Beobachtungen"
@@ -3623,7 +3621,6 @@ msgstr ""
 msgid "The UUID of the watch."
 msgstr "Die UUID der Überwachung."
 
-#. dennis-ignore: W303 - False positive caused by <title>. https://github.com/mozilla/dennis/issues/213
 #: changedetectionio/templates/_common_fields.html
 msgid "The page title of the watch, uses <title> if not set, falls back to URL"
 msgstr ""

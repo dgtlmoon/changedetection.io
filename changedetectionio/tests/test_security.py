@@ -760,7 +760,9 @@ def test_ssrf_private_ip_blocked(client, live_server, monkeypatch, measure_memor
 
     f = RequestsFetcher()
 
-    with patch('changedetectionio.content_fetchers.requests.is_private_hostname', return_value=True):
+    # Patch the underlying is_private_hostname in validate_url — the fetcher now goes through
+    # is_url_private_or_parser_confused() (GHSA-rph4-96w6-q594), which calls it transitively.
+    with patch('changedetectionio.validate_url.is_private_hostname', return_value=True):
         with pytest.raises(Exception, match='private/reserved'):
             f._run_sync(
                 url='http://example.com/',
@@ -784,7 +786,7 @@ def test_ssrf_private_ip_blocked(client, live_server, monkeypatch, measure_memor
         return hostname in {'169.254.169.254', '10.0.0.1', '172.16.0.1',
                             '192.168.0.1', '127.0.0.1', '::1'}
 
-    with patch('changedetectionio.content_fetchers.requests.is_private_hostname',
+    with patch('changedetectionio.validate_url.is_private_hostname',
                side_effect=_private_only_for_redirect):
         with patch('requests.Session.request', return_value=mock_redirect):
             with pytest.raises(Exception, match='Redirect blocked'):
@@ -827,6 +829,113 @@ def test_unresolvable_hostname_is_allowed(client, live_server, monkeypatch):
     res = client.get(url_for('watchlist.index'))
     assert b'this-host-does-not-exist-xyz987.invalid' in res.data, \
         "Unresolvable hostname watch should appear in the watch overview list"
+
+
+def test_ghsa_rph4_96w6_q594_urlparse_urllib3_parser_differential_ssrf(client, live_server, monkeypatch, measure_memory_usage, datastore_path):
+    """
+    GHSA-rph4-96w6-q594: SSRF via urlparse/urllib3 parser differential.
+
+    A URL like  http://INTERNAL:8888\\@PUBLIC/  is parsed two different ways:
+      - urlparse() treats \\@ as a credential separator     → hostname = PUBLIC
+      - urllib3   treats \\  as a path character           → hostname = INTERNAL
+    The pre-fetch SSRF check used urlparse(), but requests/urllib3 actually connected
+    to INTERNAL. Fix: parser-agnostic gate that (a) blocks any URL containing a
+    backslash and (b) validates every hostname both parsers produce.
+
+    Covers:
+      1. extract_url_hostnames() reveals BOTH hostnames for the payload
+      2. is_url_private_or_parser_confused() blocks backslash payloads outright
+      3. is_safe_valid_url() rejects backslash payloads at add-time
+      4. The /api/v1/watch add endpoint rejects the payload
+      5. The requests fetcher refuses the payload at fetch-time
+       6. The redirect-following loop refuses a backslash payload in Location
+    """
+    from unittest.mock import patch, MagicMock
+    from changedetectionio.validate_url import (
+        extract_url_hostnames,
+        is_safe_valid_url,
+        is_url_private_or_parser_confused,
+    )
+
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')
+
+    # The published proof-of-concept payload — backslash splits the two parsers' views.
+    payload = "http://169.254.169.254:8888" + chr(92) + "@httpbin.org/latest/meta-data/"
+
+    # ---------------------------------------------------------------
+    # 1. extract_url_hostnames() returns BOTH parsers' hostnames
+    # ---------------------------------------------------------------
+    hosts = extract_url_hostnames(payload)
+    assert '169.254.169.254' in hosts, \
+        f"urllib3 sees 169.254.169.254 as the connect target; extract_url_hostnames must surface it. Got {hosts!r}"
+    assert 'httpbin.org' in hosts, \
+        f"urlparse sees httpbin.org; extract_url_hostnames must surface it too. Got {hosts!r}"
+
+    # ---------------------------------------------------------------
+    # 2. Parser-agnostic gate blocks the payload
+    # ---------------------------------------------------------------
+    assert is_url_private_or_parser_confused(payload), \
+        "Parser-differential payload must be blocked by the SSRF gate"
+
+    # And a plain backslash anywhere in the URL is enough to block, even without a private IP
+    assert is_url_private_or_parser_confused("http://example.com" + chr(92) + "@evil.com/"), \
+        "Any backslash in a URL must trigger the parser-differential block"
+
+    # Sanity: a regular public URL is not blocked
+    assert not is_url_private_or_parser_confused("http://example.com/path"), \
+        "Plain public URLs must continue to pass the gate"
+
+    # ---------------------------------------------------------------
+    # 3. is_safe_valid_url() rejects backslash payloads at add-time
+    # ---------------------------------------------------------------
+    assert not is_safe_valid_url(payload), \
+        "is_safe_valid_url must reject URLs containing a backslash (parser-differential vector)"
+
+    # ---------------------------------------------------------------
+    # 4. The watch-add API endpoint rejects the payload
+    # ---------------------------------------------------------------
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    res = client.post(
+        url_for('createwatch'),
+        data='{"url": "%s", "fetch_backend": "html_requests"}' % payload,
+        headers={'x-api-key': api_key, 'Content-Type': 'application/json'},
+    )
+    assert res.status_code >= 400, \
+        f"API must refuse to create a watch for parser-differential URL; got status {res.status_code} body {res.data!r}"
+
+    # ---------------------------------------------------------------
+    # 5. Requests fetcher refuses the payload at fetch-time
+    # ---------------------------------------------------------------
+    from changedetectionio.content_fetchers.requests import fetcher as RequestsFetcher
+
+    f = RequestsFetcher()
+    with pytest.raises(Exception, match='private/reserved|parser-differential'):
+        f._run_sync(
+            url=payload,
+            timeout=5,
+            request_headers={},
+            request_body=None,
+            request_method='GET',
+        )
+
+    # ---------------------------------------------------------------
+    # 6. A 302 Location header pointing at a backslash payload is blocked
+    #    (open-redirect → SSRF via parser differential)
+    # ---------------------------------------------------------------
+    mock_redirect = MagicMock()
+    mock_redirect.is_redirect = True
+    mock_redirect.status_code = 302
+    mock_redirect.headers = {'Location': payload}
+
+    with patch('requests.Session.request', return_value=mock_redirect):
+        with pytest.raises(Exception, match='Redirect blocked'):
+            f._run_sync(
+                url='http://example.com/',
+                timeout=5,
+                request_headers={},
+                request_body=None,
+                request_method='GET',
+            )
 
 
 def test_ghsa_8757_69j2_hx56_backup_restore_history_path_traversal(client, live_server, measure_memory_usage, datastore_path):

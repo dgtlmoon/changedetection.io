@@ -80,6 +80,52 @@ def is_private_hostname(hostname):
     return False
 
 
+def extract_url_hostnames(url):
+    """Return every hostname this URL could resolve to under different URL parsers.
+
+    Why: urllib's urlparse() and urllib3's parse_url() disagree on URLs containing
+    a backslash (e.g. http://INTERNAL:8888\\@PUBLIC/ — urlparse extracts PUBLIC, but
+    urllib3/requests will actually connect to INTERNAL). Any SSRF check that trusts
+    only one parser can be bypassed by the other. Callers should reject the fetch
+    if ANY hostname returned here is private/reserved.
+
+    See GHSA-rph4-96w6-q594.
+    """
+    hostnames = set()
+    try:
+        h = urlparse(url).hostname
+        if h:
+            hostnames.add(h)
+    except Exception:
+        pass
+    try:
+        from urllib3.util.url import parse_url as _u3_parse_url
+        u3 = _u3_parse_url(url)
+        if u3.host:
+            # urllib3 keeps IPv6 brackets in `.host`; strip them so socket.getaddrinfo() accepts the literal.
+            hostnames.add(u3.host.strip('[]'))
+    except Exception:
+        pass
+    return hostnames
+
+
+def is_url_private_or_parser_confused(url):
+    """SSRF gate that defends against urlparse/urllib3 parser-differential attacks.
+
+    Returns True (block the fetch) when:
+      * the URL contains a backslash — no legitimate URL needs one, and it is the
+        established vector for the parser-differential bypass (GHSA-rph4-96w6-q594), OR
+      * any hostname produced by urlparse OR urllib3 resolves to a private/reserved IP.
+    """
+    if '\\' in url:
+        logger.warning(f"URL '{url}' contains a backslash — rejected to prevent urlparse/urllib3 parser-differential SSRF.")
+        return True
+    for hostname in extract_url_hostnames(url):
+        if is_private_hostname(hostname):
+            return True
+    return False
+
+
 def is_llm_api_base_safe(api_base):
     """SSRF guard for the LLM `api_base` setting (GHSA-jrxm-qjfh-g54f).
 
@@ -176,6 +222,13 @@ def is_safe_valid_url(test_url):
     # Check query parameters and fragment
     if re.search(r'[<>]', test_url):
         logger.warning(f'URL "{test_url}" contains suspicious characters')
+        return False
+
+    # Reject backslashes — urllib's urlparse and urllib3's parse_url disagree on URLs containing
+    # a backslash (e.g. http://INTERNAL:8888\@PUBLIC/), which is the documented SSRF bypass in
+    # GHSA-rph4-96w6-q594. A backslash has no legitimate use in an HTTP URL, so block at add-time.
+    if '\\' in test_url:
+        logger.warning(f'URL "{test_url}" contains a backslash — rejected (parser-differential SSRF vector).')
         return False
 
     # Normalize URL encoding - handle both encoded and unencoded query parameters

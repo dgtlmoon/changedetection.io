@@ -31,33 +31,15 @@ jobs:
             echo "Checking $f"
             msgfmt --check-format -o /dev/null "$f"
           done
-      - name: Lint .po/.pot files with dennis (errors only)
+      - name: Lint .pot template with dennis
         run: |
           pip install "$(grep -E '^dennis ?>=' requirements.txt)"
-          dennis-cmd lint --errorsonly changedetectionio/translations/
-      - name: Lint .pot template with dennis (warnings)
+          dennis-cmd lint --strict changedetectionio/translations/messages.pot
+      - name: Lint .po files with dennis
         run: |
-          output=$(dennis-cmd lint changedetectionio/translations/messages.pot)
-          echo "$output"
-          warnings=$(echo "$output" | awk '/Warnings:/ {print $NF; exit}')
-          if (( ${warnings:-0} > 0 )); then
-            echo "ERROR: ${warnings} dennis warning(s) detected in messages.pot"
-            echo "Fix the warning(s)."
-            exit 1
-          fi
-      - name: Lint .po files with dennis (warnings)
+          dennis-cmd lint --strict --excluderules=W302 changedetectionio/translations/*/LC_MESSAGES/messages.po
         # W302 (unchanged) is excluded due to high false-positive rate in this codebase:
         # many msgstrs intentionally match msgid (units like "AI", "LLM", and proper nouns).
-        run: |
-          output=$(dennis-cmd lint --excluderules=W302 \
-            changedetectionio/translations/*/LC_MESSAGES/messages.po)
-          echo "$output"
-          warnings=$(echo "$output" | awk '/Total number of warnings:/ {print $NF; exit}')
-          if (( ${warnings:-0} > 0 )); then
-            echo "ERROR: ${warnings} dennis warning(s) detected in .po files"
-            echo "Fix the warning(s)."
-            exit 1
-          fi
       - name: Check translation catalog is up-to-date
         run: |
           pip install "$(grep -E '^babel==' requirements.txt)"

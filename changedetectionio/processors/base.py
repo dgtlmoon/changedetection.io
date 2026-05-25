@@ -5,7 +5,7 @@ import hashlib
 from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
 from changedetectionio.content_fetchers.base import Fetcher
 from changedetectionio.strtobool import strtobool
-from changedetectionio.validate_url import is_private_hostname
+from changedetectionio.validate_url import is_private_hostname, is_url_private_or_parser_confused
 from copy import deepcopy
 from abc import abstractmethod
 import os
@@ -104,13 +104,13 @@ class difference_detection_processor():
         """
         if strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')):
             return
-        parsed = urlparse(self.watch.link)
-        if not parsed.hostname:
-            return
         loop = asyncio.get_running_loop()
-        if await loop.run_in_executor(None, is_private_hostname, parsed.hostname):
+        # Use the parser-agnostic check so urlparse/urllib3 differentials (GHSA-rph4-96w6-q594)
+        # can't slip a private/internal hostname past this pre-flight gate.
+        if await loop.run_in_executor(None, is_url_private_or_parser_confused, self.watch.link):
             raise Exception(
-                f"Fetch blocked: '{self.watch.link}' resolves to a private/reserved IP address. "
+                f"Fetch blocked: '{self.watch.link}' resolves to a private/reserved IP address "
+                f"or contains a parser-differential payload. "
                 f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow."
             )
 
