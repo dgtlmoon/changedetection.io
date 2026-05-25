@@ -7,3 +7,19 @@ repos:
         args: [--fix]
       # Fomrat
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: dennis-lint-pot
+        name: dennis lint pot
+        language: system
+        entry: dennis-cmd lint --strict
+        files: ^changedetectionio/translations/messages\.pot$
+        pass_filenames: true
+
+      - id: dennis-lint-po
+        name: dennis lint po
+        language: system
+        entry: dennis-cmd lint --strict --excluderules=W302
+        files: ^changedetectionio/translations/\w+/LC_MESSAGES/messages\.po$
+        pass_filenames: true
