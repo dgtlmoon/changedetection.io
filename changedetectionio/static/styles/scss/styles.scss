@@ -26,6 +26,7 @@
 @use "parts/modal";
 @use "parts/language";
 @use "parts/action_sidebar";
+@use "parts/queue";
 @use "parts/hamburger_menu";
 @use "parts/search_modal";
 @use "parts/llm";
@@ -833,14 +834,9 @@ $form-edge-padding: 20px;
   padding-bottom: 1em;
 }
 
-body.full-width {
-  .edit-form {
-    width: 95%;
-  }
-}
 
 .edit-form {
-  width: 100%;
+  width: 95%;
 
   .box-wrap {
     position: relative;

@@ -8,6 +8,7 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
+from changedetectionio.blueprint.ui.queue import construct_blueprint as construct_queue_blueprint
 from changedetectionio.blueprint.ui import diff, preview
 
 def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchMetaData, watch_check_update, extra_data=None, emit_flash=True):
@@ -137,6 +138,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
     preview_blueprint = preview.construct_blueprint(datastore)
     ui_blueprint.register_blueprint(preview_blueprint)
+
+    queue_blueprint = construct_queue_blueprint(datastore, update_q)
+    ui_blueprint.register_blueprint(queue_blueprint)
 
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required

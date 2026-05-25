@@ -90,6 +90,11 @@ $(document).ready(function () {
                 reconnectionAttempts: 25
             });
 
+            // Expose the socket so other pages can attach their own listeners
+            // (e.g. the queue page reacts to watch_update / queue_size events).
+            window.cdioSocket = socket;
+            document.dispatchEvent(new CustomEvent('cdio:socket-ready', { detail: { socket: socket } }));
+
             // Connection status logging
             socket.on('connect', function () {
                 $('#realtime-conn-error').hide();

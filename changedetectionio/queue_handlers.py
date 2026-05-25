@@ -66,6 +66,16 @@ class RecheckPriorityQueue:
         """Thread-safe sync put with priority ordering"""
         logger.trace(f"RecheckQueue.put() called for item: {self._get_item_uuid(item)}, block={block}, timeout={timeout}")
         try:
+            # Stamp an enqueue timestamp on the item if it doesn't already carry one
+            # — gives the queue UI a "queued Ns ago" reading without all callers
+            # having to opt in. setdefault preserves callers that DO supply their own.
+            try:
+                if hasattr(item, 'item') and isinstance(item.item, dict):
+                    import time as _t
+                    item.item.setdefault('enqueued_at', _t.time())
+            except Exception:
+                pass
+
             # CRITICAL: Add to both priority storage AND notification queue atomically
             # to prevent desynchronization where item exists but no notification
             with self._lock:
@@ -314,12 +324,13 @@ class RecheckPriorityQueue:
                 
                 result = []
                 for position, item in enumerate(items_to_process, start=offset):
-                    if (hasattr(item, 'item') and isinstance(item.item, dict) and 
+                    if (hasattr(item, 'item') and isinstance(item.item, dict) and
                         'uuid' in item.item):
                         result.append({
                             'uuid': item.item['uuid'],
                             'position': position,
-                            'priority': item.priority
+                            'priority': item.priority,
+                            'enqueued_at': item.item.get('enqueued_at'),
                         })
                 
                 return {

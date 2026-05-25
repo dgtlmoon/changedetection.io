@@ -99,6 +99,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
                 llm_form_input = dict(form.data.get('llm') or {})
 
+                # Empty IntegerField submissions come back as None from WTForms;
+                # the schema declares those fields as strict `int`, so passing
+                # them through would fail validation. Treat None like the
+                # absent-key case: keep the stored value, don't merge.
+                llm_form_input = {k: v for k, v in llm_form_input.items() if v is not None}
+
                 # PasswordField never re-renders, so a blank submitted value means
                 # "keep stored key" — drop it from the merge.
                 if not (llm_form_input.get('api_key') or '').strip():

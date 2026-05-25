@@ -15,26 +15,13 @@
             <span class="action-label">{{ _('Add a page watch') }}</span>
         </a>
     </li>
-    {% if not current_diff_url %}
-    <li class="action-sidebar-li">
-        <button type="button"
-                class="action-sidebar-item action-sidebar-item--button js-open-search-modal"
-                title="{{ _('Search, or Use Alt+S Key') }}">
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <span class="action-label">{{ _('Search') }}</span>
-        </button>
-    </li>
-    {% endif %}
     <li class="action-sidebar-li">
         <a href="{{ url_for('watchlist.index') }}"
            class="action-sidebar-item {% if ep == 'watchlist.index' or ep.startswith('ui.ui_views') or ep.startswith('ui.ui_edit') %}active{% endif %}"
            title="{{ _('Page Watches') }}">
             <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="9"/>
-                <polyline points="12 7 12 12 15 14"/>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
             </svg>
             <span class="action-label">{{ _('Page Watches') }}</span>
         </a>
@@ -64,6 +51,34 @@
             </svg>
             <span class="action-label">{{ _('Browsers') }}</span>
             <span class="action-badge">{{ _('soon') }}</span>
+        </a>
+    </li>
+    {% if not current_diff_url %}
+    <li class="action-sidebar-li">
+        <button type="button"
+                class="action-sidebar-item action-sidebar-item--button js-open-search-modal"
+                title="{{ _('Search, or Use Alt+S Key') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span class="action-label">{{ _('Search') }}</span>
+        </button>
+    </li>
+    {% endif %}
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('ui.ui_queue.queue_page') }}"
+           class="action-sidebar-item {% if ep.startswith('ui.ui_queue') %}active{% endif %}"
+           title="{{ _('Queue') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="8" y1="6"  x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6"  x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            <span class="action-label">{{ _('Queue') }}</span>
         </a>
     </li>
     <li class="action-sidebar-li">

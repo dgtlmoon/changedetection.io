@@ -1,0 +1,418 @@
+{%- extends 'base.html' -%}
+{%- block content -%}
+
+<script>
+// Server-rendered translation strings — keeps JS-built rows consistent with the
+// gettext catalog (matches the watchOverviewI18n pattern in watch-overview.html).
+window.queueI18n = {
+    workerLabel:  {{ _('Worker %(n)s', n='__N__')|tojson }},
+    idle:         {{ _('— idle')|tojson }},
+    statusRunning:{{ _('running')|tojson }},
+    statusIdle:   {{ _('idle')|tojson }},
+    statusDone:   {{ _('done')|tojson }},
+    cancel:       {{ _('cancel')|tojson }},
+    noWorkers:    {{ _('No workers configured and queue is empty')|tojson }},
+    watchGone:    {{ _('Watch no longer exists')|tojson }},
+    nothingRunning: {{ _('Nothing running')|tojson }}
+};
+</script>
+
+<div id="queue-page" data-queue-json="{{ url_for('ui.ui_queue.queue_json') }}">
+
+  <div class="queue-panel">
+    <h2 style="margin: 0 0 0.3em 0;">{{ _('Check queue') }}</h2>
+    <div style="opacity:0.75; font-size:0.9rem;">
+      {{ _('Live view of what the workers are doing right now and what is waiting in line.') }}
+    </div>
+  </div>
+
+  <div class="queue-panel queue-stats">
+    <div class="queue-stat">
+      <div class="label">{{ _('Workers') }}</div>
+      <div class="value"><span data-stat="worker_count">{{ snapshot.worker_count }}</span></div>
+    </div>
+    <div class="queue-stat">
+      <div class="label">{{ _('Running now') }}</div>
+      <div class="value"><span data-stat="running_count">{{ snapshot.running_count }}</span></div>
+    </div>
+    <div class="queue-stat">
+      <div class="label">{{ _('Queued') }}</div>
+      <div class="value"><span data-stat="queued_count">{{ snapshot.queued_count }}</span></div>
+    </div>
+    <div class="queue-stat queue-stat--action">
+      <form method="POST" action="{{ url_for('ui.ui_queue.queue_clear') }}" style="margin:0;"
+            data-requires-confirm
+            data-confirm-type="danger"
+            data-confirm-title="{{ _('Clear Queue?') }}"
+            data-confirm-message="{{ _('<p>This will remove every pending check from the queue.</p><p>Running checks will continue.</p>') }}"
+            data-confirm-button="{{ _('Clear') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="pure-button button-secondary button-xsmall" type="submit">
+          <i data-feather="trash-2" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i>
+          {{ _('Clear Queue') }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="queue-panel">
+    <h3 style="margin: 0 0 0.6em 0;">{{ _('Workers & queue') }}</h3>
+    <table class="pure-table pure-table-striped">
+      <thead>
+        <tr>
+          <th style="width:90px;">#</th>
+          <th>{{ _('Watch') }}</th>
+          <th style="width:110px;">{{ _('Elapsed') }}</th>
+          <th style="width:120px;">{{ _('Status') }}</th>
+        </tr>
+      </thead>
+      <tbody data-section="workers">
+        {# Worker slot rows — JS replaces this with one row per FETCH_WORKERS slot. #}
+        {% for w in snapshot.running %}
+        <tr class="worker-slot worker-busy" data-uuid="{{ w.uuid }}">
+          <td><strong>{{ _('Worker %(n)s', n=loop.index) }}</strong></td>
+          <td class="watch-cell">
+            {% if w.gone %}
+              <em>{{ _('Watch no longer exists') }}</em>
+            {% else %}
+              <strong>{{ w.title or w.url }}</strong>
+              {% if w.title and w.url %}<br><small>{{ w.url }}</small>{% endif %}
+            {% endif %}
+          </td>
+          <td class="time-cell" data-since="{{ w.started_at or '' }}"></td>
+          <td>
+            <span class="inline-tag inline-tag--running">{{ _('running') }}</span>
+            <a href="#" class="queue-cancel" data-uuid="{{ w.uuid }}">{{ _('cancel') }}</a>
+          </td>
+        </tr>
+        {% endfor %}
+        {% for idle_idx in range(snapshot.running|length, snapshot.worker_count) %}
+        <tr class="worker-slot worker-idle">
+          <td><strong>{{ _('Worker %(n)s', n=idle_idx + 1) }}</strong></td>
+          <td class="watch-cell"><small style="opacity:0.55;">{{ _('— idle') }}</small></td>
+          <td class="time-cell"><small style="opacity:0.4;">—</small></td>
+          <td><span class="inline-tag inline-tag--idle">{{ _('idle') }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tbody data-section="queued">
+        {% if snapshot.queued %}
+          {% for w in snapshot.queued %}
+          <tr data-uuid="{{ w.uuid }}">
+            <td>{{ w.position + 1 }}</td>
+            <td class="watch-cell">
+              {% if w.gone %}
+                <em>{{ _('Watch no longer exists') }}</em>
+              {% else %}
+                <strong>{{ w.title or w.url }}</strong>
+                {% if w.title and w.url %}<br><small>{{ w.url }}</small>{% endif %}
+              {% endif %}
+            </td>
+            <td class="time-cell" data-since="{{ w.enqueued_at or '' }}"></td>
+            <td><span class="inline-tag">{{ w.priority_label }}</span></td>
+          </tr>
+          {% endfor %}
+        {% elif snapshot.worker_count == 0 %}
+          <tr class="empty-row"><td colspan="4"><em>{{ _('No workers configured (FETCH_WORKERS=0) and queue is empty') }}</em></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    {% if pagination and pagination.total > pagination.per_page %}
+      <div class="queue-pagination" data-current-page="{{ pagination.page }}">
+        {{ pagination.info }}
+        {{ pagination.links }}
+      </div>
+    {% endif %}
+
+    <div class="queue-waiting" data-show="{{ 'true' if not snapshot.running and not snapshot.queued else 'false' }}">
+      <span class="spinner"></span>
+      <span>{{ _('Waiting for new pages to check…') }}</span>
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+$(function () {
+  const $root = $('#queue-page');
+  if (!$root.length) return;
+  const baseUrl = $root.data('queueJson');
+
+  const COMPLETION_GRACE_MS = 60 * 1000;  // keep completed rows visible this long
+
+  // Stable per-worker slots so the running table doesn't jump around as jobs come and go.
+  // slots[i] = { uuid|null, watchData|null, completedAt: 0 | <ms epoch> }
+  const slots = [];
+
+  // Queued items recently popped — keep them around (faded) for a short grace period.
+  // Map<uuid, {watchData, removedAt}>
+  const queuedGhosts = new Map();
+  let lastQueueSnapshot = [];
+
+  function currentPage() {
+    const params = new URLSearchParams(window.location.search);
+    const p = parseInt(params.get('page'), 10);
+    return Number.isFinite(p) && p > 0 ? p : 1;
+  }
+
+  function refreshUrl() {
+    const sep = baseUrl.includes('?') ? '&' : '?';
+    return baseUrl + sep + 'page=' + currentPage();
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  const I18N = window.queueI18n || {};
+
+  function renderWatchCell(w) {
+    if (!w) return '';
+    if (w.gone) return '<em>' + escapeHtml(I18N.watchGone || 'Watch no longer exists') + '</em>';
+    const title = escapeHtml(w.title || w.url || w.uuid);
+    const sub = (w.title && w.url) ? '<br><small style="opacity:0.7;">' + escapeHtml(w.url) + '</small>' : '';
+    return '<strong>' + title + '</strong>' + sub;
+  }
+
+  function workerLabel(i) {
+    const tpl = I18N.workerLabel || 'Worker __N__';
+    return tpl.replace('__N__', i + 1);
+  }
+
+  function elapsedText(since) {
+    if (!since) return '';
+    const sec = Math.max(0, Math.floor(Date.now() / 1000 - since));
+    if (sec < 60) return sec + 's';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm ' + (sec % 60) + 's';
+    return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
+  }
+
+  function refreshTimeCells() {
+    $root.find('.time-cell[data-since]').each(function () {
+      const since = parseFloat(this.dataset.since);
+      if (!isFinite(since) || since <= 0) return;
+      this.textContent = elapsedText(since);
+    });
+  }
+
+  function ensureSlotCount(target) {
+    while (slots.length < target) slots.push({ uuid: null, watchData: null, completedAt: 0 });
+    // Don't shrink — preserve trailing slots so completed entries can fade out.
+    // They'll be culled later by cleanupSlots.
+  }
+
+  function reconcileRunningSlots(running, workerCount) {
+    ensureSlotCount(workerCount);
+
+    const incoming = new Map();
+    for (const w of running) incoming.set(w.uuid, w);
+
+    // 1) Confirm or expire existing slot assignments
+    for (const slot of slots) {
+      if (slot.uuid && incoming.has(slot.uuid)) {
+        slot.watchData = incoming.get(slot.uuid);
+        slot.completedAt = 0;
+        incoming.delete(slot.uuid);
+      } else if (slot.uuid && !slot.completedAt) {
+        slot.completedAt = Date.now();
+      }
+    }
+
+    // 2) Place newly-running uuids into free slots
+    for (const [uuid, w] of incoming) {
+      let target = slots.find(s => !s.uuid);
+      if (!target) {
+        // No vacant slot — bump the oldest completed entry (or append)
+        target = slots.find(s => s.completedAt) || null;
+        if (target) {
+          target.uuid = null;
+          target.watchData = null;
+          target.completedAt = 0;
+        } else {
+          target = { uuid: null, watchData: null, completedAt: 0 };
+          slots.push(target);
+        }
+      }
+      target.uuid = uuid;
+      target.watchData = w;
+      target.completedAt = 0;
+    }
+  }
+
+  function cleanupSlots() {
+    const cutoff = Date.now() - COMPLETION_GRACE_MS;
+    for (const slot of slots) {
+      if (slot.completedAt && slot.completedAt < cutoff) {
+        slot.uuid = null;
+        slot.watchData = null;
+        slot.completedAt = 0;
+      }
+    }
+    for (const [uuid, ghost] of queuedGhosts) {
+      if (ghost.removedAt < cutoff) queuedGhosts.delete(uuid);
+    }
+  }
+
+  function reconcileQueuedGhosts(queued) {
+    const incoming = new Set(queued.map(w => w.uuid));
+    // Anything we showed last time but isn't in the new snapshot → ghost
+    for (const prev of lastQueueSnapshot) {
+      if (!incoming.has(prev.uuid) && !queuedGhosts.has(prev.uuid)) {
+        queuedGhosts.set(prev.uuid, { watchData: prev, removedAt: Date.now() });
+      }
+    }
+    // If something reappears in queue, drop its ghost
+    for (const w of queued) queuedGhosts.delete(w.uuid);
+    lastQueueSnapshot = queued.slice();
+  }
+
+  function renderWorkers() {
+    const $tbody = $root.find('[data-section="workers"]').empty();
+    if (!slots.length) return;
+    slots.forEach((slot, i) => {
+      const slotLabel = '<strong>' + escapeHtml(workerLabel(i)) + '</strong>';
+      let classes, watchCell, statusCell, since;
+      if (slot.uuid && slot.completedAt) {
+        classes = 'worker-slot is-completed';
+        watchCell = renderWatchCell(slot.watchData);
+        statusCell = '<span class="inline-tag inline-tag--done">' + escapeHtml(I18N.statusDone || 'done') + '</span>';
+        since = slot.watchData && slot.watchData.started_at;
+      } else if (slot.uuid) {
+        classes = 'worker-slot worker-busy';
+        watchCell = renderWatchCell(slot.watchData);
+        statusCell =
+          '<span class="inline-tag inline-tag--running">' + escapeHtml(I18N.statusRunning || 'running') + '</span> ' +
+          '<a href="#" class="queue-cancel" data-uuid="' + escapeHtml(slot.uuid) + '">' +
+            escapeHtml(I18N.cancel || 'cancel') +
+          '</a>';
+        since = slot.watchData && slot.watchData.started_at;
+      } else {
+        classes = 'worker-slot worker-idle';
+        watchCell = '<small style="opacity:0.55;">' + escapeHtml(I18N.idle || '— idle') + '</small>';
+        statusCell = '<span class="inline-tag inline-tag--idle">' + escapeHtml(I18N.statusIdle || 'idle') + '</span>';
+        since = null;
+      }
+      const timeCell = since
+        ? '<td class="time-cell" data-since="' + since + '">' + escapeHtml(elapsedText(since)) + '</td>'
+        : '<td class="time-cell"><small style="opacity:0.4;">—</small></td>';
+      $tbody.append(
+        '<tr class="' + classes + '"' +
+          (slot.uuid ? ' data-uuid="' + escapeHtml(slot.uuid) + '"' : '') +
+          '>' +
+          '<td>' + slotLabel + '</td>' +
+          '<td class="watch-cell">' + watchCell + '</td>' +
+          timeCell +
+          '<td>' + statusCell + '</td>' +
+        '</tr>'
+      );
+    });
+  }
+
+  function renderQueued() {
+    const $tbody = $root.find('[data-section="queued"]').empty();
+    const live = lastQueueSnapshot;
+    const ghosts = Array.from(queuedGhosts.values())
+      .sort((a, b) => b.removedAt - a.removedAt);  // most recently popped first
+
+    if (!live.length && !ghosts.length && slots.length === 0) {
+      $tbody.append('<tr class="empty-row"><td colspan="4"><em>' + escapeHtml(I18N.noWorkers || 'No workers configured and queue is empty') + '</em></td></tr>');
+      return;
+    }
+    live.forEach(w => {
+      const since = w.enqueued_at;
+      const timeCell = since
+        ? '<td class="time-cell" data-since="' + since + '">' + escapeHtml(elapsedText(since)) + '</td>'
+        : '<td class="time-cell"><small style="opacity:0.4;">—</small></td>';
+      $tbody.append(
+        '<tr data-uuid="' + escapeHtml(w.uuid) + '">' +
+          '<td>' + (w.position + 1) + '</td>' +
+          '<td class="watch-cell">' + renderWatchCell(w) + '</td>' +
+          timeCell +
+          '<td><span class="inline-tag">' + escapeHtml(w.priority_label) + '</span></td>' +
+        '</tr>'
+      );
+    });
+    ghosts.forEach(g => {
+      const w = g.watchData;
+      $tbody.append(
+        '<tr class="is-completed" data-uuid="' + escapeHtml(w.uuid) + '">' +
+          '<td><small>—</small></td>' +
+          '<td class="watch-cell">' + renderWatchCell(w) + '</td>' +
+          '<td class="time-cell"><small style="opacity:0.4;">—</small></td>' +
+          '<td><span class="inline-tag inline-tag--done">' + escapeHtml(I18N.statusDone || 'done') + '</span></td>' +
+        '</tr>'
+      );
+    });
+  }
+
+  function repaint(snap) {
+    $root.find('[data-stat="worker_count"]').text(snap.worker_count);
+    $root.find('[data-stat="running_count"]').text(snap.running_count);
+    $root.find('[data-stat="queued_count"]').text(snap.queued_count);
+
+    reconcileQueuedGhosts(snap.queued || []);
+    reconcileRunningSlots(snap.running || [], snap.worker_count || 0);
+    cleanupSlots();
+    renderWorkers();
+    renderQueued();
+
+    // Footer "waiting…" indicator: only show when nothing is actually running or queued.
+    const idle = (snap.running_count === 0) && (snap.queued_count === 0);
+    $root.find('.queue-waiting').attr('data-show', idle ? 'true' : 'false');
+  }
+
+  // Debounced refetch — the socket fires many times per check; we only need the latest state.
+  let pending = null;
+  function refresh() {
+    if (pending) clearTimeout(pending);
+    pending = setTimeout(function () {
+      pending = null;
+      $.getJSON(refreshUrl()).done(repaint);
+    }, 200);
+  }
+
+  function attach(socket) {
+    socket.on('watch_update', refresh);
+    socket.on('queue_size', refresh);
+    socket.on('watch_deleted', refresh);
+  }
+
+  // Delegated click — survives row re-renders.
+  $root.on('click', '.queue-cancel', function (e) {
+    e.preventDefault();
+    const uuid = this.dataset.uuid;
+    if (!uuid) return;
+    const $link = $(this).addClass('is-busy').text('…');
+    $.post('{{ url_for("ui.ui_queue.queue_cancel_running") }}', { uuid: uuid })
+      .always(refresh)
+      .fail(function () { $link.removeClass('is-busy').text(I18N.cancel || 'cancel'); });
+  });
+
+  if (window.cdioSocket) {
+    attach(window.cdioSocket);
+  } else {
+    document.addEventListener('cdio:socket-ready', function (e) {
+      attach(e.detail.socket);
+    }, { once: true });
+  }
+
+  // First load: get the JS-driven view up to date with what the server has.
+  refresh();
+
+  // Heartbeat: re-fetch periodically (catches scheduler-added items) and prune expired ghosts.
+  setInterval(refresh, 8000);
+  setInterval(function () { cleanupSlots(); renderWorkers(); renderQueued(); }, 2000);
+  // Tick "queued Ns ago" / "running Ns" labels every second.
+  setInterval(refreshTimeCells, 1000);
+  refreshTimeCells();
+
+  // Re-init feather icons for the action buttons (they're inline in the template)
+  if (window.feather) window.feather.replace();
+});
+</script>
+{%- endblock -%}
