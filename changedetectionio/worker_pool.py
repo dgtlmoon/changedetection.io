@@ -113,6 +113,8 @@ def start_async_workers(n_workers, update_q, notification_q, app, datastore):
     """Start async workers, each with its own thread and event loop for isolation"""
     global worker_threads, currently_processing_uuids
 
+    _ensure_queue_executor()
+
     # Clear any stale state
     currently_processing_uuids.clear()
 
@@ -172,9 +174,24 @@ def start_workers(n_workers, update_q, notification_q, app, datastore):
     start_async_workers(n_workers, update_q, notification_q, app, datastore)
 
 
+def _ensure_queue_executor():
+    """Recreate queue_executor if a prior shutdown_workers() left it in the
+    shutdown state. Without this, any add_worker() / start_async_workers()
+    after a brutal shutdown spawns workers that immediately crash with
+    'cannot schedule new futures after shutdown'."""
+    global queue_executor
+    if queue_executor is None or getattr(queue_executor, '_shutdown', False):
+        queue_executor = ThreadPoolExecutor(
+            max_workers=_max_executor_workers,
+            thread_name_prefix="QueueGetter-",
+        )
+
+
 def add_worker(update_q, notification_q, app, datastore):
     """Add a new async worker (for dynamic scaling)"""
     global worker_threads
+
+    _ensure_queue_executor()
 
     # Reuse lowest available ID to prevent unbounded growth over time
     used_ids = {w.worker_id for w in worker_threads}
