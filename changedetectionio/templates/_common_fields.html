@@ -147,7 +147,11 @@
     </div>
 {%  endmacro %}
 
-{% macro render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) %}
+{# Notification fields shared by global settings, watch-edit and tag-edit. Kept as a
+   dedicated sub-macro so the standalone /settings/notifications page can call it
+   without dragging in any non-notification rendering that might later live in
+   render_common_settings_form. #}
+{% macro notification_part_render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) %}
                         <div class="pure-control-group">
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
     Gitter - gitter://token/room
@@ -216,4 +220,10 @@
                                 </div>
                             </div>
                         </div>
+{% endmacro %}
+
+{# Thin wrapper kept for callers (watch edit, tag edit) that may grow non-notification
+   common fields later. Today it just renders the notification block. #}
+{% macro render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) %}
+{{ notification_part_render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
 {% endmacro %}

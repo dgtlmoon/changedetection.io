@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% from '_helpers.html' import render_field, render_button %}
+{% from '_common_fields.html' import notification_part_render_common_settings_form %}
+<script>
+    const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="global-settings")}}";
+{% if emailprefix %}
+    const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
+{% endif %}
+</script>
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<div class="edit-form">
+    <div class="tabs collapsable">
+        <ul>
+            <li class="tab" id=""><a href="#all-notifications">{{ _('All Notifications') }}</a></li>
+        </ul>
+    </div>
+    <div class="box-wrap inner">
+        <form class="pure-form pure-form-stacked settings" action="{{url_for('settings.notifications_page')}}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
+            <div class="tab-pane-inner" id="all-notifications">
+                <fieldset>
+                    {{ notification_part_render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
+                </fieldset>
+                <div class="pure-control-group" id="notification-base-url">
+                    {{ render_field(form.base_url, class="m-d") }}
+                    <span class="pure-form-message-inline">
+                        {{ _('Base URL used for the') }} <code>{{ '{{ base_url }}' }}</code> {{ _('token in notification links.') }}<br>
+                        {{ _('Default value is the system environment variable') }} '<code>BASE_URL</code>' - <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">{{ _('read more here') }}</a>.
+                    </span>
+                </div>
+            </div>
+            <div id="actions">
+                <div class="pure-control-group">
+                    {{ render_button(form.save_button) }}
+                    <a href="{{url_for('settings.settings_page')}}" class="pure-button button-cancel">{{ _('Back to settings') }}</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
