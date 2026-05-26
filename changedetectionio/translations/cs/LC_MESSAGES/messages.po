@@ -370,12 +370,12 @@ msgstr "Došlo k chybě při úpravě pracovních procesů: {}"
 msgid "Password protection enabled."
 msgstr "Ochrana heslem povolena."
 
-#: changedetectionio/blueprint/settings/__init__.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Settings updated."
 msgstr "Nastavení upraveno."
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "Došlo k chybě, více informací níže."
 
@@ -413,6 +413,31 @@ msgstr "AI / LLM konfigurace odstraněna."
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI cache souhrnů vyčištěna ({}s soubor(ů) odstraněno)."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "All Notifications"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Base URL used for the"
+msgstr "Základní URL použita pro"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "token in notification links."
+msgstr "token v odkazech oznámení."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Default value is the system environment variable"
+msgstr "Výchozí hodnota je systémová proměnná prostředí"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+#: changedetectionio/templates/_common_fields.html
+msgid "read more here"
+msgstr "přečtěte si více zde"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Back to settings"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
@@ -499,22 +524,6 @@ msgstr "Pokud požadavek vrátí prázdný obsah, nebo pokud HTML neobsahuje ž�
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Vyberte výchozí proxy pro všechna sledování"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Base URL used for the"
-msgstr "Základní URL použita pro"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "token in notification links."
-msgstr "token v odkazech oznámení."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Default value is the system environment variable"
-msgstr "Výchozí hodnota je systémová proměnná prostředí"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
-msgid "read more here"
-msgstr "přečtěte si více zde"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
@@ -2892,6 +2901,19 @@ msgid "Should contain one or more seconds"
 msgstr "Měl by obsahovat jednu nebo více sekund"
 
 #: changedetectionio/forms.py
+msgid "Notification base URL override"
+msgstr "Základní URL pro upozornění"
+
+#: changedetectionio/forms.py
+msgid "Not set"
+msgstr "Nenastaveno"
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/forms.py
+msgid "Save"
+msgstr "Uložit"
+
+#: changedetectionio/forms.py
 msgid "URLs"
 msgstr "URL"
 
@@ -3032,11 +3054,6 @@ msgstr "Blokovat detekci změn, když se text shoduje"
 msgid "Execute JavaScript before change detection"
 msgstr "Spusťte JavaScript před detekcí změn"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
-msgid "Save"
-msgstr "Uložit"
-
 #: changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Proxy"
@@ -3053,9 +3070,8 @@ msgstr "Ztlumit"
 msgid "On"
 msgstr "Zapnuto"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
-#: changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Oznámení"
 
@@ -3181,14 +3197,6 @@ msgstr "Použijte stránku <title> v přehledu sledování"
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "Kontrola zabezpečení přístupového tokenu API povolena"
-
-#: changedetectionio/forms.py
-msgid "Notification base URL override"
-msgstr "Základní URL pro upozornění"
-
-#: changedetectionio/forms.py
-msgid "Not set"
-msgstr "Nenastaveno"
 
 #: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"

@@ -377,12 +377,12 @@ msgstr "Çalışanlar ayarlanırken hata oluştu: {}"
 msgid "Password protection enabled."
 msgstr "Parola koruması etkinleştirildi."
 
-#: changedetectionio/blueprint/settings/__init__.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Settings updated."
 msgstr "Ayarlar güncellendi."
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "Bir hata oluştu, lütfen aşağıya bakın."
 
@@ -419,6 +419,31 @@ msgstr ""
 #: changedetectionio/blueprint/settings/llm.py
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "All Notifications"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Base URL used for the"
+msgstr "Şunun için kullanılan temel URL"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "token in notification links."
+msgstr "bildirim bağlantılarındaki belirteç."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Default value is the system environment variable"
+msgstr "Varsayılan değer sistem ortam değişkenidir"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+#: changedetectionio/templates/_common_fields.html
+msgid "read more here"
+msgstr "daha fazlasını buradan okuyun"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Back to settings"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -508,22 +533,6 @@ msgstr "Bir istek içerik döndürmediğinde veya HTML hiç metin içermediğind
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Tüm izleyiciler için varsayılan bir proxy seçin"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Base URL used for the"
-msgstr "Şunun için kullanılan temel URL"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "token in notification links."
-msgstr "bildirim bağlantılarındaki belirteç."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Default value is the system environment variable"
-msgstr "Varsayılan değer sistem ortam değişkenidir"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
-msgid "read more here"
-msgstr "daha fazlasını buradan okuyun"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
@@ -2939,6 +2948,19 @@ msgid "Should contain one or more seconds"
 msgstr "Bir veya daha fazla saniye içermelidir"
 
 #: changedetectionio/forms.py
+msgid "Notification base URL override"
+msgstr "Bildirim temel URL'sini geçersiz kılma"
+
+#: changedetectionio/forms.py
+msgid "Not set"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/forms.py
+msgid "Save"
+msgstr "Kaydet"
+
+#: changedetectionio/forms.py
 msgid "URLs"
 msgstr "URL'ler"
 
@@ -3079,11 +3101,6 @@ msgstr "Metin eşleşirken değişiklik tespitini engelle"
 msgid "Execute JavaScript before change detection"
 msgstr "Değişiklik tespitinden önce JavaScript'i çalıştır"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
-msgid "Save"
-msgstr "Kaydet"
-
 #: changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Proxy"
@@ -3100,9 +3117,8 @@ msgstr "Sessize alındı"
 msgid "On"
 msgstr "Açık"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
-#: changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Bildirimler"
 
@@ -3228,14 +3244,6 @@ msgstr "İzleyici genel bakış listesinde sayfa <title>'ını kullan"
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "API erişim belirteci güvenlik kontrolü etkin"
-
-#: changedetectionio/forms.py
-msgid "Notification base URL override"
-msgstr "Bildirim temel URL'sini geçersiz kılma"
-
-#: changedetectionio/forms.py
-msgid "Not set"
-msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"

@@ -372,12 +372,12 @@ msgstr "调整工作线程时出错：{}"
 msgid "Password protection enabled."
 msgstr "已启用密码保护。"
 
-#: changedetectionio/blueprint/settings/__init__.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Settings updated."
 msgstr "设置已更新。"
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "发生错误，请查看下方详情。"
 
@@ -414,6 +414,31 @@ msgstr ""
 #: changedetectionio/blueprint/settings/llm.py
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "All Notifications"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Base URL used for the"
+msgstr "用于通知链接中的"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "token in notification links."
+msgstr "通知链接中的令牌。"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Default value is the system environment variable"
+msgstr "默认值为系统环境变量"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+#: changedetectionio/templates/_common_fields.html
+msgid "read more here"
+msgstr "在此阅读更多"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Back to settings"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -501,22 +526,6 @@ msgstr "当请求无内容返回，或 HTML 不包含任何文本时，是否视
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "为所有监视器选择默认代理"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Base URL used for the"
-msgstr "用于通知链接中的"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "token in notification links."
-msgstr "通知链接中的令牌。"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Default value is the system environment variable"
-msgstr "默认值为系统环境变量"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
-msgid "read more here"
-msgstr "在此阅读更多"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
@@ -2891,6 +2900,19 @@ msgid "Should contain one or more seconds"
 msgstr "应为 1 秒或以上"
 
 #: changedetectionio/forms.py
+msgid "Notification base URL override"
+msgstr "通知基础 URL 覆盖"
+
+#: changedetectionio/forms.py
+msgid "Not set"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/forms.py
+msgid "Save"
+msgstr "保存"
+
+#: changedetectionio/forms.py
 msgid "URLs"
 msgstr "URL 列表"
 
@@ -3031,11 +3053,6 @@ msgstr "文本匹配时阻止变更检测"
 msgid "Execute JavaScript before change detection"
 msgstr "在变更检测前执行 JavaScript"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
-msgid "Save"
-msgstr "保存"
-
 #: changedetectionio/forms.py
 msgid "Proxy"
 msgstr "代理"
@@ -3052,9 +3069,8 @@ msgstr "静音"
 msgid "On"
 msgstr "开启"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
-#: changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "通知"
 
@@ -3180,14 +3196,6 @@ msgstr "在监控概览列表中使用页面 <title>"
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "已启用 API 访问令牌安全检查"
-
-#: changedetectionio/forms.py
-msgid "Notification base URL override"
-msgstr "通知基础 URL 覆盖"
-
-#: changedetectionio/forms.py
-msgid "Not set"
-msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"

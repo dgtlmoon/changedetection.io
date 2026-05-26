@@ -376,12 +376,12 @@ msgstr "Error al ajustar trabajadores:{}"
 msgid "Password protection enabled."
 msgstr "Protección con contraseña habilitada."
 
-#: changedetectionio/blueprint/settings/__init__.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Settings updated."
 msgstr "Configuración actualizada."
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "Se produjo un error, consulte a continuación."
 
@@ -418,6 +418,31 @@ msgstr ""
 #: changedetectionio/blueprint/settings/llm.py
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "All Notifications"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Base URL used for the"
+msgstr "URL base utilizada para el"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "token in notification links."
+msgstr "token en enlaces de notificación."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Default value is the system environment variable"
+msgstr "El valor predeterminado es la variable de entorno del sistema"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+#: changedetectionio/templates/_common_fields.html
+msgid "read more here"
+msgstr "leer más aquí"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Back to settings"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
@@ -507,22 +532,6 @@ msgstr "Cuando una solicitud no devuelve contenido o el HTML no contiene ningún
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Elija un proxy predeterminado para todos los monitores"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Base URL used for the"
-msgstr "URL base utilizada para el"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "token in notification links."
-msgstr "token en enlaces de notificación."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Default value is the system environment variable"
-msgstr "El valor predeterminado es la variable de entorno del sistema"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
-msgid "read more here"
-msgstr "leer más aquí"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
@@ -2959,6 +2968,19 @@ msgid "Should contain one or more seconds"
 msgstr "Debe contener uno o más segundos"
 
 #: changedetectionio/forms.py
+msgid "Notification base URL override"
+msgstr "Anulación de URL de base de notificaciones"
+
+#: changedetectionio/forms.py
+msgid "Not set"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/forms.py
+msgid "Save"
+msgstr "Guardar"
+
+#: changedetectionio/forms.py
 msgid "URLs"
 msgstr "URL"
 
@@ -3099,11 +3121,6 @@ msgstr "Bloquear la detección de cambios mientras el texto coincide"
 msgid "Execute JavaScript before change detection"
 msgstr "Ejecute JavaScript antes de la detección de cambios"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
-msgid "Save"
-msgstr "Guardar"
-
 #: changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Proxy"
@@ -3120,9 +3137,8 @@ msgstr "Silenciado"
 msgid "On"
 msgstr "On"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
-#: changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Notificaciones"
 
@@ -3248,14 +3264,6 @@ msgstr "Usar <title> de la página en la lista general de monitores"
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "Comprobación de seguridad del token de acceso API habilitada"
-
-#: changedetectionio/forms.py
-msgid "Notification base URL override"
-msgstr "Anulación de URL de base de notificaciones"
-
-#: changedetectionio/forms.py
-msgid "Not set"
-msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"
