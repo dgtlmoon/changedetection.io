@@ -271,14 +271,12 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
 
 
     res = client.post(
-        url_for("settings.settings_page"),
+        url_for("settings.notifications.apprise"),
         data={
-              "application-fetch_backend": "html_requests",
-              "application-minutes_between_check": 180,
-              "application-notification_body": 'Boo yeah hello from main settings notification body<br>\nTitle: {{ watch_title }} changed',
-              "application-notification_format": default_notification_format,
+              "notification_body": 'Boo yeah hello from main settings notification body<br>\nTitle: {{ watch_title }} changed',
+              "notification_format": default_notification_format,
               "application-rss_template_type" : 'notification_body',
-              "application-notification_urls": "",
+              "notification_urls": "",
 
               },
         follow_redirects=True
