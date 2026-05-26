@@ -18,7 +18,7 @@
         </ul>
     </div>
     <div class="box-wrap inner">
-        <form class="pure-form pure-form-stacked settings" action="{{url_for('settings.notifications_page')}}" method="POST">
+        <form class="pure-form pure-form-stacked settings" action="{{url_for('settings.notifications.apprise')}}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
             <div class="tab-pane-inner" id="all-notifications">
                 <fieldset>

@@ -809,15 +809,19 @@ class commonSettingsForm(Form):
 #                    raise ValidationError('HTML Color format is not supported by Telegram and Discord. Please choose another Notification Format (Plain Text, HTML, or Markdown to HTML).')
 
 
-# Standalone form for the /settings/notifications page. Holds only the global
-# notification fields (the macro `notification_part_render_common_settings_form`
-# in _common_fields.html expects these exact field names) plus base_url, which
-# powers the {{base_url}} token in notification templates.
+# Standalone form for the /settings/notifications/apprise page. Holds only the
+# global apprise-notification fields (the macro
+# `notification_part_render_common_settings_form` in _common_fields.html expects
+# these exact field names) plus base_url, which powers the {{base_url}} token
+# in notification templates.
 #
 # This is intentionally not a sub-form of globalSettingsForm — the notifications
 # page POSTs to its own route so the broader settings form's validators (worker
 # count, RSS limits, etc.) don't run when the user only wants to tweak alerts.
-class globalSettingsNotificationForm(Form):
+#
+# Named for the backend (apprise) on purpose: future backends (simple_email,
+# webhook, etc.) will land as their own forms next to this one.
+class globalSettingsAppriseNotificationForm(Form):
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
         extra = kwargs.get('extra_notification_tokens', {})

@@ -28,7 +28,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
 
     # Re 360 - new install should have defaults set
     # Notification UI lives on its own page since the global settings refactor.
-    res = client.get(url_for("settings.notifications_page"))
+    res = client.get(url_for("settings.notifications.apprise"))
     notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')+"?status_code=204"
 
     assert default_notification_body.encode() in res.data
@@ -37,7 +37,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.notifications_page"),
+        url_for("settings.notifications.apprise"),
         data={"notification_urls": notification_url,
               "notification_title": "fallback-title "+default_notification_title,
               "notification_body": "fallback-body "+default_notification_body,
@@ -47,7 +47,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
 
     assert b"Settings updated." in res.data
 
-    res = client.get(url_for("settings.notifications_page"))
+    res = client.get(url_for("settings.notifications.apprise"))
     for k,v in valid_notification_formats.items():
         if k == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
             continue
@@ -59,7 +59,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     env_base_url = os.getenv('BASE_URL', '').strip()
     if len(env_base_url):
         logging.debug(">>> BASE_URL enabled, looking for %s", env_base_url)
-        res = client.get(url_for("settings.notifications_page"))
+        res = client.get(url_for("settings.notifications.apprise"))
         assert bytes(env_base_url.encode('utf-8')) in res.data
     else:
         logging.debug(">>> SKIPPING BASE_URL check")
@@ -279,7 +279,7 @@ def test_notification_urls_jinja2_apprise_integration(client, live_server, measu
     test_notification_url = "hassio://127.0.0.1/longaccesstoken?verify=no&nid={{watch_uuid}}"
 
     res = client.post(
-        url_for("settings.notifications_page"),
+        url_for("settings.notifications.apprise"),
         data={
               "notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了", "another": "{{diff|truncate(1500)}}" }',
               "notification_format": default_notification_format,
@@ -309,7 +309,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?status_code=204&watch_uuid={{ watch_uuid }}&xxx={{ watch_url }}&now={% now 'Europe/London', '%Y-%m-%d' %}&+custom-header=123&+second=hello+world%20%22space%22"
 
     res = client.post(
-        url_for("settings.notifications_page"),
+        url_for("settings.notifications.apprise"),
         data={
               "notification_body": '{ "url" : "{{ watch_url }}", "secret": 444, "somebug": "网站监测 内容更新了" }',
               "notification_format": default_notification_format,
@@ -392,7 +392,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
 
     # otherwise other settings would have already existed from previous tests in this file
     res = client.post(
-        url_for("settings.notifications_page"),
+        url_for("settings.notifications.apprise"),
         data={
             "notification_body": test_body,
             "notification_format": default_notification_format,
@@ -580,7 +580,7 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
 
     # otherwise other settings would have already existed from previous tests in this file
     res = client.post(
-        url_for("settings.notifications_page"),
+        url_for("settings.notifications.apprise"),
         data={
             "notification_body": notification_body_token,
             "notification_format": "htmlcolor",
@@ -652,7 +652,7 @@ def _test_custom_html_in_notification_body_not_escaped(client, datastore_path, c
     test_url = url_for('test_endpoint', _external=True, **kwargs)
 
     res = client.post(
-        url_for("settings.notifications_page"),
+        url_for("settings.notifications.apprise"),
         data={
             "notification_body": '<a href="{{watch_url}}">Watch Link</a> had changes\n\n{{diff}}',
             "notification_format": "htmlcolor",
@@ -730,7 +730,7 @@ def test_html_watch_diff_content_escaped_in_html_notification(client, live_serve
     # HTML-format notification body that embeds the snapshot directly. Operators do this
     # when they want the full changed content in the alert (e.g. an email digest).
     res = client.post(
-        url_for("settings.notifications_page"),
+        url_for("settings.notifications.apprise"),
         data={
             "notification_body": 'Watch had changes:\n{{current_snapshot}}',
             "notification_format": "html",
@@ -808,7 +808,7 @@ def test_source_url_diff_content_escaped_in_html_notification(client, live_serve
     test_url = 'source:' + url_for('test_endpoint', _external=True, content_type='text/html')
 
     res = client.post(
-        url_for("settings.notifications_page"),
+        url_for("settings.notifications.apprise"),
         data={
             "notification_body": 'Watch had changes:\n{{current_snapshot}}',
             "notification_format": "html",

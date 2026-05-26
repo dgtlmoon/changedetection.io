@@ -20,6 +20,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
         settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
 
+    # Notification settings live in their own child blueprint so future backends
+    # (simple_email, webhooks, etc.) slot in as /settings/notifications/<backend>
+    # without further URL-shaping churn.
+    from changedetectionio.blueprint.settings.notifications import construct_notifications_blueprint
+    settings_blueprint.register_blueprint(
+        construct_notifications_blueprint(datastore), url_prefix='/notifications',
+    )
+
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
@@ -277,46 +285,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("API Key was regenerated."))
         return redirect(url_for('settings.settings_page')+'#api')
         
-    @settings_blueprint.route("/notifications", methods=['GET', 'POST'])
-    @login_optionally_required
-    def notifications_page():
-        from changedetectionio import forms
-
-        app_settings = datastore.data['settings']['application']
-        # Seed the form with the currently stored values so GET (and a failed
-        # POST that re-renders) shows what's persisted, not WTForms defaults.
-        default = {
-            'notification_urls': app_settings.get('notification_urls') or [],
-            'notification_title': app_settings.get('notification_title') or '',
-            'notification_body': app_settings.get('notification_body') or '',
-            'notification_format': app_settings.get('notification_format') or '',
-            'base_url': app_settings.get('base_url') or '',
-        }
-
-        form = forms.globalSettingsNotificationForm(
-            formdata=request.form if request.method == 'POST' else None,
-            data=default,
-            extra_notification_tokens=datastore.get_unique_notification_tokens_available(),
-        )
-
-        if request.method == 'POST' and form.validate():
-            for field in ('notification_urls', 'notification_title', 'notification_body',
-                          'notification_format', 'base_url'):
-                app_settings[field] = form.data.get(field)
-            datastore.commit()
-            flash(gettext("Settings updated."))
-            return redirect(url_for('settings.notifications_page'))
-        elif request.method == 'POST':
-            flash(gettext("An error occurred, please see below."), "error")
-
-        return render_template(
-            "notifications.html",
-            form=form,
-            emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
-            extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
-            settings_application=app_settings,
-        )
-
     @settings_blueprint.route("/notification-logs", methods=['GET'])
     @login_optionally_required
     def notification_logs():
