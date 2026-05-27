@@ -1,14 +1,5 @@
 // Styles for /queue (blueprint/ui/templates/queue.html)
 
-// The queue page wants the whole content strip wider — the default 1164px
-// cap on .content-main makes the queue tables look skinny when empty.
-body.queue-full-width {
-  .content-main {
-    max-width: none;
-    align-items: stretch;
-  }
-}
-
 #queue-page {
   width: 100%;
   color: var(--color-white);
