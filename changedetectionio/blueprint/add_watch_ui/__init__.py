@@ -10,7 +10,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
     @add_watch_ui_blueprint.route("/", methods=['GET'])
     @login_optionally_required
-    def index():
+    def add_watch_ui_index():
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
         from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
 

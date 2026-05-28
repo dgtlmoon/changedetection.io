@@ -4,7 +4,7 @@
 {%- set ep = request.endpoint or '' -%}
 <ul class="action-sidebar-list">
     <li class="action-sidebar-li">
-        <a href="{{ url_for('add_watch_ui.index') }}"
+        <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
            class="action-sidebar-item action-sidebar-item--accent {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
            title="{{ _('Add a page watch') }}">
             <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -120,7 +120,13 @@
         </a>
     </li>
     <li class="action-sidebar-divider" aria-hidden="true"></li>
+    <li>
 
+    <div class="action-sidebar-li" id="queue-stats-sidebar">
+        {{ _('Queued size') }}: <span id="queue-size-int">{{ queue_size }}</span>
+    </div>
+
+    </li>
     <li class="action-sidebar-li">
         {% if hosted_sticky %}
           <div id="hosted-sticky">
