@@ -15,29 +15,24 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add a new web page change detection watch"
 msgstr "Agregar un nuevo monitor de detección de cambios en páginas web"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch this URL!"
 msgstr "¡Monitoriza esta URL!"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit first then Watch"
 msgstr "Editar primero y luego monitorizar"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "AI — Notify when…"
 msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch group / tag"
 msgstr "Ver grupo/etiqueta"
 

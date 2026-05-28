@@ -177,6 +177,8 @@ body.has-queue {
 }
 
 #watch-table-wrapper {
+  display: inline-block; /* so the tabs at the bottom align */
+  width: 100%; /* so the table always grows to the tab sizes if theres lots of tabs and full is OK too */
   /* general styling */
   #post-list-buttons {
     text-align: right;

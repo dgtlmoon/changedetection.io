@@ -147,16 +147,7 @@ window.watchOverviewI18n = {
 
 
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
-    <div>
-        <a href="{{url_for('watchlist.index')}}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">{{ _('All') }}</a>
 
-    <!-- tag list -->
-    {%- for uuid, tag in tags -%}
-        {%- if tag != "" -%}
-            <a href="{{url_for('watchlist.index', tag=uuid) }}" class="pure-button button-tag tag-{{ tag.title|sanitize_tag_class }} {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
-        {%- endif -%}
-    {%- endfor -%}
-    </div>
 
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
@@ -173,6 +164,15 @@ window.watchOverviewI18n = {
         'has-error' if errored_count else '',
     ] -%}
     <div id="watch-table-wrapper" class="{{ wrapper_classes | reject('equalto', '') | join(' ') }}">
+        <div>
+            <a href="{{url_for('watchlist.index')}}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">{{ _('All') }}</a>
+            <!-- tag list -->
+            {%- for uuid, tag in tags -%}
+                {%- if tag != "" -%}
+                    <a href="{{url_for('watchlist.index', tag=uuid) }}" class="pure-button button-tag tag-{{ tag.title|sanitize_tag_class }} {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
+                {%- endif -%}
+            {%- endfor -%}
+        </div>
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
