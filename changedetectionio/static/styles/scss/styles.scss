@@ -1,7 +1,6 @@
 /*
  * -- BASE STYLES --
  */
-
 @use "settings" as *;
 @use "parts/variables";
 @use "parts/arrows";
@@ -66,6 +65,40 @@ body {
   color: var(--color-text);
   background: var(--color-background-page);
   font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+}
+
+// Page-level layout primitive: holds the fixed left rail and the main content
+// column side-by-side on desktop, stacked on mobile. Not sidebar-specific — the
+// rail's parts/_action_sidebar.scss styles target the rail itself, this is the
+// outer wrapper any future side-column layout could share.
+.content-wrapper {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  align-items: flex-start;
+
+  @media only screen and (max-width: $desktop-wide-breakpoint) {
+    flex-direction: column;
+  }
+}
+
+// Right-hand column that hosts the page content (header, flash messages, the
+// page body block). `align-items: center` centers each child horizontally
+// — child blocks render at their intrinsic width and sit in the middle of
+// the column regardless of viewport size.
+.content-main {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  @media only screen and (min-width: $desktop-wide-breakpoint) {
+    flex-direction: column;
+    padding-right: 1rem;
+  }
 }
 
 .visually-hidden {
@@ -238,20 +271,6 @@ code {
   &:visited {
     color: var(--color-white);
   }
-}
-
-@media (min-width: 768px) {
-  .box {
-    margin: 0 1em !important;
-  }
-}
-
-.box {
-  max-width: 100%;
-  margin: 0 0.3em;
-  flex-direction: column;
-  display: flex;
-  justify-content: center;
 }
 
 
@@ -836,7 +855,7 @@ $form-edge-padding: 20px;
 
 
 .edit-form {
-  width: 95%;
+  max-width: 95%;
 
   .box-wrap {
     position: relative;

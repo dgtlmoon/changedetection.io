@@ -102,44 +102,10 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
 {%- endif -%}
 {%- endfor -%}
 </style>
-<div class="box" id="form-quick-watch-add">
-
-    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
-        <fieldset>
-            <legend>{{ _('Add a new web page change detection watch') }}</legend>
-            <div id="watch-add-wrapper-zone">
-                    {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_nolabel_field(form.watch_submit_button, title=_("Watch this URL!") ) }}
-                    {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Edit first then Watch") ) }}
-            </div>
-            {% if llm_configured %}
-            <div id="quick-watch-llm-intent" style="display:none; margin-top: 0.5em;">
-                <textarea name="llm_intent"
-                          id="quick_watch_llm_intent"
-                          rows="2"
-                          class="pure-input-1"
-                          placeholder="{{ _('AI — Notify when…') }} {{ llm_intent_watch_placeholder }}"
-                ></textarea>
-            </div>
-            {% endif %}
-            <div id="watch-group-tag">
-               {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder=_("Watch group / tag"), class="transparent-field") }}
-            </div>
-            <div id="quick-watch-processor-type">
-                {{ render_simple_field(form.processor) }}
-            </div>
-
-        </fieldset>
-        <span style="color:#eee; font-size: 80%;">
-            <strong>Tip: </strong> {{ tips | random | safe }}
-        </span>
-    </form>
-</div>
 {% if llm_configured %}
 <script>
 window.watchOverviewI18n = {
-    generatingSummary: {{ _('Generating summary…')|tojson }},
+    generatingSummary: {{ _('Generating change summary…')|tojson }},
     gotoHistory:       {{ _('Goto full history')|tojson }}
 };
 </script>
@@ -197,6 +163,7 @@ window.watchOverviewI18n = {
     {%- set pagination_page = request.args.get('page', 0) -%}
     {%- set cols_required = 6 -%}
     {%- set any_has_restock_price_processor = datastore.any_watches_have_processor_by_name("restock_diff") -%}
+    {%- set any_has_restock_price_processor = 0 -%}
     {%- if any_has_restock_price_processor -%}
         {%- set cols_required = cols_required + 1 -%}
     {%- endif -%}
@@ -215,10 +182,11 @@ window.watchOverviewI18n = {
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
                 {%- set arrow_span = "" -%}
                 <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('watchlist.index', sort='date_created', order=link_order, tag=active_tag_uuid)}}"># <span class='arrow {{link_order}}'></span></a></th>
-                <th>
-                    <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, tag=active_tag_uuid)}}"><i data-feather="pause" style="vertical-align: bottom; width: 14px; height: 14px;  margin-right: 4px;"></i><span class='arrow {{link_order}}'></span></a>
-                    &nbsp;
-                    <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, tag=active_tag_uuid)}}"><i data-feather="volume-2" style="vertical-align: bottom; width: 14px; height: 14px;  margin-right: 4px;"></i><span class='arrow {{link_order}}'></span></a>
+                <th id="mute-pause">
+                    <div>
+                        <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, tag=active_tag_uuid)}}"><i data-feather="pause" style="vertical-align: bottom; width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
+                        <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, tag=active_tag_uuid)}}"><i data-feather="volume-2" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
+                    </div>
                 </th>
                 <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">{{ _('Website') }} <span class='arrow {{link_order}}'></span></a></th>
              {%- if any_has_restock_price_processor -%}
@@ -261,13 +229,13 @@ window.watchOverviewI18n = {
                     'use-html-title' if system_use_url_watchlist else 'no-html-title',
                 ] -%}
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}" class="{{ row_classes | reject('equalto', '') | join(' ') }}">
-                <td class="inline checkbox-uuid" ><div><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span class="counter-i">{{ loop.index+pagination.skip }}</span></div></td>
+                <td class="inline checkbox-uuid" ><div><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " >{# <span class="counter-i">{{ loop.index+pagination.skip }}</span>#}</div></td>
                 <td class="inline watch-controls">
                     <div>
-                    <a class="ajax-op state-off pause-toggle" data-op="pause" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="{{ _('Pause checks') }}" title="{{ _('Pause checks') }}" class="icon icon-pause" ></a>
-                    <a class="ajax-op state-on pause-toggle"  data-op="pause" style="display: none" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="{{ _('UnPause checks') }}" title="{{ _('UnPause checks') }}" class="icon icon-unpause" ></a>
-                    <a class="ajax-op state-off mute-toggle" data-op="mute" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ _('Mute notification') }}" title="{{ _('Mute notification') }}" class="icon icon-mute" ></a>
-                    <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ _('UnMute notification') }}" title="{{ _('UnMute notification') }}" class="icon icon-mute" ></a>
+                        <a class="ajax-op state-off pause-toggle" data-op="pause" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="{{ _('Pause checks') }}" title="{{ _('Pause checks') }}" class="icon icon-pause" ></a>
+                        <a class="ajax-op state-on pause-toggle"  data-op="pause" style="display: none" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="{{ _('UnPause checks') }}" title="{{ _('UnPause checks') }}" class="icon icon-unpause" ></a>
+                        <a class="ajax-op state-off mute-toggle" data-op="mute" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ _('Mute notification') }}" title="{{ _('Mute notification') }}" class="icon icon-mute" ></a>
+                        <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ _('UnMute notification') }}" title="{{ _('UnMute notification') }}" class="icon icon-mute" ></a>
                     </div>
                 </td>
 
@@ -320,39 +288,45 @@ window.watchOverviewI18n = {
                             {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
 
                     </div>
+
+                    <div class="restock-info-wrap">
+                        {%- if watch['processor'] == 'restock_diff'  -%}
+                            {%- if watch.has_restock_info -%}
+                                <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="{{ _('Detecting restock and price') }}">
+                                    <!-- maybe some object watch['processor'][restock_diff] or.. -->
+                                     {%- if watch['restock']['in_stock']-%}  {{ _('In stock') }} {%- else-%}  {{ _('Not in stock') }} {%- endif -%}
+                                </span>
+                            {%- endif -%}
+
+                            {%- if watch.get('restock') and watch['restock'].get('price') -%}
+                                {%- set restock = watch['restock'] -%}
+                                {%- set price = restock.get('price') -%}
+                                {%- set cur = restock.get('currency','') -%}
+
+                                {%- if price is not none and (price|string)|regex_search('\d') -%}
+                                  <span class="restock-label price" title="{{ _('Price') }}">
+                                  {# @todo: make parse_currency/parse_decimal aware of the locale of the actual web page and use that instead changedetectionio/processors/restock_diff/__init__.py #}
+                                    {%- if price is number -%}{# It's a number so we can convert it to their locale' #}
+                                      {{ price|format_number_locale }} {{ cur }}<!-- as number -->
+                                    {%- else -%}{# It's totally fine if it arrives as something else, the website might be something weird in this field #}
+                                      {{ price }} {{ cur }}<!-- as string -->
+                                    {%- endif -%}
+                                  </span>
+                                {%- endif -%}
+                            {%- elif not watch.has_restock_info -%}
+                                <span class="restock-label error">{{ _('No information') }}</span>
+                            {%- endif -%}
+                        {%- endif -%}
                     </div>
+                </div>
+
                 </td>
+{#
 {%- if any_has_restock_price_processor -%}
                 <td class="restock-and-price">
-                    {%- if watch['processor'] == 'restock_diff'  -%}
-                        {%- if watch.has_restock_info -%}
-                            <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="{{ _('Detecting restock and price') }}">
-                                <!-- maybe some object watch['processor'][restock_diff] or.. -->
-                                 {%- if watch['restock']['in_stock']-%}  {{ _('In stock') }} {%- else-%}  {{ _('Not in stock') }} {%- endif -%}
-                            </span>
-                        {%- endif -%}
-
-                        {%- if watch.get('restock') and watch['restock'].get('price') -%}
-                            {%- set restock = watch['restock'] -%}
-                            {%- set price = restock.get('price') -%}
-                            {%- set cur = restock.get('currency','') -%}
-
-                            {%- if price is not none and (price|string)|regex_search('\d') -%}
-                              <span class="restock-label price" title="{{ _('Price') }}">
-                              {# @todo: make parse_currency/parse_decimal aware of the locale of the actual web page and use that instead changedetectionio/processors/restock_diff/__init__.py #}
-                                {%- if price is number -%}{# It's a number so we can convert it to their locale' #}
-                                  {{ price|format_number_locale }} {{ cur }}<!-- as number -->
-                                {%- else -%}{# It's totally fine if it arrives as something else, the website might be something weird in this field #}
-                                  {{ price }} {{ cur }}<!-- as string -->
-                                {%- endif -%}
-                              </span>
-                            {%- endif -%}
-                        {%- elif not watch.has_restock_info -%}
-                            <span class="restock-label error">{{ _('No information') }}</span>
-                        {%- endif -%}
-                    {%- endif -%}
                 </td>
 {%- endif -%}
+#}
             {#last_checked becomes fetch-start-time#}
                 <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ _('Last Checked') }}">
                     <div class="spinner-wrapper" style="display:none;" >

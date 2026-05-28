@@ -1,33 +1,25 @@
 // Left-rail navigation - icon-only collapsed rail with label rollout on hover
 @use "../settings" as *;
 
-.content-wrapper {
-  display: flex;
-  gap: 0;
-  width: 100%;
-  max-width: 100%;
-  position: relative;
-  align-items: flex-start;
+//$action-sidebar-width-expanded: 240px — used by the rail's outer frame, the hover-expansion target, the always-on width, and the content-main left-padding in always-on mode
+//$action-sidebar-width-collapsed: 64px — used by the resting inner-block width and the content-main left-padding in minimal mode
+//$action-sidebar-content-slot: 1100px — editable content column; .content-main max-width is now derived as content_slot + collapsed_width
 
-  @media only screen and (max-width: $desktop-wide-breakpoint) {
-    flex-direction: column;
-  }
-}
+$action-sidebar-width-expanded: 190px;
+$action-sidebar-width-collapsed: 64px;
+$action-sidebar-content-slot: 1100px;
 
 // Desktop left rail — fixed positioning frame, full-height, but only the
 // inner item-list block captures hover. Empty area is pointer-events:none so
 // the top header stays clickable behind it.
 .action-sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 240px;            // reserve enough to host the expanded inner block
-  z-index: 60;
-  pointer-events: none;    // empty space doesn't intercept clicks/hovers
   display: flex;
   flex-direction: column;
-  justify-content: center; // vertically center the item block
+  align-items: center;
+  width: $action-sidebar-width-expanded; // reserve enough to host the expanded inner block
+  z-index: 60;
+  pointer-events: none; // empty space doesn't intercept clicks/hovers
+
 
   @media only screen and (max-width: $desktop-wide-breakpoint) {
     // Hidden on mobile: the mobile drawer (hamburger) carries these items
@@ -36,18 +28,33 @@
 }
 
 // The actual interactive item block — wraps only the items, not the whole height.
+//
+// Two body-level modes drive the rail's display state:
+//   body.actionside-bar-on     → always expanded (icons + labels visible all the time)
+//   body.actionsidebar-minimal → icon-only collapsed rail; expands on hover/focus
+// `actionside-bar-on` is the default applied in templates/base.html. Both the
+// hover-to-expand width animation and the label fade-in are gated on the
+// minimal class so that the always-expanded mode (or no mode) doesn't trigger
+// a needless layout jump when the user mouses across the rail.
 .action-sidebar-inner {
   pointer-events: auto;    // restore interactivity inside the block
-  width: 64px;
+  width: $action-sidebar-width-collapsed;
   overflow: hidden;
   // Exit (mouse-away) is fast — snaps back to icons.
   transition: width 0.08s ease-out;
 
-  &:hover,
-  &:focus-within {
-    width: 240px;
+  // Hover-to-expand only fires in minimal mode.
+  body.actionsidebar-minimal &:hover,
+  body.actionsidebar-minimal &:focus-within {
+    width: $action-sidebar-width-expanded;
     // Enter is smoother.
     transition: width 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  // Always-expanded mode: no hover gate; the rail just sits open.
+  body.actionside-bar-on & {
+    width: $action-sidebar-width-expanded;
+    transition: none;
   }
 }
 
@@ -80,7 +87,8 @@
   display: flex;
   align-items: center;
   width: 100%;
-  height: 50px;
+  height: 42px;
+  font-size: var(--body-main-text-size);
   padding: 0 20px;       // 20 = (64-24)/2 → icon stays centered in collapsed rail
   border-radius: 8px;
   color: var(--color-white);
@@ -89,7 +97,6 @@
   // Reset button defaults so <button> rail items match anchor rail items
   background: transparent;
   border: 0;
-  font: inherit;
   text-align: left;
   cursor: pointer;
   transition: background-color 0.12s ease, color 0.12s ease;
@@ -135,7 +142,6 @@
     flex: 0 0 auto;
     margin-left: 14px;
     font-family: inherit;
-    font-size: 1rem;          // 16px
     font-weight: 400;          // normal idle; 700 when .active
     letter-spacing: 0;
     text-transform: none;
@@ -163,9 +169,11 @@
   }
 }
 
-// When the inner block expands, reveal every label/badge together with a smooth enter.
-.action-sidebar-inner:hover,
-.action-sidebar-inner:focus-within {
+// When the inner block expands in MINIMAL mode, reveal every label/badge
+// together with a smooth enter. Always-expanded mode handles labels via the
+// `body.actionside-bar-on` block below — no hover gate needed there.
+body.actionsidebar-minimal .action-sidebar-inner:hover,
+body.actionsidebar-minimal .action-sidebar-inner:focus-within {
   .action-sidebar-item {
     .action-label {
       opacity: 1;
@@ -179,6 +187,24 @@
   }
 }
 
+// Always-expanded mode: labels and badges are visible at rest (no hover gate),
+// and the main content gutter grows from 64px → 240px to keep the rail from
+// overlapping page content.
+body.actionside-bar-on {
+  .action-sidebar .action-sidebar-item {
+    .action-label {
+      opacity: 1;
+      transform: translateX(0);
+      transition: none;
+    }
+    .action-badge {
+      opacity: 1;
+      transition: none;
+    }
+  }
+
+}
+
 .action-icon {
   flex: 0 0 auto;
   width: 24px;
@@ -188,14 +214,6 @@
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-// Default label styles for places where it's rendered inline (mobile drawer)
-.action-label {
-  font-size: 0.92rem;
-  letter-spacing: 0.01em;
-  font-weight: 500;
-  color: inherit;
 }
 
 .action-badge {
@@ -208,23 +226,6 @@
   background: rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.85);
   font-weight: 700;
-}
-
-// Main content: capped width, centered, with a 64px gutter for the fixed rail
-.content-main {
-  flex: 1 1 auto;
-  width: 100%;
-  min-width: 0;
-  max-width: 1164px;        // 1100px content + 64px rail gutter
-  margin: 0 auto;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  @media only screen and (min-width: ($desktop-wide-breakpoint + 1)) {
-    padding-left: 64px;
-  }
 }
 
 // Dark-mode overrides handled via CSS vars in parts/_variables.scss
@@ -270,7 +271,6 @@
       opacity: 1;
       pointer-events: auto;
       padding: 0;
-      font-size: 0.92rem;
       font-weight: 500;
 
       &::before { display: none; }

@@ -111,7 +111,7 @@ $(function () {
     // LLM / AI features — only active when the server has LLM configured
     if ($('body').hasClass('llm-configured')) {
         var i18n = window.watchOverviewI18n || {};
-        var msgGenerating = i18n.generatingSummary || 'Generating summary…';
+        var msgGenerating = i18n.generatingSummary || 'Generating change summary…';
         var msgHistory    = i18n.gotoHistory     || 'Goto full history';
 
         // Reveal intent textarea on first keydown in the quick-add URL field

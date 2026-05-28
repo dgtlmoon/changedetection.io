@@ -1764,7 +1764,7 @@ msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"
 msgstr "팁: 설정에서 <strong>\"비밀번호 사용 시 공유 접근 허용\"</strong>을 활성화할 수 있습니다."
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Generating summary…"
+msgid "Generating change summary…"
 msgstr "요약 생성 중..."
 
 #: changedetectionio/blueprint/ui/templates/diff.html
