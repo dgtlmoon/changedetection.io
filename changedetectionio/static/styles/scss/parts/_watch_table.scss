@@ -44,6 +44,10 @@ body.has-queue {
 
   td {
     padding: $table-cell-padding;
+    &.buttons {
+      font-size: 12px;
+      white-space: nowrap;
+    }
     &.title-col {
       word-break: break-all;
       white-space: normal;
@@ -51,6 +55,11 @@ body.has-queue {
         margin-left: auto;
       }
     }
+
+    &.last-changed,&.last-checked {
+      text-align: center;
+    }
+
     a.external::after {
       content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
       margin: 0 3px 0 5px;
@@ -66,9 +75,10 @@ body.has-queue {
 
 
   th {
-    white-space: nowrap;
     padding: $table-cell-padding;
-
+    &#h-lastchanged, &#h-lastchecked {
+      text-align: center;
+    }
     a {
       font-weight: normal;
 
@@ -82,7 +92,8 @@ body.has-queue {
         }
       }
     }
-    #mute-pause {
+    &#mute-pause {
+      white-space: nowrap;
       > div {
         display: flex;
         justify-content: space-between;
@@ -154,10 +165,9 @@ body.has-queue {
 
 
   tr.has-error {
-    color: var(--color-watch-table-error);
-
     .error-text {
       display: block !important;
+      color: var(--color-watch-table-error);
     }
   }
 

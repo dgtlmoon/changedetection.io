@@ -131,4 +131,13 @@
           <div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div>
         {% endif %}
     </li>
+
+      {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
+      <li class="action-sidebar-li">
+        <span id="new-version-text">
+          <a href="https://changedetection.io">{{ _('A new version is available') }}</a>
+        </span>
+      </li>
+      {% endif %}
+
 </ul>
