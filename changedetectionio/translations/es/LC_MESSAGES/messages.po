@@ -2418,10 +2418,6 @@ msgstr ""
 "deshacer.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued size"
-msgstr "Tamaño de la cola"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
 msgstr "Buscando"
 
@@ -4395,6 +4391,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

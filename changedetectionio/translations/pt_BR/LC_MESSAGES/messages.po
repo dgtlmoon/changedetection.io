@@ -2397,10 +2397,6 @@ msgstr ""
 "desfeita.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued size"
-msgstr "Tamanho da fila"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
 msgstr "Pesquisando"
 
@@ -4367,6 +4363,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

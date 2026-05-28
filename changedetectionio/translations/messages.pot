@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.6\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-28 14:59+0200\n"
+"POT-Creation-Date: 2026-05-28 15:42+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2346,10 +2346,6 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued size"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
 msgstr ""
 
@@ -4308,6 +4304,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

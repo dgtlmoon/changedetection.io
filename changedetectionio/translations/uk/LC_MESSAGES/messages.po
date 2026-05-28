@@ -2379,10 +2379,6 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr "<p><strong>Ви впевнені, що хочете видалити вибрані завдання?</strong></p><p>Цю дію неможливо скасувати.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued size"
-msgstr "Розмір черги"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
 msgstr "Пошук"
 
@@ -4347,6 +4343,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

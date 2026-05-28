@@ -74,9 +74,11 @@ $(document).ready(function () {
     }
 
 
-    // Cache DOM elements for performance
+    // Cache DOM elements for performance.
+    // queue-size-int is a class (not an id) because the count is rendered in
+    // BOTH the desktop sidebar and the hamburger drawer — keep them in sync.
     const queueBubble = document.getElementById('queue-bubble');
-    const queueSizePagerInfoText = document.getElementById('queue-size-int');
+    const queueSizeNodes = document.querySelectorAll('.queue-size-int');
     // Only try to connect if authentication isn't required or user is authenticated
     // The 'is_authenticated' variable will be set in the template
     if (typeof is_authenticated !== 'undefined' ? is_authenticated : true) {
@@ -131,9 +133,8 @@ $(document).ready(function () {
 
             socket.on('queue_size', function (data) {
                 console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
-                if(queueSizePagerInfoText) {
-                    queueSizePagerInfoText.textContent = parseInt(data.q_length).toLocaleString() || 'None';
-                }
+                const formattedCount = parseInt(data.q_length).toLocaleString() || 'None';
+                queueSizeNodes.forEach(node => { node.textContent = formattedCount; });
                 document.body.classList.toggle('has-queue', parseInt(data.q_length) > 0);
 
                 // Update queue bubble in action sidebar

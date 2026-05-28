@@ -2366,10 +2366,6 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr "<p><strong>選択したウォッチを削除してもよいですか？</strong></p><p>この操作は元に戻せません。</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued size"
-msgstr "キューのサイズ"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
 msgstr "検索中"
 
@@ -4352,6 +4348,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

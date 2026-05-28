@@ -2351,10 +2351,6 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr "<p><strong>您確定要刪除所選的監測任務嗎？</strong></p><p>此動作無法復原。</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued size"
-msgstr "佇列大小"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
 msgstr "搜尋中"
 
@@ -4313,6 +4309,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

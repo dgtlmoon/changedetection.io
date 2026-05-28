@@ -2400,10 +2400,6 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr "<p><strong>Seçili izleyicileri silmek istediğinizden emin misiniz?</strong></p><p>Bu işlem geri alınamaz.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued size"
-msgstr "Sıraya alınmış boyut"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
 msgstr "Aranıyor"
 
@@ -4370,6 +4366,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
