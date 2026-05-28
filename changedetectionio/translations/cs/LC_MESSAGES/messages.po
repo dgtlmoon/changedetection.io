@@ -3917,10 +3917,6 @@ msgid "Settings sections"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "A new version is available"
-msgstr "Je dostupná nová verze"
-
-#: changedetectionio/templates/base.html
 msgid "Main navigation"
 msgstr ""
 
@@ -4320,6 +4316,10 @@ msgstr ""
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
 msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "A new version is available"
+msgstr "Je dostupná nová verze"
 
 #: changedetectionio/validate_url.py
 msgid "API Base URL is not a valid http(s) URL."

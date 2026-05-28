@@ -3963,10 +3963,6 @@ msgid "Settings sections"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "A new version is available"
-msgstr ""
-
-#: changedetectionio/templates/base.html
 msgid "Main navigation"
 msgstr ""
 
@@ -4371,6 +4367,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "A new version is available"
 msgstr ""
 
 #: changedetectionio/validate_url.py

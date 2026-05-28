@@ -3921,10 +3921,6 @@ msgid "Settings sections"
 msgstr "설정 섹션"
 
 #: changedetectionio/templates/base.html
-msgid "A new version is available"
-msgstr "새 버전이 있습니다"
-
-#: changedetectionio/templates/base.html
 msgid "Main navigation"
 msgstr ""
 
@@ -4334,6 +4330,10 @@ msgstr ""
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Settings"
 msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "A new version is available"
+msgstr "새 버전이 있습니다"
 
 #: changedetectionio/validate_url.py
 msgid "API Base URL is not a valid http(s) URL."
