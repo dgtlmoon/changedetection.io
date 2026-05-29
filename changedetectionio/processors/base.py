@@ -143,6 +143,7 @@ class difference_detection_processor():
         # In the case that the preferred fetcher was a browser config with custom connection URL..
         # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
         custom_browser_connection_url = None
+        use_playwright_fetcher = False  # Force playwright specifically when a named playwright server is selected
         if prefer_fetch_backend.startswith('extra_browser_'):
             (t, key) = prefer_fetch_backend.split('extra_browser_')
             connection = list(
@@ -150,6 +151,15 @@ class difference_detection_processor():
             if connection:
                 prefer_fetch_backend = 'html_webdriver'
                 custom_browser_connection_url = connection[0].get('browser_connection_url')
+
+        elif prefer_fetch_backend.startswith('extra_playwright_server_'):
+            (t, key) = prefer_fetch_backend.split('extra_playwright_server_', 1)
+            connection = list(
+                filter(lambda s: (s['playwright_server_name'] == key), self.datastore.data['settings']['requests'].get('extra_playwright_servers', [])))
+            if connection:
+                prefer_fetch_backend = 'html_webdriver'
+                custom_browser_connection_url = connection[0].get('playwright_server_url')
+                use_playwright_fetcher = True
 
         # PDF should be html_requests because playwright will serve it up (so far) in a embedded page
         # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
@@ -161,10 +171,11 @@ class difference_detection_processor():
         from changedetectionio import content_fetchers
         if hasattr(content_fetchers, prefer_fetch_backend):
             # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
-            if prefer_fetch_backend == 'html_webdriver' and self.watch.has_browser_steps:
-                # This is never supported in selenium anyway
-                logger.warning(
-                    "Using playwright fetcher override for possible puppeteer request in browsersteps, because puppetteer:browser steps is incomplete.")
+            if use_playwright_fetcher or (prefer_fetch_backend == 'html_webdriver' and self.watch.has_browser_steps):
+                # Extra playwright servers always use playwright; browser steps also require playwright over puppeteer
+                if not use_playwright_fetcher:
+                    logger.warning(
+                        "Using playwright fetcher override for possible puppeteer request in browsersteps, because puppetteer:browser steps is incomplete.")
                 from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
                 fetcher_obj = playwright_fetcher
             else:

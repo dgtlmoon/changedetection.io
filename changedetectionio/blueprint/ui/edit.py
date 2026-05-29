@@ -164,6 +164,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
 
+        for p in datastore.extra_playwright_servers:
+            form.fetch_backend.choices.append(p)
+
         form.fetch_backend.choices.append(("system", gettext('System settings default')))
 
         # form.browser_steps[0] can be assumed that we 'goto url' first

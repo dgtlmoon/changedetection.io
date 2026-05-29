@@ -995,6 +995,18 @@ class SingleExtraBrowser(Form):
         ValidateSimpleURL()
     ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
 
+class SingleExtraPlaywrightServer(Form):
+    playwright_server_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": _l("Name")})
+    playwright_server_url = StringField(_l('Playwright server URL'), [
+        validators.Optional(),
+        ValidateStartsWithRegex(
+            regex=r'^(wss?|ws)://',
+            flags=re.IGNORECASE,
+            message=_l('Playwright server URLs must start with wss:// or ws://')
+        ),
+        ValidateSimpleURL()
+    ], render_kw={"placeholder": "ws://my-playwright-server:3000", "size":50})
+
 class DefaultUAInputForm(Form):
     html_requests = StringField(_l('Plaintext requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
     if os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv("WEBDRIVER_URL"):
@@ -1021,6 +1033,7 @@ class globalSettingsRequestForm(Form):
 
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
+    extra_playwright_servers = FieldList(FormField(SingleExtraPlaywrightServer), min_entries=5)
 
     default_ua = FormField(DefaultUAInputForm, label=_l("Default User-Agent overrides"))
 
