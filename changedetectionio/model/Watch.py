@@ -401,7 +401,16 @@ class model(EntityPersistenceMixin, watch_base):
         if not fetcher_name or fetcher_name == 'system':
             fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
 
-        fetcher_class = getattr(content_fetchers, fetcher_name, None)
+        # Extra-browser / extra-playwright-server selections route to a real browser
+        # fetcher in processors/base.py; resolve them the same way (mirrors
+        # pluggy_interface.get_fetcher_capabilities).
+        if fetcher_name.startswith('extra_playwright_server_'):
+            from changedetectionio.content_fetchers.playwright import fetcher as fetcher_class
+        elif fetcher_name.startswith('extra_browser_'):
+            fetcher_class = getattr(content_fetchers, 'html_webdriver', None)
+        else:
+            fetcher_class = getattr(content_fetchers, fetcher_name, None)
+
         if fetcher_class is None:
             return False
 

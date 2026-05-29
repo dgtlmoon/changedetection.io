@@ -466,9 +466,21 @@ def get_fetcher_capabilities(watch, datastore):
     # Get the fetcher class
     from changedetectionio import content_fetchers
 
-    # Try to get from built-in fetchers first
-    if hasattr(content_fetchers, fetcher_name):
+    # A watch's "Fetch Method" may be an extra-browser or extra-playwright-server
+    # selection (e.g. "extra_playwright_server_<name>"). These are routed to a real
+    # browser fetcher in processors/base.py, so resolve them the same way here -
+    # otherwise capability flags (screenshots etc.) are all reported as False.
+    fetcher_class = None
+    if fetcher_name.startswith('extra_playwright_server_'):
+        # Always forced to the Playwright fetcher (see processors/base.py)
+        from changedetectionio.content_fetchers.playwright import fetcher as fetcher_class
+    elif fetcher_name.startswith('extra_browser_'):
+        # Uses the configured webdriver/chrome fetcher
+        fetcher_class = getattr(content_fetchers, 'html_webdriver', None)
+    elif hasattr(content_fetchers, fetcher_name):
         fetcher_class = getattr(content_fetchers, fetcher_name)
+
+    if fetcher_class is not None:
         return {
             'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
             'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
