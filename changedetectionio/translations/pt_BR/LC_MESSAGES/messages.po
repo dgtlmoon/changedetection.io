@@ -2321,6 +2321,10 @@ msgstr "Monitoramento adicionado."
 msgid "records"
 msgstr "registros"
 
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "todo - tag name etc"
+msgstr ""
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "Changedetection.io pode monitorar mais do que apenas páginas web! Veja nossos plugins!"

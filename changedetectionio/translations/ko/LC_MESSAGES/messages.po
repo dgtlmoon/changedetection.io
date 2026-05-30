@@ -2283,6 +2283,10 @@ msgstr "모니터링이 추가되었습니다."
 msgid "records"
 msgstr "항목"
 
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "todo - tag name etc"
+msgstr ""
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "changedetection.io는 웹페이지 외에도 다양한 대상을 모니터링할 수 있습니다. 플러그인을 확인해 보세요."

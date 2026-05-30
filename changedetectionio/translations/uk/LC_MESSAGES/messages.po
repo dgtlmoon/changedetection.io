@@ -2305,6 +2305,10 @@ msgstr "Завдання додано."
 msgid "records"
 msgstr "записів"
 
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "todo - tag name etc"
+msgstr ""
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "Changedetection.io може моніторити більше, ніж просто веб-сторінки! Дивіться наші плагіни!"

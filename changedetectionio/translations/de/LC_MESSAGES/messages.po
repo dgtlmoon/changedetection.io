@@ -2324,6 +2324,10 @@ msgstr "Überwachung hinzugefügt."
 msgid "records"
 msgstr "Einträge"
 
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "todo - tag name etc"
+msgstr ""
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr ""
