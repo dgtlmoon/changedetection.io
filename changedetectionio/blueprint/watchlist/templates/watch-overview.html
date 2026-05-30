@@ -242,16 +242,18 @@ window.watchOverviewI18n = {
                     <div class="flex-wrapper">
                     {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
                         <div>
-                            {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
-                            <img alt="Favicon thumbnail"
-                                 class="favicon lazy-favicon"
-                                 loading="lazy"
-                                 decoding="async"
-                                 fetchpriority="low"
-                                 {% if favicon %}
-                                 data-src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"
-                                 {% endif %}
-                                 src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E'>
+                            <a target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">
+                                {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
+                                <img alt="Favicon thumbnail"
+                                     class="favicon lazy-favicon"
+                                     loading="lazy"
+                                     decoding="async"
+                                     fetchpriority="low"
+                                     {% if favicon %}
+                                     data-src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"
+                                     {% endif %}
+                                     src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E'>
+                            </a>
                         </div>
                     {%  endif %}
                         <div>
@@ -264,7 +266,9 @@ window.watchOverviewI18n = {
                                 {% else %}
                                     {{ watch.get('title') or watch.link }}
                                 {% endif %}
-                               <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
+                                {% if not ui_settings.get('favicons_enabled') %}
+                                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
+                                {% endif %}
                             </span>
 
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}

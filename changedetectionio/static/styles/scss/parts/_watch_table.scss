@@ -1,4 +1,4 @@
-$table-cell-padding: 5px 10px;
+$table-cell-padding: 8px 10px;
 
 /* table related */
 #stats_row {
@@ -224,4 +224,8 @@ body.has-queue {
       }
     }
   }
+}
+
+.group-overview-table {
+  width: 100%;
 }

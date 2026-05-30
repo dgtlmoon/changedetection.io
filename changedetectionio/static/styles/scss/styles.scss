@@ -1118,3 +1118,17 @@ ul#highlightSnippetActions {
 }
 
 
+.box {
+  color: var(--color-white);
+  border-width: 1px;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.25);
+  border-image: initial;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+header {
+  color: var(--color-white);
+}

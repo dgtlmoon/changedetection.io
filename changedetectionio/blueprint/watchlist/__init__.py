@@ -100,6 +100,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             wcag_text_color=processors.wcag_text_color,
             guid=datastore.data['app_guid'],
             has_proxies=proxy_list,
+            header=_("todo - tag name etc"),
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
             now_time_server=round(time.time()),
             pagination=pagination,

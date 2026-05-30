@@ -177,10 +177,10 @@
           </aside>
           {% endif %}
           <div class="content-main">
-            <header>
-              {% block header %}{% endblock %}
-            </header>
 
+            {% if header %}
+              <header><h3>{{ header }}</h3></header>
+            {% endif %}
             {% with messages = get_flashed_messages(with_categories = true) %}
             {% if messages %}
               <ul class="messages">
