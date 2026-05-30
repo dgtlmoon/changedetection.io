@@ -693,7 +693,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '',
 # Live-preview extraction (current content, no diff)
 # ---------------------------------------------------------------------------
 
-def preview_extract(watch, datastore, content: str, metadata: str = '') -> dict | None:
+def preview_extract(watch, datastore, content: str) -> dict | None:
     """
     For the live-preview endpoint: extract relevant information from the
     *current* page content according to the watch's intent.
@@ -717,7 +717,7 @@ def preview_extract(watch, datastore, content: str, metadata: str = '') -> dict 
     title = watch.get('page_title') or watch.get('title') or ''
 
     system_prompt = build_preview_system_prompt()
-    user_prompt = build_preview_prompt(intent, content, url=url, title=title, metadata=metadata)
+    user_prompt = build_preview_prompt(intent, content, url=url, title=title)
     settings = get_llm_settings(datastore)
 
     try:

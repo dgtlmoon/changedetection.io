@@ -185,13 +185,9 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
     # Results are NOT cached back to the real watch.
     llm_evaluation = None
     try:
-        from changedetectionio.llm.evaluator import preview_extract, compute_llm_enrichment
+        from changedetectionio.llm.evaluator import preview_extract
         if text_after_filter and text_after_filter.strip() not in ('', 'Empty content'):
-            # Append verbatim structured metadata (JSON-LD/OpenGraph) from the raw HTML so
-            # preview answers about SKUs/IDs/availability work even when the visible text dropped them.
-            _llm_raw_html = getattr(getattr(update_handler, 'fetcher', None), 'content', '') or ''
-            _llm_metadata = compute_llm_enrichment(tmp_watch, datastore, _llm_raw_html, text_after_filter)
-            llm_evaluation = preview_extract(tmp_watch, datastore, content=text_after_filter, metadata=_llm_metadata)
+            llm_evaluation = preview_extract(tmp_watch, datastore, content=text_after_filter)
     except Exception as e:
         logger.warning(f"LLM preview evaluation failed for {watch_uuid}: {e}")
 

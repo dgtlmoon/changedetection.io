@@ -102,18 +102,13 @@ def build_eval_system_prompt() -> str:
     )
 
 
-def build_preview_prompt(intent: str, content: str, url: str = '', title: str = '',
-                         metadata: str = '') -> str:
+def build_preview_prompt(intent: str, content: str, url: str = '', title: str = '') -> str:
     """
     Build the user message for a live-preview extraction call.
     Unlike build_eval_prompt (which analyses a diff), this asks the LLM to
     extract relevant information from the *current* page content — giving the
     user a direct answer to their intent so they can verify it makes sense
     before saving.
-
-    `metadata` is verbatim current-state structured data (JSON-LD/OpenGraph) appended
-    so intents about SKUs / IDs / availability can be answered even when the visible
-    text has dropped them.
     """
     parts = []
     if url:
@@ -122,8 +117,6 @@ def build_preview_prompt(intent: str, content: str, url: str = '', title: str = 
         parts.append(f"Page title: {title}")
     parts.append(f"Intent / question: {intent}")
     parts.append(f"\nPage content:\n{content[:6_000]}")
-    if metadata:
-        parts.append(f"\n{metadata}")
     return '\n'.join(parts)
 
 

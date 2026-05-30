@@ -8,7 +8,6 @@ from changedetectionio.llm.prompt_builder import (
     build_eval_prompt,
     build_eval_system_prompt,
     build_change_summary_prompt,
-    build_preview_prompt,
     build_setup_prompt,
     build_setup_system_prompt,
     SNAPSHOT_CONTEXT_CHARS,
@@ -109,23 +108,11 @@ class TestMetadataEnrichmentInPrompts:
         without = build_change_summary_prompt(diff='- a\n+ b', custom_prompt='x')
         assert 'Structured metadata found' not in without
 
-    def test_preview_prompt_includes_metadata(self):
-        prompt = build_preview_prompt(intent='what is the SKU?', content='some page text',
-                                      metadata=self.METADATA)
-        assert self.METADATA in prompt
-        assert '"sku":"12345"' in prompt
-
-    def test_preview_prompt_unchanged_without_metadata(self):
-        without = build_preview_prompt(intent='q', content='page text')
-        assert 'Structured metadata found' not in without
-
     def test_empty_metadata_appends_nothing(self):
         # Falsy metadata ('') must not add a trailing block/whitespace section
         assert build_eval_prompt(intent='i', diff='d', metadata='') == build_eval_prompt(intent='i', diff='d')
         assert (build_change_summary_prompt(diff='d', custom_prompt='c', metadata='')
                 == build_change_summary_prompt(diff='d', custom_prompt='c'))
-        assert (build_preview_prompt(intent='i', content='c', metadata='')
-                == build_preview_prompt(intent='i', content='c'))
 
 
 class TestBuildEvalSystemPrompt:
