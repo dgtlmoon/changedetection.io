@@ -1,0 +1,124 @@
+# =============================================================================
+# Test environment for the "Extra Playwright Servers" feature
+# =============================================================================
+#
+# Spins up changedetection.io (local dev image) plus TWO remote browser servers
+# so you can exercise per-watch "Fetch Method" selection against different
+# servers.
+#
+#   Usage:
+#     # build the local image first (if you haven't):
+#     #   docker build -t changedetection-io:local .
+#     docker compose -f docker-compose.test-playwright.yml up -d
+#
+#   Then open http://127.0.0.1:5000  ->  Settings > Captcha/Proxies >
+#   "Extra Playwright Servers" and add the two servers below. Each one then
+#   appears as a selectable "Fetch Method" when editing a watch.
+#
+# -----------------------------------------------------------------------------
+# IMPORTANT: what a "Playwright server" actually is here
+# -----------------------------------------------------------------------------
+# Despite the UI label, changedetection.io connects to these servers with
+# Playwright's `connect_over_cdp()` (see changedetectionio/content_fetchers/
+# playwright.py). That speaks the Chrome DevTools Protocol (CDP) over a
+# websocket, and it connects to the ROOT path "/" of the URL you enter.
+#
+# So a compatible server must be a CDP *gateway* that accepts a connection at
+# "/" and hands back a browser session. browserless and sockpuppetbrowser both
+# do this. See the "Microsoft Playwright" note at the bottom for why the
+# upstream microsoft/playwright image is NOT compatible.
+#
+# Connection URLs to paste into the UI (host = the service name on this network):
+#   browserless       ->  ws://playwright-browserless:3000?token=changeme123
+#   sockpuppetbrowser ->  ws://playwright-sockpuppet:3000
+# =============================================================================
+
+services:
+
+  changedetection:
+    image: changedetection-io:local
+    container_name: cdio-test
+    hostname: changedetection
+    ports:
+      # Bound to localhost only. If you already run the standalone `changedetection`
+      # container on 5000, stop it first (`docker rm -f changedetection`) or change this.
+      - 127.0.0.1:5000:5000
+    volumes:
+      - changedetection-test-data:/datastore
+    depends_on:
+      - playwright-browserless
+      - playwright-sockpuppet
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # browserless (https://github.com/browserless/browserless)
+  # Exposes a CDP endpoint at the root path, gated by a token.
+  # UI URL:  ws://playwright-browserless:3000?token=changeme123
+  # ---------------------------------------------------------------------------
+  playwright-browserless:
+    image: ghcr.io/browserless/chromium:latest
+    container_name: cdio-test-browserless
+    hostname: playwright-browserless
+    environment:
+      - TOKEN=changeme123
+      # Optional tuning:
+      # - CONCURRENT=10
+      # - TIMEOUT=60000
+    # Expose on the host too, only if you want to poke it directly:
+    # ports:
+    #   - 127.0.0.1:3000:3000
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # sockpuppetbrowser (https://github.com/dgtlmoon/sockpuppetbrowser)
+  # The browser server written by the changedetection.io author. Chrome wrapped
+  # in a CDP gateway; accepts a connection at the root path (no token).
+  # UI URL:  ws://playwright-sockpuppet:3000
+  # ---------------------------------------------------------------------------
+  playwright-sockpuppet:
+    image: dgtlmoon/sockpuppetbrowser:latest
+    container_name: cdio-test-sockpuppet
+    hostname: playwright-sockpuppet
+    cap_add:
+      # SYS_ADMIN can be required for Chrome's sandbox inside a container.
+      # https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md
+      - SYS_ADMIN
+    environment:
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1024
+      - SCREEN_DEPTH=16
+      - MAX_CONCURRENT_CHROME_PROCESSES=10
+    # ports:
+    #   - 127.0.0.1:3001:3000
+    restart: unless-stopped
+
+# =============================================================================
+# NOT COMPATIBLE: a "Microsoft Playwright" server (microsoft/playwright)
+# =============================================================================
+# The upstream image (mcr.microsoft.com/playwright) cannot be used as a server
+# for this feature, for two independent reasons:
+#
+#   1. `npx playwright run-server` speaks the *Playwright* wire protocol, which
+#      requires the client to call `connect()`. changedetection.io uses
+#      `connect_over_cdp()` (CDP) instead, so the protocols don't match.
+#
+#   2. Running raw Chrome from that image with
+#         --remote-debugging-port=3000 --remote-debugging-address=0.0.0.0
+#      does not work either:
+#        a. Chrome ignores --remote-debugging-address and binds the debug port
+#           to 127.0.0.1 only, so it is unreachable from another container.
+#        b. Even after forwarding the port, `connect_over_cdp("ws://host:3000")`
+#           opens the websocket at the ROOT path "/". Raw Chrome only serves CDP
+#           at a dynamic /devtools/browser/<guid> path, so "/" returns 404.
+#        c. Chrome's DNS-rebinding protection also rejects requests whose Host
+#           header is a non-localhost hostname.
+#      The feature's form additionally only accepts ws:// / wss:// URLs, so the
+#      http:// endpoint-discovery path of connect_over_cdp can't be used.
+#
+# In short: this feature needs a CDP *gateway* that accepts a connection at "/"
+# (browserless / sockpuppetbrowser). The bare microsoft/playwright image is not
+# one. Use one of the two services above instead.
+# =============================================================================
+
+volumes:
+  changedetection-test-data:

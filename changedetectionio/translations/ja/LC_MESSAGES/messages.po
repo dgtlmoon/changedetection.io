@@ -746,6 +746,22 @@ msgid ""
 msgstr "認証付きSOCKS5プロキシは「プレーンリクエスト」フェッチャーのみサポートしています。他のフェッチャーではIPアクセスをホワイトリストに登録してください。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Extra Playwright Servers"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Connect to additional self-hosted Playwright browser servers. Useful for running browsers in different geolocations "
+"or with different configurations."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Each server will appear as a selectable \"Fetch Method\" in the watch settings. The URL should point to a running "
+"Playwright server (e.g."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "稼働時間："
 
@@ -3018,6 +3034,14 @@ msgstr "ブラウザ接続URL"
 #: changedetectionio/forms.py
 msgid "Browser URLs must start with wss:// or ws://"
 msgstr "ブラウザURLはwss://またはws://で始まる必要があります"
+
+#: changedetectionio/forms.py
+msgid "Playwright server URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Playwright server URLs must start with wss:// or ws://"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Plaintext requests"

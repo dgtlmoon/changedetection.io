@@ -369,6 +369,15 @@ nav
                     </p>
                     {{ render_fieldlist_with_inline_errors(form.requests.form.extra_browsers) }}
                 </div>
+                <div class="pure-control-group" id="extra-playwright-servers-setting">
+                    <p>
+                    <span class="pure-form-message-inline"><strong>{{ _('Extra Playwright Servers') }}</strong></span><br>
+                    <span class="pure-form-message-inline">{{ _('Connect to additional self-hosted Playwright browser servers. Useful for running browsers in different geolocations or with different configurations.') }}</span><br>
+                    <span class="pure-form-message-inline">{{ _('Each server will appear as a selectable "Fetch Method" in the watch settings. The URL should point to a running Playwright server (e.g.') }} <code>ws://my-server:3000</code>).
+                    </span>
+                    </p>
+                    {{ render_fieldlist_with_inline_errors(form.requests.form.extra_playwright_servers) }}
+                </div>
             </div>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}

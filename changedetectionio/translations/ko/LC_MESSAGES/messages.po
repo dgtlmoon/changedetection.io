@@ -741,6 +741,22 @@ msgid ""
 msgstr "인증이 필요한 SOCKS5 프록시는 'plain requests' 가져오기 방식에서만 지원됩니다. 다른 가져오기 방식에서는 대신 IP 접근을 허용해야 합니다."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Extra Playwright Servers"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Connect to additional self-hosted Playwright browser servers. Useful for running browsers in different geolocations "
+"or with different configurations."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Each server will appear as a selectable \"Fetch Method\" in the watch settings. The URL should point to a running "
+"Playwright server (e.g."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "가동 시간:"
 
@@ -3009,6 +3025,14 @@ msgstr "브라우저 연결 URL"
 #: changedetectionio/forms.py
 msgid "Browser URLs must start with wss:// or ws://"
 msgstr "브라우저 URL은 wss:// 또는 ws://로 시작해야 합니다."
+
+#: changedetectionio/forms.py
+msgid "Playwright server URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Playwright server URLs must start with wss:// or ws://"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Plaintext requests"
