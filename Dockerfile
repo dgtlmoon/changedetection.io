@@ -86,6 +86,7 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.vendor="changedetection.io"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     libxslt1.1 \
     # For presenting price amounts correctly in the restock/price detection overview
     locales \
@@ -136,6 +137,8 @@ ENV LOGGER_LEVEL="$LOGGER_LEVEL"
 
 # Default
 ENV LC_ALL=en_US.UTF-8
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl -fsS "http://127.0.0.1:${PORT:-5000}/" > /dev/null
 
 WORKDIR /app
 
