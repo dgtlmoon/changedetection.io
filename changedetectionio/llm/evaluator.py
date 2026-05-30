@@ -68,6 +68,43 @@ def _get_max_input_chars(datastore) -> int:
     return _DEFAULT_MAX_INPUT_CHARS
 
 
+def compute_llm_enrichment(watch, datastore, raw_html: str, base_text: str) -> str:
+    """
+    Collect verbatim structured-metadata enrichment (via the llm_context_enrich
+    plugin hook) to append to an LLM prompt, or '' when there's nothing usable.
+
+    Sizing is governed by the single configurable budget, max_input_chars — there is
+    no hardcoded cap. If the enrichment would push base_text + metadata over that
+    budget it is DROPPED (the diff/content alone still goes through), so adding the
+    feature can never turn a previously-working call into an over-size failure.
+
+    The result is deterministic for a given (raw_html, base_text, budget), so callers
+    that also fold it into a cache key (the summary cache) stay consistent.
+    """
+    if not raw_html:
+        return ''
+    try:
+        from changedetectionio.pluggy_interface import collect_llm_context_enrichment
+        meta = collect_llm_context_enrichment(watch, raw_html, datastore)
+    except Exception as e:
+        logger.debug(f"{watch.get('uuid')} - LLM - enrichment collection failed: {e}")
+        return ''
+    if not meta:
+        return ''
+
+    max_chars = _get_max_input_chars(datastore)
+    if len(base_text or '') + len(meta) > max_chars:
+        logger.debug(
+            f"{watch.get('uuid')} - LLM - enrichment of {len(meta)} bytes of metadata "
+            f"DROPPED: would exceed max_input_chars budget ({len(base_text or '')} + "
+            f"{len(meta)} > {max_chars})"
+        )
+        return ''
+
+    logger.debug(f"{watch.get('uuid')} - LLM - enrichening query/prompt with {len(meta)} bytes of metadata")
+    return meta
+
+
 class LLMInputTooLargeError(Exception):
     pass
 
@@ -541,7 +578,8 @@ class DiffPrefs:
 
 
 def build_summary_cache_prompt(effective_prompt: str, max_summary_tokens: int,
-                                prefs: DiffPrefs = None, model: str = '') -> str:
+                                prefs: DiffPrefs = None, model: str = '',
+                                metadata: str = '') -> str:
     """
     Compose the full cache-key string passed to save/get_llm_diff_summary.
 
@@ -553,6 +591,10 @@ def build_summary_cache_prompt(effective_prompt: str, max_summary_tokens: int,
     The active model name is folded into the key so switching models
     (e.g. qwen3 → gpt-4o) invalidates stale summaries that were generated
     by a different model with potentially different phrasing/quality.
+
+    `metadata` (the appended structured-data block) is folded in too: two checks can
+    produce the same text diff but different current metadata, and a stale cached
+    summary must not be served when the appended facts have changed.
     """
     if prefs is None:
         prefs = DiffPrefs()
@@ -562,10 +604,12 @@ def build_summary_cache_prompt(effective_prompt: str, max_summary_tokens: int,
         + f'\x00sys:{build_change_summary_system_prompt()}'
         + f'\x00max_tokens:{max_summary_tokens}'
         + f'\x00model:{model}'
+        + f'\x00meta:{metadata}'
     )
 
 
-def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') -> str:
+def summarise_change(watch, datastore, diff: str, current_snapshot: str = '',
+                     metadata: str = '') -> str:
     """
     Generate a plain-language summary of the change using the watch's
     llm_change_summary prompt (cascades from tag if not set on watch).
@@ -603,6 +647,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
         current_snapshot=current_snapshot,
         url=url,
         title=title,
+        metadata=metadata,
     )
 
     settings = get_llm_settings(datastore)
@@ -648,7 +693,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
 # Live-preview extraction (current content, no diff)
 # ---------------------------------------------------------------------------
 
-def preview_extract(watch, datastore, content: str) -> dict | None:
+def preview_extract(watch, datastore, content: str, metadata: str = '') -> dict | None:
     """
     For the live-preview endpoint: extract relevant information from the
     *current* page content according to the watch's intent.
@@ -672,7 +717,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
     title = watch.get('page_title') or watch.get('title') or ''
 
     system_prompt = build_preview_system_prompt()
-    user_prompt = build_preview_prompt(intent, content, url=url, title=title)
+    user_prompt = build_preview_prompt(intent, content, url=url, title=title, metadata=metadata)
     settings = get_llm_settings(datastore)
 
     try:
@@ -704,12 +749,14 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
 # Per-change evaluation
 # ---------------------------------------------------------------------------
 
-def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> dict | None:
+def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '',
+                    metadata: str = '') -> dict | None:
     """
     Evaluate whether `diff` matches the watch's intent.
     Returns {'important': bool, 'summary': str} or None if LLM not configured / no intent.
 
-    Results are cached by (intent, diff) hash — each unique diff is evaluated exactly once.
+    Results are cached by (intent, diff, metadata) hash — each unique diff+metadata is
+    evaluated exactly once. `metadata` is the appended verbatim structured-data block.
     """
     cfg = _runtime_llm_config(datastore)
     if not cfg:
@@ -725,7 +772,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
     _check_input_size(diff, _get_max_input_chars(datastore))
 
     # Cache lookup — evaluations are deterministic once cached
-    cache_key = hashlib.sha256(f"{intent}||{diff}".encode()).hexdigest()
+    cache_key = hashlib.sha256(f"{intent}||{diff}||{metadata}".encode()).hexdigest()
     cache = watch.get('llm_evaluation_cache') or {}
     if cache_key in cache:
         logger.debug(f"LLM cache hit for {watch.get('uuid')} key={cache_key[:8]}")
@@ -758,6 +805,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         current_snapshot=current_snapshot,
         url=url,
         title=title,
+        metadata=metadata,
     )
 
     settings = get_llm_settings(datastore)
