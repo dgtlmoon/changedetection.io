@@ -743,6 +743,22 @@ msgid ""
 msgstr "带认证的 SOCKS5 代理仅支持“明文请求”抓取器，其他抓取器请改为白名单 IP"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Extra Playwright Servers"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Connect to additional self-hosted Playwright browser servers. Useful for running browsers in different geolocations "
+"or with different configurations."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Each server will appear as a selectable \"Fetch Method\" in the watch settings. The URL should point to a running "
+"Playwright server (e.g."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr ""
 
@@ -3004,6 +3020,14 @@ msgstr "浏览器连接 URL"
 #: changedetectionio/forms.py
 msgid "Browser URLs must start with wss:// or ws://"
 msgstr "浏览器 URL 必须以 wss:// 或 ws:// 开头"
+
+#: changedetectionio/forms.py
+msgid "Playwright server URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Playwright server URLs must start with wss:// or ws://"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Plaintext requests"

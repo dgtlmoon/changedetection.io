@@ -754,6 +754,22 @@ msgstr ""
 "необхідно додати IP до білого списку"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Extra Playwright Servers"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Connect to additional self-hosted Playwright browser servers. Useful for running browsers in different geolocations "
+"or with different configurations."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Each server will appear as a selectable \"Fetch Method\" in the watch settings. The URL should point to a running "
+"Playwright server (e.g."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr ""
 
@@ -3031,6 +3047,14 @@ msgstr "URL підключення браузера"
 #: changedetectionio/forms.py
 msgid "Browser URLs must start with wss:// or ws://"
 msgstr "URL браузера повинні починатися з wss:// або ws://"
+
+#: changedetectionio/forms.py
+msgid "Playwright server URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Playwright server URLs must start with wss:// or ws://"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Plaintext requests"

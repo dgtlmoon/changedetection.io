@@ -777,6 +777,22 @@ msgstr ""
 "buscadores, en su lugar, debe incluir en la lista blanca el acceso IP"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Extra Playwright Servers"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Connect to additional self-hosted Playwright browser servers. Useful for running browsers in different geolocations "
+"or with different configurations."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Each server will appear as a selectable \"Fetch Method\" in the watch settings. The URL should point to a running "
+"Playwright server (e.g."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "Tiempo de actividad:"
 
@@ -3072,6 +3088,14 @@ msgstr "URL de conexión del navegador"
 #: changedetectionio/forms.py
 msgid "Browser URLs must start with wss:// or ws://"
 msgstr "Las URL del navegador deben comenzar con wss:// o ws://"
+
+#: changedetectionio/forms.py
+msgid "Playwright server URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Playwright server URLs must start with wss:// or ws://"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Plaintext requests"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-25 18:47+0200\n"
+"POT-Creation-Date: 2026-05-30 12:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -735,6 +735,22 @@ msgstr ""
 msgid ""
 "SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
 "whitelist the IP access instead"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Extra Playwright Servers"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Connect to additional self-hosted Playwright browser servers. Useful for running browsers in different geolocations "
+"or with different configurations."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Each server will appear as a selectable \"Fetch Method\" in the watch settings. The URL should point to a running "
+"Playwright server (e.g."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -2997,6 +3013,14 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Browser URLs must start with wss:// or ws://"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Playwright server URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Playwright server URLs must start with wss:// or ws://"
 msgstr ""
 
 #: changedetectionio/forms.py
