@@ -56,7 +56,7 @@ services:
   #      - USE_X_SETTINGS: 1
   #
   #        Hides the `Referer` header so that monitored websites can't see the changedetection.io hostname.
-  #      - HIDE_REFERER: true
+  #      - HIDE_REFERER: 'true'
   #        
   #        Default number of parallel/concurrent fetchers
   #      - FETCH_WORKERS: 10
@@ -65,10 +65,10 @@ services:
   #      - MINIMUM_SECONDS_RECHECK_TIME: 3
   #
   #        If you want to watch local files file:///path/to/file.txt (careful! security implications!)
-  #      - ALLOW_FILE_URI: False
+  #      - ALLOW_FILE_URI: 'False'
   #
   #        For complete privacy if you don't want to use the 'check version' / telemetry service
-  #      - DISABLE_VERSION_CHECK: true
+  #      - DISABLE_VERSION_CHECK: 'true'
   #
   #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   #      - TZ: America/Los_Angeles
@@ -86,7 +86,7 @@ services:
   #      - SSL_PRIVKEY_FILE: privkey.pem
   #
   #        LISTEN_HOST / "host", Same as -h
-  #      - LISTEN_HOST: ::
+  #      - LISTEN_HOST: '::'
   #      - LISTEN_HOST: 0.0.0.0
 
   
