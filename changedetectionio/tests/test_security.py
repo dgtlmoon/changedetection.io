@@ -831,6 +831,16 @@ def test_unresolvable_hostname_is_allowed(client, live_server, monkeypatch):
         "Unresolvable hostname watch should appear in the watch overview list"
 
 
+@pytest.mark.parametrize("url", [
+    "https://example.com/{{watch_url}}",
+    "https://example.com/{% if foo %}bar{% endif %}",
+    "https://example.com/api?q={%22key%22:1}",
+])
+def test_is_safe_valid_url_accepts_valid_urls(url):
+    from changedetectionio.validate_url import is_safe_valid_url
+    assert is_safe_valid_url(url)
+
+
 def test_ghsa_rph4_96w6_q594_urlparse_urllib3_parser_differential_ssrf(client, live_server, monkeypatch, measure_memory_usage, datastore_path):
     """
     GHSA-rph4-96w6-q594: SSRF via urlparse/urllib3 parser differential.
