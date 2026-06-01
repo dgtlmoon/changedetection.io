@@ -82,6 +82,9 @@ body.has-queue {
       }
     }
 
+    .watch-text-info {
+      line-height: 1.5; /* lots of text and CSS tags etc here that can wrap at any time, add some breathability */
+    }
     /* Row with 'checking-now' */
     &.checking-now {
       td:first-child {

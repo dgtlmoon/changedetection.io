@@ -244,7 +244,6 @@ code {
   border-radius: 5px;
   padding: 2px 5px;
   margin-right: 4px;
-  line-height: 1.2rem;
 }
 
 /* Processor type badges - colors auto-generated from processor names */
@@ -1043,6 +1042,9 @@ ul {
     background-color: var(--color-background-button-error);
     color: #fff;
     opacity: 0.7;
+  }
+  &.price {
+    border: 1px solid var(--color-background-button-cancel);
   }
 
   svg {
