@@ -173,6 +173,30 @@ window.watchOverviewI18n = {
                 {%- endif -%}
             {%- endfor -%}
         </div>
+
+        <ul id="list-related-buttons">
+            <li id="post-list-with-errors" style="display: none;" >
+                <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error">{{ _('With errors') }} ({{ errored_count }})</a>
+            </li>
+            <li id="post-list-mark-views" style="display: none;" >
+                <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">{{ _('Mark all viewed') }}</a>
+            </li>
+        {%-  if active_tag_uuid -%}
+            <li id="post-list-mark-views-tag">
+                <a href="{{url_for('ui.mark_all_viewed', tag=active_tag_uuid) }}" class="pure-button button-tag " id="mark-all-viewed">{{ _("Mark all viewed in '%(title)s'", title=active_tag.title) }}</a>
+            </li>
+        {%-  endif -%}
+            <li id="post-list-unread" style="display: none;" >
+                <a href="{{url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}" class="pure-button button-tag">{{ _('Unread') }} (<span id="unread-tab-counter">{{ unread_changes_count }}</span>)</a>
+            </li>
+            <li>
+               <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">{{ _('Recheck all') }} {% if active_tag_uuid %}  {{ _("in '%(title)s'", title=active_tag.title) }}{%endif%}</a>
+            </li>
+            <li>
+                <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
+            </li>
+        </ul>
+
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
@@ -259,7 +283,7 @@ window.watchOverviewI18n = {
                     {%  endif %}
                         <div class="watch-text-info">
                             {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
-                                <span class="processor-badge processor-badge-{{ watch['processor'] }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</span>
+                                <a href="{{ url_for('watchlist.index', tag=active_tag_uuid, processor=watch['processor']) }}" class="processor-badge processor-badge-{{ watch['processor'] }}{{ ' active' if active_processor == watch['processor'] else '' }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</a>
                             {%- endif -%}
                             <span class="watch-title">
                                 {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
@@ -358,28 +382,6 @@ window.watchOverviewI18n = {
             {%- endfor -%}
             </tbody>
         </table>
-        <ul id="post-list-buttons">
-            <li id="post-list-with-errors" style="display: none;" >
-                <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error">{{ _('With errors') }} ({{ errored_count }})</a>
-            </li>
-            <li id="post-list-mark-views" style="display: none;" >
-                <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">{{ _('Mark all viewed') }}</a>
-            </li>
-        {%-  if active_tag_uuid -%}
-            <li id="post-list-mark-views-tag">
-                <a href="{{url_for('ui.mark_all_viewed', tag=active_tag_uuid) }}" class="pure-button button-tag " id="mark-all-viewed">{{ _("Mark all viewed in '%(title)s'", title=active_tag.title) }}</a>
-            </li>
-        {%-  endif -%}
-            <li id="post-list-unread" style="display: none;" >
-                <a href="{{url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}" class="pure-button button-tag">{{ _('Unread') }} (<span id="unread-tab-counter">{{ unread_changes_count }}</span>)</a>
-            </li>
-            <li>
-               <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">{{ _('Recheck all') }} {% if active_tag_uuid %}  {{ _("in '%(title)s'", title=active_tag.title) }}{%endif%}</a>
-            </li>
-            <li>
-                <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
-            </li>
-        </ul>
         {{ pagination.links }}
     </div>
     </form>

@@ -46,6 +46,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         sorted_watches = []
         with_errors = request.args.get('with_errors') == "1"
         unread_only = request.args.get('unread') == "1"
+        active_processor = request.args.get('processor', '').strip()
         errored_count = 0
         search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
         for uuid, watch in datastore.data['watching'].items():
@@ -56,6 +57,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 continue
 
             if active_tag_uuid and not active_tag_uuid in watch['tags']:
+                    continue
+
+            if active_processor and watch.get('processor') != active_processor:
                     continue
             if watch.get('last_error'):
                 errored_count += 1
@@ -91,6 +95,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             "watch-overview.html",
             active_tag=active_tag,
             active_tag_uuid=active_tag_uuid,
+            active_processor=active_processor,
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             datastore=datastore,
             errored_count=errored_count,

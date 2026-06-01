@@ -250,6 +250,21 @@ code {
 .processor-badge {
   @extend .inline-tag;
   font-weight: 900;
+
+  /* Used as a link to filter the watchlist by processor */
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+    opacity: 0.8;
+    cursor: pointer;
+  }
+
+  /* Highlight the processor currently used as a filter */
+  &.active {
+    outline: 2px solid var(--color-link);
+    outline-offset: 1px;
+  }
 }
 
 .watch-tag-list {
@@ -335,15 +350,13 @@ a.pure-button-selected {
   background: var(--color-background-button-tag);
   color: var(--color-text-button);
   font-size: 75%;
-  border-bottom-left-radius: initial;
-  border-bottom-right-radius: initial;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  border-radius: 6px;
   margin-right: 4px;
   &.active {
     background: var(--color-background-button-tag-active);
     font-weight: bold;
   }
+  margin-bottom: 1px;
 }
 
 .button-error {
