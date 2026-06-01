@@ -165,7 +165,7 @@ $watch-table-mobile-max: 767px;
     }
   }
   .pure-table td {
-    padding: 3px !important;
+    padding: 0 !important;
   }
 }
 
@@ -179,7 +179,9 @@ $watch-table-mobile-max: 767px;
 @media (min-width: 1600px) {
   .watch-table {
     td.last-checked, td.last-changed {
-      white-space: nowrap;
+      .innertext {
+        white-space: nowrap;
+      }
     }
   }
 }

@@ -44,7 +44,6 @@ body.has-queue {
 
   td,
   th {
-    padding: $table-cell-padding;
     vertical-align: middle;
   }
 
@@ -62,9 +61,16 @@ body.has-queue {
        onto its own row, centered beneath the three columns above it.
     */
     td.inline.title-col {
+      width: 100%;
       .grid-wrapper {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        /* Only 3 explicit columns. The optional restock column is placed into an
+           IMPLICIT 4th track (grid-column: 4 below), which is created only when
+           .restock-info-wrap is actually present. Reserving an explicit 4th track
+           here would leave a phantom 0.8rem gap-gutter after .status-icons on the
+           (common) watches that have no restock info. */
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-auto-columns: auto;
         align-items: center;
         gap: 0.8rem;
 

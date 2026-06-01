@@ -19,8 +19,6 @@ $action-sidebar-content-slot: 1100px;
   width: $action-sidebar-width-expanded; // reserve enough to host the expanded inner block
   z-index: 60;
   pointer-events: none; // empty space doesn't intercept clicks/hovers
-
-
   @media only screen and (max-width: $desktop-wide-breakpoint) {
     // Hidden on mobile: the mobile drawer (hamburger) carries these items
     display: none;
@@ -72,6 +70,24 @@ $action-sidebar-content-slot: 1100px;
   margin: 0;
   padding: 0;
   position: relative; // anchor for rollout label
+  color: var(--color-white);
+}
+
+// Live "is it alive?" activity monitor — compact scrolling strip under the queue count.
+// New data enters from the right (pulsing dot); old data scrolls left and fades out.
+// Drawn by static/js/queue-sparkline.js. Full rail width, deliberately short.
+.action-sidebar-li--spark {
+  padding: 2px 4px 4px;
+
+  .queue-spark {
+    display: block;
+    width: 100%;
+    height: 15px;
+    border-radius: 3px;
+    // Faint "screen" so the trace reads as a small instrument even when idle.
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
 }
 
 .action-sidebar-divider {

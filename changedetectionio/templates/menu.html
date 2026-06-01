@@ -11,6 +11,31 @@
     <li class="pure-menu-item " id="menu-mute">
         <a href="{{ url_for('settings.toggle_all_muted') }}" ><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}" class="icon icon-mute"{% if not all_muted %} style="opacity: 0.3"{% endif %}></a>
     </li>
+
+     <li class="pure-menu-item " >
+        <a href="{{ url_for('settings.settings_page') }}"
+
+           title="{{ _('Settings') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span class="action-label">{{ _('Settings') }}</span>
+        </a>
+    </li>
+
+    <li class="pure-menu-item " >
+        <a href="{{ url_for('imports.import_page') }}"
+
+           title="{{ _('Import') }}">
+            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 9 12 4 17 9"/>
+                <line x1="12" y1="4" x2="12" y2="16"/>
+            </svg>
+            <span class="action-label">{{ _('Import') }}</span>
+        </a>
+    </li>
 {% else %}
     <li class="pure-menu-item menu-collapsible">
         <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}"
