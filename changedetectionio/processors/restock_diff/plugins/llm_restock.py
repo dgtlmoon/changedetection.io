@@ -151,7 +151,7 @@ def _remove_chrome(html_content: str) -> str:
         return html_content
 
 
-def _strip_html(html_content: str) -> str:
+def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
     """HTML-to-text for LLM consumption.
 
     1. Extracts JSON-LD (structured product data) to prepend.
@@ -159,6 +159,9 @@ def _strip_html(html_content: str) -> str:
     3. Removes all remaining tags and collapses whitespace.
     JSON-LD is prepended so reliable price/availability data is always visible
     to the LLM regardless of how deep it sits in the page.
+
+    `max_chars` caps the total returned length — callers pass the app's
+    configured `max_input_chars` setting so the prompt size obeys the UI.
     """
     jsonld = _extract_jsonld(html_content)
 
@@ -182,9 +185,9 @@ def _strip_html(html_content: str) -> str:
     text = re.sub(r'\s+', ' ', text).strip()
 
     if jsonld:
-        budget = _MAX_CONTENT_CHARS - len(jsonld) - 1
+        budget = max_chars - len(jsonld) - 1
         return (jsonld + ' ' + text[:budget]).strip()
-    return text[:_MAX_CONTENT_CHARS]
+    return text[:max_chars]
 
 
 @hookimpl
@@ -197,7 +200,7 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         return None
 
     try:
-        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens, get_llm_settings
+        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens, get_llm_settings, _get_max_input_chars
         from changedetectionio.llm import client as llm_client
     except ImportError as e:
         logger.debug(f"LLM restock fallback: LLM libraries not available ({e})")
@@ -215,7 +218,9 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         logger.debug("LLM restock fallback: no LLM model configured or LLM disabled, skipping")
         return None
 
-    text_content = _strip_html(content) if content else ''
+    # Prompt size obeys the app's "Max input characters" setting (env → datastore → 100k)
+    max_input_chars = _get_max_input_chars(datastore)
+    text_content = _strip_html(content, max_chars=max_input_chars) if content else ''
     logger.debug(f"LLM restock fallback: stripped HTML to {len(text_content)} chars for {url}")
     if not text_content.strip():
         logger.debug("LLM restock fallback: no text content after stripping HTML")
@@ -227,6 +232,8 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
     if llm_intent:
         user_prompt += f'\n\nUser notification intent: {llm_intent}'
 
+    logger.debug(f"LLM System Prompt: {SYSTEM_PROMPT}")
+    logger.debug(f"LLM Prompt: {user_prompt}")
     try:
         raw, tokens, input_tokens, output_tokens = llm_client.completion(
             model=llm_cfg['model'],
@@ -236,10 +243,10 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             ],
             api_key=llm_cfg.get('api_key'),
             api_base=llm_cfg.get('api_base'),
-            # 80 fits a {price, currency, availability} JSON answer comfortably for cloud
+            # 150 fits a {price, currency, availability} JSON answer comfortably for cloud
             # models. Local reasoning models burn most of that on chain-of-thought before
             # the JSON lands — the multiplier scales it up only when provider_kind says so.
-            max_tokens=apply_local_token_multiplier(80, llm_cfg),
+            max_tokens=apply_local_token_multiplier(150, llm_cfg),
         )
 
         accumulate_global_tokens(
