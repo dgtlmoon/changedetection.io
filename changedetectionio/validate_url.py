@@ -1,6 +1,6 @@
 import ipaddress
+import re
 import socket
-from functools import lru_cache
 from loguru import logger
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode, quote, unquote
 
@@ -172,11 +172,13 @@ def is_llm_api_base_safe(api_base):
     return True, ''
 
 
+_JINJA2_MARKER_PATTERN = re.compile(r'{%[^}%]*%}|{{[^}]*}}')
+
+
 def is_safe_valid_url(test_url):
     from changedetectionio import strtobool
     from changedetectionio.jinja2_custom import render as jinja_render
     import os
-    import re
     import validators
 
     # Validate input type first - must be a non-empty string
@@ -219,7 +221,7 @@ def is_safe_valid_url(test_url):
     # Check the actual rendered URL in case of any Jinja markup
     # Only run jinja_render when the URL actually contains Jinja2 syntax - creating a new
     # ImmutableSandboxedEnvironment is expensive and is called once per watch per page load
-    if '{%' in test_url or '{{' in test_url:
+    if _JINJA2_MARKER_PATTERN.search(test_url):
         try:
             test_url = jinja_render(test_url)
         except Exception as e:
