@@ -291,9 +291,7 @@ window.watchOverviewI18n = {
                                 {% else %}
                                     {{ watch.get('title') or watch.link }}
                                 {% endif %}
-                                {% if not ui_settings.get('favicons_enabled') %}
-                                    <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
-                                {% endif %}
+                                <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
                             </span>
 
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
