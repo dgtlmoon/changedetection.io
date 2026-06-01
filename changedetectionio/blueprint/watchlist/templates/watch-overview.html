@@ -239,9 +239,9 @@ window.watchOverviewI18n = {
                 </td>
 
                 <td class="title-col inline">
-                    <div class="flex-wrapper">
+                    <div class="grid-wrapper">
                     {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
-                        <div>
+                        <div class="favicon">
                             <a target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">
                                 {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
                                 <img alt="Favicon thumbnail"
@@ -256,7 +256,7 @@ window.watchOverviewI18n = {
                             </a>
                         </div>
                     {%  endif %}
-                        <div>
+                        <div class="watch-text-info">
                             {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
                                 <span class="processor-badge processor-badge-{{ watch['processor'] }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</span>
                             {%- endif -%}
@@ -291,9 +291,9 @@ window.watchOverviewI18n = {
                             {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
                             {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
                     </div>
-
+{%- if watch['processor'] == 'restock_diff'  -%}
+    {#-  @todo - this could be injected somehow watch.extra_row_info or something -#}
                     <div class="restock-info-wrap">
-                        {%- if watch['processor'] == 'restock_diff'  -%}
                             {%- if watch.has_restock_info -%}
                                 <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="{{ _('Detecting restock and price') }}">
                                     <!-- maybe some object watch['processor'][restock_diff] or.. -->
@@ -319,8 +319,8 @@ window.watchOverviewI18n = {
                             {%- elif not watch.has_restock_info -%}
                                 <span class="restock-label error">{{ _('No information') }}</span>
                             {%- endif -%}
-                        {%- endif -%}
                     </div>
+{%- endif -%}
                 </div>
 
                 </td>

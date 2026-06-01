@@ -1,4 +1,6 @@
 $table-cell-padding: 8px 10px;
+/* below this width the optional restock info drops to its own row in the title cell */
+$title-col-stack-breakpoint: 1200px;
 
 /* table related */
 #stats_row {
@@ -33,17 +35,134 @@ body.has-queue {
 /*  width: 100%;*/
   font-size: var(--body-main-text-size);
 
+  td,
+  th {
+    padding: $table-cell-padding;
+    vertical-align: middle;
+  }
+
   tr {
+    color: var(--color-watch-table-row-text);
+
     &.unviewed {
       font-weight: bold;
     }
 
-    color: var(--color-watch-table-row-text);
+    /*
+       Title cell layout:
+       [favicon] [watch-text-info (grows)] [status-icons] [restock-info-wrap?]
+       The restock column is optional; below $title-col-stack-breakpoint it drops
+       onto its own row, centered beneath the three columns above it.
+    */
+    td.inline.title-col {
+      .grid-wrapper {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 6px;
+
+        > .favicon        { grid-column: 1; }
+        > .watch-text-info { grid-column: 2; }
+        > .status-icons   { grid-column: 3; }
+        > .restock-info-wrap { grid-column: 4; }
+
+        @media only screen and (max-width: $title-col-stack-breakpoint) {
+          > .restock-info-wrap {
+            grid-column: 1 / -1;
+            justify-self: center;
+          }
+        }
+      }
+    }
+
+    /* Row with 'checking-now' */
+    &.checking-now {
+      td:first-child {
+        position: relative;
+      }
+
+      td:first-child::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 3px;
+        background-color: #293eff;
+      }
+
+      td.last-checked {
+        .spinner-wrapper {
+          display: inline-block !important;
+        }
+
+        .innertext {
+          display: none !important;
+        }
+      }
+    }
+
+    &.queued {
+      a.recheck {
+        display: none !important;
+      }
+
+      a.already-in-queue-button {
+        display: inline-block !important;
+      }
+    }
+
+    &.paused {
+      a.pause-toggle {
+        &.state-on {
+          display: inline !important;
+        }
+
+        &.state-off {
+          display: none !important;
+        }
+      }
+    }
+
+    &.notification_muted {
+      a.mute-toggle {
+        &.state-on {
+          display: inline !important;
+        }
+
+        &.state-off {
+          display: none !important;
+        }
+      }
+    }
+
+    &.has-error {
+      .error-text {
+        display: block !important;
+        color: var(--color-watch-table-error);
+      }
+    }
+
+    &.single-history {
+      a.preview-link {
+        display: inline-block !important;
+      }
+    }
+
+    &.multiple-history {
+      a.history-link {
+        display: inline-block !important;
+      }
+    }
+
+    &.has-favicon.unviewed {
+      img.favicon {
+        opacity: 1.0 !important;
+      }
+    }
   }
 
-
   td {
-    padding: $table-cell-padding;
     &.buttons {
       font-size: 12px;
       white-space: nowrap;
@@ -51,9 +170,6 @@ body.has-queue {
     &.title-col {
       word-break: break-all;
       white-space: normal;
-      .restock-info-wrap {
-        margin-left: auto;
-      }
     }
 
     &.last-changed,&.last-checked {
@@ -75,7 +191,6 @@ body.has-queue {
 
 
   th {
-    padding: $table-cell-padding;
     &#h-lastchanged, &#h-lastchecked {
       text-align: center;
     }
@@ -102,88 +217,69 @@ body.has-queue {
     }
   }
 
-  /* Row with 'checking-now' */
-  tr.checking-now {
-    td:first-child {
-      position: relative;
-    }
-
-    td:first-child::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 3px;
-      background-color: #293eff;
-    }
-
-    td.last-checked {
-      .spinner-wrapper {
-        display: inline-block !important;
-      }
-
-      .innertext {
-        display: none !important;
+  &.favicon-not-enabled {
+    tr {
+      .favicon {
+        display: none;
       }
     }
   }
 
-  tr.queued {
-    a.recheck {
-      display: none !important;
-    }
-
-    a.already-in-queue-button {
-      display: inline-block !important;
+  .status-icons {
+    white-space: nowrap;
+    display: flex;
+    align-items: center; /* Vertical centering */
+    gap: 4px; /* Space between image and text */
+    > * {
+      vertical-align: middle;
     }
   }
 
-  tr.paused {
-    a.pause-toggle {
-      &.state-on {
-        display: inline !important;
+  .title-col {
+    /* Optional, for spacing */
+    padding: 10px;
+  }
+
+  .title-wrapper {
+    display: flex;
+    align-items: center; /* Vertical centering */
+    gap: 10px; /* Space between image and text */
+  }
+
+  /* Make sure .title-col-inner doesn't collapse or misalign */
+  .title-col-inner {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  /* favicon styling */
+  img.favicon {
+    vertical-align: middle;
+    max-width: 36px;
+    max-height: 36px;
+    height: 36px;
+    padding-right: 4px;
+  }
+
+  // Reserved for future use
+  /*  &.thumbnail-type-screenshot {
+      tr.has-favicon {
+        td.inline.title-col {
+          img.thumbnail {
+            background-color: #fff; !* fallback bg for SVGs without bg *!
+            border-radius: 4px; !* subtle rounded corners *!
+            border: 1px solid #ddd; !* light border for contrast *!
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); !* soft shadow *!
+            filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+            object-fit: cover; !* crop/fill if needed *!
+            opacity: 0.8;
+            max-width: 30px;
+            max-height: 30px;
+            height: 30px;
+          }
+        }
       }
-
-      &.state-off {
-        display: none !important;
-      }
-    }
-  }
-
-  tr.notification_muted {
-    a.mute-toggle {
-      &.state-on {
-        display: inline !important;
-      }
-
-      &.state-off {
-        display: none !important;
-      }
-    }
-  }
-
-
-  tr.has-error {
-    .error-text {
-      display: block !important;
-      color: var(--color-watch-table-error);
-    }
-  }
-
-  tr.single-history {
-    a.preview-link {
-      display: inline-block !important;
-    }
-  }
-
-  tr.multiple-history {
-    a.history-link {
-      display: inline-block !important;
-    }
-  }
-
-
+    }*/
 }
 
 #watch-table-wrapper {
