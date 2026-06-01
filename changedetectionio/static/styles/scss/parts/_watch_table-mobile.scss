@@ -1,4 +1,4 @@
-$grid-col-checkbox: 20px;
+$grid-col-checkbox: 40px;
 $grid-col-watch: 100px;
 $grid-gap: 0.5rem;
 
@@ -35,19 +35,6 @@ $watch-table-mobile-max: 767px;
       .empty-cell {
         display: none;
       }
-    }
-
-
-    .last-checked {
-      margin-left: calc($grid-col-checkbox + $grid-gap);
-
-      > span {
-        vertical-align: middle;
-      }
-    }
-
-    .last-changed {
-      margin-left: calc($grid-col-checkbox + $grid-gap);
     }
 
     .last-checked::before {

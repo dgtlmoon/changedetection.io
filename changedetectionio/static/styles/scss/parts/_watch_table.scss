@@ -35,6 +35,13 @@ body.has-queue {
 /*  width: 100%;*/
   font-size: var(--body-main-text-size);
 
+  .checkbox-uuid {
+    >* {
+      vertical-align: middle;
+    }
+    text-align: center;
+  }
+
   td,
   th {
     padding: $table-cell-padding;
