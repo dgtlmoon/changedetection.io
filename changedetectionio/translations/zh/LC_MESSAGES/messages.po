@@ -2364,8 +2364,8 @@ msgid "All"
 msgstr "全部"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Website"
-msgstr "网站"
+msgid "Web page"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Restock & Price"

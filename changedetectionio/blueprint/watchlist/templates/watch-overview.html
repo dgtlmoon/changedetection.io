@@ -187,7 +187,7 @@ window.watchOverviewI18n = {
                         <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, tag=active_tag_uuid)}}"><i data-feather="volume-2" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
                     </div>
                 </th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">{{ _('Website') }} <span class='arrow {{link_order}}'></span></a></th>
+                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">{{ _('Web page') }} <span class='arrow {{link_order}}'></span></a></th>
              {%- if any_has_restock_price_processor -%}
                 <th>{{ _('Restock & Price') }}</th>
              {%- endif -%}

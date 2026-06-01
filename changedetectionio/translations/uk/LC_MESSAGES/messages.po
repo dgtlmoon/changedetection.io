@@ -2391,8 +2391,8 @@ msgid "All"
 msgstr "Всі"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Website"
-msgstr "Вебсайт"
+msgid "Web page"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Restock & Price"
