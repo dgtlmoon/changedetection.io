@@ -334,15 +334,16 @@ a.pure-button-selected {
 .button-tag {
   background: var(--color-background-button-tag);
   color: var(--color-text-button);
-  font-size: 65%;
+  font-size: 75%;
   border-bottom-left-radius: initial;
   border-bottom-right-radius: initial;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
   margin-right: 4px;
   &.active {
     background: var(--color-background-button-tag-active);
     font-weight: bold;
   }
-
 }
 
 .button-error {

@@ -330,6 +330,20 @@ body.has-queue {
       }
     }
   }
+
+  #tag-lister {
+    #tag-all {
+      opacity: 1.0;
+    }
+    &.active-tag {
+      .button-tag {
+        opacity: 0.35;
+        &.active {
+          opacity: 1;
+        }
+      }
+    }
+  }
 }
 
 .group-overview-table {
