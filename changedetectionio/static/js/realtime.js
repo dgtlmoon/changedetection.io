@@ -79,6 +79,8 @@ $(document).ready(function () {
     // BOTH the desktop sidebar and the hamburger drawer — keep them in sync.
     const queueBubble = document.getElementById('queue-bubble');
     const queueSizeNodes = document.querySelectorAll('.queue-size-int');
+    // "Checking now" count - rendered in both the desktop sidebar and the hamburger drawer.
+    const checkingNowNodes = document.querySelectorAll('.checking-now-int');
     // Only try to connect if authentication isn't required or user is authenticated
     // The 'is_authenticated' variable will be set in the template
     if (typeof is_authenticated !== 'undefined' ? is_authenticated : true) {
@@ -170,6 +172,13 @@ $(document).ready(function () {
                         queueBubble.setAttribute('data-count', '0');
                     }
                 }
+            })
+
+            socket.on('checking_now', function (data) {
+                console.log(`${data.event_timestamp} - Checking now update: ${data.count}`);
+                const formattedCount = parseInt(data.count).toLocaleString() || 'None';
+                checkingNowNodes.forEach(node => { node.textContent = formattedCount; });
+                document.body.classList.toggle('is-checking-now', parseInt(data.count) > 0);
             })
 
             // Listen for operation results

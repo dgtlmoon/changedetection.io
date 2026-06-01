@@ -120,12 +120,13 @@
         </a>
     </li>
     <li class="action-sidebar-divider" aria-hidden="true"></li>
-    <li>
 
-    <div class="action-sidebar-li" id="queue-stats-sidebar">
+
+    <li class="action-sidebar-li" id="checking-now-stats-sidebar">
+        {{ _('Checking now') }}: <span class="checking-now-int">{{ checking_now_size }}</span>
+    </li>
+    <li class="action-sidebar-li" id="queue-stats-sidebar">
         {{ _('In queue') }}: <span class="queue-size-int">{{ queue_size }}</span>
-    </div>
-
     </li>
     <li class="action-sidebar-li">
         {% if hosted_sticky %}

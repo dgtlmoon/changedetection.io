@@ -7,6 +7,7 @@ from flask_babel import gettext as _
 
 from changedetectionio import forms
 from changedetectionio import processors
+from changedetectionio import worker_pool
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
@@ -96,6 +97,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             active_tag=active_tag,
             active_tag_uuid=active_tag_uuid,
             active_processor=active_processor,
+            checking_now_size=len(worker_pool.get_running_uuids()),
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             datastore=datastore,
             errored_count=errored_count,

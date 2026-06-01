@@ -192,6 +192,13 @@ def handle_watch_update(socketio, **kwargs):
         socketio.emit("watch_update", {'watch': watch_data})
         socketio.emit("general_stats_update", general_stats)
 
+        # The set of running UUIDs changes exactly when a worker claims/releases a watch,
+        # and this signal fires at both of those moments - so emit the live "checking now" count here.
+        socketio.emit("checking_now", {
+            "count": len(running_uuids),
+            "event_timestamp": time.time()
+        })
+
         # Log after successful emit - use watch_data['uuid'] to avoid variable shadowing issues
         logger.trace(f"Socket.IO: Emitted update for watch {watch_data['uuid']}, Checking now: {watch_data['checking_now']}")
 
@@ -311,6 +318,7 @@ def init_socketio(app, datastore):
         from flask import request
         from flask_login import current_user
         from changedetectionio.flask_app import update_q
+        from changedetectionio import worker_pool
 
         # Access datastore from socketio
         datastore = socketio.datastore
@@ -331,6 +339,14 @@ def init_socketio(app, datastore):
                 "event_timestamp": time.time()
             }, room=request.sid)  # Send only to this client
             logger.debug(f"Socket.IO: Sent initial queue size {queue_size} to new client")
+
+            # Send the current "checking now" count (how many watches workers are processing right now)
+            checking_now = len(worker_pool.get_running_uuids())
+            socketio.emit("checking_now", {
+                "count": checking_now,
+                "event_timestamp": time.time()
+            }, room=request.sid)  # Send only to this client
+            logger.debug(f"Socket.IO: Sent initial checking_now {checking_now} to new client")
         except Exception as e:
             logger.error(f"Socket.IO error sending initial queue size: {str(e)}")
 
