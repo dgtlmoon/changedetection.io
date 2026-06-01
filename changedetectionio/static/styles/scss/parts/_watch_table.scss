@@ -263,6 +263,15 @@ body.has-queue {
     max-width: 36px;
     max-height: 36px;
     height: 36px;
+    &:hover {
+      outline: 2px solid color-mix(
+        in srgb,
+        var(--color-watch-table-row-text) 50%,
+        transparent
+      );
+      outline-offset: 1px;
+      border-radius: 4px;
+    }
   }
 
   // Reserved for future use
