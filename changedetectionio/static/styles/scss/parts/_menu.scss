@@ -37,10 +37,22 @@
       color: var(--color-text-menu-link-hover);
     }
   }
+
+  .action-label {
+    color: var(--color-text-menu-link-hover);
+    @media only screen and (max-width: 768px) {
+
+      display: none;
+    }
+  }
+
+  .action-icon {
+    stroke: var(--color-text-menu-link-hover);;
+  }
 }
 
 #inline-menu-extras-group {
-  >* {
+  > * {
     display: inline-block;
   }
 }

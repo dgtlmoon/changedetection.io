@@ -1125,7 +1125,11 @@ ul#highlightSnippetActions {
     display: inline-block;
   }
 }
-
+@media only screen and (max-width: 768px) {
+  .box {
+    padding: 0.25rem !important;
+  }
+}
 
 .box {
   color: var(--color-white);

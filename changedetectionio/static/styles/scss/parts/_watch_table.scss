@@ -359,7 +359,19 @@ body.has-queue {
     }
   }
 }
+.content {
+  .group-overview-table {
+    width: 100%;
 
-.group-overview-table {
-  width: 100%;
+    .pure-button {
+      margin-top: 0.3rem;
+      margin-bottom: 0.3rem;
+    }
+
+    td {
+      padding: 5px !important;
+        color: var(--color-watch-table-row-text);
+    }
+  }
+
 }
