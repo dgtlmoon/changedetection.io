@@ -5,7 +5,7 @@
 <ul class="action-sidebar-list">
     <li class="action-sidebar-li">
         <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
-           class="action-sidebar-item action-sidebar-item--accent {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
+           class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
            title="{{ _('Add a page watch') }}">
             <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="3" y="3" width="18" height="18" rx="4" ry="4"/>
@@ -107,11 +107,6 @@
     </li>
     {% endif %}
     <li class="action-sidebar-li">
-        {% if hosted_sticky %}
-          <div id="hosted-sticky">
-            <a href="https://changedetection.io/?ref={{guid}}"  class="action-sidebar-item">Let us host your instance!</a>
-          </div>
-        {% endif %}
         {% if right_sticky %}
           <div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div>
         {% endif %}
