@@ -48,7 +48,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
             <thead>
             <tr>
                 <th></th>
-                <th>{{ _('# Watches') }}</th>
+                <th class="watch-count">{{ _('# Watches') }}</th>
                 <th>{{ _('Tag / Label name') }}</th>
                 <th></th>
             </tr>
@@ -67,7 +67,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                 <td class="watch-controls">
                     <a class="link-mute state-{{'on' if tag.notification_muted else 'off'}}" href="{{url_for('tags.mute', uuid=tag.uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ _('Mute notifications') }}" title="{{ _('Mute notifications') }}" class="icon icon-mute" ></a>
                 </td>
-                <td>{{ "{:,}".format(tag_count[uuid]) if uuid in tag_count else 0 }}</td>
+                <td class="watch-count">{{ "{:,}".format(tag_count[uuid]) if uuid in tag_count else 0 }}</td>
                 <td class="title-col inline"> <a href="{{url_for('watchlist.index', tag=uuid) }}" class="watch-tag-list tag-{{ tag.title|sanitize_tag_class }}">{{ tag.title }}</a></td>
                 <td>
                     <a class="pure-button pure-button-primary button-small " href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">{{ _('Edit') }}</a>

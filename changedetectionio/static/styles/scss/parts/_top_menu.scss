@@ -14,3 +14,34 @@ ul#top-right-menu {
   }
 }
 
+// The current diff URL sits between the logo and the right-hand menu in the
+// horizontal nav. It can be arbitrarily long, so it must never push the
+// surrounding items around: it absorbs the available middle space and trims
+// its own text, fading out toward the cut edge instead of a hard clip.
+.current-diff-url {
+  // Fill the space between the logo and the right-hand menu so the URL block
+  // sits in the central region of the row without pushing either side around.
+  flex: 1 1 auto;
+  // min-width:0 is required for a flex item to shrink below its content width,
+  // otherwise the long URL forces the row to grow and shoves the menu off-screen.
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  // Anchor the text to the start of the href so the beginning of the URL is
+  // always visible; only the far (right) end gets trimmed when it overflows.
+  text-align: left;
+  margin: 0 $common-gap;
+
+  // Fade the text toward the trimmed (right) edge. On short URLs the text ends
+  // before this region, so the fade falls over empty space and stays invisible;
+  // only an overflowing URL actually shows the fade-out.
+  $fade-width: 2.5em;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - #{$fade-width}), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - #{$fade-width}), transparent);
+
+  span {
+    overflow: visible;
+    white-space: nowrap;
+  }
+}
+

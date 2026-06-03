@@ -65,8 +65,8 @@
             <strong>Change</strong>Detection.io</a>
         {% endif %}
         {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
-          <a class="current-diff-url" href="{{ current_diff_url }}">
-            <span style="max-width: 30%; overflow: hidden">{{ current_diff_url }}</span></a>
+          <a class="current-diff-url" href="{{ current_diff_url }}" title="{{ current_diff_url }}">
+            <span>{{ current_diff_url }}</span></a>
         {% endif %}
 
         <ul class="top-menu-list" id="top-right-menu">

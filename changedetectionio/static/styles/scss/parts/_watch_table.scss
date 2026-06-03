@@ -369,10 +369,13 @@ body.has-queue {
       margin-top: 0.3rem;
       margin-bottom: 0.3rem;
     }
-
+    .watch-controls, .watch-count {
+      text-align: center;
+    }
     td {
       padding: 5px !important;
-        color: var(--color-watch-table-row-text);
+      color: var(--color-watch-table-row-text);
+
     }
   }
 
