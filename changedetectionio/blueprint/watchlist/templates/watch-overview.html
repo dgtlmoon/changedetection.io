@@ -15,23 +15,41 @@
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
 
+    // Placeholder shown when a favicon fails to load (network error, or the URL
+    // returned HTML instead of an image etc). Same round outline as the loading
+    // placeholder, but with a small red dot to signify the error state.
+    const FAVICON_ERROR_SRC = 'data:image/svg+xml;utf8,' +
+        '%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E' +
+        '%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E' +
+        '%3Ccircle cx="5.4" cy="5.4" r="0.7" fill="%23d9534f"/%3E' +
+        '%3C/svg%3E';
+
+    // Load the real favicon URL stored in data-src, falling back to an error
+    // placeholder (and a console error) if the image can't be loaded.
+    function loadFavicon(img) {
+        const src = img.getAttribute('data-src');
+        if (!src) {
+            return;
+        }
+        img.removeAttribute('data-src');
+        img.addEventListener('error', function onError() {
+            img.removeEventListener('error', onError);
+            console.error('Favicon failed to load (network error or non-image response):', src);
+            img.src = FAVICON_ERROR_SRC;
+        });
+        img.src = src;
+    }
+
     // Intersection Observer for lazy loading favicons
     // Only load favicon images when they enter the viewport
     if ('IntersectionObserver' in window) {
         const faviconObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    const img = entry.target;
-                    const src = img.getAttribute('data-src');
-
-                    if (src) {
-                        // Load the actual favicon
-                        img.src = src;
-                        img.removeAttribute('data-src');
-                    }
+                    loadFavicon(entry.target);
 
                     // Stop observing this image
-                    observer.unobserve(img);
+                    observer.unobserve(entry.target);
                 }
             });
         }, {
@@ -46,13 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } else {
         // Fallback for older browsers: load all favicons immediately
-        document.querySelectorAll('.lazy-favicon').forEach(img => {
-            const src = img.getAttribute('data-src');
-            if (src) {
-                img.src = src;
-                img.removeAttribute('data-src');
-            }
-        });
+        document.querySelectorAll('.lazy-favicon').forEach(loadFavicon);
     }
 });
 </script>
