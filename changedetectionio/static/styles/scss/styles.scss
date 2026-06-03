@@ -157,7 +157,8 @@ button.toggle-button {
 
 .pure-menu-horizontal {
   background: var(--color-background);
-  padding: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -190,6 +191,7 @@ body.spinner-active {
 }
 .pure-menu-heading {
   color: var(--color-text-menu-heading);
+  padding-left: $common-gap;
 }
 
 .pure-menu-link {
@@ -1132,4 +1134,14 @@ ul#highlightSnippetActions {
 
 header {
   color: var(--color-white);
+}
+
+#heart-us {
+  svg {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+  }
 }
