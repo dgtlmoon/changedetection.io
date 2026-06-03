@@ -2,6 +2,7 @@
  * -- BASE STYLES --
  */
 @use "settings" as *;
+@use "parts/top_menu";
 @use "parts/variables";
 @use "parts/arrows";
 @use "parts/browser-steps";
@@ -127,19 +128,6 @@ a {
   color: var(--color-link);
 }
 
-a.github-link {
-  color: var(--color-icon-github);
-  margin: 0 1rem 0 0.5rem;
-
-  svg {
-    fill: currentColor;
-  }
-
-  &:hover {
-    color: var(--color-icon-github-hover);
-  }
-}
-
 #search-result-info {
   color: #fff;
 }
@@ -150,7 +138,7 @@ button.toggle-button {
   border: none;
   cursor: pointer;
 
-  color: var(--color-icon-github);
+  color: var(--color-text-menu-heading);
 
   &:hover {
     color: var(--color-icon-github-hover);

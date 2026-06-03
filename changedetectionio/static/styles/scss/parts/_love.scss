@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 #overlay {
 
   opacity: 0.95;
@@ -30,6 +32,8 @@
 }
 
 #heartpath {
+  height: 1.6rem;
+  width: 1.6rem;
   &:hover {
     fill: #ff0000 !important;
     transition: all ease 0.3s !important;

@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 $table-cell-padding: 8px 10px;
 /* below this width the optional restock info drops to its own row in the title cell */
 $title-col-stack-breakpoint: 1200px;
@@ -72,7 +74,7 @@ body.has-queue {
         grid-template-columns: auto minmax(0, 1fr) auto;
         grid-auto-columns: auto;
         align-items: center;
-        gap: 0.8rem;
+        gap: $common-gap;
 
         > .favicon        { grid-column: 1; }
         > .watch-text-info { grid-column: 2; }

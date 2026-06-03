@@ -1,0 +1,16 @@
+@use "../settings" as *;
+
+ul#top-right-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: $common-gap;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: center;
+  .toggle-button {
+    padding: 0;
+  }
+}
+

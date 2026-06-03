@@ -1,29 +1,42 @@
+@use "../settings" as *;
+
+
 .pure-menu-link {
   padding: 0.5rem 1em;
   line-height: 1.2rem;
 }
+
 #menu-mute, #menu-pause {
-  padding-left: 0.3rem;
-  padding-right: 0.3rem;
   img {
     height: 1.2rem;
   }
 }
 
+a.github-link {
+  color: var(--color-text-menu-heading);
+  margin: 0;
+  padding: 0;
+  height: $top-menu-icon-size;
+  display: block;
+  svg {
+    fill: currentColor;
+    height: 100%;
+  }
+
+  &:hover {
+    color: var(--color-icon-github-hover);
+  }
+}
+
 .pure-menu-item {
+  height: initial;
   svg {
     height: 1.2rem;
   }
   * {
     vertical-align: middle;
   }
-  .github-link {
-    height: 1.8rem;
-    display: block;
-    svg {
-      height: 100%;
-    }
-  }
+
   .bi-heart {
     &:hover {
       cursor: pointer;
@@ -34,25 +47,29 @@
   &.active {
     .pure-menu-link {
       background-color: var(--color-background-menu-link-hover);
-      color: var(--color-text-menu-link-hover);
+      color: var(--color-text-menu-heading);
     }
   }
 
   .action-label {
-    color: var(--color-text-menu-link-hover);
+    color: var(--color-text-menu-heading);
     @media only screen and (max-width: 768px) {
-
       display: none;
     }
   }
 
   .action-icon {
-    stroke: var(--color-text-menu-link-hover);;
+    stroke: var(--color-text-menu-heading);
   }
 }
 
 #inline-menu-extras-group {
-  > * {
-    display: inline-block;
-  }
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: $common-gap;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: center;
 }

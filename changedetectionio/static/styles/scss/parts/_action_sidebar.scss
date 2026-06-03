@@ -58,7 +58,8 @@ $action-sidebar-content-slot: 1100px;
 
 .action-sidebar-list {
   list-style: none;
-  padding: 0 20px;       // 20 = (64-24)/2 → icon stays centered in collapsed rail
+  padding-right: 0;
+  padding-left: 20px;
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -68,17 +69,21 @@ $action-sidebar-content-slot: 1100px;
 .action-sidebar-li {
   list-style: none;
   margin: 0;
-  padding: 0;
   position: relative; // anchor for rollout label
   color: var(--color-white);
+  button {
+    padding: 0;
+    margin: 0;
+  }
+  a {
+    color: var(--color-white);
+  }
 }
 
 // Live "is it alive?" activity monitor — compact scrolling strip under the queue count.
 // New data enters from the right (pulsing dot); old data scrolls left and fades out.
 // Drawn by static/js/queue-sparkline.js. Full rail width, deliberately short.
 .action-sidebar-li--spark {
-  padding: 2px 4px 4px;
-
   .queue-spark {
     display: block;
     width: 100%;
@@ -345,5 +350,15 @@ body.actionside-bar-on {
       opacity: 0.6;
       padding: 0.6rem 0;
     }
+  }
+}
+
+/* same menu gets rendered again as the hamburger menu, requires some tweaks */
+.mobile-menu-drawer {
+  .action-sidebar-list {
+    padding: 0;
+  }
+  .mobile-menu-section .action-sidebar-item {
+    padding-left: 0;
   }
 }

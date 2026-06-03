@@ -69,11 +69,11 @@
             <span style="max-width: 30%; overflow: hidden">{{ current_diff_url }}</span></a>
         {% endif %}
 
-        <ul class="pure-menu-list" id="top-right-menu">
+        <ul class="top-menu-list" id="top-right-menu">
           <!-- Collapsible menu items (hidden on mobile, shown in drawer) -->
           {% include "menu.html" %}
 
-          <li class="pure-menu-item" id="heart-us">
+          <li class="" id="heart-us">
                 <svg
                    fill="#ff0000"
                    class="bi bi-heart"
@@ -86,7 +86,7 @@
                 </svg>
           </li>
           <!-- Hamburger menu button (mobile only) -->
-          <li class="pure-menu-item">
+          <li class="">
             <button class="hamburger-menu" id="hamburger-toggle" aria-label="Toggle menu">
               <div class="hamburger-icon">
                 <span></span>
@@ -108,7 +108,7 @@
         {% endif %}
         <ul class="mobile-menu-items">
           {% include "menu.html" %}
-            <li class="pure-menu-item menu-collapsible">
+            <li class=" menu-collapsible">
                 {%- if right_sticky -%}<div>{{ right_sticky }}</div>{%- endif -%}
                 <a href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a><br>
             </li>
