@@ -40,7 +40,7 @@ msgstr ""
 msgid "Watch group / tag"
 msgstr "分组 / 标签"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
 msgid "Live activity"
 msgstr ""
 
@@ -326,7 +326,7 @@ msgstr "分组/标签名称"
 msgid "Recheck time (minutes)"
 msgstr "复检间隔（分钟）"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
 msgid "Import"
 msgstr "导入"
 
@@ -2278,10 +2278,6 @@ msgstr "监控项已添加。"
 msgid "records"
 msgstr "记录"
 
-#: changedetectionio/blueprint/watchlist/__init__.py
-msgid "todo - tag name etc"
-msgstr ""
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr ""
@@ -2462,6 +2458,7 @@ msgid "No information"
 msgstr "暂无信息"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Checking now"
 msgstr "正在检查"
 
@@ -4246,6 +4243,10 @@ msgid "Notifications are muted - click to unmute"
 msgstr "通知已静音 - 点击取消静音"
 
 #: changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "编辑"
 
@@ -4311,10 +4312,6 @@ msgstr "搜索，或使用 Alt+S 快捷键"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

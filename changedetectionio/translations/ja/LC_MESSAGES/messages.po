@@ -41,7 +41,7 @@ msgstr ""
 msgid "Watch group / tag"
 msgstr "ウォッチグループ / タグ"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
 msgid "Live activity"
 msgstr ""
 
@@ -326,7 +326,7 @@ msgstr "グループ / タグ名"
 msgid "Recheck time (minutes)"
 msgstr "再チェック時間（分）"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
 msgid "Import"
 msgstr "インポート"
 
@@ -2292,10 +2292,6 @@ msgstr "ウォッチを追加しました。"
 msgid "records"
 msgstr "件"
 
-#: changedetectionio/blueprint/watchlist/__init__.py
-msgid "todo - tag name etc"
-msgstr ""
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "Changedetection.io はウェブページ以外も監視できます！プラグインをご覧ください！"
@@ -2476,6 +2472,7 @@ msgid "No information"
 msgstr "情報なし"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Checking now"
 msgstr "今すぐチェック"
 
@@ -4283,6 +4280,10 @@ msgid "Notifications are muted - click to unmute"
 msgstr "通知はミュート中 - クリックして解除"
 
 #: changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "編集"
 
@@ -4348,10 +4349,6 @@ msgstr "検索、またはAlt+Sキーを使用"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

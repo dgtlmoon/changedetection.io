@@ -40,7 +40,7 @@ msgstr ""
 msgid "Watch group / tag"
 msgstr "Sledovat skupinu / Značka"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
 msgid "Live activity"
 msgstr ""
 
@@ -324,7 +324,7 @@ msgstr "Skupina / tag"
 msgid "Recheck time (minutes)"
 msgstr "Znovu zkontrolovat po (minuty)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
 msgid "Import"
 msgstr "Importovat"
 
@@ -2277,10 +2277,6 @@ msgstr ""
 msgid "records"
 msgstr "záznamy"
 
-#: changedetectionio/blueprint/watchlist/__init__.py
-msgid "todo - tag name etc"
-msgstr ""
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr ""
@@ -2461,6 +2457,7 @@ msgid "No information"
 msgstr "Žádné informace"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Checking now"
 msgstr "Probíhá kontrola"
 
@@ -4246,6 +4243,10 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Oznámení jsou ztlumena - klikněte pro opětovné povolení"
 
 #: changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "UPRAVIT"
 
@@ -4311,10 +4312,6 @@ msgstr "Vyhledejte nebo použijte klávesu Alt+S"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

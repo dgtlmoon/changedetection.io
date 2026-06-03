@@ -40,7 +40,7 @@ msgstr "AI - 다음 경우 알림"
 msgid "Watch group / tag"
 msgstr "모니터링 그룹 / 태그"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
 msgid "Live activity"
 msgstr ""
 
@@ -324,7 +324,7 @@ msgstr "그룹 / 태그 이름"
 msgid "Recheck time (minutes)"
 msgstr "재확인 시간(분)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
 msgid "Import"
 msgstr "가져오기"
 
@@ -2283,10 +2283,6 @@ msgstr "모니터링이 추가되었습니다."
 msgid "records"
 msgstr "항목"
 
-#: changedetectionio/blueprint/watchlist/__init__.py
-msgid "todo - tag name etc"
-msgstr ""
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "changedetection.io는 웹페이지 외에도 다양한 대상을 모니터링할 수 있습니다. 플러그인을 확인해 보세요."
@@ -2467,6 +2463,7 @@ msgid "No information"
 msgstr "정보 없음"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Checking now"
 msgstr "지금 확인 중"
 
@@ -4260,6 +4257,10 @@ msgid "Notifications are muted - click to unmute"
 msgstr "알림이 음소거되어 있습니다. 클릭해 해제하세요."
 
 #: changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "편집"
 
@@ -4325,10 +4326,6 @@ msgstr "검색 또는 Alt+S 키 사용"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

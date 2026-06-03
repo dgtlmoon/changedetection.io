@@ -41,7 +41,7 @@ msgstr ""
 msgid "Watch group / tag"
 msgstr "Grupo / Tag de monitoramento"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
 msgid "Live activity"
 msgstr ""
 
@@ -325,7 +325,7 @@ msgstr "Nome(s) de Grupo / Tag"
 msgid "Recheck time (minutes)"
 msgstr "Tempo de rechecagem (minutos)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
 msgid "Import"
 msgstr "Importar"
 
@@ -2321,10 +2321,6 @@ msgstr "Monitoramento adicionado."
 msgid "records"
 msgstr "registros"
 
-#: changedetectionio/blueprint/watchlist/__init__.py
-msgid "todo - tag name etc"
-msgstr ""
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "Changedetection.io pode monitorar mais do que apenas páginas web! Veja nossos plugins!"
@@ -2507,6 +2503,7 @@ msgid "No information"
 msgstr "Sem informações"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Checking now"
 msgstr "Verificando agora"
 
@@ -4298,6 +4295,10 @@ msgid "Notifications are muted - click to unmute"
 msgstr "As notificações estão silenciadas - clique para reativar"
 
 #: changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "EDITAR"
 
@@ -4363,10 +4364,6 @@ msgstr "Pesquisar, ou use a tecla Alt+S"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

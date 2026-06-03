@@ -41,7 +41,7 @@ msgstr ""
 msgid "Watch group / tag"
 msgstr "İzleyici grubu / etiketi"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
 msgid "Live activity"
 msgstr ""
 
@@ -331,7 +331,7 @@ msgstr "Grup / Etiket adları"
 msgid "Recheck time (minutes)"
 msgstr "Yeniden kontrol süresi (dakika)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
 msgid "Import"
 msgstr "İçe Aktar"
 
@@ -2326,10 +2326,6 @@ msgstr "İzleyici eklendi."
 msgid "records"
 msgstr "kayıtlar"
 
-#: changedetectionio/blueprint/watchlist/__init__.py
-msgid "todo - tag name etc"
-msgstr ""
-
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "Changedetection.io web sayfalarından daha fazlasını izleyebilir! Eklentilerimize bakın!"
@@ -2510,6 +2506,7 @@ msgid "No information"
 msgstr "Bilgi yok"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Checking now"
 msgstr "Şimdi kontrol ediliyor"
 
@@ -4301,6 +4298,10 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Bildirimler sessize alındı - sesini açmak için tıklayın"
 
 #: changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "DÜZENLE"
 
@@ -4366,10 +4367,6 @@ msgstr "Arayın veya Alt+S Tuşunu Kullanın"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
