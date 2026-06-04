@@ -217,6 +217,7 @@ msgstr ".XLSX ve Wachete"
 msgid "Backup Restore"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "changedetection.io yedeklerini geri yükleme yeri"
@@ -261,6 +262,7 @@ msgstr "Nasıl dışa aktarılır?"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "Gerekirse varsayılan getiricinizi Chrome olarak ayarladığınızdan emin olun."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "Şunun için özel sütun ve veri türleri eşleme tablosu"
@@ -424,6 +426,7 @@ msgstr ""
 msgid "Info"
 msgstr "Bilgi"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Tüm izleyiciler için varsayılan yeniden kontrol süresi, mevcut sistem minimumu"
@@ -470,6 +473,7 @@ msgstr "Bir istek içerik döndürmediğinde veya HTML hiç metin içermediğind
 msgid "Choose a default proxy for all watches"
 msgstr "Tüm izleyiciler için varsayılan bir proxy seçin"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Base URL used for the"
 msgstr "Şunun için kullanılan temel URL"
@@ -518,6 +522,7 @@ msgstr ""
 "İzleyicileri işlemek için eşzamanlı çalışan sayısı. Daha fazla çalışan = daha hızlı işleme ancak daha yüksek bellek "
 "kullanımı."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "Şu anda çalışan:"
@@ -546,6 +551,7 @@ msgstr "Normal düz istekler için (chrome tabanlı olmayan), zaman aşımına k
 msgid "Applied to all requests."
 msgstr "Tüm isteklere uygulanır."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "Not: Sadece User-Agent'ı değiştirmek genellikle anti-robot teknolojilerini alt etmez, şunları dikkate almak önemlidir"
@@ -639,6 +645,7 @@ msgstr "changedetection.io'nuzu API üzerinden yönlendirin, Daha fazlası"
 msgid "API access and examples here"
 msgstr "API erişimi ve örnekler burada"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "Şunu kullanarak API erişim sınırını kısıtlayın"
@@ -1583,6 +1590,7 @@ msgstr ""
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr "Bu işlem TÜM izleyiciler için sürüm geçmişini (anlık görüntüleri) kaldıracak, ancak URL listenizi koruyacaktır!"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "Şunu kullanmak isteyebilirsiniz"
@@ -1599,6 +1607,7 @@ msgstr "önceki bağlantı."
 msgid "Confirmation text"
 msgstr "Onay metni"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "Kelimeyi yazın"
@@ -1787,6 +1796,7 @@ msgstr "Koşullar"
 msgid "Stats"
 msgstr "İstatistikler"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "Bazı siteler içeriği oluşturmak için JavaScript kullanır, bunun için şunları yapmalısınız"
@@ -1919,6 +1929,7 @@ msgstr ""
 msgid "to one that supports interactive Javascript."
 msgstr "etkileşimli Javascript'i destekleyen bir tanesine."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "Yapmanız gerekenler"
@@ -1931,6 +1942,7 @@ msgstr "Getirme yöntemini ayarla"
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr "Bir koşulun mevcut anlık görüntüye göre geçip geçmediğini test etmek için doğrula (✓) düğmesini kullanın."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "Şunun hakkında hızlı bir eğitim okuyun"
@@ -1963,6 +1975,7 @@ msgstr ""
 "Not: Her satırdaki metnin uzunluğuna ve benzerliğine bağlı olarak, algoritma örneğin bir <strong>değiştirme</strong> "
 "yerine bir <strong>ekleme</strong> dikkate alabilir."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "Bu yüzden her zaman seçmek daha iyidir"
@@ -1971,6 +1984,7 @@ msgstr "Bu yüzden her zaman seçmek daha iyidir"
 msgid "when you're interested in new content."
 msgstr "yeni içerikle ilgilendiğinizde."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "İçerik yalnızca bir listede taşındığında, ayrıca şunu tetikleyecektir"
@@ -2014,6 +2028,7 @@ msgstr ""
 msgid "Loading..."
 msgstr "Yükleniyor..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "Görsel Seçici aracı şunları seçmenizi sağlar"
@@ -2312,6 +2327,7 @@ msgstr "Değiştirildi"
 msgid "Last Changed"
 msgstr "Son Değiştirildi"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "Yapılandırılmış web sayfası değişiklik tespiti izleyicisi yok, lütfen yukarıdaki kutuya bir URL ekleyin veya"
@@ -3436,6 +3452,7 @@ msgstr ""
 msgid "Be sure to test your RegEx here."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr ""
@@ -3466,6 +3483,7 @@ msgstr "İzleyici protokolüne izin verilmiyor veya geçersiz URL formatı"
 msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr "İzleyici sınırına ulaşıldı ({current}/{limit} izleyici). Daha fazla izleyici eklenemez."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "Tüm bildirimler için gövde — Bildirim başlığı, gövdesi ve URL'sinde"
@@ -3523,6 +3541,7 @@ msgstr "İzleyici için fark çıktısının URL'si."
 msgid "The diff output - only changes, additions, and removals"
 msgstr "Fark çıktısı - yalnızca değişiklikler, eklemeler ve kaldırmalar"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr ""
@@ -3609,6 +3628,7 @@ msgstr ""
 msgid "The AI Change Intent that was evaluated."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "Uyarı: Şunun içerikleri"
@@ -3645,6 +3665,7 @@ msgstr "<i>Önemli yapılandırma notları için lütfen buradaki bildirim hizme
 msgid "Show advanced help and tips"
 msgstr "Gelişmiş yardım ve ipuçlarını göster"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "(veya"
@@ -3665,6 +3686,7 @@ msgstr "başlık da dahil olmak üzere bildirim metni."
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "botlar diğer botlara mesaj gönderemez, bu nedenle bot olmayan kullanıcının sohbet kimliğini belirtmelisiniz."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "yalnızca çok sınırlı HTML'yi destekler ve ekstra etiketler gönderildiğinde başarısız olabilir,"
@@ -3673,6 +3695,7 @@ msgstr "yalnızca çok sınırlı HTML'yi destekler ve ekstra etiketler gönderi
 msgid "(or use plaintext/markdown format)"
 msgstr "(veya düz metin/markdown biçimini kullanın)"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "doğrudan API çağrıları için (veya şunu atlayın"
@@ -3714,6 +3737,7 @@ msgstr "İşleniyor.."
 msgid "Title for all notifications"
 msgstr "Tüm bildirimler için başlık"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "JSON yükleri için"
@@ -3722,6 +3746,7 @@ msgstr "JSON yükleri için"
 msgid "without quotes for automatic escaping, for example -"
 msgstr "filtresini otomatik kaçış için tırnak işareti olmadan kullanın, örneğin:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "URL kodlaması için"
@@ -3730,6 +3755,7 @@ msgstr "URL kodlaması için"
 msgid "for example -"
 msgstr "kullanın, örneğin:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "Düzenli ifade değişimi için"
@@ -3742,6 +3768,7 @@ msgstr "Tüm Jinja2 yerleşik filtrelerinin tam bir referansı için kullanıcı
 msgid "Format for all notifications"
 msgstr "Tüm bildirimler için format"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr ""
@@ -4065,6 +4092,7 @@ msgstr "Her satır ayrı ayrı işlenir (her satırı \"VEYA\" olarak düşünü
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "Not: Regex örneğini kullanmak için eğik çizgi / içine alın:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr "Ayrıca ek"
@@ -4145,6 +4173,7 @@ msgstr "<code>//(?aiLmsux))</code> tür bayraklarını kullanın (daha fazla <a 
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr "Anahtar kelime örneği - örnek: <code>Stokta yok</code>"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "Yalnızca o metni çıkarmak için grupları kullanın - örnek"
