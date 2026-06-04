@@ -186,6 +186,10 @@ class ScheduleLimitDaySubForm(Form):
     start_time = TimeStringField(_l("Start At"), default="00:00", validators=[validators.Optional()])
     duration = FormField(TimeDurationForm, label=_l("Run duration"))
 
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        self.duration.widget = LabelAfterInputTableWidget()
+
 class ScheduleLimitForm(Form):
     enabled = BooleanField(_l("Use time scheduler"), default=False)
     # Because the label for=""" doesnt line up/work with the actual checkbox
@@ -368,6 +372,8 @@ class RequiredFormField(FormField):
     A FormField that passes require_at_least_one=True to TimeBetweenCheckForm.
     Use this when you want the sub-form to always require at least one value.
     """
+
+    widget = LabelAfterInputTableWidget()
 
     def __init__(self, form_class, label=None, validators=None, separator="-", **kwargs):
         super().__init__(form_class, label, validators, separator, **kwargs)
