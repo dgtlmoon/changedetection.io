@@ -20,6 +20,7 @@
 @use "parts/conditions_table";
 @use "parts/socket";
 @use "parts/visualselector";
+@use "parts/add-watch";
 @use "parts/widgets";
 @use "parts/diff_image";
 @use "parts/modal";
@@ -210,12 +211,7 @@ body.spinner-active {
 }
 
 section.content {
-  @media only screen and (max-width: $desktop-wide-breakpoint) {
-    padding-top: 80px;
-  }
-  @media only screen and (min-width: $desktop-wide-breakpoint) {
-    padding-top: 100px;
-  }
+  padding-top: 80px;
 
   padding-bottom: 1em;
   flex-direction: column;
@@ -1056,6 +1052,24 @@ ul {
   }
 
   @extend .inline-tag;
+}
+
+/* Price up/down indicator next to the restock price, e.g. "▼ -18%" */
+.price-change {
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 90%;
+  margin-left: 4px;
+  vertical-align: middle;
+
+  /* Price dropped = good for a shopper = green; price rose = red */
+  &.down {
+    color: var(--color-background-button-green);
+  }
+
+  &.up {
+    color: var(--color-background-button-error);
+  }
 }
 
 #chrome-extension-link {

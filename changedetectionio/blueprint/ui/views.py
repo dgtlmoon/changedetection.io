@@ -30,6 +30,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         extras = {'paused': add_paused, 'processor': processor}
         if llm_intent:
             extras['llm_intent'] = llm_intent
+
+        # Filters picked with the Add Watch visual selector ("by element" mode)
+        include_filters = [l.strip() for l in request.form.get('include_filters', '').split('\n') if l.strip()]
+        if include_filters:
+            extras['include_filters'] = include_filters
         new_uuid = datastore.add_watch(url=url, tag=request.form.get('tags','').strip(), extras=extras)
 
         if new_uuid:

@@ -1,0 +1,179 @@
+/* Add Watch UI - 3-pane workspace (top: URL+Go, left: live visual selector, right: options) */
+
+#add-watch-ui {
+
+  /* TOP : URL input + Go */
+  #add-watch-url-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+    margin-bottom: 1rem;
+
+    // render_nolabel_field wraps the input in a <span>
+    > span {
+      flex: 1 1 auto;
+      min-width: 0;
+
+      input {
+        width: 100%;
+      }
+    }
+
+    #add-watch-go {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+  }
+
+  /* PANES */
+  #add-watch-panes {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+
+    @media (max-width: 900px) {
+      flex-direction: column;
+    }
+  }
+
+  /* LEFT : live visual-selector preview */
+  #add-watch-selector-pane {
+    flex: 1 1 62%;
+    min-width: 0;
+    min-height: 380px;
+    position: relative;
+    overflow: auto; // the pane scrolls for tall snapshots, NOT the wrapper - keeps img+canvas aligned
+    border: 1px solid var(--color-background-tab);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 0.75rem;
+
+    // Transient states fill and centre over the whole pane (only one is visible at a time)
+    #add-watch-empty-state,
+    #add-watch-spinner,
+    #add-watch-error {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    #add-watch-empty-state {
+      opacity: 0.8;
+
+      svg {
+        opacity: 0.55;
+      }
+
+      strong {
+        font-size: 1.05rem;
+      }
+
+      span {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        max-width: 32ch;
+      }
+    }
+
+    #add-watch-spinner {
+      gap: 1.2rem;
+
+      .spinner {
+        font-size: 5px; // scales the em-based spinner up a little
+      }
+
+      .fetching-update-notice {
+        font-size: 0.85rem;
+        opacity: 0.85;
+      }
+    }
+
+    #add-watch-error {
+      color: #ffb4b4;
+      font-size: 0.9rem;
+      word-break: break-word;
+    }
+
+    // Pin the highlight canvas exactly over the screenshot. The shared selector CSS
+    // (parts/_visualselector.scss) positions the img absolutely + canvas in-flow inside
+    // an overflow-y:scroll wrapper, whose scrollbar gutter offsets the two in this
+    // narrower pane. Here the img drives the layout (in normal flow) and the canvas is
+    // overlaid on top, so they stay pixel-aligned regardless of scrollbars.
+    #selector-wrapper {
+      position: relative;
+      display: block;
+      width: 100%;
+      max-height: none;
+      overflow: visible;
+      text-align: left;
+
+      > img {
+        position: relative;
+        display: block;
+        max-width: 100%;
+        height: auto;
+        z-index: 4;
+      }
+
+      > canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        max-width: none;
+        z-index: 5;
+      }
+    }
+  }
+
+  /* RIGHT : options */
+  #add-watch-options-pane {
+    flex: 0 0 34%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+
+    @media (max-width: 900px) {
+      flex: 1 1 auto;
+    }
+
+    .add-watch-option-group {
+      label {
+        display: inline-block;
+      }
+    }
+
+    #by-element-toggle-group {
+      .pure-form-message-inline {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+
+      #clear-selector {
+        margin-top: 0.5rem;
+      }
+    }
+
+    #quick-watch-llm-intent {
+      label {
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+    }
+
+    #add-watch-submit-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: auto; // push the create buttons to the bottom of the pane
+    }
+  }
+}

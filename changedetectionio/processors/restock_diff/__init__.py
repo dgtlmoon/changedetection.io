@@ -45,7 +45,8 @@ class Restock(dict):
             'in_stock': None,
             'price': None,
             'currency': None,
-            'original_price': None
+            'original_price': None,
+            'prev_price': None  # price at the previous check, for the watch-list up/down arrow (display only)
         }
 
         # Initialize the dictionary with default values
@@ -65,6 +66,31 @@ class Restock(dict):
                 value = self.parse_currency(raw_value=value)
 
         super().__setitem__(key, value)
+
+    def get_prev_price(self):
+        """Price at the previous check. Falls back to original_price for watches
+        saved before prev_price existed. Returns a float or None."""
+        prev = self.get('prev_price')
+        if prev is None:
+            prev = self.get('original_price')
+        return prev
+
+    def get_price_change_percent(self):
+        """Signed % change of the current price vs the previous price, rounded to one
+        decimal place (e.g. -18.0, 5.3). Returns None when it can't be computed -
+        no/zero previous price, non-numeric values, or no change."""
+        try:
+            price = float(self.get('price'))
+            prev = self.get_prev_price()
+            prev = float(prev) if prev is not None else None
+        except (TypeError, ValueError):
+            return None
+
+        if prev is None or prev == 0:
+            return None
+
+        pct = round((price - prev) / prev * 100.0, 1)
+        return pct if pct != 0 else None
 
 def get_price_from_history_str(history_str):
     m = _price_re.search(history_str)

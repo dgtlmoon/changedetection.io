@@ -25,7 +25,7 @@ except ImportError:
     HAS_ORJSON = False
 
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
-from ..processors.restock_diff import Restock
+from ..processors.restock_diff import Restock, get_price_from_history_str
 from ..blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
 from ..model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
@@ -824,4 +824,18 @@ class DatastoreUpdatesMixin:
         if changed:
             self.data['settings']['application']['llm'] = llm
             logger.info("update_32: cleaned up obsolete max_tokens_per_check / renamed max_tokens_cumulative")
+
+    def update_39(self):
+        for uuid, watch in self.data['watching'].items():
+            if watch.get('processor') != 'restock_diff':
+                continue
+            versions = list(watch.history.keys())
+            if versions and len(versions) >= 2:
+                snapshot = watch.get_history_snapshot(timestamp=versions[-2])
+                if snapshot:
+                    prev_price = get_price_from_history_str(history_str=snapshot)
+                    logger.debug(f"UUID {watch['uuid']} setting prev_price to '{prev_price}'")
+                    watch['restock']['prev_price'] = prev_price
+                    watch.commit()
+
 

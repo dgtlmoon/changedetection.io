@@ -23,16 +23,46 @@ msgid "Add a new web page change detection watch"
 msgstr "Aggiungi un nuovo monitoraggio modifiche pagina web"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Watch this URL!"
-msgstr "Monitora questo URL!"
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Go"
+msgstr "Vai"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Edit first then Watch"
-msgstr "Modifica > Monitora"
+msgid "Enter a URL to get started!"
+msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-#: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI — Notify when…"
+msgid "Enter a URL in the input box above to get started."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Fetching screenshot and element information…"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Currently:"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Select by element"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Hover & click the preview to watch just one part of the page."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear selection"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "What matters — when to notify me"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid ""
+"e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
+"appear. Skip review additions."
 msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
@@ -40,17 +70,13 @@ msgstr ""
 msgid "Watch group / tag"
 msgstr "Gruppo / Etichetta"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
-msgid "Live activity"
-msgstr ""
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Watch this URL!"
+msgstr "Monitora questo URL!"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Recent additions and live check status will appear here."
-msgstr ""
-
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Waiting for activity…"
-msgstr ""
+msgid "Edit first then Watch"
+msgstr "Modifica > Monitora"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
@@ -763,6 +789,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "How \"Last Checked\" and \"Last Changed\" times are shown in the watch overview list."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -2050,23 +2080,11 @@ msgid "Selection Mode:"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Select by element"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Draw area"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Clear selection"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "One moment, fetching screenshot and element information.."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Currently:"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -2152,10 +2170,6 @@ msgstr "Clona e Modifica"
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Select timestamp"
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/preview.html
-msgid "Go"
-msgstr "Vai"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current erroring screenshot from most recent request"
@@ -2449,6 +2463,11 @@ msgstr "Non disponibile"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Price"
 msgstr "Prezzo"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No information"
@@ -3183,6 +3202,18 @@ msgid "Use page <title> in watch overview list"
 msgstr "Usa <title> pagina nell'elenco osservati"
 
 #: changedetectionio/forms.py
+msgid "Relative time format"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Long (1 minute ago)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Short (1m ago)"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "Controllo sicurezza token API attivo"
 
@@ -3341,6 +3372,132 @@ msgstr "RegEx da estrarre"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Estrai come CSV"
+
+#: changedetectionio/languages.py
+msgid "just now"
+msgstr "proprio ora"
+
+#: changedetectionio/languages.py
+msgid "right now"
+msgstr "tra poco"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%ss ago"
+msgstr "%ss fa"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %ss"
+msgstr "tra %ss"
+
+#: changedetectionio/languages.py
+msgid "1m ago"
+msgstr "1min fa"
+
+#: changedetectionio/languages.py
+msgid "in 1m"
+msgstr "tra 1min"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sm ago"
+msgstr "%smin fa"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sm"
+msgstr "tra %smin"
+
+#: changedetectionio/languages.py
+msgid "1h ago"
+msgstr "1h fa"
+
+#: changedetectionio/languages.py
+msgid "in 1h"
+msgstr "tra 1h"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sh ago"
+msgstr "%sh fa"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sh"
+msgstr "tra %sh"
+
+#: changedetectionio/languages.py
+msgid "1d ago"
+msgstr "1g fa"
+
+#: changedetectionio/languages.py
+msgid "in 1d"
+msgstr "tra 1g"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sd ago"
+msgstr "%sg fa"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sd"
+msgstr "tra %sg"
+
+#: changedetectionio/languages.py
+msgid "1w ago"
+msgstr "1sett fa"
+
+#: changedetectionio/languages.py
+msgid "in 1w"
+msgstr "tra 1sett"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sw ago"
+msgstr "%ssett fa"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sw"
+msgstr "tra %ssett"
+
+#: changedetectionio/languages.py
+msgid "1mo ago"
+msgstr "1mese fa"
+
+#: changedetectionio/languages.py
+msgid "in 1mo"
+msgstr "tra 1mese"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%smo ago"
+msgstr "%smesi fa"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %smo"
+msgstr "tra %smesi"
+
+#: changedetectionio/languages.py
+msgid "1yr ago"
+msgstr "1anno fa"
+
+#: changedetectionio/languages.py
+msgid "in 1yr"
+msgstr "tra 1anno"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%syr ago"
+msgstr "%sanni fa"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %syr"
+msgstr "tra %sanni"
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
@@ -3971,6 +4128,10 @@ msgid "AI"
 msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI — Notify when…"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
 "Describe what you care about. The AI evaluates every detected change against this and only notifies you when it "
 "matches."
@@ -4312,6 +4473,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "In queue"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Live activity"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

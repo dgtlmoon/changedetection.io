@@ -23,34 +23,60 @@ msgid "Add a new web page change detection watch"
 msgstr "새 웹페이지 변경 감지 모니터링 추가"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Watch this URL!"
-msgstr "이 URL 모니터링 추가"
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Go"
+msgstr "이동"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Edit first then Watch"
-msgstr "편집 후 모니터링 추가"
+msgid "Enter a URL to get started!"
+msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-#: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI — Notify when…"
-msgstr "AI - 다음 경우 알림"
+msgid "Enter a URL in the input box above to get started."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Fetching screenshot and element information…"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Currently:"
+msgstr "현재:"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Select by element"
+msgstr "요소별로 선택"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Hover & click the preview to watch just one part of the page."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear selection"
+msgstr "선택 취소"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "What matters — when to notify me"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid ""
+"e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
+"appear. Skip review additions."
+msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Watch group / tag"
 msgstr "모니터링 그룹 / 태그"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
-msgid "Live activity"
-msgstr ""
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Watch this URL!"
+msgstr "이 URL 모니터링 추가"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Recent additions and live check status will appear here."
-msgstr ""
-
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Waiting for activity…"
-msgstr ""
+msgid "Edit first then Watch"
+msgstr "편집 후 모니터링 추가"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
@@ -764,6 +790,10 @@ msgstr "모니터링 목록 옆 파비콘 표시 여부"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "모니터링 목록 페이지당 항목 수입니다. 0이면 비활성화됩니다."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "How \"Last Checked\" and \"Last Changed\" times are shown in the watch overview list."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Tip"
@@ -2058,24 +2088,12 @@ msgid "Selection Mode:"
 msgstr "선택 모드:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Select by element"
-msgstr "요소별로 선택"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Draw area"
 msgstr "그리기 영역"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Clear selection"
-msgstr "선택 취소"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "One moment, fetching screenshot and element information.."
 msgstr "잠시만 기다려 주세요. 스크린샷과 요소 정보를 가져오는 중입니다."
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Currently:"
-msgstr "현재:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc)."
@@ -2160,10 +2178,6 @@ msgstr "복제 및 편집"
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Select timestamp"
 msgstr "타임스탬프 선택"
-
-#: changedetectionio/blueprint/ui/templates/preview.html
-msgid "Go"
-msgstr "이동"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current erroring screenshot from most recent request"
@@ -2457,6 +2471,11 @@ msgstr "재고 없음"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Price"
 msgstr "가격"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No information"
@@ -3191,6 +3210,18 @@ msgid "Use page <title> in watch overview list"
 msgstr "모니터링 목록에 페이지 <title> 사용"
 
 #: changedetectionio/forms.py
+msgid "Relative time format"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Long (1 minute ago)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Short (1m ago)"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "API 액세스 토큰 보안 확인 활성화"
 
@@ -3349,6 +3380,132 @@ msgstr "추출할 정규식"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "CSV로 추출"
+
+#: changedetectionio/languages.py
+msgid "just now"
+msgstr "방금"
+
+#: changedetectionio/languages.py
+msgid "right now"
+msgstr "곧"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%ss ago"
+msgstr "%s초 전"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %ss"
+msgstr "%s초 후"
+
+#: changedetectionio/languages.py
+msgid "1m ago"
+msgstr "1분 전"
+
+#: changedetectionio/languages.py
+msgid "in 1m"
+msgstr "1분 후"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sm ago"
+msgstr "%s분 전"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sm"
+msgstr "%s분 후"
+
+#: changedetectionio/languages.py
+msgid "1h ago"
+msgstr "1시간 전"
+
+#: changedetectionio/languages.py
+msgid "in 1h"
+msgstr "1시간 후"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sh ago"
+msgstr "%s시간 전"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sh"
+msgstr "%s시간 후"
+
+#: changedetectionio/languages.py
+msgid "1d ago"
+msgstr "1일 전"
+
+#: changedetectionio/languages.py
+msgid "in 1d"
+msgstr "1일 후"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sd ago"
+msgstr "%s일 전"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sd"
+msgstr "%s일 후"
+
+#: changedetectionio/languages.py
+msgid "1w ago"
+msgstr "1주 전"
+
+#: changedetectionio/languages.py
+msgid "in 1w"
+msgstr "1주 후"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sw ago"
+msgstr "%s주 전"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sw"
+msgstr "%s주 후"
+
+#: changedetectionio/languages.py
+msgid "1mo ago"
+msgstr "1개월 전"
+
+#: changedetectionio/languages.py
+msgid "in 1mo"
+msgstr "1개월 후"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%smo ago"
+msgstr "%s개월 전"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %smo"
+msgstr "%s개월 후"
+
+#: changedetectionio/languages.py
+msgid "1yr ago"
+msgstr "1년 전"
+
+#: changedetectionio/languages.py
+msgid "in 1yr"
+msgstr "1년 후"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%syr ago"
+msgstr "%s년 전"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %syr"
+msgstr "%s년 후"
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
@@ -3979,6 +4136,10 @@ msgid "AI"
 msgstr "AI"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI — Notify when…"
+msgstr "AI - 다음 경우 알림"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
 "Describe what you care about. The AI evaluates every detected change against this and only notifies you when it "
 "matches."
@@ -4330,6 +4491,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "In queue"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Live activity"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

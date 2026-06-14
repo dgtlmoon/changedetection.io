@@ -564,10 +564,14 @@ class perform_site_check(difference_detection_processor):
         # Main detection method
         fetched_md5 = None
 
-        # store original price if not set
-        if itemprop_availability and itemprop_availability.get('price') and not itemprop_availability.get('original_price'):
-            itemprop_availability['original_price'] = itemprop_availability.get('price')
-            update_obj['restock']["original_price"] = itemprop_availability.get('price')
+        # Original price = the price at the FIRST check. Set it once and then preserve it across
+        # every later check (display only) so the watch list can show "first seen" alongside the
+        # current price. (Previously this was re-set to the current price on every check.)
+        old_original_price = (watch.get('restock') or {}).get('original_price')
+        if old_original_price is not None:
+            update_obj['restock']['original_price'] = old_original_price
+        elif update_obj['restock'].get('price') is not None:
+            update_obj['restock']['original_price'] = update_obj['restock'].get('price')
 
         if not self.fetcher.instock_data and not itemprop_availability.get('availability') and not itemprop_availability.get('price'):
             raise ProcessorException(
@@ -593,6 +597,18 @@ class perform_site_check(difference_detection_processor):
                     f"Lie detected in the availability machine data!! when scraping said its not in stock!! itemprop was '{itemprop_availability}' and scraped from browser was '{self.fetcher.instock_data}' update obj was {update_obj['restock']} ")
                 logger.warning(f"Setting instock to FALSE, scraper found '{self.fetcher.instock_data}' in the body but metadata reported not-in-stock")
                 update_obj['restock']["in_stock"] = False
+
+        # Remember the price from *before the last actual price change* so the watch list can
+        # show a persistent up/down arrow. Only bump prev_price when the price really changed -
+        # otherwise an unchanged check would overwrite it and we'd lose the comparison point.
+        # Display only - not part of the snapshot/md5, so it never affects change detection.
+        old_restock = watch.get('restock') or {}
+        old_price = old_restock.get('price')
+        new_price = update_obj['restock'].get('price')
+        if new_price is not None and old_price is not None and new_price != old_price:
+            update_obj['restock']['prev_price'] = old_price          # price moved: remember what we moved from
+        else:
+            update_obj['restock']['prev_price'] = old_restock.get('prev_price')  # unchanged: keep the existing reference
 
         # What we store in the snapshot
         price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""

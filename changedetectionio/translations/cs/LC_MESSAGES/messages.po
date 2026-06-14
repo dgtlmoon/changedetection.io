@@ -23,16 +23,46 @@ msgid "Add a new web page change detection watch"
 msgstr "Přidejte nové sledování zjišťování změn webové stránky"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Watch this URL!"
-msgstr "Monitorovat tuto URL!"
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Go"
+msgstr "Přejít"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Edit first then Watch"
-msgstr "Nejdříve upravit, poté sledovat"
+msgid "Enter a URL to get started!"
+msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-#: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI — Notify when…"
+msgid "Enter a URL in the input box above to get started."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Fetching screenshot and element information…"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Currently:"
+msgstr "V současné době:"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Select by element"
+msgstr "Vyberte podle prvku"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Hover & click the preview to watch just one part of the page."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear selection"
+msgstr "Jasný výběr"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "What matters — when to notify me"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid ""
+"e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
+"appear. Skip review additions."
 msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
@@ -40,17 +70,13 @@ msgstr ""
 msgid "Watch group / tag"
 msgstr "Sledovat skupinu / Značka"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/templates/sidebar-nav.html
-msgid "Live activity"
-msgstr ""
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Watch this URL!"
+msgstr "Monitorovat tuto URL!"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Recent additions and live check status will appear here."
-msgstr ""
-
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Waiting for activity…"
-msgstr ""
+msgid "Edit first then Watch"
+msgstr "Nejdříve upravit, poté sledovat"
 
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
@@ -763,6 +789,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "How \"Last Checked\" and \"Last Changed\" times are shown in the watch overview list."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -2052,24 +2082,12 @@ msgid "Selection Mode:"
 msgstr "Režim výběru:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Select by element"
-msgstr "Vyberte podle prvku"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Draw area"
 msgstr "Kreslit oblast"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Clear selection"
-msgstr "Jasný výběr"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "One moment, fetching screenshot and element information.."
 msgstr "Okamžik, načítání snímku obrazovky a informací o prvku."
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Currently:"
-msgstr "V současné době:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc)."
@@ -2154,10 +2172,6 @@ msgstr "Duplikovat a upravit"
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Select timestamp"
 msgstr "Vybrat časové razítko"
-
-#: changedetectionio/blueprint/ui/templates/preview.html
-msgid "Go"
-msgstr "Přejít"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current erroring screenshot from most recent request"
@@ -2451,6 +2465,11 @@ msgstr "Není skladem"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Price"
 msgstr "Cena"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No information"
@@ -3187,6 +3206,18 @@ msgid "Use page <title> in watch overview list"
 msgstr "Použijte stránku <title> v přehledu sledování"
 
 #: changedetectionio/forms.py
+msgid "Relative time format"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Long (1 minute ago)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Short (1m ago)"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "Kontrola zabezpečení přístupového tokenu API povolena"
 
@@ -3345,6 +3376,132 @@ msgstr "RegEx k extrahování"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Extrahujte data"
+
+#: changedetectionio/languages.py
+msgid "just now"
+msgstr "právě teď"
+
+#: changedetectionio/languages.py
+msgid "right now"
+msgstr "za chvíli"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%ss ago"
+msgstr "před %ss"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %ss"
+msgstr "za %ss"
+
+#: changedetectionio/languages.py
+msgid "1m ago"
+msgstr "před 1m"
+
+#: changedetectionio/languages.py
+msgid "in 1m"
+msgstr "za 1m"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sm ago"
+msgstr "před %sm"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sm"
+msgstr "za %sm"
+
+#: changedetectionio/languages.py
+msgid "1h ago"
+msgstr "před 1h"
+
+#: changedetectionio/languages.py
+msgid "in 1h"
+msgstr "za 1h"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sh ago"
+msgstr "před %sh"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sh"
+msgstr "za %sh"
+
+#: changedetectionio/languages.py
+msgid "1d ago"
+msgstr "před 1d"
+
+#: changedetectionio/languages.py
+msgid "in 1d"
+msgstr "za 1d"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sd ago"
+msgstr "před %sd"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sd"
+msgstr "za %sd"
+
+#: changedetectionio/languages.py
+msgid "1w ago"
+msgstr "před 1týd"
+
+#: changedetectionio/languages.py
+msgid "in 1w"
+msgstr "za 1týd"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sw ago"
+msgstr "před %stýd"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sw"
+msgstr "za %stýd"
+
+#: changedetectionio/languages.py
+msgid "1mo ago"
+msgstr "před 1měs"
+
+#: changedetectionio/languages.py
+msgid "in 1mo"
+msgstr "za 1měs"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%smo ago"
+msgstr "před %směs"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %smo"
+msgstr "za %směs"
+
+#: changedetectionio/languages.py
+msgid "1yr ago"
+msgstr "před 1r"
+
+#: changedetectionio/languages.py
+msgid "in 1yr"
+msgstr "za 1r"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%syr ago"
+msgstr "před %sr"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %syr"
+msgstr "za %sr"
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
@@ -3975,6 +4132,10 @@ msgid "AI"
 msgstr "AI"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI — Notify when…"
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
 "Describe what you care about. The AI evaluates every detected change against this and only notifies you when it "
 "matches."
@@ -4316,6 +4477,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "In queue"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Live activity"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

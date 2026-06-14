@@ -1074,6 +1074,9 @@ class globalSettingsApplicationUIForm(Form):
     socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
+    timeago_format = SelectField(_l('Relative time format'),
+                                 choices=[('long', _l('Long (1 minute ago)')), ('short', _l('Short (1m ago)'))],
+                                 default='long', validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):

@@ -288,6 +288,10 @@ nav
                     {{ render_field(form.application.form.pager_size) }}
                     <span class="pure-form-message-inline">{{ _('Number of items per page in the watch overview list, 0 to disable.') }}</span>
                 </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.application.form.ui.form.timeago_format) }}
+                    <span class="pure-form-message-inline">{{ _('How "Last Checked" and "Last Changed" times are shown in the watch overview list.') }}</span>
+                </div>
 
             </div>
             <div class="tab-pane-inner" id="proxies">

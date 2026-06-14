@@ -49,6 +49,84 @@ def set_back_in_stock_response(datastore_path):
         f.write(test_return_data)
     return None
 
+def set_price_response(datastore_path, price):
+    # JSON-LD product offer so the price + availability are extracted deterministically
+    # without needing a real browser (extruct parses the raw HTML).
+    test_return_data = """<html>
+       <head>
+       <script type="application/ld+json">
+       {"@context": "https://schema.org/", "@type": "Product", "name": "Test Product",
+        "offers": {"@type": "Offer", "priceCurrency": "USD", "price": "%s",
+                   "availability": "https://schema.org/InStock"}}
+       </script>
+       </head>
+       <body>
+       <div id="sametext">Available!</div>
+       </body>
+     </html>
+    """ % price
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+    return None
+
+
+def test_restock_price_change_direction(client, live_server, measure_memory_usage, datastore_path):
+    """The watch list shows a green ▼/-% on a price drop and a red ▲/+% on a price rise,
+    and prev_price only moves when the price actually changes (it persists otherwise)."""
+
+    def get_restock(client):
+        datastore = client.application.config.get('DATASTORE')
+        uuid = next(iter(datastore.data['watching']))
+        return datastore.data['watching'][uuid]['restock']
+
+    set_price_response(datastore_path=datastore_path, price="100.00")
+
+    # JSON-LD restock data is parsed by extruct over the in-process html_requests fetcher,
+    # so we can hit the live server on localhost directly (no Docker browser container needed).
+    test_url = url_for('test_endpoint', _external=True)
+    client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff', 'fetch_backend': 'html_requests'},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+
+    # First check: there is no previous price yet, so no up/down indicator should render
+    res = client.get(url_for("watchlist.index"))
+    assert b'processor-restock_diff' in res.data
+    assert b'price-change' not in res.data, "No price arrow should show on the very first check"
+    assert get_restock(client).get('prev_price') is None, "prev_price should be unset on the first check"
+
+    # Price drops 100.00 -> 82.00 => -18%, expect a green down arrow
+    set_price_response(datastore_path=datastore_path, price="82.00")
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'price-change down' in res.data, "Price drop should show a down arrow"
+    assert '▼'.encode('utf-8') in res.data
+    assert b'-18%' in res.data, "Price drop percentage should be shown"
+    assert float(get_restock(client).get('prev_price')) == 100.0, "prev_price should capture the price we moved from"
+
+    # Price rises 82.00 -> 90.00 => +9.8%, expect an up arrow
+    set_price_response(datastore_path=datastore_path, price="90.00")
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'price-change up' in res.data, "Price rise should show an up arrow"
+    assert '▲'.encode('utf-8') in res.data
+    assert b'+9.8%' in res.data, "Price rise percentage should be shown"
+    assert float(get_restock(client).get('prev_price')) == 82.0, "prev_price should update to the new previous price on a change"
+
+    # Re-check with NO price change - prev_price must NOT be clobbered, so the arrow persists.
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'price-change up' in res.data, "Arrow should persist across an unchanged check"
+    assert b'+9.8%' in res.data, "Percentage should persist across an unchanged check"
+    assert float(get_restock(client).get('prev_price')) == 82.0, "prev_price must stay put when the price is unchanged"
+
+
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
 def test_restock_detection(client, live_server, measure_memory_usage, datastore_path):
 

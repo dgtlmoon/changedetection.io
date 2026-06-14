@@ -220,7 +220,7 @@ window.watchOverviewI18n = {
                 <th style="white-space: nowrap; text-align: center;"><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('watchlist.index', sort='date_created', order=link_order, tag=active_tag_uuid)}}"># <span class='arrow {{link_order}}'></span></a></th>
                 <th id="mute-pause">
                     <div>
-                        <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, tag=active_tag_uuid)}}"><i data-feather="pause" style="vertical-align: bottom; width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
+                        <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, tag=active_tag_uuid)}}"><i data-feather="pause" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
                         <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, tag=active_tag_uuid)}}"><i data-feather="volume-2" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
                     </div>
                 </th>
@@ -350,6 +350,16 @@ window.watchOverviewI18n = {
                                       {{ price }} {{ cur }}<!-- as string -->
                                     {%- endif -%}
                                   </span>
+                                  {%- set price_change_pct = restock.get_price_change_percent() -%}
+                                  {%- if price_change_pct is not none -%}
+                                    {%- set prev_price = restock.get_prev_price() -%}
+                                    {%- set prev_disp = (prev_price|format_number_locale ~ ' ' ~ cur) if prev_price is number else prev_price -%}
+                                    {%- if price_change_pct < 0 -%}
+                                      <span class="price-change down" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▼ {{ '%g'|format(price_change_pct) }}%</span>
+                                    {%- else -%}
+                                      <span class="price-change up" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▲ +{{ '%g'|format(price_change_pct) }}%</span>
+                                    {%- endif -%}
+                                  {%- endif -%}
                                 {%- endif -%}
                             {%- elif not watch.has_restock_info -%}
                                 <span class="restock-label error">{{ _('No information') }}</span>

@@ -86,7 +86,7 @@ SYSTEM_PROMPT = (
     'No markdown, no backticks, no explanation — pure JSON only.'
 )
 
-_MAX_CONTENT_CHARS = 8_000
+_MAX_CONTENT_CHARS = 20_000
 
 
 def _extract_jsonld(html_content: str) -> str:
