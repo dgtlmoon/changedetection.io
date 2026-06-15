@@ -80,6 +80,7 @@ class model(dict):
                         'socket_io_enabled': True,
                         'favicons_enabled': True,
                         'timeago_format': 'long',  # 'long' = "1 minute ago", 'short' = "1m ago"
+                        'sidebar_mode': 'collapsed',  # 'collapsed' = slim icon rail, expands on hover; 'pinned' = always expanded
                     },
                 }
             }

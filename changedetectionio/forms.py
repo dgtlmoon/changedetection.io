@@ -1077,6 +1077,10 @@ class globalSettingsApplicationUIForm(Form):
     timeago_format = SelectField(_l('Relative time format'),
                                  choices=[('long', _l('Long (1 minute ago)')), ('short', _l('Short (1m ago)'))],
                                  default='long', validators=[validators.Optional()])
+    sidebar_mode = SelectField(_l('Navigation sidebar'),
+                               choices=[('collapsed', _l('Collapsed icon rail (expands on hover)')),
+                                        ('pinned', _l('Always expanded'))],
+                               default='collapsed', validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):

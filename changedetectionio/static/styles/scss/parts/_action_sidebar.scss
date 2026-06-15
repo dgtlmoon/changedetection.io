@@ -5,7 +5,7 @@
 //$action-sidebar-width-collapsed: 64px — used by the resting inner-block width and the content-main left-padding in minimal mode
 //$action-sidebar-content-slot: 1100px — editable content column; .content-main max-width is now derived as content_slot + collapsed_width
 
-$action-sidebar-width-expanded: 190px;
+$action-sidebar-width-expanded: 200px;
 $action-sidebar-width-collapsed: 64px;
 $action-sidebar-content-slot: 1100px;
 
@@ -16,12 +16,27 @@ $action-sidebar-content-slot: 1100px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: $action-sidebar-width-expanded; // reserve enough to host the expanded inner block
+  // Pin the rail to the viewport as a full-height column (like the demo's
+  // `height: 100vh; position: sticky`). align-self:flex-start stops the flex
+  // row from stretching it to the page-content height; sticky+100vh then keeps
+  // it viewport-tall and fixed in place while the content scrolls, so the
+  // footer list always rests at the bottom of the window.
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.05);
   z-index: 60;
   pointer-events: none; // empty space doesn't intercept clicks/hovers
   @media only screen and (max-width: $desktop-wide-breakpoint) {
     // Hidden on mobile: the mobile drawer (hamburger) carries these items
     display: none;
+  }
+}
+
+body.actionside-bar-on {
+  .action-sidebar {
+/*      width: $action-sidebar-width-expanded; // reserve enough to host the expanded inner block*/
   }
 }
 
@@ -38,8 +53,16 @@ $action-sidebar-content-slot: 1100px;
   pointer-events: auto;    // restore interactivity inside the block
   width: $action-sidebar-width-collapsed;
   overflow: hidden;
+  // Fill the full height of the (stretched) rail and stack its lists in a
+  // column, so the footer list can sit at the bottom (see --bottom below).
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   // Exit (mouse-away) is fast — snaps back to icons.
   transition: width 0.08s ease-out;
+
+  padding-left: $common-gap;
+  padding-right: $common-gap;
 
   // Hover-to-expand only fires in minimal mode.
   body.actionsidebar-minimal &:hover,
@@ -56,19 +79,24 @@ $action-sidebar-content-slot: 1100px;
   }
 }
 
-.action-sidebar-list {
+ul.action-sidebar-list {
   list-style: none;
-  padding-right: 0;
-  padding-left: $common-gap/2;
+  padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
+// Footer list (status counters, live spark, version) sits at the bottom of the
+// rail — the flex equivalent of the demo's `.rail-spacer { flex: 1 }`.
+.action-sidebar-list--bottom {
+  margin-top: auto;
+}
+
 .action-sidebar-li {
   >:first-child {
-    padding-left: $common-gap/2;
+/*    padding-left: $common-gap/2;*/
   }
 
   list-style: none;
@@ -111,8 +139,9 @@ $action-sidebar-content-slot: 1100px;
   position: relative;
   display: flex;
   align-items: center;
-  width: 100%;
-  height: 42px;
+ /* width: 100%;*/
+  /*height: 42px;*/
+  padding: $common-gap;
   font-size: var(--body-main-text-size);
   border-radius: 8px;
   color: var(--color-white);
@@ -259,7 +288,7 @@ body.actionside-bar-on {
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--color-border-table-cell);
 
-  .action-sidebar-list {
+  ul.action-sidebar-list {
     gap: 1px;
   }
 
@@ -364,5 +393,36 @@ body.actionside-bar-on {
   }
   .mobile-menu-section .action-sidebar-item {
     padding-left: 0;
+  }
+}
+
+
+/** top logo stuff */
+#action-sidebar-logo {
+  padding: $common-gap;
+}
+
+.actionsidebar-minimal {
+  #cdio-logo {
+    #logo-expanded {
+      display: none;
+    }
+  }
+
+  &.action-side-bar-expanded {
+    #cdio-logo {
+      #logo-expanded {
+        display: inline-block;
+      }
+    }
+  }
+
+}
+
+.action-side-bar-expanded {
+  #cdio-logo {
+    #logo-short {
+      display: none;
+    }
   }
 }

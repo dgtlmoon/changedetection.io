@@ -197,6 +197,19 @@ def get_css_version():
     return __version__
 
 @app.template_global()
+def get_sidebar_mode_class():
+    """Body class that drives the left-rail behaviour (see parts/_action_sidebar.scss).
+
+    'collapsed' -> slim icon rail that expands on hover/focus (actionsidebar-minimal)
+    'pinned'    -> rail always expanded with labels visible (actionside-bar-on)
+    """
+    mode = datastore.data['settings']['application'].get('ui', {}).get('sidebar_mode', 'collapsed')
+    # Pinned mode is permanently expanded, so it carries 'action-side-bar-expanded'
+    # from the start. In collapsed mode that class is toggled on hover/focus by
+    # static/js/sidebar.js.
+    return 'actionside-bar-on action-side-bar-expanded' if mode == 'pinned' else 'actionsidebar-minimal'
+
+@app.template_global()
 def get_socketio_path():
     """Generate the correct Socket.IO path prefix for the client"""
     # If behind a proxy with a sub-path, we need to respect that path

@@ -2,7 +2,22 @@
 {# Used by base.html (desktop left sidebar) and mobile hamburger drawer #}
 
 {%- set ep = request.endpoint or '' -%}
-<ul class="action-sidebar-list">
+
+<ul class="action-sidebar-list action-sidebar-list--top">
+    <li class="action-sidebar-li" id="action-sidebar-logo">
+
+        {%- if has_password and not current_user.is_authenticated -%}
+          <a id="cdio-logo" href="https://changedetection.io" rel="noopener">
+              <span id="logo-expanded"><strong>Change</strong>Detection.io</span>
+              <span id="logo-short"><strong>CD</strong>IO</span>
+          </a>
+        {%- else -%}
+          <a id="cdio-logo" href="{{url_for('watchlist.index')}}">
+              <span id="logo-expanded"><strong>Change</strong>Detection.io</span>
+              <span id="logo-short"><strong>CD</strong>IO</span>
+          </a>
+        {%- endif -%}
+    </li>
     <li class="action-sidebar-li">
         <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
            class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
@@ -92,7 +107,12 @@
             <span class="action-label">{{ _('Notifications') }}</span>
         </a>
     </li>
+</ul>
 
+{# Footer group — pushed to the bottom of the rail via `margin-top: auto`
+   (see .action-sidebar-list--bottom). Mirrors the demo's bottom-aligned rail
+   footer (status counters, live spark, version). #}
+<ul class="action-sidebar-list action-sidebar-list--bottom">
     <li class="action-sidebar-divider" aria-hidden="true"></li>
 
     <li class="action-sidebar-li" id="checking-now-stats-sidebar">

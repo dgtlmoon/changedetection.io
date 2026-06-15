@@ -52,19 +52,20 @@
     {%- endif %}
   </head>
 
-  <body class="actionside-bar-on {{extra_classes}}">
+  <body class="{{ get_sidebar_mode_class() }} {{extra_classes}}">
+    <div class="app">
+      {% if current_user.is_authenticated or not has_password %}
+      <aside class="action-sidebar" aria-label="{{ _('Main navigation') }}">
+        <div class="action-sidebar-inner">
+          {% include "sidebar-nav.html" %}
+        </div>
+      </aside>
+      {% endif %}
+      <div class="app-main">
     <div class="header">
-    <div {% if pure_menu_fixed != False %}class="pure-menu-fixed"{% endif %} style="width: 100%;">
+    <div>
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
-
-        {% if has_password and not current_user.is_authenticated %}
-          <a id="cdio-logo" class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
-            <strong>Change</strong>Detection.io</a>
-        {% else %}
-          <a  id="cdio-logo" class="pure-menu-heading" href="{{url_for('watchlist.index')}}">
-            <strong>Change</strong>Detection.io</a>
-        {% endif %}
-        {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
+          {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
           <a class="current-diff-url" href="{{ current_diff_url }}" title="{{ current_diff_url }}">
             <span>{{ current_diff_url }}</span></a>
         {% endif %}
@@ -170,13 +171,6 @@
         </div>
 
         <div class="content-wrapper">
-          {% if current_user.is_authenticated or not has_password %}
-          <aside class="action-sidebar" aria-label="{{ _('Main navigation') }}">
-            <div class="action-sidebar-inner">
-              {% include "sidebar-nav.html" %}
-            </div>
-          </aside>
-          {% endif %}
           <div class="content-main">
 
             {% if header %}
@@ -204,8 +198,11 @@
           </div>
         </div>
     </section>
+      </div><!-- /.app-main -->
+    </div><!-- /.app -->
     <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='hamburger-menu.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='sidebar.js')}}" defer></script>
 
     <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span></div>
     <div id="realtime-conn-error" style="display:none">{{ _('Real-time updates offline') }}</div>

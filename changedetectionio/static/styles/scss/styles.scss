@@ -72,9 +72,31 @@ body {
 // column side-by-side on desktop, stacked on mobile. Not sidebar-specific — the
 // rail's parts/_action_sidebar.scss styles target the rail itself, this is the
 // outer wrapper any future side-column layout could share.
+// App shell — the demo's `.app`: a full-height flex row whose left column is the
+// navigation rail and whose right column (`.app-main`) stacks the top menu over
+// the page content. `min-height: 100vh` guarantees the rail's gutter runs the
+// full window height even when the page content is short.
+.app {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+  // No gap here on purpose: the top menu (.header) should sit flush against the
+  // rail. The content's breathing room from the rail is applied to
+  // section.content alone (padding-left below), not the whole right column.
+}
+
+// Right-hand column: top menu (.header) above the scrolling content.
+.app-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  // Space between the top menu and the page content below it.
+  gap: $common-gap;
+}
+
 .content-wrapper {
   display: flex;
-  gap: 1rem;
   width: 100%;
   max-width: 100%;
   position: relative;
@@ -98,7 +120,7 @@ body {
   align-items: center;
   @media only screen and (min-width: $desktop-wide-breakpoint) {
     flex-direction: column;
-    padding-right: 1rem;
+    padding-top: 4rem;
   }
 }
 
@@ -190,9 +212,10 @@ body.spinner-active {
 		background-position: 0% 50%;
 	}
 }
-.pure-menu-heading {
-  color: var(--color-text-menu-heading);
-  padding-left: $common-gap;
+
+#cdio-logo {
+  color: var(--color-white);
+  text-transform: uppercase;
 }
 
 .pure-menu-link {
@@ -211,13 +234,17 @@ body.spinner-active {
 }
 
 section.content {
-  padding-top: 80px;
-
+  // The top menu (.header) now sits in-flow above this section inside .app-main,
+  // so the old fixed-header clearance (padding-top: 80px) is no longer needed.
+  // Inset the content from the rail (and the window's right edge) so it doesn't
+  // butt against the left action bar — the header above stays flush to the rail.
   padding-bottom: 1em;
+  padding-left: $common-gap;
+  padding-right: $common-gap;
   flex-direction: column;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 code {
