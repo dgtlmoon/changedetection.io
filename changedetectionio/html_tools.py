@@ -757,16 +757,41 @@ def get_triggered_text(content, trigger_text):
 
 
 def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 8192) -> str | None:
+    """Extract the <title> from an HTML document.
+
+    Rather than decoding/scanning a fixed prefix of the whole document, we first
+    locate the raw ``<title`` marker and then decode only a small window around
+    it.  This handles pages (e.g. Amazon) where large ``<head>`` sections push
+    the title tag well past the old 8 192-character scan limit.
+    """
+    # Maximum bytes/chars to extract after (and including) the opening <title tag.
+    # The regex needs to see </title>, so the window must cover the full content.
+    # The return value is always capped at 2 000 chars; titles beyond that are
+    # rare but possible.  We read up to 128 KiB from the tag onwards to handle
+    # even pathological cases without scanning the whole document.
+    _TITLE_WINDOW = 131072
+
     try:
-        # Only decode/process the prefix we need for title extraction
         match data:
-            case bytes() if data.startswith((b"\xff\xfe", b"\xfe\xff")):
-                prefix = data[:scan_chars * 2].decode("utf-16", errors="replace")
             case bytes() if data.startswith((b"\xff\xfe\x00\x00", b"\x00\x00\xfe\xff")):
-                prefix = data[:scan_chars * 4].decode("utf-32", errors="replace")
+                # UTF-32: locate the tag in the raw bytes, then decode the window.
+                tag_pos = data.lower().find(b"<\x00\x00\x00t\x00\x00\x00")
+                if tag_pos == -1:
+                    return None
+                chunk = data[tag_pos: tag_pos + _TITLE_WINDOW * 4].decode("utf-32", errors="replace")
+                prefix = chunk
+            case bytes() if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+                # UTF-16: simple byte-pair search is tricky; fall back to decoding
+                # a reasonable head chunk and let the regex do the rest.
+                prefix = data[: max(scan_chars * 2, _TITLE_WINDOW)].decode("utf-16", errors="replace")
             case bytes():
+                # UTF-8 / legacy 8-bit: find the tag cheaply in raw bytes.
+                tag_pos = data.lower().find(b"<title")
+                if tag_pos == -1:
+                    return None
+                raw_chunk = data[tag_pos: tag_pos + _TITLE_WINDOW]
                 try:
-                    prefix = data[:scan_chars].decode("utf-8")
+                    chunk = raw_chunk.decode("utf-8")
                 except UnicodeDecodeError:
                     try:
                         head = data[:sniff_bytes].decode("ascii", errors="ignore")
@@ -774,23 +799,27 @@ def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 
                             enc = m.group(1).lower()
                         else:
                             enc = "cp1252"
-                        prefix = data[:scan_chars * 2].decode(enc, errors="replace")
+                        chunk = raw_chunk.decode(enc, errors="replace")
                     except Exception as e:
                         logger.error(f"Title extraction encoding detection failed: {e}")
                         return None
+                prefix = chunk
             case str():
-                prefix = data[:scan_chars] if len(data) > scan_chars else data
+                tag_pos = data.lower().find("<title")
+                if tag_pos == -1:
+                    return None
+                prefix = data[tag_pos: tag_pos + _TITLE_WINDOW]
             case _:
                 logger.error(f"Title extraction received unsupported data type: {type(data)}")
                 return None
 
-        # Search only in the prefix
+        # Search only in the (now tag-anchored) prefix
         if m := TITLE_RE.search(prefix):
             title = html.unescape(" ".join(m.group(1).split())).strip()
             # Some safe limit
             return title[:2000]
         return None
-        
+
     except Exception as e:
         logger.error(f"Title extraction failed: {e}")
         return None
