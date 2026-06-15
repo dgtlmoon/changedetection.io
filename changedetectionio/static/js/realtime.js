@@ -226,6 +226,10 @@ $(document).ready(function () {
                 $('#watch-table-wrapper').toggleClass("has-error", general_stats.count_errors !== 0)
                 $('#post-list-with-errors a').text(`With errors (${ new Intl.NumberFormat(navigator.language).format(general_stats.count_errors) })`);
                 $('#unread-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count));
+
+                // Left-rail "Page Watches" unread badge(s) — desktop + mobile copies. Hide at zero.
+                const unreadText = new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count);
+                $('.js-unread-count').text(unreadText).toggle(general_stats.unread_changes_count !== 0);
             });
 
             socket.on('watch_update', function (data) {

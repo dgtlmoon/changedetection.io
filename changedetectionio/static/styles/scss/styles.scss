@@ -120,7 +120,7 @@ body {
   align-items: center;
   @media only screen and (min-width: $desktop-wide-breakpoint) {
     flex-direction: column;
-    padding-top: 4rem;
+    padding-top: 2rem;
   }
 }
 
@@ -163,9 +163,6 @@ button.toggle-button {
 
   color: var(--color-text-menu-heading);
 
-  &:hover {
-    color: var(--color-icon-github-hover);
-  }
 
   svg {
     fill: currentColor;
@@ -176,23 +173,6 @@ button.toggle-button {
   }
 
 
-}
-
-.pure-menu-horizontal {
-  background: var(--color-background);
-  padding-top: 5px;
-  padding-bottom: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#pure-menu-horizontal-spinner {
-  height: 3px;
-  background: linear-gradient(-75deg, #ff6000, #ff8f00, #ffdd00, #ed0000);
-  background-size: 400% 400%;
-  width: 100%;
-  animation: gradient 200s ease infinite;
 }
 
 body.spinner-active {
@@ -975,6 +955,12 @@ ul {
     supported by Chrome, Edge, Opera and Firefox */
 }
 
+[type=checkbox], [type=radio] {
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  cursor: pointer;
+}
 
 #checkbox-operations {
   background: var(--color-background-checkbox-operations);
@@ -991,6 +977,7 @@ ul {
     align-items: center;
   }
 }
+
 
 .inline-warning {
   >span {

@@ -1,4 +1,5 @@
 /* Add Watch UI - 3-pane workspace (top: URL+Go, left: live visual selector, right: options) */
+@use "../settings" as *;
 
 #add-watch-ui {
 
@@ -28,7 +29,7 @@
   /* PANES */
   #add-watch-panes {
     display: flex;
-    gap: 1rem;
+    gap: $common-gap;
     align-items: stretch;
 
     @media (max-width: 900px) {

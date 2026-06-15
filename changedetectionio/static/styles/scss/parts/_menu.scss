@@ -12,21 +12,6 @@
   }
 }
 
-a.github-link {
-  color: var(--color-text-menu-heading);
-  margin: 0;
-  padding: 0;
-  height: $top-menu-icon-size;
-  display: block;
-  svg {
-    fill: currentColor;
-    height: 100%;
-  }
-
-  &:hover {
-    color: var(--color-icon-github-hover);
-  }
-}
 
 .pure-menu-item {
   height: initial;
@@ -54,25 +39,4 @@ a.github-link {
   .action-icon {
     stroke: var(--color-text-menu-heading);
   }
-}
-
-.top-menu-list {
-  .action-label {
-   color: var(--color-text-menu-heading);
-    @media only screen and (max-width: 768px) {
-      display: none;
-    }
-  }
-}
-
-
-#inline-menu-extras-group {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: $common-gap;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
-  align-items: center;
 }

@@ -57,7 +57,8 @@
       {% if current_user.is_authenticated or not has_password %}
       <aside class="action-sidebar" aria-label="{{ _('Main navigation') }}">
         <div class="action-sidebar-inner">
-          {% include "sidebar-nav.html" %}
+          {# sidebar_scope keeps in-SVG ids unique across the desktop + mobile includes #}
+          {% with sidebar_scope = 'desktop' %}{% include "sidebar-nav.html" %}{% endwith %}
         </div>
       </aside>
       {% endif %}
@@ -76,7 +77,7 @@
 
           <li class="" id="heart-us">
                 <svg
-                   fill="#ff0000"
+                   fill="green"
                    class="bi bi-heart"
                    preserveAspectRatio="xMidYMid meet"
                    viewBox="0 0 16.9 16.1"
@@ -104,7 +105,7 @@
       <div class="mobile-menu-drawer" id="mobile-menu-drawer">
         {% if current_user.is_authenticated or not has_password %}
         <nav class="mobile-menu-section mobile-menu-section--primary" aria-label="{{ _('Main navigation') }}">
-          {% include "sidebar-nav.html" %}
+          {% with sidebar_scope = 'mobile' %}{% include "sidebar-nav.html" %}{% endwith %}
         </nav>
         {% endif %}
         <ul class="mobile-menu-items">
@@ -115,7 +116,6 @@
             </li>
         </ul>
       </div>
-      <div id="pure-menu-horizontal-spinner"></div>
       </div>
 
     </div>
@@ -275,6 +275,7 @@
     </dialog>
     {% endif %}
 
+  <div id="pure-menu-horizontal-spinner"></div>
 
   <script>
   (function() {

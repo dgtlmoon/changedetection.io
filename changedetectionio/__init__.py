@@ -635,6 +635,7 @@ def main():
                     all_paused=datastore.data['settings']['application'].get('all_paused', False),
                     all_muted=datastore.data['settings']['application'].get('all_muted', False),
                     llm_configured=bool(_get_llm_config(datastore)),
+                    unread_changes_count=datastore.unread_changes_count,
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.

@@ -4,6 +4,13 @@ $table-cell-padding: 8px 10px;
 /* below this width the optional restock info drops to its own row in the title cell */
 $title-col-stack-breakpoint: 1200px;
 
+// Highlight a row whose checkbox is selected. Pure CSS via :has() — no JS class
+// toggling needed. Targets the <td> cells (the striped background lives on the
+// cells, not the row) with enough specificity to beat .pure-table-striped.
+.watch-table tr:has(input[name="uuids"]:checked) > td {
+  background-color: var(--watchlist-row-selected);
+}
+
 /* table related */
 #stats_row {
   display: flex;

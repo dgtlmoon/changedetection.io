@@ -90,7 +90,9 @@ ul.action-sidebar-list {
 
 // Footer list (status counters, live spark, version) sits at the bottom of the
 // rail — the flex equivalent of the demo's `.rail-spacer { flex: 1 }`.
-.action-sidebar-list--bottom {
+// Both classes are stacked in the selector so this beats `ul.action-sidebar-list`
+// (specificity 0,1,1) which sets `margin: 0` and would otherwise cancel the auto.
+.action-sidebar-list.action-sidebar-list--bottom {
   margin-top: auto;
 }
 
@@ -120,6 +122,12 @@ ul.action-sidebar-list {
     display: block;
     width: 100%;
     height: 15px;
+    // border-box + zero padding so width:100% fills the rail exactly (no
+    // content-box "100% + padding" overflow) and the canvas's content box —
+    // what the JS measures and draws into — equals its displayed box.
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
     border-radius: 3px;
     // Faint "screen" so the trace reads as a small instrument even when idle.
     background: rgba(255, 255, 255, 0.05);
@@ -219,6 +227,20 @@ ul.action-sidebar-list {
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.05s ease-out;
+
+    // Unread-count variant: a small accent bubble pinned to the right of the row
+    // (a plain number, not an uppercase tag). Reveal/hide-on-expand is inherited
+    // from the .action-badge rules above; display:none at zero is handled inline.
+    &.action-badge--count {
+      margin-left: auto;          // hug the far right of the row, after the label
+      text-transform: none;
+      letter-spacing: 0;
+      // Calm blue — distinct from the red/orange error styling so an unread
+      // count never reads as an alert.
+      background: #3e95bb;
+      color: var(--color-white);
+      font-variant-numeric: tabular-nums;
+    }
   }
 }
 
@@ -290,6 +312,11 @@ body.actionside-bar-on {
 
   ul.action-sidebar-list {
     gap: 1px;
+    .action-sidebar-li {
+      a, button {
+        padding: $common-gap;
+      }
+    }
   }
 
   .action-sidebar-item {
@@ -297,10 +324,8 @@ body.actionside-bar-on {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 0.85rem;
-    width: 100%;
-    height: auto;
-    padding: 0.75rem 0.75rem;
+    gap: $common-gap;
+    padding: $common-gap $common-gap;
     border-radius: 8px;
     color: var(--color-text);
 
@@ -403,6 +428,9 @@ body.actionside-bar-on {
 }
 
 .actionsidebar-minimal {
+  #checking-now-stats-sidebar, #queue-stats-sidebar {
+    display: none;
+  }
   #cdio-logo {
     #logo-expanded {
       display: none;
@@ -410,6 +438,9 @@ body.actionside-bar-on {
   }
 
   &.action-side-bar-expanded {
+    #checking-now-stats-sidebar, #queue-stats-sidebar {
+      display: block;
+    }
     #cdio-logo {
       #logo-expanded {
         display: inline-block;

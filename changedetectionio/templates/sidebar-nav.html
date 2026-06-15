@@ -22,10 +22,17 @@
         <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
            class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
            title="{{ _('Add a page watch') }}">
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="4" ry="4"/>
-                <line x1="12" y1="8" x2="12" y2="16"/>
-                <line x1="8" y1="12" x2="16" y2="12"/>
+            {# Inverted "add" glyph: a solid (currentColor) rounded square with the
+               plus knocked out to transparency via a mask, so the plus shows the
+               rail behind it rather than a painted colour. #}
+            {%- set _add_mask_id = 'action-add-knockout-' ~ (sidebar_scope | default('nav')) -%}
+            <svg class="action-icon action-icon--filled" viewBox="0 0 24 24" aria-hidden="true">
+                <mask id="{{ _add_mask_id }}">
+                    <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="white"/>
+                    <line x1="12" y1="8" x2="12" y2="16" stroke="black" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="8" y1="12" x2="16" y2="12" stroke="black" stroke-width="3" stroke-linecap="round"/>
+                </mask>
+                <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="currentColor" stroke="none" mask="url(#{{ _add_mask_id }})"/>
             </svg>
             <span class="action-label">{{ _('Add a page watch') }}</span>
         </a>
@@ -39,6 +46,12 @@
                 <circle cx="12" cy="12" r="3"/>
             </svg>
             <span class="action-label">{{ _('Page Watches') }}</span>
+            {# Unread (changed, not-yet-viewed) count. Class hook (not id) because this
+               partial renders twice — desktop rail + mobile drawer. Hidden at 0; shown
+               and kept in sync live by realtime.js (general_stats_update). #}
+            <span class="action-badge action-badge--count js-unread-count"
+                  title="{{ _('Unread changes') }}"
+                  {% if not unread_changes_count %}style="display: none"{% endif %}>{{ unread_changes_count|format_int_locale }}</span>
         </a>
     </li>
     <li class="action-sidebar-li">
@@ -123,18 +136,18 @@
     </li>
     {% if socket_io_enabled %}
     <li class="action-sidebar-li action-sidebar-li--spark" aria-hidden="true">
-        <canvas class="queue-spark" title="{{ _('Live activity') }}"></canvas>
+        <canvas class="queue-spark" title="{{ _('Live activity') }}" ></canvas>
     </li>
     {% endif %}
     <li class="action-sidebar-li">
         {% if right_sticky %}
-          <div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div>
+          <div class="action-sidebar-item" id="right-sticky">{{ right_sticky }}</div>
         {% endif %}
     </li>
 
       {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
       <li class="action-sidebar-li">
-        <span id="new-version-text">
+        <span id="new-version-text" class="action-sidebar-item">
           <a href="https://changedetection.io">{{ _('A new version is available') }}</a>
         </span>
       </li>
