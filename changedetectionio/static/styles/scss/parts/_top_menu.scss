@@ -6,7 +6,10 @@
 // the right, so the divider dissolves toward the rail.
 .header {
   position: relative;
-
+  color: var(--color-text-menu-heading);
+  a {
+    color: var(--color-text-menu-heading);
+  }
   &::after {
     content: "";
     position: absolute;
@@ -19,7 +22,6 @@
       rgba(200, 200, 200, 0.02),
       rgba(200, 200, 200, 0.6));
   }
-
 }
 
 ul#top-right-menu {
