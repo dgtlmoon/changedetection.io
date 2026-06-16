@@ -215,7 +215,7 @@ ul.action-sidebar-list {
   // 'soon' / placeholder badge — inline tag once expanded; hidden at rest
   .action-badge {
     margin-left: 10px;
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     line-height: 1;
     padding: 3px 7px;
     border-radius: 999px;
@@ -428,7 +428,7 @@ body.actionside-bar-on {
 }
 
 .actionsidebar-minimal {
-  #checking-now-stats-sidebar, #queue-stats-sidebar {
+  #checking-now-stats-sidebar {
     display: none;
   }
   #cdio-logo {
@@ -438,7 +438,7 @@ body.actionside-bar-on {
   }
 
   &.action-side-bar-expanded {
-    #checking-now-stats-sidebar, #queue-stats-sidebar {
+    #checking-now-stats-sidebar{
       display: block;
     }
     #cdio-logo {

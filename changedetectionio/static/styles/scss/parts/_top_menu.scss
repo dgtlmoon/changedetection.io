@@ -5,7 +5,10 @@
 // white from nearly invisible on the left (next to the action bar) up to ~0.8 on
 // the right, so the divider dissolves toward the rail.
 .header {
-  position: relative;
+/* @todo - come back to this, because it has for now a transparent background.. */
+  /*  position: sticky;
+  top: 0;
+  z-index: 50;*/
   color: var(--color-text-menu-heading);
   a {
     color: var(--color-text-menu-heading);

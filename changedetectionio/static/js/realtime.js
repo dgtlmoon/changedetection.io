@@ -237,7 +237,9 @@ $(document).ready(function () {
                 // Tabs at bottom of list
                 $('#watch-table-wrapper').toggleClass("has-unread-changes", general_stats.unread_changes_count !==0)
                 $('#watch-table-wrapper').toggleClass("has-error", general_stats.count_errors !== 0)
-                $('#post-list-with-errors a').text(`With errors (${ new Intl.NumberFormat(navigator.language).format(general_stats.count_errors) })`);
+                // Counts live in dedicated .seg-count badges; update those (not the
+                // whole anchor text, which would wipe the badge markup + label).
+                $('#with-errors-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.count_errors));
                 $('#unread-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count));
 
                 // Left-rail "Page Watches" unread badge(s) — desktop + mobile copies. Hide at zero.

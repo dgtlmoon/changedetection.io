@@ -206,28 +206,28 @@ window.watchOverviewI18n = {
             {%- endfor -%}
         </div>
 
-        <ul id="list-related-buttons">
-            <li id="post-list-with-errors" style="display: none;" >
-                <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error">{{ _('With errors') }} ({{ errored_count }})</a>
-            </li>
-            <li id="post-list-mark-views" style="display: none;" >
-                <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">{{ _('Mark all viewed') }}</a>
-            </li>
-        {%-  if active_tag_uuid -%}
-            <li id="post-list-mark-views-tag">
-                <a href="{{url_for('ui.mark_all_viewed', tag=active_tag_uuid) }}" class="pure-button button-tag " id="mark-all-viewed">{{ _("Mark all viewed in '%(title)s'", title=active_tag.title) }}</a>
-            </li>
-        {%-  endif -%}
-            <li id="post-list-unread" style="display: none;" >
-                <a href="{{url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}" class="pure-button button-tag">{{ _('Unread') }} (<span id="unread-tab-counter">{{ unread_changes_count }}</span>)</a>
-            </li>
-            <li>
-               <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">{{ _('Recheck all') }} {% if active_tag_uuid %}  {{ _("in '%(title)s'", title=active_tag.title) }}{%endif%}</a>
-            </li>
-            <li>
-                <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
-            </li>
-        </ul>
+        <div id="list-related-buttons">
+            {# Status-view filters as a segmented control. Active state is server-
+               rendered from the query args; Unread/Errors options are revealed by the
+               has-unread-changes / has-error wrapper classes and their counts kept in
+               sync live by realtime.js. #}
+            <div class="seg" role="group" aria-label="{{ _('Filter watches') }}">
+                <a class="{{ 'active' if not request.args.get('unread') and not request.args.get('with_errors') }}"
+                   href="{{ url_for('watchlist.index', tag=request.args.get('tag')) }}">{{ _('All') }}</a>
+                <a id="post-list-unread" class="{{ 'active' if request.args.get('unread') == '1' }}"
+                   href="{{ url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}"
+                   {% if not unread_changes_count %}style="display: none"{% endif %}>{{ _('Unread') }} <span class="seg-count seg-count--unread" id="unread-tab-counter">{{ unread_changes_count|format_int_locale }}</span></a>
+                <a id="post-list-with-errors" class="{{ 'active' if request.args.get('with_errors') == '1' }}"
+                   href="{{ url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}"
+                   {% if not errored_count %}style="display: none"{% endif %}>{{ _('With errors') }} <span class="seg-count seg-count--error" id="with-errors-tab-counter">{{ errored_count|format_int_locale }}</span></a>
+            </div>
+            <a id="post-list-mark-views" class="pure-button button-tag" href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" {% if not unread_changes_count %}style="display: none"{% endif %}>{{ _('Mark all viewed') }}</a>
+            {%- if active_tag_uuid -%}
+            <a id="post-list-mark-views-tag" class="pure-button button-tag" href="{{url_for('ui.mark_all_viewed', tag=active_tag_uuid) }}">{{ _("Mark all viewed in '%(title)s'", title=active_tag.title) }}</a>
+            {%- endif -%}
+            <a id="recheck-all" class="pure-button button-tag" href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}">{{ _('Recheck all') }} {% if active_tag_uuid %}{{ _("in '%(title)s'", title=active_tag.title) }}{% endif %}</a>
+            <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
+        </div>
 
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',

@@ -15,6 +15,7 @@
 @use "parts/love";
 @use "parts/preview_text_filter";
 @use "parts/table";
+@use "parts/seg";
 @use "parts/watch_table";
 @use "parts/watch_table-mobile";
 @use "parts/edit";
@@ -795,9 +796,6 @@ textarea::placeholder {
   }
 }
 
-
-$form-edge-padding: 20px;
-
 .pure-form-stacked {
   >div:first-child {
     display: block;
@@ -842,7 +840,7 @@ $form-edge-padding: 20px;
 
   .inner {
     background: var(--color-background);
-    padding: $form-edge-padding;
+    padding: $common-gap*2;
   }
 
   #actions {

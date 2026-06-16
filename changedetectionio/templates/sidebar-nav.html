@@ -107,6 +107,11 @@
                 <line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
             <span class="action-label">{{ _('Queue') }}</span>
+
+
+            <span class="action-badge action-badge--count  queue-size-int">{{ queue_size }}</span>
+
+
         </a>
     </li>
     <li class="action-sidebar-li">
@@ -130,9 +135,6 @@
 
     <li class="action-sidebar-li" id="checking-now-stats-sidebar">
         <a href="{{ url_for('ui.ui_queue.queue_page') }}" class="action-sidebar-item">{{ _('Checking now') }}:&nbsp;<span class="checking-now-int">{{ checking_now_size }}</span></a>
-    </li>
-    <li class="action-sidebar-li" id="queue-stats-sidebar">
-        <a href="{{ url_for('ui.ui_queue.queue_page') }}" class="action-sidebar-item">{{ _('In queue') }}:&nbsp;<span class="queue-size-int">{{ queue_size }}</span></a>
     </li>
     {% if socket_io_enabled %}
     <li class="action-sidebar-li action-sidebar-li--spark" aria-hidden="true">

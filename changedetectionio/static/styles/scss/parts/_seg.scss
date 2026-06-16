@@ -1,0 +1,69 @@
+@use "../settings" as *;
+
+// Segmented control — a row of related options sharing one rounded "track", with
+// the active option raised onto a surface. Used for the watch-list status filters
+// (All / Unread / With errors) and reusable for any small mutually-exclusive view
+// switch.
+.seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border-table-cell);
+  border-radius: var(--common-round-border);
+  background: var(--color-background-table-thead);
+
+  a,
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-input-description);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 5px 11px;
+    border-radius: calc(var(--common-round-border) - 1px);
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--color-text);
+    }
+
+    &.active {
+      background: var(--color-background);
+      color: var(--color-text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+  }
+}
+
+// Dark mode: the default active surface (--color-background ≈ #444) barely lifts
+// off the track (#333) and the soft shadow disappears on dark — raise the active
+// option onto a clearly lighter surface with a deeper shadow so it still reads.
+html[data-darkmode="true"] .seg {
+  a.active,
+  button.active {
+    background: var(--color-grey-400);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+}
+
+// Small count bubble inside a seg option (e.g. "Unread (12)") — same pill shape
+// as the sidebar's .action-badge, recoloured for a light track.
+.seg-count {
+  font-size: 0.62rem;
+  line-height: 1;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--color-background-button-tag);
+  color: var(--color-white);
+
+  &--unread { background: #3e95bb; }                       // matches the sidebar unread badge
+  &--error  { background: var(--color-background-button-error); }
+}
