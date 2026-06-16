@@ -11,24 +11,12 @@ $title-col-stack-breakpoint: 1200px;
   background-color: var(--watchlist-row-selected);
 }
 
-// Row hover: light grey background (replaces the now-disabled zebra striping)
-// and reveals the per-row action buttons (hidden at rest — see td.buttons below).
-.watch-table tbody tr:hover > td {
-  background-color: var(--watchlist-row-hover);
-}
+// Reveal the per-row action buttons on hover/focus/selection (hidden at rest —
+// see td.buttons below). The row-hover background itself comes from .cdio-table.
 .watch-table tbody tr:hover td.buttons > *,
 .watch-table tbody tr:focus-within td.buttons > *,
 .watch-table tbody tr:has(input[name="uuids"]:checked) td.buttons > * {
   opacity: 1;
-}
-
-// Rounds the table's corners. border-radius on the <table> itself doesn't work
-// with border-collapse:collapse (and the row divider lines depend on collapse),
-// so a clip wrapper rounds + overflow-clips the square corners of the thead /
-// last-row cell backgrounds instead.
-.watch-table-clip {
-  border-radius: var(--common-round-border);
-  overflow: hidden;
 }
 
 // "Select all matching" banner shown under the bulk-operations bar when the
@@ -81,10 +69,8 @@ body.has-queue {
   }
 }
 
+// Watch-list-specific styling layered on top of the shared .cdio-table base.
 .watch-table {
-  width: 100%;
-  font-size: var(--body-main-text-size);
-
   .checkbox-uuid {
     >* {
       vertical-align: middle;
@@ -92,18 +78,6 @@ body.has-queue {
     text-align: center;
   }
 
-  thead {
-    text-transform: uppercase;
-    a {
-      color: var(--color-text);
-    }
-  }
-
-  td,
-  th {
-    vertical-align: middle;
-    border: none;
-  }
   @media only screen and (max-width: $title-col-stack-breakpoint) {
     .last-checked, .last-changed {
       text-align: center;
@@ -114,14 +88,6 @@ body.has-queue {
     text-align: center;
   }
   tbody tr {
-    color: var(--color-watch-table-row-text);
-    border-bottom: 1px solid var(--color-table-line);
-    background-color: var(--color-table-background);
-
-    td {
-      background-color: var(--color-table-background);
-    }
-
     &.unviewed {
       font-weight: bold;
     }

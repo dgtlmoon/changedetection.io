@@ -43,8 +43,8 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     </form>
     <!-- @todo maybe some overview matrix, 'tick' with which has notification, filter rules etc -->
     <div id="watch-table-wrapper">
-
-        <table class="pure-table pure-table-striped group-overview-table">
+        <div class="cdio-table-clip">
+        <table class="pure-table cdio-table group-overview-table">
             <thead>
             <tr>
                 <th></th>
@@ -95,6 +95,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
             {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endblock %}

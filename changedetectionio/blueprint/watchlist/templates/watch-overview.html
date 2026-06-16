@@ -232,8 +232,8 @@ window.watchOverviewI18n = {
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
-        <div class="watch-table-clip">
-        <table class="pure-table {#pure-table-striped#} watch-table {{ table_classes | reject('equalto', '') | join(' ') }}">
+        <div class="cdio-table-clip">
+        <table class="pure-table cdio-table watch-table {{ table_classes | reject('equalto', '') | join(' ') }}">
             <thead>
             <tr>
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
