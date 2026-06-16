@@ -43,6 +43,11 @@ $title-col-stack-breakpoint: 1200px;
   }
   .left {
     text-align: left;
+
+    .records-selected {
+      margin-top: 0.25rem;
+      opacity: 0.9;
+    }
   }
 
   .right {

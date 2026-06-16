@@ -128,6 +128,7 @@ window.watchOverviewI18n = {
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
     <div id="checkbox-operations">
+        <button type="button" class="pure-button button-secondary button-xsmall" id="check-invert"><i data-feather="repeat" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Invert') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Pause') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('UnPause') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="mute"><i data-feather="volume-x" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Mute') }}</button>
@@ -150,10 +151,14 @@ window.watchOverviewI18n = {
                        data-confirm-title="{{ _('Delete Watches?') }}"
                        data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Delete') }}</button>
+        <button type="button" class="pure-button button-secondary button-xsmall" id="check-cancel"><i data-feather="x" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Cancel') }}</button>
     </div>
 
     <div id="stats_row">
-        <div class="left">{%- if watches|length >= pagination.per_page -%}{{ pagination.info }}{%- endif -%}</div>
+        <div class="left">{%- if watches|length >= pagination.per_page -%}{{ pagination.info }}{%- endif -%}
+            {# Live count of selected rows; %(count)s is filled (locale-formatted) by watch-overview.js #}
+            <div id="records-selected" class="records-selected" data-template="{{ _('%(count)s records selected') }}" style="display: none;"></div>
+        </div>
     </div>
 
 

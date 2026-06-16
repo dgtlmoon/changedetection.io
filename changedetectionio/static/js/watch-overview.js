@@ -66,9 +66,49 @@ $(function () {
         }
     });
 
+    // Update the "N records selected" line under the stats row. The translatable
+    // template ("%(count)s records selected") is carried on the element's
+    // data-template attribute; we substitute a locale-formatted count here.
+    function updateRecordsSelected() {
+        const $el = $('#records-selected');
+        if (!$el.length) return;
+        const n = $('input[name="uuids"][type=checkbox]:checked').length;
+        if (n > 0) {
+            const tpl = $el.attr('data-template') || '%(count)s records selected';
+            // Only the count is emphasised. The number is locale-formatted digits/
+            // separators (no HTML-special chars) so injecting it as markup is safe.
+            const numHtml = '<strong>' + new Intl.NumberFormat(navigator.language).format(n) + '</strong>';
+            $el.html(tpl.replace('%(count)s', numHtml)).show();
+        } else {
+            $el.hide();
+        }
+    }
+
     // checkboxes - check all
     $("#check-all").click(function (e) {
         $('input[type=checkbox]').not(this).prop('checked', this.checked);
+        updateRecordsSelected();
+    });
+
+    // checkboxes - invert the current selection
+    $("#check-invert").click(function (e) {
+        $('input[name="uuids"][type=checkbox]').prop('checked', function (i, val) {
+            return !val;
+        });
+        // Programmatic changes don't fire 'click', so re-evaluate the operations bar.
+        if ($('input[name="uuids"][type=checkbox]:checked').length) {
+            $('#checkbox-operations').slideDown();
+        } else {
+            $('#checkbox-operations').slideUp();
+        }
+        updateRecordsSelected();
+    });
+
+    // checkboxes - cancel: clear the whole selection and dismiss the operations bar
+    $("#check-cancel").click(function (e) {
+        $('input[type=checkbox]').prop('checked', false);
+        $('#checkbox-operations').slideUp();
+        updateRecordsSelected();
     });
 
     const time_check_step_size_seconds=1;
@@ -80,7 +120,11 @@ $(function () {
         } else {
             $('#checkbox-operations').slideUp();
         }
+        updateRecordsSelected();
     });
+
+    // Initial state (e.g. browser restored some checkbox states on reload)
+    updateRecordsSelected();
 
     setInterval(function () {
         // Background ETA completion for 'checking now'

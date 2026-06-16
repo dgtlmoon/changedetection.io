@@ -27,7 +27,9 @@ $(document).ready(function () {
         });
 
 
-        $('#checkbox-operations button').on('click.socketHandlerNamespace', function (e) {
+        // Only the actual operation buttons carry name="op"; this excludes UI-only
+        // buttons in the bar such as "Invert" (client-side selection toggle).
+        $('#checkbox-operations button[name="op"]').on('click.socketHandlerNamespace', function (e) {
             e.preventDefault();
             const $button = $(this);
             const op = $button.val();
@@ -52,8 +54,8 @@ $(document).ready(function () {
                             uuids: checkedUuids,
                             extra_data: $('#op_extradata').val()
                         });
-                        $('input[name="uuids"]:checked').prop('checked', false);
-                        $('#check-all:checked').prop('checked', false);
+                        // Keep the rows selected after the operation so further
+                        // actions can be applied to the same selection.
                     }
                 };
                 ModalDialog.confirm(config);
@@ -64,8 +66,8 @@ $(document).ready(function () {
                     uuids: checkedUuids,
                     extra_data: $('#op_extradata').val()
                 });
-                $('input[name="uuids"]:checked').prop('checked', false);
-                $('#check-all:checked').prop('checked', false);
+                // Keep the rows selected after the operation so further
+                // actions can be applied to the same selection.
             }
 
             return false;
