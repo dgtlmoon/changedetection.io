@@ -53,6 +53,7 @@ msgid "Hover & click the preview to watch just one part of the page."
 msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear selection"
 msgstr "Limpar seleção"
 
@@ -2420,6 +2421,21 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr ""
 "<p><strong>Tem certeza que deseja excluir os monitoramentos selecionados?</strong></p><p>Esta ação não pode ser "
 "desfeita.</p>"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "All %(page)s on this page are selected."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "Select all %(total)s matching"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "All %(total)s matching are selected."
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
