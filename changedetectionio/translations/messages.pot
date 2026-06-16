@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-14 13:29+0200\n"
+"POT-Creation-Date: 2026-06-16 13:31+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -790,6 +790,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "How \"Last Checked\" and \"Last Changed\" times are shown in the watch overview list."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"\"Collapsed icon rail\" keeps the left navigation slim and reveals labels on mouse-over; \"Always expanded\" keeps "
+"labels visible."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -3211,6 +3217,18 @@ msgid "Short (1m ago)"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Navigation sidebar"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Collapsed icon rail (expands on hover)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Always expanded"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr ""
 
@@ -4442,6 +4460,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Page Watches"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Unread changes"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

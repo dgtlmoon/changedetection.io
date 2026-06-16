@@ -212,7 +212,8 @@ window.watchOverviewI18n = {
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
-        <table class="pure-table pure-table-striped watch-table {{ table_classes | reject('equalto', '') | join(' ') }}">
+        <div class="watch-table-clip">
+        <table class="pure-table {#pure-table-striped#} watch-table {{ table_classes | reject('equalto', '') | join(' ') }}">
             <thead>
             <tr>
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
@@ -224,7 +225,7 @@ window.watchOverviewI18n = {
                         <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, tag=active_tag_uuid)}}"><i data-feather="volume-2" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
                     </div>
                 </th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">{{ _('Web page') }} <span class='arrow {{link_order}}'></span></a></th>
+                <th id="th-webpage"><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">{{ _('Web page') }} <span class='arrow {{link_order}}'></span></a></th>
              {%- if any_has_restock_price_processor -%}
                 <th>{{ _('Restock & Price') }}</th>
              {%- endif -%}
@@ -247,8 +248,8 @@ window.watchOverviewI18n = {
                 {%- set error_texts = watch.compile_error_texts(has_proxies=has_proxies) -%}
                 {%- set system_use_url_watchlist = datastore.data['settings']['application']['ui'].get('use_page_title_in_list')  -%}
                 {#  Class settings mirrored in changedetectionio/static/js/realtime.js for the frontend #}
+{#                    loop.cycle('pure-table-odd', 'pure-table-even'),#}
                 {%- set row_classes = [
-                    loop.cycle('pure-table-odd', 'pure-table-even'),
                     'processor-' ~ watch['processor'],
                     'has-error' if error_texts|length > 2 else '',
                     'paused' if watch.paused is defined and watch.paused != False else '',
@@ -404,6 +405,7 @@ window.watchOverviewI18n = {
             {%- endfor -%}
             </tbody>
         </table>
+        </div>
         {{ pagination.links }}
     </div>
     </form>

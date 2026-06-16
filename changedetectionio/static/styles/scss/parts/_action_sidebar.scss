@@ -151,7 +151,7 @@ ul.action-sidebar-list {
   /*height: 42px;*/
   padding: $common-gap;
   font-size: var(--body-main-text-size);
-  border-radius: 8px;
+  border-radius: var(--common-round-border);
   color: var(--color-white);
   text-decoration: none;
   white-space: nowrap;
@@ -326,7 +326,7 @@ body.actionside-bar-on {
     justify-content: flex-start;
     gap: $common-gap;
     padding: $common-gap $common-gap;
-    border-radius: 8px;
+    border-radius: var(--common-round-border);
     color: var(--color-text);
 
     &:hover {

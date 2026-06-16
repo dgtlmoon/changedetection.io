@@ -141,9 +141,9 @@ body {
   vertical-align: middle;
 }
 
-.pure-table-even {
+/*.pure-table-even {
   background: var(--color-background);
-}
+}*/
 
 /* Some styles from https://css-tricks.com/ */
 a {
@@ -735,13 +735,15 @@ footer {
   }
 }
 
-.pure-table-striped {
-  tr:nth-child(2n-1) {
-    td {
-      background-color: var(--color-table-stripe);
-    }
-  }
-}
+// Temporarily disabled: zebra striping on odd rows. Row distinction now comes
+// from the :hover highlight (see .watch-table tr:hover in parts/_watch_table.scss).
+//.pure-table-striped {
+//  tr:nth-child(2n-1) {
+//    td {
+//      background-color: var(--color-table-stripe);
+//    }
+//  }
+//}
 
 .pure-form input[type=color],
 .pure-form input[type=date],
@@ -1156,8 +1158,8 @@ ul#highlightSnippetActions {
   border-color: rgba(255, 255, 255, 0.25);
   border-image: initial;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
-  padding: 1.25rem;
+  border-radius: var(--common-round-border);
+  padding: $common-gap*2;
 }
 
 header {

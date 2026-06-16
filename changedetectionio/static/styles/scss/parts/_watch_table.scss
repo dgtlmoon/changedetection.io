@@ -11,6 +11,26 @@ $title-col-stack-breakpoint: 1200px;
   background-color: var(--watchlist-row-selected);
 }
 
+// Row hover: light grey background (replaces the now-disabled zebra striping)
+// and reveals the per-row action buttons (hidden at rest — see td.buttons below).
+.watch-table tbody tr:hover > td {
+  background-color: var(--watchlist-row-hover);
+}
+.watch-table tbody tr:hover td.buttons > *,
+.watch-table tbody tr:focus-within td.buttons > *,
+.watch-table tbody tr:has(input[name="uuids"]:checked) td.buttons > * {
+  opacity: 1;
+}
+
+// Rounds the table's corners. border-radius on the <table> itself doesn't work
+// with border-collapse:collapse (and the row divider lines depend on collapse),
+// so a clip wrapper rounds + overflow-clips the square corners of the thead /
+// last-row cell backgrounds instead.
+.watch-table-clip {
+  border-radius: var(--common-round-border);
+  overflow: hidden;
+}
+
 /* table related */
 #stats_row {
   display: flex;
@@ -51,13 +71,35 @@ body.has-queue {
     text-align: center;
   }
 
+  thead {
+    text-transform: uppercase;
+    a {
+      color: var(--color-text);
+    }
+  }
+
   td,
   th {
     vertical-align: middle;
+    border: none;
+  }
+  @media only screen and (max-width: $title-col-stack-breakpoint) {
+    .last-checked, .last-changed {
+      text-align: center;
+    }
   }
 
-  tr {
+  #th-webpage {
+    text-align: center;
+  }
+  tbody tr {
     color: var(--color-watch-table-row-text);
+    border-bottom: 1px solid var(--color-table-line);
+    background-color: var(--color-table-background);
+
+    td {
+      background-color: var(--color-table-background);
+    }
 
     &.unviewed {
       font-weight: bold;
@@ -191,18 +233,31 @@ body.has-queue {
     &.buttons {
       font-size: 12px;
       white-space: nowrap;
+      // Per-row actions are hidden at rest and revealed on row hover/focus (see
+      // the .watch-table tbody tr:hover rule above). Opacity (not display) keeps
+      // the column width stable so the table doesn't shift on hover.
+      > * {
+        opacity: 0;
+        transition: opacity 0.12s ease;
+      }
     }
     &.title-col {
       word-break: break-all;
       white-space: normal;
     }
 
-    &.last-changed,&.last-checked {
-      text-align: center;
-    }
-
     a.external::after {
-      content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+      // Inline "external link" glyph (open-cornered square + outbound arrow) as a
+      // background image so its box can be sized off the doc text-size variable
+      // (a data-URI in `content:url()` can't be reliably resized). Neutral grey so
+      // it reads on light backgrounds; dark mode lightens it via the existing
+      // invert filter on .title-col a[target="_blank"]::after.
+      content: "";
+      display: inline-block;
+      width: var(--body-main-text-size);
+      height: var(--body-main-text-size);
+      vertical-align: -0.1em;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E") no-repeat center / contain;
       margin: 0 3px 0 5px;
     }
     &.watch-controls {
@@ -216,6 +271,9 @@ body.has-queue {
 
 
   th {
+    @media (min-width: 1020px) {
+      white-space: nowrap;
+    }
     &#h-lastchanged, &#h-lastchecked {
       text-align: center;
     }
@@ -386,4 +444,8 @@ body.has-queue {
     }
   }
 
+}
+
+.pure-button {
+  border-radius: var(--common-round-border);
 }

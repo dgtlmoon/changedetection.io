@@ -14,7 +14,7 @@ import sys
 import time
 
 # Allow alphanumerics, space, and a small set of punctuation that appears in legitimate
-# status strings ("Querying AI/LLM (intent)..", "Fetching page.."). Anything that could
+# status strings ("Querying AI/LLM (intent)..", "Fetching..."). Anything that could
 # be HTML-active (<, >, &, ", ', =, ;, {, }, `, \) is stripped.
 _MINITEXT_STATUS_SAFE_RE = re.compile(r'[^A-Za-z0-9 ().,/:\-]')
 _MINITEXT_STATUS_MAX_LEN = 80
@@ -30,7 +30,7 @@ DEFER_SLEEP_TIME_ALREADY_QUEUED = 0.3 if IN_PYTEST else 10.0
 
 def set_watch_minitext_status(watch, status):
     """
-    Set a transient status line for a watch (e.g. "Fetching page..", "Querying AI/LLM..").
+    Set a transient status line for a watch (e.g. "Fetching...", "Querying AI/LLM..").
 
     Writes to watch['__check_status'] so a client reloading the page can render the
     last known status, and fires the realtime signal so already-connected clients
@@ -182,7 +182,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
 
-                    set_watch_minitext_status(watch, "Fetching page..")
+                    set_watch_minitext_status(watch, "Fetching...")
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
