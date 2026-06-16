@@ -33,9 +33,15 @@ $(document).ready(function () {
             e.preventDefault();
             const $button = $(this);
             const op = $button.val();
-            const checkedUuids = $('input[name="uuids"]:checked').map(function () {
-                return this.value.trim();
-            }).get();
+            // The cross-page selection store (watch-overview.js) is the source of
+            // truth when present — it includes rows selected on other pages, not
+            // just the visible checked boxes. Fall back to the DOM if absent.
+            const watchSel = window.cdioWatchSelection;
+            const checkedUuids = watchSel
+                ? watchSel.all()
+                : $('input[name="uuids"]:checked').map(function () {
+                    return this.value.trim();
+                }).get();
 
             // Check if this button requires confirmation
             console.log('Button clicked, op:', op, 'requires-confirm:', $button.is('[data-requires-confirm]'));
@@ -55,7 +61,12 @@ $(document).ready(function () {
                             extra_data: $('#op_extradata').val()
                         });
                         // Keep the rows selected after the operation so further
-                        // actions can be applied to the same selection.
+                        // actions can be applied to the same selection — except
+                        // delete, where the rows (and their UUIDs) are now gone.
+                        if (op === 'delete' && watchSel) {
+                            watchSel.clear();
+                            if (watchSel.refreshUI) watchSel.refreshUI();
+                        }
                     }
                 };
                 ModalDialog.confirm(config);
@@ -66,8 +77,8 @@ $(document).ready(function () {
                     uuids: checkedUuids,
                     extra_data: $('#op_extradata').val()
                 });
-                // Keep the rows selected after the operation so further
-                // actions can be applied to the same selection.
+                // Keep the rows selected after the operation so further actions
+                // can be applied to the same selection.
             }
 
             return false;

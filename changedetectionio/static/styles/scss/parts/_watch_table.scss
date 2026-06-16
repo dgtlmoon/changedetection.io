@@ -31,6 +31,22 @@ $title-col-stack-breakpoint: 1200px;
   overflow: hidden;
 }
 
+// "Select all matching" banner shown under the bulk-operations bar when the
+// whole visible page is selected but more matching rows exist on other pages.
+.select-all-banner {
+  margin: 0.4rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--common-round-border);
+  background: var(--watchlist-row-selected);
+  color: var(--color-watch-table-row-text);
+  font-size: var(--body-main-text-size);
+
+  button {
+    margin-left: 0.5rem;
+    vertical-align: baseline;
+  }
+}
+
 /* table related */
 #stats_row {
   display: flex;

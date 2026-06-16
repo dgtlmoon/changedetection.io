@@ -11,6 +11,14 @@
 <script>let nowtimeserver={{ now_time_server }};</script>
 <script>let favicon_baseURL="{{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}";</script>
 <script>
+// Cross-page selection: total rows matching the current filter, and the endpoint
+// that lists all matching UUIDs for the "select all matching" action.
+window.watchListSelection = {
+    total: {{ pagination.total }},
+    uuidsUrl: "{{ url_for('watchlist.uuids') }}"
+};
+</script>
+<script>
 // Initialize Feather icons after the page loads
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
@@ -151,8 +159,15 @@ window.watchOverviewI18n = {
                        data-confirm-title="{{ _('Delete Watches?') }}"
                        data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Delete') }}</button>
-        <button type="button" class="pure-button button-secondary button-xsmall" id="check-cancel"><i data-feather="x" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Cancel') }}</button>
+        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" style="width: 14px; height: 14px; stroke: #333; margin-right: 4px;"></i>{{ _('Cancel') }}</button>
     </div>
+    {# "Select all matching" banner — shown by watch-overview.js when the whole
+       visible page is selected but more matching rows exist on other pages. #}
+    <div id="select-all-banner" class="select-all-banner" style="display: none;"
+         data-select-all-tmpl="{{ _('All %(page)s on this page are selected.') }}"
+         data-select-all-action="{{ _('Select all %(total)s matching') }}"
+         data-all-selected-tmpl="{{ _('All %(total)s matching are selected.') }}"
+         data-clear-action="{{ _('Clear selection') }}"></div>
 
     <div id="stats_row">
         <div class="left">{%- if watches|length >= pagination.per_page -%}{{ pagination.info }}{%- endif -%}

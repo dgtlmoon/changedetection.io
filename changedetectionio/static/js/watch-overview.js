@@ -66,65 +66,169 @@ $(function () {
         }
     });
 
-    // Update the "N records selected" line under the stats row. The translatable
-    // template ("%(count)s records selected") is carried on the element's
-    // data-template attribute; we substitute a locale-formatted count here.
+    // ---- Cross-page selection store -------------------------------------------
+    // Selection is a Set of watch UUIDs (the source of truth) rather than the DOM,
+    // so it spans paginated pages. Persisted in sessionStorage scoped to the
+    // current filter (URL minus the page param) so it auto-clears when the
+    // search/filter changes. The watchlist "/uuids" endpoint supplies the full
+    // matching id list for "select all matching".
+    const sel = window.cdioWatchSelection = (function () {
+        const KEY = 'cdio-watch-selection';
+        function scopeKey() {
+            const p = new URLSearchParams(location.search);
+            p.delete('page');
+            return location.pathname + '?' + p.toString();
+        }
+        let uuids = new Set();
+        try {
+            const obj = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+            if (obj && obj.scope === scopeKey() && Array.isArray(obj.uuids)) {
+                uuids = new Set(obj.uuids);
+            }
+        } catch (e) { /* private mode / corrupt — best effort */ }
+        function persist() {
+            try {
+                sessionStorage.setItem(KEY, JSON.stringify({ scope: scopeKey(), uuids: Array.from(uuids) }));
+            } catch (e) { /* quota / private mode */ }
+        }
+        return {
+            has: (u) => uuids.has(u),
+            add: (u) => { uuids.add(u); persist(); },
+            remove: (u) => { uuids.delete(u); persist(); },
+            toggle: (u) => { if (uuids.has(u)) { uuids.delete(u); } else { uuids.add(u); } persist(); },
+            addMany: (arr) => { arr.forEach((u) => uuids.add(u)); persist(); },
+            clear: () => { uuids.clear(); persist(); },
+            all: () => Array.from(uuids),
+            size: () => uuids.size
+        };
+    })();
+
+    const selCfg = window.watchListSelection || {};
+    const totalMatching = parseInt(selCfg.total, 10) || 0;
+
+    // Row checkbox values carry a trailing space in the template — always trim.
+    const cbUuid = (el) => (el.value || '').trim();
+    const $rowCbs = () => $('input[name="uuids"][type=checkbox]');
+    const fmtNum = (n) => new Intl.NumberFormat(navigator.language).format(n);
+
+    // Reflect the store onto this page's checkboxes (load + after bulk changes).
+    function applySelectionToDom() {
+        $rowCbs().each(function () { this.checked = sel.has(cbUuid(this)); });
+        const visible = $rowCbs().get();
+        $('#check-all').prop('checked', visible.length > 0 && visible.every((el) => el.checked));
+    }
+
     function updateRecordsSelected() {
         const $el = $('#records-selected');
         if (!$el.length) return;
-        const n = $('input[name="uuids"][type=checkbox]:checked').length;
+        const n = sel.size();
         if (n > 0) {
             const tpl = $el.attr('data-template') || '%(count)s records selected';
-            // Only the count is emphasised. The number is locale-formatted digits/
-            // separators (no HTML-special chars) so injecting it as markup is safe.
-            const numHtml = '<strong>' + new Intl.NumberFormat(navigator.language).format(n) + '</strong>';
-            $el.html(tpl.replace('%(count)s', numHtml)).show();
+            // Only the count is emphasised; the number is locale-formatted digits.
+            $el.html(tpl.replace('%(count)s', '<strong>' + fmtNum(n) + '</strong>')).show();
         } else {
             $el.hide();
         }
     }
 
-    // checkboxes - check all
-    $("#check-all").click(function (e) {
-        $('input[type=checkbox]').not(this).prop('checked', this.checked);
-        updateRecordsSelected();
-    });
+    function updateSelectAllBanner() {
+        const $b = $('#select-all-banner');
+        if (!$b.length) return;
+        const visible = $rowCbs().map(function () { return cbUuid(this); }).get();
+        const allVisibleSelected = visible.length > 0 && visible.every((u) => sel.has(u));
 
-    // checkboxes - invert the current selection
-    $("#check-invert").click(function (e) {
-        $('input[name="uuids"][type=checkbox]').prop('checked', function (i, val) {
-            return !val;
-        });
-        // Programmatic changes don't fire 'click', so re-evaluate the operations bar.
-        if ($('input[name="uuids"][type=checkbox]:checked').length) {
-            $('#checkbox-operations').slideDown();
+        if (allVisibleSelected && totalMatching > 0 && sel.size() >= totalMatching) {
+            const tpl = $b.attr('data-all-selected-tmpl') || 'All %(total)s matching are selected.';
+            $b.html(
+                tpl.replace('%(total)s', '<strong>' + fmtNum(totalMatching) + '</strong>') +
+                ' <button type="button" class="pure-button button-xsmall" id="select-all-clear">' +
+                ($b.attr('data-clear-action') || 'Clear selection') + '</button>'
+            ).show();
+        } else if (allVisibleSelected && totalMatching > visible.length) {
+            const tpl = $b.attr('data-select-all-tmpl') || 'All %(page)s on this page are selected.';
+            const action = ($b.attr('data-select-all-action') || 'Select all %(total)s matching')
+                .replace('%(total)s', fmtNum(totalMatching));
+            $b.html(
+                tpl.replace('%(page)s', '<strong>' + fmtNum(visible.length) + '</strong>') +
+                ' <button type="button" class="pure-button button-xsmall" id="select-all-matching">' + action + '</button>'
+            ).show();
         } else {
-            $('#checkbox-operations').slideUp();
+            $b.hide().empty();
         }
+    }
+
+    function refreshSelectionUI() {
+        if (sel.size() > 0) { $('#checkbox-operations').slideDown(); }
+        else { $('#checkbox-operations').slideUp(); }
         updateRecordsSelected();
+        updateSelectAllBanner();
+    }
+    // Exposed so realtime.js can refresh the UI after it mutates the selection
+    // (e.g. clearing it once a delete operation removes the rows).
+    sel.refreshUI = refreshSelectionUI;
+
+    // Individual row checkbox toggled (direct click, or via the row-click handler).
+    $(document).on('change', 'input[name="uuids"][type=checkbox]', function () {
+        if (this.checked) { sel.add(cbUuid(this)); } else { sel.remove(cbUuid(this)); }
+        const visible = $rowCbs().get();
+        $('#check-all').prop('checked', visible.length > 0 && visible.every((el) => el.checked));
+        refreshSelectionUI();
     });
 
-    // checkboxes - cancel: clear the whole selection and dismiss the operations bar
-    $("#check-cancel").click(function (e) {
-        $('input[type=checkbox]').prop('checked', false);
+    // Check-all (this page only).
+    $("#check-all").click(function () {
+        const on = this.checked;
+        $rowCbs().each(function () {
+            this.checked = on;
+            if (on) { sel.add(cbUuid(this)); } else { sel.remove(cbUuid(this)); }
+        });
+        refreshSelectionUI();
+    });
+
+    // Invert this page's selection.
+    $("#check-invert").click(function () {
+        $rowCbs().each(function () { sel.toggle(cbUuid(this)); });
+        applySelectionToDom();
+        refreshSelectionUI();
+    });
+
+    // Cancel: clear the whole cross-page selection (incl. the stored browser data)
+    // and dismiss the operations bar.
+    $("#check-cancel").click(function () {
+        sel.clear();
+        applySelectionToDom();
         $('#checkbox-operations').slideUp();
         updateRecordsSelected();
+        updateSelectAllBanner();
+    });
+
+    // "Select all N matching" — pull the full matching id list from the server.
+    $(document).on('click', '#select-all-matching', function () {
+        if (!selCfg.uuidsUrl) return;
+        const $btn = $(this).prop('disabled', true);
+        $.getJSON(selCfg.uuidsUrl + location.search)
+            .done(function (data) {
+                if (data && Array.isArray(data.uuids)) {
+                    sel.addMany(data.uuids.map((u) => ('' + u).trim()));
+                    applySelectionToDom();
+                    refreshSelectionUI();
+                }
+            })
+            .always(function () { $btn.prop('disabled', false); });
+    });
+
+    // "Clear selection" link inside the banner.
+    $(document).on('click', '#select-all-clear', function () {
+        sel.clear();
+        applySelectionToDom();
+        refreshSelectionUI();
     });
 
     const time_check_step_size_seconds=1;
 
-    // checkboxes - show/hide buttons
-    $("input[type=checkbox]").click(function (e) {
-        if ($('input[type=checkbox]:checked').length) {
-            $('#checkbox-operations').slideDown();
-        } else {
-            $('#checkbox-operations').slideUp();
-        }
-        updateRecordsSelected();
-    });
-
-    // Initial state (e.g. browser restored some checkbox states on reload)
-    updateRecordsSelected();
+    // On load: reflect any persisted selection onto this page, then refresh the UI.
+    applySelectionToDom();
+    refreshSelectionUI();
 
     setInterval(function () {
         // Background ETA completion for 'checking now'

@@ -13,7 +13,50 @@ from changedetectionio.auth_decorator import login_optionally_required
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
-    
+
+    # --- Watchlist filtering, shared by the rendered list (index) and the
+    # "/uuids" endpoint (used by the client "select all matching" feature) so the
+    # two can never drift out of sync. ---
+    def _resolve_active_tag_uuid(active_tag_req):
+        if not active_tag_req:
+            return None
+        for uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
+            if active_tag_req == tag.get('title', '').lower().strip() or active_tag_req == uuid:
+                return uuid
+        return None
+
+    def _list_filters_from_args(args, active_tag_uuid):
+        return {
+            'with_errors': args.get('with_errors') == "1",
+            'unread_only': args.get('unread') == "1",
+            'processor': args.get('processor', '').strip(),
+            'tag_uuid': active_tag_uuid,
+            'search_q': args.get('q').strip().lower() if args.get('q') else False,
+        }
+
+    # Status/tag/processor filters (everything except the text search).
+    def _watch_passes_prefilter(watch, f):
+        if f['with_errors'] and not watch.get('last_error'):
+            return False
+        if f['unread_only'] and (watch.viewed or watch.last_changed == 0):
+            return False
+        if f['tag_uuid'] and f['tag_uuid'] not in watch['tags']:
+            return False
+        if f['processor'] and watch.get('processor') != f['processor']:
+            return False
+        return True
+
+    def _watch_passes_search(watch, f):
+        search_q = f['search_q']
+        if not search_q:
+            return True
+        if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
+            return True
+        if watch.get('last_error') and search_q in watch.get('last_error').lower():
+            return True
+        return False
+
+
     @watchlist_blueprint.route("/", methods=['GET'])
     @login_optionally_required
     def index():
@@ -45,32 +88,16 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
-        with_errors = request.args.get('with_errors') == "1"
-        unread_only = request.args.get('unread') == "1"
         active_processor = request.args.get('processor', '').strip()
         errored_count = 0
-        search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
+        list_filters = _list_filters_from_args(request.args, active_tag_uuid)
         for uuid, watch in datastore.data['watching'].items():
-            if with_errors and not watch.get('last_error'):
+            if not _watch_passes_prefilter(watch, list_filters):
                 continue
-
-            if unread_only and (watch.viewed or watch.last_changed == 0) :
-                continue
-
-            if active_tag_uuid and not active_tag_uuid in watch['tags']:
-                    continue
-
-            if active_processor and watch.get('processor') != active_processor:
-                    continue
+            # errored_count reflects the tag/processor/status-filtered set (pre-search)
             if watch.get('last_error'):
                 errored_count += 1
-
-            if search_q:
-                if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
-                    sorted_watches.append(watch)
-                elif watch.get('last_error') and search_q in watch.get('last_error').lower():
-                    sorted_watches.append(watch)
-            else:
+            if _watch_passes_search(watch, list_filters):
                 sorted_watches.append(watch)
 
         form = forms.quickWatchForm(request.form)
@@ -149,5 +176,23 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             resp.set_cookie('order', request.args.get('order'))
 
         return resp
-        
+
+    @watchlist_blueprint.route("/uuids", methods=['GET'])
+    @login_optionally_required
+    def uuids():
+        """All watch UUIDs matching the current filter (tag/search/status/processor).
+
+        Backs the client "select all matching" feature: the watchlist page only
+        renders one page of rows, so to select across pages the browser fetches the
+        full matching id list from here and holds it in its selection store.
+        """
+        from flask import jsonify
+        active_tag_uuid = _resolve_active_tag_uuid(request.args.get('tag', '').lower().strip())
+        list_filters = _list_filters_from_args(request.args, active_tag_uuid)
+        matching = [
+            uuid for uuid, watch in datastore.data['watching'].items()
+            if _watch_passes_prefilter(watch, list_filters) and _watch_passes_search(watch, list_filters)
+        ]
+        return jsonify({'uuids': matching})
+
     return watchlist_blueprint
