@@ -2412,21 +2412,32 @@ msgid "All"
 msgstr "Tous"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "With errors"
-msgstr "Avec des erreurs"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mark all viewed"
-msgstr "Marquer tous les articles consultés"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Mark all viewed in '%(title)s'"
-msgstr "Marquer tout vu dans '%(title)s'"
+msgid "Filter watches"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Unread"
 msgstr "Non lu"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Deals"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "With errors"
+msgstr "Avec des erreurs"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter by type"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All types"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark all viewed"
+msgstr "Marquer tous les articles consultés"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck all"
@@ -2436,6 +2447,10 @@ msgstr "Revérifiez tout"
 #, python-format
 msgid "in '%(title)s'"
 msgstr "dans '%(title)s'"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "RSS Feed"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"
@@ -4445,7 +4460,19 @@ msgid "Pause auto-queue scheduling of watches"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "Scheduling is paused - click to resume"
+msgid "Scheduling paused — click to resume"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling active — click to pause all"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Paused"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Live"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4457,7 +4484,15 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Notifications désactivées - cliquez pour réactiver"
 
 #: changedetectionio/templates/menu.html
+msgid "More"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4487,14 +4522,6 @@ msgstr "Basculer le mode clair/sombre"
 #: changedetectionio/templates/menu.html
 msgid "Toggle light/dark mode"
 msgstr "Basculer en mode clair/sombre"
-
-#: changedetectionio/templates/menu.html
-msgid "Change Language"
-msgstr "Changer de langue"
-
-#: changedetectionio/templates/menu.html
-msgid "Change language"
-msgstr "Changer de langue"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Add a page watch"
@@ -4530,10 +4557,6 @@ msgstr "Recherchez ou utilisez la touche Alt+S"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

@@ -41,6 +41,8 @@
     <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='feather-icons.min.js')}}" defer></script>
+    {# Render all <i data-feather="..."> icons app-wide (jQuery ready), so individual pages don't each need their own feather.replace() call. #}
+    <script>$(function () { if (window.feather) feather.replace(); });</script>
     {% if socket_io_enabled %}
     <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='realtime.js')}}" defer></script>
@@ -203,6 +205,7 @@
     <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='hamburger-menu.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='sidebar.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='menu-pop.js')}}" defer></script>
 
     <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span></div>
     <div id="realtime-conn-error" style="display:none">{{ _('Real-time updates offline') }}</div>

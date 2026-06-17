@@ -193,9 +193,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     @ui_blueprint.route("/form/mark-all-viewed", methods=['GET'])
     @login_optionally_required
     def mark_all_viewed():
-        # Save the current newest history as the most recently viewed
-        with_errors = request.args.get('with_errors') == "1"
-        tag_limit = request.args.get('tag')
+        # Save the current newest history as the most recently viewed. Operate on
+        # the SAME set the watch list is currently showing (tag/processor/status/
+        # search) — via the shared filter — so a filtered "Mark all viewed" only
+        # touches what's in view, not every watch.
+        from changedetectionio.blueprint.watchlist import filters as wl_filters
+        list_filters = wl_filters.list_filters_from_args(datastore, request.args)
         now = int(time.time())
 
         # Mark watches as viewed - use background thread only for large watch counts
@@ -204,10 +207,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             marked_count = 0
             try:
                 for watch_uuid, watch in datastore.data['watching'].items():
-                    if with_errors and not watch.get('last_error'):
-                        continue
-
-                    if tag_limit and (not watch.get('tags') or tag_limit not in watch['tags']):
+                    if not wl_filters.watch_matches_filters(watch, list_filters):
                         continue
 
                     datastore.set_last_viewed(watch_uuid, now)
@@ -228,7 +228,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             thread = threading.Thread(target=mark_viewed_impl, daemon=True)
             thread.start()
 
-        return redirect(url_for('watchlist.index', tag=tag_limit))
+        return redirect(url_for('watchlist.index', **wl_filters.filter_query_args(request.args)))
 
     @ui_blueprint.route("/delete", methods=['GET'])
     @login_optionally_required
@@ -268,9 +268,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     @login_optionally_required
     def form_watch_checknow():
         # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))
-        tag = request.args.get('tag')
+        from changedetectionio.blueprint.watchlist import filters as wl_filters
         uuid = request.args.get('uuid')
-        with_errors = request.args.get('with_errors') == "1"
 
         if uuid:
             # Single watch - check if already queued or running
@@ -280,16 +279,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
                 flash(gettext("Queued 1 watch for rechecking."))
         else:
-            # Multiple watches - first count how many need to be queued
+            # Multiple watches - operate on the SAME set the watch list is showing
+            # (tag/processor/status/search) via the shared filter, skipping paused.
+            list_filters = wl_filters.list_filters_from_args(datastore, request.args)
             watches_to_queue = []
             for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
                 watch_uuid = k[0]
                 watch = k[1]
-                if not watch['paused'] and watch_uuid:
-                    if with_errors and not watch.get('last_error'):
-                        continue
-                    if tag != None and tag not in watch['tags']:
-                        continue
+                if not watch['paused'] and watch_uuid and wl_filters.watch_matches_filters(watch, list_filters):
                     watches_to_queue.append(watch_uuid)
 
             # If less than 20 watches, queue synchronously for immediate feedback
@@ -348,7 +345,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 # Return immediately with approximate message
                 flash(gettext("Queueing watches for rechecking in background..."))
 
-        return redirect(url_for('watchlist.index', **({'tag': tag} if tag else {})))
+        return redirect(url_for('watchlist.index', **wl_filters.filter_query_args(request.args)))
 
     @ui_blueprint.route("/form/checkbox-operations", methods=['POST'])
     @login_optionally_required

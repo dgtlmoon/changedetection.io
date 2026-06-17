@@ -2405,21 +2405,32 @@ msgid "All"
 msgstr "Vše"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "With errors"
-msgstr "S chybami"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mark all viewed"
-msgstr "Označit všechny prohlížené"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Mark all viewed in '%(title)s'"
-msgstr "Označit vše prohlížené v '%(title)s'"
+msgid "Filter watches"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Unread"
 msgstr "Nepřečtený"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Deals"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "With errors"
+msgstr "S chybami"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter by type"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All types"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark all viewed"
+msgstr "Označit všechny prohlížené"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck all"
@@ -2429,6 +2440,10 @@ msgstr "Znovu zkontrolovat vše"
 #, python-format
 msgid "in '%(title)s'"
 msgstr "v '%(title)s'"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "RSS Feed"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"
@@ -4436,8 +4451,20 @@ msgid "Pause auto-queue scheduling of watches"
 msgstr "Pozastavit automatické řazení plánovaných sledovaní"
 
 #: changedetectionio/templates/menu.html
-msgid "Scheduling is paused - click to resume"
-msgstr "Naplánování je pozastaveno - klikněte pro opětovné spuštění"
+msgid "Scheduling paused — click to resume"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling active — click to pause all"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Paused"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Live"
+msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
@@ -4448,7 +4475,15 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Oznámení jsou ztlumena - klikněte pro opětovné povolení"
 
 #: changedetectionio/templates/menu.html
+msgid "More"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4478,14 +4513,6 @@ msgstr "Přepnout režim Světlý/Tmavý"
 #: changedetectionio/templates/menu.html
 msgid "Toggle light/dark mode"
 msgstr "Přepínání mezi světlým/tmavým režimem"
-
-#: changedetectionio/templates/menu.html
-msgid "Change Language"
-msgstr "Změnit jazyk"
-
-#: changedetectionio/templates/menu.html
-msgid "Change language"
-msgstr "Změnit jazyk"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Add a page watch"
@@ -4521,10 +4548,6 @@ msgstr "Vyhledejte nebo použijte klávesu Alt+S"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

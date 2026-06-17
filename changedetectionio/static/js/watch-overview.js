@@ -59,9 +59,11 @@ $(function () {
     $(".watch-table tr").click(function (event) {
         var tagName = event.target.tagName.toLowerCase();
         if (tagName === 'tr' || tagName === 'td') {
-            var x = $('input[type=checkbox]', this);
-            if (x) {
-                $(x).click();
+            var cb = $('input[type=checkbox]', this)[0];
+            if (cb) {
+                // Forward the shiftKey so shift-clicking anywhere on a row does a
+                // range-select (a plain $(cb).click() would drop the modifier).
+                cb.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: event.shiftKey }));
             }
         }
     });
@@ -69,15 +71,15 @@ $(function () {
     // ---- Cross-page selection store -------------------------------------------
     // Selection is a Set of watch UUIDs (the source of truth) rather than the DOM,
     // so it spans paginated pages. Persisted in sessionStorage scoped to the
-    // current filter (URL minus the page param) so it auto-clears when the
-    // search/filter changes. The watchlist "/uuids" endpoint supplies the full
-    // matching id list for "select all matching".
+    // watch-list page + the active tag (only): a selection survives switching the
+    // status/processor/search/pagination views, but each tag group (and the
+    // untagged "all" view) gets its own selection bucket. The "/uuids" endpoint
+    // supplies the full matching id list for "select all matching".
     const sel = window.cdioWatchSelection = (function () {
         const KEY = 'cdio-watch-selection';
         function scopeKey() {
-            const p = new URLSearchParams(location.search);
-            p.delete('page');
-            return location.pathname + '?' + p.toString();
+            const tag = new URLSearchParams(location.search).get('tag') || '';
+            return location.pathname + (tag ? '?tag=' + tag : '');
         }
         let uuids = new Set();
         try {
@@ -166,6 +168,25 @@ $(function () {
     // Exposed so realtime.js can refresh the UI after it mutates the selection
     // (e.g. clearing it once a delete operation removes the rows).
     sel.refreshUI = refreshSelectionUI;
+
+    // Shift-click to (de)select a contiguous range, anchored on the last checkbox
+    // clicked — the usual "select many at once" gesture. Runs on 'click' (which
+    // carries shiftKey) before the 'change' handler below.
+    let lastCheckedIndex = null;
+    $(document).on('click', 'input[name="uuids"][type=checkbox]', function (e) {
+        const boxes = $rowCbs().get();
+        const idx = boxes.indexOf(this);
+        if (e.shiftKey && lastCheckedIndex !== null && lastCheckedIndex < boxes.length) {
+            const lo = Math.min(idx, lastCheckedIndex);
+            const hi = Math.max(idx, lastCheckedIndex);
+            for (let i = lo; i <= hi; i++) {
+                boxes[i].checked = this.checked;
+                if (this.checked) { sel.add(cbUuid(boxes[i])); } else { sel.remove(cbUuid(boxes[i])); }
+            }
+            refreshSelectionUI();
+        }
+        lastCheckedIndex = idx;
+    });
 
     // Individual row checkbox toggled (direct click, or via the row-click handler).
     $(document).on('change', 'input[name="uuids"][type=checkbox]', function () {

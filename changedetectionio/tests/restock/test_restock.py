@@ -108,6 +108,12 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
     assert b'-18%' in res.data, "Price drop percentage should be shown"
     assert float(get_restock(client).get('prev_price')) == 100.0, "prev_price should capture the price we moved from"
 
+    # A price drop makes this watch a "deal": the Deals filter appears in the toolbar
+    # and filtering by it (?deals=1) lists the watch.
+    assert b'post-list-deals' in res.data, "Deals filter should appear when a price drop is detected"
+    res_deals = client.get(url_for("watchlist.index", deals=1))
+    assert b'processor-restock_diff' in res_deals.data, "?deals=1 should list the dropped-price watch"
+
     # Price rises 82.00 -> 90.00 => +9.8%, expect an up arrow
     set_price_response(datastore_path=datastore_path, price="90.00")
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -117,6 +123,11 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
     assert '▲'.encode('utf-8') in res.data
     assert b'+9.8%' in res.data, "Price rise percentage should be shown"
     assert float(get_restock(client).get('prev_price')) == 82.0, "prev_price should update to the new previous price on a change"
+
+    # A price rise is not a deal: the Deals filter disappears and matches nothing.
+    assert b'post-list-deals' not in res.data, "Deals filter should disappear once there are no price drops"
+    res_deals = client.get(url_for("watchlist.index", deals=1))
+    assert b'processor-restock_diff' not in res_deals.data, "?deals=1 should match nothing after a price rise"
 
     # Re-check with NO price change - prev_price must NOT be clobbered, so the arrow persists.
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)

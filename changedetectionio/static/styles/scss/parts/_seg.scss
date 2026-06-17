@@ -64,6 +64,7 @@ html[data-darkmode="true"] .seg {
   background: var(--color-background-button-tag);
   color: var(--color-white);
 
-  &--unread { background: #3e95bb; }                       // matches the sidebar unread badge
+  &--unread { background: #3e95bb; }                        // matches the sidebar unread badge
   &--error  { background: var(--color-background-button-error); }
+  &--deal   { background: var(--color-background-button-success); } // price drop = good = green
 }

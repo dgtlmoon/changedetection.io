@@ -234,15 +234,14 @@ $(document).ready(function () {
             })
 
             socket.on('general_stats_update', function (general_stats) {
-                // Tabs at bottom of list
                 $('#watch-table-wrapper').toggleClass("has-unread-changes", general_stats.unread_changes_count !==0)
                 $('#watch-table-wrapper').toggleClass("has-error", general_stats.count_errors !== 0)
-                // Counts live in dedicated .seg-count badges; update those (not the
-                // whole anchor text, which would wipe the badge markup + label).
-                $('#with-errors-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.count_errors));
-                $('#unread-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count));
+                // NB: the watch-list status .seg counts (unread/errors/deals) are
+                // server-rendered and SCOPED to the current tag/processor/search, so we
+                // deliberately don't overwrite them here with these GLOBAL totals — doing
+                // so would show e.g. the whole-list unread count on a filtered view.
 
-                // Left-rail "Page Watches" unread badge(s) — desktop + mobile copies. Hide at zero.
+                // The left-rail "Page Watches" unread badge IS global — keep it live.
                 const unreadText = new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count);
                 $('.js-unread-count').text(unreadText).toggle(general_stats.unread_changes_count !== 0);
             });

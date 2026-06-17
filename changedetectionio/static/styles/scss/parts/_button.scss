@@ -1,0 +1,89 @@
+@use "../settings" as *;
+
+// Clean outline button — surface background, hairline border, muted label that
+// darkens on hover. The app's neutral/secondary action button (toolbars, list
+// actions), a calmer alternative to the solid pure-button. Pairs with .seg.
+.cdio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--common-round-border);
+  border: 1px solid var(--color-border-table-cell);
+  background: var(--color-background);
+  color: var(--color-text-input-description);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+
+  &:hover {
+    border-color: var(--color-border-input);
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+
+  // Feather icons inherit the button's (muted → text) colour.
+  svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+  }
+  img {
+    height: 15px;
+    display: block;
+  }
+
+  // Icon-only square variant (e.g. the RSS button).
+  &--icon {
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  // Compact size — for dense contexts like the watch-list row actions.
+  &--sm {
+    height: 26px;
+    padding: 0 9px;
+    font-size: 0.72rem;
+    gap: 5px;
+
+    svg {
+      width: 13px;
+      height: 13px;
+    }
+  }
+
+  // Solid primary — the high-contrast "pop" button for the main per-row actions
+  // (Recheck, Edit, …). Brighter blue on hover.
+  &--primary {
+    background: var(--color-background-button-primary);
+    border-color: var(--color-background-button-primary);
+    color: var(--color-text-button);
+
+    &:hover {
+      background: var(--color-link);
+      border-color: var(--color-link);
+      color: var(--color-text-button);
+    }
+  }
+
+  // Destructive / cautionary variants — outline style, accent-coloured label that
+  // strengthens on hover (calmer than a solid red button, still clearly flagged).
+  &--danger {
+    color: var(--color-background-button-error);
+    &:hover { color: var(--color-background-button-error); border-color: var(--color-background-button-error); }
+  }
+  &--warning {
+    color: #d68a00;
+    &:hover { color: #d68a00; border-color: #d68a00; }
+  }
+}

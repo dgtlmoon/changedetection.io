@@ -2420,21 +2420,32 @@ msgid "All"
 msgstr "すべて"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "With errors"
-msgstr "エラーあり"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mark all viewed"
-msgstr "すべて既読にする"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Mark all viewed in '%(title)s'"
-msgstr "'%(title)s' のすべてを既読にする"
+msgid "Filter watches"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Unread"
 msgstr "未読"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Deals"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "With errors"
+msgstr "エラーあり"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter by type"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All types"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark all viewed"
+msgstr "すべて既読にする"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck all"
@@ -2444,6 +2455,10 @@ msgstr "すべて再チェック"
 #, python-format
 msgid "in '%(title)s'"
 msgstr "'%(title)s' 内"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "RSS Feed"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"
@@ -4473,8 +4488,20 @@ msgid "Pause auto-queue scheduling of watches"
 msgstr "ウォッチの自動キュースケジューリングを一時停止"
 
 #: changedetectionio/templates/menu.html
-msgid "Scheduling is paused - click to resume"
-msgstr "スケジューリングは一時停止中 - クリックして再開"
+msgid "Scheduling paused — click to resume"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling active — click to pause all"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Paused"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Live"
+msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
@@ -4485,7 +4512,15 @@ msgid "Notifications are muted - click to unmute"
 msgstr "通知はミュート中 - クリックして解除"
 
 #: changedetectionio/templates/menu.html
+msgid "More"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4515,14 +4550,6 @@ msgstr "ライト/ダークモードの切り替え"
 #: changedetectionio/templates/menu.html
 msgid "Toggle light/dark mode"
 msgstr "ライト/ダークモードを切り替え"
-
-#: changedetectionio/templates/menu.html
-msgid "Change Language"
-msgstr "言語の変更"
-
-#: changedetectionio/templates/menu.html
-msgid "Change language"
-msgstr "言語を変更"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Add a page watch"
@@ -4558,10 +4585,6 @@ msgstr "検索、またはAlt+Sキーを使用"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

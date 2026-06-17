@@ -187,12 +187,12 @@ html[data-darkmode="true"] {
 
     .watch-controls {
       .state-off {
-        img {
+        svg {
           opacity: 0.3;
         }
       }
       .state-on {
-        img {
+        svg {
           opacity: 1.0;
         }
       }

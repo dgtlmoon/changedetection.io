@@ -2407,21 +2407,32 @@ msgid "All"
 msgstr "全部"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "With errors"
-msgstr "有錯誤"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mark all viewed"
-msgstr "標記所有為已讀"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Mark all viewed in '%(title)s'"
-msgstr "標記 '%(title)s' 中的所有項目為已讀"
+msgid "Filter watches"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Unread"
 msgstr "未讀"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Deals"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "With errors"
+msgstr "有錯誤"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter by type"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All types"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark all viewed"
+msgstr "標記所有為已讀"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck all"
@@ -2431,6 +2442,10 @@ msgstr "複查全部"
 #, python-format
 msgid "in '%(title)s'"
 msgstr "於 '%(title)s'"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "RSS Feed"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"
@@ -4436,7 +4451,19 @@ msgid "Pause auto-queue scheduling of watches"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "Scheduling is paused - click to resume"
+msgid "Scheduling paused — click to resume"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling active — click to pause all"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Paused"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Live"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4448,7 +4475,15 @@ msgid "Notifications are muted - click to unmute"
 msgstr "通知已靜音 - 點擊以取消靜音"
 
 #: changedetectionio/templates/menu.html
+msgid "More"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4478,14 +4513,6 @@ msgstr "切換亮 / 暗模式"
 #: changedetectionio/templates/menu.html
 msgid "Toggle light/dark mode"
 msgstr "切換亮 / 暗模式"
-
-#: changedetectionio/templates/menu.html
-msgid "Change Language"
-msgstr "更改語言"
-
-#: changedetectionio/templates/menu.html
-msgid "Change language"
-msgstr "更改語言"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Add a page watch"
@@ -4521,10 +4548,6 @@ msgstr "搜尋，或使用 Alt+S 鍵"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "In queue"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

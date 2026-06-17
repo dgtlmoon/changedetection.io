@@ -16,6 +16,7 @@
 @use "parts/preview_text_filter";
 @use "parts/table";
 @use "parts/seg";
+@use "parts/button";
 @use "parts/watch_table";
 @use "parts/watch_table-mobile";
 @use "parts/edit";
@@ -168,6 +169,12 @@ button.toggle-button {
 
   svg {
     fill: currentColor;
+  }
+
+  // Feather icons (light/dark sun/moon) are stroke-based — don't fill them.
+  svg.feather {
+    fill: none;
+    stroke: currentColor;
   }
 
   .icon-light {

@@ -35,6 +35,16 @@ $title-col-stack-breakpoint: 1200px;
   }
 }
 
+// Row-control Feather icons (pause/play, bell/bell-off) on the watch list AND the
+// groups/tags list — both use td.watch-controls. Sized + stroked to match.
+.watch-controls svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  vertical-align: middle;
+}
+
 /* table related */
 #stats_row {
   display: flex;
@@ -227,6 +237,12 @@ body.has-queue {
         opacity: 0;
         transition: opacity 0.12s ease;
       }
+      // The actions live in a wrapper div — lay them out as an evenly-spaced row.
+      > div {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
     }
     &.title-col {
       word-break: break-all;
@@ -359,15 +375,15 @@ body.has-queue {
   display: inline-block; /* so the tabs at the bottom align */
   width: 100%; /* so the table always grows to the tab sizes if theres lots of tabs and full is OK too */
 
-  /* toolbar row: status-filter segmented control + list actions, right-aligned */
+  /* toolbar row: status-filter segmented control + list actions, left-aligned */
   #list-related-buttons {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     flex-wrap: wrap;
     gap: $common-gap;
     margin: 0;
-    padding: 0 0 0.5rem 0;
+    padding: $common-gap*2 0 $common-gap 0;
   }
 
   /* post list dynamically on/off stuff */

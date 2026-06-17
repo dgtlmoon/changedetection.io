@@ -75,9 +75,19 @@
       }
     });
 
-    // Handle Alt+S keyboard shortcut
+    // Keyboard shortcuts: Alt+S, and "/" (when not already typing in a field).
     document.addEventListener('keydown', function(e) {
       if (e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        openSearchModal();
+        return;
+      }
+      if (e.key === '/' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        const t = e.target;
+        const tag = t && t.tagName ? t.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) {
+          return; // let "/" type normally in form fields
+        }
         e.preventDefault();
         openSearchModal();
       }
