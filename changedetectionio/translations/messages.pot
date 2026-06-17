@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-17 16:24+0200\n"
+"POT-Creation-Date: 2026-06-17 18:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,7 +23,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Go"
 msgstr ""
 
@@ -351,7 +350,7 @@ msgstr ""
 msgid "Recheck time (minutes)"
 msgstr ""
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
 msgid "Import"
 msgstr ""
 
@@ -2314,6 +2313,10 @@ msgid "Goto full history"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Web page URL"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr ""
 
@@ -2898,7 +2901,8 @@ msgstr ""
 msgid "Group tag"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/forms.py
 msgid "Watch"
 msgstr ""
 
@@ -4463,15 +4467,7 @@ msgid "Notifications are muted - click to unmute"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "More"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
 msgid "Settings"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4516,6 +4512,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Watch Groups"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import lists of web pages"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

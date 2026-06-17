@@ -24,7 +24,6 @@ msgstr "새 웹페이지 변경 감지 모니터링 추가"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Go"
 msgstr "이동"
 
@@ -354,7 +353,7 @@ msgstr "그룹 / 태그 이름"
 msgid "Recheck time (minutes)"
 msgstr "재확인 시간(분)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
 msgid "Import"
 msgstr "가져오기"
 
@@ -2325,6 +2324,10 @@ msgid "Goto full history"
 msgstr "전체 기록으로 이동"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Web page URL"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr ""
 
@@ -2909,7 +2912,8 @@ msgstr "값이 잘못되었습니다."
 msgid "Group tag"
 msgstr "그룹 / 태그"
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/forms.py
 msgid "Watch"
 msgstr "모니터링"
 
@@ -4484,15 +4488,7 @@ msgid "Notifications are muted - click to unmute"
 msgstr "알림이 음소거되어 있습니다. 클릭해 해제하세요."
 
 #: changedetectionio/templates/menu.html
-msgid "More"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
 msgid "Settings"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4537,6 +4533,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Watch Groups"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import lists of web pages"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

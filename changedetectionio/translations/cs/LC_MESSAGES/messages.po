@@ -24,7 +24,6 @@ msgstr "Přidejte nové sledování zjišťování změn webové stránky"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Go"
 msgstr "Přejít"
 
@@ -354,7 +353,7 @@ msgstr "Skupina / tag"
 msgid "Recheck time (minutes)"
 msgstr "Znovu zkontrolovat po (minuty)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
 msgid "Import"
 msgstr "Importovat"
 
@@ -2319,6 +2318,10 @@ msgid "Goto full history"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Web page URL"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr ""
 
@@ -2905,7 +2908,8 @@ msgstr "Neplatná hodnota."
 msgid "Group tag"
 msgstr "Skupina / Značka"
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/forms.py
 msgid "Watch"
 msgstr "Monitorovat"
 
@@ -4470,15 +4474,7 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Oznámení jsou ztlumena - klikněte pro opětovné povolení"
 
 #: changedetectionio/templates/menu.html
-msgid "More"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
 msgid "Settings"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4523,6 +4519,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Watch Groups"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import lists of web pages"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

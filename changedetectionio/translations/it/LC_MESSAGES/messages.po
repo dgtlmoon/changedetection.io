@@ -24,7 +24,6 @@ msgstr "Aggiungi un nuovo monitoraggio modifiche pagina web"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Go"
 msgstr "Vai"
 
@@ -354,7 +353,7 @@ msgstr "Nome gruppo / Tag"
 msgid "Recheck time (minutes)"
 msgstr "Tempo di ricontrollo (minuti)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
 msgid "Import"
 msgstr "Importa"
 
@@ -2317,6 +2316,10 @@ msgid "Goto full history"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Web page URL"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr ""
 
@@ -2901,7 +2904,8 @@ msgstr "Valore non valido."
 msgid "Group tag"
 msgstr "Gruppo / Etichetta"
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/forms.py
 msgid "Watch"
 msgstr "Monitora"
 
@@ -4466,15 +4470,7 @@ msgid "Notifications are muted - click to unmute"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "More"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
 msgid "Settings"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4519,6 +4515,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Watch Groups"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import lists of web pages"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

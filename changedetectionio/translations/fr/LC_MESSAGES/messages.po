@@ -24,7 +24,6 @@ msgstr "Ajouter une nouvelle surveillance de détection de changement de page We
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Go"
 msgstr "Aller"
 
@@ -356,7 +355,7 @@ msgstr "Groupe de surveillance/tag"
 msgid "Recheck time (minutes)"
 msgstr "Temps de revérification (minutes)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/menu.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
 msgid "Import"
 msgstr "IMPORTER"
 
@@ -2326,6 +2325,10 @@ msgid "Goto full history"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Web page URL"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr ""
 
@@ -2912,7 +2915,8 @@ msgstr "Valeur invalide."
 msgid "Group tag"
 msgstr "Groupe / Étiquette"
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/forms.py
 msgid "Watch"
 msgstr "Moniteur"
 
@@ -4479,15 +4483,7 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Notifications désactivées - cliquez pour réactiver"
 
 #: changedetectionio/templates/menu.html
-msgid "More"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
 msgid "Settings"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "Language"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
@@ -4532,6 +4528,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Watch Groups"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import lists of web pages"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
