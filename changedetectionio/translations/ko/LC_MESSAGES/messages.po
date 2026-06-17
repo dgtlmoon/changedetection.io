@@ -24,6 +24,7 @@ msgstr "새 웹페이지 변경 감지 모니터링 추가"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Go"
 msgstr "이동"
 
@@ -57,10 +58,12 @@ msgid "Clear selection"
 msgstr "선택 취소"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "What matters — when to notify me"
 msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid ""
 "e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
 "appear. Skip review additions."
@@ -793,7 +796,7 @@ msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "모니터링 목록 페이지당 항목 수입니다. 0이면 비활성화됩니다."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "How \"Last Checked\" and \"Last Changed\" times are shown in the watch overview list."
+msgid "How \"Checked\" and \"Changed\" times are shown in the watch overview list."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -2464,16 +2467,8 @@ msgid "Checked"
 msgstr "확인됨"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Checked"
-msgstr "최근 확인"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
 msgstr "변경됨"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Changed"
-msgstr "최근 변경"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"

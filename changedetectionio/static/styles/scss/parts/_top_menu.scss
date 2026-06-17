@@ -29,14 +29,14 @@
 
 ul#top-right-menu {
   list-style: none;
-  margin: 0;
   // Always pegged to the far right of the horizontal menu: margin-left:auto
   // absorbs all free space to its left, so it stays right regardless of whether
   // the logo / current-diff-url are present as siblings.
   margin-left: auto;
   padding: 0;
+  margin-top: 0;
   display: grid;
-  gap: $common-gap;
+  gap: $common-gap*2;
   grid-auto-flow: column;
   grid-auto-columns: max-content;
   align-items: center;
@@ -85,6 +85,11 @@ ul#top-right-menu {
   svg {
     height: $top-menu-icon-size;
   }
+}
+
+.fi {
+  height: $top-menu-icon-size;
+  cursor: pointer;
 }
 
 #pure-menu-horizontal-spinner {

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-17 12:15+0200\n"
+"POT-Creation-Date: 2026-06-17 16:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,6 +23,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Go"
 msgstr ""
 
@@ -56,10 +57,12 @@ msgid "Clear selection"
 msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "What matters — when to notify me"
 msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid ""
 "e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
 "appear. Skip review additions."
@@ -790,7 +793,7 @@ msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "How \"Last Checked\" and \"Last Changed\" times are shown in the watch overview list."
+msgid "How \"Checked\" and \"Changed\" times are shown in the watch overview list."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -2453,15 +2456,7 @@ msgid "Checked"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Checked"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Changed"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html

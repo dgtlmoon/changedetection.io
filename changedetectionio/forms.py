@@ -1197,7 +1197,7 @@ class globalSettingsLLMForm(Form):
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
         render_kw={
-            "rows": "5",
+            "rows": "12",
             "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT,
             "style": "width: 100%; ",
         },

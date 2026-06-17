@@ -20,6 +20,7 @@ msgstr "Agregar un nuevo monitor de detección de cambios en páginas web"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Go"
 msgstr "Ir"
 
@@ -53,10 +54,12 @@ msgid "Clear selection"
 msgstr "Borrar selección"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "What matters — when to notify me"
 msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid ""
 "e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
 "appear. Skip review additions."
@@ -827,7 +830,7 @@ msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "Número de elementos por página en la lista general de monitores, 0 para desactivar."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "How \"Last Checked\" and \"Last Changed\" times are shown in the watch overview list."
+msgid "How \"Checked\" and \"Changed\" times are shown in the watch overview list."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -2525,16 +2528,8 @@ msgid "Checked"
 msgstr "Comprobado"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Checked"
-msgstr "Último Comprobado"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changed"
 msgstr "Cambiado"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Changed"
-msgstr "Último Cambiado"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"

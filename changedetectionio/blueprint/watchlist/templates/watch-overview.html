@@ -130,6 +130,32 @@ window.watchOverviewI18n = {
 };
 </script>
 {% endif %}
+
+
+<div class="box" id="add-watch-ui">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
+        <div id="add-watch-url-row">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="url"><strong>{{ _('Web page URL') }}</strong></label><br>
+            {{ render_nolabel_field(form.url, placeholder="https://...", required=true, class="pure-input-1") }}
+            <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
+        </div>
+        {% if llm_configured %}
+        <div class="add-watch-option-group" id="quick-watch-llm-intent">
+            <label for="quick_watch_llm_intent"><strong>{{ _('What matters — when to notify me') }}</strong></label>
+            <textarea name="llm_intent"
+                      id="quick_watch_llm_intent"
+                      rows="4"
+                      class="pure-input-1"
+                      placeholder="{{ _('e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants appear. Skip review additions.') }}"></textarea>
+        </div>
+        {% endif %}
+        <div class="add-watch-option-group" id="quick-watch-processor-type">
+            {{ render_simple_field(form.processor) }}
+        </div>
+    </form>
+</div>
+
 <div class="box">
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
@@ -266,8 +292,8 @@ window.watchOverviewI18n = {
              {%- if any_has_restock_price_processor -%}
                 <th>{{ _('Restock & Price') }}</th>
              {%- endif -%}
-                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Last Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
-                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Last Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
             </tr>
             </thead>
@@ -414,13 +440,13 @@ window.watchOverviewI18n = {
 {%- endif -%}
 #}
             {#last_checked becomes fetch-start-time#}
-                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ _('Last Checked') }}">
+                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ _('Checked') }}">
                     <div class="spinner-wrapper" style="display:none;" >
                         <span class="spinner"></span><span class="status-text">&nbsp;{{ watch['__check_status'] or _('Checking now') }}</span>
                     </div>
                     <span class="innertext">{{watch|format_last_checked_time|safe}}</span>
                 </td>
-                <td class="last-changed" data-timestamp="{{ watch.last_changed }}" data-label="{{ _('Last Changed') }}">
+                <td class="last-changed" data-timestamp="{{ watch.last_changed }}" data-label="{{ _('Changed') }}">
                     <span class="innertext">{%- if watch.history_n >=2 and watch.last_changed >0 -%}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {%- else -%}

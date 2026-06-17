@@ -10,23 +10,23 @@
 {# TRANSLATORS: 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide #}
 {% set _usage_label = pgettext('AI usage stats', 'Usage') %}
 {% call stab_shell('ai-settings', [
-    {'id': 'overview',  'label': _('Overview'),  'icon': '✦'},
-    {'id': 'provider',  'label': _('Provider'),  'icon': '⚙'},
-    {'id': 'prompts',   'label': _('Prompts'),   'icon': '≡'},
-    {'id': 'behaviour', 'label': _('Behaviour'), 'icon': '⚑'},
-    {'id': 'usage',     'label': _usage_label,   'icon': '$'},
+    {'id': 'overview',  'label': _('Overview'),  'icon': 'info'},
+    {'id': 'provider',  'label': _('Provider'),  'icon': 'settings'},
+    {'id': 'prompts',   'label': _('Prompts'),   'icon': 'message-square'},
+    {'id': 'behaviour', 'label': _('Behaviour'), 'icon': 'sliders'},
+    {'id': 'usage',     'label': _usage_label,   'icon': 'bar-chart-2'},
 ]) %}
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}
   {% call stab_pane('overview') %}
   <div class="stab-overview-hero">
-    <h3><span class="stab-overview-glyph">✦</span> {{ _('AI-powered change monitoring') }}</h3>
+    <h3><span class="stab-overview-glyph"><i data-feather="cpu"></i></span> {{ _('AI-powered change monitoring') }}</h3>
     <p>{{ _('Connect an LLM to move from "something changed" to "only the thing you care about changed".') }}</p>
   </div>
 
   <div class="stab-overview-features">
     <div class="stab-overview-feature">
-      <div class="stab-overview-icon">⊞</div>
+      <div class="stab-overview-icon"><i data-feather="target"></i></div>
       <div class="stab-overview-text">
         <strong>{{ _('Intent filtering') }}</strong>
         <p>{{ _('Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the diff against it and suppresses irrelevant noise.', ex1='<strong>"notify me only when the price drops"</strong>', ex2='<strong>"alert when the item goes out of stock"</strong>') | safe }}</p>
@@ -37,14 +37,14 @@
       </div>
     </div>
     <div class="stab-overview-feature">
-      <div class="stab-overview-icon">≡</div>
+      <div class="stab-overview-icon"><i data-feather="file-text"></i></div>
       <div class="stab-overview-text">
         <strong>{{ _('AI Change Summary') }}</strong>
         <p>{{ _('Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default prompt here, or override per watch or tag.', ex1='<strong>"Price dropped from $89 to $67"</strong>', ex2='<strong>"3 new items added to the listing"</strong>') | safe }}</p>
       </div>
     </div>
     <div class="stab-overview-feature">
-      <div class="stab-overview-icon">≈</div>
+      <div class="stab-overview-icon"><i data-feather="code"></i></div>
       <div class="stab-overview-text">
         <strong>{{ _('Minimal cost') }}</strong>
         <p>{{ _('The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s handle this well, typically fractions of a cent per check.',
@@ -59,7 +59,7 @@
     <span class="stab-configured-badge">&#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}</span>
     {% else %}
     <button type="button" class="pure-button pure-button-primary" data-stab-goto="provider">
-      ⚙ {{ _('Configure AI Provider') }} &rarr;
+      <i data-feather="settings"></i> {{ _('Configure AI Provider') }} &rarr;
     </button>
     {% endif %}
   </div>
@@ -82,7 +82,7 @@
 
   {% if not llm_env_configured and not (llm_config and llm_config.get('model')) %}
   <div class="stab-overview-disclaimer">
-    <div class="stab-disclaimer-icon">⚠</div>
+    <div class="stab-disclaimer-icon"><i data-feather="alert-triangle"></i></div>
     <div class="stab-disclaimer-body">
       <strong>{{ _('Third-party data transfer — please read') }}</strong>
       <p>{{ _('When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is sent to an external AI provider of your choice.') }}</p>

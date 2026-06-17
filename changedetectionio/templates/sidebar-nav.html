@@ -26,7 +26,7 @@
                plus knocked out to transparency via a mask, so the plus shows the
                rail behind it rather than a painted colour. #}
             {%- set _add_mask_id = 'action-add-knockout-' ~ (sidebar_scope | default('nav')) -%}
-            <svg class="action-icon action-icon--filled" viewBox="0 0 24 24" aria-hidden="true">
+            <svg id="add-page-watch-svg" class="action-icon action-icon--filled" viewBox="0 0 24 24" aria-hidden="true">
                 <mask id="{{ _add_mask_id }}">
                     <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="white"/>
                     <line x1="12" y1="8" x2="12" y2="16" stroke="black" stroke-width="3" stroke-linecap="round"/>
@@ -41,10 +41,7 @@
         <a href="{{ url_for('watchlist.index') }}"
            class="action-sidebar-item {% if ep == 'watchlist.index' or ep.startswith('ui.ui_views') or ep.startswith('ui.ui_edit') %}active{% endif %}"
            title="{{ _('Page Watches') }}">
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-            </svg>
+            <i data-feather="eye" class="action-icon"></i>
             <span class="action-label">{{ _('Page Watches') }}</span>
             {# Unread (changed, not-yet-viewed) count. Class hook (not id) because this
                partial renders twice — desktop rail + mobile drawer. Hidden at 0; shown
@@ -58,12 +55,16 @@
         <a href="{{ url_for('tags.tags_overview_page') }}"
            class="action-sidebar-item {% if ep.startswith('tags.') %}active{% endif %}"
            title="{{ _('Watch Groups') }}">
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                <polyline points="2 17 12 22 22 17"/>
-                <polyline points="2 12 12 17 22 12"/>
-            </svg>
+            <i data-feather="layers" class="action-icon"></i>
             <span class="action-label">{{ _('Watch Groups') }}</span>
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+      <a href="{{ url_for('imports.import_page') }}"
+           class="action-sidebar-item {% if ep.startswith('imports.') %}active{% endif %}"
+           title="{{ _('Import lists of web pages') }}">
+            <i data-feather="upload" class="action-icon"></i>
+            <span class="action-label">{{ _('Import') }}</span>
         </a>
     </li>
     <li class="action-sidebar-li">
@@ -72,11 +73,7 @@
            title="{{ _('Browsers (coming soon)') }}"
            aria-disabled="true"
            tabindex="-1">
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="9"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <path d="M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18"/>
-            </svg>
+            <i data-feather="globe" class="action-icon"></i>
             <span class="action-label">{{ _('Browsers') }}</span>
             <span class="action-badge">{{ _('soon') }}</span>
         </a>
@@ -86,10 +83,7 @@
         <button type="button"
                 class="action-sidebar-item action-sidebar-item--button js-open-search-modal"
                 title="{{ _('Search, or Use Alt+S Key') }}">
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
+            <i data-feather="search" class="action-icon"></i>
             <span class="action-label">{{ _('Search') }}</span>
         </button>
     </li>
@@ -98,14 +92,7 @@
         <a href="{{ url_for('ui.ui_queue.queue_page') }}"
            class="action-sidebar-item {% if ep.startswith('ui.ui_queue') %}active{% endif %}"
            title="{{ _('Queue') }}">
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <line x1="8" y1="6"  x2="21" y2="6"/>
-                <line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6"  x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/>
-                <line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
+            <i data-feather="list" class="action-icon"></i>
             <span class="action-label">{{ _('Queue') }}</span>
 
 
@@ -118,10 +105,7 @@
         <a href="{{ url_for('settings.notifications.apprise') }}"
            class="action-sidebar-item"
            title="{{ _('Notifications') }}">
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
+            <i data-feather="bell" class="action-icon"></i>
             <span class="action-label">{{ _('Notifications') }}</span>
         </a>
     </li>

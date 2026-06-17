@@ -11,20 +11,13 @@
     <li class="pure-menu-item " id="menu-mute">
         <a href="{{ url_for('settings.toggle_all_muted') }}" aria-label="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}"><i data-feather="{{ 'bell-off' if all_muted else 'bell' }}" class="action-icon"></i></a>
     </li>
-
-    {# Settings / Import / Language live behind this "More" overflow menu. #}
-    <li class="pure-menu-item" id="menu-more">
-        <div class="menu-pop-wrap">
-            <button type="button" class="icon-btn js-menu-more-toggle" title="{{ _('More') }}" aria-haspopup="true" aria-expanded="false">
-                <i data-feather="more-horizontal"></i>
-            </button>
-            <div class="menu-pop">
-                <a class="mi" href="{{ url_for('settings.settings_page') }}"><span class="ico"><i data-feather="settings"></i></span>{{ _('Settings') }}</a>
-                <a class="mi" href="{{ url_for('imports.import_page') }}"><span class="ico"><i data-feather="upload"></i></span>{{ _('Import') }}</a>
-                <button type="button" class="mi language-selector"><span class="ico"><i data-feather="globe"></i></span>{{ _('Language') }} <span class="right {{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span></button>
-            </div>
-        </div>
+    <li class="pure-menu-item " id="menu-settings">
+        <a href="{{ url_for('settings.settings_page') }}" title="{{ _('Settings') }}"><i data-feather="{{ 'settings' }}" class="action-icon"></i>&nbsp;{{ ('Settings') }}</a>
     </li>
+    <li class="pure-menu-item " id="menu-ui-language">
+        <a class="language-selector"><span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span></a>
+    </li>
+
 {% else %}
     <li class="pure-menu-item menu-collapsible">
         <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}"

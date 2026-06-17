@@ -100,6 +100,9 @@ ul.action-sidebar-list {
   >:first-child {
 /*    padding-left: $common-gap/2;*/
   }
+  &:nth-child(2) {
+    padding-top: 2rem; /* to align horizontally with the start of the actual content in content area */
+  }
 
   list-style: none;
   margin: 0;

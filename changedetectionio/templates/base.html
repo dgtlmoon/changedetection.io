@@ -54,7 +54,7 @@
     {%- endif %}
   </head>
 
-  <body class="{{ get_sidebar_mode_class() }} {{extra_classes}}">
+  <body class="{{ get_sidebar_mode_class() }} {{ get_blueprint_class() }} {{extra_classes}}">
     <div class="app">
       {% if current_user.is_authenticated or not has_password %}
       <aside class="action-sidebar" aria-label="{{ _('Main navigation') }}">

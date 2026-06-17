@@ -227,6 +227,14 @@ def get_sidebar_mode_class():
     return 'actionside-bar-on action-side-bar-expanded' if mode == 'pinned' else 'actionsidebar-minimal'
 
 @app.template_global()
+def get_blueprint_class():
+    """Body class for the currently-executing blueprint, e.g. 'blueprint-watchlist'
+    or 'blueprint-ui-ui_queue' (dots → dashes), so CSS can target a section. Empty
+    when there's no blueprint (e.g. an error page)."""
+    bp = request.blueprint or ''
+    return ('blueprint-' + bp.replace('.', '-')) if bp else ''
+
+@app.template_global()
 def get_socketio_path():
     """Generate the correct Socket.IO path prefix for the client"""
     # If behind a proxy with a sub-path, we need to respect that path
@@ -1305,10 +1313,10 @@ def ticker_thread_check_time_launch_checks():
                     if queued_successfully:
                         logger.debug(
                             f"> Queued watch UUID {uuid} "
-                            f"last checked at {watch['last_checked']} "
+                            f"Checked at {watch['last_checked']} "
                             f"queued at {now:0.2f} priority {priority} "
                             f"jitter {watch.jitter_seconds:0.2f}s, "
-                            f"{now - watch['last_checked']:0.2f}s since last checked")
+                            f"{now - watch['last_checked']:0.2f}s since Checked")
                     else:
                         logger.critical(f"CRITICAL: Failed to queue watch UUID {uuid} in ticker thread!")
                         

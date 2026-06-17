@@ -123,7 +123,6 @@ body {
   align-items: center;
   @media only screen and (min-width: $desktop-wide-breakpoint) {
     flex-direction: column;
-    padding-top: 2rem;
   }
 }
 
@@ -470,7 +469,6 @@ label {
   background: var(--color-background-new-watch-form);
   padding: 1em;
   border-radius: 10px;
-  margin-bottom: 1em;
   max-width: 100%;
 
   #url {
@@ -481,7 +479,6 @@ label {
 
   input {
     display: inline-block;
-    margin-bottom: 5px;
   }
 
   input:not(.pure-button) {
