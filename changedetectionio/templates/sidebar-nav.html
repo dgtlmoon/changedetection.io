@@ -48,7 +48,7 @@
                and kept in sync live by realtime.js (general_stats_update). #}
             <span class="action-badge action-badge--count js-unread-count"
                   title="{{ _('Unread changes') }}"
-                  {% if not unread_changes_count %}style="display: none"{% endif %}>{{ unread_changes_count|format_int_locale }}</span>
+                  {% if not unread_changes_count %}style="display: none"{% endif %}>{{ unread_changes_count|default(0)|format_int_locale }}</span>
         </a>
     </li>
     <li class="action-sidebar-li">
