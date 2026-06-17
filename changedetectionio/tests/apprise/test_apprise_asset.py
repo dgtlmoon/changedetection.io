@@ -11,7 +11,7 @@ from changedetectionio.notification.apprise_plugin.assets import (
 
 @pytest.fixture(scope="function")
 def apprise_asset() -> AppriseAsset:
-    from changedetectionio.apprise_asset import apprise_asset
+    from changedetectionio.notification.apprise_plugin.assets import apprise_asset
 
     return apprise_asset
 
