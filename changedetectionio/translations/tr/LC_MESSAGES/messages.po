@@ -4529,16 +4529,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Bildirimler sessize alındı - sesini açmak için tıklayın"
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "DÜZENLE"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "ÇIKIŞ YAP"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."

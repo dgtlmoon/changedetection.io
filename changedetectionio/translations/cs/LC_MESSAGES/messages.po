@@ -4476,16 +4476,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Oznámení jsou ztlumena - klikněte pro opětovné povolení"
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "UPRAVIT"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "ODHLÁSIT SE"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."

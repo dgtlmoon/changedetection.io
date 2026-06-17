@@ -4511,16 +4511,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr "通知はミュート中 - クリックして解除"
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "編集"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "ログアウト"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."

@@ -4468,15 +4468,15 @@ msgid "Notifications are muted - click to unmute"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
 msgstr ""
 
 #: changedetectionio/templates/menu.html

@@ -4470,16 +4470,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "MODIFICA"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "ESCI"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."

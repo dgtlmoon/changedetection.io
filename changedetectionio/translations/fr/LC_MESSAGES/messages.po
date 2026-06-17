@@ -4483,16 +4483,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Notifications désactivées - cliquez pour réactiver"
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "MODIFIER"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "DÉCONNEXION"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."

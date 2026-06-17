@@ -4488,16 +4488,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr "알림이 음소거되어 있습니다. 클릭해 해제하세요."
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "편집"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "로그아웃"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."

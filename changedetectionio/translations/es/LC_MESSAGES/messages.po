@@ -4554,16 +4554,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Las notificaciones están silenciadas: haga clic para activar el silencio"
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "EDITAR"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "FINALIZAR LA SESIÓN"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."

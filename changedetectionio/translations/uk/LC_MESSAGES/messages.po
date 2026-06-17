@@ -4506,16 +4506,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Сповіщення вимкнено - натисніть для увімкнення"
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "РЕДАГУВАТИ"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "ВИЙТИ"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."

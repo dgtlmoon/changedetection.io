@@ -4476,16 +4476,16 @@ msgid "Notifications are muted - click to unmute"
 msgstr "通知已静音 - 点击取消静音"
 
 #: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
 msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
 msgstr "编辑"
-
-#: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "退出登录"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."
