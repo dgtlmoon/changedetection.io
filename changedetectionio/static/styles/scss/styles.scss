@@ -1116,6 +1116,7 @@ ul {
   font-size: 0.8rem;
   color: #fff;
   opacity: 0.8;
+  z-index: 100;
 }
 
 #bottom-horizontal-offscreen {
@@ -1174,10 +1175,9 @@ header {
 
 #heart-us {
   svg {
-    width: 24px;
-    height: 24px;
     display: inline-block;
     vertical-align: middle;
     cursor: pointer;
+    width: 1.4rem; /*it's slightly more wider than square so default auto will trim it slightly */
   }
 }
