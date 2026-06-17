@@ -1,7 +1,7 @@
 import pytest
 from apprise import AppriseAsset
 
-from changedetectionio.apprise_asset import (
+from changedetectionio.notification.apprise_plugin.assets import (
     APPRISE_APP_DESC,
     APPRISE_APP_ID,
     APPRISE_APP_URL,
