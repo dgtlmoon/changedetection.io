@@ -72,8 +72,9 @@ def set_price_response(datastore_path, price):
 
 
 def test_restock_price_change_direction(client, live_server, measure_memory_usage, datastore_path):
-    """The watch list shows a green ▼/-% on a price drop and a red ▲/+% on a price rise,
-    and prev_price only moves when the price actually changes (it persists otherwise)."""
+    """The watch list shows a green ▼/-% on a price drop and a red ▲/+% on a price rise.
+    The arrow is computed from last_price (the previous check's price), so it reflects the
+    change since the previous check and disappears once the price is stable."""
 
     def get_restock(client):
         datastore = client.application.config.get('DATASTORE')
@@ -96,7 +97,7 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
     res = client.get(url_for("watchlist.index"))
     assert b'processor-restock_diff' in res.data
     assert b'price-change' not in res.data, "No price arrow should show on the very first check"
-    assert get_restock(client).get('prev_price') is None, "prev_price should be unset on the first check"
+    assert get_restock(client).get('last_price') is None, "last_price should be unset on the first check"
 
     # Price drops 100.00 -> 82.00 => -18%, expect a green down arrow
     set_price_response(datastore_path=datastore_path, price="82.00")
@@ -106,7 +107,7 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
     assert b'price-change down' in res.data, "Price drop should show a down arrow"
     assert '▼'.encode('utf-8') in res.data
     assert b'-18%' in res.data, "Price drop percentage should be shown"
-    assert float(get_restock(client).get('prev_price')) == 100.0, "prev_price should capture the price we moved from"
+    assert float(get_restock(client).get('last_price')) == 100.0, "last_price should be the previous check's price"
 
     # A price drop makes this watch a "deal": the Deals filter appears in the toolbar
     # and filtering by it (?deals=1) lists the watch.
@@ -122,20 +123,22 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
     assert b'price-change up' in res.data, "Price rise should show an up arrow"
     assert '▲'.encode('utf-8') in res.data
     assert b'+9.8%' in res.data, "Price rise percentage should be shown"
-    assert float(get_restock(client).get('prev_price')) == 82.0, "prev_price should update to the new previous price on a change"
+    assert float(get_restock(client).get('last_price')) == 82.0, "last_price should be the previous check's price"
 
     # A price rise is not a deal: the Deals filter disappears and matches nothing.
     assert b'post-list-deals' not in res.data, "Deals filter should disappear once there are no price drops"
     res_deals = client.get(url_for("watchlist.index", deals=1))
     assert b'processor-restock_diff' not in res_deals.data, "?deals=1 should match nothing after a price rise"
 
-    # Re-check with NO price change - prev_price must NOT be clobbered, so the arrow persists.
+    # Re-check with NO price change - the page content is identical so the check short-circuits
+    # (checksumFromPreviousCheckWasTheSame) and the processor never runs, so last_price is NOT
+    # advanced and the arrow persists showing the last real move.
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'price-change up' in res.data, "Arrow should persist across an unchanged check"
+    assert b'price-change up' in res.data, "Arrow should persist across an unchanged (short-circuited) check"
     assert b'+9.8%' in res.data, "Percentage should persist across an unchanged check"
-    assert float(get_restock(client).get('prev_price')) == 82.0, "prev_price must stay put when the price is unchanged"
+    assert float(get_restock(client).get('last_price')) == 82.0, "last_price stays put when the check short-circuits"
 
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready

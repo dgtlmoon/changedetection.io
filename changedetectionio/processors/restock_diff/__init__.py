@@ -45,8 +45,7 @@ class Restock(dict):
             'in_stock': None,
             'price': None,
             'currency': None,
-            'original_price': None,
-            'prev_price': None  # price at the previous check, for the watch-list up/down arrow (display only)
+            'last_price': None  # price at the previous check - drives the % threshold and the watch-list up/down arrow
         }
 
         # Initialize the dictionary with default values
@@ -60,28 +59,20 @@ class Restock(dict):
                 raise ValueError("Only one positional argument of type 'dict' is allowed")
 
     def __setitem__(self, key, value):
-        # Custom logic to handle setting price and original_price
-        if key == 'price' or key == 'original_price':
+        # Custom logic to handle setting price and last_price
+        if key == 'price' or key == 'last_price':
             if isinstance(value, str):
                 value = self.parse_currency(raw_value=value)
 
         super().__setitem__(key, value)
 
-    def get_prev_price(self):
-        """Price at the previous check. Falls back to original_price for watches
-        saved before prev_price existed. Returns a float or None."""
-        prev = self.get('prev_price')
-        if prev is None:
-            prev = self.get('original_price')
-        return prev
-
     def get_price_change_percent(self):
-        """Signed % change of the current price vs the previous price, rounded to one
-        decimal place (e.g. -18.0, 5.3). Returns None when it can't be computed -
+        """Signed % change of the current price vs last_price (the previous check's price),
+        rounded to one decimal place (e.g. -18.0, 5.3). Returns None when it can't be computed -
         no/zero previous price, non-numeric values, or no change."""
         try:
             price = float(self.get('price'))
-            prev = self.get_prev_price()
+            prev = self.get('last_price')
             prev = float(prev) if prev is not None else None
         except (TypeError, ValueError):
             return None
@@ -115,7 +106,8 @@ class Watch(BaseWatch):
 
     def extra_notification_token_values(self):
         values = super().extra_notification_token_values()
-        values['restock'] = self.get('restock', {})
+        # Copy so the derived 'previous_price' token added below doesn't mutate the stored restock object
+        values['restock'] = dict(self.get('restock', {}))
 
         values['restock']['previous_price'] = None
         if self.history_n >= 2:
@@ -135,7 +127,7 @@ class Watch(BaseWatch):
 
         values.append(('restock.price', "Price detected"))
         values.append(('restock.in_stock', "In stock status"))
-        values.append(('restock.original_price', "Original price at first check"))
+        values.append(('restock.last_price', "Price at the previous check"))
         values.append(('restock.previous_price', "Previous price in history"))
 
         return values

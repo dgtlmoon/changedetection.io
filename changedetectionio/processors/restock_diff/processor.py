@@ -564,14 +564,16 @@ class perform_site_check(difference_detection_processor):
         # Main detection method
         fetched_md5 = None
 
-        # Original price = the price at the FIRST check. Set it once and then preserve it across
-        # every later check (display only) so the watch list can show "first seen" alongside the
-        # current price. (Previously this was re-set to the current price on every check.)
-        old_original_price = (watch.get('restock') or {}).get('original_price')
-        if old_original_price is not None:
-            update_obj['restock']['original_price'] = old_original_price
-        elif update_obj['restock'].get('price') is not None:
-            update_obj['restock']['original_price'] = update_obj['restock'].get('price')
+        # Store the PREVIOUS check's price as 'last_price' - the value 'price' currently holds,
+        # before this check's freshly-scraped price overwrites it. last_price drives both the %
+        # threshold comparison below and the watch-list up/down arrow (get_price_change_percent),
+        # so the arrow needs no history reads at render time.
+        prev_check_price = (watch.get('restock') or {}).get('price')
+        if prev_check_price is not None:
+            update_obj['restock']['last_price'] = prev_check_price
+            logger.debug(
+                f"{watch.get('uuid')} Setting 'last_price' to the previous check's price '{prev_check_price}' "
+                f"(new scraped price is '{update_obj['restock'].get('price')}').")
 
         if not self.fetcher.instock_data and not itemprop_availability.get('availability') and not itemprop_availability.get('price'):
             raise ProcessorException(
@@ -598,18 +600,6 @@ class perform_site_check(difference_detection_processor):
                 logger.warning(f"Setting instock to FALSE, scraper found '{self.fetcher.instock_data}' in the body but metadata reported not-in-stock")
                 update_obj['restock']["in_stock"] = False
 
-        # Remember the price from *before the last actual price change* so the watch list can
-        # show a persistent up/down arrow. Only bump prev_price when the price really changed -
-        # otherwise an unchanged check would overwrite it and we'd lose the comparison point.
-        # Display only - not part of the snapshot/md5, so it never affects change detection.
-        old_restock = watch.get('restock') or {}
-        old_price = old_restock.get('price')
-        new_price = update_obj['restock'].get('price')
-        if new_price is not None and old_price is not None and new_price != old_price:
-            update_obj['restock']['prev_price'] = old_price          # price moved: remember what we moved from
-        else:
-            update_obj['restock']['prev_price'] = old_restock.get('prev_price')  # unchanged: keep the existing reference
-
         # What we store in the snapshot
         price = update_obj.get('restock').get('price') if update_obj.get('restock').get('price') else ""
         snapshot_content = f"In Stock: {update_obj.get('restock').get('in_stock')} - Price: {price}"
@@ -633,12 +623,14 @@ class perform_site_check(difference_detection_processor):
 
         if restock_settings.get('follow_price_changes') and watch.get('restock') and update_obj.get('restock') and update_obj['restock'].get('price'):
             price = float(update_obj['restock'].get('price'))
-            # Compare against the price from the *previous check* - not the first-seen
-            # 'original_price' (which is display-only and preserved across checks). Change
-            # detection is about consecutive movements, so the previous stored price is the
-            # correct reference point.
+            # Compare against the previous check's price (the value 'price' held before this check).
+            # That old stored 'price' is the correct reference point - last_price now mirrors it for
+            # display, but reading 'price' directly avoids any off-by-one from last_price's own update.
             if watch['restock'].get('price'):
                 previous_price = float(watch['restock'].get('price'))
+                logger.debug(
+                    f"{watch.get('uuid')} Comparing NEW price '{price}' against previous check's price '{previous_price}' -> "
+                    f"price {'CHANGED' if price != previous_price else 'unchanged'}")
                 # It was different, but negate it further down
                 if price != previous_price:
                     changed_detected = True
@@ -661,12 +653,14 @@ class perform_site_check(difference_detection_processor):
                         else:
                             logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}, continuing normal comparison")
 
-                    # Price comparison by % - against the previous check's price (not the
-                    # display-only first-seen 'original_price').
+                    # Price comparison by % - against the previous check's price
                     if watch['restock'].get('price') and changed_detected and restock_settings.get('price_change_threshold_percent'):
                         previous_price = float(watch['restock'].get('price'))
                         pc = float(restock_settings.get('price_change_threshold_percent'))
                         change = abs((price - previous_price) / previous_price * 100)
+                        logger.debug(
+                            f"{watch.get('uuid')} % threshold check - comparing NEW price '{price}' against previous "
+                            f"check's price '{previous_price}' = {change:.3f}% change (threshold {pc}%)")
                         if change and change <= pc:
                             logger.debug(f"{watch.get('uuid')} Override change-detected to FALSE because % threshold ({pc}%) was {change:.3f}%")
                             changed_detected = False

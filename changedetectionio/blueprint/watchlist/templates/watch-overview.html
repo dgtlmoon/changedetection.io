@@ -416,7 +416,7 @@ window.watchOverviewI18n = {
                                   </span>
                                   {%- set price_change_pct = restock.get_price_change_percent() -%}
                                   {%- if price_change_pct is not none -%}
-                                    {%- set prev_price = restock.get_prev_price() -%}
+                                    {%- set prev_price = restock.get('last_price') -%}
                                     {%- set prev_disp = (prev_price|format_number_locale ~ ' ' ~ cur) if prev_price is number else prev_price -%}
                                     {%- if price_change_pct < 0 -%}
                                       <span class="price-change down" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▼ {{ '%g'|format(price_change_pct) }}%</span>

@@ -825,17 +825,43 @@ class DatastoreUpdatesMixin:
             self.data['settings']['application']['llm'] = llm
             logger.info("update_32: cleaned up obsolete max_tokens_per_check / renamed max_tokens_cumulative")
 
-    def update_39(self):
+    def update_33(self):
+        """Restock: consolidate the old price-history fields into a single 'last_price'.
+
+        Earlier schemas carried 'original_price' (misnamed - it was re-stamped with the current
+        price every check, so it actually held the previous check's price) and, on the UI branch,
+        'prev_price' (price before the last change, for the watch-list arrow). Both are replaced by
+        'last_price' = the price at the previous check, which now drives BOTH the % threshold and
+        the up/down arrow (get_price_change_percent), with no history reads at render time.
+
+        Backfill last_price from the second-to-last history snapshot so the arrow is correct
+        immediately; fall back to the old original_price; then drop the obsolete keys. Idempotent.
+
+        """
+        migrated = 0
         for uuid, watch in self.data['watching'].items():
             if watch.get('processor') != 'restock_diff':
                 continue
-            versions = list(watch.history.keys())
-            if versions and len(versions) >= 2:
+            restock = watch.get('restock')
+            if not isinstance(restock, dict):
+                continue
+
+            # Best-effort backfill of last_price = previous price (second-to-last history snapshot)
+            try:
+                versions = list(watch.history.keys())
+            except Exception:
+                versions = []
+            if len(versions) >= 2:
                 snapshot = watch.get_history_snapshot(timestamp=versions[-2])
                 if snapshot:
-                    prev_price = get_price_from_history_str(history_str=snapshot)
-                    logger.debug(f"UUID {watch['uuid']} setting prev_price to '{prev_price}'")
-                    watch['restock']['prev_price'] = prev_price
-                    watch.commit()
+                    restock['last_price'] = get_price_from_history_str(history_str=snapshot)
+
+            # Fall back to the old preserved value if history gave us nothing
+            if not restock.get('last_price') and restock.get('original_price') is not None:
+                restock['last_price'] = restock.get('original_price')
+
+            restock.pop('original_price', None)
+            restock.pop('prev_price', None)
+            watch.commit()
 
 
