@@ -3365,7 +3365,7 @@ msgstr "Ціна вище для спрацювання сповіщення"
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
 msgid "Threshold in %% for price changes since the previous check"
-msgstr ""
+msgstr "Поріг у %% для зміни ціни від попередньої перевірки"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"
