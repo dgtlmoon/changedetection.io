@@ -285,7 +285,7 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
     client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'1,960.45' or b'1960.45' in res.data #depending on locale
+    assert b'1,960.45' in res.data or b'1960.45' in res.data #depending on locale
     assert b'has-unread-changes' in res.data
 
 
@@ -295,7 +295,7 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
     client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'1,950.45' or b'1950.45' in res.data #depending on locale
+    assert b'1,950.45' in res.data or b'1950.45' in res.data #depending on locale
     assert b'has-unread-changes' not in res.data
 
 
