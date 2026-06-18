@@ -16,7 +16,7 @@ services:
   #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
   #      - LOGGER_LEVEL=TRACE
   #
-  #        Plugins! See https://changedetection.io/plugins for more plugins.
+  #        Plugins! See https://github.com/dgtlmoon/changedetection.io/blob/master/changedetectionio/PLUGIN_README.md for more plugins.
   #        Install additional Python packages (processor plugins, etc.)
   #        Example: Install the OSINT reconnaissance processor plugin
   #      - EXTRA_PACKAGES=changedetection.io-osint-processor
@@ -148,4 +148,3 @@ services:
 
 volumes:
   changedetection-data:
-
