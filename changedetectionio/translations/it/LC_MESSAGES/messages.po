@@ -3333,9 +3333,8 @@ msgid "Above price to trigger notification"
 msgstr "Prezzo massimo per attivare notifica"
 
 #: changedetectionio/processors/restock_diff/forms.py
-#, python-format
-msgid "Threshold in %% for price changes since the original price"
-msgstr "Soglia in %% per modifiche prezzo dal prezzo originale"
+msgid "Threshold (%) for price changes since the previous check"
+msgstr "Soglia (%) per le variazioni di prezzo dal controllo precedente"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"

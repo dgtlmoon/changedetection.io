@@ -22,7 +22,7 @@ class RestockSettingsForm(Form):
                                   render_kw={"placeholder": _l("No limit"), "size": "10"})
     price_change_max = FloatField(_l('Above price to trigger notification'), [validators.Optional()],
                                   render_kw={"placeholder": _l("No limit"), "size": "10"})
-    price_change_threshold_percent = FloatField(_l('Threshold in %% for price changes since the original price'), validators=[
+    price_change_threshold_percent = FloatField(_l('Threshold (%) for price changes since the previous check'), validators=[
 
         validators.Optional(),
         validators.NumberRange(min=0, max=100, message=_l("Should be between 0 and 100")),
@@ -73,8 +73,8 @@ class processor_settings_form(processor_text_json_diff_form):
                 </fieldset>
                 <fieldset class="pure-group price-change-minmax">
                     {{ render_field(form.processor_config_restock_diff.price_change_threshold_percent) }}
-                    <span class="pure-form-message-inline">Price must change more than this % to trigger a change since the first check.</span><br>
-                    <span class="pure-form-message-inline">For example, If the product is $1,000 USD originally, <strong>2%</strong> would mean it has to change more than $20 since the first check.</span><br>
+                    <span class="pure-form-message-inline">Price must change more than this % since the previous check to trigger a change.</span><br>
+                    <span class="pure-form-message-inline">For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change more than $20 since then.</span><br>
                 </fieldset>
             </div>
         </fieldset>

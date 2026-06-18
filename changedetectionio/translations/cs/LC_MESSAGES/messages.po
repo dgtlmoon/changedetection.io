@@ -3339,9 +3339,8 @@ msgid "Above price to trigger notification"
 msgstr "Vyšší cena pro spuštění upozornění"
 
 #: changedetectionio/processors/restock_diff/forms.py
-#, python-format
-msgid "Threshold in %% for price changes since the original price"
-msgstr "Prahová hodnota v %% pro změny ceny od původní ceny"
+msgid "Threshold (%) for price changes since the previous check"
+msgstr "Prahová hodnota (%) pro změny ceny od předchozí kontroly"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"
