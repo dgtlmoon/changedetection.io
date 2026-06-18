@@ -49,9 +49,11 @@ def set_back_in_stock_response(datastore_path):
         f.write(test_return_data)
     return None
 
-def set_price_response(datastore_path, price):
+def set_price_response(datastore_path, price, nonce=''):
     # JSON-LD product offer so the price + availability are extracted deterministically
     # without needing a real browser (extruct parses the raw HTML).
+    # `nonce` injects throwaway body content so the page checksum differs (the check actually
+    # runs instead of short-circuiting) while the price stays the same.
     test_return_data = """<html>
        <head>
        <script type="application/ld+json">
@@ -62,9 +64,10 @@ def set_price_response(datastore_path, price):
        </head>
        <body>
        <div id="sametext">Available!</div>
+       <!-- %s -->
        </body>
      </html>
-    """ % price
+    """ % (price, nonce)
 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
@@ -139,6 +142,17 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
     assert b'price-change up' in res.data, "Arrow should persist across an unchanged (short-circuited) check"
     assert b'+9.8%' in res.data, "Percentage should persist across an unchanged check"
     assert float(get_restock(client).get('last_price')) == 82.0, "last_price stays put when the check short-circuits"
+
+    # Regression: the page CONTENT changes (so the check actually runs, no short-circuit) but the
+    # PRICE stays 90.00. last_price must NOT be clobbered to 90 - it should still hold 82 so the
+    # arrow persists. (Previously last_price was re-stamped every check and collapsed to == price.)
+    set_price_response(datastore_path=datastore_path, price="90.00", nonce="changed-body-same-price")
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert float(get_restock(client).get('last_price')) == 82.0, "last_price must be preserved when the price is unchanged but the page content changed"
+    assert b'price-change up' in res.data, "Arrow should persist when only non-price content changed"
+    assert b'+9.8%' in res.data
 
 
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready

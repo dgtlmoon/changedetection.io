@@ -83,6 +83,7 @@ class Restock(dict):
         pct = round((price - prev) / prev * 100.0, 1)
         return pct if pct != 0 else None
 
+# @todo - kinda bad, needs to be in its own DB
 def get_price_from_history_str(history_str):
     m = _price_re.search(history_str)
     if not m:

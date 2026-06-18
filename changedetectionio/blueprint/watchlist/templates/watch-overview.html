@@ -195,7 +195,7 @@ window.watchOverviewI18n = {
                        data-confirm-title="{{ _('Delete Watches?') }}"
                        data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" ></i>&nbsp;{{ _('Delete') }}</button>
-        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Cancel') }}</button>
+        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
     </div>
     {# Option lists for the bulk Browser / Proxy modals (rendered by watch-overview.js into a ModalDialog).
        Mirrors the choices on the watch edit page. Kept inert inside <template> until the modal is opened. #}
@@ -292,10 +292,12 @@ window.watchOverviewI18n = {
                 {% endfor %}
             </div>
             {% endif %}
-            {% if unread_count %}
-            <a id="post-list-mark-views" class="cdio-btn" href="{{ filtered_action_url('ui.mark_all_viewed') }}"><i data-feather="eye"></i>{{ _('Mark all viewed') }}</a>
-            {% endif %}
-            <a id="recheck-all" class="cdio-btn" href="{{ filtered_action_url('ui.form_watch_checknow') }}"><i data-feather="refresh-cw"></i>{{ _('Recheck all') }} {% if active_tag_uuid %}{{ _("in '%(title)s'", title=active_tag.title) }}{% endif %}</a>
+            <div id="buttons-for-all-watches">
+                {%- if unread_count -%}
+                <a id="post-list-mark-views" class="cdio-btn" href="{{ filtered_action_url('ui.mark_all_viewed') }}"><i data-feather="eye"></i>{{ _('Mark all viewed') }}</a>
+                {%- endif -%}
+                <a id="recheck-all" class="cdio-btn" href="{{ filtered_action_url('ui.form_watch_checknow') }}"><i data-feather="refresh-cw"></i>{{ _('Recheck all') }} {% if active_tag_uuid %}{{ _("in '%(title)s'", title=active_tag.title) }}{% endif %}</a>
+            </div>
             <a title="{{ _('RSS Feed') }}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
         </div>
 
@@ -430,21 +432,21 @@ window.watchOverviewI18n = {
                             {%- if watch.get('restock') and watch['restock'].get('price') -%}
                                 {%- set restock = watch['restock'] -%}
                                 {%- set price = restock.get('price') -%}
-                                {%- set cur = restock.get('currency','') -%}
+                                {%- set currency = restock.get('currency') if restock.get('currency','') else '' -%}
 
                                 {%- if price is not none and (price|string)|regex_search('\d') -%}
                                   <span class="restock-label price" title="{{ _('Price') }}">
                                   {# @todo: make parse_currency/parse_decimal aware of the locale of the actual web page and use that instead changedetectionio/processors/restock_diff/__init__.py #}
                                     {%- if price is number -%}{# It's a number so we can convert it to their locale' #}
-                                      {{ price|format_number_locale }} {{ cur }}<!-- as number -->
+                                      {{ price|format_number_locale }} {{ currency }}<!-- as number -->
                                     {%- else -%}{# It's totally fine if it arrives as something else, the website might be something weird in this field #}
-                                      {{ price }} {{ cur }}<!-- as string -->
+                                      {{ price }} {{ currency }}<!-- as string -->
                                     {%- endif -%}
                                   </span>
                                   {%- set price_change_pct = restock.get_price_change_percent() -%}
                                   {%- if price_change_pct is not none -%}
                                     {%- set prev_price = restock.get('last_price') -%}
-                                    {%- set prev_disp = (prev_price|format_number_locale ~ ' ' ~ cur) if prev_price is number else prev_price -%}
+                                    {%- set prev_disp = (prev_price|format_number_locale ~ ' ' ~ currency) if prev_price is number else prev_price -%}
                                     {%- if price_change_pct < 0 -%}
                                       <span class="price-change down" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▼ {{ '%g'|format(price_change_pct) }}%</span>
                                     {%- else -%}

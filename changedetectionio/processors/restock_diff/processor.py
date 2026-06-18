@@ -564,16 +564,19 @@ class perform_site_check(difference_detection_processor):
         # Main detection method
         fetched_md5 = None
 
-        # Store the PREVIOUS check's price as 'last_price' - the value 'price' currently holds,
-        # before this check's freshly-scraped price overwrites it. last_price drives both the %
-        # threshold comparison below and the watch-list up/down arrow (get_price_change_percent),
-        # so the arrow needs no history reads at render time.
-        prev_check_price = (watch.get('restock') or {}).get('price')
-        if prev_check_price is not None:
-            update_obj['restock']['last_price'] = prev_check_price
-            logger.debug(
-                f"{watch.get('uuid')} Setting 'last_price' to the previous check's price '{prev_check_price}' "
-                f"(new scraped price is '{update_obj['restock'].get('price')}').")
+        # Maintain 'last_price' = the price from *before the last actual price change*, for the
+        # watch-list up/down arrow (get_price_change_percent). Only move it when the price really
+        # changed; on an unchanged check we MUST preserve it, otherwise frequent re-checks of a
+        # stable price would overwrite last_price with the current price and the arrow would vanish.
+        # Display only - the % threshold/change detection below compares against the stored 'price'.
+        old_restock = watch.get('restock') or {}
+        old_price = old_restock.get('price')
+        new_price = update_obj['restock'].get('price')
+        if new_price is not None and new_price != old_price:
+            update_obj['restock']['last_price'] = old_price          # price moved: remember what we moved from (None on first detection)
+            logger.debug(f"{watch.get('uuid')} price changed '{old_price}' -> '{new_price}', setting 'last_price' to '{old_price}'.")
+        else:
+            update_obj['restock']['last_price'] = old_restock.get('last_price')  # unchanged: keep the existing reference
 
         if not self.fetcher.instock_data and not itemprop_availability.get('availability') and not itemprop_availability.get('price'):
             raise ProcessorException(

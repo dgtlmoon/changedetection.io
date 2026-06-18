@@ -83,6 +83,8 @@ body.has-queue {
 
 #checkbox-operations {
   margin-bottom: 1em;
+  // Hidden until watches are selected; shown via body.watch-selection-active (toggled in
+  // watch-overview.js, replaces the old jQuery slideUp/slideDown).
   display: none;
   button {
     /* some space if they wrap the page */
@@ -97,6 +99,10 @@ body.has-queue {
     height: 14px;
     stroke: white;
   }
+}
+
+body.watch-selection-active #checkbox-operations {
+  display: block;
 }
 
 
@@ -180,6 +186,7 @@ body.has-queue {
       td.last-checked {
         .spinner-wrapper {
           display: inline-block !important;
+          white-space: nowrap !important;
         }
 
         .innertext {
@@ -231,13 +238,13 @@ body.has-queue {
 
     &.single-history {
       a.preview-link {
-        display: inline-block !important;
+        display: inherit !important;
       }
     }
 
     &.multiple-history {
       a.history-link {
-        display: inline-block !important;
+        display: inherit !important;
       }
     }
 
@@ -391,6 +398,21 @@ body.has-queue {
         }
       }
     }*/
+}
+
+body.watch-selection-active  {
+  /* because its confusing to be in checkbox selection mode AND see these buttons which apply always to all watches */
+  #buttons-for-all-watches {
+      display: none !important;
+  }
+}
+#buttons-for-all-watches {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: $common-gap;
+  margin: 0;
 }
 
 #watch-table-wrapper {

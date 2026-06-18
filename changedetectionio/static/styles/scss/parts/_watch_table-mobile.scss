@@ -173,10 +173,6 @@ $watch-table-mobile-max: 767px;
   .watch-table thead tr th .hide-on-desktop {
     display: none;
   }
-}
-
-
-@media (min-width: 1600px) {
   .watch-table {
     td.last-checked, td.last-changed {
       .innertext {

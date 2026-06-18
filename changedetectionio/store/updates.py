@@ -851,10 +851,17 @@ class DatastoreUpdatesMixin:
                 versions = list(watch.history.keys())
             except Exception:
                 versions = []
+
+            if len(versions) >= 1 and not restock.get('price'):
+                snapshot = watch.get_history_snapshot(timestamp=versions[-1])
+                restock['price'] = get_price_from_history_str(history_str=snapshot)
+                logger.trace(f"UUID {uuid} restock current price set to '{restock['last_price']}'")
+
             if len(versions) >= 2:
                 snapshot = watch.get_history_snapshot(timestamp=versions[-2])
                 if snapshot:
                     restock['last_price'] = get_price_from_history_str(history_str=snapshot)
+                    logger.trace(f"UUID {uuid} restock last_price set to '{restock['last_price']}'")
 
             # Fall back to the old preserved value if history gave us nothing
             if not restock.get('last_price') and restock.get('original_price') is not None:

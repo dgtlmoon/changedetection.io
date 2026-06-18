@@ -193,8 +193,14 @@ $(function () {
     }
 
     function refreshSelectionUI() {
-        if (sel.size() > 0) { $('#checkbox-operations').slideDown(); }
-        else { $('#checkbox-operations').slideUp(); }
+        // Toggle a single body class - everything (operations bar visibility, hiding the whole-list
+        // buttons) is driven off body.watch-selection-active in CSS (see _watch_table.scss).
+        // No jQuery slideUp/slideDown.
+        // Base it on a checkbox actually being checked on THIS page, not sel.size(): the store is a
+        // cross-page set persisted in sessionStorage, so a leftover/off-page selection would
+        // otherwise light up the class with nothing visibly selected.
+        const anyVisibleChecked = $rowCbs().get().some((el) => el.checked);
+        $('body').toggleClass('watch-selection-active', anyVisibleChecked);
         updateRecordsSelected();
         updateSelectAllBanner();
     }
@@ -251,9 +257,7 @@ $(function () {
     $("#check-cancel").click(function () {
         sel.clear();
         applySelectionToDom();
-        $('#checkbox-operations').slideUp();
-        updateRecordsSelected();
-        updateSelectAllBanner();
+        refreshSelectionUI();
     });
 
     // "Select all N matching" — pull the full matching id list from the server.
