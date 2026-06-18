@@ -110,7 +110,6 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             follow_redirects=True
         )
 
-        # Yes we are correctly logged in
         assert b"/logout" in res.data
 
         # 598 - Password should be set and not accidently removed

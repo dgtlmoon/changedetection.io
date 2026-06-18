@@ -10,7 +10,7 @@
     <li class="pure-menu-item " id="menu-mute">
         <a href="{{ url_for('settings.toggle_all_muted') }}" aria-label="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}"><i data-feather="{{ 'bell-off' if all_muted else 'bell' }}" class="action-icon"></i></a>
     </li>
-{%- if has_password -%}
+{%- if current_user.is_authenticated -%}
     <li class="pure-menu-item menu-collapsible">
         <a href="{{ url_for('logout', redirect=request.path) }}" ><i data-feather="log-out" class="action-icon"></i>&nbsp;{{ _('Log out') }}</a>
     </li>
