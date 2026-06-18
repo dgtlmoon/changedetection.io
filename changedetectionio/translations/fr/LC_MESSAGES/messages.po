@@ -3345,8 +3345,8 @@ msgstr "Au-dessus du prix pour déclencher une notification"
 
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
-msgid "Threshold in %% for price changes since the original price"
-msgstr "Seuil en %% pour les changements de prix depuis le prix initial"
+msgid "Threshold in %% for price changes since the previous check"
+msgstr ""
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"

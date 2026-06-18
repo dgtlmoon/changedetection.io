@@ -3336,8 +3336,8 @@ msgstr "高於此價格觸發通知"
 
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
-msgid "Threshold in %% for price changes since the original price"
-msgstr "自原始價格以來價格變化的閾值（%%）"
+msgid "Threshold in %% for price changes since the previous check"
+msgstr ""
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"
