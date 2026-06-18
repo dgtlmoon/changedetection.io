@@ -427,7 +427,8 @@ body.actionside-bar-on {
 
 /** top logo stuff */
 #action-sidebar-logo {
-  padding: $common-gap;
+  padding-top: $common-gap*2;
+  padding-left: $common-gap;
 }
 
 .actionsidebar-minimal {

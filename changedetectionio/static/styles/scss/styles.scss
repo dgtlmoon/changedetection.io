@@ -967,22 +967,6 @@ ul {
   cursor: pointer;
 }
 
-#checkbox-operations {
-  background: var(--color-background-checkbox-operations);
-  padding: 1em;
-  border-radius: 10px;
-  margin-bottom: 1em;
-  display: none;
-  button {
-    /* some space if they wrap the page */
-    margin-bottom: 3px;
-    margin-top: 3px;
-    /* vertically center icon and text */
-    display: inline-flex;
-    align-items: center;
-  }
-}
-
 
 .inline-warning {
   >span {

@@ -80,6 +80,27 @@ body.has-queue {
   }
 }
 
+
+#checkbox-operations {
+  margin-bottom: 1em;
+  display: none;
+  button {
+    /* some space if they wrap the page */
+    margin-bottom: 3px;
+    margin-top: 3px;
+    /* vertically center icon and text */
+    display: inline-flex;
+    align-items: center;
+  }
+    i,svg {
+    width: 14px;
+    height: 14px;
+    stroke: white;
+  }
+}
+
+
+
 // Watch-list-specific styling layered on top of the shared .cdio-table base.
 .watch-table {
   .checkbox-uuid {

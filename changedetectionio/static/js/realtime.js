@@ -204,6 +204,14 @@ $(document).ready(function () {
                 }
             });
 
+            // Server-driven feedback for bulk checkbox operations (real count / error from the server)
+            socket.on('toast', function (data) {
+                if (data && data.message && window.Toast) {
+                    const fn = window.Toast[data.type] || window.Toast.info;
+                    fn(data.message);
+                }
+            });
+
             socket.on('watch_small_status_comment', function (data) {
                 console.log(`Socket.IO: Operation  watch_small_status_comment'${data.uuid}' status ${data.status}`);
                 $('tr[data-watch-uuid="' + data.uuid + '"] td.last-checked .status-text').html("&nbsp;").text(data.status);

@@ -35,6 +35,8 @@ ul#top-right-menu {
   margin-left: auto;
   padding: 0;
   margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
   display: grid;
   gap: $common-gap*2;
   grid-auto-flow: column;

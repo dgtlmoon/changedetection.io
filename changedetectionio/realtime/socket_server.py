@@ -288,11 +288,15 @@ def init_socketio(app, datastore):
         logger.trace(f"Got checkbox operations event: {data}")
 
         datastore = socketio.datastore
+        # Capture the requesting client's session id now (request context is gone inside the thread)
+        # so we can send the feedback toast only back to them, not broadcast to everyone.
+        from flask import request
+        sid = getattr(request, 'sid', None)
 
         def run_operation():
             """Run the operation in a background thread to avoid blocking the socket.io event loop"""
             try:
-                _handle_operations(
+                result = _handle_operations(
                     op=data.get('op'),
                     uuids=data.get('uuids'),
                     datastore=datastore,
@@ -303,6 +307,9 @@ def init_socketio(app, datastore):
                     watch_check_update=watch_check_update,
                     emit_flash=False
                 )
+                # Server-driven feedback: tell the requesting client what happened (real count / errors)
+                if result and result.get('message') and sid:
+                    socketio.emit('toast', {'message': result['message'], 'type': result.get('type', 'success')}, to=sid)
             except Exception as e:
                 logger.error(f"Error in checkbox operation thread: {e}")
 
