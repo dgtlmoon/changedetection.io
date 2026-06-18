@@ -1050,8 +1050,7 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -2466,6 +2465,10 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr ""
 "<p><strong>Möchten Sie die ausgewählten Überwachungen wirklich löschen?</strong></p><p>Diese Aktion kann nicht "
 "rückgängig gemacht werden.</p>"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
@@ -4251,10 +4254,6 @@ msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Go to AI / LLM Settings"
-msgstr ""
-
-#: changedetectionio/templates/base.html
-msgid "Close"
 msgstr ""
 
 #: changedetectionio/templates/base.html changedetectionio/templates/sidebar-nav.html

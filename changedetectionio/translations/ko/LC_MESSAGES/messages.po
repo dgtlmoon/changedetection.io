@@ -1040,8 +1040,7 @@ msgid "Remove"
 msgstr "제거"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "취소"
 
@@ -2421,6 +2420,10 @@ msgstr "모니터링을 삭제하시겠습니까?"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr "<p><strong>선택한 모니터링을 삭제하시겠습니까?</strong></p><p>이 작업은 되돌릴 수 없습니다.</p>"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr "닫기"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
@@ -4200,10 +4203,6 @@ msgstr "LLM 기반 요약이 아직 활성화되지 않았습니다. 시작하�
 #: changedetectionio/templates/base.html
 msgid "Go to AI / LLM Settings"
 msgstr "AI / LLM 설정으로 이동"
-
-#: changedetectionio/templates/base.html
-msgid "Close"
-msgstr "닫기"
 
 #: changedetectionio/templates/base.html changedetectionio/templates/sidebar-nav.html
 msgid "Search"
