@@ -633,9 +633,12 @@ class perform_site_check(difference_detection_processor):
 
         if restock_settings.get('follow_price_changes') and watch.get('restock') and update_obj.get('restock') and update_obj['restock'].get('price'):
             price = float(update_obj['restock'].get('price'))
-            # Default to current price if no previous price found
-            if watch['restock'].get('original_price'):
-                previous_price = float(watch['restock'].get('original_price'))
+            # Compare against the price from the *previous check* - not the first-seen
+            # 'original_price' (which is display-only and preserved across checks). Change
+            # detection is about consecutive movements, so the previous stored price is the
+            # correct reference point.
+            if watch['restock'].get('price'):
+                previous_price = float(watch['restock'].get('price'))
                 # It was different, but negate it further down
                 if price != previous_price:
                     changed_detected = True
@@ -658,9 +661,10 @@ class perform_site_check(difference_detection_processor):
                         else:
                             logger.trace(f"{watch.get('uuid')} {price} is between {min_limit} and {max_limit}, continuing normal comparison")
 
-                    # Price comparison by %
-                    if watch['restock'].get('original_price') and changed_detected and restock_settings.get('price_change_threshold_percent'):
-                        previous_price = float(watch['restock'].get('original_price'))
+                    # Price comparison by % - against the previous check's price (not the
+                    # display-only first-seen 'original_price').
+                    if watch['restock'].get('price') and changed_detected and restock_settings.get('price_change_threshold_percent'):
+                        previous_price = float(watch['restock'].get('price'))
                         pc = float(restock_settings.get('price_change_threshold_percent'))
                         change = abs((price - previous_price) / previous_price * 100)
                         if change and change <= pc:

@@ -22,7 +22,7 @@ class RestockSettingsForm(Form):
                                   render_kw={"placeholder": _l("No limit"), "size": "10"})
     price_change_max = FloatField(_l('Above price to trigger notification'), [validators.Optional()],
                                   render_kw={"placeholder": _l("No limit"), "size": "10"})
-    price_change_threshold_percent = FloatField(_l('Threshold in %% for price changes since the original price'), validators=[
+    price_change_threshold_percent = FloatField(_l('Threshold in % for price changes since the original price'), validators=[
 
         validators.Optional(),
         validators.NumberRange(min=0, max=100, message=_l("Should be between 0 and 100")),

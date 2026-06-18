@@ -3716,7 +3716,7 @@ msgstr "Bildirimi tetiklemek için fiyatın üstünde"
 
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
-msgid "Threshold in %% for price changes since the original price"
+msgid "Threshold in % for price changes since the original price"
 msgstr "Orijinal fiyattan bu yana fiyat değişiklikleri için %% cinsinden eşik"
 
 #: changedetectionio/processors/restock_diff/forms.py

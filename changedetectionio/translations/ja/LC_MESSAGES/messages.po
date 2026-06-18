@@ -3682,7 +3682,7 @@ msgstr "通知をトリガーする上限価格"
 
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
-msgid "Threshold in %% for price changes since the original price"
+msgid "Threshold in % for price changes since the original price"
 msgstr "元の価格からの価格変動率のしきい値（%%）"
 
 #: changedetectionio/processors/restock_diff/forms.py

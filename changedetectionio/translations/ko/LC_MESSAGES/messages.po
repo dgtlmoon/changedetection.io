@@ -3673,7 +3673,7 @@ msgstr "다음 가격 초과이면 알림 트리거"
 
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
-msgid "Threshold in %% for price changes since the original price"
+msgid "Threshold in % for price changes since the original price"
 msgstr "원래 가격 대비 가격 변동 기준(%%)"
 
 #: changedetectionio/processors/restock_diff/forms.py

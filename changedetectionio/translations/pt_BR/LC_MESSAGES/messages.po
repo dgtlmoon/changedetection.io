@@ -3713,7 +3713,7 @@ msgstr "Preço acima deste valor para disparar notificação"
 
 #: changedetectionio/processors/restock_diff/forms.py
 #, python-format
-msgid "Threshold in %% for price changes since the original price"
+msgid "Threshold in % for price changes since the original price"
 msgstr "Limite em %% para mudanças de preço desde o preço original"
 
 #: changedetectionio/processors/restock_diff/forms.py
