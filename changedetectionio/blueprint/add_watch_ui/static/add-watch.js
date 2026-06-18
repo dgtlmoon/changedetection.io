@@ -12,6 +12,7 @@ $(document).ready(() => {
     const $byElement = $('#by-element-toggle');
     const $clear = $('#clear-selector');
     const $includeFilters = $('#include_filters');
+    const $temporaryUuid = $('#temporary_uuid');
 
     const vs = window.initVisualSelector({
         $canvas: $('#selector-canvas'),
@@ -47,6 +48,8 @@ $(document).ready(() => {
         }
 
         showState('loading');
+        // A previous parked snapshot is now stale; drop it until this fetch succeeds.
+        $temporaryUuid.val('');
 
         $.ajax({
             url: add_watch_snapshot_url,
@@ -54,6 +57,7 @@ $(document).ready(() => {
             dataType: 'json',
         }).done((data) => {
             showState('ready');
+            $temporaryUuid.val(data.temporary_uuid || '');
             vs.load({screenshotSrc: data.screenshot, xpathData: data.xpath_data});
         }).fail((xhr) => {
             const msg = (xhr && xhr.responseText) ? xhr.responseText : 'Could not fetch a preview for that URL.';

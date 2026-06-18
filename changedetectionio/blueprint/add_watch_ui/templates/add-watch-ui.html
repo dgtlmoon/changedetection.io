@@ -7,6 +7,8 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <!-- Filled in by the visual selector when "Select by element" is used -->
         <input type="hidden" name="include_filters" id="include_filters" value="">
+        <!-- UUID of the parked live snapshot, so submit can promote it without re-fetching -->
+        <input type="hidden" name="temporary_uuid" id="temporary_uuid" value="">
 
         <fieldset>
             <legend>{{ _('Add a new web page change detection watch') }}</legend>
