@@ -446,7 +446,7 @@ msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
-msgid "All Notifications"
+msgid "Default Notifications"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
@@ -3204,10 +3204,6 @@ msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "Filtre artık sayfada bulunamadığında bir bildirim gönder"
 
 #: changedetectionio/forms.py
-msgid "Muted"
-msgstr "Sessize alındı"
-
-#: changedetectionio/forms.py
 msgid "On"
 msgstr "Açık"
 
@@ -3215,6 +3211,10 @@ msgstr "Açık"
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Bildirimler"
+
+#: changedetectionio/forms.py changedetectionio/templates/menu.html
+msgid "Muted"
+msgstr "Sessize alındı"
 
 #: changedetectionio/forms.py
 msgid "Attach screenshot to notification (where possible)"
@@ -3997,6 +3997,30 @@ msgid "More Here"
 msgstr "Daha Fazlası Burada"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Add email notification:"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add an email address"
+msgstr "Bir e-posta adresi ekle"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "Test bildirimi gönder"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Notification debug logs"
+msgstr "Bildirim hata ayıklama günlükleri"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "İşleniyor.."
+
+#: changedetectionio/templates/_common_fields.html
 #, python-format
 msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
@@ -4058,24 +4082,8 @@ msgid "Accepts the <code>%(token)s</code> placeholders listed below"
 msgstr "Aşağıda listelenen <code>%(token)s</code> yer tutucularını kabul eder"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "Test bildirimi gönder"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add email"
-msgstr "E-posta ekle"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add an email address"
-msgstr "Bir e-posta adresi ekle"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Notification debug logs"
-msgstr "Bildirim hata ayıklama günlükleri"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "İşleniyor.."
+msgid "Customise notifications"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Title for all notifications"
@@ -4559,6 +4567,10 @@ msgstr "Bildirimlerin sesini aç"
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"
 msgstr "Bildirimler sessize alındı - sesini açmak için tıklayın"
+
+#: changedetectionio/templates/menu.html
+msgid "Alerts on"
+msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Log out"

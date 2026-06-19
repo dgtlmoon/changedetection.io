@@ -445,7 +445,7 @@ msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
-msgid "All Notifications"
+msgid "Default Notifications"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
@@ -3224,10 +3224,6 @@ msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "Enviar una notificación cuando el filtro ya no se pueda encontrar en la página"
 
 #: changedetectionio/forms.py
-msgid "Muted"
-msgstr "Silenciado"
-
-#: changedetectionio/forms.py
 msgid "On"
 msgstr "On"
 
@@ -3235,6 +3231,10 @@ msgstr "On"
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Notificaciones"
+
+#: changedetectionio/forms.py changedetectionio/templates/menu.html
+msgid "Muted"
+msgstr "Silenciado"
 
 #: changedetectionio/forms.py
 msgid "Attach screenshot to notification (where possible)"
@@ -4017,6 +4017,30 @@ msgid "More Here"
 msgstr "Más aquí"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Add email notification:"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add an email address"
+msgstr "Agregar una dirección de correo electrónico"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "Enviar notificación de prueba"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Notification debug logs"
+msgstr "Registros de depuración de notificaciones"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "Tratamiento.."
+
+#: changedetectionio/templates/_common_fields.html
 #, python-format
 msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
@@ -4080,24 +4104,8 @@ msgid "Accepts the <code>%(token)s</code> placeholders listed below"
 msgstr "Acepta los marcadores de posición <code>%(token)s</code> enumerados a continuación"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "Enviar notificación de prueba"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add email"
-msgstr "Agregar correo electrónico"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add an email address"
-msgstr "Agregar una dirección de correo electrónico"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Notification debug logs"
-msgstr "Registros de depuración de notificaciones"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "Tratamiento.."
+msgid "Customise notifications"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Title for all notifications"
@@ -4584,6 +4592,10 @@ msgstr "Dejar de silenciar notificaciones"
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"
 msgstr "Las notificaciones están silenciadas: haga clic para activar el silencio"
+
+#: changedetectionio/templates/menu.html
+msgid "Alerts on"
+msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Log out"

@@ -8,7 +8,7 @@
         <a class="status-pill {{ 'paused' if all_paused }}" href="{{ url_for('settings.toggle_all_paused') }}" aria-label="{% if all_paused %}{{ _('Resume automatic scheduling') }}{% else %}{{ _('Pause auto-queue scheduling of watches') }}{% endif %}" title="{% if all_paused %}{{ _('Scheduling paused — click to resume') }}{% else %}{{ _('Scheduling active — click to pause all') }}{% endif %}"><span class="live-dot"></span>{% if all_paused %}{{ _('Paused') }}{% else %}{{ _('Live') }}{% endif %}</a>
     </li>
     <li class="pure-menu-item " id="menu-mute">
-        <a href="{{ url_for('settings.toggle_all_muted') }}" aria-label="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}"><i data-feather="{{ 'bell-off' if all_muted else 'bell' }}" class="action-icon"></i></a>
+        <a class="status-pill {{ 'muted' if all_muted }}" href="{{ url_for('settings.toggle_all_muted') }}" aria-label="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}"><i data-feather="{{ 'bell-off' if all_muted else 'bell' }}" class="action-icon"></i>{% if all_muted %}{{ _('Muted') }}{% else %}{{ _('Alerts on') }}{% endif %}</a>
     </li>
 {%- if current_user.is_authenticated -%}
     <li class="pure-menu-item menu-collapsible">

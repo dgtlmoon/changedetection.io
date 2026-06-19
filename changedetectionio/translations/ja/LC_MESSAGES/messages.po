@@ -441,7 +441,7 @@ msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
-msgid "All Notifications"
+msgid "Default Notifications"
 msgstr ""
 
 # 訳注: "Base URL used for the {{base_url}} token in notification links."
@@ -3170,10 +3170,6 @@ msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "フィルタがページで見つからなくなったときに通知を送信"
 
 #: changedetectionio/forms.py
-msgid "Muted"
-msgstr "ミュート済み"
-
-#: changedetectionio/forms.py
 msgid "On"
 msgstr "オン"
 
@@ -3181,6 +3177,10 @@ msgstr "オン"
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "通知"
+
+#: changedetectionio/forms.py changedetectionio/templates/menu.html
+msgid "Muted"
+msgstr "ミュート済み"
 
 #: changedetectionio/forms.py
 msgid "Attach screenshot to notification (where possible)"
@@ -3969,6 +3969,30 @@ msgid "More Here"
 msgstr "詳細はこちら"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Add email notification:"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add an email address"
+msgstr "メールアドレスを追加"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "テスト通知を送信"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Notification debug logs"
+msgstr "通知デバッグログ"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "処理中.."
+
+#: changedetectionio/templates/_common_fields.html
 #, python-format
 msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr "<a target=\"newwindow\" href=\"%(url)s\">AppRise 通知URL</a> を使えば、ほぼすべてのサービスへの通知に対応できます！"
@@ -4032,24 +4056,8 @@ msgid "Accepts the <code>%(token)s</code> placeholders listed below"
 msgstr "下記の <code>%(token)s</code> プレースホルダーを受け付けます"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "テスト通知を送信"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add email"
-msgstr "メールを追加"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add an email address"
-msgstr "メールアドレスを追加"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Notification debug logs"
-msgstr "通知デバッグログ"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "処理中.."
+msgid "Customise notifications"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Title for all notifications"
@@ -4541,6 +4549,10 @@ msgstr "通知のミュートを解除"
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"
 msgstr "通知はミュート中 - クリックして解除"
+
+#: changedetectionio/templates/menu.html
+msgid "Alerts on"
+msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Log out"

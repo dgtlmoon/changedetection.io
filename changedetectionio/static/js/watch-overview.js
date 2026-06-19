@@ -404,17 +404,16 @@ $(function () {
                         $content.addClass('loaded');
                         $content.find('.ai-inline-text').html(formatSummary(data.summary));
                         $content.find('.ai-inline-prompt').remove();
-                        $content.find('.ai-inline-body').append(
-                            '<a href="' + historyUrl + '" class="ai-inline-history-link">' +
-                            $('<span>').text(msgHistory).html() + '</a>'
-                        );
                     } else if (data.error) {
                         $summaryRow.find('td').html(
                             '<span class="ai-inline-error">' + $('<span>').text(data.error).html() + '</span>'
                         );
-                    } else {
-                        $summaryRow.remove();
                     }
+                    $content.find('.ai-inline-body').append(
+                        '<a href="' + historyUrl + '" class="ai-inline-history-link">' +
+                        $('<span>').text(msgHistory).html() + '</a>'
+                    );
+
                 })
                 .fail(function (xhr) {
                     var msg = (xhr.responseJSON && xhr.responseJSON.error)

@@ -437,7 +437,7 @@ msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
-msgid "All Notifications"
+msgid "Default Notifications"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
@@ -3151,16 +3151,16 @@ msgid "Send a notification when the filter can no longer be found on the page"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Muted"
-msgstr ""
-
-#: changedetectionio/forms.py
 msgid "On"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
+msgstr ""
+
+#: changedetectionio/forms.py changedetectionio/templates/menu.html
+msgid "Muted"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -3944,6 +3944,30 @@ msgid "More Here"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Add email notification:"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add an email address"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Notification debug logs"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
 #, python-format
 msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
@@ -4003,23 +4027,7 @@ msgid "Accepts the <code>%(token)s</code> placeholders listed below"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add email"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add an email address"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Notification debug logs"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
+msgid "Customise notifications"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
@@ -4497,6 +4505,10 @@ msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Notifications are muted - click to unmute"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Alerts on"
 msgstr ""
 
 #: changedetectionio/templates/menu.html

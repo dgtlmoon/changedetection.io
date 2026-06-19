@@ -143,6 +143,18 @@ ul#top-right-menu {
     box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.3);
     animation: none;
   }
+
+  // Icon-led pills (e.g. the mute toggle) keep the feather icon compact.
+  .action-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  // Muted = notifications silenced; dim the pill and amber the bell so it reads as "off".
+  &.muted {
+    opacity: 0.8;
+    .action-icon { color: #e8a33d; }
+  }
 }
 
 @keyframes status-pill-pulse {

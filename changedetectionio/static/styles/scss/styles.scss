@@ -34,6 +34,7 @@
 @use "parts/search_modal";
 @use "parts/llm";
 @use "parts/notification_bubble";
+@use "parts/notifications";
 @use "parts/toast";
 @use "parts/login_form";
 @use "parts/tabs";
@@ -235,6 +236,10 @@ section.content {
   justify-content: flex-start;
 }
 
+details summary {
+  cursor: pointer;
+}
+
 code {
   background: var(--color-background-code);
   color: var(--color-text);
@@ -406,24 +411,6 @@ a.pure-button-selected {
   }
 }
 
-.notifications-wrapper {
-  padding-top: 0.5rem;
-  #notification-test-log {
-    margin-top: 1rem;
-    padding: 1rem;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    max-width: 100%;
-    box-sizing: border-box;
-    max-height: 12rem;
-    overflow-y: scroll;
-    border: 1px solid var(--color-border-notification);
-    border-radius: 5px;
-
-  }
-}
-
 label {
  &:hover {
    cursor: pointer;
@@ -436,12 +423,6 @@ label {
   border-radius: 5px;
 }
 
-#notification-error-log {
-  border: 1px solid var(--color-border-notification);
-  padding: 1rem;
-  border-radius: 5px;
-  overflow-wrap: break-word;
-}
 
 #token-table {
 
@@ -1034,7 +1015,7 @@ ul {
 
 .restock-label {
   &.in-stock {
-    background-color: var(--color-background-button-green);
+    background-color: #7a0cc5;
     color: #fff;
   }
   &.not-in-stock {
