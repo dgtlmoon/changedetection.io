@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-19 17:02+0200\n"
+"POT-Creation-Date: 2026-06-19 18:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1119,6 +1119,10 @@ msgstr ""
 msgid ""
 "Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
 "more."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -3459,6 +3463,18 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Skip the watch check entirely"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Watchlist \"Summary\" link compares"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Previous version (second-last vs latest)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py

@@ -1131,6 +1131,10 @@ msgid ""
 msgstr "AI가 변경 요약을 작성할 때 사용할 수 있는 토큰 상한입니다. 값이 높을수록 더 긴 요약이 가능하지만 비용이 증가합니다."
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Configure a provider first to unlock behaviour settings."
 msgstr "동작 설정을 사용하려면 먼저 프로바이더를 설정하세요."
 
@@ -3471,6 +3475,18 @@ msgstr "AI 요약만 건너뛰기 (모니터링 확인은 계속)"
 #: changedetectionio/forms.py
 msgid "Skip the watch check entirely"
 msgstr "모니터링 확인 전체 건너뛰기"
+
+#: changedetectionio/forms.py
+msgid "Watchlist \"Summary\" link compares"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Previous version (second-last vs latest)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Changes since you last viewed the watch"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

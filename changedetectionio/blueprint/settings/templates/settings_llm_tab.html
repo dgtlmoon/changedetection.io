@@ -302,6 +302,20 @@
       {% endfor %}
     </div>
   </div>
+
+  <div class="pure-control-group">
+    <label>{{ form.llm.form.watchlist_overview_summary.label.text }}</label>
+    <div>
+      {% for subfield in form.llm.form.watchlist_overview_summary %}
+      <label class="pure-radio" style="display:block; font-weight:normal; margin-bottom:0.3em;">
+        {{ subfield() }} {{ subfield.label.text }}
+      </label>
+      {% endfor %}
+    </div>
+    <span class="pure-form-message-inline">
+      {{ _('Which baseline the watchlist “Summary” link compares the latest version against by default.') }}
+    </span>
+  </div>
   {% else %}
   <p class="pure-form-message-inline" style="margin-top:0.5em;">
     {{ _('Configure a provider first to unlock behaviour settings.') }}

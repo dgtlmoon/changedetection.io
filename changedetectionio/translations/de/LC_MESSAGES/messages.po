@@ -1141,6 +1141,10 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Configure a provider first to unlock behaviour settings."
 msgstr ""
 
@@ -3518,6 +3522,18 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Skip the watch check entirely"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Watchlist \"Summary\" link compares"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Previous version (second-last vs latest)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py

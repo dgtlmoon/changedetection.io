@@ -1279,6 +1279,14 @@ class globalSettingsLLMForm(Form):
         ],
         default='skip_llm',
     )
+    watchlist_overview_summary = RadioField(
+        _l('Watchlist "Summary" link compares'),
+        choices=[
+            ('second_last_version', _l('Previous version (second-last vs latest)')),
+            ('since_last_viewed',   _l('Changes since you last viewed the watch')),
+        ],
+        default='second_last_version',
+    )
 
 
 class globalSettingsForm(Form):

@@ -195,8 +195,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if len(dates) < 2:
             return jsonify({'summary': None, 'error': 'Not enough history'}), 400
 
-        best_from = watch.get_from_version_based_on_last_viewed
-        from_version      = request.args.get('from_version', best_from if best_from else dates[-2])
+        # Default baseline for the watchlist "Summary" link (when no explicit from_version
+        # is requested) is configurable at Settings > AI. Default 'second_last_version'
+        # compares the previous snapshot; 'since_last_viewed' uses the operator's last view.
+        if llm_cfg.get('watchlist_overview_summary', 'second_last_version') == 'since_last_viewed':
+            best_from = watch.get_from_version_based_on_last_viewed
+            default_from = best_from if best_from else dates[-2]
+        else:
+            default_from = dates[-2]
+        from_version      = request.args.get('from_version', default_from)
         to_version        = request.args.get('to_version', dates[-1])
         from changedetectionio.llm.evaluator import DiffPrefs
         prefs             = DiffPrefs.from_request_args(request.args)
