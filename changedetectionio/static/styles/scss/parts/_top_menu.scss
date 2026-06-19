@@ -98,12 +98,17 @@ ul#top-right-menu {
   height: 2px;
   background: linear-gradient(-75deg, #ff6000, #ff8f00, #ffdd00, #ed0000);
   background-size: 400% 400%;
-  width: 100%;
   animation: gradient 200s ease infinite;
   opacity: 0.8;
-  position: sticky;
+  // Fixed (not sticky): a sticky element still reserves its 2px in normal flow, and since
+  // this sits after the 100vh .app it pushed body to 100vh+2px and forced a scrollbar.
+  // Fixed pins it to the viewport bottom with zero layout impact.
+  position: fixed;
   bottom: 0;
-  left:0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  pointer-events: none; // it's a thin overlay - never intercept clicks on content beneath
 }
 
 // "Live / Paused" scheduling status — a pill with a pulsing dot, replacing the

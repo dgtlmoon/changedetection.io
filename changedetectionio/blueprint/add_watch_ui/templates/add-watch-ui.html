@@ -10,8 +10,8 @@
         <!-- UUID of the parked live snapshot, so submit can promote it without re-fetching -->
         <input type="hidden" name="temporary_uuid" id="temporary_uuid" value="">
 
-        <fieldset>
-            <legend>{{ _('Add a new web page change detection watch') }}</legend>
+        <div id="add-watch-fieldset">
+            <h3 id="add-watch-legend">{{ _('Add a new web page change detection watch') }}</h3>
 
             <!-- TOP : enter the URL and fetch a live preview -->
             <div id="add-watch-url-row">
@@ -84,7 +84,7 @@
                 </div>
 
             </div>
-        </fieldset>
+        </div>
     </form>
 </div>
 

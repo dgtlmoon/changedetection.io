@@ -1,9 +1,17 @@
 /* Add Watch UI - 3-pane workspace (top: URL+Go, left: live visual selector, right: options) */
 @use "../settings" as *;
 
-#add-watch-ui {
-  width: 80%;
+body {
+ &.blueprint-add_watch_ui {
+    @media (min-width: 901px) {
+      #add-watch-ui {
+        width: 80%;
+      }
+    }
+ }
+}
 
+#add-watch-ui {
   padding: 0;
   /* TOP : URL input + Go */
   #add-watch-url-row {
@@ -45,7 +53,9 @@
     min-width: 0;
     min-height: 380px;
     position: relative;
-    overflow: auto; // the pane scrolls for tall snapshots, NOT the wrapper - keeps img+canvas aligned
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; // pane clips to its (flex-bounded) height; the wrapper below is the scroller
     border: 1px solid var(--color-background-tab);
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.15);
@@ -112,9 +122,14 @@
       position: relative;
       display: block;
       width: 100%;
-      height: 100%;
+      // Bound the wrapper to the pane's height via flex (NOT height:100% - a percentage
+      // height won't resolve against a flex-stretched parent, so it falls back to auto and
+      // the wrapper grows to the full screenshot height, e.g. 4000px). flex + min-height:0
+      // forces it to the available height so tall snapshots scroll inside here.
+      flex: 1 1 auto;
+      min-height: 0;
       max-height: none;
-      overflow-y: scroll;
+      overflow-y: auto;
       overflow-x: hidden;
       text-align: left;
 
@@ -178,7 +193,64 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
-      margin-top: auto; // push the create buttons to the bottom of the pane
     }
+  }
+}
+
+/* Give the Add Watch workspace a tall, near-full-height feel without forcing a 100vh
+   fill (which overflowed by a few px once the box padding/border + toolbar were added on
+   top). A bounded 90vh leaves headroom for the toolbar and never triggers a scrollbar.
+   The inner flex chain lets the panes consume that height. Scoped to the add-watch page
+   via the body blueprint class so other pages are unaffected. */
+body.blueprint-add_watch_ui {
+  #add-watch-ui {
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // The ex-<fieldset> is now a plain <div> (fieldset is an awkward flex container).
+  #add-watch-fieldset {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border: 0;
+    margin: 0;
+    padding: 0;
+  }
+  #add-watch-legend {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  #new-watch-form {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // Desktop: panes sit side-by-side and consume the leftover height. The panes already
+  // use align-items:stretch, so each pane stretches to the full row height automatically.
+  @media (min-width: 901px) {
+    #add-watch-panes {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    // Pane fills the row height (via #add-watch-panes' align-items:stretch); min-height:0
+    // lets the container height win so tall snapshots scroll INSIDE the pane (overflow:auto
+    // is already set) instead of stretching the box past 90vh.
+    #add-watch-selector-pane {
+      min-height: 0;
+    }
+  }
+
+  // Mobile: panes stack - let the box size to its content (no 90vh) and the panes keep
+  // their natural heights (the selector pane's own min-height keeps it usable).
+  @media (max-width: 900px) {
+    #add-watch-ui { height: auto; }
+    #add-watch-panes { flex: 0 0 auto; }
   }
 }
