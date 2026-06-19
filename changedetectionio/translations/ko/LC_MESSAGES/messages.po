@@ -443,6 +443,10 @@ msgid "Default Notifications"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "알림 링크의"
 
@@ -466,6 +470,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
 msgstr "알림 디버그 로그"
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "For security this log is emptied on restart."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -536,6 +544,10 @@ msgstr "changedetection.io 애플리케이션에 비밀번호를 적용합니다
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password is locked."
 msgstr "비밀번호가 설정되어 있습니다."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Clear Snapshot History"
+msgstr "스냅샷 기록 지우기"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
@@ -837,14 +849,6 @@ msgstr "활성화된 플러그인:"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "활성화된 플러그인이 없습니다."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Back"
-msgstr "뒤로"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Clear Snapshot History"
-msgstr "스냅샷 기록 지우기"
 
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html

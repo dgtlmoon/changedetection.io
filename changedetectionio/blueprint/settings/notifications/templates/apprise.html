@@ -21,6 +21,10 @@
         <form class="pure-form pure-form-stacked settings" action="{{url_for('settings.notifications.apprise')}}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
             <div class="tab-pane-inner" id="all-notifications">
+                <span class="pure-form-message-inline">
+                    {{ _('These notifications apply to all web page watches, or you can configure them per group or per watch separately.') }}
+                </span>
+                <br><br>
                 <fieldset>
                     {{ notification_part_render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                 </fieldset>

@@ -441,6 +441,10 @@ msgid "Default Notifications"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr ""
 
@@ -463,6 +467,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "For security this log is emptied on restart."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -533,6 +541,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password is locked."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Clear Snapshot History"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -834,14 +846,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Back"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Clear Snapshot History"
 msgstr ""
 
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide

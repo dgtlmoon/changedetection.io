@@ -443,6 +443,10 @@ msgid "Default Notifications"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "Základní URL použita pro"
 
@@ -466,6 +470,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
 msgstr "Protokol ladění oznámení"
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "For security this log is emptied on restart."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -536,6 +544,10 @@ msgstr "Chránit heslem tuto changedetection.io applikaci"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password is locked."
 msgstr "Heslo je uzamčeno."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Clear Snapshot History"
+msgstr "Vymazat historii snímků"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
@@ -837,14 +849,6 @@ msgstr "Pluginy aktivní:"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "Nejsou aktivní žádné pluginy"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Back"
-msgstr "Zpět"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Clear Snapshot History"
-msgstr "Vymazat historii snímků"
 
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html

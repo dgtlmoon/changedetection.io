@@ -13,9 +13,9 @@ $title-col-stack-breakpoint: 1200px;
 
 // Reveal the per-row action buttons on hover/focus/selection (hidden at rest —
 // see td.buttons below). The row-hover background itself comes from .cdio-table.
-.watch-table tbody tr:hover td.buttons > *,
-.watch-table tbody tr:focus-within td.buttons > *,
-.watch-table tbody tr:has(input[name="uuids"]:checked) td.buttons > * {
+.watch-table tbody tr:hover td.buttons *,
+.watch-table tbody tr:focus-within td.buttons *,
+.watch-table tbody tr:has(input[name="uuids"]:checked) td.buttons * {
   opacity: 1;
 }
 
@@ -188,6 +188,9 @@ body.watch-selection-active #checkbox-operations {
           display: inline-block !important;
           white-space: nowrap !important;
         }
+        .spinner {
+          margin-right: $common-gap/2;
+        }
 
         .innertext {
           display: none !important;
@@ -201,7 +204,8 @@ body.watch-selection-active #checkbox-operations {
       }
 
       a.already-in-queue-button {
-        display: inline-block !important;
+        display: inline-flex !important;
+        opacity: 0.8;
       }
     }
 
@@ -251,6 +255,7 @@ body.watch-selection-active #checkbox-operations {
     &.has-favicon.unviewed {
       img.favicon {
         opacity: 1.0 !important;
+        border-radius: 4px;
       }
     }
   }
@@ -262,15 +267,16 @@ body.watch-selection-active #checkbox-operations {
       // Per-row actions are hidden at rest and revealed on row hover/focus (see
       // the .watch-table tbody tr:hover rule above). Opacity (not display) keeps
       // the column width stable so the table doesn't shift on hover.
-      > * {
-        opacity: 0;
-        transition: opacity 0.12s ease;
-      }
+
       // The actions live in a wrapper div — lay them out as an evenly-spaced row.
       > div {
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        > * {
+          opacity: 0;
+          transition: opacity 0.12s ease;
+        }
       }
     }
     &.title-col {

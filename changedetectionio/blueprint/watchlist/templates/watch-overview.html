@@ -310,19 +310,19 @@ window.watchOverviewI18n = {
             <tr>
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
                 {%- set arrow_span = "" -%}
-                <th style="white-space: nowrap; text-align: center;"><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('watchlist.index', sort='date_created', order=link_order, tag=active_tag_uuid)}}"># <span class='arrow {{link_order}}'></span></a></th>
+                <th style="white-space: nowrap; text-align: center;"><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('watchlist.index', sort='date_created', order=link_order, **active_filters)}}"># <span class='arrow {{link_order}}'></span></a></th>
                 <th id="mute-pause">
                     <div>
-                        <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, tag=active_tag_uuid)}}"><i data-feather="pause" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
-                        <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, tag=active_tag_uuid)}}"><i data-feather="volume-2" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
+                        <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, **active_filters)}}"><i data-feather="pause" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
+                        <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, **active_filters)}}"><i data-feather="volume-2" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
                     </div>
                 </th>
-                <th id="th-webpage"><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">{{ _('Web page') }} <span class='arrow {{link_order}}'></span></a></th>
+                <th id="th-webpage"><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, **active_filters)}}">{{ _('Web page') }} <span class='arrow {{link_order}}'></span></a></th>
              {%- if any_has_restock_price_processor -%}
                 <th>{{ _('Restock & Price') }}</th>
              {%- endif -%}
-                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
-                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
             </tr>
             </thead>
@@ -486,7 +486,7 @@ window.watchOverviewI18n = {
                 <td class="buttons">
                     <div>
                     {%- set target_attr = ' target="' ~ watch.uuid ~ '"' if datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab') else '' -%}
-                    <a href="" class="already-in-queue-button recheck cdio-btn cdio-btn--primary cdio-btn--sm" style="display: none;" disabled="disabled">{{ _('Queued') }}</a>
+                    <a href="" class="already-in-queue-button recheck cdio-btn cdio-btn--primary cdio-btn--sm" style="display: none;" disabled="disabled"><i data-feather="clock"></i>{{ _('Queued') }}</a>
                     <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" data-op='recheck' class="ajax-op recheck cdio-btn cdio-btn--primary cdio-btn--sm"><i data-feather="refresh-cw"></i>{{ _('Recheck') }}</a>
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="cdio-btn cdio-btn--primary cdio-btn--sm">{{ _('Edit') }}</a>
                     <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>

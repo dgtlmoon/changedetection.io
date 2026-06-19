@@ -75,7 +75,9 @@
                             <span class="pure-form-message-inline">{{ _('Password is locked.') }}</span>
                         {% endif %}
                     </div>
-
+                    <div class="pure-control-group">
+                      <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">{{ _('Clear Snapshot History') }}</a>
+                    </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.shared_diff_access, class="shared_diff_access") }}
                         <span class="pure-form-message-inline">{{ _('Allow access to the watch change history page when password is enabled (Good for sharing the diff page)') }}</span>
@@ -403,8 +405,6 @@ nav
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
-                    <a href="{{url_for('watchlist.index')}}" class="pure-button button-cancel">{{ _('Back') }}</a>
-                    <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">{{ _('Clear Snapshot History') }}</a>
                 </div>
             </div>
         </form>

@@ -446,6 +446,10 @@ msgid "Default Notifications"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "URL base usada para o"
 
@@ -469,6 +473,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
 msgstr "Log de depuração de notificações"
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "For security this log is emptied on restart."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -539,6 +547,10 @@ msgstr "Proteção por senha para sua aplicação changedetection.io."
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password is locked."
 msgstr "Senha bloqueada."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Clear Snapshot History"
+msgstr "Limpar Histórico de Instantâneos"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
@@ -860,14 +872,6 @@ msgstr "Plugins ativos:"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "Nenhum plugin ativo"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Back"
-msgstr "Voltar"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Clear Snapshot History"
-msgstr "Limpar Histórico de Instantâneos"
 
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html

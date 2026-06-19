@@ -446,6 +446,10 @@ msgid "Default Notifications"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "用于通知链接中的"
 
@@ -469,6 +473,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
 msgstr "通知调试日志"
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "For security this log is emptied on restart."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -539,6 +547,10 @@ msgstr "为你的 changedetection.io 应用启用密码保护。"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Password is locked."
 msgstr "密码已锁定。"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Clear Snapshot History"
+msgstr "清除快照历史"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
@@ -840,14 +852,6 @@ msgstr "已启用插件："
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "未启用任何插件"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Back"
-msgstr "返回"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Clear Snapshot History"
-msgstr "清除快照历史"
 
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html

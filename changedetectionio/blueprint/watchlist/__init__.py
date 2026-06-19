@@ -133,6 +133,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             processor_descriptions=processors.get_processor_descriptions(),
             queue_size=update_q.qsize(),
             queued_uuids=update_q.get_queued_uuids(),
+            # Active view filters (tag/processor/q/unread/...) so links (e.g. column sorting)
+            # can re-apply them and not drop the operator's current filtered view.
+            active_filters=wl_filters.filter_query_args(request.args),
             search_q=request.args.get('q', '').strip(),
             sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
             sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),

@@ -2,7 +2,9 @@
 @use "../settings" as *;
 
 #add-watch-ui {
+  width: 80%;
 
+  padding: 0;
   /* TOP : URL input + Go */
   #add-watch-url-row {
     display: flex;
@@ -110,8 +112,10 @@
       position: relative;
       display: block;
       width: 100%;
+      height: 100%;
       max-height: none;
-      overflow: visible;
+      overflow-y: scroll;
+      overflow-x: hidden;
       text-align: left;
 
       > img {
