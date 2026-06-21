@@ -67,6 +67,22 @@ html[data-darkmode="true"] #restock-graph {
   svg { display: block; max-width: 100%; }
   .rg-axis { stroke: var(--color-border-notification, rgba(127, 127, 127, 0.4)); stroke-width: 1; }
   .rg-label { fill: currentColor; opacity: 0.7; font-size: 12px; }
+  // Neutral single-colour price line; stock status is shown by the dot colours, not the line.
+  .rg-line { stroke: currentColor; opacity: 0.55; }
+
+  .rg-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.1rem;
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    opacity: 0.85;
+
+    .rg-legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .rg-legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .rg-legend-dot.in { background: #1fa463; }
+    .rg-legend-dot.out { background: #e74c3c; }
+  }
 
   .rg-stats {
     margin-top: 0.35rem;

@@ -18,7 +18,6 @@
     const HEIGHT = 320;
     const PAD = { top: 20, right: 16, bottom: 30, left: 52 };
     const MAX_X_LABELS = 6;       // keep the date axis uncluttered
-    const SMOOTHING = 0.28;       // curve tension (Catmull-Rom default ~0.167; higher = curvier)
 
     const DEFAULT_I18N = { in_stock: 'In stock', out_of_stock: 'Out of stock',
         no_data: 'No price data available to graph yet.', load_error: 'Could not load price history.',
@@ -58,17 +57,6 @@
     function fmtPrice(v, currency) {
         const n = Math.round(v * 100) / 100;
         return (currency || '') + (Number.isInteger(n) ? n : n.toFixed(2));
-    }
-
-    // Catmull-Rom control points for segment p[i] -> p[i+1] -> "C c1x c1y c2x c2y x y".
-    function smoothSegment(pts, i) {
-        const p0 = pts[i - 1] || pts[i];
-        const p1 = pts[i];
-        const p2 = pts[i + 1];
-        const p3 = pts[i + 2] || pts[i + 1];
-        const c1x = p1.x + (p2.x - p0.x) * SMOOTHING, c1y = p1.y + (p2.y - p0.y) * SMOOTHING;
-        const c2x = p2.x - (p3.x - p1.x) * SMOOTHING, c2y = p2.y - (p3.y - p1.y) * SMOOTHING;
-        return `C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
     }
 
     // Thin a large price series down to ~target points for drawing (you can't perceive more
@@ -152,19 +140,19 @@
             svg.appendChild(at);
         }
 
-        // Line: one <path> per segment so each carries its own colour. A section is coloured by
-        // the stock state at the START of that interval (the state that held until the next check).
-        for (let i = 0; i < pts.length - 1; i++) {
-            const d = `M ${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)} ${smoothSegment(pts, i)}`;
-            svg.appendChild(el('path', {
-                d: d, fill: 'none', stroke: stockColor(pts[i].d.in_stock),
-                'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
-            }));
-        }
+        // Single neutral straight-line path connecting the points (no smoothing — a curve
+        // overshoots and reads as a price move that didn't happen). Stock status is shown by the
+        // DOT colours instead, not the line.
+        let linePath = '';
+        pts.forEach((p, i) => { linePath += (i === 0 ? 'M ' : ' L ') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); });
+        svg.appendChild(el('path', {
+            class: 'rg-line', d: linePath, fill: 'none',
+            'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+        }));
 
-        // Dots, coloured by each point's own stock state.
+        // Dots, coloured by each point's own stock state (green = in stock, red = out of stock).
         pts.forEach(p => {
-            svg.appendChild(el('circle', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 3, fill: stockColor(p.d.in_stock) }));
+            svg.appendChild(el('circle', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 3.2, fill: stockColor(p.d.in_stock) }));
         });
 
         // Sparse x-axis date labels: evenly spaced, always including both endpoints. The number
@@ -205,6 +193,14 @@
                 $tip.hide();
             });
         });
+
+        // Legend explaining the dot colours (the line is neutral; only dots indicate stock).
+        const $legend = $('<div class="rg-legend"></div>');
+        $legend.append($('<span class="rg-legend-item"></span>')
+            .append('<span class="rg-legend-dot in"></span>').append(document.createTextNode(' ' + (i18n.in_stock || 'In stock'))));
+        $legend.append($('<span class="rg-legend-item"></span>')
+            .append('<span class="rg-legend-dot out"></span>').append(document.createTextNode(' ' + (i18n.out_of_stock || 'Out of stock'))));
+        $container.append($legend);
 
         // Footer stats: total recorded changes + average of the prices shown.
         const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
