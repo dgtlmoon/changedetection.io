@@ -239,14 +239,15 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         return None
 
     try:
-        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens, get_llm_settings, _get_max_input_chars
+        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens, get_llm_settings, _get_max_input_chars, _thinking_extra_body
         from changedetectionio.llm import client as llm_client
     except ImportError as e:
         logger.debug(f"LLM restock fallback: LLM libraries not available ({e})")
         return None
 
     # Gate on the user setting (default True — enabled out of the box)
-    if not get_llm_settings(datastore).restock_use_fallback_extract:
+    settings = get_llm_settings(datastore)
+    if not settings.restock_use_fallback_extract:
         logger.debug("LLM restock fallback: disabled in settings")
         return None
 
@@ -290,10 +291,14 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             ],
             api_key=llm_cfg.get('api_key'),
             api_base=llm_cfg.get('api_base'),
-            # 150 fits a {price, currency, availability} JSON answer comfortably for cloud
-            # models. Local reasoning models burn most of that on chain-of-thought before
-            # the JSON lands — the multiplier scales it up only when provider_kind says so.
-            max_tokens=apply_local_token_multiplier(150, llm_cfg),
+            # Output budget must cover the model's THINKING tokens (Gemini reasoning models count
+            # them against max_tokens) PLUS the JSON answer — otherwise it truncates mid-object
+            # (finish_reason='length') and the price is lost. Tokens are cheap, so we keep this
+            # generous: respect the app's thinking_budget (default 0 = off; the user can turn
+            # reasoning on for accuracy) and add plenty of headroom for the answer and any
+            # provider-default reasoning we don't explicitly control.
+            max_tokens=apply_local_token_multiplier(max(1000, settings.thinking_budget + 800), llm_cfg),
+            extra_body=_thinking_extra_body(llm_cfg['model'], settings.thinking_budget),
         )
 
         accumulate_global_tokens(
