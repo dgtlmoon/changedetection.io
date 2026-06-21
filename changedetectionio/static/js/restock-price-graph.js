@@ -15,7 +15,7 @@
     const COLOR_IN = '#1fa463';   // in stock = green
     const COLOR_OUT = '#e74c3c';  // out of stock = red
     const COLOR_UNKNOWN = '#999'; // stock state not known
-    const HEIGHT = 320;
+    const HEIGHT = 320;          // default (diff page); the inline watchlist graph passes a shorter one
     const PAD = { top: 20, right: 16, bottom: 30, left: 52 };
     const MAX_X_LABELS = 6;       // keep the date axis uncluttered
 
@@ -76,7 +76,8 @@
         return Array.from(keep).sort((a, b) => a - b).map(i => arr[i]);
     }
 
-    function draw($container, series, currency, i18n, summary) {
+    function draw($container, series, currency, i18n, summary, height) {
+        height = height || HEIGHT;
         // Only points that actually have a price can sit on the line.
         const data = (series || []).filter(p => p.price !== null && p.price !== undefined);
         if (data.length < 2) {
@@ -85,7 +86,7 @@
         }
 
         const width = Math.max($container.width() || 0, 320);
-        const innerH = HEIGHT - PAD.top - PAD.bottom;
+        const innerH = height - PAD.top - PAD.bottom;
 
         const prices = data.map(p => p.price);
         let dataMin = Math.min.apply(null, prices), dataMax = Math.max.apply(null, prices);
@@ -110,7 +111,7 @@
         const pts = drawData.map((p, i) => ({ x: x(i), y: y(p.price), d: p }));
 
         // Size the SVG in real pixels at the measured width (no viewBox => no CSS rescaling).
-        const svg = el('svg', { width: width, height: HEIGHT, role: 'img' });
+        const svg = el("svg", { width: width, height: height, role: "img" });
 
         // Y axis: max / mid / min gridlines + price labels.
         ticks.forEach(price => {
@@ -165,7 +166,7 @@
         ));
         labelIdx.forEach(i => {
             const anchor = i === 0 ? 'start' : (i === pts.length - 1 ? 'end' : 'middle');
-            const t = el('text', { class: 'rg-label', x: pts[i].x.toFixed(1), y: HEIGHT - 10, 'text-anchor': anchor });
+            const t = el('text', { class: 'rg-label', x: pts[i].x.toFixed(1), y: height - 10, 'text-anchor': anchor });
             t.textContent = fmtAxisDate(pts[i].d.timestamp);
             svg.appendChild(t);
         });
@@ -252,7 +253,7 @@
         const w = Math.round($c.width());
         if (w === ctx.lastWidth) return;
         ctx.lastWidth = w;
-        draw($c, ctx.series, ctx.currency, ctx.i18n, ctx.summary);
+        draw($c, ctx.series, ctx.currency, ctx.i18n, ctx.summary, ctx.height);
     }
 
     // Watch the container's own size, not just the window: the content area also changes width
@@ -283,16 +284,17 @@
 
     // Public reusable renderer. Stores its context on the element and observes the element so
     // it redraws on any size change; usable from anywhere (e.g. the watchlist inline roll-down).
-    window.renderRestockGraph = function (container, series, currency, i18n, summary) {
+    window.renderRestockGraph = function (container, series, currency, i18n, summary, height) {
         const $c = $(container);
         if (!$c.length) return;
         const merged = $.extend({}, DEFAULT_I18N, i18n || {});
         // Seed lastWidth to the current width so the immediate ResizeObserver callback (which
         // fires once on observe()) doesn't trigger a redundant redraw.
         $c.addClass('js-restock-graph').data('rg', {
-            series: series || [], currency: currency || '', i18n: merged, summary: summary || null, lastWidth: Math.round($c.width())
+            series: series || [], currency: currency || '', i18n: merged, summary: summary || null,
+            height: height || HEIGHT, lastWidth: Math.round($c.width())
         });
-        draw($c, series || [], currency || '', merged, summary || null);
+        draw($c, series || [], currency || '', merged, summary || null, height || HEIGHT);
         if (ro) {
             try { ro.unobserve($c[0]); } catch (e) {}
             ro.observe($c[0]);

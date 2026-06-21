@@ -138,7 +138,8 @@ $(function () {
                 typical_note: i18n.typicalNote, avg_label: i18n.avgLabel
             };
             if (window.renderRestockGraph) {
-                window.renderRestockGraph($r.find('.restock-inline-graph')[0], series, (data && data.currency) || '', graphI18n, (data && data.summary) || null);
+                // Shorter graph inline in the watchlist roll-down than on the full /diff page.
+                window.renderRestockGraph($r.find('.restock-inline-graph')[0], series, (data && data.currency) || '', graphI18n, (data && data.summary) || null, 230);
             }
         }).fail(showError);
     });

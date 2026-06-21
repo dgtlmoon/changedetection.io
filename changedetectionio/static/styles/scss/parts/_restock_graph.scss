@@ -29,19 +29,26 @@
   &.out-of-stock { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
 }
 
-// Diff page: the chart sits on the app's light-blue gradient and inside a .box that sets white
-// text — so give it its own card surface with proper theme text colour so the line, labels and
-// overlays are readable. (Scoped to the diff-page id; the watchlist inline graph keeps its own
-// teal roll-down styling.)
+// Diff page: tab content sits in a white box connected to the tabs, exactly like #diff-ui on
+// the text-diff page. This is the readable surface for the graph/table/screenshot, and it sets
+// the theme text colour so the chart's labels/line (currentColor) contrast (the parent .box
+// uses white text, which would be invisible on this light surface).
+#restock-tabs {
+  background: var(--color-background);
+  color: var(--color-text);
+  padding: 1rem;
+  border-radius: 5px;
+
+  // Current-screenshot pane: centre the image like the text-diff page does.
+  .tab-pane-inner#screenshot {
+    text-align: center;
+    img { max-width: 99%; }
+  }
+}
+
 #restock-graph {
   margin-top: 1rem;
-  box-sizing: border-box;   // width:100% (from .js-restock-graph) + padding + border must fit the parent
-  color: var(--color-text);
-  background: var(--color-background, #fff);
-  border: 1px solid var(--color-border-notification, rgba(127, 127, 127, 0.25));
-  border-radius: 8px;
-  padding: 0.85rem 0.85rem 0.6rem;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+  box-sizing: border-box;   // width:100% (from .js-restock-graph) + padding must fit the parent
 
   // On wide screens, cap the chart width and centre it so it doesn't stretch too far.
   @media (min-width: 1200px) {
@@ -49,12 +56,6 @@
     margin-left: auto;
     margin-right: auto;
   }
-}
-
-html[data-darkmode="true"] #restock-graph {
-  background: linear-gradient(160deg, #171b24, #1e2533);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5);
 }
 
 .js-restock-graph {

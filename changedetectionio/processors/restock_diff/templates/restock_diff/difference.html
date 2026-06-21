@@ -19,37 +19,59 @@
         {% endif %}
     </div>
 
-    {% if has_enough_history %}
-        <div id="restock-graph">
-            <p class="pure-form-message-inline" id="restock-graph-loading">{{ _('Loading price history…') }}</p>
+    <div class="tabs">
+        <ul>
+            <li class="tab" id="price-history-tab"><a href="#price-history">{{ _('Price history') }}</a></li>
+            <li class="tab" id="screenshot-tab"><a href="#screenshot">{{ _('Current screenshot') }}</a></li>
+        </ul>
+    </div>
+
+    <div id="restock-tabs">
+        <div class="tab-pane-inner" id="price-history">
+        {% if has_enough_history %}
+            <div id="restock-graph">
+                <p class="pure-form-message-inline" id="restock-graph-loading">{{ _('Loading price history…') }}</p>
+            </div>
+
+            {# Full data table, shown by default. Rows are filled by the graph JS from the same
+               fetched data; the XLSX export is generated server-side for correct number formats. #}
+            <div id="restock-history-table-wrap" style="margin-top: 1.2rem;">
+                <div class="restock-table-toolbar">
+                    <strong>{{ _('Price history') }}</strong>
+                    <a href="{{ url_for('ui.ui_diff.diff_history_page_processor_export', uuid=uuid) }}"
+                       class="pure-button button-secondary button-xsmall">{{ _('Download as XLSX') }}</a>
+                </div>
+                <table class="pure-table" id="restock-history-table">
+                    <thead>
+                        <tr>
+                            <th>{{ _('When') }}</th>
+                            <th>{{ _('Stock') }}</th>
+                            <th>{{ _('Price') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="pure-form-message-inline" style="margin-top: 1rem;">
+                {{ _('Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here.') }}
+            </p>
+        {% endif %}
         </div>
 
-        {# Full data table, shown by default. Rows are filled by the graph JS from the same
-           fetched data; the XLSX export is generated server-side for correct number formats. #}
-        <div id="restock-history-table-wrap" style="margin-top: 1.2rem;">
-            <div class="restock-table-toolbar">
-                <strong>{{ _('Price history') }}</strong>
-                <a href="{{ url_for('ui.ui_diff.diff_history_page_processor_export', uuid=uuid) }}"
-                   class="pure-button button-secondary button-xsmall">{{ _('Download as XLSX') }}</a>
-            </div>
-            <table class="pure-table" id="restock-history-table">
-                <thead>
-                    <tr>
-                        <th>{{ _('When') }}</th>
-                        <th>{{ _('Stock') }}</th>
-                        <th>{{ _('Price') }}</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div class="tab-pane-inner" id="screenshot">
+        {% if screenshot %}
+            <div class="snapshot-age">{{ watch.snapshot_screenshot_ctime|format_timestamp_timeago }}</div>
+            <img style="max-width: 100%;" alt="{{ _('Current screenshot from most recent request') }}"
+                 src="{{ url_for('static_content', group='screenshot', filename=uuid) }}">
+        {% else %}
+            <p class="pure-form-message-inline">{{ _('No screenshot available just yet! Try rechecking the page.') }}</p>
+        {% endif %}
         </div>
-    {% else %}
-        <p class="pure-form-message-inline" style="margin-top: 1rem;">
-            {{ _('Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here.') }}
-        </p>
-    {% endif %}
+    </div>
 </div>
 
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
     // The graph data (full timeline) is fetched from this endpoint to keep it out of the HTML.
     window.restock_data_url = {{ processor_data_url|tojson }};
