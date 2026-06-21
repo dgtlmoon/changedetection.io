@@ -213,6 +213,11 @@ class difference_detection_processor():
         # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
         # @todo needs test to or a fix
         if self.watch.is_pdf:
+            logger.warning(
+                f"Watch {self.watch.get('uuid')} is_pdf detected (content-type/url) - forcing the "
+                f"'html_requests' fetcher because browser support isn't complete yet for "
+                f"saving/downloading the PDF. Overriding requested backend '{prefer_fetch_backend}'."
+            )
             prefer_fetch_backend = "html_requests"
 
         # Grab the right kind of 'fetcher', (playwright, requests, etc)

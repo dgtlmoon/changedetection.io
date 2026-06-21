@@ -506,6 +506,32 @@ class User(flask_login.UserMixin):
     pass
 
 
+def clean_startup_state(datastore):
+    """One-shot validation/repair of persisted settings at app startup.
+
+    Runs once when the app boots (after the datastore is loaded and fetchers are registered).
+    Keeps stale/invalid persisted config from silently breaking runtime behaviour. Add further
+    startup repairs here as needed.
+    """
+    # If the global default fetch method points at a fetcher that is no longer available
+    # (e.g. a browser plugin like 'cloakbrowser' that was set as default and then uninstalled),
+    # fall back to 'html_requests'. Otherwise the settings UI shows no selected default and
+    # watches set to "System settings default" silently resolve to requests at fetch time
+    # (and break for browser-steps watches).
+    try:
+        from changedetectionio import content_fetchers
+        valid_fetchers = {name for name, _desc in content_fetchers.available_fetchers()}
+        cur_default = datastore.data['settings']['application'].get('fetch_backend')
+        if cur_default and cur_default != 'system' and cur_default not in valid_fetchers:
+            logger.warning(
+                f"Configured default fetch_backend '{cur_default}' is not an available fetcher "
+                f"(plugin uninstalled?) - resetting default to 'html_requests'."
+            )
+            datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+    except Exception as e:
+        logger.error(f"clean_startup_state: could not validate default fetch_backend: {e}")
+
+
 def changedetection_app(config=None, datastore_o=None):
     logger.trace("TRACE log is enabled")
 
@@ -514,6 +540,9 @@ def changedetection_app(config=None, datastore_o=None):
 
     # Set datastore reference in notification queue for all_muted checking
     notification_q.set_datastore(datastore)
+
+    # One-shot validation/repair of persisted settings that may have gone stale between runs.
+    clean_startup_state(datastore)
 
     # Import and create a wrapper for is_safe_url that has access to app
     from changedetectionio.is_safe_url import is_safe_url as _is_safe_url
