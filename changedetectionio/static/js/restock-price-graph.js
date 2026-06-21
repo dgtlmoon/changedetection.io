@@ -22,7 +22,12 @@
 
     const DEFAULT_I18N = { in_stock: 'In stock', out_of_stock: 'Out of stock',
         no_data: 'No price data available to graph yet.', load_error: 'Could not load price history.',
-        changes: 'Number of changes', avg_price: 'average price' };
+        changes: 'Number of changes', avg_price: 'average price',
+        price_low: 'Currently low', price_typical: 'Currently typical', price_high: 'Currently high',
+        cheaper_than: 'cheaper than %s% of tracked prices',
+        pricier_than: 'more expensive than %s% of tracked prices',
+        typical_note: 'around the usual price', avg_label: 'avg' };
+    const OVERLAY_MIN_POINTS = 5; // need enough history for low/typical/high to be meaningful
 
     function el(name, attrs) {
         const e = document.createElementNS(SVG_NS, name);
@@ -66,7 +71,24 @@
         return `C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
     }
 
-    function draw($container, series, currency, i18n) {
+    // Thin a large price series down to ~target points for drawing (you can't perceive more
+    // points than pixels). Always keeps the first, last and the true min/max points so the line
+    // still touches its extremes. The axis range + summary stay computed over the FULL data.
+    function downsample(arr, target) {
+        if (arr.length <= target) return arr;
+        const keep = new Set([0, arr.length - 1]);
+        let minI = 0, maxI = 0;
+        for (let i = 1; i < arr.length; i++) {
+            if (arr[i].price < arr[minI].price) minI = i;
+            if (arr[i].price > arr[maxI].price) maxI = i;
+        }
+        keep.add(minI); keep.add(maxI);
+        const step = arr.length / target;
+        for (let i = 0; i < target; i++) keep.add(Math.floor(i * step));
+        return Array.from(keep).sort((a, b) => a - b).map(i => arr[i]);
+    }
+
+    function draw($container, series, currency, i18n, summary) {
         // Only points that actually have a price can sit on the line.
         const data = (series || []).filter(p => p.price !== null && p.price !== undefined);
         if (data.length < 2) {
@@ -93,9 +115,11 @@
         const padLeft = Math.max(PAD.left, maxLabelChars * 7 + 14);
 
         const innerW = width - padLeft - PAD.right;
-        const x = i => padLeft + (i * innerW) / (data.length - 1);
+        // Draw at most ~one point per few pixels; keeps the SVG light on long histories / mobile.
+        const drawData = downsample(data, Math.max(40, Math.min(250, Math.floor(innerW / 4))));
+        const x = i => padLeft + (i * innerW) / (drawData.length - 1);
         const y = price => PAD.top + (1 - (price - domMin) / range) * innerH;
-        const pts = data.map((p, i) => ({ x: x(i), y: y(p.price), d: p }));
+        const pts = drawData.map((p, i) => ({ x: x(i), y: y(p.price), d: p }));
 
         // Size the SVG in real pixels at the measured width (no viewBox => no CSS rescaling).
         const svg = el('svg', { width: width, height: HEIGHT, role: 'img' });
@@ -108,6 +132,25 @@
             t.textContent = fmtPrice(price, currency);
             svg.appendChild(t);
         });
+
+        // Analyser overlays (Google-Flights style): a "typical range" band (p25-p75) behind the
+        // line + a dashed average line. Drawn before the data line so they sit behind it.
+        const showOverlays = summary && summary.count >= OVERLAY_MIN_POINTS;
+        if (showOverlays) {
+            const yTop = y(summary.p75), yBot = y(summary.p25);
+            svg.appendChild(el('rect', {
+                class: 'rg-band', x: padLeft, y: Math.min(yTop, yBot),
+                width: Math.max(0, width - PAD.right - padLeft), height: Math.abs(yBot - yTop)
+            }));
+            const yAvg = y(summary.avg);
+            svg.appendChild(el('line', {
+                class: 'rg-avg-line', x1: padLeft, y1: yAvg, x2: width - PAD.right, y2: yAvg,
+                'stroke-dasharray': '4 4'
+            }));
+            const at = el('text', { class: 'rg-label rg-avg-text', x: width - PAD.right, y: yAvg - 4, 'text-anchor': 'end' });
+            at.textContent = i18n.avg_label || 'avg';
+            svg.appendChild(at);
+        }
 
         // Line: one <path> per segment so each carries its own colour. A section is coloured by
         // the stock state at the START of that interval (the state that held until the next check).
@@ -124,9 +167,11 @@
             svg.appendChild(el('circle', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 3, fill: stockColor(p.d.in_stock) }));
         });
 
-        // Sparse x-axis date labels: up to MAX_X_LABELS, evenly spaced and always including both
-        // endpoints (computed by even fractions, so the last label can't overlap the previous one).
-        const count = Math.min(MAX_X_LABELS, pts.length);
+        // Sparse x-axis date labels: evenly spaced, always including both endpoints. The number
+        // adapts to the available width (each label ~64px) so they don't jam together on narrow
+        // / mobile widths, capped at MAX_X_LABELS on desktop. Min 2 (the two endpoints).
+        const fitLabels = Math.max(2, Math.min(MAX_X_LABELS, Math.floor(innerW / 64)));
+        const count = Math.min(fitLabels, pts.length);
         const labelIdx = Array.from(new Set(
             Array.from({ length: count }, (_, i) => Math.round((i * (pts.length - 1)) / (count - 1)))
         ));
@@ -167,6 +212,23 @@
             .text((i18n.changes || 'Number of changes') + ' ' + (series ? series.length : data.length) +
                   ', ' + (i18n.avg_price || 'average price') + ' ' + fmtPrice(avgPrice, currency))
             .appendTo($container);
+
+        // Status pill (LOW / TYPICAL / HIGH) above the graph, like Google Flights. The sub-text
+        // is phrased per status so it never reads awkwardly (e.g. "cheaper than 0%" when high).
+        if (showOverlays) {
+            const $pill = $('<div class="rg-status rg-status-' + summary.status + '"></div>');
+            $pill.append($('<span class="rg-status-label"></span>').text(i18n['price_' + summary.status] || ''));
+            let sub;
+            if (summary.status === 'low') {
+                sub = (i18n.cheaper_than || '').replace('%s', summary.cheaper_than_pct);
+            } else if (summary.status === 'high') {
+                sub = (i18n.pricier_than || '').replace('%s', summary.pricier_than_pct);
+            } else {
+                sub = i18n.typical_note || '';
+            }
+            if (sub) $pill.append($('<span class="rg-status-sub"></span>').text(sub));
+            $container.prepend($pill);
+        }
     }
 
     function buildTable($table, series, currency, i18n) {
@@ -194,7 +256,7 @@
         const w = Math.round($c.width());
         if (w === ctx.lastWidth) return;
         ctx.lastWidth = w;
-        draw($c, ctx.series, ctx.currency, ctx.i18n);
+        draw($c, ctx.series, ctx.currency, ctx.i18n, ctx.summary);
     }
 
     // Watch the container's own size, not just the window: the content area also changes width
@@ -225,16 +287,16 @@
 
     // Public reusable renderer. Stores its context on the element and observes the element so
     // it redraws on any size change; usable from anywhere (e.g. the watchlist inline roll-down).
-    window.renderRestockGraph = function (container, series, currency, i18n) {
+    window.renderRestockGraph = function (container, series, currency, i18n, summary) {
         const $c = $(container);
         if (!$c.length) return;
         const merged = $.extend({}, DEFAULT_I18N, i18n || {});
         // Seed lastWidth to the current width so the immediate ResizeObserver callback (which
         // fires once on observe()) doesn't trigger a redundant redraw.
         $c.addClass('js-restock-graph').data('rg', {
-            series: series || [], currency: currency || '', i18n: merged, lastWidth: Math.round($c.width())
+            series: series || [], currency: currency || '', i18n: merged, summary: summary || null, lastWidth: Math.round($c.width())
         });
-        draw($c, series || [], currency || '', merged);
+        draw($c, series || [], currency || '', merged, summary || null);
         if (ro) {
             try { ro.unobserve($c[0]); } catch (e) {}
             ro.observe($c[0]);
@@ -248,7 +310,7 @@
         const i18n = $.extend({}, DEFAULT_I18N, window.restock_i18n || {});
         $.getJSON(window.restock_data_url).done(function (data) {
             const series = (data && data.series) || [];
-            window.renderRestockGraph($container, series, (data && data.currency) || '', i18n);
+            window.renderRestockGraph($container, series, (data && data.currency) || '', i18n, (data && data.summary) || null);
             buildTable($('#restock-history-table'), series, (data && data.currency) || '', i18n);
         }).fail(function () {
             $container.html($('<p class="pure-form-message-inline"></p>').text(i18n.load_error));

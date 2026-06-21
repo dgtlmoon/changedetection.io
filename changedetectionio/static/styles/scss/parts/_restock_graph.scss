@@ -29,7 +29,33 @@
   &.out-of-stock { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
 }
 
-#restock-graph { margin-top: 1rem; }
+// Diff page: the chart sits on the app's light-blue gradient and inside a .box that sets white
+// text — so give it its own card surface with proper theme text colour so the line, labels and
+// overlays are readable. (Scoped to the diff-page id; the watchlist inline graph keeps its own
+// teal roll-down styling.)
+#restock-graph {
+  margin-top: 1rem;
+  box-sizing: border-box;   // width:100% (from .js-restock-graph) + padding + border must fit the parent
+  color: var(--color-text);
+  background: var(--color-background, #fff);
+  border: 1px solid var(--color-border-notification, rgba(127, 127, 127, 0.25));
+  border-radius: 8px;
+  padding: 0.85rem 0.85rem 0.6rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+
+  // On wide screens, cap the chart width and centre it so it doesn't stretch too far.
+  @media (min-width: 1200px) {
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+html[data-darkmode="true"] #restock-graph {
+  background: linear-gradient(160deg, #171b24, #1e2533);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5);
+}
 
 .js-restock-graph {
   position: relative;
@@ -48,6 +74,29 @@
     opacity: 0.7;
     text-align: center;
   }
+
+  // Analyser overlays: typical-range band + dashed average line.
+  .rg-band { fill: rgba(120, 130, 150, 0.14); }
+  .rg-avg-line { stroke: var(--color-text, #555); opacity: 0.45; stroke-width: 1; }
+  .rg-avg-text { opacity: 0.5; }
+}
+
+// "Currently low/typical/high" pill above the graph (Google-Flights style).
+.rg-status {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+
+  .rg-status-label { font-weight: 700; }
+  .rg-status-sub { font-size: 0.78rem; opacity: 0.8; }
+
+  &.rg-status-low { background: rgba(31, 164, 99, 0.16); color: #1fa463; }
+  &.rg-status-typical { background: rgba(120, 130, 150, 0.16); color: var(--color-text, #555); }
+  &.rg-status-high { background: rgba(231, 76, 60, 0.16); color: #e74c3c; }
 }
 
 .rg-tooltip {
@@ -67,8 +116,20 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-#restock-history-table td,
-#restock-history-table th { text-align: left; }
+#restock-history-table {
+  margin-left: auto;   // centre the table horizontally within its container
+  margin-right: auto;
+
+  td, th { text-align: left; }
+}
+
+.restock-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;   // centre the title + download link above the centred table
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
 
 // ── Watchlist: restock rows keep the "History" button even in AI mode ──
 // (AI mode swaps History->Summary for LLM watches; restock has its own graph roll-down instead.)

@@ -411,6 +411,12 @@ class perform_site_check(difference_detection_processor):
             raise Exception("Watch no longer exists.")
 
         current_raw_document_checksum = self.get_raw_document_checksum()
+        raw_changed = self.last_raw_content_checksum != current_raw_document_checksum
+        logger.debug(
+            f"{watch.get('uuid')} restock - raw document checksum "
+            f"last='{self.last_raw_content_checksum}' current='{current_raw_document_checksum}' "
+            f"changed={raw_changed} (was_edited={watch.was_edited}, force_reprocess={force_reprocess})"
+        )
         # Skip processing only if BOTH conditions are true:
         # 1. HTML content unchanged (checksum matches last saved checksum)
         # 2. Watch configuration was not edited (including trigger_text, filters, etc.)
@@ -419,7 +425,8 @@ class perform_site_check(difference_detection_processor):
         if (not force_reprocess and
             not watch.was_edited and
             self.last_raw_content_checksum and
-            self.last_raw_content_checksum == current_raw_document_checksum):
+            not raw_changed):
+            logger.debug(f"{watch.get('uuid')} restock - raw document unchanged since last fetch, skipping reprocessing")
             raise checksumFromPreviousCheckWasTheSame()
 
         # Unset any existing notification error
@@ -545,8 +552,12 @@ class perform_site_check(difference_detection_processor):
 
         # Something valid in get_itemprop_availability() by scraping metadata ?
         if itemprop_availability.get('price') or itemprop_availability.get('availability'):
-            # Store for other usage
-            update_obj['restock'] = itemprop_availability
+            # Store for other usage. Wrap in Restock() so it's ALWAYS a Restock, never a plain
+            # dict: the built-in extruct path returns a Restock, but plugin fallbacks (e.g. the
+            # LLM restock scraper) return a plain dict. A plain dict here later blows up callers
+            # that use its helpers, e.g. watch['restock'].get_price_change_percent() on the
+            # watchlist (AttributeError -> 500 on the list page).
+            update_obj['restock'] = Restock(itemprop_availability)
 
             if itemprop_availability.get('availability'):
                 # @todo: Configurable?

@@ -12,6 +12,7 @@ provides an optional get_data() hook served as JSON by /diff/<uuid>/processor-da
 asset endpoint.
 """
 import re
+import statistics
 import time
 
 from flask_babel import gettext
@@ -60,6 +61,101 @@ def _build_series(watch):
     return series
 
 
+def compute_price_summary(series):
+    """Compact price stats for the graph overlays + (future) watchlist deal-score badge.
+
+    This is the single source of truth for "is the current price low/typical/high". It works
+    off an already-built series (cheap, no extra I/O) so the same function can be reused at
+    check time to cache the result on the watch and avoid scanning history at render time.
+
+    Returns None when there are no prices.
+    """
+    prices = [p['price'] for p in series if p.get('price') is not None]
+    if not prices:
+        return None
+
+    count = len(prices)
+    current = prices[-1]                      # series is oldest -> newest, so last priced value
+    ordered = sorted(prices)
+    mn, mx = ordered[0], ordered[-1]
+    avg = sum(prices) / count
+
+    if count >= 2:
+        try:
+            q = statistics.quantiles(prices, n=4, method='inclusive')  # [p25, p50, p75]
+            p25, median, p75 = q[0], q[1], q[2]
+        except statistics.StatisticsError:
+            median, p25, p75 = statistics.median(prices), mn, mx
+    else:
+        median = p25 = p75 = current
+
+    # Two directional shares so the UI can phrase it naturally per status:
+    #   cheaper_than_pct = share of records MORE expensive than now (good when price is low)
+    #   pricier_than_pct = share of records CHEAPER than now (relevant when price is high)
+    cheaper_than_pct = round(100.0 * sum(1 for x in prices if x > current) / count)
+    pricier_than_pct = round(100.0 * sum(1 for x in prices if x < current) / count)
+
+    if current <= p25:
+        status = 'low'
+    elif current >= p75:
+        status = 'high'
+    else:
+        status = 'typical'
+
+    r2 = lambda v: round(v, 2)
+    return {
+        'count': count,
+        'min': r2(mn), 'max': r2(mx), 'avg': r2(avg), 'median': r2(median),
+        'p25': r2(p25), 'p75': r2(p75),
+        'current': r2(current),
+        'cheaper_than_pct': cheaper_than_pct,
+        'pricier_than_pct': pricier_than_pct,
+        'status': status,
+        'all_time_low': current <= mn,
+    }
+
+
+def export_xlsx(watch, datastore):
+    """Build an .xlsx of the full price/stock history. Returns (bytes, filename).
+
+    xlsx (not csv) so prices stay real numbers and dates stay real dates in the user's
+    spreadsheet, regardless of locale number formatting. Columns: Date, Stock status, Price,
+    Currency. Served by /diff/<uuid>/processor-export.xlsx.
+    """
+    import datetime
+    from io import BytesIO
+    from openpyxl import Workbook
+
+    series = _build_series(watch)
+    currency = _currency(watch)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Price history'
+    ws.append([gettext('Date'), gettext('Stock status'), gettext('Price'), gettext('Currency')])
+
+    for p in series:
+        when = datetime.datetime.fromtimestamp(p['timestamp'])
+        if p['in_stock'] is None:
+            stock = ''
+        else:
+            stock = gettext('In stock') if p['in_stock'] else gettext('Out of stock')
+        cell_date = ws.cell(row=ws.max_row + 1, column=1, value=when)
+        cell_date.number_format = 'YYYY-MM-DD HH:MM:SS'
+        ws.cell(row=ws.max_row, column=2, value=stock)
+        # Real numeric price (None -> blank cell) so spreadsheet number formats apply.
+        ws.cell(row=ws.max_row, column=3, value=p['price'])
+        ws.cell(row=ws.max_row, column=4, value=currency)
+
+    # Sensible column widths.
+    for col, width in {'A': 20, 'B': 14, 'C': 12, 'D': 10}.items():
+        ws.column_dimensions[col].width = width
+
+    out = BytesIO()
+    wb.save(out)
+    return out.getvalue(), f"price-history-{watch.get('uuid')}.xlsx"
+
+
 def get_data(watch, datastore, request):
     """JSON payload for the price/stock graph, fetched via /diff/<uuid>/processor-data.
     Keeps the full timeline out of the HTML page."""
@@ -69,6 +165,7 @@ def get_data(watch, datastore, request):
     return {
         'series': series,
         'currency': _currency(watch),
+        'summary': compute_price_summary(series),
     }
 
 

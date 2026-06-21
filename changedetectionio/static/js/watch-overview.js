@@ -132,10 +132,13 @@ $(function () {
             var graphI18n = {
                 in_stock: i18n.inStock, out_of_stock: i18n.outOfStock,
                 no_data: i18n.noPriceData, load_error: i18n.priceHistoryError,
-                changes: i18n.changes, avg_price: i18n.avgPrice
+                changes: i18n.changes, avg_price: i18n.avgPrice,
+                price_low: i18n.priceLow, price_typical: i18n.priceTypical, price_high: i18n.priceHigh,
+                cheaper_than: i18n.cheaperThan, pricier_than: i18n.pricierThan,
+                typical_note: i18n.typicalNote, avg_label: i18n.avgLabel
             };
             if (window.renderRestockGraph) {
-                window.renderRestockGraph($r.find('.restock-inline-graph')[0], series, (data && data.currency) || '', graphI18n);
+                window.renderRestockGraph($r.find('.restock-inline-graph')[0], series, (data && data.currency) || '', graphI18n, (data && data.summary) || null);
             }
         }).fail(showError);
     });

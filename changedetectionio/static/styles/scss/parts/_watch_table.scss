@@ -516,7 +516,11 @@ body.blueprint-watchlist {
     @media only screen and (min-width: $desktop-wide-breakpoint) {
       field-sizing: content;
       min-width: 32rem;
-      max-width: 80%;
+      // Cap against the viewport, not just the parent: with field-sizing:content the parent is
+      // shrink-to-fit, so "80%" is effectively the input's own width and a long URL would grow
+      // it past the viewport edge (horizontal scroll). min(80%, 80vw) keeps it on-screen.
+      max-width: min(80%, 80vw);
+      box-sizing: border-box;
     }
   }
 

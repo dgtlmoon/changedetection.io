@@ -88,16 +88,51 @@ SYSTEM_PROMPT = (
 
 _MAX_CONTENT_CHARS = 20_000
 
+# Cache LLM extraction results keyed by the exact LLM input (model + url + stripped content +
+# intent). Product pages re-fetch constantly with noisy raw HTML (analytics, nonces, CSRF
+# tokens) that changes the watch's raw checksum every check — so the processor's checksum-skip
+# rarely fires for them and the LLM would otherwise be billed on every check even when the
+# price/stock content is identical. Keying on the actual prompt means we only spend tokens when
+# the meaningful content changes. Bounded FIFO so it can't grow unbounded across many watches.
+import hashlib
+from collections import OrderedDict
+
+_LLM_RESULT_CACHE = OrderedDict()
+_LLM_RESULT_CACHE_MAX = 500
+
+
+def _llm_cache_get(key):
+    return _LLM_RESULT_CACHE.get(key)
+
+
+def _llm_cache_put(key, value):
+    _LLM_RESULT_CACHE[key] = value
+    _LLM_RESULT_CACHE.move_to_end(key)
+    while len(_LLM_RESULT_CACHE) > _LLM_RESULT_CACHE_MAX:
+        _LLM_RESULT_CACHE.popitem(last=False)
+
+
+# JSON-LD blocks worth sending: only those that actually carry price/stock signals. This drops
+# the noise (BreadcrumbList, WebSite, Organization, ItemList…) that otherwise dominates and
+# pushes the useful data out of the (truncated) prompt.
+_JSONLD_RELEVANT = re.compile(
+    r'"(price|priceCurrency|lowPrice|highPrice|availability|offers|InStock|OutOfStock|priceSpecification)"',
+    re.IGNORECASE,
+)
+
 
 def _extract_jsonld(html_content: str) -> str:
-    """Extract JSON-LD blocks — these contain reliable structured product data."""
+    """Extract the JSON-LD blocks that contain price/availability info (reliable structured
+    product data). Blocks without any price/stock signal (breadcrumbs, site metadata, etc.)
+    are skipped so they don't crowd out the useful content."""
     blocks = re.findall(
         r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
         html_content, flags=re.DOTALL | re.IGNORECASE
     )
     if not blocks:
         return ''
-    combined = ' '.join(b.strip() for b in blocks)
+    relevant = [b.strip() for b in blocks if _JSONLD_RELEVANT.search(b)]
+    combined = ' '.join(relevant)
     return combined[:2000]
 
 
@@ -185,6 +220,10 @@ def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
     text = re.sub(r'\s+', ' ', text).strip()
 
     if jsonld:
+        # The structured metadata is extra CONTEXT, not a replacement for the page text — the
+        # real/visible price often isn't in JSON-LD (e.g. JSON-LD price "0" placeholder). So cap
+        # the metadata to at most half the budget and always leave room for the visible text.
+        jsonld = jsonld[: max(1, max_chars // 2)]
         budget = max_chars - len(jsonld) - 1
         return (jsonld + ' ' + text[:budget]).strip()
     return text[:max_chars]
@@ -231,6 +270,14 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
     user_prompt = f'URL: {url or "unknown"}\n\nPage content:\n{text_content}'
     if llm_intent:
         user_prompt += f'\n\nUser notification intent: {llm_intent}'
+
+    # Skip the (billed) LLM call entirely if we've already extracted this exact input — the page
+    # content that matters hasn't changed since last time, only noisy raw HTML around it.
+    cache_key = hashlib.md5(((llm_cfg.get('model') or '') + '\n' + user_prompt).encode('utf-8')).hexdigest()
+    cached = _llm_cache_get(cache_key)
+    if cached is not None:
+        logger.info(f"LLM restock fallback: content unchanged since last LLM call, reusing cached result - {url}")
+        return {**cached, '_tokens': 0, '_input_tokens': 0, '_output_tokens': 0, '_model': llm_cfg['model']}
 
     logger.debug(f"LLM System Prompt: {SYSTEM_PROMPT}")
     logger.debug(f"LLM Prompt: {user_prompt}")
@@ -289,10 +336,11 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             f"LLM restock fallback result: price={price} currency={currency} "
             f"availability={availability!r} url={url}"
         )
+        result_clean = {'price': price, 'currency': currency, 'availability': availability}
+        # Remember this result so an identical next check doesn't re-bill the LLM.
+        _llm_cache_put(cache_key, result_clean)
         return {
-            'price': price,
-            'currency': currency,
-            'availability': availability,
+            **result_clean,
             '_tokens': tokens,
             '_input_tokens': input_tokens,
             '_output_tokens': output_tokens,

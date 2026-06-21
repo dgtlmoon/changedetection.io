@@ -34,7 +34,14 @@ def watch_is_deal(watch):
     """A restock/price watch whose latest check reported a price DROP."""
     if not watch.has_restock_info:
         return False
-    pct = watch['restock'].get_price_change_percent()
+    restock = watch['restock']
+    # Defensive: restock should be a Restock, but some sources (e.g. the LLM restock fallback
+    # plugin) can leave a plain dict. Normalise so .get_price_change_percent() always exists
+    # and a rendering of the watchlist can't 500 over it. Lazy import avoids an import cycle.
+    if not hasattr(restock, 'get_price_change_percent'):
+        from changedetectionio.processors.restock_diff import Restock
+        restock = Restock(restock)
+    pct = restock.get_price_change_percent()
     return pct is not None and pct < 0
 
 

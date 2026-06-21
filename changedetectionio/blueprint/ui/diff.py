@@ -362,6 +362,37 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         abort(404, description=f"Processor '{processor_name}' does not provide difference data")
 
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-export.xlsx", methods=['GET'])
+    @login_optionally_required
+    def diff_history_page_processor_export(uuid):
+        """
+        Download the processor's history as an .xlsx (e.g. the restock price/stock timeline).
+        Processor-aware: delegates to processors/{type}/difference.py::export_xlsx(), which
+        returns (bytes, filename). 404 if the processor doesn't implement it.
+        """
+        from flask import make_response, abort
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash(gettext("No history found for the specified link, bad link?"), "error")
+            return redirect(url_for('watchlist.index'))
+
+        processor_name = watch.get('processor', 'text_json_diff')
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'difference')
+
+        if processor_module and hasattr(processor_module, 'export_xlsx'):
+            data, filename = processor_module.export_xlsx(watch=watch, datastore=datastore)
+            resp = make_response(data)
+            resp.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            resp.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return resp
+
+        abort(404, description=f"Processor '{processor_name}' does not support xlsx export")
+
     @diff_blueprint.route("/diff/<uuid_str:uuid>/extract", methods=['GET'])
     @login_optionally_required
     def diff_history_page_extract_GET(uuid):

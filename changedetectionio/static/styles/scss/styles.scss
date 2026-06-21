@@ -239,6 +239,15 @@ section.content {
 
 details summary {
   cursor: pointer;
+  // Make disclosures clearly clickable: bold + link-coloured so they invite a click,
+  // not just a faint arrow + plain text.
+  font-weight: 600;
+  color: var(--color-link);
+  width: fit-content;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 code {

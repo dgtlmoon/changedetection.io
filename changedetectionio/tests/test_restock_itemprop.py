@@ -568,6 +568,30 @@ def test_restock_diff_price_data_ajax(client, live_server, measure_memory_usage,
     # These snapshots were all "in stock"
     assert series[-1]['in_stock'] is True
 
+    # Price summary (deal-score inputs) is computed and returned
+    assert data.get('summary')
+    summary = data['summary']
+    for key in ('count', 'min', 'max', 'avg', 'median', 'p25', 'p75', 'current', 'status', 'all_time_low'):
+        assert key in summary
+    assert summary['status'] in ('low', 'typical', 'high')
+    assert summary['min'] <= summary['avg'] <= summary['max']
+
+    # XLSX export of the history
+    res = client.get(url_for("ui.ui_diff.diff_history_page_processor_export", uuid=uuid))
+    assert res.status_code == 200
+    assert res.headers['Content-Type'] == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    assert 'attachment' in res.headers.get('Content-Disposition', '')
+    # Valid xlsx with the expected header row + numeric prices
+    import io
+    from openpyxl import load_workbook
+    wb = load_workbook(io.BytesIO(res.data))
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    assert rows[0] == ('Date', 'Stock status', 'Price', 'Currency')
+    xlsx_prices = [r[2] for r in rows[1:]]
+    assert 190.95 in xlsx_prices
+    assert 180.45 in xlsx_prices
+
     delete_all_watches(client)
 
 
