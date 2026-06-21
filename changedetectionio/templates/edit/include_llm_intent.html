@@ -23,13 +23,15 @@
 
 {# Processor check only applies in watch-edit context (llm_group_overrides present). #}
 {# In tag/group edit context the AI section is always visible.                        #}
+{# Processors whose edit form carries the AI Intent / Change Summary fields (i.e. those whose
+   form inherits processor_text_json_diff_form). text_json_diff + restock_diff today. #}
 {% if llm_group_overrides is defined %}
-    {% set is_text_json_diff = not watch.get('processor') or watch.get('processor') == 'text_json_diff' %}
+    {% set show_ai_section = not watch.get('processor') or watch.get('processor') in ['text_json_diff', 'restock_diff'] %}
 {% else %}
-    {% set is_text_json_diff = true %}
+    {% set show_ai_section = true %}
 {% endif %}
 
-{% if is_text_json_diff %}
+{% if show_ai_section %}
 
 {# ── Configured: show the intent + summary fields ────────────────── #}
 {% if llm_configured %}
@@ -123,4 +125,4 @@
 </div>
 {% endif %}
 
-{% endif %}{# is_text_json_diff #}
+{% endif %}{# show_ai_section #}

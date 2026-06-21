@@ -522,3 +522,76 @@ def test_itemprop_as_str(client, live_server, measure_memory_usage, datastore_pa
 
     res = client.get(url_for("watchlist.index"))
     assert b'767.55' in res.data
+
+
+def test_restock_diff_price_data_ajax(client, live_server, measure_memory_usage, datastore_path):
+    """The restock history graph fetches its timeline from the processor-data callback
+    (restock_diff/difference.py::get_data, served at /diff/<uuid>/processor-data)."""
+    import json
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    # First snapshot - in stock @ 190.95
+    set_original_response(props_markup=instock_props[0], price="190.95", datastore_path=datastore_path)
+    client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+    uuid = extract_UUID_from_client(client)
+
+    # Second snapshot - price changes to 180.45 (still in stock) -> a new history point
+    set_original_response(props_markup=instock_props[0], price='180.45', datastore_path=datastore_path)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # The AJAX/plugin data callback
+    res = client.get(url_for("ui.ui_diff.diff_history_page_processor_data", uuid=uuid))
+    assert res.status_code == 200
+    data = json.loads(res.data)
+
+    assert 'series' in data
+    assert 'currency' in data
+    series = data['series']
+    assert len(series) >= 2
+
+    # Every point exposes the parsed timestamp + price + stock state
+    for point in series:
+        assert 'timestamp' in point
+        assert 'price' in point
+        assert 'in_stock' in point
+
+    prices = [p['price'] for p in series]
+    assert 190.95 in prices
+    assert 180.45 in prices
+    # These snapshots were all "in stock"
+    assert series[-1]['in_stock'] is True
+
+    delete_all_watches(client)
+
+
+def test_restock_edit_has_ai_llm_section(client, live_server, measure_memory_usage, datastore_path):
+    """restock_diff watches must expose the AI / LLM tab content on the edit page, the same as
+    text_json_diff. Regression: the AI section used to be gated to text_json_diff only, so the
+    #ai-llm tab rendered empty for restock watches."""
+    test_url = url_for('test_endpoint', _external=True)
+    set_original_response(props_markup=instock_props[0], datastore_path=datastore_path)
+    client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+    uuid = extract_UUID_from_client(client)
+
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    assert res.status_code == 200
+    # The AI / LLM tab link exists...
+    assert b'#ai-llm' in res.data
+    # ...and crucially its section now renders for restock_diff (either the configured fields
+    # block or the "configure a provider" disabled block — both carry this id). Before the fix
+    # this was absent for restock watches.
+    assert b'llm-intent-section' in res.data
+
+    delete_all_watches(client)

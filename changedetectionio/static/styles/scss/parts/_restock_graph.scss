@@ -1,0 +1,117 @@
+// Restock price/stock history graph + inline watchlist roll-down.
+// Used by the diff page (#restock-graph) and the watchlist inline graph (.restock-inline-graph);
+// both containers get the .js-restock-graph class from restock-price-graph.js.
+
+#restock-diff { width: 100%; box-sizing: border-box; }
+
+#restock-diff-summary {
+  margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.restock-latest-price {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.restock-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.in-stock { background: rgba(31, 164, 99, 0.15); color: #1fa463; }
+  &.out-of-stock { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
+}
+
+#restock-graph { margin-top: 1rem; }
+
+.js-restock-graph {
+  position: relative;
+  width: 100%;
+  // The SVG is drawn at a measured pixel width; on shrink it would otherwise overflow and
+  // cause horizontal page scroll until the (debounced) resize redraw. max-width:100% caps it
+  // to the container so it never pushes the viewport wider (brief squish during an active
+  // resize, then the redraw restores the correct width).
+  svg { display: block; max-width: 100%; }
+  .rg-axis { stroke: var(--color-border-notification, rgba(127, 127, 127, 0.4)); stroke-width: 1; }
+  .rg-label { fill: currentColor; opacity: 0.7; font-size: 12px; }
+
+  .rg-stats {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    text-align: center;
+  }
+}
+
+.rg-tooltip {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+  z-index: 5;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: var(--color-background, #fff);
+  color: var(--color-text, #222);
+  border: 1px solid var(--color-border-notification, rgba(127, 127, 127, 0.4));
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+#restock-history-table td,
+#restock-history-table th { text-align: left; }
+
+// ── Watchlist: restock rows keep the "History" button even in AI mode ──
+// (AI mode swaps History->Summary for LLM watches; restock has its own graph roll-down instead.)
+html[data-ai-mode="true"] body.llm-configured tr.processor-restock_diff {
+  .btn-label-history { display: inline; }
+  .btn-label-summary { display: none; }
+}
+
+// ── Watchlist: inline restock graph roll-down (mirrors .ai-inline-summary-row, teal/green) ──
+.restock-inline-row {
+  td {
+    white-space: normal !important;
+    word-break: break-word;
+    padding: 0.6rem 1rem 0.8rem 1.4rem !important;
+    background: linear-gradient(135deg, #e6fbf0, #e8f6ff) !important;
+    border-top: 1px solid #9fe3c2 !important;
+    border-left: 3px solid #1fa463 !important;
+    color: #06281a !important;
+    line-height: 1.5;
+  }
+
+  html[data-darkmode="true"] & td {
+    background: linear-gradient(135deg, #0c2a1c, #0d2230) !important;
+    border-top: 1px solid #1f5e40 !important;
+    border-left-color: #1fa463 !important;
+    color: #d6ffe9 !important;
+  }
+
+  .restock-inline-graph {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .restock-inline-history-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.75;
+    white-space: nowrap;
+
+    &:hover { opacity: 1; }
+  }
+
+  .restock-inline-error { color: #c0392b; }
+}

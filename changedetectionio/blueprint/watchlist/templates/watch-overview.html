@@ -7,6 +7,7 @@
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='restock-price-graph.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
 <script>let favicon_baseURL="{{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}";</script>
@@ -126,7 +127,14 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 window.watchOverviewI18n = {
     generatingSummary: {{ _('Generating change summary…')|tojson }},
-    gotoHistory:       {{ _('Goto full history')|tojson }}
+    gotoHistory:       {{ _('Goto full history')|tojson }},
+    loadingPriceHistory: {{ _('Loading price history…')|tojson }},
+    inStock:           {{ _('In stock')|tojson }},
+    outOfStock:        {{ _('Out of stock')|tojson }},
+    noPriceData:       {{ _('No price data available to graph yet.')|tojson }},
+    priceHistoryError: {{ _('Could not load price history.')|tojson }},
+    changes:           {{ _('Number of changes')|tojson }},
+    avgPrice:          {{ _('average price')|tojson }}
 };
 </script>
 {% endif %}
@@ -489,7 +497,7 @@ window.watchOverviewI18n = {
                     <a href="" class="already-in-queue-button recheck cdio-btn cdio-btn--primary cdio-btn--sm" style="display: none;" disabled="disabled"><i data-feather="clock"></i>{{ _('Queued') }}</a>
                     <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" data-op='recheck' class="ajax-op recheck cdio-btn cdio-btn--primary cdio-btn--sm"><i data-feather="refresh-cw"></i>{{ _('Recheck') }}</a>
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="cdio-btn cdio-btn--primary cdio-btn--sm">{{ _('Edit') }}</a>
-                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>
+                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}" data-processor-data-url="{{ url_for('ui.ui_diff.diff_history_page_processor_data', uuid=watch.uuid) }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>
                     <a href="{{ url_for('ui.ui_preview.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm preview-link" style="display: none;">{{ _('Preview') }}</a>
                     </div>
                 </td>

@@ -332,6 +332,36 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         datastore.set_last_viewed(uuid, int(time.time()))
         return jsonify({'summary': summary, 'error': None, 'cached': False})
 
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-data", methods=['GET'])
+    @login_optionally_required
+    def diff_history_page_processor_data(uuid):
+        """
+        Return processor-specific JSON data for the history/diff page (e.g. the restock
+        price/stock timeline that the graph JS fetches).
+
+        Processor-aware: delegates to processors/{type}/difference.py::get_data(), so the
+        heavy data stays out of the rendered HTML (same rationale as the preview asset route).
+        Works for built-in and plugin processors via get_processor_submodule(). Returns 404
+        if the watch's processor doesn't implement get_data().
+        """
+        from flask import jsonify, abort
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            return jsonify({'error': 'Watch not found'}), 404
+
+        processor_name = watch.get('processor', 'text_json_diff')
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'difference')
+
+        if processor_module and hasattr(processor_module, 'get_data'):
+            return jsonify(processor_module.get_data(watch=watch, datastore=datastore, request=request))
+
+        abort(404, description=f"Processor '{processor_name}' does not provide difference data")
+
     @diff_blueprint.route("/diff/<uuid_str:uuid>/extract", methods=['GET'])
     @login_optionally_required
     def diff_history_page_extract_GET(uuid):

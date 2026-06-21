@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="box" id="restock-diff">
+    <div id="restock-diff-header">
+        <h3 style="margin: 0 0 0.25rem;">{{ _('Price & stock history') }}</h3>
+        <a href="{{ current_diff_url }}" target="_blank" rel="noopener" class="current-diff-url">{{ current_diff_url }}</a>
+
+        {% if restock_latest %}
+        <div id="restock-diff-summary">
+            {% if restock_latest.in_stock is not none %}
+                <span class="restock-badge {{ 'in-stock' if restock_latest.in_stock else 'out-of-stock' }}">
+                    {{ _('In stock') if restock_latest.in_stock else _('Out of stock') }}
+                </span>
+            {% endif %}
+            {% if restock_latest.price is not none %}
+                <span class="restock-latest-price">{{ restock_currency }}{{ restock_latest.price }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if has_enough_history %}
+        <div id="restock-graph">
+            <p class="pure-form-message-inline" id="restock-graph-loading">{{ _('Loading price history…') }}</p>
+        </div>
+
+        {# Accessible data table - filled in by the graph JS from the same fetched data #}
+        <details id="restock-history-table-wrap" style="margin-top: 1rem;">
+            <summary>{{ _('Show data table') }}</summary>
+            <table class="pure-table" id="restock-history-table">
+                <thead>
+                    <tr>
+                        <th>{{ _('When') }}</th>
+                        <th>{{ _('Stock') }}</th>
+                        <th>{{ _('Price') }}</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </details>
+    {% else %}
+        <p class="pure-form-message-inline" style="margin-top: 1rem;">
+            {{ _('Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here.') }}
+        </p>
+    {% endif %}
+</div>
+
+<script>
+    // The graph data (full timeline) is fetched from this endpoint to keep it out of the HTML.
+    window.restock_data_url = {{ processor_data_url|tojson }};
+    // i18n strings for the JS-built table + states.
+    window.restock_i18n = {
+        in_stock: {{ _('In stock')|tojson }},
+        out_of_stock: {{ _('Out of stock')|tojson }},
+        no_data: {{ _('No price data available to graph yet.')|tojson }},
+        load_error: {{ _('Could not load price history.')|tojson }},
+        changes: {{ _('Number of changes')|tojson }},
+        avg_price: {{ _('average price')|tojson }}
+    };
+</script>
+<script src="{{ url_for('static_content', group='js', filename='restock-price-graph.js') }}" defer></script>
+{% endblock %}
