@@ -175,43 +175,6 @@ window.watchOverviewI18n = {
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
-    <div id="checkbox-operations">
-        <button type="button" class="pure-button button-secondary button-xsmall" id="check-invert"><i data-feather="repeat" ></i>&nbsp;{{ _('Invert') }}</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" ></i>&nbsp;{{ _('Pause') }}</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" ></i>&nbsp;{{ _('UnPause') }}</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute"><i data-feather="volume-x" ></i>&nbsp;{{ _('Mute') }}</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute"><i data-feather="volume-2" ></i>&nbsp;{{ _('UnMute') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck"><i data-feather="refresh-cw" ></i>&nbsp;{{ _('Recheck') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag"><i data-feather="tag" ></i>&nbsp;{{ _('Tag') }}</button>
-        <button type="button" class="pure-button button-secondary button-xsmall" id="checkbox-set-browser"
-                data-modal-title="{{ _('Set browser / fetch method for selected') }}"
-                data-modal-apply="{{ _('Apply') }}"><i data-feather="globe" ></i>&nbsp;{{ _('Browser') }}</button>
-        {% if has_proxies %}
-        <button type="button" class="pure-button button-secondary button-xsmall" id="checkbox-set-proxy"
-                data-modal-title="{{ _('Set proxy for selected') }}"
-                data-modal-apply="{{ _('Apply') }}"><i data-feather="server" ></i>&nbsp;{{ _('Proxy') }}</button>
-        {% endif %}
-        {# Hidden real operation buttons triggered by the Browser/Proxy modals once a choice is made #}
-        <button type="submit" name="op" value="set-fetch-backend" id="op-set-fetch-backend" hidden></button>
-        <button type="submit" name="op" value="set-proxy" id="op-set-proxy" hidden></button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" ></i>&nbsp;{{ _('Mark viewed') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" ></i>&nbsp;{{ _('Use default notification') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors"><i data-feather="x-circle" ></i>&nbsp;{{ _('Clear errors') }}</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history"
-                       data-requires-confirm
-                       data-confirm-type="danger"
-                       data-confirm-title="{{ _('Clear Histories') }}"
-                       data-confirm-message="{{ _('<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>') }}"
-                       {# TRANSLATORS: Universally recognized; typically left as-is. dennis-ignore: W302 #}
-                       data-confirm-button="{{ _('OK') }}"><i data-feather="trash-2" ></i>&nbsp;{{ _('Clear/reset history') }}</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete"
-                       data-requires-confirm
-                       data-confirm-type="danger"
-                       data-confirm-title="{{ _('Delete Watches?') }}"
-                       data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
-                       data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" ></i>&nbsp;{{ _('Delete') }}</button>
-        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
-    </div>
     {# Option lists for the bulk Browser / Proxy modals (rendered by watch-overview.js into a ModalDialog).
        Mirrors the choices on the watch edit page. Kept inert inside <template> until the modal is opened. #}
     <template id="bulk-browser-options">
@@ -316,6 +279,44 @@ window.watchOverviewI18n = {
             <a title="{{ _('RSS Feed') }}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
         </div>
 
+    <div id="checkbox-operations">
+        <button type="button" class="pure-button button-secondary button-xsmall" id="check-invert"><i data-feather="repeat" ></i>&nbsp;{{ _('Invert') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" ></i>&nbsp;{{ _('Pause') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" ></i>&nbsp;{{ _('UnPause') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute"><i data-feather="volume-x" ></i>&nbsp;{{ _('Mute') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute"><i data-feather="volume-2" ></i>&nbsp;{{ _('UnMute') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck"><i data-feather="refresh-cw" ></i>&nbsp;{{ _('Recheck') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag"><i data-feather="tag" ></i>&nbsp;{{ _('Tag') }}</button>
+        <button type="button" class="pure-button button-secondary button-xsmall" id="checkbox-set-browser"
+                data-modal-title="{{ _('Set browser / fetch method for selected') }}"
+                data-modal-apply="{{ _('Apply') }}"><i data-feather="globe" ></i>&nbsp;{{ _('Browser') }}</button>
+        {% if has_proxies %}
+        <button type="button" class="pure-button button-secondary button-xsmall" id="checkbox-set-proxy"
+                data-modal-title="{{ _('Set proxy for selected') }}"
+                data-modal-apply="{{ _('Apply') }}"><i data-feather="server" ></i>&nbsp;{{ _('Proxy') }}</button>
+        {% endif %}
+        {# Hidden real operation buttons triggered by the Browser/Proxy modals once a choice is made #}
+        <button type="submit" name="op" value="set-fetch-backend" id="op-set-fetch-backend" hidden></button>
+        <button type="submit" name="op" value="set-proxy" id="op-set-proxy" hidden></button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" ></i>&nbsp;{{ _('Mark viewed') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" ></i>&nbsp;{{ _('Use default notification') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors"><i data-feather="x-circle" ></i>&nbsp;{{ _('Clear errors') }}</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="{{ _('Clear Histories') }}"
+                       data-confirm-message="{{ _('<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>') }}"
+                       {# TRANSLATORS: Universally recognized; typically left as-is. dennis-ignore: W302 #}
+                       data-confirm-button="{{ _('OK') }}"><i data-feather="trash-2" ></i>&nbsp;{{ _('Clear/reset history') }}</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="{{ _('Delete Watches?') }}"
+                       data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
+                       data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" ></i>&nbsp;{{ _('Delete') }}</button>
+        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
+    </div>
+
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
@@ -393,6 +394,8 @@ window.watchOverviewI18n = {
                                      class="favicon lazy-favicon"
                                      loading="lazy"
                                      decoding="async"
+                                     title="{{ _('Goto web page') }}"
+                                     alt="{{ _('Goto web page') }}"
                                      fetchpriority="low"
                                      {% if favicon %}
                                      data-src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"

@@ -82,7 +82,13 @@ body.has-queue {
 
 
 #checkbox-operations {
-  margin-bottom: 1em;
+  margin-bottom: $common-gap;
+  background: var(--color-background-new-watch-form);
+  padding: 1em;
+  border-radius: 10px;
+  max-width: 100%;
+  position: sticky;
+  top: 20px;
   // Hidden until watches are selected; shown via body.watch-selection-active (toggled in
   // watch-overview.js, replaces the old jQuery slideUp/slideDown).
   display: none;
