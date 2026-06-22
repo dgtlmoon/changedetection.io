@@ -514,7 +514,7 @@ body.blueprint-watchlist {
 
     width: auto;
     @media only screen and (min-width: $desktop-wide-breakpoint) {
-      field-sizing: content;
+      /*field-sizing: content;*/ // <-- removed, buggy
       min-width: 32rem;
       // Cap against the viewport, not just the parent: with field-sizing:content the parent is
       // shrink-to-fit, so "80%" is effectively the input's own width and a long URL would grow
