@@ -446,7 +446,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                 logger.info(f"LLM monthly budget exceeded — skipping check for {uuid} (budget_action=skip_check)")
                                 changed_detected = False
 
-                        if changed_detected:
+                        # Only run AI intent/summary when there's a PREVIOUS snapshot to diff
+                        # against. On the very first check history_n is 0 (the new snapshot is
+                        # saved further below), so there's no "change" to describe — running the
+                        # LLM here would summarise the whole page as if it just changed (e.g.
+                        # "price updated to 860" on first sight). Mirrors the notification gate
+                        # (which only fires at history_n >= 2).
+                        if changed_detected and watch.history_n >= 1:
                             try:
                                 from changedetectionio.llm.evaluator import (
                                     evaluate_change, resolve_intent, resolve_llm_field,
