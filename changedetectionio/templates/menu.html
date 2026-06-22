@@ -17,7 +17,7 @@
 {%- endif -%}
 
     <li class="pure-menu-item " id="menu-settings">
-        <a href="{{ url_for('settings.settings_page') }}" title="{{ _('Settings') }}"><i data-feather="settings" class="action-icon"></i>&nbsp;{{ ('Settings') }}</a>
+        <a href="{{ url_for('settings.settings_page') }}" title="{{ _('Settings') }}"><i data-feather="settings" class="action-icon"></i>&nbsp;<span>{{ ('Settings') }}</span></a>
     </li>
     <li class="pure-menu-item " id="menu-ui-language">
         <a class="language-selector"><span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span></a>

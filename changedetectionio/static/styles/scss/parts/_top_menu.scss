@@ -276,3 +276,13 @@ ul#top-right-menu {
   grid-auto-columns: max-content;
   align-items: center;
 }
+
+@media only screen and (max-width: $desktop-wide-breakpoint) {
+  #nav-menu {
+    #menu-settings {
+      span {
+        display: none;
+      }
+    }
+  }
+}
