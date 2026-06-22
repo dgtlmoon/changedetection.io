@@ -21,7 +21,7 @@
 
     const DEFAULT_I18N = { in_stock: 'In stock', out_of_stock: 'Out of stock',
         no_data: 'No price data available to graph yet.', load_error: 'Could not load price history.',
-        changes: 'Number of changes', avg_price: 'average price',
+        changes: 'Changes', avg_price: 'Average price',
         price_low: 'Currently low', price_typical: 'Currently typical', price_high: 'Currently high',
         cheaper_than: 'cheaper than %s% of tracked prices',
         pricier_than: 'more expensive than %s% of tracked prices',
@@ -74,6 +74,51 @@
         const step = arr.length / target;
         for (let i = 0; i < target; i++) keep.add(Math.floor(i * step));
         return Array.from(keep).sort((a, b) => a - b).map(i => arr[i]);
+    }
+
+    // Monotone cubic spline (Fritsch–Carlson). A gentle, smooth curve that — unlike Catmull-Rom —
+    // is guaranteed NOT to overshoot beyond the actual data points: tangents are clamped so the
+    // line never dips below / rises above neighbouring values. So the curve stays faithful to the
+    // real prices (no phantom dips/spikes) while still looking soft. Returns an SVG path string.
+    function monotonePath(pts) {
+        const n = pts.length;
+        if (n < 2) return '';
+        const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+        if (n === 2) return `M ${xs[0].toFixed(1)} ${ys[0].toFixed(1)} L ${xs[1].toFixed(1)} ${ys[1].toFixed(1)}`;
+
+        const dx = [], slope = [];
+        for (let i = 0; i < n - 1; i++) {
+            const h = xs[i + 1] - xs[i];
+            dx.push(h);
+            slope.push(h === 0 ? 0 : (ys[i + 1] - ys[i]) / h);
+        }
+
+        const m = new Array(n);
+        m[0] = slope[0];
+        m[n - 1] = slope[n - 2];
+        for (let i = 1; i < n - 1; i++) {
+            // Local extremum (slope changes sign) → flat tangent so the curve doesn't overshoot.
+            m[i] = (slope[i - 1] * slope[i] <= 0) ? 0 : (slope[i - 1] + slope[i]) / 2;
+        }
+        // Fritsch–Carlson: clamp tangents so each segment stays monotone (no overshoot).
+        for (let i = 0; i < n - 1; i++) {
+            if (slope[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
+            const a = m[i] / slope[i], b = m[i + 1] / slope[i], s = a * a + b * b;
+            if (s > 9) {
+                const t = 3 / Math.sqrt(s);
+                m[i] = t * a * slope[i];
+                m[i + 1] = t * b * slope[i];
+            }
+        }
+
+        let d = `M ${xs[0].toFixed(1)} ${ys[0].toFixed(1)}`;
+        for (let i = 0; i < n - 1; i++) {
+            const h = dx[i];
+            const c1x = xs[i] + h / 3, c1y = ys[i] + m[i] * h / 3;
+            const c2x = xs[i + 1] - h / 3, c2y = ys[i + 1] - m[i + 1] * h / 3;
+            d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${xs[i + 1].toFixed(1)} ${ys[i + 1].toFixed(1)}`;
+        }
+        return d;
     }
 
     function draw($container, series, currency, i18n, summary, height) {
@@ -141,19 +186,20 @@
             svg.appendChild(at);
         }
 
-        // Single neutral straight-line path connecting the points (no smoothing — a curve
-        // overshoots and reads as a price move that didn't happen). Stock status is shown by the
-        // DOT colours instead, not the line.
-        let linePath = '';
-        pts.forEach((p, i) => { linePath += (i === 0 ? 'M ' : ' L ') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); });
+        // Single neutral, gently-smoothed line (monotone cubic — soft but never overshoots the
+        // real values). Stock status is shown by the DOT colours instead, not the line.
         svg.appendChild(el('path', {
-            class: 'rg-line', d: linePath, fill: 'none',
+            class: 'rg-line', d: monotonePath(pts), fill: 'none',
             'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
         }));
 
         // Dots, coloured by each point's own stock state (green = in stock, red = out of stock).
+        // Sized to match the legend swatch (~9px) with a thin surface-coloured ring so they stand
+        // out from the line instead of blending into it.
         pts.forEach(p => {
-            svg.appendChild(el('circle', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 3.2, fill: stockColor(p.d.in_stock) }));
+            svg.appendChild(el('circle', {
+                class: 'rg-dot', cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 4.5, fill: stockColor(p.d.in_stock)
+            }));
         });
 
         // Sparse x-axis date labels: evenly spaced, always including both endpoints. The number
@@ -203,17 +249,14 @@
             .append('<span class="rg-legend-dot out"></span>').append(document.createTextNode(' ' + (i18n.out_of_stock || 'Out of stock'))));
         $container.append($legend);
 
-        // Footer stats: total recorded changes + average of the prices shown.
-        const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-        $('<div class="rg-stats"></div>')
-            .text((i18n.changes || 'Number of changes') + ' ' + (series ? series.length : data.length) +
-                  ', ' + (i18n.avg_price || 'average price') + ' ' + fmtPrice(avgPrice, currency))
-            .appendTo($container);
+        // Header row above the graph: status pill (LOW / TYPICAL / HIGH, left) and the summary
+        // stats (right), on one line. The pill sub-text is phrased per status so it never reads
+        // awkwardly (e.g. "cheaper than 0%" when high).
+        const $header = $('<div class="rg-header"></div>');
 
-        // Status pill (LOW / TYPICAL / HIGH) above the graph, like Google Flights. The sub-text
-        // is phrased per status so it never reads awkwardly (e.g. "cheaper than 0%" when high).
+        let $pill = $('<span></span>');  // placeholder keeps the stats pushed to the right
         if (showOverlays) {
-            const $pill = $('<div class="rg-status rg-status-' + summary.status + '"></div>');
+            $pill = $('<div class="rg-status rg-status-' + summary.status + '"></div>');
             $pill.append($('<span class="rg-status-label"></span>').text(i18n['price_' + summary.status] || ''));
             let sub;
             if (summary.status === 'low') {
@@ -224,8 +267,15 @@
                 sub = i18n.typical_note || '';
             }
             if (sub) $pill.append($('<span class="rg-status-sub"></span>').text(sub));
-            $container.prepend($pill);
         }
+
+        const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+        const $stats = $('<div class="rg-stats"></div>')
+            .text((i18n.avg_price || 'Average price') + ' ' + fmtPrice(avgPrice, currency) +
+                  ', ' + (series ? series.length : data.length) + ' ' + (i18n.changes || 'Changes'));
+
+        $header.append($pill).append($stats);
+        $container.prepend($header);
     }
 
     function buildTable($table, series, currency, i18n) {

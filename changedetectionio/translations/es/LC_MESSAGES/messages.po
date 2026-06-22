@@ -2437,12 +2437,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Number of changes"
+msgid "Changes"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "average price"
+msgid "Average price"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html

@@ -70,6 +70,8 @@
   .rg-label { fill: currentColor; opacity: 0.7; font-size: 12px; }
   // Neutral single-colour price line; stock status is shown by the dot colours, not the line.
   .rg-line { stroke: currentColor; opacity: 0.55; }
+  // Surface-coloured ring so the bigger stock dots sit clearly on top of the line.
+  .rg-dot { stroke: var(--color-background, #fff); stroke-width: 1.5; }
 
   .rg-legend {
     display: flex;
@@ -85,11 +87,21 @@
     .rg-legend-dot.out { background: #e74c3c; }
   }
 
+  // Header row above the graph: status pill (left) and summary stats (right) on one line.
+  .rg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+
   .rg-stats {
-    margin-top: 0.35rem;
     font-size: 0.8rem;
     opacity: 0.7;
-    text-align: center;
+    text-align: right;
+    margin-left: auto;   // pin to the right even when the pill is absent
   }
 
   // Analyser overlays: typical-range band + dashed average line.
@@ -103,7 +115,6 @@
   display: inline-flex;
   align-items: baseline;
   gap: 0.4rem;
-  margin-bottom: 0.5rem;
   padding: 0.2rem 0.6rem;
   border-radius: 1rem;
   font-size: 0.85rem;
