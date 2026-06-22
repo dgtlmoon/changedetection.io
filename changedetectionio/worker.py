@@ -503,8 +503,16 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                 f"{_llm_result.get('summary', '')[:80]}"
                                             )
 
-                                    # Step 2: AI Change Summary — runs for any LLM-configured watch with a change
-                                    if changed_detected:
+                                    # Step 2: AI Change Summary — only compute it when a notification
+                                    # is actually going to be sent, because that's the only place
+                                    # the worker needs it (it fills {{diff}}/{{llm_summary}} in the
+                                    # notification body). The watch-list / diff-page "Summary" button
+                                    # computes it on demand via the diff_llm_summary AJAX endpoint, so
+                                    # we deliberately do NOT pre-compute it here just for the UI —
+                                    # that would spend tokens on every change for a summary nobody
+                                    # may ever look at.
+                                    from changedetectionio.notification_service import watch_will_send_content_changed_notification
+                                    if changed_detected and watch_will_send_content_changed_notification(datastore, watch):
                                         set_watch_minitext_status(watch, "AI/LLM (summary)..")
                                         _change_summary = await loop.run_in_executor(
                                             executor,

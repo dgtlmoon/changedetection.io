@@ -54,6 +54,22 @@ def _check_cascading_vars(datastore, var_name, watch):
     return None
 
 
+def watch_will_send_content_changed_notification(datastore, watch):
+    """Single source of truth for: will a *content changed* notification actually be
+    delivered for this watch?
+
+    This mirrors exactly the decision the worker + send_content_changed_notification()
+    make together: the watch must not be muted, and a notification URL must resolve via
+    the watch > tag > global cascade. Anything that wants to know "is a notification
+    going to fire?" (e.g. the worker deciding whether to spend tokens pre-computing the
+    LLM change summary that fills the notification body) should ask here, so the answer
+    can never drift from what actually gets sent.
+    """
+    if not watch or watch.get('notification_muted'):
+        return False
+    return bool(_check_cascading_vars(datastore, 'notification_urls', watch))
+
+
 class FormattableTimestamp(str):
     """
     A str subclass representing a formatted datetime. As a plain string it renders
