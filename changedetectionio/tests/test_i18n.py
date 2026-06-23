@@ -332,6 +332,21 @@ def test_time_unit_translations(client, live_server, measure_memory_usage, datas
     assert b"Chrome-Erweiterung" in res.data, "Expected German 'Chrome-Erweiterung' for Chrome Extension"
     assert b"Time Between Check" not in res.data, "Should not have English 'Time Between Check'"
 
+    # Test Russian translations
+    res = client.get(url_for("set_language", locale="ru"), follow_redirects=True)
+    assert res.status_code == 200
+
+    res = client.get(url_for("settings.settings_page"), follow_redirects=True)
+    assert res.status_code == 200
+
+    # Russian: Hours=Часы, Minutes=Минуты, Seconds=Секунды, Chrome Extension=Расширение Chrome, Time Between Check=Интервал проверки
+    assert "Часы".encode() in res.data, "Expected Russian 'Часы' for Hours"
+    assert "Минуты".encode() in res.data, "Expected Russian 'Минуты' for Minutes"
+    assert "Секунды".encode() in res.data, "Expected Russian 'Секунды' for Seconds"
+    assert "Расширение Chrome".encode() in res.data, "Expected Russian 'Расширение Chrome' for Chrome Extension"
+    assert "Интервал проверки".encode() in res.data, "Expected Russian 'Интервал проверки' for Time Between Check"
+    assert b"Time Between Check" not in res.data, "Should not have English 'Time Between Check'"
+
     # Test Traditional Chinese (zh_Hant_TW) translations
     res = client.get(url_for("set_language", locale="zh_Hant_TW"), follow_redirects=True)
     assert res.status_code == 200

@@ -1,0 +1,4962 @@
+# Russian translations for changedetection.io.
+# Copyright (C) 2026 changedetection.io
+# This file is distributed under the same license as the changedetection.io project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: changedetection.io 0.55.7\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-06-23 14:19+0300\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: changedetectionio/blueprint/backups/__init__.py
+msgid "A backup is already running, check back in a few minutes"
+msgstr ""
+"Резервное копирование уже запущено. Повторите попытку через несколько минут."
+
+#: changedetectionio/blueprint/backups/__init__.py
+msgid "Maximum number of backups reached, please remove some"
+msgstr ""
+"Достигнуто максимальное количество резервных копий. Удалите некоторые из "
+"них."
+
+#: changedetectionio/blueprint/backups/__init__.py
+msgid "Backup building in background, check back in a few minutes."
+msgstr ""
+"Резервная копия создаётся в фоновом режиме, повторите попытку через несколько минут."
+
+#: changedetectionio/blueprint/backups/__init__.py
+msgid "Backups were deleted."
+msgstr "Резервные копии были удалены."
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Backup zip file"
+msgstr "Резервный zip-файл"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Must be a .zip backup file!"
+msgstr "Это должен быть файл резервной копии .zip!"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Include groups"
+msgstr "Включить группы"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Replace existing groups of the same UUID"
+msgstr "Заменить существующие группы с одним и тем же UUID."
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Include watches"
+msgstr "Включить часы"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Replace existing watches of the same UUID"
+msgstr "Заменить существующие часы с тем же UUID"
+
+#: changedetectionio/blueprint/backups/restore.py
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore backup"
+msgstr "Восстановить резервную копию"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "A restore is already running, check back in a few minutes"
+msgstr "Восстановление уже запущено. Повторите попытку через несколько минут."
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "No file uploaded"
+msgstr "Ни один файл не загружен"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "File must be a .zip backup file"
+msgstr "Файл должен быть файлом резервной копии .zip."
+
+#: changedetectionio/blueprint/backups/restore.py
+#, python-format
+msgid "Backup file is too large (max %(mb)s MB)"
+msgstr "Файл резервной копии слишком велик (максимум %(mb)s МБ)"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Invalid or corrupted zip file"
+msgstr "Неверный или поврежденный zip-файл."
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Restore started in background, check back in a few minutes."
+msgstr ""
+"Восстановление началось в фоновом режиме. Повторите попытку через несколько "
+"минут."
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Create"
+msgstr "Создавать"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr "Восстановить"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "A backup is running!"
+msgstr "Резервное копирование запущено!"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid ""
+"Here you can download and request a new backup, when a backup is completed "
+"you will see it listed below."
+msgstr ""
+"Здесь вы можете скачать и запросить новую резервную копию. Когда резервная "
+"копия будет завершена, вы увидите ее в списке ниже."
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "Mb"
+msgstr "Мб"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "No backups found."
+msgstr "Резервные копии не найдены."
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "Create backup"
+msgstr "Создать резервную копию"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "Remove backups"
+msgstr "Удаление резервных копий"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "A restore is running!"
+msgstr "Восстановление запущено!"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid ""
+"Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new "
+"database layout)."
+msgstr ""
+"Восстановите резервную копию. Должен быть файл резервной копии .zip, "
+"созданный в версии 0.53.1 или после нее (новая структура базы данных)."
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid ""
+"Note: This does not override the main application settings, only watches and"
+" groups."
+msgstr ""
+"Примечание. Это не отменяет основные настройки приложения, а только часы и "
+"группы."
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+#, python-format
+msgid "Max upload size: %(upload)s MB, Max decompressed size: %(decomp)s MB"
+msgstr ""
+"Максимальный размер загрузки: %(upload)s МБ. Максимальный размер в "
+"распакованном виде: %(decomp)s МБ."
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Include all groups found in backup?"
+msgstr "Включить все группы, найденные в резервной копии?"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Replace any existing groups of the same UUID?"
+msgstr "Заменить существующие группы с одним и тем же UUID?"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Include all watches found in backup?"
+msgstr "Включить все найденные часы в резервную копию?"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Replace any existing watches of the same UUID?"
+msgstr "Заменить существующие часы с тем же UUID?"
+
+#: changedetectionio/blueprint/imports/importer.py
+msgid ""
+"Importing 5,000 of the first URLs from your list, the rest can be imported "
+"again."
+msgstr ""
+"Импортируйте 5000 первых URL-адресов из вашего списка, остальные можно "
+"импортировать снова."
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr ""
+"{count} Импортировано из списка в {duration}, {skipped_count} пропущено."
+
+#: changedetectionio/blueprint/imports/importer.py
+msgid "Unable to read JSON file, was it broken?"
+msgstr "Не удалось прочитать файл JSON, он сломан?"
+
+#: changedetectionio/blueprint/imports/importer.py
+msgid "JSON structure looks invalid, was it broken?"
+msgstr "Структура JSON выглядит недействительной, она сломана?"
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid ""
+"{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr ""
+"{count} Импортирован из Distill.io в {duration}, {skipped_count} пропущен."
+
+#: changedetectionio/blueprint/imports/importer.py
+msgid "Unable to read export XLSX file, something wrong with the file?"
+msgstr ""
+"Невозможно прочитать экспортированный файл XLSX. Что-то не так с файлом?"
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid ""
+"Error processing row number {}, URL value was incorrect, row was skipped."
+msgstr ""
+"Ошибка обработки номера строки {}, неверное значение URL, строка пропущена."
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid ""
+"Error processing row number {}, check all cell data types are correct, row "
+"was skipped."
+msgstr ""
+"Ошибка обработки номера строки {}, проверьте правильность всех типов данных "
+"ячеек, строка пропущена."
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} импортирован из Wachete .xlsx в {duration}."
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} импортирован из пользовательского файла .xlsx в {duration}."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "URL List"
+msgstr "Список URL-адресов"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid ".XLSX & Wachete"
+msgstr ".XLSX и Wachete"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Backup Restore"
+msgstr "Восстановление резервной копии"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Restoring changedetection.io backups is in the"
+msgstr "Восстановление резервных копий Changetection.io находится в разделе"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "backups section"
+msgstr "раздел резервных копий"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid ""
+"Enter one URL per line, and optionally add tags for each URL after a space, "
+"delineated by comma (,):"
+msgstr ""
+"Введите по одному URL-адресу в каждой строке и при необходимости добавьте "
+"теги для каждого URL-адреса после пробела, разделенного запятой (,):"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/templates/edit/include_subtract.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example"
+msgstr "Пример"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "URLs which do not pass validation will stay in the textarea."
+msgstr "URL-адреса, не прошедшие проверку, останутся в текстовом поле."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid ""
+"Copy and Paste your Distill.io watch 'export' file, this should be a JSON "
+"file."
+msgstr ""
+"Скопируйте и вставьте файл экспорта часов Distill.io. Это должен быть файл "
+"JSON."
+
+#. CJK fonts lack native italics; allow substitution with conventional local
+#. styling. dennis-ignore: W303
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid ""
+"This is <i>experimental</i>, supported fields are <code>name</code>, "
+"<code>uri</code>, <code>tags</code>, <code>config:selections</code>, the "
+"rest (including <code>schedule</code>) are ignored."
+msgstr ""
+"Это <i>experimental</i>, поддерживаются поля <code>name</code>, "
+"<code>uri</code>, <code>tags</code>, <code>config:selections</code>, "
+"остальные (включая <code>schedule</code>) игнорируются."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "How to export?"
+msgstr "Как экспортировать?"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Be sure to set your default fetcher to Chrome if required."
+msgstr ""
+"При необходимости обязательно установите сборщик данных по умолчанию в "
+"Chrome."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Table of custom column and data types mapping for the"
+msgstr "Таблица сопоставления пользовательских столбцов и типов данных для"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Custom mapping"
+msgstr "Пользовательское сопоставление"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "File mapping type."
+msgstr "Тип сопоставления файлов."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Column #"
+msgstr "Столбец #"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Type"
+msgstr "Тип"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "none"
+msgstr "никто"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "CSS/xPath filter"
+msgstr "Фильтр CSS/xPath"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Group / Tag name(s)"
+msgstr "Имя(я) группы/тега"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Recheck time (minutes)"
+msgstr "Время перепроверки (минуты)"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Import"
+msgstr "Импорт"
+
+#: changedetectionio/blueprint/rss/single_watch.py
+#, python-format
+msgid "Watch with UUID %(uuid)s not found"
+msgstr "Часы с UUID %(uuid)s не найдены"
+
+#: changedetectionio/blueprint/rss/single_watch.py
+#, python-format
+msgid ""
+"Watch %(uuid)s does not have enough history snapshots to show changes (need "
+"at least 2)"
+msgstr ""
+"У Watch %(uuid)s недостаточно снимков истории, чтобы отобразить изменения "
+"(нужно как минимум 2)."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Password protection removed."
+msgstr "Защита паролем снята."
+
+#: changedetectionio/blueprint/settings/__init__.py
+#, python-brace-format
+msgid ""
+"Warning: Worker count ({worker_count}) is close to or exceeds available CPU "
+"cores ({cpu_count})"
+msgstr ""
+"Предупреждение: количество рабочих процессов ({worker_count}) близко к "
+"доступным ядрам ЦП ({cpu_count}) или превышает их."
+
+#: changedetectionio/blueprint/settings/__init__.py
+#, python-brace-format
+msgid "Worker count adjusted: {}"
+msgstr "Изменено количество работников: {}"
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Dynamic worker adjustment not supported for sync workers"
+msgstr ""
+"Динамическая настройка рабочего процесса не поддерживается для рабочих "
+"процессов синхронизации."
+
+#: changedetectionio/blueprint/settings/__init__.py
+#, python-brace-format
+msgid "Error adjusting workers: {}"
+msgstr "Ошибка настройки работников: {}"
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Password protection enabled."
+msgstr "Защита паролем включена."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Settings updated."
+msgstr "Настройки обновлены."
+
+#: changedetectionio/blueprint/settings/__init__.py
+#: changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "Произошла ошибка, см. ниже."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "API Key was regenerated."
+msgstr "Ключ API был восстановлен."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Automatic scheduling paused - checks will not be queued."
+msgstr ""
+"Автоматическое планирование приостановлено — чеки не будут поставлены в "
+"очередь."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Automatic scheduling resumed - checks will be queued normally."
+msgstr ""
+"Автоматическое планирование возобновлено – чеки будут поставлены в очередь в"
+" обычном режиме."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "All notifications muted."
+msgstr "Все уведомления отключены."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "All notifications unmuted."
+msgstr "Все уведомления включены."
+
+#: changedetectionio/blueprint/settings/llm.py
+msgid ""
+"api_key is required when api_base differs from the saved configuration. "
+"Refusing to send the stored API key to a different endpoint."
+msgstr ""
+"api_key требуется, если api_base отличается от сохраненной конфигурации. "
+"Отказ отправить сохраненный ключ API в другую конечную точку."
+
+#: changedetectionio/blueprint/settings/llm.py
+msgid "AI / LLM configuration removed."
+msgstr "Конфигурация AI/LLM удалена."
+
+#: changedetectionio/blueprint/settings/llm.py
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
+msgstr "Кэш сводки AI очищен (удалены {} файлы)."
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "Notification debug log"
+msgstr "Журнал отладки уведомлений"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "General"
+msgstr "Общий"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Fetching"
+msgstr "Получение"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Global Filters"
+msgstr "Глобальные фильтры"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "UI Options"
+msgstr "Параметры пользовательского интерфейса"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Backups"
+msgstr "Резервные копии"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Time & Date"
+msgstr "Время и дата"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "CAPTCHA & Proxies"
+msgstr "Капча и прокси"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr "ИИ/LLM"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Info"
+msgstr "Информация"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Default recheck time for all watches, current system minimum is"
+msgstr ""
+"Время перепроверки по умолчанию для всех часов, текущий системный минимум:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "more info"
+msgstr "больше информации"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"After this many consecutive times that the CSS/xPath filter is missing, send"
+" a notification"
+msgstr ""
+"После этого много раз подряд, когда фильтр CSS/xPath отсутствует, отправьте "
+"уведомление."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set to <strong>0</strong> to disable"
+msgstr "Установите значение <strong>0</strong>, чтобы отключить"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Limit collection of history snapshots for each watch to this number of "
+"history items."
+msgstr ""
+"Ограничьте сбор снимков истории для каждых часов указанным количеством "
+"элементов истории."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set to empty to disable / no limit"
+msgstr "Установите пустое значение, чтобы отключить/без ограничений"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Password protection for your changedetection.io application."
+msgstr "Защита паролем для вашего приложения Changetection.io."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Password is locked."
+msgstr "Пароль заблокирован."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Allow access to the watch change history page when password is enabled (Good"
+" for sharing the diff page)"
+msgstr ""
+"Разрешить доступ к странице истории изменений часов, когда пароль включен "
+"(хорошо для совместного использования страницы различий)"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"When a request returns no content, or the HTML does not contain any text, is"
+" this considered a change?"
+msgstr ""
+"Если запрос не возвращает содержимого или HTML не содержит текста, считается"
+" ли это изменением?"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Choose a default proxy for all watches"
+msgstr "Выберите прокси-сервер по умолчанию для всех часов"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Base URL used for the"
+msgstr "Базовый URL-адрес, используемый для"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "token in notification links."
+msgstr "токен в ссылках уведомлений."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Default value is the system environment variable"
+msgstr "Значение по умолчанию — переменная системной среды."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/templates/_common_fields.html
+msgid "read more here"
+msgstr "читайте больше здесь"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Use the <strong>Basic</strong> method (default) where your watched sites "
+"don't need Javascript to render."
+msgstr ""
+"Используйте метод <strong>Basic</strong> (по умолчанию), если для просмотра "
+"ваших сайтов не требуется Javascript."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection "
+"to a running WebDriver+Chrome server, set by the ENV var 'WEBDRIVER_URL'."
+msgstr ""
+"Для метода <strong>Chrome/Javascript</strong> требуется сетевое подключение "
+"к работающему серверу WebDriver+Chrome, заданное переменной ENV "
+"'WEBDRIVER_URL'."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"If you're having trouble waiting for the page to be fully rendered (text "
+"missing etc), try increasing the 'wait' time here."
+msgstr ""
+"Если у вас возникли проблемы с ожиданием полной визуализации страницы "
+"(отсутствует текст и т. д.), попробуйте увеличить время ожидания здесь."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "This will wait <i>n</i> seconds before extracting the text."
+msgstr "Это будет ждать <i>n</i> секунд, прежде чем извлекать текст."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Number of concurrent workers to process watches. More workers = faster "
+"processing but higher memory usage."
+msgstr ""
+"Количество одновременно работающих работников, обрабатывающих часы. Больше "
+"рабочих = более быстрая обработка, но более высокое использование памяти."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Currently running:"
+msgstr "В настоящее время работает:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "operational"
+msgstr "оперативный"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "workers"
+msgstr "рабочие"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "actively processing"
+msgstr "активно обрабатываю"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Example - 3 seconds random jitter could trigger up to 3 seconds earlier or "
+"up to 3 seconds later"
+msgstr ""
+"Пример. Случайное дрожание длительностью 3 секунды может сработать на 3 "
+"секунды раньше или на 3 секунды позже."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"For regular plain requests (not chrome based), maximum number of seconds "
+"until timeout, 1-999."
+msgstr ""
+"Для обычных простых запросов (не на основе Chrome) максимальное количество "
+"секунд до истечения времени ожидания — 1–999."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Applied to all requests."
+msgstr "Применяется ко всем запросам."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Note: Simply changing the User-Agent often does not defeat anti-robot "
+"technologies, it's important to consider"
+msgstr ""
+"Примечание. Простое изменение User-Agent часто не побеждает технологии "
+"защиты от роботов, это важно учитывать."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "all of the ways that the browser is detected"
+msgstr "все способы обнаружения браузера"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Connect using Bright Data proxies, find out more here."
+msgstr "Подключайтесь с помощью прокси Bright Data, узнайте больше здесь."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/templates/_common_fields.html
+msgid "Tip:"
+msgstr "Кончик:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Ignore whitespace, tabs and new-lines/line-feeds when considering if a "
+"change was detected."
+msgstr ""
+"Игнорируйте пробелы, символы табуляции и символы новой строки/перевода "
+"строки при рассмотрении вопроса об обнаружении изменения."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Note:"
+msgstr "Примечание:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Changing this will change the status of your existing watches, possibly "
+"trigger alerts etc."
+msgstr ""
+"Изменение этого параметра приведет к изменению статуса ваших существующих "
+"часов, возможно, вызовет оповещения и т. д."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Render anchor tag content, default disabled, when enabled renders links as"
+msgstr ""
+"Отображение содержимого тега привязки (по умолчанию отключено). При "
+"включении ссылки отображаются как"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Changing this could affect the content of your existing watches, possibly "
+"trigger alerts etc."
+msgstr ""
+"Изменение этого параметра может повлиять на содержимое ваших существующих "
+"часов, возможно, вызвать оповещения и т. д."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Remove HTML element(s) by CSS and XPath selectors before text conversion."
+msgstr ""
+"Удалите элементы HTML с помощью селекторов CSS и XPath перед преобразованием"
+" текста."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Don't paste HTML here, use only CSS and XPath selectors"
+msgstr "Не вставляйте сюда HTML, используйте только селекторы CSS и XPath."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Add multiple elements, CSS or XPath selectors per line to ignore multiple "
+"parts of the HTML."
+msgstr ""
+"Добавьте несколько элементов, селекторов CSS или XPath в каждую строку, "
+"чтобы игнорировать несколько частей HTML."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Note: This is applied globally in addition to the per-watch rules."
+msgstr ""
+"Примечание. Это применяется глобально в дополнение к правилам для каждого "
+"просмотра."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Matching text will be ignored in the text snapshot (you can still see it but"
+" it wont trigger a change)"
+msgstr ""
+"Соответствующий текст будет игнорироваться в текстовом снимке (вы все еще "
+"можете видеть его, но он не приведет к изменению)."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Each line processed separately, any line matching will be ignored (removed "
+"before creating the checksum)"
+msgstr ""
+"Каждая строка обрабатывается отдельно, любое совпадение строк будет "
+"игнорироваться (удаляется перед созданием контрольной суммы)"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Regular Expression support, wrap the entire line in forward slash"
+msgstr "Поддержка регулярных выражений, оберните всю строку косой чертой"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Changing this will affect the comparison checksum which may trigger an alert"
+msgstr ""
+"Изменение этого параметра повлияет на контрольную сумму сравнения, что может"
+" вызвать предупреждение."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Remove any text that appears in the \"Ignore text\" from the output "
+"(otherwise its just ignored for change-detection)"
+msgstr ""
+"Удалите из вывода любой текст, который появляется в поле «Игнорировать "
+"текст» (в противном случае он просто игнорируется для обнаружения "
+"изменений)."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "API Access"
+msgstr "API-доступ"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Drive your changedetection.io via API, More about"
+msgstr "Управляйте своим Changetection.io через API. Подробнее о"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "API access and examples here"
+msgstr "Доступ к API и примеры здесь"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Restrict API access limit by using"
+msgstr "Ограничьте лимит доступа к API, используя"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "header - required for the Chrome Extension to work"
+msgstr "заголовок — необходим для работы расширения Chrome."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copy"
+msgstr "копировать"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Regenerate API key"
+msgstr "Восстановить ключ API"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Chrome Extension"
+msgstr "Расширение Chrome"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Easily add any web-page to your changedetection.io installation from within "
+"Chrome."
+msgstr ""
+"Легко добавьте любую веб-страницу в вашу установку Changetection.io из "
+"Chrome."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Step 1"
+msgstr "Шаг 1"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install the extension,"
+msgstr "Установите расширение,"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Step 2"
+msgstr "Шаг 2"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Navigate to this page,"
+msgstr "Перейдите на эту страницу,"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Step 3"
+msgstr "Шаг 3"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Open the extension from the toolbar and click"
+msgstr "Откройте расширение на панели инструментов и нажмите"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Sync API Access"
+msgstr "Доступ к API синхронизации"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Try our new Chrome Extension!"
+msgstr "Попробуйте наше новое расширение для Chrome!"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Chrome store icon"
+msgstr "Значок магазина Chrome"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Chrome Webstore"
+msgstr "Интернет-магазин Chrome"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Maximum number of history snapshots to include in the watch specific RSS "
+"feed."
+msgstr ""
+"Максимальное количество снимков истории, которые можно включить в RSS-канал "
+"конкретного просмотра."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"For watching other RSS feeds - When watching RSS/Atom feeds, convert them "
+"into clean text for better change detection."
+msgstr ""
+"Для просмотра других каналов RSS. При просмотре каналов RSS/Atom "
+"преобразуйте их в чистый текст для лучшего обнаружения изменений."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Does your reader support HTML? Set it here"
+msgstr "Поддерживает ли ваша читалка HTML? Установите это здесь"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"'System default' for the same template for all items, or re-use your "
+"\"Notification Body\" as the template."
+msgstr ""
+"«Системное значение по умолчанию» для одного и того же шаблона для всех "
+"элементов или повторно используйте «Тело уведомления» в качестве шаблона."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Ensure the settings below are correct, they are used to manage the time "
+"schedule for checking your web page watches."
+msgstr ""
+"Убедитесь, что приведенные ниже настройки верны. Они используются для "
+"управления расписанием проверки часов вашей веб-страницы."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "UTC Time & Date from Server:"
+msgstr "Время и дата UTC с сервера:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Local Time & Date in Browser:"
+msgstr "Местное время и дата в браузере:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"Enable this setting to open the diff page in a new tab. If disabled, the "
+"diff page will open in the current tab."
+msgstr ""
+"Включите этот параметр, чтобы открыть страницу различий в новой вкладке. "
+"Если этот параметр отключен, страница различий откроется на текущей вкладке."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
+msgstr ""
+"Обновления пользовательского интерфейса в реальном времени включены — (если "
+"это изменено, требуется перезагрузка)"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Enable or Disable Favicons next to the watch list"
+msgstr "Включить или отключить значки рядом со списком наблюдения."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Number of items per page in the watch overview list, 0 to disable."
+msgstr ""
+"Количество элементов на странице в обзорном списке наблюдения: 0, чтобы "
+"отключить."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Tip"
+msgstr "Кончик"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data"
+" Center\" for blocked websites."
+msgstr ""
+"«Жилой» и «Мобильный» тип прокси могут быть более успешными, чем «Дата-"
+"центр» для заблокированных веб-сайтов."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr "«Имя» будет использоваться для выбора прокси в настройках Watch Edit."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' "
+"fetcher, for other fetchers you should whitelist the IP access instead"
+msgstr ""
+"Прокси-серверы SOCKS5 с аутентификацией поддерживаются только с помощью "
+"сборщика «простых запросов», для других сборщиков вместо этого следует "
+"внести в белый список доступ по IP."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Uptime:"
+msgstr "Время работы:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Python version:"
+msgstr "Версия Python:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Plugins active:"
+msgstr "Плагины активны:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "No plugins active"
+msgstr "Нет активных плагинов"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Back"
+msgstr "Назад"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Clear Snapshot History"
+msgstr "Очистить историю снимков"
+
+#. 'Usage' here means token consumption/cost stats for the AI provider, not a
+#. how-to guide
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgctxt "AI usage stats"
+msgid "Usage"
+msgstr "Использование"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Overview"
+msgstr "Обзор"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Provider"
+msgstr "Поставщик"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Prompts"
+msgstr "Подсказки"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Behaviour"
+msgstr "Поведение"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI-powered change monitoring"
+msgstr "Мониторинг изменений на базе искусственного интеллекта"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Connect an LLM to move from \"something changed\" to \"only the thing you "
+"care about changed\"."
+msgstr ""
+"Подключите LLM, чтобы перейти от «что-то изменилось» к «изменилось только "
+"то, что вам важно»."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Intent filtering"
+msgstr "Фильтрация намерений"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On "
+"every detected change the AI evaluates the diff against it and suppresses "
+"irrelevant noise."
+msgstr ""
+"Каждые часы или тег могут содержать текстовое намерение — %(ex1)s или "
+"%(ex2)s. При каждом обнаруженном изменении ИИ оценивает разницу и подавляет "
+"ненужный шум."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Tip: intent evaluation benefits from a capable model — recommended %(local)s"
+" locally, or %(gpt)s / %(gemini)s. Very small models (≤3B) may misjudge "
+"numeric comparisons."
+msgstr ""
+"Совет: оценка намерений выигрывает от работоспособной модели — локально "
+"рекомендуется %(local)s или %(gpt)s/%(gemini)s. Очень маленькие модели (≤3B)"
+" могут давать ошибочные результаты при числовом сравнении."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Instead of raw diffs, receive plain-language summaries in notifications — "
+"%(ex1)s or %(ex2)s. Set a global default prompt here, or override per watch "
+"or tag."
+msgstr ""
+"Вместо необработанных различий получайте в уведомлениях сводку на простом "
+"языке — %(ex1)s или %(ex2)s. Установите здесь глобальное приглашение по "
+"умолчанию или переопределите его для каждого просмотра или тега."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Minimal cost"
+msgstr "Минимальная стоимость"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"The AI sees only a unified diff of what changed — never full page HTML. Low-"
+"cost models like %(gpt)s or %(gemini)s handle this well, typically fractions"
+" of a cent per check."
+msgstr ""
+"ИИ видит только единую разницу того, что изменилось, а не полный HTML-код "
+"страницы. Недорогие модели, такие как %(gpt)s или %(gemini)s, справляются с "
+"этим хорошо, обычно доли цента за чек."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI / LLM configured:"
+msgstr "AI/LLM настроено:"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Configure AI Provider"
+msgstr "Настройка поставщика AI"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI Provider"
+msgstr "Поставщик ИИ"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Master switch — when off, all AI lookups are skipped even if a provider is "
+"configured below."
+msgstr ""
+"Главный переключатель — если он выключен, все запросы AI пропускаются, даже "
+"если провайдер настроен ниже."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Third-party data transfer — please read"
+msgstr "Передача данных третьим лицам — прочтите"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"When AI features are active, change data from the websites you monitor — "
+"including page diffs and extracted text — is sent to an external AI provider"
+" of your choice."
+msgstr ""
+"Когда функции искусственного интеллекта активны, данные об изменениях с веб-"
+"сайтов, которые вы отслеживаете, включая различия страниц и извлеченный "
+"текст, отправляются внешнему поставщику искусственного интеллекта по вашему "
+"выбору."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You are solely responsible for ensuring this complies with the terms of "
+"service of each website you monitor."
+msgstr ""
+"Вы несете единоличную ответственность за обеспечение соответствия условиям "
+"обслуживания каждого веб-сайта, который вы отслеживаете."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You are solely responsible for compliance with applicable data-protection "
+"laws (e.g. GDPR) regarding any personal data that may appear in monitored "
+"content."
+msgstr ""
+"Вы несете единоличную ответственность за соблюдение применимых законов о "
+"защите данных (например, GDPR) в отношении любых личных данных, которые "
+"могут появляться в отслеживаемом контенте."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"API costs charged by your chosen provider are your own responsibility; this "
+"software has no visibility into or control over those charges."
+msgstr ""
+"Затраты на API, взимаемые выбранным вами провайдером, являются вашей "
+"собственной ответственностью; это программное обеспечение не имеет "
+"возможности отслеживать и контролировать эти платежи."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"AI / LLM models are known to hallucinate — producing plausible-sounding but "
+"factually incorrect or entirely fabricated output with apparent confidence —"
+" and by design may omit or truncate relevant data during summarisation. AI "
+"output must never be relied upon as complete or accurate. This software is "
+"provided as-is with no warranty of any kind."
+msgstr ""
+"Известно, что модели AI/LLM галлюцинируют — выдавая правдоподобно звучащие, "
+"но фактически неверные или полностью сфабрикованные результаты с очевидной "
+"уверенностью — и по замыслу могут опускать или усекать соответствующие "
+"данные во время обобщения. Никогда нельзя полагаться на результаты "
+"искусственного интеллекта как на полные и точные. Это программное "
+"обеспечение предоставляется «как есть», без каких-либо гарантий."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"By enabling AI features you personally indemnify and hold harmless the "
+"creator(s) and contributor(s) of this software from any claims, damages, or "
+"liability arising from this data transfer or your use of AI features."
+msgstr ""
+"Включая функции ИИ, вы лично освобождаете от ответственности и ограждаете "
+"создателей и участников этого программного обеспечения от любых претензий, "
+"ущерба или ответственности, возникающих в результате такой передачи данных "
+"или использования вами функций ИИ."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"I have read and understood the above. I accept full responsibility and "
+"indemnify the creator(s) of this software."
+msgstr ""
+"Я прочитал и понял вышесказанное. Я принимаю на себя полную ответственность "
+"и возмещаю ущерб создателям этого программного обеспечения."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/templates/_common_fields.html
+msgid "Note"
+msgstr "Примечание"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"AI / LLM is configured via environment variables "
+"(<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
+"<code>LLM_MODEL</code> environment variable to configure via this form "
+"instead."
+msgstr ""
+"AI/LLM настраивается через переменные среды "
+"(<code>LLM_MODEL=%(model)s</code>%(api_base)s). Вместо этого удалите "
+"переменную среды <code>LLM_MODEL</code>, чтобы настроить ее с помощью этой "
+"формы."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "select a provider"
+msgstr "выберите провайдера"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
+msgstr "Совместимость с OpenAI (vLLM, LM Studio, llama.cpp)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Only needed for Ollama or custom/self-hosted endpoints. Leave blank for "
+"cloud providers."
+msgstr ""
+"Требуется только для Ollama или пользовательских/автономных конечных точек. "
+"Оставьте пустым для поставщиков облачных услуг."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought "
+"before the final answer. This multiplier scales every "
+"<code>max_tokens</code> cap for this endpoint to leave reasoning room. "
+"Defaults to %(default)s; raise it if responses come back truncated or empty,"
+" lower it (down to 1x) if you want tighter limits on a paid endpoint. "
+"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers "
+"(OpenAI, Anthropic, Gemini) keep their original tight caps."
+msgstr ""
+"Модели рассуждений (Qwen3, DeepSeek-R1, Gemma 3 и т. д.) перед окончательным"
+" ответом выдают цепочку мыслей. Этот множитель масштабирует каждое "
+"ограничение <code>max_tokens</code> для этой конечной точки, чтобы оставить "
+"место для рассуждений. По умолчанию %(default)s; поднимите его, если ответы "
+"возвращаются усеченными или пустыми, уменьшите его (до 1x), если вы хотите "
+"более жесткие ограничения для платной конечной точки. Применительно к Ollama"
+" и конечным точкам, совместимым с OpenAI: другие облачные провайдеры "
+"(OpenAI, Anthropic, Gemini) сохраняют свои первоначальные жесткие "
+"ограничения."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Load available models"
+msgstr "Загрузить доступные модели"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Available models"
+msgstr "Доступные модели"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "choose a model"
+msgstr "выбрать модель"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Enter API key and click 'Load available models'"
+msgstr "Введите ключ API и нажмите «Загрузить доступные модели»."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove AI / LLM configuration?"
+msgstr "Удалить конфигурацию AI/LLM?"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This will remove your saved AI provider, model, and API key."
+msgstr ""
+"Это приведет к удалению сохраненного поставщика AI, модели и ключа API."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove"
+msgstr "Удалять"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+#: changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "Отмена"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Test connection"
+msgstr "Тестовое соединение"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Your API key is stored locally and sent only to your chosen provider. On "
+"each detected change, the watch's diff and extracted text are sent to the "
+"LLM — no full page HTML."
+msgstr ""
+"Ваш ключ API хранится локально и отправляется только выбранному вами "
+"провайдеру. При каждом обнаруженном изменении разница часов и извлеченный "
+"текст отправляются в LLM — без полностраничного HTML."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Cache"
+msgstr "Кэш"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear all summary cache?"
+msgstr "Очистить весь кэш сводки?"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This will remove all cached AI change summaries across all watches."
+msgstr ""
+"Это приведет к удалению всех кэшированных сводок изменений ИИ во всех часах."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "They will be regenerated on the next check."
+msgstr "Они будут восстановлены при следующей проверке."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear cache"
+msgstr "Очистить кеш"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear all summary cache"
+msgstr "Очистить весь кэш сводки"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Removes all cached AI change summaries across all watches. They will be "
+"regenerated on the next check."
+msgstr ""
+"Удаляет все кэшированные сводки изменений ИИ во всех часах. Они будут "
+"восстановлены при следующей проверке."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Enables litellm verbose output (routed through loguru). Useful when "
+"diagnosing provider errors or empty responses. Leave off in production — "
+"generates a lot of log volume."
+msgstr ""
+"Включает подробный вывод Litellm (передается через loguru). Полезно при "
+"диагностике ошибок провайдера или пустых ответов. Оставить в производстве — "
+"генерируется большой объем журналов."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Default AI Change Summary"
+msgstr "Сводка изменений ИИ по умолчанию"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Used for all watches unless overridden by the watch or its tag/group."
+msgstr ""
+"Используется для всех часов, если они не переопределены самими часами или их"
+" тегом/группой."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Modify default prompt"
+msgstr "Изменить приглашение по умолчанию"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"When enabled, the <code>%(diff)s</code> notification token shows the AI "
+"summary instead of the raw diff. Use <code>%(raw_diff)s</code> to always get"
+" the original."
+msgstr ""
+"Если этот параметр включен, токен уведомления <code>%(diff)s</code> "
+"показывает сводку AI вместо необработанных различий. Используйте "
+"<code>%(raw_diff)s</code>, чтобы всегда получать оригинал."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"When enabled, the AI will be used as a last resort to extract price and "
+"stock status from product pages where no structured metadata (JSON-LD, "
+"microdata, OpenGraph) is found."
+msgstr ""
+"Если эта функция включена, искусственный интеллект будет использоваться в "
+"качестве крайней меры для извлечения цен и состояния запасов со страниц "
+"продуктов, где не обнаружены структурированные метаданные (JSON-LD, "
+"микроданные, OpenGraph)."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but "
+"count against the output budget. Set to Off if summaries are being cut "
+"short."
+msgstr ""
+"Только для моделей Gemini 2.5+. Жетоны мышления улучшают качество "
+"рассуждений, но учитываются в бюджете продукции. Установите значение "
+"«Выкл.», если сводки обрезаются."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Upper limit on tokens the AI may use when writing a change summary. Higher "
+"values allow longer summaries but cost more."
+msgstr ""
+"Верхний предел токенов, которые ИИ может использовать при написании сводки "
+"изменений. Более высокие значения позволяют составлять более длинные сводки,"
+" но стоят дороже."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Configure a provider first to unlock behaviour settings."
+msgstr ""
+"Сначала настройте поставщика, чтобы разблокировать настройки поведения."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token & Cost Tracking"
+msgstr "Отслеживание токенов и затрат"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This month"
+msgstr "В этом месяце"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens"
+msgstr "жетоны"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid "%(percent)s%% of %(budget)s"
+msgstr "%(percent)s%% от %(budget)s"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "All-time total"
+msgstr "Всего за все время"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Monthly token budget reached. AI summarisation is paused until next month."
+msgstr ""
+"Достигнут ежемесячный бюджет токенов. Подведение итогов AI приостановлено до"
+" следующего месяца."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token budget this period"
+msgstr "Бюджет токена на этот период"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+msgstr "(устанавливается через <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "0 = unlimited"
+msgstr "0 = неограниченно"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens (0 = unlimited)"
+msgstr "жетоны (0 = неограниченно)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Current billing period"
+msgstr "Текущий расчетный период"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
+msgstr "(устанавливается через <code>LLM_MAX_INPUT_CHARS</code>)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid "characters — currently enforcing: %(limit)s"
+msgstr "символы — в настоящее время применяется: %(limit)s"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"tokens — skips AI evaluation on a watch once its usage within the current "
+"period (monthly) hits this cap (0 = unlimited)"
+msgstr ""
+"токены — пропускает оценку ИИ на часах, как только их использование в "
+"течение текущего периода (ежемесячно) достигает этого ограничения (0 = "
+"неограниченно)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No AI usage recorded yet."
+msgstr "Использование ИИ пока не зафиксировано."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token budget"
+msgstr "Бюджет токена"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens per month (0 = unlimited)"
+msgstr "токенов в месяц (0 = неограниченно)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.openai.com → API keys"
+msgstr "Platform.openai.com → Ключи API"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.anthropic.com → API keys"
+msgstr "console.anthropic.com → Ключи API"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "aistudio.google.com → Get API key"
+msgstr "aistudio.google.com → Получить ключ API"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No API key needed for local Ollama"
+msgstr "Для локальной Олламы ключ API не требуется."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
+msgstr ""
+"Токен носителя для вашего собственного сервера (vLLM, LM Studio и т. д.)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "openrouter.ai → Keys"
+msgstr "openrouter.ai → Ключи"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Select a provider first."
+msgstr "Сначала выберите провайдера."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Loading…"
+msgstr "Загрузка…"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No models returned by the provider."
+msgstr "Поставщик не вернул ни одной модели."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "— choose a model —"
+msgstr "— выбрать модель —"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "models available with your key"
+msgstr "модели доступны с вашим ключом"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Request failed"
+msgstr "Запрос не выполнен"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Testing…"
+msgstr "Тестирование…"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Connected"
+msgstr "Подключено"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Failed"
+msgstr "Неуспешный"
+
+#: changedetectionio/blueprint/tags/__init__.py
+#, python-brace-format
+msgid "The tag \"{}\" already exists"
+msgstr "Тег \"{}\" уже существует."
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Tag added"
+msgstr "Тег добавлен"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Tag deleted, removing from watches in background"
+msgstr "Тег удален, часы удалены в фоновом режиме"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Unlinking tag from watches in background"
+msgstr "Отключение тега от часов в фоновом режиме"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "All tags deleted, clearing from watches in background"
+msgstr "Все теги удалены, часы в фоновом режиме удалены."
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Tag not found"
+msgstr "Тег не найден"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Updated"
+msgstr "Обновлено"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Activate for individual watches in this tag/group?"
+msgstr "Активировать для отдельных часов в этом теге/группе?"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Auto-apply to watches with URLs matching"
+msgstr "Автоматически применять к часам с совпадающими URL-адресами"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "e.g. *://example.com/* or github.com/myorg"
+msgstr "например *://example.com/* или github.com/myorg"
+
+#: changedetectionio/blueprint/tags/form.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Tag colour"
+msgstr "Цвет тега"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Tag name"
+msgstr "Имя тега"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Filters & Triggers"
+msgstr "Фильтры и триггеры"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"Automatically applies this tag to any watch whose URL matches. Supports "
+"wildcards: <code>*example.com*</code> or plain substring: "
+"<code>github.com/myorg</code>"
+msgstr ""
+"Автоматически применяет этот тег ко всем часам, URL-адрес которых совпадает."
+" Поддерживается подстановочные знаки: <code>*example.com*</code> или простая"
+" подстрока: <code>github.com/myorg</code>."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Currently matching watches"
+msgstr "Подходящие часы"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Custom colour"
+msgstr "Пользовательский цвет"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"Leave unchecked to use the auto-generated colour based on the tag name."
+msgstr ""
+"Оставьте этот флажок снятым, чтобы использовать автоматически "
+"сгенерированный цвет на основе имени тега."
+
+#. CJK fonts lack native italics; allow substitution with conventional local
+#. styling. dennis-ignore: W303
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"These settings are <strong><i>added</i></strong> to any existing watch "
+"configurations."
+msgstr ""
+"Эти настройки <strong><i>добавлены</i></strong> во все существующие "
+"конфигурации часов."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Text filtering"
+msgstr "Фильтрация текста"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use with caution!"
+msgstr "Используйте с осторожностью!"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"This will easily fill up your email storage quota or flood other storages."
+msgstr ""
+"Это легко заполнит вашу квоту на хранение электронной почты или переполнит "
+"другие хранилища."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Look out!"
+msgstr "Высматривать!"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Lookout!"
+msgstr "Высматривать!"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid ""
+"There are <a href=\"%(url)s\">system-wide notification URLs enabled</a>, "
+"this form will override notification settings for this watch only &dash; an "
+"empty Notification URL list here will still send notifications."
+msgstr ""
+"Включены общесистемные URL-адреса уведомлений <a href=\"%(url)s\"></a>, эта "
+"форма будет переопределять настройки уведомлений только для этих часов "
+"&dash; пустой список URL-адресов уведомлений здесь по-прежнему будет "
+"отправлять уведомления."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use system defaults"
+msgstr "Использовать системные настройки по умолчанию"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Add a new organisational tag"
+msgstr "Добавить новый организационный тег"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Watch group / tag"
+msgstr "Группа просмотра/тег"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid ""
+"Groups allows you to manage filters and notifications for multiple watches "
+"under a single organisational tag."
+msgstr ""
+"Группы позволяют управлять фильтрами и уведомлениями для нескольких часов "
+"под одним организационным тегом."
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "# Watches"
+msgstr "# Часы"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Tag / Label name"
+msgstr "Имя тега/метки"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "No website organisational tags/groups configured"
+msgstr "Организационные теги/группы веб-сайта не настроены."
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/templates/menu.html
+msgid "Mute notifications"
+msgstr "Отключить уведомления"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Edit"
+msgstr "Редактировать"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Recheck"
+msgstr "Перепроверить"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Delete Group?"
+msgstr "Удалить группу?"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#, python-format
+msgid ""
+"<p>Are you sure you want to delete group "
+"<strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
+msgstr ""
+"<p>Вы уверены, что хотите удалить группу "
+"<strong>%(title)s</strong>?</p><p>Это действие невозможно отменить.</p>"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Delete"
+msgstr "Удалить"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Deletes and removes tag"
+msgstr "Удаляет и удаляет тег"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Unlink Group?"
+msgstr "Отсоединить группу?"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#, python-format
+msgid ""
+"<p>Are you sure you want to unlink all watches from group "
+"<strong>%(title)s</strong>?</p><p>The tag will be kept but watches will be "
+"removed from it.</p>"
+msgstr ""
+"<p>Вы уверены, что хотите отменить связь всех часов с группой "
+"<strong>%(title)s</strong>?</p><p>Тег сохранится, но часы будут из него "
+"удалены.</p>"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Unlink"
+msgstr "Отсоединить"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Keep the tag but unlink any watches"
+msgstr "Сохраните метку, но отсоедините все часы"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "RSS Feed for this watch"
+msgstr "RSS-канал для этих часов"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches deleted"
+msgstr "{} часы удалены"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches paused"
+msgstr "{} часы приостановлены"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches unpaused"
+msgstr "{} смотрит без паузы"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches updated"
+msgstr "{} часы обновлены"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches muted"
+msgstr "{} часы отключены"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches un-muted"
+msgstr "{} смотрит без звука"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches queued for rechecking"
+msgstr "{} часов поставлено в очередь на перепроверку"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches errors cleared"
+msgstr "{} наблюдает за устранением ошибок"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches cleared/reset."
+msgstr "{} часы очищены/сброшены."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches set to use default notification settings"
+msgstr "Часы {} настроены на использование настроек уведомлений по умолчанию."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches were tagged"
+msgstr "{} часы были помечены"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Watch not found"
+msgstr "Часы не найдены"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Cleared snapshot history for watch {}"
+msgstr "Очищена история снимков для просмотра {}."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "clear"
+msgstr "прозрачный"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "History clearing started in background"
+msgstr "Очистка истории началась в фоновом режиме"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Incorrect confirmation text."
+msgstr "Неверный текст подтверждения."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "The watch by UUID {} does not exist."
+msgstr "Часы по UUID {} ​​не существуют."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Deleted."
+msgstr "Удален."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Cloned, you are editing the new watch."
+msgstr "Клонированные, вы редактируете новые часы."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Watch is already queued or being checked."
+msgstr "Часы уже поставлены в очередь или проходят проверку."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Queued 1 watch for rechecking."
+msgstr "В очереди на перепроверку 1 часы."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid ""
+"Queued {count} watches for rechecking ({skipped_count} already queued or "
+"running)."
+msgstr ""
+"Поставленный в очередь {count} ожидает повторной проверки ({skipped_count} "
+"уже поставлен в очередь или работает)."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Queued {} watches for rechecking."
+msgstr "В очереди {} ожидает повторной проверки."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Queueing watches for rechecking in background..."
+msgstr "Очередь в часы для перепроверки в фоновом режиме..."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid ""
+"Could not share, something went wrong while communicating with the share "
+"server - {}"
+msgstr ""
+"Не удалось поделиться, что-то пошло не так при обмене данными с сервером "
+"общего доступа – {}"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Language set to auto-detect from browser"
+msgstr "Язык настроен на автоматическое определение в браузере"
+
+#: changedetectionio/blueprint/ui/diff.py
+#: changedetectionio/blueprint/ui/preview.py
+msgid "No history found for the specified link, bad link?"
+msgstr "Для указанной ссылки не найдена история, плохая ссылка?"
+
+#: changedetectionio/blueprint/ui/diff.py
+msgid ""
+"Not enough history (2 snapshots required) to show difference page for this "
+"watch."
+msgstr ""
+"Недостаточно истории (необходимо 2 снимка), чтобы показать страницу различий"
+" для этих часов."
+
+#: changedetectionio/blueprint/ui/diff.py
+#, python-format
+msgid ""
+"Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets"
+" next month."
+msgstr ""
+"Достигнут ежемесячный бюджет токенов AI в токенах %(budget)s (использовано "
+"%(used)s). Сброс в следующем месяце."
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "No watches to edit"
+msgstr "Нет часов для редактирования"
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "No watch with the UUID {} found."
+msgstr "Часы с UUID {} ​​не найдены."
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Switched to mode - {}."
+msgstr "Переключился в режим - {}."
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid ""
+"Could not load '{}' processor, processor plugin might be missing. Please "
+"select a different processor."
+msgstr ""
+"Не удалось загрузить процессор «{}», возможно, отсутствует плагин "
+"процессора. Пожалуйста, выберите другой процессор."
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not load '{}' processor, processor plugin might be missing."
+msgstr ""
+"Не удалось загрузить процессор «{}», возможно, отсутствует плагин "
+"процессора."
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "System settings default"
+msgstr "Системные настройки по умолчанию"
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "Default"
+msgstr "По умолчанию"
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "Updated watch - unpaused!"
+msgstr "Обновленные часы — сняты с паузы!"
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "Updated watch."
+msgstr "Обновленные часы."
+
+#: changedetectionio/blueprint/ui/preview.py
+msgid "Preview unavailable - No fetch/check completed or triggers not reached"
+msgstr ""
+"Предварительный просмотр недоступен: выборка/проверка не завершена или "
+"триггеры не достигнуты."
+
+#: changedetectionio/blueprint/ui/preview.py
+msgid "Diff"
+msgstr "Разница"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid ""
+"This will remove version history (snapshots) for ALL watches, but keep your "
+"list of URLs!"
+msgstr ""
+"Это приведет к удалению истории версий (снимков) для ВСЕХ часов, но "
+"сохраните список URL-адресов!"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "You may like to use the"
+msgstr "Возможно, вам захочется использовать"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "BACKUP"
+msgstr "РЕЗЕРВНОЕ КОПИРОВАНИЕ"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "link first."
+msgstr "ссылка первая."
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Confirmation text"
+msgstr "Текст подтверждения"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Type in the word"
+msgstr "Введите слово"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "to confirm that you understand."
+msgstr "чтобы подтвердить, что вы понимаете."
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Clear History!"
+msgstr "Очистить историю!"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Share diff as image"
+msgstr "Поделиться различиями как изображением"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Share as Image"
+msgstr "Поделиться как изображение"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Ignore any lines matching"
+msgstr "Игнорировать любые совпадения строк"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Ignore any lines matching excluding digits"
+msgstr "Игнорировать любые совпадения строк, за исключением цифр."
+
+#. 'From' labels the older snapshot version selector on the diff page
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
+msgid "From"
+msgstr "От"
+
+#. 'To' labels the newer snapshot version selector on the diff page
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
+msgid "To"
+msgstr "К"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Words"
+msgstr "Слова"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Lines"
+msgstr "Линии"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Ignore Whitespace"
+msgstr "Игнорировать пробелы"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Same/non-changed"
+msgstr "То же/без изменений"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Removed"
+msgstr "Удаленный"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Added"
+msgstr "Добавлен"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Replaced"
+msgstr "Заменено"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid ""
+"Include all intermediate snapshots between the selected versions in the AI "
+"summary"
+msgstr ""
+"Включить все промежуточные снимки между выбранными версиями в сводку AI."
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "AI: every change between versions"
+msgstr "AI: каждое изменение между версиями"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Keyboard:"
+msgstr "Клавиатура:"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Previous"
+msgstr "Предыдущий"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Next"
+msgstr "Следующий"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Jump to next difference"
+msgstr "Перейти к следующему отличию"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Jump"
+msgstr "Прыжок"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/templates/extract.html
+msgid "Error Text"
+msgstr "Текст ошибки"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/templates/extract.html
+msgid "Error Screenshot"
+msgstr "Скриншот ошибки"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/templates/extract.html
+msgid "Text"
+msgstr "Текст"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Current screenshot"
+msgstr "Текущий скриншот"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/processors/extract.py
+#: changedetectionio/processors/templates/extract.html
+msgid "Extract Data"
+msgstr "Извлечение данных"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "seconds ago."
+msgstr "секунды назад."
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "seconds ago"
+msgstr "секунды назад"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Current error-ing screenshot from most recent request"
+msgstr "Текущий скриншот с ошибкой из последнего запроса"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid ""
+"Pro-tip: You can enable <strong>\"share access when password is "
+"enabled\"</strong> from settings."
+msgstr ""
+"Совет: вы можете включить «общий доступ <strong> при включенном пароле» "
+"</strong> в настройках."
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Generating summary…"
+msgstr "Создание сводки…"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Goto single snapshot"
+msgstr "Перейти к одному снимку"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Highlight text to share or add to ignore lists."
+msgstr ""
+"Выделите текст, которым хотите поделиться, или добавьте его в списки "
+"игнорирования."
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Download difference patch"
+msgstr "Скачать патч различий"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid ""
+"For now, Differences are performed on text, not graphically, only the latest"
+" screenshot is available."
+msgstr ""
+"На данный момент различия выполняются в текстовом виде, а не графически, "
+"доступен только последний скриншот."
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Current screenshot from most recent request"
+msgstr "Текущий снимок экрана из последнего запроса"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "No screenshot available just yet! Try rechecking the page."
+msgstr "Скриншот пока не доступен! Попробуйте перепроверить страницу."
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Screenshot requires Playwright/WebDriver enabled"
+msgstr "Для создания снимка экрана требуется включенный Playwright/WebDriver."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "Запрос"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Browser Steps"
+msgstr "Шаги браузера"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Visual Filter Selector"
+msgstr "Выбор визуального фильтра"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Conditions"
+msgstr "Условия"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Stats"
+msgstr "Статистика"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Some sites use JavaScript to create the content, for this you should"
+msgstr ""
+"Некоторые сайты используют JavaScript для создания контента, для этого вам "
+"следует"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "use the Chrome/WebDriver Fetcher"
+msgstr "используйте Chrome/WebDriver Fetcher"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the URL"
+msgstr "В URL-адресе поддерживаются переменные."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "help and examples here"
+msgstr "помощь и примеры здесь"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Organisational tag/group name used in the main listing page"
+msgstr ""
+"Название организационного тега/группы, используемое на главной странице "
+"листинга."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Also automatically applied by URL pattern:"
+msgstr "Также автоматически применяется по шаблону URL:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Automatically uses the page title if found, you can also use your own "
+"title/description here"
+msgstr ""
+"Автоматически использует заголовок страницы, если он найден. Вы также можете"
+" использовать здесь свой собственный заголовок/описание."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "Интервал/количество времени между каждой проверкой."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sends a notification when the filter can no longer be seen on the page, good"
+" for knowing when the page changed and your filter will not work anymore."
+msgstr ""
+"Отправляет уведомление, когда фильтр больше не виден на странице. Это "
+"полезно для того, чтобы узнать, когда страница изменилась и ваш фильтр "
+"больше не будет работать."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set to empty to use system settings default"
+msgstr ""
+"Установите пустое значение, чтобы использовать системные настройки по "
+"умолчанию."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
+msgstr ""
+"Подключайтесь с помощью Bright Data и прокси-серверов Oxylabs. Подробную "
+"информацию можно найти здесь."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Check/Scan all"
+msgstr "Проверить/сканировать все"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Choose a proxy for this watch"
+msgstr "Выберите прокси для этих часов"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Using the current global default settings"
+msgstr "Использование текущих глобальных настроек по умолчанию"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Show advanced options"
+msgstr "Показать дополнительные параметры"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Run this code before performing change detection, handy for filling in "
+"fields and other actions"
+msgstr ""
+"Запустите этот код перед обнаружением изменений, что удобно для заполнения "
+"полей и других действий."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "More help and examples here"
+msgstr "Дополнительная помощь и примеры здесь"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the request body"
+msgstr "В теле запроса поддерживаются переменные."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the request header values"
+msgstr "Переменные поддерживаются в значениях заголовка запроса."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Alert! Extra headers file found and will be added to this watch!"
+msgstr ""
+"Тревога! Найден дополнительный файл заголовков, который будет добавлен в эти"
+" часы!"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Headers can be also read from a file in your data-directory"
+msgstr "Заголовки также можно прочитать из файла в вашем каталоге данных."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Read more here"
+msgstr "Подробнее здесь"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Not supported by Selenium browser"
+msgstr "Не поддерживается браузером Selenium."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Turn on text finder"
+msgstr "Включить поиск текста"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Please wait, first browser step can take a little time to load.."
+msgstr ""
+"Пожалуйста, подождите, загрузка первого шага браузера может занять некоторое"
+" время."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Click here to Start"
+msgstr "Нажмите здесь, чтобы начать"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Please allow 10-15 seconds for the browser to connect."
+msgstr "Пожалуйста, подождите 10-15 секунд, пока браузер подключится."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Press \"Play\" to start."
+msgstr "Нажмите «Играть», чтобы начать."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Visual Selector data is not ready, watch needs to be checked atleast once."
+msgstr ""
+"Данные визуального селектора не готовы, часы необходимо проверить хотя бы "
+"один раз."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sorry, this functionality only works with fetchers that support interactive "
+"Javascript (so far only Playwright based fetchers)"
+msgstr ""
+"К сожалению, эта функция работает только с сборщиками, которые поддерживают "
+"интерактивный Javascript (пока только сборщики на основе Playwright)."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to one that supports interactive Javascript."
+msgstr "на тот, который поддерживает интерактивный Javascript."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "You need to"
+msgstr "Вам нужно"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set the fetch method"
+msgstr "Установите метод выборки"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Use the verify (✓) button to test if a condition passes against the current "
+"snapshot."
+msgstr ""
+"Используйте кнопку проверки (✓), чтобы проверить, соответствует ли условие "
+"текущему снимку."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Read a quick tutorial about"
+msgstr "Прочтите краткое руководство по"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "using conditional web page changes here"
+msgstr "использование условных изменений веб-страницы здесь"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Activate preview"
+msgstr "Активировать предварительный просмотр"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Pro-tips:"
+msgstr "Советы:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the preview page to see your filters and triggers highlighted."
+msgstr ""
+"Используйте страницу предварительного просмотра, чтобы увидеть выделенные "
+"фильтры и триггеры."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit trigger/ignore/block/extract to;"
+msgstr "Ограничить триггер/игнорирование/блокировку/извлечение до;"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Note: Depending on the length and similarity of the text on each line, the "
+"algorithm may consider an <strong>addition</strong> instead of "
+"<strong>replacement</strong> for example."
+msgstr ""
+"Примечание. В зависимости от длины и сходства текста в каждой строке "
+"алгоритм может учитывать, например, <strong>addition</strong> вместо "
+"<strong>replacement</strong>."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "So it's always better to select"
+msgstr "Поэтому всегда лучше выбрать"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "when you're interested in new content."
+msgstr "когда вы заинтересованы в новом контенте."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "When content is merely moved in a list, it will also trigger an"
+msgstr "Когда контент просто перемещается в списке, это также вызывает"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "addition"
+msgstr "добавление"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "consider enabling"
+msgstr "рассмотреть возможность включения"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Only trigger when unique lines appear"
+msgstr "Срабатывает только при появлении уникальных строк"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Good for websites that just move the content around, and you want to know "
+"when NEW content is added, compares new lines against all history for this "
+"watch."
+msgstr ""
+"Подходит для веб-сайтов, которые просто перемещают контент, и вы хотите "
+"знать, когда добавляется НОВЫЙ контент, сравнивает новые строки со всей "
+"историей для этих часов."
+
+#. CJK fonts lack native italics; allow substitution with conventional local
+#. styling. dennis-ignore: W303
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Helps reduce changes detected caused by sites shuffling lines around, "
+"combine with <i>check unique lines</i> below."
+msgstr ""
+"Помогает уменьшить количество обнаруженных изменений, вызванных перетасовкой"
+" строк на сайтах. В сочетании с <i>проверьте уникальные строки</i> ниже."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Remove any whitespace before and after each line of text"
+msgstr "Удалите все пробелы до и после каждой строки текста."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI Intent preview"
+msgstr "Предварительный просмотр намерений ИИ"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Loading..."
+msgstr "Загрузка..."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The Visual Selector tool lets you select the"
+msgstr "Инструмент «Визуальный выбор» позволяет выбрать"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "text"
+msgstr "текст"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"elements that will be used for the change detection. It automatically fills-"
+"in the filters in the \"CSS/JSONPath/JQ/XPath Filters\" box of the"
+msgstr ""
+"элементы, которые будут использоваться для обнаружения изменений. Он "
+"автоматически заполняет фильтры в поле «Фильтры CSS/JSONPath/JQ/XPath» окна"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "tab. Use"
+msgstr "вкладка. Использовать"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Shift+Click"
+msgstr "Shift+щелчок"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to select multiple items."
+msgstr "чтобы выбрать несколько элементов."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Selection Mode:"
+msgstr "Режим выбора:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Select by element"
+msgstr "Выбрать по элементу"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Draw area"
+msgstr "Область рисования"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear selection"
+msgstr "Очистить выбор"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "One moment, fetching screenshot and element information.."
+msgstr "Один момент, получение снимка экрана и информации об элементе.."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Currently:"
+msgstr "В настоящее время:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sorry, this functionality only works with fetchers that support Javascript "
+"and screenshots (such as playwright etc)."
+msgstr ""
+"К сожалению, эта функция работает только с сборщиками, которые поддерживают "
+"Javascript и снимки экрана (например, драматург и т. д.)."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to one that supports Javascript and screenshots."
+msgstr "на тот, который поддерживает Javascript и снимки экрана."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Check count"
+msgstr "Проверьте количество"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Consecutive filter failures"
+msgstr "Последовательные отказы фильтров"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "History length"
+msgstr "Продолжительность истории"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Last fetch duration"
+msgstr "Продолжительность последней загрузки"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Notification alert count"
+msgstr "Количество оповещений об уведомлениях"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Server type reply"
+msgstr "Тип ответа сервера"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI tokens (last check)"
+msgstr "Токены AI (последняя проверка)"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI tokens (total)"
+msgstr "Токены AI (всего)"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Download latest HTML snapshot"
+msgstr "Загрузить последний снимок HTML"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Download watch data package"
+msgstr "Загрузить пакет данных часов"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Delete Watch?"
+msgstr "Удалить часы?"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Are you sure you want to delete the watch for:"
+msgstr "Вы уверены, что хотите удалить часы для:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "This action cannot be undone."
+msgstr "Это действие невозможно отменить."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear History?"
+msgstr "Очистить историю?"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Are you sure you want to clear all history for:"
+msgstr "Вы уверены, что хотите очистить всю историю:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"This will remove all snapshots and previous versions. This action cannot be "
+"undone."
+msgstr ""
+"Это приведет к удалению всех снимков и предыдущих версий. Это действие "
+"невозможно отменить."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear History"
+msgstr "Очистить историю"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clone & Edit"
+msgstr "Клонировать и редактировать"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Select timestamp"
+msgstr "Выберите временную метку"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Go"
+msgstr "Идти"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Current erroring screenshot from most recent request"
+msgstr "Текущий скриншот с ошибкой из последнего запроса"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid ""
+"Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) "
+"that supports screenshots."
+msgstr ""
+"Для создания снимков экрана требуется сборщик контента (Sockpuppetbrowser, "
+"selenium и т. д.), поддерживающий снимки экрана."
+
+#: changedetectionio/blueprint/ui/views.py
+#, python-brace-format
+msgid "Warning, URL {} already exists"
+msgstr "Внимание, URL {} уже существует."
+
+#: changedetectionio/blueprint/ui/views.py
+msgid "Watch added in Paused state, saving will unpause."
+msgstr ""
+"Просмотр добавлен в состоянии «Приостановлено», сохранение возобновится."
+
+#: changedetectionio/blueprint/ui/views.py
+msgid "Watch added."
+msgstr "Часы добавлены."
+
+#: changedetectionio/blueprint/watchlist/__init__.py
+#, python-brace-format
+msgid ""
+"displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
+msgstr "отображение <b>{start} - {end}</b> {record_name} всего <b>{total}</b>"
+
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "records"
+msgstr "записи"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid ""
+"Changedetection.io can monitor more than just web-pages! See our plugins!"
+msgstr ""
+"Changedetection.io может отслеживать не только веб-страницы! Посмотрите наши"
+" плагины!"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "More info"
+msgstr "Дополнительная информация"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "You can also add 'shared' watches."
+msgstr "Вы также можете добавить «общие» часы."
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Add a new web page change detection watch"
+msgstr "Добавить новый контроль обнаружения изменений веб-страницы"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Watch this URL!"
+msgstr "Следите за этим URL!"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Edit first then Watch"
+msgstr "Сначала отредактируйте, потом посмотрите"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI — Notify when…"
+msgstr "AI — Сообщить, когда…"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Goto full history"
+msgstr "Перейти к полной истории"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Pause"
+msgstr "Пауза"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnPause"
+msgstr "Снять паузу"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mute"
+msgstr "Немой"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnMute"
+msgstr "Включить звук"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Tag"
+msgstr "Ярлык"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark viewed"
+msgstr "Отметить просмотренные"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Use default notification"
+msgstr "Использовать уведомление по умолчанию"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear errors"
+msgstr "Удалить ошибки"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear Histories"
+msgstr "Очистить истории"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid ""
+"<p>Are you sure you want to clear history for the selected items?</p><p>This"
+" action cannot be undone.</p>"
+msgstr ""
+"<p>Вы уверены, что хотите очистить историю выбранных элементов?</p><p>Это "
+"действие невозможно отменить.</p>"
+
+#. Universally recognized; typically left as-is. dennis-ignore: W302
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "OK"
+msgstr "ХОРОШО"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear/reset history"
+msgstr "Очистить/сбросить историю"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Delete Watches?"
+msgstr "Удалить часы?"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid ""
+"<p><strong>Are you sure you want to delete the selected "
+"watches?</strong></p><p>This action cannot be undone.</p>"
+msgstr ""
+"<p><strong>Вы уверены, что хотите удалить выбранные часы?</strong></p><p>Это"
+" действие невозможно отменить.</p>"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Queued size"
+msgstr "Размер очереди"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Searching"
+msgstr "Идет поиск"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All"
+msgstr "Все"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Website"
+msgstr "Веб-сайт"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Restock & Price"
+msgstr "Пополнение и цена"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Checked"
+msgstr "Проверено"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last Checked"
+msgstr "Последняя проверка"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changed"
+msgstr "Измененный"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Last Changed"
+msgstr "Последнее изменение"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid ""
+"No web page change detection watches configured, please add a URL in the box"
+" above, or"
+msgstr ""
+"Не настроено наблюдение за обнаружением изменений веб-страниц. Добавьте URL-"
+"адрес в поле выше или"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "import a list"
+msgstr "импортировать список"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Pause checks"
+msgstr "Приостановить проверки"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnPause checks"
+msgstr "Возобновить проверку"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mute notification"
+msgstr "Отключить уведомление"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnMute notification"
+msgstr "Включить уведомление"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Create a link to share watch config with others"
+msgstr "Создайте ссылку, чтобы поделиться конфигурацией часов с другими"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Detecting restock and price"
+msgstr "Обнаружение пополнения запасов и цены"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "In stock"
+msgstr "В наличии"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Not in stock"
+msgstr "Нет в наличии"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Price"
+msgstr "Цена"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "No information"
+msgstr "Нет информации"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/base.html
+msgid "Checking now"
+msgstr "Проверяю сейчас"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Queued"
+msgstr "В очереди"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Summary"
+msgstr "Краткое содержание"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "История"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Preview"
+msgstr "Предварительный просмотр"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "With errors"
+msgstr "С ошибками"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark all viewed"
+msgstr "Отметить все просмотренные"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "Mark all viewed in '%(title)s'"
+msgstr "Отметить все просмотренные в «%(title)s»"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Unread"
+msgstr "Непрочитано"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Recheck all"
+msgstr "Перепроверить все"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "in '%(title)s'"
+msgstr "в '%(title)s'"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Choose one - Operator"
+msgstr "Выберите один - Оператор"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Greater Than"
+msgstr "Больше, чем"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Less Than"
+msgstr "Меньше, чем"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Greater Than or Equal To"
+msgstr "Больше или равно"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Less Than or Equal To"
+msgstr "Меньше или равно"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Equals"
+msgstr "Равно"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Not Equals"
+msgstr "Не Равно"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Contains"
+msgstr "Содержит"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Choose one - Field"
+msgstr "Выберите один — Поле"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Does NOT Contain"
+msgstr "НЕ содержит"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Text Starts With"
+msgstr "Текст начинается с"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Text Ends With"
+msgstr "Текст заканчивается на"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Length minimum"
+msgstr "Минимальная длина"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Length maximum"
+msgstr "Максимальная длина"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Text Matches Regex"
+msgstr "Текст соответствует регулярному выражению"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Text Does NOT Match Regex"
+msgstr "Текст НЕ соответствует регулярному выражению"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Extracted number after 'Filters & Triggers'"
+msgstr "Извлеченный номер после «Фильтры и триггеры»"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Page text after 'Filters & Triggers'"
+msgstr "Текст страницы после «Фильтры и триггеры»"
+
+#: changedetectionio/conditions/form.py
+msgid "Field"
+msgstr "Поле"
+
+#: changedetectionio/conditions/form.py
+msgid "Operator"
+msgstr "Оператор"
+
+#: changedetectionio/conditions/form.py
+msgid "A value"
+msgstr "Значение"
+
+#: changedetectionio/conditions/form.py
+msgid "Operator is required."
+msgstr "Требуется оператор."
+
+#: changedetectionio/conditions/form.py
+msgid "Field is required."
+msgstr "Поле обязательно."
+
+#: changedetectionio/conditions/form.py
+msgid "Value is required."
+msgstr "Требуется значение."
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein - Text similarity ratio"
+msgstr "Левенштейн - Коэффициент сходства текста"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein - Text change distance"
+msgstr "Левенштейн - Расстояние изменения текста"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Not enough history to calculate Levenshtein metrics"
+msgstr "Недостаточно истории для расчета метрик Левенштейна"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Snapshot too large for edit statistics, skipping."
+msgstr "Снимок слишком велик для редактирования статистики, пропускаем."
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Unable to calculate Levenshtein metrics"
+msgstr "Невозможно рассчитать метрики Левенштейна"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein Text Similarity Details"
+msgstr "Детали сходства текста Левенштейна"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Raw distance (edits needed)"
+msgstr "Необработанное расстояние (необходимы правки)"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Similarity ratio"
+msgstr "Коэффициент сходства"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Percent similar"
+msgstr "Процент похожих"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid ""
+"Levenshtein metrics compare the last two snapshots, measuring how many "
+"character edits are needed to transform one into the other."
+msgstr ""
+"Метрики Левенштейна сравнивают два последних снимка, измеряя, сколько правок"
+" символов необходимо для преобразования одного в другой."
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Error calculating Levenshtein metrics"
+msgstr "Ошибка расчета метрик Левенштейна"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count of content"
+msgstr "Количество слов в контенте"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Content Analysis"
+msgstr "Контент-анализ"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count (latest snapshot)"
+msgstr "Количество слов (последний снимок)"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid ""
+"Word count is a simple measure of content length, calculated by splitting "
+"text on whitespace."
+msgstr ""
+"Количество слов — это простая мера длины контента, рассчитываемая путем "
+"разделения текста на пробелы."
+
+#: changedetectionio/content_fetchers/requests.py
+msgid "Basic fast Plaintext/HTTP Client"
+msgstr "Базовый быстрый текстовый/HTTP-клиент"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/flask_app.py changedetectionio/realtime/socket_server.py
+msgid "Not yet"
+msgstr "Еще нет"
+
+#: changedetectionio/flask_app.py
+msgid "0 seconds"
+msgstr "0 секунд"
+
+#: changedetectionio/flask_app.py
+msgid "year"
+msgstr "год"
+
+#: changedetectionio/flask_app.py
+msgid "years"
+msgstr "годы"
+
+#: changedetectionio/flask_app.py
+msgid "month"
+msgstr "месяц"
+
+#: changedetectionio/flask_app.py
+msgid "months"
+msgstr "месяцы"
+
+#: changedetectionio/flask_app.py
+msgid "week"
+msgstr "неделя"
+
+#: changedetectionio/flask_app.py
+msgid "weeks"
+msgstr "недели"
+
+#: changedetectionio/flask_app.py
+msgid "day"
+msgstr "день"
+
+#: changedetectionio/flask_app.py
+msgid "days"
+msgstr "дни"
+
+#: changedetectionio/flask_app.py
+msgid "hour"
+msgstr "час"
+
+#: changedetectionio/flask_app.py
+msgid "hours"
+msgstr "часы"
+
+#: changedetectionio/flask_app.py
+msgid "minute"
+msgstr "минута"
+
+#: changedetectionio/flask_app.py
+msgid "minutes"
+msgstr "минуты"
+
+#: changedetectionio/flask_app.py
+msgid "second"
+msgstr "второй"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/flask_app.py
+msgid "seconds"
+msgstr "секунды"
+
+#: changedetectionio/flask_app.py
+msgid "Already logged in"
+msgstr "Уже вошел в систему"
+
+#: changedetectionio/flask_app.py
+msgid "You must be logged in, please log in."
+msgstr "Вы должны войти в систему, пожалуйста, войдите."
+
+#: changedetectionio/flask_app.py
+msgid "Incorrect password"
+msgstr "Неправильный пароль"
+
+#: changedetectionio/forms.py
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must be"
+" specified."
+msgstr ""
+"Должен быть указан хотя бы один временной интервал (недели, дни, часы, "
+"минуты или секунды)."
+
+#: changedetectionio/forms.py
+msgid ""
+"At least one time interval (weeks, days, hours, minutes, or seconds) must be"
+" specified when not using global settings."
+msgstr ""
+"Если не используются глобальные настройки, необходимо указать хотя бы один "
+"временной интервал (недели, дни, часы, минуты или секунды)."
+
+#: changedetectionio/forms.py
+msgid "Invalid time format. Use HH:MM."
+msgstr "Неверный формат времени. Используйте ЧЧ:ММ."
+
+#: changedetectionio/forms.py
+msgid "Not a valid timezone name"
+msgstr "Недопустимое название часового пояса."
+
+#: changedetectionio/forms.py
+msgid "not set"
+msgstr "не установлено"
+
+#: changedetectionio/forms.py
+msgid "Start At"
+msgstr "Начать с"
+
+#: changedetectionio/forms.py
+msgid "Run duration"
+msgstr "Продолжительность запуска"
+
+#: changedetectionio/forms.py
+msgid "Use time scheduler"
+msgstr "Используйте планировщик времени"
+
+#: changedetectionio/forms.py
+msgid "Optional timezone to run in"
+msgstr "Дополнительный часовой пояс для запуска"
+
+#: changedetectionio/forms.py
+msgid "Monday"
+msgstr "Понедельник"
+
+#: changedetectionio/forms.py
+msgid "Tuesday"
+msgstr "Вторник"
+
+#: changedetectionio/forms.py
+msgid "Wednesday"
+msgstr "Среда"
+
+#: changedetectionio/forms.py
+msgid "Thursday"
+msgstr "Четверг"
+
+#: changedetectionio/forms.py
+msgid "Friday"
+msgstr "Пятница"
+
+#: changedetectionio/forms.py
+msgid "Saturday"
+msgstr "Суббота"
+
+#: changedetectionio/forms.py
+msgid "Sunday"
+msgstr "Воскресенье"
+
+#: changedetectionio/forms.py
+msgid "Weeks"
+msgstr "Недели"
+
+#: changedetectionio/forms.py
+msgid "Should contain zero or more seconds"
+msgstr "Должно содержать ноль или более секунд."
+
+#: changedetectionio/forms.py
+msgid "Days"
+msgstr "Дни"
+
+#: changedetectionio/forms.py
+msgid "Hours"
+msgstr "Часы"
+
+#: changedetectionio/forms.py
+msgid "Minutes"
+msgstr "Минуты"
+
+#: changedetectionio/forms.py
+msgid "Seconds"
+msgstr "Секунды"
+
+#: changedetectionio/forms.py
+msgid ""
+"Notification Body and Title is required when a Notification URL is used"
+msgstr ""
+"Текст и заголовок уведомления требуются при использовании URL-адреса "
+"уведомления."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%s' is not a valid AppRise URL."
+msgstr "«%s» не является допустимым URL-адресом AppRise."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "RegEx '%s' is not a valid regular expression."
+msgstr "RegEx «%s» не является допустимым регулярным выражением."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%(expression)s' is not a valid XPath expression. (%(error)s)"
+msgstr "«%(expression)s» не является допустимым выражением XPath. (%(error)s)"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%(expression)s' is not a valid JSONPath expression. (%(error)s)"
+msgstr ""
+"«%(expression)s» не является допустимым выражением JSONPath. (%(error)s)"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%(expression)s' is not a valid jq expression. (%(error)s)"
+msgstr "«%(expression)s» не является допустимым выражением jq. (%(error)s)"
+
+#: changedetectionio/forms.py
+msgid "Empty value not allowed."
+msgstr "Пустое значение не допускается."
+
+#: changedetectionio/forms.py
+msgid "Invalid value."
+msgstr "Недопустимое значение."
+
+#: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Тег группы"
+
+#: changedetectionio/forms.py
+msgid "Watch"
+msgstr "Смотреть"
+
+#: changedetectionio/forms.py
+msgid "Processor"
+msgstr "Процессор"
+
+#: changedetectionio/forms.py
+msgid "Edit > Watch"
+msgstr "Редактировать > Смотреть"
+
+#: changedetectionio/forms.py
+msgid "Fetch Method"
+msgstr "Метод выборки"
+
+#: changedetectionio/forms.py
+msgid "Notification Body"
+msgstr "Орган уведомления"
+
+#: changedetectionio/forms.py
+msgid "Notification format"
+msgstr "Формат уведомления"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Название уведомления"
+
+#: changedetectionio/forms.py
+msgid "Notification URL List"
+msgstr "Список URL-адресов уведомлений"
+
+#: changedetectionio/forms.py
+msgid "Processor - What do you want to achieve?"
+msgstr "Процессор. Чего вы хотите достичь?"
+
+#: changedetectionio/forms.py
+msgid "Default timezone for watch check scheduler"
+msgstr "Часовой пояс по умолчанию для планировщика проверки часов"
+
+#: changedetectionio/forms.py
+msgid "Wait seconds before extracting text"
+msgstr "Подождите несколько секунд, прежде чем извлекать текст."
+
+#: changedetectionio/forms.py
+msgid "Should contain one or more seconds"
+msgstr "Должно содержать одну или несколько секунд."
+
+#: changedetectionio/forms.py
+msgid "URLs"
+msgstr "URL-адреса"
+
+#: changedetectionio/forms.py
+msgid "Upload .xlsx file"
+msgstr "Загрузите файл .xlsx"
+
+#: changedetectionio/forms.py
+msgid "Must be .xlsx file!"
+msgstr "Должен быть файл .xlsx!"
+
+#: changedetectionio/forms.py
+msgid "File mapping"
+msgstr "Сопоставление файлов"
+
+#: changedetectionio/forms.py
+msgid "Operation"
+msgstr "Операция"
+
+#: changedetectionio/forms.py
+msgid "Selector"
+msgstr "Селектор"
+
+#: changedetectionio/forms.py
+msgid "CSS or xPath selector"
+msgstr "Селектор CSS или xPath"
+
+#: changedetectionio/forms.py
+msgid "value"
+msgstr "ценить"
+
+#: changedetectionio/conditions/form.py changedetectionio/forms.py
+msgid "Value"
+msgstr "Ценить"
+
+#: changedetectionio/forms.py
+msgid "Web Page URL"
+msgstr "URL-адрес веб-страницы"
+
+#: changedetectionio/forms.py
+msgid "Group Tag"
+msgstr "Групповой тег"
+
+#: changedetectionio/forms.py
+msgid "Time Between Check"
+msgstr "Интервал проверки"
+
+#: changedetectionio/forms.py
+msgid "Use global settings for time between check and scheduler."
+msgstr ""
+"Используйте глобальные настройки времени между проверкой и планировщиком."
+
+#: changedetectionio/forms.py
+msgid "AI Change Intent"
+msgstr "Изменение намерения ИИ"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/forms.py
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI Change Summary"
+msgstr "Обзор изменений ИИ"
+
+#: changedetectionio/forms.py
+msgid "CSS/JSONPath/JQ/XPath Filters"
+msgstr "Фильтры CSS/JSONPath/JQ/XPath"
+
+#: changedetectionio/forms.py
+msgid "Remove elements"
+msgstr "Удалить элементы"
+
+#: changedetectionio/forms.py
+msgid "Extract lines containing"
+msgstr "Извлечь строки, содержащие"
+
+#: changedetectionio/forms.py
+msgid "Extract text"
+msgstr "Извлечь текст"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/forms.py
+msgid "Title"
+msgstr "Заголовок"
+
+#: changedetectionio/forms.py
+msgid "Ignore lines containing"
+msgstr "Игнорировать строки, содержащие"
+
+#: changedetectionio/forms.py
+msgid "Request body"
+msgstr "Тело запроса"
+
+#: changedetectionio/forms.py
+msgid "Request method"
+msgstr "Метод запроса"
+
+#: changedetectionio/forms.py
+msgid "Ignore status codes (process non-2xx status codes as normal)"
+msgstr ""
+"Игнорировать коды состояния (обрабатывать коды состояния, отличные от 2xx, "
+"как обычно)"
+
+#: changedetectionio/forms.py
+msgid "Only trigger when unique lines appear in all history"
+msgstr ""
+"Срабатывает только тогда, когда уникальные строки появляются во всей истории"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/forms.py
+msgid "Remove duplicate lines of text"
+msgstr "Удаление повторяющихся строк текста"
+
+#: changedetectionio/forms.py
+msgid "Sort text alphabetically"
+msgstr "Сортировать текст по алфавиту"
+
+#: changedetectionio/forms.py
+msgid "Strip ignored lines"
+msgstr "Удалить игнорируемые строки"
+
+#: changedetectionio/forms.py
+msgid "Trim whitespace before and after text"
+msgstr "Обрезать пробелы до и после текста"
+
+#: changedetectionio/forms.py
+msgid "Added lines"
+msgstr "Добавлены строки"
+
+#: changedetectionio/forms.py
+msgid "Replaced/changed lines"
+msgstr "Заменены/изменены строки"
+
+#: changedetectionio/forms.py
+msgid "Removed lines"
+msgstr "Удалены строки"
+
+#: changedetectionio/forms.py
+msgid "Keyword triggers - Trigger/wait for text"
+msgstr "Триггеры по ключевым словам — триггер/ожидание текста"
+
+#: changedetectionio/forms.py
+msgid "Block change-detection while text matches"
+msgstr "Блокировать обнаружение изменений, пока текст совпадает"
+
+#: changedetectionio/forms.py
+msgid "Execute JavaScript before change detection"
+msgstr "Выполнять JavaScript перед обнаружением изменений"
+
+#: changedetectionio/blueprint/tags/form.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/forms.py
+msgid "Save"
+msgstr "Сохранять"
+
+#: changedetectionio/forms.py
+msgid "Proxy"
+msgstr "Прокси"
+
+#: changedetectionio/forms.py
+msgid "Send a notification when the filter can no longer be found on the page"
+msgstr ""
+"Отправьте уведомление, когда фильтр больше не будет найден на странице."
+
+#: changedetectionio/forms.py
+msgid "Muted"
+msgstr "Без звука"
+
+#: changedetectionio/forms.py
+msgid "On"
+msgstr "На"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/forms.py
+msgid "Notifications"
+msgstr "Уведомления"
+
+#: changedetectionio/forms.py
+msgid "Attach screenshot to notification (where possible)"
+msgstr "Прикрепите скриншот к уведомлению (где это возможно)"
+
+#: changedetectionio/forms.py
+msgid "Match"
+msgstr "Соответствовать"
+
+#: changedetectionio/forms.py
+msgid "Match all of the following"
+msgstr "Сопоставьте все следующее"
+
+#: changedetectionio/forms.py
+msgid "Match any of the following"
+msgstr "Соответствует любому из следующих"
+
+#: changedetectionio/forms.py
+msgid "Use page <title> in list"
+msgstr "Использовать страницу <title> в списке"
+
+#: changedetectionio/forms.py
+msgid "Number of history items per watch to keep"
+msgstr "Количество сохраняемых элементов истории на часы"
+
+#: changedetectionio/forms.py
+msgid "Body must be empty when Request Method is set to GET"
+msgstr ""
+"Тело должно быть пустым, если для метода запроса установлено значение GET."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Неверная конфигурация синтаксиса шаблона: %(error)s."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Неверный синтаксис шаблона: %(error)s."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Неверный синтаксис шаблона в заголовке «%(header)s»: %(error)s."
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Name"
+msgstr "Имя"
+
+#: changedetectionio/forms.py
+msgid "Proxy URL"
+msgstr "URL-адрес прокси-сервера"
+
+#: changedetectionio/forms.py
+msgid "Proxy URLs must start with http://, https:// or socks5://"
+msgstr ""
+"URL-адреса прокси-серверов должны начинаться с http://, https:// или "
+"Socks5://."
+
+#: changedetectionio/forms.py
+msgid "Browser connection URL"
+msgstr "URL-адрес подключения браузера"
+
+#: changedetectionio/forms.py
+msgid "Browser URLs must start with wss:// or ws://"
+msgstr "URL-адреса браузера должны начинаться с wss:// или ws://."
+
+#: changedetectionio/forms.py
+msgid "Plaintext requests"
+msgstr "Открытые текстовые запросы"
+
+#: changedetectionio/forms.py
+msgid "Chrome requests"
+msgstr "Запросы Chrome"
+
+#: changedetectionio/forms.py
+msgid "Default proxy"
+msgstr "Прокси по умолчанию"
+
+#: changedetectionio/forms.py
+msgid "Random jitter seconds ± check"
+msgstr "Случайное дрожание в секундах ± проверка"
+
+#: changedetectionio/forms.py
+msgid "Number of fetch workers"
+msgstr "Количество работников по выборке"
+
+#: changedetectionio/forms.py
+msgid "Should be between 1 and 50"
+msgstr "Должно быть от 1 до 50"
+
+#: changedetectionio/forms.py
+msgid "Requests timeout in seconds"
+msgstr "Запрашивает таймаут в секундах"
+
+#: changedetectionio/forms.py
+msgid "Should be between 1 and 999"
+msgstr "Должно быть от 1 до 999"
+
+#: changedetectionio/forms.py
+msgid "Default User-Agent overrides"
+msgstr "Переопределения User-Agent по умолчанию"
+
+#: changedetectionio/forms.py
+msgid "Both a name, and a Proxy URL is required."
+msgstr "Требуется как имя, так и URL-адрес прокси-сервера."
+
+#: changedetectionio/forms.py
+msgid "Open 'History' page in a new tab"
+msgstr "Открыть страницу «История» в новой вкладке"
+
+#: changedetectionio/forms.py
+msgid "Realtime UI Updates Enabled"
+msgstr "Обновления пользовательского интерфейса в реальном времени включены"
+
+#: changedetectionio/forms.py
+msgid "Favicons Enabled"
+msgstr "Фавиконки включены"
+
+#: changedetectionio/forms.py
+msgid "Use page <title> in watch overview list"
+msgstr "Использовать страницу <title> в обзорном списке просмотра"
+
+#: changedetectionio/forms.py
+msgid "API access token security check enabled"
+msgstr "Проверка безопасности токена доступа к API включена"
+
+#: changedetectionio/forms.py
+msgid "Notification base URL override"
+msgstr "Переопределение URL-адреса базы уведомлений"
+
+#: changedetectionio/forms.py
+msgid "Not set"
+msgstr "Не установлено"
+
+#: changedetectionio/forms.py
+msgid "Treat empty pages as a change?"
+msgstr "Считать пустые страницы изменением?"
+
+#: changedetectionio/forms.py
+msgid "Ignore Text"
+msgstr "Игнорировать текст"
+
+#: changedetectionio/forms.py
+msgid "Ignore whitespace"
+msgstr "Игнорировать пробелы"
+
+#: changedetectionio/forms.py
+msgid "Screenshot: Minimum Change Percentage"
+msgstr "Снимок экрана: Минимальный процент изменений"
+
+#: changedetectionio/forms.py
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Must be between 0 and 100"
+msgstr "Должно быть от 0 до 100"
+
+#: changedetectionio/forms.py changedetectionio/templates/login.html
+msgid "Password"
+msgstr "Пароль"
+
+#: changedetectionio/forms.py
+msgid "Pager size"
+msgstr "Размер пейджера"
+
+#: changedetectionio/forms.py
+msgid "Should be atleast zero (disabled)"
+msgstr "Должно быть по крайней мере ноль (отключено)"
+
+#: changedetectionio/forms.py
+msgid "RSS Content format"
+msgstr "Формат RSS-контента"
+
+#: changedetectionio/forms.py
+msgid "RSS <description> body built from"
+msgstr "Корпус RSS <description> построен из"
+
+#: changedetectionio/forms.py
+msgid "RSS \"System default\" template override"
+msgstr "Переопределение шаблона RSS «Системное значение по умолчанию»"
+
+#: changedetectionio/forms.py
+msgid "Remove password"
+msgstr "Удалить пароль"
+
+#: changedetectionio/forms.py
+msgid "Render anchor tag content"
+msgstr "Отображение содержимого тега привязки"
+
+#: changedetectionio/forms.py
+msgid "Allow anonymous access to watch history page when password is enabled"
+msgstr ""
+"Разрешить анонимный доступ к странице истории просмотра, если включен пароль"
+
+#: changedetectionio/forms.py
+msgid "Hide muted watches from RSS feed"
+msgstr "Скрыть часы с отключенным звуком из RSS-канала"
+
+#: changedetectionio/forms.py
+msgid "Enable RSS reader mode "
+msgstr "Включить режим чтения RSS"
+
+#: changedetectionio/forms.py
+msgid "Number of changes to show in watch RSS feed"
+msgstr "Количество изменений, отображаемых в RSS-канале просмотра"
+
+#: changedetectionio/forms.py
+msgid "Should contain zero or more attempts"
+msgstr "Должно содержать ноль или более попыток."
+
+#: changedetectionio/forms.py
+msgid ""
+"Number of times the filter can be missing before sending a notification"
+msgstr "Сколько раз фильтр может отсутствовать перед отправкой уведомления"
+
+#: changedetectionio/forms.py
+msgid "Model"
+msgstr "Модель"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/forms.py
+msgid "API Key"
+msgstr "API-ключ"
+
+#: changedetectionio/forms.py
+msgid "API Base URL"
+msgstr "Базовый URL-адрес API"
+
+#: changedetectionio/forms.py
+msgid "Token multiplier for local reasoning models"
+msgstr "Множитель токена для локальных моделей рассуждений"
+
+#: changedetectionio/forms.py
+msgid "Default AI Change Summary prompt"
+msgstr "Подсказка сводки изменений AI по умолчанию"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/forms.py
+msgid "Max tokens per watch per period"
+msgstr "Максимальное количество токенов за просмотр за период"
+
+#: changedetectionio/forms.py
+msgid "Monthly token budget"
+msgstr "Ежемесячный бюджет токенов"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/forms.py
+msgid "Max input characters"
+msgstr "Максимальное количество входных символов"
+
+#: changedetectionio/forms.py
+msgid "Enable AI / LLM features"
+msgstr "Включить функции AI/LLM"
+
+#: changedetectionio/forms.py
+msgid "Replace {{diff}} notification token with AI summary"
+msgstr "Замените токен уведомления {{diff}} сводкой AI."
+
+#: changedetectionio/forms.py
+msgid "Use LLM as a fallback for extracting price and restock info"
+msgstr ""
+"Используйте LLM в качестве запасного варианта для получения информации о "
+"ценах и пополнении запасов."
+
+#: changedetectionio/forms.py
+msgid "Enable LLM debug logging"
+msgstr "Включить ведение журнала отладки LLM"
+
+#: changedetectionio/forms.py
+msgid "AI thinking budget (tokens)"
+msgstr "Бюджет мышления ИИ (токены)"
+
+#: changedetectionio/forms.py
+msgid "Off (no thinking)"
+msgstr "Выкл. (не думая)"
+
+#: changedetectionio/forms.py
+msgid "Max AI summary length (tokens)"
+msgstr "Максимальная длина сводки AI (токены)"
+
+#: changedetectionio/forms.py
+msgid "When monthly token budget is reached"
+msgstr "Когда будет достигнут ежемесячный бюджет токенов"
+
+#: changedetectionio/forms.py
+msgid "Skip AI summarisation only (watch still checks)"
+msgstr "Пропустить только обобщение AI (смотреть еще проверяет)"
+
+#: changedetectionio/forms.py
+msgid "Skip the watch check entirely"
+msgstr "Полностью пропустить проверку часов"
+
+#: changedetectionio/forms.py
+msgid "RegEx to extract"
+msgstr "RegEx для извлечения"
+
+#: changedetectionio/forms.py
+msgid "Extract as CSV"
+msgstr "Извлечь в формате CSV"
+
+#: changedetectionio/processors/extract.py
+msgid ""
+"No matches found while scanning all of the watch history for that RegEx."
+msgstr ""
+"При сканировании всей истории просмотра для этого RegEx совпадений не "
+"обнаружено."
+
+#: changedetectionio/processors/image_ssim_diff/difference.py
+msgid "Not enough history to compare. Need at least 2 snapshots."
+msgstr "Недостаточно истории для сравнения. Нужно минимум 2 снимка."
+
+#: changedetectionio/processors/image_ssim_diff/difference.py
+#, python-brace-format
+msgid "Failed to load screenshots: {}"
+msgstr "Не удалось загрузить скриншоты: {}"
+
+#: changedetectionio/processors/image_ssim_diff/difference.py
+#, python-brace-format
+msgid "Failed to calculate diff: {}"
+msgstr "Не удалось вычислить разницу: {}"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding box value is too long"
+msgstr "Значение ограничивающей рамки слишком длинное"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding box must be in format: x,y,width,height (integers only)"
+msgstr ""
+"Ограничивающая рамка должна иметь формат: x,y,ширина,высота (только целые "
+"числа)."
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding box values must be non-negative"
+msgstr "Значения ограничивающей рамки должны быть неотрицательными."
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding box values are too large"
+msgstr "Значения ограничивающей рамки слишком велики"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Selection mode must be either \"element\" or \"draw\""
+msgstr "Режим выбора должен быть либо «элемент», либо «рисование»."
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Minimum Change Percentage"
+msgstr "Минимальный процент изменения"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Pixel Difference Sensitivity"
+msgstr "Чувствительность к разнице пикселей"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Use global default"
+msgstr "Использовать глобальное значение по умолчанию"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding Box"
+msgstr "Ограничивающая рамка"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Selection Mode"
+msgstr "Режим выбора"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Selection mode value is too long"
+msgstr "Значение режима выбора слишком длинное"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Screenshot Comparison"
+msgstr "Сравнение скриншотов"
+
+#: changedetectionio/processors/image_ssim_diff/preview.py
+msgid "Preview unavailable - No snapshots captured yet"
+msgstr "Предварительный просмотр недоступен: снимки пока не сделаны."
+
+#: changedetectionio/processors/image_ssim_diff/processor.py
+msgid "Visual / Image screenshot change detection"
+msgstr "Обнаружение изменений визуального изображения/скриншота изображения"
+
+#: changedetectionio/processors/image_ssim_diff/processor.py
+msgid ""
+"Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
+msgstr ""
+"Сравнивает снимки экрана с использованием быстрого алгоритма OpenCV, в "
+"10–100 раз быстрее, чем SSIM."
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Re-stock detection"
+msgstr "Обнаружение пополнения запасов"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "In Stock only (Out Of Stock -> In Stock only)"
+msgstr "Только в наличии (Нет в наличии -> Только в наличии)"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Any availability changes"
+msgstr "Любые изменения доступности"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Off, don't follow availability/restock"
+msgstr "Выключено, не следить за наличием/пополнением запасов"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Below price to trigger notification"
+msgstr "Цена ниже, чтобы вызвать уведомление"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "No limit"
+msgstr "Без ограничений"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Above price to trigger notification"
+msgstr "Цена выше, чтобы вызвать уведомление"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Threshold (%) for price changes since the previous check"
+msgstr "Порог (%) изменения цены с момента предыдущей проверки"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Should be between 0 and 100"
+msgstr "Должно быть от 0 до 100"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Follow price changes"
+msgstr "Следите за изменением цен"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Restock & Price Detection"
+msgstr "Пополнение запасов и определение цен"
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "Re-stock & Price detection for pages with a SINGLE product"
+msgstr "Пополнение запасов и определение цен для страниц с ОДНИМ товаром"
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "Detects if the product goes back to in-stock"
+msgstr "Определяет, возвращается ли товар на склад"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "Screenshot"
+msgstr "Скриншот"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "This tool will extract text data from all of the watch history."
+msgstr "Этот инструмент извлечет текстовые данные из всей истории просмотра."
+
+#: changedetectionio/processors/templates/extract.html
+msgid ""
+"A <strong>RegEx</strong> is a pattern that identifies exactly which part "
+"inside of the text that you want to extract."
+msgstr ""
+"<strong>RegEx</strong> — это шаблон, который точно определяет, какую часть "
+"текста вы хотите извлечь."
+
+#: changedetectionio/processors/templates/extract.html
+msgid "For example, to extract only the numbers from text"
+msgstr "Например, чтобы извлечь из текста только цифры"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "Raw text"
+msgstr "Необработанный текст"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "RegEx to extract:"
+msgstr "RegEx для извлечения:"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "Be sure to test your RegEx here."
+msgstr "Обязательно проверьте свой RegEx здесь."
+
+#: changedetectionio/processors/templates/extract.html
+msgid "Each RegEx group bracket"
+msgstr "Каждая скобка группы RegEx"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "will be in its own column, the first column value is always the date."
+msgstr ""
+"будет в отдельном столбце, первое значение столбца всегда является датой."
+
+#: changedetectionio/processors/text_json_diff/processor.py
+msgid "Webpage Text/HTML, JSON and PDF changes"
+msgstr "Изменения текста веб-страницы/HTML, JSON и PDF"
+
+#: changedetectionio/processors/text_json_diff/processor.py
+msgid "Detects all text changes where possible"
+msgstr "Обнаруживает все изменения текста, где это возможно."
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
+msgid "Error fetching metadata for {}"
+msgstr "Ошибка при получении метаданных для {}."
+
+#: changedetectionio/store/__init__.py
+msgid "Watch protocol is not permitted or invalid URL format"
+msgstr "Протокол просмотра не разрешен или неверный формат URL."
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
+msgid ""
+"Watch limit reached ({current}/{limit} watches). Cannot add more watches."
+msgstr ""
+"Достигнут лимит просмотра (часы {current}/{limit}). Невозможно добавить "
+"больше часов."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Body for all notifications — You can use"
+msgstr "Текст для всех уведомлений — вы можете использовать"
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"templating in the notification title, body and URL, and tokens from below."
+msgstr ""
+"шаблоны в заголовке, теле и URL-адресе уведомления, а также токены снизу."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Show token/placeholders"
+msgstr "Показать токен/заполнители"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Token"
+msgstr "Токен"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Description"
+msgstr "Описание"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The URL of the changedetection.io instance you are running."
+msgstr "URL-адрес запущенного вами экземпляраchangetection.io."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The URL being watched."
+msgstr "URL-адрес, который просматривается."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The UUID of the watch."
+msgstr "UUID часов."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"The page title of the watch, uses <title> if not set, falls back to URL"
+msgstr ""
+"Заголовок страницы часов использует <title>, если он не установлен, и "
+"возвращается к URL."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The watch group / tag"
+msgstr "Группа/тег просмотра"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The URL of the preview page generated by changedetection.io."
+msgstr ""
+"URL-адрес страницы предварительного просмотра, созданной Changetection.io."
+
+#: changedetectionio/templates/_common_fields.html
+#, python-format
+msgid ""
+"Date/time of the change, accepts format=, %(call)s, default is '%(default)s'"
+msgstr ""
+"Дата/время изменения, принимает формат=, %(call)s, по умолчанию — "
+"«%(default)s»."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The URL of the diff output for the watch."
+msgstr "URL-адрес вывода различий для часов."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes, additions, and removals"
+msgstr "Вывод различий — только изменения, дополнения и удаления."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "All diff variants accept"
+msgstr "Все варианты различий принимаются"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "args, e.g."
+msgstr "аргументы, например"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes, additions, and removals —"
+msgstr "Вывод различий — только изменения, дополнения и удаления —"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Without (added) prefix or colors"
+msgstr "Без (добавленного) префикса или цвета"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes and additions"
+msgstr "Вывод diff - только изменения и дополнения"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes and additions —"
+msgstr "Вывод diff — только изменения и дополнения —"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes and removals"
+msgstr "Вывод различий - только изменения и удаления"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes and removals —"
+msgstr "Вывод различий — только изменения и удаления —"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - full difference output"
+msgstr "Вывод разницы – вывод полной разницы"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - full difference output —"
+msgstr "Вывод разницы – вывод полной разницы –"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - patch in unified format"
+msgstr "Вывод diff - патч в едином формате"
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"Only the changed words/values from the previous version — e.g. the old "
+"price. Best when a single value changes per line; multiple changed fragments"
+" are joined by newline."
+msgstr ""
+"Только измененные слова/значения из предыдущей версии — например. старая "
+"цена. Лучше всего, когда в каждой строке меняется одно значение; несколько "
+"измененных фрагментов объединяются новой строкой."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"Only the changed words/values from the new version — e.g. the new price. "
+"Best when a single value changes per line; multiple changed fragments are "
+"joined by newline."
+msgstr ""
+"Только измененные слова/значения из новой версии — например. новая цена. "
+"Лучше всего, когда в каждой строке меняется одно значение; несколько "
+"измененных фрагментов объединяются новой строкой."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"The current snapshot text contents value, useful when combined with JSON or "
+"CSS filters"
+msgstr ""
+"Текущее значение текстового содержимого снимка, полезно в сочетании с "
+"фильтрами JSON или CSS."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Text that tripped the trigger from filters"
+msgstr "Текст, вызывающий срабатывание триггера фильтров"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "(upgraded)"
+msgstr "(обновлено)"
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"When AI Change Summary is configured, contains the AI-generated description "
+"instead of the raw diff. Falls back to raw diff when not configured."
+msgstr ""
+"Если настроена сводка изменений AI, она содержит описание, созданное AI, "
+"вместо необработанных различий. Возвращается к необработанным различиям, "
+"если они не настроены."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Always the raw +/- diff, regardless of AI Change Summary setting."
+msgstr ""
+"Всегда необработанная разница +/-, независимо от настройки сводки изменений "
+"AI."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"The AI Change Summary text (same as the upgraded {{diff}} — explicit "
+"reference)."
+msgstr ""
+"Текст сводки изменений AI (тот же, что и в обновленном {{diff}} — явная "
+"ссылка)."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The AI Change Intent that was evaluated."
+msgstr "Намерение изменения ИИ, которое было оценено."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Warning: Contents of"
+msgstr "Внимание: Содержание"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "and"
+msgstr "и"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "depend on how the difference algorithm perceives the change."
+msgstr "зависят от того, как алгоритм разницы воспринимает изменение."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"For example, an addition or removal could be perceived as a change in some "
+"cases."
+msgstr ""
+"Например, в некоторых случаях добавление или удаление может восприниматься "
+"как изменение."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "More Here"
+msgstr "Больше здесь"
+
+#: changedetectionio/templates/_common_fields.html
+#, python-format
+msgid ""
+"Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> "
+"for notification to just about any service!"
+msgstr ""
+"Используйте URL-адреса уведомлений <a target=\"newwindow\" "
+"href=\"%(url)s\">AppRise</a> для уведомлений практически о любой службе!"
+
+#. CJK fonts lack native italics; allow substitution with conventional local
+#. styling. dennis-ignore: W303
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"<i>Please read the notification services wiki here for important "
+"configuration notes</i>"
+msgstr ""
+"<i>Пожалуйста, прочитайте здесь вики-сайт служб уведомлений, где вы найдете "
+"важные примечания по настройке</i>"
+
+#: changedetectionio/templates/_common_fields.html
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "Показать расширенную справку и советы"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "(or"
+msgstr "(или"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "only supports a maximum"
+msgstr "поддерживает только максимум"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "2,000 characters"
+msgstr "2000 символов"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "of notification text, including the title."
+msgstr "текста уведомления, включая заголовок."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"bots can't send messages to other bots, so you should specify chat ID of "
+"non-bot user."
+msgstr ""
+"боты не могут отправлять сообщения другим ботам, поэтому вам следует указать"
+" идентификатор чата пользователя, не являющегося ботом."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "only supports very limited HTML and can fail when extra tags are sent,"
+msgstr ""
+"поддерживает только очень ограниченный HTML и может привести к сбою при "
+"отправке дополнительных тегов,"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "(or use plaintext/markdown format)"
+msgstr "(или используйте формат открытого текста/уценки)"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "for direct API calls (or omit the"
+msgstr "для прямых вызовов API (или опустите"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "for non-SSL ie"
+msgstr "для не-SSL, т.е."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "more help here"
+msgstr "больше помощи здесь"
+
+#: changedetectionio/templates/_common_fields.html
+#, python-format
+msgid "Accepts the <code>%(token)s</code> placeholders listed below"
+msgstr "Принимает заполнители <code>%(token)s</code>, перечисленные ниже."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "Отправить тестовое уведомление"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add email"
+msgstr "Добавить адрес электронной почты"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add an email address"
+msgstr "Добавить адрес электронной почты"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Notification debug logs"
+msgstr "Журналы отладки уведомлений"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "Обработка.."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Title for all notifications"
+msgstr "Название для всех уведомлений"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "For JSON payloads, use"
+msgstr "Для полезных данных JSON используйте"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "without quotes for automatic escaping, for example -"
+msgstr "без кавычек для автоматического экранирования, например -"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "URL encoding, use"
+msgstr "Кодировка URL, используйте"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "for example -"
+msgstr "например -"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Regular-expression replace, use"
+msgstr "Замена регулярного выражения, использование"
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"For a complete reference of all Jinja2 built-in filters, users can refer to "
+"the"
+msgstr ""
+"Полную информацию обо всех встроенных фильтрах Jinja2 пользователи могут "
+"найти на странице"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Format for all notifications"
+msgstr "Формат всех уведомлений"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Discord does not render HTML — switch to"
+msgstr "Discord не отображает HTML — переключитесь на"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Plain Text"
+msgstr "Обычный текст"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "format to avoid"
+msgstr "формат, чтобы избежать"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "and other HTML entities appearing literally in your notifications."
+msgstr ""
+"и другие объекты HTML, которые буквально появляются в ваших уведомлениях."
+
+#: changedetectionio/templates/_helpers.html
+msgid "Entry"
+msgstr "Вход"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Actions"
+msgstr "Действия"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Add a row/rule after"
+msgstr "Добавьте строку/правило после"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Remove this row/rule"
+msgstr "Удалить эту строку/правило"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Verify this rule against current snapshot"
+msgstr "Проверьте это правило на текущем снимке"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Set a hourly/week day schedule"
+msgstr "Установите почасовой/еженедельный график"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
+msgstr "Запланируйте ограничения по времени"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Business hours"
+msgstr "Часы работы"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Weekends"
+msgstr "Выходные"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Reset"
+msgstr "Перезагрузить"
+
+#: changedetectionio/templates/_helpers.html
+msgid ""
+"Warning, one or more of your 'days' has a duration that would extend into "
+"the next day."
+msgstr ""
+"Внимание! Продолжительность одного или нескольких ваших «дней» может "
+"продлиться до следующего дня."
+
+#: changedetectionio/templates/_helpers.html
+msgid "This could have unintended consequences."
+msgstr "Это может иметь непредвиденные последствия."
+
+#: changedetectionio/templates/_helpers.html
+msgid "More help and examples about using the scheduler"
+msgstr "Дополнительная помощь и примеры использования планировщика"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Want to use a time schedule?"
+msgstr "Хотите использовать расписание?"
+
+#: changedetectionio/templates/_helpers.html
+msgid "First confirm/save your Time Zone Settings"
+msgstr "Сначала подтвердите/сохраните настройки часового пояса."
+
+#: changedetectionio/templates/_helpers.html
+msgid ""
+"Triggers a change if this text appears, AND something changed in the "
+"document."
+msgstr ""
+"Запускает изменение, если появляется этот текст И что-то изменилось в "
+"документе."
+
+#: changedetectionio/templates/_helpers.html
+msgid "Triggered text"
+msgstr "Триггерный текст"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Ignored for calculating changes, but still shown."
+msgstr "Игнорируется при расчете изменений, но все равно отображается."
+
+#: changedetectionio/templates/_helpers.html
+msgid "Ignored text"
+msgstr "Игнорируемый текст"
+
+#: changedetectionio/templates/_helpers.html
+msgid "No change-detection will occur because this text exists."
+msgstr ""
+"Никакого обнаружения изменений не произойдет, поскольку этот текст "
+"существует."
+
+#: changedetectionio/templates/_helpers.html
+msgid "Blocked text"
+msgstr "Заблокированный текст"
+
+#: changedetectionio/templates/_stab.html
+msgid "Settings sections"
+msgstr "Разделы настроек"
+
+#: changedetectionio/templates/base.html
+msgid "A new version is available"
+msgstr "Доступна новая версия"
+
+#: changedetectionio/templates/base.html
+msgid "Search, or Use Alt+S Key"
+msgstr "Найдите или используйте клавишу Alt+S."
+
+#: changedetectionio/templates/base.html
+msgid "Share this link:"
+msgstr "Поделитесь этой ссылкой:"
+
+#: changedetectionio/templates/base.html
+msgid "Real-time updates offline"
+msgstr "Обновления в режиме реального времени в автономном режиме"
+
+#: changedetectionio/templates/base.html
+msgid "Select Language"
+msgstr "Выберите язык"
+
+#: changedetectionio/templates/base.html
+msgid "Auto-detect from browser"
+msgstr "Автоматическое определение из браузера"
+
+#: changedetectionio/templates/base.html
+msgid ""
+"Language support is in beta, please help us improve by opening a PR on "
+"GitHub with any updates."
+msgstr ""
+"Языковая поддержка находится в стадии бета-тестирования. Помогите нам "
+"улучшить ее, открыв PR на GitHub с любыми обновлениями."
+
+#: changedetectionio/templates/base.html
+msgid "AI / LLM not configured"
+msgstr "AI/LLM не настроен"
+
+#: changedetectionio/templates/base.html
+msgid ""
+"LLM-powered summaries are not yet enabled. Configure an AI provider in "
+"Settings to get started."
+msgstr ""
+"Сводки на основе LLM пока не включены. Чтобы начать, настройте поставщика "
+"искусственного интеллекта в настройках."
+
+#: changedetectionio/templates/base.html
+msgid "Go to AI / LLM Settings"
+msgstr "Зайдите в настройки AI/LLM."
+
+#: changedetectionio/templates/base.html
+msgid "Close"
+msgstr "Закрывать"
+
+#: changedetectionio/templates/base.html
+msgid "Search"
+msgstr "Поиск"
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "URL or Title in '%(title)s'"
+msgstr "URL-адрес или заголовок в формате «%(title)s»"
+
+#: changedetectionio/templates/base.html
+msgid "URL or Title"
+msgstr "URL или заголовок"
+
+#: changedetectionio/templates/base.html
+msgid "Enter search term..."
+msgstr "Введите поисковый запрос..."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI"
+msgstr "ИИ"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Describe what you care about. The AI evaluates every detected change against"
+" this and only notifies you when it matches."
+msgstr ""
+"Опишите, что вас волнует. ИИ сравнивает каждое обнаруженное изменение с этим"
+" и уведомляет вас только тогда, когда оно совпадает."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Set a change intent for all watches in this tag/group. Each watch can "
+"override with its own."
+msgstr ""
+"Установите намерение изменения для всех часов в этом теге/группе. Каждые "
+"часы могут переопределяться своими собственными."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "From group '%(name)s': %(value)s"
+msgstr "Из группы «%(name)s»: %(value)s"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"e.g. Alert me when the price drops below $300, or a new product is launched."
+" Ignore footer and navigation changes."
+msgstr ""
+"например Сообщите мне, когда цена упадет ниже 300 долларов США или будет "
+"выпущен новый продукт. Игнорируйте нижний колонтитул и изменения навигации."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"e.g. Flag price changes or new product launches across all watches in this "
+"group"
+msgstr ""
+"например Сообщить об изменении цен или выпуске новых продуктов для всех "
+"часов в этой группе"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Examples:"
+msgstr "Примеры:"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Only notify if the price drops below $200, or a limited-time deal is added"
+msgstr ""
+"Уведомляйте только в том случае, если цена упадет ниже 200 долларов США или "
+"будет добавлена ​​акция с ограниченным сроком действия."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Alert when a new recall, safety notice, or product withdrawal is published"
+msgstr ""
+"Оповещение при публикации нового отзыва, уведомления о безопасности или "
+"отзыва продукта"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Notify when a new grant round opens or an application deadline is announced"
+msgstr ""
+"Уведомлять об открытии нового грантового раунда или объявлении крайнего "
+"срока подачи заявок."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Only important if package versions change or a CVE is mentioned"
+msgstr ""
+"Важно только в том случае, если изменяются версии пакетов или упоминается "
+"CVE."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid ""
+"AI pre-filter active: <code>%(filter)s</code> — narrows content scope before"
+" evaluation"
+msgstr ""
+"Активен предварительный фильтр AI: <code>%(filter)s</code> — сужает объем "
+"контента перед оценкой."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid ""
+"When a change is detected, the AI describes it according to your "
+"instructions and replaces <code>%(diff)s</code> in your notification. Use "
+"<code>%(raw_diff)s</code> if you still want the original diff."
+msgstr ""
+"При обнаружении изменения ИИ описывает его в соответствии с вашими "
+"инструкциями и заменяет <code>%(diff)s</code> в вашем уведомлении. "
+"Используйте <code>%(raw_diff)s</code>, если вам все еще нужен исходный "
+"дифференциал."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Describe how changes should be summarised in notifications for all watches "
+"in this group."
+msgstr ""
+"Опишите, как изменения должны отражаться в уведомлениях для всех часов в "
+"этой группе."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"List each new item added with its name and price. Translate to English."
+msgstr ""
+"Перечислите каждый новый добавленный товар с его названием и ценой. "
+"Перевести на английский."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Summarise what events were added or cancelled. Two sentences maximum."
+msgstr ""
+"Подведите итог, какие события были добавлены или отменены. Два предложения "
+"максимум."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Describe the price change: old price, new price, percentage difference."
+msgstr "Опишите изменение цены: старая цена, новая цена, процентная разница."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid ""
+"Configure an AI / LLM provider in <a href=\"%(url)s\">Settings → AI / "
+"LLM</a> to enable AI Change Intent and AI Change Summary."
+msgstr ""
+"Настройте поставщика AI / LLM в <a href=\"%(url)s\">Settings → AI / LLM</a>,"
+" чтобы включить намерение изменения AI и сводку изменений AI."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid ""
+"Configure an AI / LLM provider in <a href=\"%(url)s\">Settings → AI / "
+"LLM</a> to enable AI features for this group."
+msgstr ""
+"Настройте поставщика AI / LLM в <a href=\"%(url)s\">Settings → AI / LLM</a>,"
+" чтобы включить функции AI для этой группы."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Note!: //text() function does not work where the <element> contains "
+"<![CDATA[]]>"
+msgstr ""
+"Примечание!: функция //text() не работает, если <element> содержит "
+"<![CDATA[]]>."
+
+#. CJK fonts lack native italics; allow substitution with conventional local
+#. styling. dennis-ignore: W303
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that "
+"matches will be used."
+msgstr ""
+"Будет использоваться один CSS, xPath 1 и 2, селектор JSON Path/JQ на строку,"
+" соответствующие правила <i>any</i>."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Limit text to this CSS rule, only text matching this CSS rule is included."
+msgstr ""
+"Ограничьте текст этим правилом CSS, включается только текст, соответствующий"
+" этому правилу CSS."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Prefix with <code>json:</code>, use <code>json:$</code> to force re-"
+"formatting if required,"
+msgstr ""
+"Префикс <code>json:</code>, используйте <code>json:$</code> для "
+"принудительного переформатирования, если необходимо,"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your JSONPath here"
+msgstr "проверьте свой JSONPath здесь"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Prefix <code>jqraw:</code> outputs the results as text instead of a JSON "
+"list."
+msgstr ""
+"Префикс <code>jqraw:</code> выводит результаты в виде текста, а не списка "
+"JSON."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "jq support not installed"
+msgstr "поддержка jq не установлена"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Limit text to this XPath rule, simply start with a forward-slash. To specify"
+" XPath to be used explicitly or the XPath rule starts with an XPath "
+"function: Prefix with <code>xpath:</code>"
+msgstr ""
+"Ограничьте текст этим правилом XPath, просто начните с косой черты. Чтобы "
+"явно указать XPath для использования или правило XPath начинается с функции "
+"XPath: используйте префикс <code>xpath:</code>."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your XPath here"
+msgstr "проверьте свой XPath здесь"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Get all titles from an RSS feed <code>//title/text()</code>"
+msgstr "Получить все заголовки из RSS-канала <code>//title/text()</code>"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "To use XPath1.0: Prefix with <code>xpath1:</code>"
+msgstr "Чтобы использовать XPath1.0: префикс <code>xpath1:</code>."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "here for more CSS selector help"
+msgstr "здесь для получения дополнительной помощи по выбору CSS"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Text to wait for before triggering a change/notification, all text and regex"
+" are tested case-insensitive."
+msgstr ""
+"Текст, который следует ожидать перед запуском изменения/уведомления. Весь "
+"текст и регулярные выражения проверяются без учета регистра."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Trigger text is processed from the result-text that comes out of any "
+"CSS/JSON Filters for this monitor"
+msgstr ""
+"Текст триггера обрабатывается из результирующего текста, полученного из "
+"любых фильтров CSS/JSON для этого монитора."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Each line is processed separately (think of each line as \"OR\")"
+msgstr ""
+"Каждая строка обрабатывается отдельно (представьте каждую строку как «ИЛИ»)."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Note: Wrap in forward slash / to use regex example:"
+msgstr ""
+"Примечание. Чтобы использовать пример регулярного выражения, заключите косую"
+" черту /:"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "You can also use"
+msgstr "Вы также можете использовать"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "conditions"
+msgstr "условия"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
+msgstr ""
+"«Текст страницы» — с «Содержит», «Начинается с», «Не содержит» и многими "
+"другими."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"For example: Out of stock\n"
+"Sold out\n"
+"Not in stock\n"
+"Unavailable"
+msgstr ""
+"Например: Нет в наличии.\n"
+"Распродано\n"
+"Нет в наличии\n"
+"Недоступно"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Block change-detection while this text is on the page, all text and regex "
+"are tested case-insensitive, good for waiting for when a product is "
+"available again"
+msgstr ""
+"Блокировать обнаружение изменений, пока этот текст находится на странице. "
+"Весь текст и регулярные выражения проверяются без учета регистра, что удобно"
+" для ожидания, когда продукт снова станет доступен."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Block text is processed from the result-text that comes out of any CSS/JSON "
+"Filters for this monitor"
+msgstr ""
+"Текст блока обрабатывается из результирующего текста, полученного из любых "
+"фильтров CSS/JSON для этого монитора."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "All lines here must not exist (think of each line as \"OR\")"
+msgstr ""
+"Все строки здесь не должны существовать (представьте каждую строку как "
+"«ИЛИ»)"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"celsius\n"
+"temperature\n"
+"price"
+msgstr ""
+"Цельсия\n"
+"температура\n"
+"цена"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Keep only lines that contain any of these words or phrases (plain text, "
+"case-insensitive)"
+msgstr ""
+"Сохраняйте только строки, содержащие любое из этих слов или фраз (обычный "
+"текст, без учета регистра)."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"One entry per line — any line in the page text that contains a match is kept"
+msgstr ""
+"Одна запись в строке — сохраняется любая строка текста страницы, содержащая "
+"совпадение."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Simpler alternative to regex — use this when you just want lines about a "
+"specific topic"
+msgstr ""
+"Более простая альтернатива регулярному выражению — используйте ее, если вам "
+"просто нужны строки по определенной теме."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"enter <code>celsius</code> to keep only lines mentioning temperature "
+"readings"
+msgstr ""
+"введите <code>celsius</code>, чтобы сохранить только строки, в которых "
+"упоминаются показания температуры."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Extracts text in the final output (line by line) after other filters using "
+"regular expressions or string match:"
+msgstr ""
+"Извлекает текст в конечном выводе (построчно) после других фильтров с "
+"использованием регулярных выражений или сопоставления строк:"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Regular expression - example"
+msgstr "Регулярное выражение — пример"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Don't forget to consider the white-space at the start of a line"
+msgstr "Не забудьте учитывать пробелы в начале строки."
+
+#: changedetectionio/templates/edit/text-options.html
+#, python-format
+msgid ""
+"Use <code>//(?aiLmsux))</code> type flags (more <a "
+"href=\"%(url)s\">information here</a>)"
+msgstr ""
+"Используйте флаги типа <code>//(?aiLmsux))</code> (более подробную "
+"информацию о <a href=\"%(url)s\"> можно найти здесь</a>)."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Keyword example - example: <code>Out of stock</code>"
+msgstr "Пример ключевого слова: <code>Нет на складе</code>"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Use groups to extract just that text - example"
+msgstr "Используйте группы для извлечения только этого текста — пример"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "returns a list of years only"
+msgstr "возвращает только список лет"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example - match lines containing a keyword"
+msgstr "Пример: сопоставить строки, содержащие ключевое слово"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "One line per regular-expression/string match"
+msgstr "Одна строка на совпадение регулярного выражения/строки"
+
+#: changedetectionio/templates/login.html
+msgid "Login"
+msgstr "Авторизоваться"
+
+#: changedetectionio/templates/menu.html
+msgid "GROUPS"
+msgstr "ГРУППЫ"
+
+#: changedetectionio/templates/menu.html
+msgid "SETTINGS"
+msgstr "НАСТРОЙКИ"
+
+#: changedetectionio/templates/menu.html
+msgid "IMPORT"
+msgstr "ИМПОРТ"
+
+#: changedetectionio/templates/menu.html
+msgid "Resume automatic scheduling"
+msgstr "Возобновить автоматическое планирование"
+
+#: changedetectionio/templates/menu.html
+msgid "Pause auto-queue scheduling of watches"
+msgstr "Приостановить автоматическое планирование часов в очереди"
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling is paused - click to resume"
+msgstr "Планирование приостановлено — нажмите, чтобы возобновить"
+
+#: changedetectionio/templates/menu.html
+msgid "Unmute notifications"
+msgstr "Включить уведомления"
+
+#: changedetectionio/templates/menu.html
+msgid "Notifications are muted - click to unmute"
+msgstr "Уведомления отключены — нажмите, чтобы включить звук"
+
+#: changedetectionio/templates/menu.html
+msgid "EDIT"
+msgstr "РЕДАКТИРОВАТЬ"
+
+#: changedetectionio/templates/menu.html
+msgid "LOG OUT"
+msgstr "ВЫХОД"
+
+#: changedetectionio/templates/menu.html
+msgid "Website Change Detection and Notification."
+msgstr "Обнаружение и уведомление об изменениях на веб-сайте."
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle AI Mode"
+msgstr "Переключить режим ИИ"
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle AI mode"
+msgstr "Переключить режим ИИ"
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle Light/Dark Mode"
+msgstr "Переключить светлый/темный режим"
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle light/dark mode"
+msgstr "Переключить светлый/темный режим"
+
+#: changedetectionio/templates/menu.html
+msgid "Change Language"
+msgstr "Изменить язык"
+
+#: changedetectionio/templates/menu.html
+msgid "Change language"
+msgstr "Изменить язык"
+
+#: changedetectionio/validate_url.py
+msgid "API Base URL is not a valid http(s) URL."
+msgstr "Базовый URL-адрес API не является допустимым URL-адресом http(s)."
+
+#: changedetectionio/validate_url.py
+msgid ""
+"API Base URL resolves to a private, loopback, link-local or reserved IP "
+"address and was blocked to prevent SSRF. To allow LLM endpoints on private "
+"networks (e.g. a local Ollama server) set the environment variable "
+"ALLOW_IANA_RESTRICTED_ADDRESSES=true and restart."
+msgstr ""
+"Базовый URL-адрес API преобразуется в частный IP-адрес, адрес обратной "
+"связи, локальный или зарезервированный IP-адрес и был заблокирован для "
+"предотвращения SSRF. Чтобы разрешить конечным точкам LLM в частных сетях "
+"(например, на локальном сервере Ollama), установите переменную среды "
+"ALLOW_IANA_RESTRICTED_ADDRESSES=true и перезапустите."
+
+#: changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "Да"
+
+#: changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "Нет"
+
+#: changedetectionio/widgets/ternary_boolean.py
+msgid "Main settings"
+msgstr "Основные настройки"
