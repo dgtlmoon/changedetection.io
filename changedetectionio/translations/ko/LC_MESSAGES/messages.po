@@ -422,6 +422,10 @@ msgid "Default recheck time for all watches, current system minimum is"
 msgstr "모든 모니터링의 기본 재확인 간격입니다. 현재 시스템 최소값은"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "seconds"
+msgstr "초"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
 msgstr "추가 정보"
 
@@ -1318,7 +1322,7 @@ msgstr "구성된 그룹/태그 없음"
 msgid "Mute notifications"
 msgstr "알림 음소거"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
 msgstr "편집"
@@ -1546,10 +1550,6 @@ msgstr "모니터링 설정이 업데이트되었습니다."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "미리보기를 사용할 수 없습니다. 아직 가져오기/확인이 완료되지 않았거나 트리거 조건에 도달하지 않았습니다."
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr "비교"
-
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr "이 작업은 모든 모니터링의 버전 기록(스냅샷)을 삭제하지만 URL 목록은 유지합니다."
@@ -1685,8 +1685,7 @@ msgstr "텍스트"
 msgid "Current screenshot"
 msgstr "현재 스크린샷"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
-#: changedetectionio/processors/templates/extract.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Extract Data"
 msgstr "데이터 추출"
 
@@ -2326,13 +2325,12 @@ msgid "Queued"
 msgstr "대기 중"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Summary"
-msgstr "요약"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "기록"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Summary"
+msgstr "요약"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Preview"
@@ -2468,59 +2466,9 @@ msgstr "Levenshtein - 텍스트 유사도 비율"
 msgid "Levenshtein - Text change distance"
 msgstr "Levenshtein - 텍스트 변경 거리"
 
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Not enough history to calculate Levenshtein metrics"
-msgstr "Levenshtein 지표를 계산할 기록이 충분하지 않습니다."
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Snapshot too large for edit statistics, skipping."
-msgstr "스냅샷이 너무 커서 편집 통계를 계산할 수 없어 건너뜁니다."
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Unable to calculate Levenshtein metrics"
-msgstr "Levenshtein 지표를 계산할 수 없습니다."
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Levenshtein Text Similarity Details"
-msgstr "Levenshtein 텍스트 유사도 상세"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Raw distance (edits needed)"
-msgstr "원시 거리(필요한 편집 횟수)"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Similarity ratio"
-msgstr "유사도 비율"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Percent similar"
-msgstr "유사도 백분율"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid ""
-"Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
-"into the other."
-msgstr "Levenshtein 지표는 마지막 두 스냅샷을 비교하여 한쪽을 다른 쪽으로 바꾸는 데 필요한 문자 편집 횟수를 측정합니다."
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Error calculating Levenshtein metrics"
-msgstr "Levenshtein 지표 계산 중 오류가 발생했습니다."
-
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count of content"
 msgstr "콘텐츠 단어 수"
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Content Analysis"
-msgstr "콘텐츠 분석"
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Word count (latest snapshot)"
-msgstr "단어 수(최신 스냅샷)"
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
-msgstr "단어 수는 텍스트를 공백 기준으로 나누어 계산하는 간단한 콘텐츠 길이 지표입니다."
 
 #: changedetectionio/content_fetchers/requests.py
 msgid "Basic fast Plaintext/HTTP Client"
@@ -2534,62 +2482,6 @@ msgstr "아직 없음"
 #: changedetectionio/flask_app.py
 msgid "0 seconds"
 msgstr "0초"
-
-#: changedetectionio/flask_app.py
-msgid "year"
-msgstr "년"
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr "년"
-
-#: changedetectionio/flask_app.py
-msgid "month"
-msgstr "개월"
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr "개월"
-
-#: changedetectionio/flask_app.py
-msgid "week"
-msgstr "주"
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr "주"
-
-#: changedetectionio/flask_app.py
-msgid "day"
-msgstr "일"
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr "일"
-
-#: changedetectionio/flask_app.py
-msgid "hour"
-msgstr "시간"
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr "시간"
-
-#: changedetectionio/flask_app.py
-msgid "minute"
-msgstr "분"
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr "분"
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr "초"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "초"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
