@@ -14,6 +14,9 @@ on:
         type: boolean
         default: false
 
+env:
+  FORCE_COLOR: 1
+
 jobs:
   # Build the Docker image once and share it with all test jobs
   build:
