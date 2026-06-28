@@ -420,10 +420,6 @@ msgid "Default recheck time for all watches, current system minimum is"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "seconds"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
 msgstr ""
 
@@ -1312,7 +1308,7 @@ msgstr "No website organizational tags/groups configured"
 msgid "Mute notifications"
 msgstr ""
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
 msgstr ""
@@ -1540,6 +1536,10 @@ msgstr ""
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/preview.py
+msgid "Diff"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr ""
@@ -1675,7 +1675,8 @@ msgstr ""
 msgid "Current screenshot"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
+#: changedetectionio/processors/templates/extract.html
 msgid "Extract Data"
 msgstr ""
 
@@ -2315,11 +2316,12 @@ msgid "Queued"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "History"
+msgid "Summary"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Summary"
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -2456,8 +2458,58 @@ msgstr ""
 msgid "Levenshtein - Text change distance"
 msgstr ""
 
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Not enough history to calculate Levenshtein metrics"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Snapshot too large for edit statistics, skipping."
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Unable to calculate Levenshtein metrics"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein Text Similarity Details"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Raw distance (edits needed)"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Similarity ratio"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Percent similar"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid ""
+"Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
+"into the other."
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Error calculating Levenshtein metrics"
+msgstr ""
+
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count of content"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Content Analysis"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count (latest snapshot)"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
 msgstr ""
 
 #: changedetectionio/content_fetchers/requests.py
@@ -2471,6 +2523,62 @@ msgstr ""
 
 #: changedetectionio/flask_app.py
 msgid "0 seconds"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "year"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "years"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "month"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "months"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "week"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "weeks"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "day"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "days"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "hour"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "hours"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "minute"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "minutes"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "second"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
+msgid "seconds"
 msgstr ""
 
 #: changedetectionio/flask_app.py
