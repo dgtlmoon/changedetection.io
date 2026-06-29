@@ -450,7 +450,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             try:
                                 from changedetectionio.llm.evaluator import (
                                     evaluate_change, resolve_intent, resolve_llm_field,
-                                    summarise_change, _runtime_llm_config,
+                                    summarise_change, _runtime_llm_config, compute_llm_enrichment,
                                 )
                                 # _runtime_llm_config returns None (and logs a debug skip
                                 # message) when the master 'llm_enabled' toggle is off, so
@@ -476,14 +476,20 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                     else:
                                         _diff_text = contents
 
+                                    # Structured-metadata enrichment (verbatim JSON-LD/OpenGraph) from the
+                                    # raw HTML, appended to both the intent and summary prompts. Computed once
+                                    # and dropped automatically if it won't fit the max_input_chars budget.
+                                    _llm_raw_html = getattr(getattr(update_handler, 'fetcher', None), 'content', '') or ''
+                                    _llm_metadata = compute_llm_enrichment(watch, datastore, _llm_raw_html, _diff_text)
+
                                     # Step 1: AI Change Intent — may suppress notification
                                     _llm_intent, _llm_intent_source = resolve_intent(watch, datastore)
                                     if _llm_intent:
                                         set_watch_minitext_status(watch, "AI/LLM (rules)..")
                                         _llm_result = await loop.run_in_executor(
                                             executor,
-                                            lambda diff=_diff_text, snap=contents: evaluate_change(
-                                                watch, datastore, diff=diff, current_snapshot=snap
+                                            lambda diff=_diff_text, snap=contents, meta=_llm_metadata: evaluate_change(
+                                                watch, datastore, diff=diff, current_snapshot=snap, metadata=meta
                                             )
                                         )
                                         update_obj['_llm_result'] = _llm_result
@@ -502,8 +508,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                         set_watch_minitext_status(watch, "AI/LLM (summary)..")
                                         _change_summary = await loop.run_in_executor(
                                             executor,
-                                            lambda diff=_diff_text, snap=contents: summarise_change(
-                                                watch, datastore, diff=diff, current_snapshot=snap
+                                            lambda diff=_diff_text, snap=contents, meta=_llm_metadata: summarise_change(
+                                                watch, datastore, diff=diff, current_snapshot=snap, metadata=meta
                                             )
                                         )
                                         if _change_summary:
@@ -557,6 +563,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                         effective_prompt=get_effective_summary_prompt(watch, datastore),
                                         max_summary_tokens=_llm_max_summary_tokens,
                                         model=_llm_model,
+                                        metadata=_llm_metadata,
                                     )
                                     watch.save_llm_diff_summary(
                                         update_obj['_llm_change_summary'],

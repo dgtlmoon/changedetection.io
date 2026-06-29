@@ -267,8 +267,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.llm.evaluator import (
             summarise_change, get_effective_summary_prompt, build_summary_cache_prompt,
             is_global_token_budget_exceeded, get_global_token_budget_month,
-            LLMInputTooLargeError,
+            LLMInputTooLargeError, compute_llm_enrichment,
         )
+
+        # Structured-metadata enrichment from the raw HTML of the "to" version (only the
+        # 2 newest fetched-HTML snapshots are retained; older pairs simply get no enrichment).
+        # Must be computed the same way as the worker pre-cache so the cache key matches.
+        _llm_raw_html = watch.get_fetched_html(to_version) or ''
+        _llm_metadata = compute_llm_enrichment(watch, datastore, _llm_raw_html, diff_text)
 
         # Diff-pref flags + system prompt + active model are part of the cache key
         # so prompt or model changes bust the cache.
@@ -281,6 +287,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             max_summary_tokens=_max_summary_tokens,
             prefs=prefs,
             model=_llm_model,
+            metadata=_llm_metadata,
         )
 
         # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)
@@ -306,7 +313,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             }), 429
 
         try:
-            summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text)
+            summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text, metadata=_llm_metadata)
         except LLMInputTooLargeError as e:
             return jsonify({'summary': None, 'error': str(e)}), 400
         except Exception as e:
