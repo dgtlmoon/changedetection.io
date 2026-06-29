@@ -28,6 +28,7 @@ SCREENSHOT_SIZE_STITCH_THRESHOLD = int(os.getenv("SCREENSHOT_CHUNK_HEIGHT", 1000
 # available_fetchers() will scan this implementation looking for anything starting with html_
 # this information is used in the form selections
 from changedetectionio.content_fetchers.requests import fetcher as html_requests
+from changedetectionio.content_fetchers.flaresolverr import fetcher as html_flaresolverr
 
 
 import importlib.resources

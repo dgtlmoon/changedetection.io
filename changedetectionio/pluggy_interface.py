@@ -299,7 +299,7 @@ def register_builtin_fetchers():
     This is called from content_fetchers/__init__.py after all fetchers are imported
     to avoid circular import issues.
     """
-    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium
+    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium, flaresolverr
 
     # Register each built-in fetcher plugin
     if hasattr(requests, 'requests_plugin'):
@@ -313,6 +313,9 @@ def register_builtin_fetchers():
 
     if hasattr(webdriver_selenium, 'webdriver_selenium_plugin'):
         plugin_manager.register(webdriver_selenium.webdriver_selenium_plugin, 'builtin_webdriver_selenium')
+
+    if hasattr(flaresolverr, 'flaresolverr_plugin'):
+        plugin_manager.register(flaresolverr.flaresolverr_plugin, 'builtin_flaresolverr')
 
 
 def register_builtin_restock_plugins():
