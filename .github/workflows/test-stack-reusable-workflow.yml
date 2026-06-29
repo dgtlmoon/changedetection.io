@@ -21,7 +21,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v6
@@ -29,7 +29,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip packages
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
@@ -85,7 +85,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -109,7 +109,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -181,7 +181,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -223,7 +223,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -263,7 +263,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -299,7 +299,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -327,7 +327,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -497,7 +497,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -537,7 +537,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -567,7 +567,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -595,7 +595,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -640,7 +640,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -694,7 +694,7 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Fetch all history and tags for upgrade testing
 
