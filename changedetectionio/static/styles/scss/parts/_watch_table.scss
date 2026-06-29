@@ -1,3 +1,51 @@
+@use "../settings" as *;
+
+$table-cell-padding: 8px 10px;
+/* below this width the optional restock info drops to its own row in the title cell */
+$title-col-stack-breakpoint: 1200px;
+
+// Highlight a row whose checkbox is selected. Pure CSS via :has() — no JS class
+// toggling needed. Targets the <td> cells (the striped background lives on the
+// cells, not the row) with enough specificity to beat .pure-table-striped.
+.watch-table tr:has(input[name="uuids"]:checked) > td {
+  background-color: var(--watchlist-row-selected);
+}
+
+// Reveal the per-row action buttons on hover/focus/selection (hidden at rest —
+// see td.buttons below). The row-hover background itself comes from .cdio-table.
+.watch-table tbody tr:hover td.buttons *,
+.watch-table tbody tr:focus-within td.buttons *,
+.watch-table tbody tr:has(input[name="uuids"]:checked) td.buttons * {
+  opacity: 1;
+}
+
+// "Select all matching" banner shown under the bulk-operations bar when the
+// whole visible page is selected but more matching rows exist on other pages.
+.select-all-banner {
+  margin: 0.4rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--common-round-border);
+  background: var(--watchlist-row-selected);
+  color: var(--color-watch-table-row-text);
+  font-size: var(--body-main-text-size);
+
+  button {
+    margin-left: 0.5rem;
+    vertical-align: baseline;
+  }
+}
+
+// Row-control Feather icons (pause/play, bell/bell-off) on the watch list AND the
+// groups/tags list — both use td.watch-controls. Sized + stroked to match.
+.watch-controls svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  vertical-align: middle;
+}
+
+
 /* table related */
 #stats_row {
   display: flex;
@@ -10,6 +58,11 @@
   }
   .left {
     text-align: left;
+
+    .records-selected {
+      margin-top: 0.25rem;
+      opacity: 0.9;
+    }
   }
 
   .right {
@@ -27,38 +80,247 @@ body.has-queue {
   }
 }
 
-.watch-table {
-  width: 100%;
-  font-size: 80%;
 
-  tr {
+#checkbox-operations {
+  margin-bottom: $common-gap;
+  background: var(--color-background-new-watch-form);
+  padding: 1em;
+  border-radius: 10px;
+  max-width: 100%;
+  position: sticky;
+  top: 20px;
+  // Hidden until watches are selected; shown via body.watch-selection-active (toggled in
+  // watch-overview.js, replaces the old jQuery slideUp/slideDown).
+  display: none;
+  button {
+    /* some space if they wrap the page */
+    margin-bottom: 3px;
+    margin-top: 3px;
+    /* vertically center icon and text */
+    display: inline-flex;
+    align-items: center;
+  }
+    i,svg {
+    width: 14px;
+    height: 14px;
+    stroke: white;
+  }
+}
+
+body.watch-selection-active #checkbox-operations {
+  display: block;
+}
+
+
+
+// Watch-list-specific styling layered on top of the shared .cdio-table base.
+.watch-table {
+  .checkbox-uuid {
+    >* {
+      vertical-align: middle;
+    }
+    text-align: center;
+  }
+
+  @media only screen and (max-width: $title-col-stack-breakpoint) {
+    .last-checked, .last-changed {
+      text-align: center;
+    }
+  }
+
+  #th-webpage {
+    text-align: center;
+  }
+  tbody tr {
     &.unviewed {
       font-weight: bold;
     }
 
-    color: var(--color-watch-table-row-text);
+    /*
+       Title cell layout:
+       [favicon] [watch-text-info (grows)] [status-icons] [restock-info-wrap?]
+       The restock column is optional; below $title-col-stack-breakpoint it drops
+       onto its own row, centered beneath the three columns above it.
+    */
+    td.inline.title-col {
+      width: 100%;
+      .grid-wrapper {
+        display: grid;
+        /* Only 3 explicit columns. The optional restock column is placed into an
+           IMPLICIT 4th track (grid-column: 4 below), which is created only when
+           .restock-info-wrap is actually present. Reserving an explicit 4th track
+           here would leave a phantom 0.8rem gap-gutter after .status-icons on the
+           (common) watches that have no restock info. */
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-auto-columns: auto;
+        align-items: center;
+        gap: $common-gap;
+
+        > .favicon        { grid-column: 1; }
+        > .watch-text-info { grid-column: 2; }
+        > .status-icons   { grid-column: 3; }
+        > .restock-info-wrap { grid-column: 4; }
+
+        @media only screen and (max-width: $title-col-stack-breakpoint) {
+          > .restock-info-wrap {
+            grid-column: 1 / -1;
+            justify-self: center;
+          }
+        }
+      }
+    }
+
+    .watch-text-info {
+      line-height: 1.5; /* lots of text and CSS tags etc here that can wrap at any time, add some breathability */
+    }
+    /* Row with 'checking-now' */
+    &.checking-now {
+      td:first-child {
+        position: relative;
+      }
+
+      td:first-child::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 3px;
+        background-color: #293eff;
+      }
+
+      td.last-checked {
+        .spinner-wrapper {
+          display: inline-block !important;
+          white-space: nowrap !important;
+        }
+        .spinner {
+          margin-right: $common-gap/2;
+        }
+
+        .innertext {
+          display: none !important;
+        }
+      }
+    }
+
+    &.queued {
+      a.recheck {
+        display: none !important;
+      }
+
+      a.already-in-queue-button {
+        display: inline-flex !important;
+        opacity: 0.8;
+      }
+    }
+
+    &.paused {
+      a.pause-toggle {
+        &.state-on {
+          display: inline !important;
+        }
+
+        &.state-off {
+          display: none !important;
+        }
+      }
+    }
+
+    &.notification_muted {
+      a.mute-toggle {
+        &.state-on {
+          display: inline !important;
+        }
+
+        &.state-off {
+          display: none !important;
+        }
+      }
+    }
+
+    &.has-error {
+      .error-text {
+        display: block !important;
+        color: var(--color-watch-table-error);
+      }
+    }
+
+    &.single-history {
+      a.preview-link {
+        display: inherit !important;
+      }
+    }
+
+    &.multiple-history {
+      a.history-link {
+        display: inherit !important;
+      }
+    }
+
+    &.has-favicon.unviewed {
+      img.favicon {
+        opacity: 1.0 !important;
+        border-radius: 4px;
+      }
+    }
   }
 
-
   td {
-    white-space: nowrap;
+    &.buttons {
+      font-size: 12px;
+      white-space: nowrap;
+      // Per-row actions are hidden at rest and revealed on row hover/focus (see
+      // the .watch-table tbody tr:hover rule above). Opacity (not display) keeps
+      // the column width stable so the table doesn't shift on hover.
 
+      // The actions live in a wrapper div — lay them out as an evenly-spaced row.
+      > div {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        > * {
+          opacity: 0;
+          transition: opacity 0.12s ease;
+        }
+      }
+    }
     &.title-col {
       word-break: break-all;
       white-space: normal;
     }
 
     a.external::after {
-      content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+      // Inline "external link" glyph (open-cornered square + outbound arrow) as a
+      // background image so its box can be sized off the doc text-size variable
+      // (a data-URI in `content:url()` can't be reliably resized). Neutral grey so
+      // it reads on light backgrounds; dark mode lightens it via the existing
+      // invert filter on .title-col a[target="_blank"]::after.
+      content: "";
+      display: inline-block;
+      width: var(--body-main-text-size);
+      height: var(--body-main-text-size);
+      vertical-align: -0.1em;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E") no-repeat center / contain;
       margin: 0 3px 0 5px;
     }
-
+    &.watch-controls {
+      > div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
   }
 
 
   th {
-    white-space: nowrap;
-
+    @media (min-width: 1020px) {
+      white-space: nowrap;
+    }
+    &#h-lastchanged, &#h-lastchecked {
+      text-align: center;
+    }
     a {
       font-weight: normal;
 
@@ -72,127 +334,211 @@ body.has-queue {
         }
       }
     }
-  }
-
-  /* Row with 'checking-now' */
-  tr.checking-now {
-    td:first-child {
-      position: relative;
-    }
-
-    td:first-child::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 3px;
-      background-color: #293eff;
-    }
-
-    td.last-checked {
-      .spinner-wrapper {
-        display: inline-block !important;
-      }
-
-      .innertext {
-        display: none !important;
+    &#mute-pause {
+      white-space: nowrap;
+      > div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
     }
   }
 
-  tr.queued {
-    a.recheck {
+  &.favicon-not-enabled {
+    tr {
+      .favicon {
+        display: none;
+      }
+    }
+  }
+
+  .status-icons {
+    white-space: nowrap;
+    display: flex;
+    align-items: center; /* Vertical centering */
+    gap: 4px; /* Space between image and text */
+    > * {
+      vertical-align: middle;
+    }
+  }
+
+  .title-wrapper {
+    display: flex;
+    align-items: center; /* Vertical centering */
+    gap: 10px; /* Space between image and text */
+  }
+
+  /* Make sure .title-col-inner doesn't collapse or misalign */
+  .title-col-inner {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  /* favicon styling */
+  img.favicon {
+    vertical-align: middle;
+    max-width: 36px;
+    max-height: 36px;
+    height: 36px;
+    &:hover {
+      outline: 2px solid color-mix(
+        in srgb,
+        var(--color-watch-table-row-text) 50%,
+        transparent
+      );
+      outline-offset: 1px;
+      border-radius: 4px;
+    }
+  }
+
+  // Reserved for future use
+  /*  &.thumbnail-type-screenshot {
+      tr.has-favicon {
+        td.inline.title-col {
+          img.thumbnail {
+            background-color: #fff; !* fallback bg for SVGs without bg *!
+            border-radius: 4px; !* subtle rounded corners *!
+            border: 1px solid #ddd; !* light border for contrast *!
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); !* soft shadow *!
+            filter: contrast(1.05) saturate(1.1) drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+            object-fit: cover; !* crop/fill if needed *!
+            opacity: 0.8;
+            max-width: 30px;
+            max-height: 30px;
+            height: 30px;
+          }
+        }
+      }
+    }*/
+}
+
+body.watch-selection-active  {
+  /* because its confusing to be in checkbox selection mode AND see these buttons which apply always to all watches */
+  #buttons-for-all-watches {
       display: none !important;
-    }
-
-    a.already-in-queue-button {
-      display: inline-block !important;
-    }
   }
-
-  tr.paused {
-    a.pause-toggle {
-      &.state-on {
-        display: inline !important;
-      }
-
-      &.state-off {
-        display: none !important;
-      }
-    }
-  }
-
-  tr.notification_muted {
-    a.mute-toggle {
-      &.state-on {
-        display: inline !important;
-      }
-
-      &.state-off {
-        display: none !important;
-      }
-    }
-  }
-
-
-  tr.has-error {
-    color: var(--color-watch-table-error);
-
-    .error-text {
-      display: block !important;
-    }
-  }
-
-  tr.single-history {
-    a.preview-link {
-      display: inline-block !important;
-    }
-  }
-
-  tr.multiple-history {
-    a.history-link {
-      display: inline-block !important;
-    }
-  }
-
-
+}
+#buttons-for-all-watches {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: $common-gap;
+  margin: 0;
 }
 
 #watch-table-wrapper {
-  /* general styling */
-  #post-list-buttons {
-    text-align: right;
-    padding: 0px;
-    margin: 0px;
+  display: inline-block; /* so the tabs at the bottom align */
+  width: 100%; /* so the table always grows to the tab sizes if theres lots of tabs and full is OK too */
 
-    li {
-      display: inline-block;
-    }
-
-    a {
-      border-top-left-radius: initial;
-      border-top-right-radius: initial;
-      border-bottom-left-radius: 5px;
-      border-bottom-right-radius: 5px;
-    }
+  /* toolbar row: status-filter segmented control + list actions, left-aligned */
+  #list-related-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: $common-gap;
+    margin: 0;
+    padding: $common-gap*2 0 $common-gap 0;
   }
 
   /* post list dynamically on/off stuff */
 
   &.has-error {
-    #post-list-buttons {
+    #list-related-buttons {
       #post-list-with-errors {
-        display: inline-block !important;
+        display: inline-flex !important;
       }
     }
   }
 
   &.has-unread-changes {
-    #post-list-buttons {
-      #post-list-unread, #post-list-mark-views, #post-list-unread {
-        display: inline-block !important;
+    #list-related-buttons {
+      #post-list-unread, #post-list-mark-views {
+        display: inline-flex !important;
       }
     }
+  }
+
+  #tag-lister {
+    #tag-all {
+      opacity: 1.0;
+    }
+    &.active-tag {
+      .button-tag {
+        opacity: 0.35;
+        &.active, &:hover {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+.content {
+  .group-overview-table {
+    width: 100%;
+
+    .pure-button {
+      margin-top: 0.3rem;
+      margin-bottom: 0.3rem;
+    }
+    .watch-controls, .watch-count {
+      text-align: center;
+    }
+    td {
+      padding: 5px !important;
+      color: var(--color-watch-table-row-text);
+
+    }
+  }
+
+}
+
+.pure-button {
+  border-radius: var(--common-round-border);
+}
+
+
+
+// Watchlist page: quick-add box above the list.
+body.blueprint-watchlist {
+  #add-watch-ui {
+    margin-bottom: $common-gap*2;
+    padding: 0; /* override */
+  }
+  #add-watch-url-row {
+    margin-bottom: 0 !important;
+  }
+  #quick-watch-llm-intent {
+    margin-top: $common-gap;
+  }
+
+  // Let the URL field grow with what's typed, from a compact minimum up to 80% of
+  // the row, instead of always filling it. `field-sizing: content` is the pure-CSS
+  // auto-grow (Chromium 123+); other browsers fall back to the min-width below.
+  #url {
+
+    width: auto;
+    @media only screen and (min-width: $desktop-wide-breakpoint) {
+      /*field-sizing: content;*/ // <-- removed, buggy
+      min-width: 32rem;
+      // Cap against the viewport, not just the parent: with field-sizing:content the parent is
+      // shrink-to-fit, so "80%" is effectively the input's own width and a long URL would grow
+      // it past the viewport edge (horizontal scroll). min(80%, 80vw) keeps it on-screen.
+      max-width: min(80%, 80vw);
+      box-sizing: border-box;
+    }
+  }
+
+  // Reveal the "intent" + "processor type" options only once a URL has been typed
+  // — pure CSS, no JS. :placeholder-shown is true while the box is empty (the
+  // placeholder is visible); :has() lets the form react to the nested #url input.
+  #quick-watch-llm-intent,
+  #quick-watch-processor-type {
+    display: none;
+  }
+  #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-llm-intent,
+  #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-processor-type {
+    display: block;
   }
 }

@@ -246,6 +246,14 @@ class model(EntityPersistenceMixin, watch_base):
         if self.get('default'):
             del self['default']
 
+        # restock is persisted as a plain dict; rehydrate it into the Restock model
+        # so callers always get its helpers (get_price_change_percent, etc.) and
+        # never just a dict. Lazy import avoids a model<->processor import cycle.
+        if self.get('restock') is not None:
+            from changedetectionio.processors.restock_diff import Restock
+            if not isinstance(self['restock'], Restock):
+                self['restock'] = Restock(self['restock'])
+
         # Be sure the cached timestamp is ready
         bump = self.history
 

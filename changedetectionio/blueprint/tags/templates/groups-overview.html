@@ -43,19 +43,19 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
     </form>
     <!-- @todo maybe some overview matrix, 'tick' with which has notification, filter rules etc -->
     <div id="watch-table-wrapper">
-
-        <table class="pure-table pure-table-striped watch-table group-overview-table">
+        <div class="cdio-table-clip">
+        <table class="pure-table cdio-table group-overview-table">
             <thead>
             <tr>
                 <th></th>
-                <th>{{ _('# Watches') }}</th>
+                <th class="watch-count">{{ _('# Watches') }}</th>
                 <th>{{ _('Tag / Label name') }}</th>
                 <th></th>
             </tr>
             </thead>
             <tbody>
             <!--
-            @Todo - connect Last checked, Last Changed, Number of Watches etc
+            @Todo - connect Checked, Changed, Number of Watches etc
             --->
             {% if not available_tags|length %}
             <tr>
@@ -63,16 +63,17 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
             </tr>
             {% endif %}
             {% for uuid, tag in available_tags  %}
-            <tr id="{{ uuid }}" class="{{ loop.cycle('pure-table-odd', 'pure-table-even') }}">
+                {#-{{ loop.cycle('pure-table-odd', 'pure-table-even') }}-#}
+            <tr id="{{ uuid }}" class="">
                 <td class="watch-controls">
-                    <a class="link-mute state-{{'on' if tag.notification_muted else 'off'}}" href="{{url_for('tags.mute', uuid=tag.uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ _('Mute notifications') }}" title="{{ _('Mute notifications') }}" class="icon icon-mute" ></a>
+                    <a class="link-mute state-{{'on' if tag.notification_muted else 'off'}}" href="{{url_for('tags.mute', uuid=tag.uuid)}}" aria-label="{{ _('Mute notifications') }}" title="{{ _('Mute notifications') }}"><i data-feather="{{ 'bell-off' if tag.notification_muted else 'bell' }}" class="icon icon-mute"></i></a>
                 </td>
-                <td>{{ "{:,}".format(tag_count[uuid]) if uuid in tag_count else 0 }}</td>
+                <td class="watch-count">{{ "{:,}".format(tag_count[uuid]) if uuid in tag_count else 0 }}</td>
                 <td class="title-col inline"> <a href="{{url_for('watchlist.index', tag=uuid) }}" class="watch-tag-list tag-{{ tag.title|sanitize_tag_class }}">{{ tag.title }}</a></td>
                 <td>
-                    <a class="pure-button pure-button-primary" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">{{ _('Edit') }}</a>
-                    <a href="{{ url_for('ui.form_watch_checknow', tag=uuid) }}" class="pure-button pure-button-primary" >{{ _('Recheck') }}</a>
-                    <a class="pure-button button-error"
+                    <a class="cdio-btn" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">{{ _('Edit') }}</a>
+                    <a href="{{ url_for('ui.form_watch_checknow', tag=uuid) }}" class="cdio-btn" ><i data-feather="refresh-cw"></i>{{ _('Recheck') }}</a>
+                    <a class="cdio-btn cdio-btn--danger"
                        href="{{ url_for('tags.delete', uuid=uuid) }}"
                        data-requires-confirm
                        data-confirm-type="danger"
@@ -80,7 +81,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                        data-confirm-message="{{ _('<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>', title=tag.title) }}"
                        data-confirm-button="{{ _('Delete') }}"
                        title="{{ _('Deletes and removes tag') }}">{{ _('Delete') }}</a>
-                    <a class="pure-button button-warning"
+                    <a class="cdio-btn cdio-btn--warning"
                        href="{{ url_for('tags.unlink', uuid=uuid) }}"
                        data-requires-confirm
                        data-confirm-type="warning"
@@ -94,6 +95,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
             {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endblock %}

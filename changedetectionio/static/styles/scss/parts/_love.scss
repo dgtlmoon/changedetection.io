@@ -1,14 +1,16 @@
+@use "../settings" as *;
+
 #overlay {
 
   opacity: 0.95;
   position: fixed;
-
   width: 350px;
   max-width: 100%;
   height: 100%;
-  top: 0;
+  top: 50px;
   right: -350px;
   background-color: var(--color-table-stripe);
+  border: 1px solid #aaa;
   z-index: 2;
 
   transform: translateX(0);
@@ -22,17 +24,19 @@
 
   .content {
     font-size: 0.875rem;
-    padding: 1rem;
-    margin-top: 5rem;
+    padding: $common-gap*2;
     max-width: 400px;
     color: var(--color-watch-table-row-text);
   }
 }
 
 #heartpath {
+  height: 1.6rem;
+  width: 1.6rem;
   &:hover {
     fill: #ff0000 !important;
     transition: all ease 0.3s !important;
   }
+  z-index: 100;
   transition: all ease 0.3s !important;
 }

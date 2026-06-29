@@ -49,6 +49,112 @@ def set_back_in_stock_response(datastore_path):
         f.write(test_return_data)
     return None
 
+def set_price_response(datastore_path, price, nonce=''):
+    # JSON-LD product offer so the price + availability are extracted deterministically
+    # without needing a real browser (extruct parses the raw HTML).
+    # `nonce` injects throwaway body content so the page checksum differs (the check actually
+    # runs instead of short-circuiting) while the price stays the same.
+    test_return_data = """<html>
+       <head>
+       <script type="application/ld+json">
+       {"@context": "https://schema.org/", "@type": "Product", "name": "Test Product",
+        "offers": {"@type": "Offer", "priceCurrency": "USD", "price": "%s",
+                   "availability": "https://schema.org/InStock"}}
+       </script>
+       </head>
+       <body>
+       <div id="sametext">Available!</div>
+       <!-- %s -->
+       </body>
+     </html>
+    """ % (price, nonce)
+
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write(test_return_data)
+    return None
+
+
+def test_restock_price_change_direction(client, live_server, measure_memory_usage, datastore_path):
+    """The watch list shows a green ▼/-% on a price drop and a red ▲/+% on a price rise.
+    The arrow is computed from last_price (the previous check's price), so it reflects the
+    change since the previous check and disappears once the price is stable."""
+
+    def get_restock(client):
+        datastore = client.application.config.get('DATASTORE')
+        uuid = next(iter(datastore.data['watching']))
+        return datastore.data['watching'][uuid]['restock']
+
+    set_price_response(datastore_path=datastore_path, price="100.00")
+
+    # JSON-LD restock data is parsed by extruct over the in-process html_requests fetcher,
+    # so we can hit the live server on localhost directly (no Docker browser container needed).
+    test_url = url_for('test_endpoint', _external=True)
+    client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff', 'fetch_backend': 'html_requests'},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+
+    # First check: there is no previous price yet, so no up/down indicator should render
+    res = client.get(url_for("watchlist.index"))
+    assert b'processor-restock_diff' in res.data
+    assert b'price-change' not in res.data, "No price arrow should show on the very first check"
+    assert get_restock(client).get('last_price') is None, "last_price should be unset on the first check"
+
+    # Price drops 100.00 -> 82.00 => -18%, expect a green down arrow
+    set_price_response(datastore_path=datastore_path, price="82.00")
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'price-change down' in res.data, "Price drop should show a down arrow"
+    assert '▼'.encode('utf-8') in res.data
+    assert b'-18%' in res.data, "Price drop percentage should be shown"
+    assert float(get_restock(client).get('last_price')) == 100.0, "last_price should be the previous check's price"
+
+    # A price drop makes this watch a "deal": the Deals filter appears in the toolbar
+    # and filtering by it (?deals=1) lists the watch.
+    assert b'post-list-deals' in res.data, "Deals filter should appear when a price drop is detected"
+    res_deals = client.get(url_for("watchlist.index", deals=1))
+    assert b'processor-restock_diff' in res_deals.data, "?deals=1 should list the dropped-price watch"
+
+    # Price rises 82.00 -> 90.00 => +9.8%, expect an up arrow
+    set_price_response(datastore_path=datastore_path, price="90.00")
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'price-change up' in res.data, "Price rise should show an up arrow"
+    assert '▲'.encode('utf-8') in res.data
+    assert b'+9.8%' in res.data, "Price rise percentage should be shown"
+    assert float(get_restock(client).get('last_price')) == 82.0, "last_price should be the previous check's price"
+
+    # A price rise is not a deal: the Deals filter disappears and matches nothing.
+    assert b'post-list-deals' not in res.data, "Deals filter should disappear once there are no price drops"
+    res_deals = client.get(url_for("watchlist.index", deals=1))
+    assert b'processor-restock_diff' not in res_deals.data, "?deals=1 should match nothing after a price rise"
+
+    # Re-check with NO price change - the page content is identical so the check short-circuits
+    # (checksumFromPreviousCheckWasTheSame) and the processor never runs, so last_price is NOT
+    # advanced and the arrow persists showing the last real move.
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert b'price-change up' in res.data, "Arrow should persist across an unchanged (short-circuited) check"
+    assert b'+9.8%' in res.data, "Percentage should persist across an unchanged check"
+    assert float(get_restock(client).get('last_price')) == 82.0, "last_price stays put when the check short-circuits"
+
+    # Regression: the page CONTENT changes (so the check actually runs, no short-circuit) but the
+    # PRICE stays 90.00. last_price must NOT be clobbered to 90 - it should still hold 82 so the
+    # arrow persists. (Previously last_price was re-stamped every check and collapsed to == price.)
+    set_price_response(datastore_path=datastore_path, price="90.00", nonce="changed-body-same-price")
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    res = client.get(url_for("watchlist.index"))
+    assert float(get_restock(client).get('last_price')) == 82.0, "last_price must be preserved when the price is unchanged but the page content changed"
+    assert b'price-change up' in res.data, "Arrow should persist when only non-price content changed"
+    assert b'+9.8%' in res.data
+
+
 # Add a site in paused mode, add an invalid filter, we should still have visual selector data ready
 def test_restock_detection(client, live_server, measure_memory_usage, datastore_path):
 
@@ -62,13 +168,11 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title "+default_notification_title,
-              "application-notification_body": "fallback-body "+default_notification_body,
-              "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_webdriver"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title "+default_notification_title,
+              "notification_body": "fallback-body "+default_notification_body,
+              "notification_format": default_notification_format},
         follow_redirects=True
     )
     # Add our URL to the import page, because the docker container (playwright/selenium) wont be able to connect to our usual test url

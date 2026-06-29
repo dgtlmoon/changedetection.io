@@ -5,7 +5,7 @@ import pytest
 import requests
 from apprise.utils.parse import parse_url as apprise_parse_url
 
-from ...apprise_plugin.custom_handlers import (
+from changedetectionio.notification.apprise_plugin.custom_handlers import (
     _get_auth,
     _get_headers,
     _get_params,

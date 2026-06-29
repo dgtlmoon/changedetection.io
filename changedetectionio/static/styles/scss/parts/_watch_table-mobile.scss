@@ -1,9 +1,15 @@
-$grid-col-checkbox: 20px;
+$grid-col-checkbox: 40px;
 $grid-col-watch: 100px;
 $grid-gap: 0.5rem;
 
+// Breakpoint at which the watch list snaps from horizontal table rows to the
+// stacked mobile grid layout. The min-width companion (= max + 1px) handles
+// the desktop-only side so the two queries can never overlap or leave a 1px
+// gap between them.
+$watch-table-mobile-max: 767px;
 
-@media (max-width: 767px) {
+
+@media (max-width: $watch-table-mobile-max) {
 
   /*
   Max width before this PARTICULAR table gets nasty
@@ -18,11 +24,10 @@ $grid-gap: 0.5rem;
       tr {
         th {
           display: inline-block;
-          // Hide the "Last" text for smaller screens
-          @media (max-width: 768px) {
-            .hide-on-mobile {
-              display: none;
-            }
+          // Hide the "Last" text for smaller screens — the parent
+          // @media already gates this to the mobile breakpoint.
+          .hide-on-mobile {
+            display: none;
           }
         }
       }
@@ -30,19 +35,6 @@ $grid-gap: 0.5rem;
       .empty-cell {
         display: none;
       }
-    }
-
-
-    .last-checked {
-      margin-left: calc($grid-col-checkbox + $grid-gap);
-
-      > span {
-        vertical-align: middle;
-      }
-    }
-
-    .last-changed {
-      margin-left: calc($grid-col-checkbox + $grid-gap);
     }
 
     .last-checked::before {
@@ -96,8 +88,8 @@ $grid-gap: 0.5rem;
     }
   }
 }
-
-@media (max-width: 767px) {
+/* watch table snap to stacked horizontal */
+@media (max-width: $watch-table-mobile-max) {
   .watch-table {
     tbody {
       tr {
@@ -110,11 +102,6 @@ $grid-gap: 0.5rem;
 
         .counter-i {
           display: none;
-        }
-
-        td.checkbox-uuid {
-          display: grid;
-          place-items: center;
         }
 
         td.inline {
@@ -178,12 +165,21 @@ $grid-gap: 0.5rem;
     }
   }
   .pure-table td {
-    padding: 3px !important;
+    padding: 0 !important;
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: $watch-table-mobile-max + 1px) {
   .watch-table thead tr th .hide-on-desktop {
     display: none;
   }
+  .watch-table {
+    td.last-checked, td.last-changed {
+      .innertext {
+        white-space: nowrap;
+      }
+    }
+  }
 }
+
+

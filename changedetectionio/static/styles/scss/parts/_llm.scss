@@ -62,6 +62,7 @@
   opacity: 0.5;
   font-style: italic;
   animation: llm-pulse 1.4s ease-in-out infinite;
+  font-weight: bold;
 }
 
 @keyframes llm-pulse {
@@ -83,7 +84,6 @@
   transition: opacity 0.2s ease, filter 0.2s ease;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
   color: var(--color-text-menu-link);
 
   svg {
@@ -124,7 +124,6 @@ html[data-ai-mode="true"] body.llm-configured {
     border-top: 1px solid #c4b5fd !important;
     border-left: 3px solid #8b5cf6 !important;
     color: #1a0640 !important;
-    font-size: 0.85rem;
     line-height: 1.5;
   }
 

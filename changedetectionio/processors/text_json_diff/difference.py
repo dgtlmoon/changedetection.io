@@ -129,30 +129,14 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
         extract_form = forms.extractDataForm(formdata=request.form,
                                              data={'extract_regex': request.form.get('extract_regex', '')}
                                              )
-    history = watch.history
-    dates = list(history.keys())
-
-    # If a "from_version" was requested, then find it (or the closest one)
-    # Also set "from version" to be the closest version to the one that was last viewed.
-
-    best_last_viewed_timestamp = watch.get_from_version_based_on_last_viewed
-    from_version_timestamp = best_last_viewed_timestamp if best_last_viewed_timestamp else dates[-2]
-    from_version = request.args.get('from_version', from_version_timestamp )
-
-    # Use the current one if nothing was specified
-    to_version = request.args.get('to_version', str(dates[-1]))
-
-    try:
-        to_version_file_contents = watch.get_history_snapshot(timestamp=to_version)
-    except Exception as e:
-        logger.error(f"Unable to read watch history to-version for version {to_version}: {str(e)}")
-        to_version_file_contents = f"Unable to read to-version at {to_version}.\n"
-
-    try:
-        from_version_file_contents = watch.get_history_snapshot(timestamp=from_version)
-    except Exception as e:
-        logger.error(f"Unable to read watch history from-version for version {from_version}: {str(e)}")
-        from_version_file_contents = f"Unable to read to-version {from_version}.\n"
+    # Resolve which two snapshots we're comparing (shared with all processors' diff pages).
+    from changedetectionio.processors.difference_base import resolve_diff_versions
+    diff_versions = resolve_diff_versions(watch, request)
+    dates = diff_versions.dates
+    from_version = diff_versions.from_version
+    to_version = diff_versions.to_version
+    from_version_file_contents = diff_versions.from_contents
+    to_version_file_contents = diff_versions.to_contents
 
     screenshot_url = watch.get_screenshot()
 
@@ -196,16 +180,14 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
     content = apply_html_color_to_body(n_body=content)
     offscreen_content = render_template("diff-offscreen-options.html")
 
-    note = ''
-    if str(from_version) != str(dates[-2]) or str(to_version) != str(dates[-1]):
-        note = 'Note: You are not viewing the latest changes.'
+    note = diff_versions.note
 
     llm_configured = bool(
         datastore.data.get('settings', {}).get('application', {}).get('llm', {}).get('model')
     )
 
     # Load cached AI diff summary for this exact from→to + prompt combination
-    viewing_latest = str(to_version) == str(dates[-1])
+    viewing_latest = diff_versions.viewing_latest
     llm_diff_summary = ''
     llm_summary_prompt = ''
     if llm_configured:
