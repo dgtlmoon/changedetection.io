@@ -2,7 +2,7 @@ import ipaddress
 import socket
 from functools import lru_cache
 from loguru import logger
-from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode, quote, unquote
 
 
 def normalize_url_encoding(url):
@@ -41,6 +41,13 @@ def normalize_url_encoding(url):
         # Re-encode the query string properly using standard URL encoding
         encoded_query = urlencode(query_params, safe='')
 
+        # Fragments need the same treatment - browsers accept characters there that
+        # RFC 3986 does not (e.g. '|' in "...w-4#int=S:PFreco|PF|48966", see issue #4209)
+        # and validators.url() would reject them. unquote() first so an already-encoded
+        # fragment isn't double-encoded, then re-quote keeping every character that
+        # RFC 3986 allows in a fragment (pchar / "/" / "?") intact.
+        encoded_fragment = quote(unquote(parsed.fragment), safe="/?:@!$&'()*+,;=")
+
         # Reconstruct the URL with properly encoded query string
         normalized = urlunparse((
             parsed.scheme,
@@ -48,7 +55,7 @@ def normalize_url_encoding(url):
             parsed.path,
             parsed.params,
             encoded_query,  # Use the re-encoded query
-            parsed.fragment
+            encoded_fragment  # Use the re-encoded fragment
         ))
 
         return normalized
