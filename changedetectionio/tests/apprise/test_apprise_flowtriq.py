@@ -1,4 +1,5 @@
 import json
+import os
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -110,8 +111,34 @@ def test_flowtriq_payload_structure(mock_post):
     payload = json.loads(mock_post.call_args[1]['data'])
     assert payload == {
         'source': 'changedetection',
-        'watch_url': 'https://monitored-site.com/status',
         'title': 'https://monitored-site.com/status',
         'body': 'Line removed: old content\nLine added: new content',
         'status': 'change_detected',
     }
+
+
+def test_flowtriq_ssrf_blocks_private_address():
+    """Test that SSRF protection blocks private/loopback addresses."""
+    plugin = NotifyFlowtriq(
+        host='localhost',
+        fullpath='/api/v1/webhooks/changedetection',
+    )
+
+    # Ensure ALLOW_IANA_RESTRICTED_ADDRESSES is not set
+    with patch.dict(os.environ, {}, clear=True):
+        result = plugin.send(body='Page changed', title='test')
+
+    assert result is False
+
+
+@patch("requests.post")
+def test_flowtriq_url_without_apikey(mock_post):
+    """Test url() does not leave trailing ?key= when no API key is set."""
+    plugin = NotifyFlowtriq(
+        host='app.flowtriq.com',
+        fullpath='/api/v1/webhooks/changedetection',
+    )
+
+    url = plugin.url()
+    assert url == 'flowtriq://app.flowtriq.com/api/v1/webhooks/changedetection'
+    assert '?key=' not in url

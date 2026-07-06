@@ -14,18 +14,20 @@ Examples:
 
 The plugin POSTs a JSON payload containing:
     - source: "changedetection"
-    - watch_url: the URL being monitored
     - title: notification title
     - body: notification body (change details / diff)
     - status: "change_detected"
 """
 
 import json
+import os
 
 import requests
 from apprise import NotifyBase, NotifyType
 from apprise.common import NotifyFormat
 from loguru import logger
+
+from changedetectionio.validate_url import is_url_private_or_parser_confused
 
 
 class NotifyFlowtriq(NotifyBase):
@@ -70,6 +72,15 @@ class NotifyFlowtriq(NotifyBase):
         """
         Send a structured JSON payload to the Flowtriq webhook endpoint.
         """
+        # SSRF protection — block private/loopback addresses unless explicitly allowed.
+        if not os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', '').lower() in ('true', '1', 'yes'):
+            if is_url_private_or_parser_confused(self.webhook_url):
+                logger.warning(
+                    f"Flowtriq target '{self.webhook_url}' is a private/reserved address. "
+                    f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow."
+                )
+                return False
+
         headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'changedetection.io',
@@ -80,7 +91,6 @@ class NotifyFlowtriq(NotifyBase):
 
         payload = {
             'source': 'changedetection',
-            'watch_url': title,
             'title': title,
             'body': body,
             'status': 'change_detected',
@@ -93,6 +103,7 @@ class NotifyFlowtriq(NotifyBase):
                 self.webhook_url,
                 data=json.dumps(payload),
                 headers=headers,
+                verify=self.verify_certificate,
                 timeout=30,
             )
             response.raise_for_status()
@@ -110,18 +121,17 @@ class NotifyFlowtriq(NotifyBase):
         """
         default_port = 443
 
-        url = '{schema}://{hostname}{port}{path}?key={apikey}'.format(
+        url = '{schema}://{hostname}{port}{path}'.format(
             schema=self.protocol,
             hostname=self.host,
             port='' if not self.port or self.port == default_port
             else f':{self.port}',
             path=self.fullpath if self.fullpath else '',
-            apikey=self.pprint(self.apikey, 'key', safe='')
-            if self.apikey else '',
         )
 
-        # Remove trailing ?key= when no API key is set
-        url = url.rstrip('?key=')
+        if self.apikey:
+            url += '?key={}'.format(
+                self.pprint(self.apikey, 'key', safe=''))
 
         return url
 
