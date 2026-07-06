@@ -2605,8 +2605,8 @@ msgid ""
 "Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
 "into the other."
 msgstr ""
-"Метрики Левенштейна сравнивают последние два снимка, измеряя, сколько правок символов нужно, чтобы преобразовать "
-"один в другой."
+"Метрики Левенштейна сравнивают последние два снимка, измеряя, сколько правок символов нужно, чтобы преобразовать один"
+" в другой."
 
 #: changedetectionio/conditions/plugins/levenshtein_plugin.py
 msgid "Error calculating Levenshtein metrics"
