@@ -202,8 +202,8 @@ Never fix one language and move on.
 | `ja` | Japanese (日本語) |
 | `ko` | Korean (한국어) |
 | `pt_BR` | Portuguese (Brasil) |
-| `tr` | Turkish (Türkçe) |
 | `ru` | Russian (Русский) |
+| `tr` | Turkish (Türkçe) |
 | `uk` | Ukrainian (Українська) |
 | `zh` | Chinese Simplified (中文简体) |
 | `zh_Hant_TW` | Chinese Traditional (繁體中文) |
