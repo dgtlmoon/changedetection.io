@@ -145,6 +145,10 @@ Easily add the current web page to your changedetection.io tool, simply install 
 
 ## Installation
 
+### One-click managed hosting
+
+[![Deploy with Zenith](https://cdn.zenith.hosting/buttons/deploy-with-zenith.svg)](https://zenith.hosting/host/changedetection-io) managed changedetection.io with storage, backups, email and a free subdomain included, no server required.
+
 ### Docker
 
 With Docker composer, just clone this repository and..
