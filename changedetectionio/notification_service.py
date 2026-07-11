@@ -207,6 +207,10 @@ class NotificationContextData(dict):
             # Always the raw +/- diff regardless of LLM summary override (populated in handler.py from {{diff}})
             'raw_diff': FormattableDiff('', ''),
             'markup_text_links_to_html_links': False, # If automatic conversion of plaintext to HTML should happen
+            # Safe-empty default so restock tokens ({{ restock.price }} etc.) are a valid,
+            # non-crashing token for every watch. Restock watches override this via
+            # processors/restock_diff extra_notification_token_values().
+            'restock': {},
             'notification_timestamp': time.time(),
             'prev_snapshot': None,
             'preview_url': None,
