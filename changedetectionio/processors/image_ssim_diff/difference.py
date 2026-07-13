@@ -430,7 +430,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         change_percentage=change_percentage,
         comparison_data=comparison_data,  # Full history for charts/visualization
         comparison_method=method_display,
-        current_diff_url=watch['url'],
+        current_diff_url=watch.link,
         from_version=from_version,
         percentage_different=change_percentage,
         threshold=pixel_difference_threshold_sensitivity,

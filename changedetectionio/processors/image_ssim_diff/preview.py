@@ -106,5 +106,5 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
         uuid=watch.get('uuid'),
         versions=versions,
         timestamp=timestamp,
-        current_diff_url=watch['url']
+        current_diff_url=watch.link
     )
