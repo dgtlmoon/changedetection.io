@@ -315,12 +315,14 @@ def test_open_watch_marks_it_viewed(client, live_server, measure_memory_usage, d
     external_link = BeautifulSoup(res.data, 'html.parser').select_one(f'a.external[href="{open_url}"]')
     assert external_link is not None
     assert external_link['target'] == '_blank'
-    assert external_link['rel'] == ['noopener']
+    assert external_link['rel'] == ['noopener', 'noreferrer']
+    assert external_link['title'] == test_url
     assert watch.has_unviewed
 
     res = client.get(open_url, follow_redirects=False)
     assert res.status_code == 302
     assert res.headers['Location'] == test_url
+    assert res.headers['Referrer-Policy'] == 'no-referrer'
     assert watch.viewed
 
     # A persistence failure must not prevent the monitored page from opening.
@@ -331,6 +333,7 @@ def test_open_watch_marks_it_viewed(client, live_server, measure_memory_usage, d
     res = client.get(open_url, follow_redirects=False)
     assert res.status_code == 302
     assert res.headers['Location'] == test_url
+    assert res.headers['Referrer-Policy'] == 'no-referrer'
     assert watch.has_unviewed
 
     delete_all_watches(client)

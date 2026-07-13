@@ -297,7 +297,7 @@ window.watchOverviewI18n = {
                                 {% else %}
                                     {{ watch.get('title') or watch.link }}
                                 {% endif %}
-                               <a class="external" target="_blank" rel="noopener" href="{{ url_for('ui.form_watch_open', uuid=watch.uuid) }}">&nbsp;</a>
+                               <a class="external" target="_blank" rel="noopener noreferrer" title="{{ watch.link }}" href="{{ url_for('ui.form_watch_open', uuid=watch.uuid) }}">&nbsp;</a>
                             </span>
                             <div class="error-text" style="display:none;">{{ error_texts|safe }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}
