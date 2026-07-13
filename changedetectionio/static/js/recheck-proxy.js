@@ -84,7 +84,7 @@ $(function () {
 
         }).fail(function (data) {
             console.log(data);
-            alert('There was an error communicating with the server.');
+            alert(i18nT('serverCommError', 'There was an error communicating with the server.'));
         });
 
     });
