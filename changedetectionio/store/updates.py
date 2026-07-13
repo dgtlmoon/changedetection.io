@@ -825,3 +825,25 @@ class DatastoreUpdatesMixin:
             self.data['settings']['application']['llm'] = llm
             logger.info("update_32: cleaned up obsolete max_tokens_per_check / renamed max_tokens_cumulative")
 
+    def update_33(self):
+        """Rename restock 'original_price' -> 'last_price'.
+
+        The field was named 'original_price' but never held the first-seen price: it was
+        re-stamped with the current price on every check (the freshly scraped itemprop never
+        carries it, so the "set if not present" guard was always true). So it always held the
+        price from the most recent check - i.e. the previous check's price at comparison time.
+        Renamed so the stored field name matches what it actually contains. Idempotent.
+        """
+        migrated = 0
+        for uuid, watch in self.data['watching'].items():
+            restock = watch.get('restock')
+            if isinstance(restock, dict) and 'original_price' in restock:
+                # last_price may already exist as the model default (None) after rehydration, so
+                # only copy the old value across when last_price is still empty; then drop the old key.
+                if not restock.get('last_price'):
+                    restock['last_price'] = restock.get('original_price')
+                del restock['original_price']
+                migrated += 1
+        if migrated:
+            logger.info(f"update_33: renamed restock.original_price -> restock.last_price on {migrated} watch(es)")
+

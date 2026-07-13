@@ -50,7 +50,7 @@ $(document).ready(() => {
         ctx.clearRect(0, 0, c.width, c.height);
 
         if ($includeFiltersElem.val().length) {
-            alert("Existing filters under the 'Filters & Triggers' tab were cleared.");
+            alert(i18nT('vsFiltersCleared', "Existing filters under the 'Filters & Triggers' tab were cleared."));
         }
         $includeFiltersElem.val('');
 
@@ -136,13 +136,13 @@ $(document).ready(() => {
     }
 
     function fetchData() {
-        $fetchingUpdateNoticeElem.html("Fetching element data..");
+        $fetchingUpdateNoticeElem.html(i18nT('vsFetching', "Fetching element data.."));
 
         $.ajax({
             url: watch_visual_selector_data_url,
             context: document.body
         }).done((data) => {
-            $fetchingUpdateNoticeElem.html("Rendering..");
+            $fetchingUpdateNoticeElem.html(i18nT('vsRendering', "Rendering.."));
             selectorData = data;
 
             sortScrapedElementsBySize();
@@ -360,7 +360,7 @@ $(document).ready(() => {
         // Clear element selections and xpath display
         currentSelections = [];
         $includeFiltersElem.val('');
-        $selectorCurrentXpathElem.html('Draw mode - click and drag to select an area');
+        $selectorCurrentXpathElem.html(i18nT('vsDrawMode', 'Draw mode - click and drag to select an area'));
 
         // Clear the canvas
         if (ctx && xctx) {
@@ -414,7 +414,7 @@ $(document).ready(() => {
         }
 
         // Restore the element selection display
-        $selectorCurrentXpathElem.html('Hover over elements to select');
+        $selectorCurrentXpathElem.html(i18nT('vsHover', 'Hover over elements to select'));
 
         // Highlight the restored selections
         highlightCurrentSelected();

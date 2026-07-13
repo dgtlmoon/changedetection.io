@@ -17,7 +17,7 @@ $(document).ready(function () {
 
     $('#add-email-helper').click(function (e) {
         e.preventDefault();
-        email = prompt("Destination email");
+        email = prompt(i18nT('destEmailPrompt', "Destination email"));
         if (email) {
             var n = $(".notification-urls");
             var p = email_notification_prefix;
