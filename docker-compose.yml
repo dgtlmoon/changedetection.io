@@ -73,9 +73,11 @@ services:
   #        Disable all LLM / AI features, prompts etc
   #      - LLM_FEATURES_DISABLED=true
   #
-  #        Max characters of page content sent to the LLM for price/restock fallback extraction, default 15000.
-  #        Increase if a retailer places the price deep in the page (e.g. Amazon), higher values cost more input tokens
-  #        and may exceed local-model context windows (bump Ollama num_ctx to match).
+  #        How much of the page text the AI reads when finding the price/stock, default 15000 characters.
+  #        Raise it if the price is missed (some shops put it far down the page).
+  #        Using a local model (Ollama)? It may only read the first part unless you raise its context size
+  #        (num_ctx) to about 8192 or more, otherwise it can miss the price.
+  #        In Ollama: run `ollama run <model>` then `/set parameter num_ctx 8192`
   #      - LLM_RESTOCK_MAX_CONTENT_CHARS=15000
   #
   #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
