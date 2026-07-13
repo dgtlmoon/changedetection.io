@@ -185,6 +185,23 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         output = render_template("clear_all_history.html")
         return output
 
+    @ui_blueprint.route("/form/watch/<uuid_str:uuid>/open", methods=['GET'])
+    @login_optionally_required
+    def form_watch_open(uuid):
+        watch = datastore.data['watching'].get(uuid)
+        if not watch:
+            flash(gettext('Watch not found'), 'error')
+            return redirect(url_for('watchlist.index'))
+
+        target_url = watch.link
+        try:
+            datastore.set_last_viewed(uuid, int(time.time()))
+        except Exception as e:
+            # Opening the monitored page should still work if viewed state cannot be saved.
+            logger.error(f"Error marking watch {uuid} as viewed: {e}")
+
+        return redirect(target_url)
+
     # Clear all statuses, so we do not see the 'unviewed' class
     @ui_blueprint.route("/form/mark-all-viewed", methods=['GET'])
     @login_optionally_required
