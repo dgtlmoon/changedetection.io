@@ -627,7 +627,7 @@ def changedetection_app(config=None, datastore_o=None):
             elif app.config.get('LOGIN_DISABLED'):
                 return None
             # RSS access with token is allowed
-            elif request.endpoint and 'rss.feed' in request.endpoint:
+            elif request.blueprint == 'rss':
                 return None
             # Socket.IO routes - need separate handling
             elif request.path.startswith('/socket.io/'):
