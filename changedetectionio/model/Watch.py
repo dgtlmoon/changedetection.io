@@ -29,7 +29,7 @@ from blinker import signal
 from changedetectionio.validate_url import is_safe_valid_url
 
 from changedetectionio.strtobool import strtobool
-from changedetectionio.jinja2_custom import render as jinja_render
+from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
 from . import watch_base
 from .persistence import EntityPersistenceMixin
 import os
@@ -272,7 +272,7 @@ class model(EntityPersistenceMixin, watch_base):
             return 'DISABLED'
 
         ready_url = url
-        if '{%' in url or '{{' in url:
+        if JINJA2_MARKER_PATTERN.search(url):
             # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
             try:
                 ready_url = jinja_render(template_str=url)

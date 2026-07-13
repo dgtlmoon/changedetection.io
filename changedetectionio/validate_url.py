@@ -172,12 +172,9 @@ def is_llm_api_base_safe(api_base):
     return True, ''
 
 
-_JINJA2_MARKER_PATTERN = re.compile(r'{%[^}%]*%}|{{[^}]*}}')
-
-
 def is_safe_valid_url(test_url):
     from changedetectionio import strtobool
-    from changedetectionio.jinja2_custom import render as jinja_render
+    from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
     import os
     import validators
 
@@ -221,7 +218,7 @@ def is_safe_valid_url(test_url):
     # Check the actual rendered URL in case of any Jinja markup
     # Only run jinja_render when the URL actually contains Jinja2 syntax - creating a new
     # ImmutableSandboxedEnvironment is expensive and is called once per watch per page load
-    if _JINJA2_MARKER_PATTERN.search(test_url):
+    if JINJA2_MARKER_PATTERN.search(test_url):
         try:
             test_url = jinja_render(test_url)
         except Exception as e:
