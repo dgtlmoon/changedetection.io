@@ -10,6 +10,7 @@ The module-level `datastore` variable is injected at startup by
 `inject_datastore_into_plugins()` in pluggy_interface.py.
 """
 import json
+import os
 import re
 from loguru import logger
 from changedetectionio.pluggy_interface import hookimpl
@@ -86,7 +87,11 @@ SYSTEM_PROMPT = (
     'No markdown, no backticks, no explanation — pure JSON only.'
 )
 
-_MAX_CONTENT_CHARS = 8_000
+# Max characters of page content (JSON-LD + stripped text) sent to the LLM.
+# Some retailers (e.g. Amazon.de) place the buy-box price well past 8k chars,
+# so this is env-configurable. Larger values increase input-token cost per
+# check and may exceed local-model context windows (bump Ollama num_ctx to match).
+_MAX_CONTENT_CHARS = int(os.getenv('LLM_RESTOCK_MAX_CONTENT_CHARS', 15_000))
 
 
 def _extract_jsonld(html_content: str) -> str:

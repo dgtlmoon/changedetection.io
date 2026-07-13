@@ -71,7 +71,12 @@ services:
   #      - DISABLE_VERSION_CHECK=true
   #
   #        Disable all LLM / AI features, prompts etc
-  #      - LLM_FEATURES_DISABLED=true  
+  #      - LLM_FEATURES_DISABLED=true
+  #
+  #        Max characters of page content sent to the LLM for price/restock fallback extraction, default 15000.
+  #        Increase if a retailer places the price deep in the page (e.g. Amazon), higher values cost more input tokens
+  #        and may exceed local-model context windows (bump Ollama num_ctx to match).
+  #      - LLM_RESTOCK_MAX_CONTENT_CHARS=15000
   #
   #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   #      - TZ=America/Los_Angeles
