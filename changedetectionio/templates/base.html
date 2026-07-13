@@ -37,6 +37,54 @@
         const csrftoken="{{ csrf_token() }}";
         const socketio_url="{{ get_socketio_path() }}/socket.io";
         const is_authenticated = {% if current_user.is_authenticated or not has_password %}true{% else %}false{% endif %};
+        // Translatable strings for modal.js (ModalDialog). Defined here in a Jinja
+        // template so Babel extract_messages picks them up; modal.js reads this
+        // object with English fallbacks. %(name)s is substituted client-side.
+        window.ModalDialogI18n = {
+            confirmTitle:   {{ _('Confirm Action')|tojson }},
+            confirmMessage: {{ _('Are you sure?')|tojson }},
+            proceedMessage: {{ _('<p>Are you sure you want to proceed?</p>')|tojson }},
+            confirm:        {{ _('Confirm')|tojson }},
+            cancel:         {{ _('Cancel')|tojson }},
+            delete:         {{ _('Delete')|tojson }},
+            unlink:         {{ _('Unlink')|tojson }},
+            deleteTitle:    {{ _('Delete %(name)s?')|tojson }},
+            deleteMessage:  {{ _('<p>Are you sure you want to delete <strong>%(name)s</strong>?</p><p>This action cannot be undone.</p>')|tojson }},
+            unlinkTitle:    {{ _('Unlink %(name)s?')|tojson }},
+            unlinkMessage:  {{ _('<p>Are you sure you want to unlink all watches from <strong>%(name)s</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>')|tojson }}
+        };
+        // Translatable strings for the plain .js files (alerts, prompts, dynamic
+        // labels). Defined here so Babel extract_messages picks them up; the JS
+        // reads them via i18nT() with an English fallback. %(...)s is substituted
+        // client-side.
+        window.i18n = {
+            serverCommError:  {{ _('There was an error communicating with the server.')|tojson }},
+            reloadProblem:    {{ _('There was a problem processing the request, please reload the page.')|tojson }},
+            requestProblem:   {{ _('There was a problem processing the request: %(error)s')|tojson }},
+            vsFiltersCleared: {{ _("Existing filters under the 'Filters & Triggers' tab were cleared.")|tojson }},
+            vsFetching:       {{ _('Fetching element data..')|tojson }},
+            vsRendering:      {{ _('Rendering..')|tojson }},
+            vsDrawMode:       {{ _('Draw mode - click and drag to select an area')|tojson }},
+            vsHover:          {{ _('Hover over elements to select')|tojson }},
+            imgCopied:        {{ _('Image copied to clipboard!')|tojson }},
+            imgCopyFailed:    {{ _('Failed to copy image. Your browser may not support this feature.')|tojson }},
+            imgSelectFirst:   {{ _('Please select the text/lines you want to capture first by highlighting with your mouse.')|tojson }},
+            imgSelectWithin:  {{ _('Please select text within the diff content.')|tojson }},
+            imgGenerateFailed:{{ _('Failed to generate image: %(error)s')|tojson }},
+            shareTitle:       {{ _('Change Detection Diff')|tojson }},
+            shareText:        {{ _('Check out this change detected via changedetection.io')|tojson }},
+            condFillFields:   {{ _('Please fill in all fields (Field, Operator, and Value) before verifying.')|tojson }},
+            condVerifyError:  {{ _('Error verifying condition.')|tojson }},
+            destEmailPrompt:  {{ _('Destination email')|tojson }},
+            highlightTrigger: {{ _('Triggers a change if this text appears, AND something changed in the document.')|tojson }},
+            highlightIgnored: {{ _('Ignored for calculating changes, but still shown.')|tojson }},
+            highlightBlocked: {{ _('No change-detection will occur because this text exists.')|tojson }},
+            tabContentAfter:  {{ _('Content after filters')|tojson }},
+            tabContentBefore: {{ _('Content raw/before filters')|tojson }}
+        };
+        window.i18nT = function (key, fallback) {
+            return (window.i18n && key in window.i18n) ? window.i18n[key] : fallback;
+        };
     </script>
     <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>

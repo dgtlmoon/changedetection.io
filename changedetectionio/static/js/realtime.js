@@ -200,7 +200,7 @@ $(document).ready(function () {
                     console.log(`Socket.IO: Operation '${data.operation}' completed successfully for UUID ${data.uuid}`);
                 } else {
                     console.error(`Socket.IO: Operation failed: ${data.error}`);
-                    alert("There was a problem processing the request: " + data.error);
+                    alert(i18nT('requestProblem', 'There was a problem processing the request: %(error)s').split('%(error)s').join(data.error));
                 }
             });
 

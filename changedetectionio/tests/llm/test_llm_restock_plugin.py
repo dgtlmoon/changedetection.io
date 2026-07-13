@@ -226,7 +226,7 @@ class TestLLMRestockPluginIntent:
         llm_restock.datastore = ds
 
         captured = {}
-        def fake_completion(model, messages, api_key, api_base, max_tokens, extra_body=None):
+        def fake_completion(model, messages, api_key, api_base, max_tokens, extra_body=None, timeout=None):
             captured['messages'] = messages
             return ('{"price": 299.0, "currency": "USD", "availability": "instock"}', 50, 40, 10)
 
@@ -250,7 +250,7 @@ class TestLLMRestockPluginIntent:
         llm_restock.datastore = ds
 
         captured = {}
-        def fake_completion(model, messages, api_key, api_base, max_tokens, extra_body=None):
+        def fake_completion(model, messages, api_key, api_base, max_tokens, extra_body=None, timeout=None):
             captured['messages'] = messages
             return ('{"price": 9.99, "currency": "USD", "availability": "instock"}', 20, 15, 5)
 

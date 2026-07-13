@@ -10,6 +10,7 @@ The module-level `datastore` variable is injected at startup by
 `inject_datastore_into_plugins()` in pluggy_interface.py.
 """
 import json
+import os
 import re
 from loguru import logger
 from changedetectionio.pluggy_interface import hookimpl
@@ -86,7 +87,13 @@ SYSTEM_PROMPT = (
     'No markdown, no backticks, no explanation — pure JSON only.'
 )
 
-_MAX_CONTENT_CHARS = 20_000
+# Max characters of page content (JSON-LD + stripped text) sent to the LLM.
+# Some retailers (e.g. Amazon.de) place the buy-box price well past 8k chars,
+# so this is env-configurable. Larger values increase input-token cost per
+# check and may exceed local-model context windows (bump Ollama num_ctx to match).
+# NOTE: this is only the default — the caller passes the app's datastore-configured
+# "Max input characters" setting via _get_max_input_chars() below.
+_MAX_CONTENT_CHARS = int(os.getenv('LLM_RESTOCK_MAX_CONTENT_CHARS', 15_000))
 
 # Cache LLM extraction results keyed by the exact LLM input (model + url + stripped content +
 # intent). Product pages re-fetch constantly with noisy raw HTML (analytics, nonces, CSRF
@@ -239,7 +246,7 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         return None
 
     try:
-        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens, get_llm_settings, _get_max_input_chars, _thinking_extra_body
+        from changedetectionio.llm.evaluator import _runtime_llm_config, accumulate_global_tokens, get_llm_settings, _get_max_input_chars, _thinking_extra_body, resolve_llm_timeout
         from changedetectionio.llm import client as llm_client
     except ImportError as e:
         logger.debug(f"LLM restock fallback: LLM libraries not available ({e})")
@@ -291,6 +298,7 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             ],
             api_key=llm_cfg.get('api_key'),
             api_base=llm_cfg.get('api_base'),
+            timeout=resolve_llm_timeout(llm_cfg),
             # Output budget must cover the model's THINKING tokens (Gemini reasoning models count
             # them against max_tokens) PLUS the JSON answer — otherwise it truncates mid-object
             # (finish_reason='length') and the price is lost. Tokens are cheap, so we keep this
