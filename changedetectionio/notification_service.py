@@ -210,7 +210,7 @@ class NotificationContextData(dict):
             # Safe-empty default so restock tokens ({{ restock.price }} etc.) are a valid,
             # non-crashing token for every watch. Restock watches override this via
             # processors/restock_diff extra_notification_token_values().
-            'restock': {},
+            'restock': {}, #@TODO ! should be fixed in a refactor of all processor types, maybe fetching a empty key returns null or even restock (or similar) should actually come from the JSON in the datadir processor-restock-diff.json etc
             'notification_timestamp': time.time(),
             'prev_snapshot': None,
             'preview_url': None,
