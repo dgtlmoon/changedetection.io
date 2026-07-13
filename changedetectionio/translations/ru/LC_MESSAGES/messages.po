@@ -1405,12 +1405,12 @@ msgstr "Отключить уведомления"
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
-msgstr "Редактировать"
+msgstr "Изменить"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
-msgstr "Перепроверить"
+msgstr "Проверить"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Delete Group?"
@@ -2431,7 +2431,7 @@ msgstr "В очереди"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Summary"
-msgstr "Краткое содержание"
+msgstr "Сводка"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/text_json_diff/difference.py
@@ -2440,7 +2440,7 @@ msgstr "История"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Preview"
-msgstr "Предварительный просмотр"
+msgstr "Просмотр"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "With errors"
@@ -2461,7 +2461,7 @@ msgstr "Непрочитано"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck all"
-msgstr "Перепроверить все"
+msgstr "Проверить все"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
