@@ -512,7 +512,7 @@ Thanks - Your omniscient changedetection.io installation.
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
 
-        step = step_n + 1
+        step = step_n
         # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
 
         # {{{{ }}}} because this will be Jinja2 {{ }} tokens
