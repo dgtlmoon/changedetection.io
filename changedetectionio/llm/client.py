@@ -14,7 +14,16 @@ from loguru import logger
 # _summary_max_tokens() and are NOT subject to this cap.
 _MAX_COMPLETION_TOKENS = 400
 
-DEFAULT_TIMEOUT = int(os.getenv('LLM_TIMEOUT', 60))
+# Default request timeout (seconds). Raised from 60 to 300 because even cloud
+# reasoning models can be slow on the first hit (issue #4225). Overridable via
+# LLM_TIMEOUT.
+DEFAULT_TIMEOUT = int(os.getenv('LLM_TIMEOUT', 300))
+# Relaxed timeout for local / self-hosted endpoints (Ollama, vLLM, LM Studio,
+# llama.cpp on localhost or a LAN address). These run on modest hardware and can
+# spend many minutes on prompt prefill before the first token, so they get a much
+# longer deadline (Hermes-style, 30 min). Overridable via LLM_LOCAL_TIMEOUT; see
+# evaluator.resolve_llm_timeout() for how the endpoint is classified.
+DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
 DEFAULT_RETRIES = 3
 
 
@@ -63,6 +72,9 @@ def completion(model: str, messages: list, api_key: str = None,
     Retries up to DEFAULT_RETRIES times on timeout or connection errors.
     Token counts are 0 if the provider doesn't return usage data.
     Raises on network/auth errors — callers handle gracefully.
+
+    timeout: seconds for the request. Local endpoints get a longer value than cloud —
+    see evaluator.resolve_llm_timeout().
     """
     try:
         import litellm
@@ -90,13 +102,24 @@ def completion(model: str, messages: list, api_key: str = None,
 
     _retryable = (litellm.Timeout, litellm.APIConnectionError)
 
+    # Some models reject sampling params outright: Anthropic Claude Opus 4.7/4.8 and
+    # Fable return HTTP 400 for 'temperature', and OpenAI reasoning models (o1/o3/gpt-5)
+    # only accept the default. litellm's per-model param metadata lags new releases, so
+    # drop_params can't be relied on for freshly released models — instead, if the provider
+    # rejects a sampling param, strip them and retry once. Models that accept them are
+    # unaffected (they still receive temperature=0).
+    _sampling_params = ('temperature', 'top_p', 'top_k')
+    _stripped_sampling = False
+
     logger.debug(
         f"LLM client: calling model={model!r} api_base={api_base!r} "
         f"timeout={_timeout}s max_tokens={kwargs['max_tokens']}"
     )
     logger.trace(messages)
 
-    for attempt in range(1, DEFAULT_RETRIES + 1):
+    attempt = 0
+    while attempt < DEFAULT_RETRIES:
+        attempt += 1
         try:
             response = litellm.completion(**kwargs)
             choice   = response.choices[0]
@@ -155,6 +178,25 @@ def completion(model: str, messages: list, api_key: str = None,
                 f"LLM call failed after {DEFAULT_RETRIES} attempts ({_timeout}s timeout) "
                 f"model={model!r} error={e}"
             )
+            raise
+
+        except litellm.BadRequestError as e:
+            # If the provider rejected an unsupported sampling param (and we haven't
+            # already stripped them), drop them and retry once. attempt-=1 keeps this
+            # off the timeout-retry budget; _stripped_sampling prevents a loop.
+            msg = str(e).lower()
+            if (not _stripped_sampling
+                    and any(p in kwargs for p in _sampling_params)
+                    and any(p in msg for p in _sampling_params)):
+                dropped = [p for p in _sampling_params if kwargs.pop(p, None) is not None]
+                _stripped_sampling = True
+                attempt -= 1
+                logger.warning(
+                    f"LLM client: model={model!r} rejected sampling params {dropped} "
+                    f"({e}); retrying without them"
+                )
+                continue
+            logger.warning(f"LLM call failed: model={model!r} error={e}")
             raise
 
         except Exception as e:

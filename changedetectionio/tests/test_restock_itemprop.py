@@ -285,7 +285,7 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
     client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'1,960.45' or b'1960.45' in res.data #depending on locale
+    assert b'1,960.45' in res.data or b'1960.45' in res.data #depending on locale
     assert b'has-unread-changes' in res.data
 
 
@@ -295,7 +295,28 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
     client.get(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'1,950.45' or b'1950.45' in res.data #depending on locale
+    assert b'1,950.45' in res.data or b'1950.45' in res.data #depending on locale
+    assert b'has-unread-changes' not in res.data
+
+    # PROOF that the threshold is measured "since the PREVIOUS check" and NOT "since the first check":
+    # a slow upward creep where every single step is below the 5% threshold versus the *previous*
+    # check, but the total drift from where the creep started (1950.45) ends up ABOVE 5%.
+    #   1950.45 -> 2000.00  = +2.54% vs previous  (below 5%)
+    #   2000.00 -> 2050.00  = +2.50% vs previous  (below 5%)
+    #   2050.00 -> 2100.00  = +2.44% vs previous  (below 5%)
+    #   1950.45 -> 2100.00  = +7.67% in total     (ABOVE 5%)
+    # Under "since previous check" NONE of these trigger (each step is sub-threshold).
+    # Under "since first check" the accumulated drift would cross 5% and trigger here - so the
+    # final assertion below would fail. We deliberately never mark_all_viewed during the creep,
+    # so any single trigger would leave has-unread-changes set.
+    for creep_price in ['2000.00', '2050.00', '2100.00']:
+        set_original_response(props_markup=instock_props[0], price=creep_price, datastore_path=datastore_path)
+        client.get(url_for("ui.form_watch_checknow"))
+        wait_for_all_checks(client)
+
+    res = client.get(url_for("watchlist.index"))
+    assert b'2,100.00' in res.data or b'2100.00' in res.data #depending on locale
+    # +7.67% total drift since the creep started, yet still unread-free -> comparison is vs PREVIOUS check
     assert b'has-unread-changes' not in res.data
 
 
@@ -349,9 +370,9 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
     # Should see new tokens register
     res = client.get(url_for("settings.settings_page"))
     
-    assert b'{{restock.original_price}}' in res.data
+    assert b'{{restock.last_price}}' in res.data
     assert b'{{restock.previous_price}}' in res.data
-    assert b'Original price at first check' in res.data
+    assert b'Price at the previous check' in res.data
 
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details

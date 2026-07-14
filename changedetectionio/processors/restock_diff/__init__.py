@@ -45,7 +45,7 @@ class Restock(dict):
             'in_stock': None,
             'price': None,
             'currency': None,
-            'original_price': None
+            'last_price': None  # Price recorded at the most recent check (was misleadingly named 'original_price')
         }
 
         # Initialize the dictionary with default values
@@ -59,8 +59,8 @@ class Restock(dict):
                 raise ValueError("Only one positional argument of type 'dict' is allowed")
 
     def __setitem__(self, key, value):
-        # Custom logic to handle setting price and original_price
-        if key == 'price' or key == 'original_price':
+        # Custom logic to handle setting price and last_price
+        if key == 'price' or key == 'last_price':
             if isinstance(value, str):
                 value = self.parse_currency(raw_value=value)
 
@@ -89,7 +89,8 @@ class Watch(BaseWatch):
 
     def extra_notification_token_values(self):
         values = super().extra_notification_token_values()
-        values['restock'] = self.get('restock', {})
+        # Copy so the derived 'previous_price' token added below doesn't mutate the stored restock object
+        values['restock'] = dict(self.get('restock', {}))
 
         values['restock']['previous_price'] = None
         if self.history_n >= 2:
@@ -109,7 +110,7 @@ class Watch(BaseWatch):
 
         values.append(('restock.price', "Price detected"))
         values.append(('restock.in_stock', "In stock status"))
-        values.append(('restock.original_price', "Original price at first check"))
+        values.append(('restock.last_price', "Price at the previous check"))
         values.append(('restock.previous_price', "Previous price in history"))
 
         return values
