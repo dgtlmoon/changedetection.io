@@ -324,7 +324,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     if not datastore.data['watching'].get(uuid):
                         continue
 
-                    error_step = e.step_n + 1
+                    error_step = e.step_n
                     from playwright._impl._errors import TimeoutError, Error
 
                     # Generally enough info for TimeoutError (couldnt locate the element after default seconds)
