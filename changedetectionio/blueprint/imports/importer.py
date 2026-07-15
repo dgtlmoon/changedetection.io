@@ -1,10 +1,31 @@
 from abc import abstractmethod
+import re
 import time
 from wtforms import ValidationError
 from loguru import logger
 from flask_babel import gettext
 
 from changedetectionio.forms import validate_url
+
+# A jinja2 block in a watch URL can legitimately contain spaces
+# (eg. "https://example.com/?date={% now 'utc', '%d' %}"), so the space that separates
+# the URL from its tags can only be one that sits OUTSIDE of such a block.
+JINJA2_BLOCK_PATTERN = re.compile(r'\{%.*?%\}|\{\{.*?\}\}', re.DOTALL)
+
+
+def split_url_and_tags(line):
+    """Split a "<url> <tags>" import line on the first space outside any jinja2 block.
+
+    Returns (url, tags), tags is "" when the line has no separating space.
+    """
+    # Blank out the jinja2 blocks so their spaces can't be mistaken for the separator,
+    # keeping the length the same so the offset still maps back to the original line.
+    masked = JINJA2_BLOCK_PATTERN.sub(lambda m: '_' * len(m.group(0)), line)
+    idx = masked.find(' ')
+    if idx == -1:
+        return line, ""
+
+    return line[:idx], line[idx + 1:]
 
 
 class Importer():
@@ -52,8 +73,7 @@ class import_url_list(Importer):
             tags = ""
 
             # 'tags' should be a csv list after the URL
-            if ' ' in url:
-                url, tags = url.split(" ", 1)
+            url, tags = split_url_and_tags(url)
 
             # Flask wtform validators wont work with basic auth, use validators package
             # Up to 5000 per batch so we dont flood the server
