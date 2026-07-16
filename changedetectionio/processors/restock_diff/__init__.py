@@ -45,7 +45,7 @@ class Restock(dict):
             'in_stock': None,
             'price': None,
             'currency': None,
-            'last_price': None  # Price recorded at the most recent check (was misleadingly named 'original_price')
+            'last_price': None  # price at the previous check - drives the % threshold and the watch-list up/down arrow
         }
 
         # Initialize the dictionary with default values
@@ -66,6 +66,24 @@ class Restock(dict):
 
         super().__setitem__(key, value)
 
+    def get_price_change_percent(self):
+        """Signed % change of the current price vs last_price (the previous check's price),
+        rounded to one decimal place (e.g. -18.0, 5.3). Returns None when it can't be computed -
+        no/zero previous price, non-numeric values, or no change."""
+        try:
+            price = float(self.get('price'))
+            prev = self.get('last_price')
+            prev = float(prev) if prev is not None else None
+        except (TypeError, ValueError):
+            return None
+
+        if prev is None or prev == 0:
+            return None
+
+        pct = round((price - prev) / prev * 100.0, 1)
+        return pct if pct != 0 else None
+
+# @todo - kinda bad, needs to be in its own DB
 def get_price_from_history_str(history_str):
     m = _price_re.search(history_str)
     if not m:

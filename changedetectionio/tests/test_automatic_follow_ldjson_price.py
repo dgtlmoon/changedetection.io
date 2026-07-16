@@ -104,6 +104,22 @@ def test_check_ldjson_price_autodetect(client, live_server, measure_memory_usage
     assert b'Embedded price data' not in res.data
     assert b'processor-badge-restock_diff' in res.data
 
+    # The processor badge should be a link that filters the watchlist by processor (?processor=restock_diff).
+    # The "processor=restock_diff" string only appears in a rendered badge link's href (not in the injected
+    # <style> block, which contains rules for every processor regardless of which watches are shown), so it's
+    # a reliable marker for whether the restock watch's row is actually present.
+    assert b'processor=restock_diff' in res.data, "Processor badge must link to a processor filter"
+
+    # Filtering by the watch's own processor should keep its row (and badge link) visible
+    res = client.get(url_for("watchlist.index", processor='restock_diff'))
+    assert res.status_code == 200
+    assert b'processor=restock_diff' in res.data, "Watch must remain visible when filtering by its processor"
+
+    # Filtering by a different processor should hide this watch's row entirely
+    res = client.get(url_for("watchlist.index", processor='text_json_diff'))
+    assert res.status_code == 200
+    assert b'processor=restock_diff' not in res.data, "Watch must be filtered out when its processor doesn't match"
+
     # and last snapshop (via API) should be just the price
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
     res = client.get(

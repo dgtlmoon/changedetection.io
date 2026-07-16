@@ -9,7 +9,7 @@ from .bm25_trim import trim_to_relevant
 
 _AGO_RE = re.compile(r'^\d+\s+\w+\s+ago$', re.IGNORECASE)
 
-SNAPSHOT_CONTEXT_CHARS = 3_000   # current page state excerpt sent alongside the diff
+SNAPSHOT_CONTEXT_CHARS = 30_000   # current page state excerpt sent alongside the diff
 
 
 def _annotate_moved_lines(diff_text: str) -> str:

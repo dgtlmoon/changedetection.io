@@ -1,8 +1,8 @@
 /*
  * -- BASE STYLES --
  */
-
 @use "settings" as *;
+@use "parts/top_menu";
 @use "parts/variables";
 @use "parts/arrows";
 @use "parts/browser-steps";
@@ -14,22 +14,28 @@
 @use "parts/menu";
 @use "parts/love";
 @use "parts/preview_text_filter";
+@use "parts/table";
+@use "parts/seg";
+@use "parts/button";
 @use "parts/watch_table";
 @use "parts/watch_table-mobile";
 @use "parts/edit";
 @use "parts/conditions_table";
-@use "parts/lister_extra";
 @use "parts/socket";
 @use "parts/visualselector";
+@use "parts/add-watch";
 @use "parts/widgets";
 @use "parts/diff_image";
 @use "parts/modal";
 @use "parts/language";
 @use "parts/action_sidebar";
+@use "parts/queue";
 @use "parts/hamburger_menu";
 @use "parts/search_modal";
 @use "parts/llm";
 @use "parts/notification_bubble";
+@use "parts/notifications";
+@use "parts/restock_graph";
 @use "parts/toast";
 @use "parts/login_form";
 @use "parts/tabs";
@@ -67,6 +73,61 @@ body {
   font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
 }
 
+// Page-level layout primitive: holds the fixed left rail and the main content
+// column side-by-side on desktop, stacked on mobile. Not sidebar-specific — the
+// rail's parts/_action_sidebar.scss styles target the rail itself, this is the
+// outer wrapper any future side-column layout could share.
+// App shell — the demo's `.app`: a full-height flex row whose left column is the
+// navigation rail and whose right column (`.app-main`) stacks the top menu over
+// the page content. `min-height: 100vh` guarantees the rail's gutter runs the
+// full window height even when the page content is short.
+.app {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+  // No gap here on purpose: the top menu (.header) should sit flush against the
+  // rail. The content's breathing room from the rail is applied to
+  // section.content alone (padding-left below), not the whole right column.
+}
+
+// Right-hand column: top menu (.header) above the scrolling content.
+.app-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  // Space between the top menu and the page content below it.
+  gap: $common-gap;
+}
+
+.content-wrapper {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  align-items: flex-start;
+
+  @media only screen and (max-width: $desktop-wide-breakpoint) {
+    flex-direction: column;
+  }
+}
+
+// Right-hand column that hosts the page content (header, flash messages, the
+// page body block). `align-items: center` centers each child horizontally
+// — child blocks render at their intrinsic width and sit in the middle of
+// the column regardless of viewport size.
+.content-main {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  @media only screen and (min-width: $desktop-wide-breakpoint) {
+    flex-direction: column;
+  }
+}
+
 .visually-hidden {
   clip: rect(0 0 0 0);
   clip-path: inset(50%);
@@ -84,27 +145,14 @@ body {
   vertical-align: middle;
 }
 
-.pure-table-even {
+/*.pure-table-even {
   background: var(--color-background);
-}
+}*/
 
 /* Some styles from https://css-tricks.com/ */
 a {
   text-decoration: none;
   color: var(--color-link);
-}
-
-a.github-link {
-  color: var(--color-icon-github);
-  margin: 0 1rem 0 0.5rem;
-
-  svg {
-    fill: currentColor;
-  }
-
-  &:hover {
-    color: var(--color-icon-github-hover);
-  }
 }
 
 #search-result-info {
@@ -117,14 +165,17 @@ button.toggle-button {
   border: none;
   cursor: pointer;
 
-  color: var(--color-icon-github);
+  color: var(--color-text-menu-heading);
 
-  &:hover {
-    color: var(--color-icon-github-hover);
-  }
 
   svg {
     fill: currentColor;
+  }
+
+  // Feather icons (light/dark sun/moon) are stroke-based — don't fill them.
+  svg.feather {
+    fill: none;
+    stroke: currentColor;
   }
 
   .icon-light {
@@ -132,22 +183,6 @@ button.toggle-button {
   }
 
 
-}
-
-.pure-menu-horizontal {
-  background: var(--color-background);
-  padding: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#pure-menu-horizontal-spinner {
-  height: 3px;
-  background: linear-gradient(-75deg, #ff6000, #ff8f00, #ffdd00, #ed0000);
-  background-size: 400% 400%;
-  width: 100%;
-  animation: gradient 200s ease infinite;
 }
 
 body.spinner-active {
@@ -167,8 +202,10 @@ body.spinner-active {
 		background-position: 0% 50%;
 	}
 }
-.pure-menu-heading {
-  color: var(--color-text-menu-heading);
+
+#cdio-logo {
+  color: var(--color-white);
+  text-transform: uppercase;
 }
 
 .pure-menu-link {
@@ -187,18 +224,30 @@ body.spinner-active {
 }
 
 section.content {
-  @media only screen and (max-width: $desktop-wide-breakpoint) {
-    padding-top: 80px;
-  }
-  @media only screen and (min-width: $desktop-wide-breakpoint) {
-    padding-top: 100px;
-  }
-
+  // The top menu (.header) now sits in-flow above this section inside .app-main,
+  // so the old fixed-header clearance (padding-top: 80px) is no longer needed.
+  // Inset the content from the rail (and the window's right edge) so it doesn't
+  // butt against the left action bar — the header above stays flush to the rail.
   padding-bottom: 1em;
+  padding-left: $common-gap;
+  padding-right: $common-gap;
   flex-direction: column;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+}
+
+details summary {
+  cursor: pointer;
+  // Make disclosures clearly clickable: bold + link-coloured so they invite a click,
+  // not just a faint arrow + plain text.
+  font-weight: 600;
+  color: var(--color-link);
+  width: fit-content;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 code {
@@ -211,13 +260,27 @@ code {
   border-radius: 5px;
   padding: 2px 5px;
   margin-right: 4px;
-  line-height: 1.2rem;
 }
 
 /* Processor type badges - colors auto-generated from processor names */
 .processor-badge {
   @extend .inline-tag;
   font-weight: 900;
+
+  /* Used as a link to filter the watchlist by processor */
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+    opacity: 0.8;
+    cursor: pointer;
+  }
+
+  /* Highlight the processor currently used as a filter */
+  &.active {
+    outline: 2px solid var(--color-link);
+    outline-offset: 1px;
+  }
 }
 
 .watch-tag-list {
@@ -239,20 +302,6 @@ code {
   }
 }
 
-@media (min-width: 768px) {
-  .box {
-    margin: 0 1em !important;
-  }
-}
-
-.box {
-  max-width: 100%;
-  margin: 0 0.3em;
-  flex-direction: column;
-  display: flex;
-  justify-content: center;
-}
-
 
 body:after {
   content: "";
@@ -262,11 +311,11 @@ body:after {
 body:after,
 body:before {
   display: block;
-  height: 650px;
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
+  height: 100vh;
   z-index: -1;
 }
 
@@ -279,11 +328,7 @@ body::before {
   content: "";
 }
 
-body:after,
-body:before {
-  -webkit-clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%);
-  clip-path: polygon(100% 0, 0 0, 0 77.5%, 1% 77.4%, 2% 77.1%, 3% 76.6%, 4% 75.9%, 5% 75.05%, 6% 74.05%, 7% 72.95%, 8% 71.75%, 9% 70.55%, 10% 69.3%, 11% 68.05%, 12% 66.9%, 13% 65.8%, 14% 64.8%, 15% 64%, 16% 63.35%, 17% 62.85%, 18% 62.6%, 19% 62.5%, 20% 62.65%, 21% 63%, 22% 63.5%, 23% 64.2%, 24% 65.1%, 25% 66.1%, 26% 67.2%, 27% 68.4%, 28% 69.65%, 29% 70.9%, 30% 72.15%, 31% 73.3%, 32% 74.35%, 33% 75.3%, 34% 76.1%, 35% 76.75%, 36% 77.2%, 37% 77.45%, 38% 77.5%, 39% 77.3%, 40% 76.95%, 41% 76.4%, 42% 75.65%, 43% 74.75%, 44% 73.75%, 45% 72.6%, 46% 71.4%, 47% 70.15%, 48% 68.9%, 49% 67.7%, 50% 66.55%, 51% 65.5%, 52% 64.55%, 53% 63.75%, 54% 63.15%, 55% 62.75%, 56% 62.55%, 57% 62.5%, 58% 62.7%, 59% 63.1%, 60% 63.7%, 61% 64.45%, 62% 65.4%, 63% 66.45%, 64% 67.6%, 65% 68.8%, 66% 70.05%, 67% 71.3%, 68% 72.5%, 69% 73.6%, 70% 74.65%, 71% 75.55%, 72% 76.35%, 73% 76.9%, 74% 77.3%, 75% 77.5%, 76% 77.45%, 77% 77.25%, 78% 76.8%, 79% 76.2%, 80% 75.4%, 81% 74.45%, 82% 73.4%, 83% 72.25%, 84% 71.05%, 85% 69.8%, 86% 68.55%, 87% 67.35%, 88% 66.2%, 89% 65.2%, 90% 64.3%, 91% 63.55%, 92% 63%, 93% 62.65%, 94% 62.5%, 95% 62.55%, 96% 62.8%, 97% 63.3%, 98% 63.9%, 99% 64.75%, 100% 65.7%)
-}
+/* Wave clip-path removed — flat colored band looks cleaner */
 
 .button-small {
   font-size: 85%;
@@ -320,15 +365,14 @@ a.pure-button-selected {
 .button-tag {
   background: var(--color-background-button-tag);
   color: var(--color-text-button);
-  font-size: 65%;
-  border-bottom-left-radius: initial;
-  border-bottom-right-radius: initial;
+  font-size: 75%;
+  border-radius: 6px;
   margin-right: 4px;
   &.active {
     background: var(--color-background-button-tag-active);
     font-weight: bold;
   }
-
+  margin-bottom: 1px;
 }
 
 .button-error {
@@ -377,24 +421,6 @@ a.pure-button-selected {
   }
 }
 
-.notifications-wrapper {
-  padding-top: 0.5rem;
-  #notification-test-log {
-    margin-top: 1rem;
-    padding: 1rem;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    max-width: 100%;
-    box-sizing: border-box;
-    max-height: 12rem;
-    overflow-y: scroll;
-    border: 1px solid var(--color-border-notification);
-    border-radius: 5px;
-
-  }
-}
-
 label {
  &:hover {
    cursor: pointer;
@@ -407,12 +433,6 @@ label {
   border-radius: 5px;
 }
 
-#notification-error-log {
-  border: 1px solid var(--color-border-notification);
-  padding: 1rem;
-  border-radius: 5px;
-  overflow-wrap: break-word;
-}
 
 #token-table {
 
@@ -440,7 +460,6 @@ label {
   background: var(--color-background-new-watch-form);
   padding: 1em;
   border-radius: 10px;
-  margin-bottom: 1em;
   max-width: 100%;
 
   #url {
@@ -451,7 +470,6 @@ label {
 
   input {
     display: inline-block;
-    margin-bottom: 5px;
   }
 
   input:not(.pure-button) {
@@ -560,35 +578,6 @@ footer {
       padding-left: 20px;
       padding-right: 10px;
       */
-}
-
-.sticky-tab {
-  @media only screen and (max-width: $desktop-wide-breakpoint) {
-    display: none;
-  }
-  position: absolute;
-  top: 60px;
-  font-size: 65%;
-  background: var(--color-background);
-  padding: 10px;
-
-  &#left-sticky {
-    left: 0;
-    position: fixed;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-    box-shadow: 1px 1px 4px var(--color-shadow-jump);
-  }
-
-  &#right-sticky {
-    right: 0px;
-  }
-
-  &#hosted-sticky {
-    right: 0px;
-    top: 100px;
-    font-weight: bold;
-  }
 }
 
 #new-version-text a {
@@ -743,13 +732,15 @@ footer {
   }
 }
 
-.pure-table-striped {
-  tr:nth-child(2n-1) {
-    td {
-      background-color: var(--color-table-stripe);
-    }
-  }
-}
+// Temporarily disabled: zebra striping on odd rows. Row distinction now comes
+// from the :hover highlight (see .watch-table tr:hover in parts/_watch_table.scss).
+//.pure-table-striped {
+//  tr:nth-child(2n-1) {
+//    td {
+//      background-color: var(--color-table-stripe);
+//    }
+//  }
+//}
 
 .pure-form input[type=color],
 .pure-form input[type=date],
@@ -800,9 +791,6 @@ textarea::placeholder {
   }
 }
 
-
-$form-edge-padding: 20px;
-
 .pure-form-stacked {
   >div:first-child {
     display: block;
@@ -837,15 +825,8 @@ $form-edge-padding: 20px;
   padding-bottom: 1em;
 }
 
-body.full-width {
-  .edit-form {
-    width: 95%;
-  }
-}
 
 .edit-form {
-  min-width: 70%;
-  /* so it cant overflow */
   max-width: 95%;
 
   .box-wrap {
@@ -854,7 +835,7 @@ body.full-width {
 
   .inner {
     background: var(--color-background);
-    padding: $form-edge-padding;
+    padding: $common-gap*2;
   }
 
   #actions {
@@ -970,28 +951,13 @@ ul {
     supported by Chrome, Edge, Opera and Firefox */
 }
 
-
-#checkbox-operations {
-  background: var(--color-background-checkbox-operations);
-  padding: 1em;
-  border-radius: 10px;
-  margin-bottom: 1em;
-  display: none;
-  button {
-    /* some space if they wrap the page */
-    margin-bottom: 3px;
-    margin-top: 3px;
-    /* vertically center icon and text */
-    display: inline-flex;
-    align-items: center;
-  }
+[type=checkbox], [type=radio] {
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-.checkbox-uuid {
-  >* {
-    vertical-align: middle;
-  }
-}
 
 .inline-warning {
   >span {
@@ -1059,7 +1025,7 @@ ul {
 
 .restock-label {
   &.in-stock {
-    background-color: var(--color-background-button-green);
+    background-color: #7a0cc5;
     color: #fff;
   }
   &.not-in-stock {
@@ -1071,12 +1037,33 @@ ul {
     color: #fff;
     opacity: 0.7;
   }
+  &.price {
+    border: 1px solid var(--color-background-button-cancel);
+  }
 
   svg {
     vertical-align: middle;
   }
 
   @extend .inline-tag;
+}
+
+/* Price up/down indicator next to the restock price, e.g. "▼ -18%" */
+.price-change {
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 90%;
+  margin-left: 4px;
+  vertical-align: middle;
+
+  /* Price dropped = good for a shopper = green; price rose = red */
+  &.down {
+    color: var(--color-background-button-green);
+  }
+
+  &.up {
+    color: var(--color-background-button-error);
+  }
 }
 
 #chrome-extension-link {
@@ -1101,6 +1088,7 @@ ul {
   font-size: 0.8rem;
   color: #fff;
   opacity: 0.8;
+  z-index: 100;
 }
 
 #bottom-horizontal-offscreen {
@@ -1136,5 +1124,32 @@ ul#highlightSnippetActions {
     display: inline-block;
   }
 }
+@media only screen and (max-width: 768px) {
+  .box {
+    padding: 0.25rem !important;
+  }
+}
 
+.box {
+  color: var(--color-white);
+  border-width: 1px;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.25);
+  border-image: initial;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--common-round-border);
+  padding: $common-gap*2;
+}
 
+header {
+  color: var(--color-white);
+}
+
+#heart-us {
+  svg {
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+    width: 1.4rem; /*it's slightly more wider than square so default auto will trim it slightly */
+  }
+}

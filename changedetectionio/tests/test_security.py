@@ -237,13 +237,11 @@ def test_xss(client, live_server, measure_memory_usage, datastore_path):
     )
     # the template helpers were named .jinja which meant they were not having jinja2 autoescape enabled.
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": '"><img src=x onerror=alert(document.domain)>',
-              "application-notification_title": '"><img src=x onerror=alert(document.domain)>',
-              "application-notification_body": '"><img src=x onerror=alert(document.domain)>',
-              "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": '"><img src=x onerror=alert(document.domain)>',
+              "notification_title": '"><img src=x onerror=alert(document.domain)>',
+              "notification_body": '"><img src=x onerror=alert(document.domain)>',
+              "notification_format": default_notification_format},
         follow_redirects=True
     )
 

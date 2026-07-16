@@ -1,0 +1,288 @@
+@use "../settings" as *;
+
+// Top menu bar (right of the rail). The hairline under it is a gradient rather
+// than a flat border-bottom (which can't fade): a 1px pseudo-line that ramps the
+// white from nearly invisible on the left (next to the action bar) up to ~0.8 on
+// the right, so the divider dissolves toward the rail.
+.header {
+/* @todo - come back to this, because it has for now a transparent background.. */
+  /*  position: sticky;
+  top: 0;
+  z-index: 50;*/
+  color: var(--color-text-menu-heading);
+  a {
+    color: var(--color-text-menu-heading);
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(to right,
+      rgba(200, 200, 200, 0.02),
+      rgba(200, 200, 200, 0.6));
+  }
+}
+
+ul#top-right-menu {
+  list-style: none;
+  // Always pegged to the far right of the horizontal menu: margin-left:auto
+  // absorbs all free space to its left, so it stays right regardless of whether
+  // the logo / current-diff-url are present as siblings.
+  margin-left: auto;
+  padding: 0;
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  display: grid;
+  gap: $common-gap*2;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: center;
+  .toggle-button {
+    padding: 0;
+  }
+}
+
+// The current diff URL sits between the logo and the right-hand menu in the
+// horizontal nav. It can be arbitrarily long, so it must never push the
+// surrounding items around: it absorbs the available middle space and trims
+// its own text, fading out toward the cut edge instead of a hard clip.
+.current-diff-url {
+  // Fill the space between the logo and the right-hand menu so the URL block
+  // sits in the central region of the row without pushing either side around.
+  flex: 1 1 auto;
+  // min-width:0 is required for a flex item to shrink below its content width,
+  // otherwise the long URL forces the row to grow and shoves the menu off-screen.
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  // Anchor the text to the start of the href so the beginning of the URL is
+  // always visible; only the far (right) end gets trimmed when it overflows.
+  text-align: left;
+  margin: 0 $common-gap;
+
+  // Fade the text toward the trimmed (right) edge. On short URLs the text ends
+  // before this region, so the fade falls over empty space and stays invisible;
+  // only an overflowing URL actually shows the fade-out.
+  $fade-width: 2.5em;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - #{$fade-width}), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - #{$fade-width}), transparent);
+
+  span {
+    overflow: visible;
+    white-space: nowrap;
+  }
+}
+
+
+.pure-menu-horizontal {
+  padding: $common-gap;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  svg {
+    height: $top-menu-icon-size;
+  }
+}
+
+.fi {
+  height: $top-menu-icon-size;
+  cursor: pointer;
+}
+
+#pure-menu-horizontal-spinner {
+  height: 2px;
+  background: linear-gradient(-75deg, #ff6000, #ff8f00, #ffdd00, #ed0000);
+  background-size: 400% 400%;
+  animation: gradient 200s ease infinite;
+  opacity: 0.8;
+  // Fixed (not sticky): a sticky element still reserves its 2px in normal flow, and since
+  // this sits after the 100vh .app it pushed body to 100vh+2px and forced a scrollbar.
+  // Fixed pins it to the viewport bottom with zero layout impact.
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  pointer-events: none; // it's a thin overlay - never intercept clicks on content beneath
+}
+
+// "Live / Paused" scheduling status — a pill with a pulsing dot, replacing the
+// plain pause button. Sits on the gradient top menu (white text), so it uses a
+// translucent surface rather than a light card background.
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--common-round-border);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-menu-heading);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #42dd53;                            // live = green
+    box-shadow: 0 0 0 3px rgba(66, 221, 83, 0.3);
+    animation: status-pill-pulse 2s infinite;
+  }
+
+  // Paused = steady amber dot (no pulse).
+  &.paused .live-dot {
+    background: #e8a33d;
+    box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.3);
+    animation: none;
+  }
+
+  // Icon-led pills (e.g. the mute toggle) keep the feather icon compact.
+  .action-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  // Muted = notifications silenced; dim the pill and amber the bell so it reads as "off".
+  &.muted {
+    opacity: 0.8;
+    .action-icon { color: #e8a33d; }
+  }
+}
+
+@keyframes status-pill-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+// "More" overflow menu: a kebab icon button revealing a floating popup of items
+// (Settings / Import / Language). The popup is a light surface card that floats
+// over the page (toggled open by static/js/menu-pop.js).
+.menu-pop-wrap {
+  position: relative;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--common-round-border);
+  background: transparent;
+  color: var(--color-text-menu-heading);
+  cursor: pointer;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+}
+
+.menu-pop {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid var(--color-border-table-cell);
+  border-radius: 12px;
+  background: var(--color-background);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+  z-index: 80;
+
+  &.open {
+    display: block;
+  }
+
+  .mi {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text);
+    font-size: 0.85rem;
+    text-align: left;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-background-menu-link-hover);
+    }
+
+    .ico {
+      display: inline-flex;
+      color: var(--color-text-input-description);
+
+      svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+      }
+    }
+
+    .right {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--color-text-input-description);
+    }
+  }
+}
+
+
+.top-menu-list {
+  .action-label {
+   color: var(--color-text-menu-heading);
+    @media only screen and (max-width: 768px) {
+      display: none;
+    }
+  }
+}
+
+
+#inline-menu-extras-group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: $common-gap;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: center;
+}
+
+@media only screen and (max-width: $desktop-wide-breakpoint) {
+  #nav-menu {
+    #menu-settings {
+      span {
+        display: none;
+      }
+    }
+  }
+}

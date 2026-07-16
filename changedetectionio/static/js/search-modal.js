@@ -4,12 +4,13 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     const searchModal = document.getElementById('search-modal');
-    const openSearchButton = document.getElementById('open-search-modal');
+    // The Search button is rendered in the left rail and the mobile drawer.
+    const openSearchButtons = document.querySelectorAll('.js-open-search-modal');
     const closeSearchButton = document.getElementById('close-search-modal');
     const searchForm = document.getElementById('search-form');
     const searchInput = document.getElementById('search-modal-input');
 
-    if (!searchModal || !openSearchButton) {
+    if (!searchModal || openSearchButtons.length === 0) {
       return;
     }
 
@@ -32,8 +33,21 @@
       }
     }
 
-    // Open search modal on button click
-    openSearchButton.addEventListener('click', openSearchModal);
+    // Open search modal on button click (desktop + mobile drawer)
+    openSearchButtons.forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        // Close mobile drawer if open, so the modal isn't behind it
+        const drawer = document.getElementById('mobile-menu-drawer');
+        const overlay = document.getElementById('mobile-menu-overlay');
+        const toggle = document.getElementById('hamburger-toggle');
+        if (drawer && drawer.classList.contains('active')) {
+          drawer.classList.remove('active');
+          if (overlay) overlay.classList.remove('active');
+          if (toggle) toggle.classList.remove('active');
+        }
+        openSearchModal();
+      });
+    });
 
     // Close modal on cancel button
     if (closeSearchButton) {
@@ -61,9 +75,19 @@
       }
     });
 
-    // Handle Alt+S keyboard shortcut
+    // Keyboard shortcuts: Alt+S, and "/" (when not already typing in a field).
     document.addEventListener('keydown', function(e) {
       if (e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        openSearchModal();
+        return;
+      }
+      if (e.key === '/' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        const t = e.target;
+        const tag = t && t.tagName ? t.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) {
+          return; // let "/" type normally in form fields
+        }
         e.preventDefault();
         openSearchModal();
       }

@@ -407,8 +407,10 @@ def get_processor_badge_css():
         colors = generate_processor_badge_colors(sub_package_name)
 
         # Light mode rule
+        # Double class (.processor-badge.processor-badge-{name}) bumps specificity so the
+        # color survives the browser's a:visited rule now that the badge is rendered as a link.
         css_rules.append(
-            f".processor-badge-{sub_package_name} {{\n"
+            f".processor-badge.processor-badge-{sub_package_name} {{\n"
             f"  background-color: {colors['light']['bg']};\n"
             f"  color: {colors['light']['color']};\n"
             f"}}"
@@ -416,7 +418,7 @@ def get_processor_badge_css():
 
         # Dark mode rule
         css_rules.append(
-            f"html[data-darkmode=\"true\"] .processor-badge-{sub_package_name} {{\n"
+            f"html[data-darkmode=\"true\"] .processor-badge.processor-badge-{sub_package_name} {{\n"
             f"  background-color: {colors['dark']['bg']};\n"
             f"  color: {colors['dark']['color']};\n"
             f"}}"

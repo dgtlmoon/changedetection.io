@@ -133,5 +133,5 @@ def test_everything(live_server, client, measure_memory_usage, datastore_path):
     )
 
     # Yes we are correctly logged in
-    assert b"LOG OUT" in res.data
+    assert b"/logout" in res.data
     run_socketio_watch_update_test(password_mode="should be like normal", live_server=live_server, client=client, datastore_path=datastore_path)

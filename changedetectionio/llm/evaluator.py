@@ -146,7 +146,7 @@ DEFAULT_CHANGE_SUMMARY_PROMPT = (
     "For large blocks of new text (full articles, documents, long paragraphs): briefly summarise "
     "the substance in 1-2 sentences capturing the key point — do not just repeat the title.\n\n"
     "Do not quote non-English text verbatim; translate and summarise all content into English. "
-    "Your entire response must be in English."
+    "Do not give partial listings such as 'Examples include:', always be thorough."
 )
 
 

@@ -139,6 +139,36 @@ class StringTagUUID(StringField):
 
         return 'error'
 
+class LabelAfterInputTableWidget(widgets.TableWidget):
+    """
+    Variant of WTForms' TableWidget that renders the input cell before the label cell,
+    so each row is <td>input</td><th>label</th> instead of the default <th>label</th><td>input</td>.
+    """
+
+    def __call__(self, field, **kwargs):
+        from markupsafe import Markup
+        from wtforms.widgets import html_params
+
+        html = []
+        if self.with_table_tag:
+            kwargs.setdefault("id", field.id)
+            html.append(f"<table {html_params(**kwargs)}>")
+        hidden = ""
+        for subfield in field:
+            if subfield.type in ("HiddenField", "CSRFTokenField"):
+                hidden += str(subfield)
+            else:
+                html.append(
+                    f"<tr><td>{hidden}{subfield}</td><th>{subfield.label}</th></tr>"
+                )
+                hidden = ""
+        if self.with_table_tag:
+            html.append("</table>")
+        if hidden:
+            html.append(hidden)
+        return Markup("".join(html))
+
+
 class TimeDurationForm(Form):
     hours = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 25)], default="24",  validators=[validators.Optional()])
     minutes = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 60)], default="00", validators=[validators.Optional()])
@@ -184,7 +214,7 @@ class validateTimeZoneName(object):
 class ScheduleLimitDaySubForm(Form):
     enabled = BooleanField(_l("not set"), default=True)
     start_time = TimeStringField(_l("Start At"), default="00:00", validators=[validators.Optional()])
-    duration = FormField(TimeDurationForm, label=_l("Run duration"))
+    duration = FormField(TimeDurationForm, label=_l("Run duration"), widget=LabelAfterInputTableWidget())
 
 class ScheduleLimitForm(Form):
     enabled = BooleanField(_l("Use time scheduler"), default=False)
@@ -280,36 +310,6 @@ class TimeBetweenCheckForm(Form):
         return True
 
 
-class LabelAfterInputTableWidget(widgets.TableWidget):
-    """
-    Variant of WTForms' TableWidget that renders the input cell before the label cell,
-    so each row is <td>input</td><th>label</th> instead of the default <th>label</th><td>input</td>.
-    """
-
-    def __call__(self, field, **kwargs):
-        from markupsafe import Markup
-        from wtforms.widgets import html_params
-
-        html = []
-        if self.with_table_tag:
-            kwargs.setdefault("id", field.id)
-            html.append(f"<table {html_params(**kwargs)}>")
-        hidden = ""
-        for subfield in field:
-            if subfield.type in ("HiddenField", "CSRFTokenField"):
-                hidden += str(subfield)
-            else:
-                html.append(
-                    f"<tr><td>{hidden}{subfield}</td><th>{subfield.label}</th></tr>"
-                )
-                hidden = ""
-        if self.with_table_tag:
-            html.append("</table>")
-        if hidden:
-            html.append(hidden)
-        return Markup("".join(html))
-
-
 class EnhancedFormField(FormField):
     """
     An enhanced FormField that supports conditional validation with top-level error messages.
@@ -368,6 +368,8 @@ class RequiredFormField(FormField):
     A FormField that passes require_at_least_one=True to TimeBetweenCheckForm.
     Use this when you want the sub-form to always require at least one value.
     """
+
+    widget = LabelAfterInputTableWidget()
 
     def __init__(self, form_class, label=None, validators=None, separator="-", **kwargs):
         super().__init__(form_class, label, validators, separator, **kwargs)
@@ -807,6 +809,42 @@ class commonSettingsForm(Form):
 #                    raise ValidationError('HTML Color format is not supported by Telegram and Discord. Please choose another Notification Format (Plain Text, HTML, or Markdown to HTML).')
 
 
+# Standalone form for the /settings/notifications/apprise page. Holds only the
+# global apprise-notification fields (the macro
+# `notification_part_render_common_settings_form` in _common_fields.html expects
+# these exact field names) plus base_url, which powers the {{base_url}} token
+# in notification templates.
+#
+# This is intentionally not a sub-form of globalSettingsForm — the notifications
+# page POSTs to its own route so the broader settings form's validators (worker
+# count, RSS limits, etc.) don't run when the user only wants to tweak alerts.
+#
+# Named for the backend (apprise) on purpose: future backends (simple_email,
+# webhook, etc.) will land as their own forms next to this one.
+class globalSettingsAppriseNotificationForm(Form):
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        extra = kwargs.get('extra_notification_tokens', {})
+        self.notification_body.extra_notification_tokens = extra
+        self.notification_title.extra_notification_tokens = extra
+        self.notification_urls.extra_notification_tokens = extra
+
+    notification_urls = StringListField(_l('Notification URL List'),
+                                        validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
+    notification_title = StringField(_l('Notification Title'),
+                                     default='ChangeDetection.io Notification - {{ watch_url }}',
+                                     validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_body = TextAreaField(_l('Notification Body'),
+                                      default='{{ watch_url }} had a change.',
+                                      validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_format = SelectField(_l('Notification format'),
+                                      choices=list(valid_notification_formats.items()))
+    base_url = StringField(_l('Notification base URL override'),
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))})
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
 class importForm(Form):
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     urls = TextAreaField(_l('URLs'))
@@ -1036,6 +1074,13 @@ class globalSettingsApplicationUIForm(Form):
     socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
+    timeago_format = SelectField(_l('Relative time format'),
+                                 choices=[('long', _l('Long (1 minute ago)')), ('short', _l('Short (1m ago)'))],
+                                 default='long', validators=[validators.Optional()])
+    sidebar_mode = SelectField(_l('Navigation sidebar'),
+                               choices=[('collapsed', _l('Collapsed icon rail (expands on hover)')),
+                                        ('pinned', _l('Always expanded'))],
+                               default='collapsed', validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
@@ -1152,7 +1197,7 @@ class globalSettingsLLMForm(Form):
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
         render_kw={
-            "rows": "5",
+            "rows": "12",
             "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT,
             "style": "width: 100%; ",
         },
@@ -1233,6 +1278,14 @@ class globalSettingsLLMForm(Form):
             ('skip_check', _l('Skip the watch check entirely')),
         ],
         default='skip_llm',
+    )
+    watchlist_overview_summary = RadioField(
+        _l('Watchlist "Summary" link compares'),
+        choices=[
+            ('second_last_version', _l('Previous version (second-last vs latest)')),
+            ('since_last_viewed',   _l('Changes since you last viewed the watch')),
+        ],
+        default='second_last_version',
     )
 
 

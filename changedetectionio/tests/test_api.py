@@ -439,7 +439,7 @@ def test_api_strips_internal_fields(client, live_server, measure_memory_usage, d
     # Force both a transient __-prefixed and a system-managed field onto the watch,
     # simulating worker/processor-set state.
     watch_obj = datastore.data['watching'][watch_uuid]
-    watch_obj['__check_status'] = 'Fetching page..'
+    watch_obj['__check_status'] = 'Fetching...'
     watch_obj['last_check_status'] = 200
     watch_obj['_llm_result'] = {'summary': 'cached llm output'}
     watch_obj['last_filter_config_hash'] = 'abc123'
@@ -472,7 +472,7 @@ def test_api_strips_internal_fields(client, live_server, measure_memory_usage, d
         f"PUT round-tripping GET response plus internal fields should succeed (got {res.status_code}: {res.data!r})"
 
     # Internal fields must not have been overwritten by the PUT
-    assert watch_obj.get('__check_status') == 'Fetching page..', \
+    assert watch_obj.get('__check_status') == 'Fetching...', \
         "PUT must not overwrite __-prefixed fields"
     assert watch_obj.get('_llm_result') == {'summary': 'cached llm output'}, \
         "PUT must not overwrite system-managed non-spec fields"

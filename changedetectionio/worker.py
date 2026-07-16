@@ -14,7 +14,7 @@ import sys
 import time
 
 # Allow alphanumerics, space, and a small set of punctuation that appears in legitimate
-# status strings ("Querying AI/LLM (intent)..", "Fetching page.."). Anything that could
+# status strings ("Querying AI/LLM (intent)..", "Fetching..."). Anything that could
 # be HTML-active (<, >, &, ", ', =, ;, {, }, `, \) is stripped.
 _MINITEXT_STATUS_SAFE_RE = re.compile(r'[^A-Za-z0-9 ().,/:\-]')
 _MINITEXT_STATUS_MAX_LEN = 80
@@ -30,7 +30,7 @@ DEFER_SLEEP_TIME_ALREADY_QUEUED = 0.3 if IN_PYTEST else 10.0
 
 def set_watch_minitext_status(watch, status):
     """
-    Set a transient status line for a watch (e.g. "Fetching page..", "Querying AI/LLM..").
+    Set a transient status line for a watch (e.g. "Fetching...", "Querying AI/LLM..").
 
     Writes to watch['__check_status'] so a client reloading the page can render the
     last known status, and fires the realtime signal so already-connected clients
@@ -182,7 +182,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
 
-                    set_watch_minitext_status(watch, "Fetching page..")
+                    set_watch_minitext_status(watch, "Fetching...")
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
@@ -446,7 +446,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                 logger.info(f"LLM monthly budget exceeded — skipping check for {uuid} (budget_action=skip_check)")
                                 changed_detected = False
 
-                        if changed_detected:
+                        # Only run AI intent/summary when there's a PREVIOUS snapshot to diff
+                        # against. On the very first check history_n is 0 (the new snapshot is
+                        # saved further below), so there's no "change" to describe — running the
+                        # LLM here would summarise the whole page as if it just changed (e.g.
+                        # "price updated to 860" on first sight). Mirrors the notification gate
+                        # (which only fires at history_n >= 2).
+                        if changed_detected and watch.history_n >= 1:
                             try:
                                 from changedetectionio.llm.evaluator import (
                                     evaluate_change, resolve_intent, resolve_llm_field,
@@ -497,8 +503,16 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                 f"{_llm_result.get('summary', '')[:80]}"
                                             )
 
-                                    # Step 2: AI Change Summary — runs for any LLM-configured watch with a change
-                                    if changed_detected:
+                                    # Step 2: AI Change Summary — only compute it when a notification
+                                    # is actually going to be sent, because that's the only place
+                                    # the worker needs it (it fills {{diff}}/{{llm_summary}} in the
+                                    # notification body). The watch-list / diff-page "Summary" button
+                                    # computes it on demand via the diff_llm_summary AJAX endpoint, so
+                                    # we deliberately do NOT pre-compute it here just for the UI —
+                                    # that would spend tokens on every change for a summary nobody
+                                    # may ever look at.
+                                    from changedetectionio.notification_service import watch_will_send_content_changed_notification
+                                    if changed_detected and watch_will_send_content_changed_notification(datastore, watch):
                                         set_watch_minitext_status(watch, "AI/LLM (summary)..")
                                         _change_summary = await loop.run_in_executor(
                                             executor,
