@@ -6,63 +6,25 @@
 
         <h4 style="margin-top:0">{{ _('Browsers') }}</h4>
         <p class="pure-form-message-inline">
-            {{ _('Save a browser once (its screen size, language, timezone…) and reuse it on any watch or group.') }}
+            {{ _('Save a browser once (its screen size, language, timezone…) and reuse it on any watch or group. Add a variation from one of the available browsers below.') }}
         </p>
 
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:1em; flex-wrap:wrap; margin-top:1.5em;">
-            <h5 style="margin:0">{{ _('Your browsers') }}</h5>
-        </div>
-
-        <table class="pure-table" style="width:100%; margin-top:0.75em;">
-            <thead>
-                <tr>
-                    <th>{{ _('Name') }}</th>
-                    <th>{{ _('Setup') }}</th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
+        {# ---- User-created browser variations ---- #}
+        <h5 style="margin-top:1.5em">{{ _('Your browsers') }}</h5>
+        {% if browser_configs %}
+        <table class="pure-table" style="width:100%; margin-top:0.5em;">
+            <thead><tr><th>{{ _('Name') }}</th><th>{{ _('Setup') }}</th><th></th><th></th></tr></thead>
             <tbody>
-                {# Built-in engine browsers - always present, zero-override, not editable/removable #}
-                {% for f in base_fetchers %}
-                {% set fbc = f.browser_config or {} %}
-                <tr>
-                    <td>
-                        <strong>{{ f.description }}</strong>
-                        <span class="browser-chip">{{ _('Built-in') }}</span>
-                        {% if f.name == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
-                    </td>
-                    <td>
-                        {% if fbc.get('viewport_width') %}<span class="browser-chip">{{ fbc.viewport_width }}×{{ fbc.viewport_height or '?' }}</span>{% endif %}
-                        {% if fbc.get('locale') %}<span class="browser-chip">{{ fbc.locale }}</span>{% endif %}
-                        {% if fbc.get('timezone_id') %}<span class="browser-chip">{{ fbc.timezone_id }}</span>{% endif %}
-                        {% if fbc.get('block_resource_types') %}<span class="browser-chip">{{ _('no') }} {{ fbc.block_resource_types|join(', ') }}</span>{% endif %}
-                        {% for cap, on in f.capabilities.items() %}
-                            {% if on %}<span class="browser-chip browser-chip--cap">{{ cap.replace('supports_', '')|replace('_', ' ') }}</span>{% endif %}
-                        {% endfor %}
-                    </td>
-                    <td style="text-align:right; white-space:nowrap">
-                        {% if f.name != default_browser_id %}
-                        <form method="POST" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=f.name) }}" style="display:inline">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button class="pure-button button-small" type="submit">{{ _('Make default') }}</button>
-                        </form>
-                        {% endif %}
-                    </td>
-                    <td style="text-align:right; white-space:nowrap">
-                        <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=f.name) }}">{{ _('Edit') }}</a>
-                    </td>
-                </tr>
-                {% endfor %}
-                {# User-defined browsers #}
                 {% for cid, entry in browser_configs.items() %}
                 {% set bc = entry.get('browser_config') or {} %}
                 <tr>
                     <td>
                         <strong>{{ entry.get('label') }}</strong>
+                        <span class="browser-chip">{{ entry.get('base_fetcher') }}</span>
                         {% if cid == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
                     </td>
                     <td>
+                        {% if bc.get('browser_type') %}<span class="browser-chip">{{ bc.browser_type }}</span>{% endif %}
                         {% if bc.get('viewport_width') %}<span class="browser-chip">{{ bc.viewport_width }}×{{ bc.viewport_height or '?' }}</span>{% endif %}
                         {% if bc.get('locale') %}<span class="browser-chip">{{ bc.locale }}</span>{% endif %}
                         {% if bc.get('timezone_id') %}<span class="browser-chip">{{ bc.timezone_id }}</span>{% endif %}
@@ -88,26 +50,52 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% else %}
+        <p class="pure-form-message-inline" style="color:#777">{{ _("You haven't added any browser variations yet — add one from an available browser below.") }}</p>
+        {% endif %}
 
-        {% if browser_engine_available %}
-        <details class="browser-add" {% if open_add_form %}open{% endif %} style="margin-top:1em;">
-            <summary class="pure-button pure-button-primary" style="display:inline-block;">+ {{ _('Browser') }}</summary>
-            <div class="box-wrap inner" style="margin-top:1em;">
-                <form class="pure-form pure-form-stacked" method="POST" action="{{ url_for('ui.browser_config.browser_config_add') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    {% with form = add_form %}
-                        {% include "_browser_config_fields.html" %}
-                    {% endwith %}
-                    <div class="pure-control-group">
-                        {{ add_form.save(class="pure-button pure-button-primary") }}
-                    </div>
-                </form>
-            </div>
-        </details>
+        {# ---- Available base browsers - each offers "Add variation" ---- #}
+        <h5 style="margin-top:2em">{{ _('Available browsers') }}</h5>
+        {% if base_fetchers %}
+        <table class="pure-table" style="width:100%; margin-top:0.5em;">
+            <thead><tr><th>{{ _('Browser') }}</th><th>{{ _('Capabilities') }}</th><th></th><th></th></tr></thead>
+            <tbody>
+                {% for f in base_fetchers %}
+                {% set fbc = f.browser_config or {} %}
+                <tr>
+                    <td>
+                        <strong>{{ f.description }}</strong>
+                        {% if not f.ready_to_use %}<span class="browser-chip">{{ _('needs setup') }}</span>{% endif %}
+                        {% if f.ready_to_use and f.name == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% for cap, on in f.capabilities.items() %}
+                            {% if on %}<span class="browser-chip browser-chip--cap">{{ cap.replace('supports_', '')|replace('_', ' ') }}</span>{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td style="text-align:right; white-space:nowrap">
+                        {# ready-to-use engines are usable directly: can be edited + made default #}
+                        {% if f.ready_to_use %}
+                            {% if f.name != default_browser_id %}
+                            <form method="POST" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=f.name) }}" style="display:inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="pure-button button-small" type="submit">{{ _('Make default') }}</button>
+                            </form>
+                            {% endif %}
+                            <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=f.name) }}">{{ _('Edit') }}</a>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right; white-space:nowrap">
+                        <a class="pure-button button-small pure-button-primary" href="{{ url_for('ui.browser_config.browser_config_add', base_fetcher=f.name) }}">+ {{ _('Add variation') }}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% else %}
         <div class="browser-empty">
-            <p>{{ _("No interactive browser is connected, so there's nothing to configure yet.") }}</p>
-            <p class="pure-form-message-inline">{{ _('Connect a Chrome/Playwright browser (set the <code>PLAYWRIGHT_DRIVER_URL</code> environment variable) to add custom browsers here.')|safe }}</p>
+            <p>{{ _("No interactive browser is available.") }}</p>
+            <p class="pure-form-message-inline">{{ _('Connect a Chrome/Playwright browser (e.g. set <code>PLAYWRIGHT_DRIVER_URL</code>) or install the Playwright library to configure browsers here.')|safe }}</p>
         </div>
         {% endif %}
 
@@ -133,7 +121,5 @@
     border-radius: 0.5em;
 }
 .browser-empty p { color: #777; margin-top: 0; }
-.browser-add > summary { list-style: none; cursor: pointer; }
-.browser-add > summary::-webkit-details-marker { display: none; }
 </style>
 {% endblock %}

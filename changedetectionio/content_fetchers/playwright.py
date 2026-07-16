@@ -289,7 +289,8 @@ class fetcher(Fetcher):
         response = None
 
         async with async_playwright() as p:
-            browser_type = getattr(p, self._resolve_browser_type_name())
+            _browser_type_name = self._resolve_browser_type_name()
+            browser_type = getattr(p, _browser_type_name)
 
             # Acquire the browser via the seam (remote connect by default, local launch in the
             # html_playwright_builtin subclass).
@@ -307,9 +308,12 @@ class fetcher(Fetcher):
                 extra_http_headers=request_headers,
                 ignore_https_errors=True,
                 proxy=self.proxy,
-                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
                 user_agent=manage_user_agent(headers=request_headers),
             )
+            # service_workers is a chromium-only new_context option - Firefox/WebKit reject it,
+            # so only pass it for chromium (matters for the local html_playwright_builtin fetcher).
+            if _browser_type_name == 'chromium':
+                context_kwargs['service_workers'] = os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow')
             _bc = getattr(self, 'browser_config', None)
             if _bc is not None:
                 if getattr(_bc, 'locale', None):

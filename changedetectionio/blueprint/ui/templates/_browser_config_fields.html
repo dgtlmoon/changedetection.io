@@ -1,17 +1,27 @@
-{# Browser config form fields, shared by the inline add form (browsers-overview) and the
-   standalone edit page (browser-config-edit). Expects `form` and `caps` (the selected base
-   engine's capability dict) in context. Fields are gated server-side by capability - e.g.
-   html_requests (no screenshots) doesn't render viewport/locale/timezone/screenshot. #}
+{# Browser config form fields for the add/edit page. Expects `form`, `caps` (the base engine's
+   capability dict) and `base_label` (read-only base engine name). The base engine is fixed by
+   the page (chosen via the "Add variation" link, or the existing config's base), so it's shown
+   read-only, not as a picker. Fields are gated server-side by `caps`. #}
 {% from '_helpers.html' import render_field, render_checkbox_field %}
 
 <fieldset>
     <div class="pure-control-group">
+        <label>{{ _('Based on browser') }}</label>
+        <div><strong>{{ base_label }}</strong></div>
+    </div>
+    <div class="pure-control-group">
         {{ render_field(form.label) }}
         <span class="pure-form-message-inline">{{ _('A friendly name, e.g. “Mobile” or “German desktop”.') }}</span>
     </div>
+    {% if caps.supports_browser_type %}
     <div class="pure-control-group">
-        {{ render_field(form.base_fetcher) }}
+        {{ render_field(form.browser_type) }}
+        <span class="pure-form-message-inline">{{ _('Which browser engine to launch locally.') }}</span>
     </div>
+    {% endif %}
+    {% if caps.supports_delete_created_files %}
+    <div class="pure-control-group">{{ render_checkbox_field(form.delete_created_files) }}</div>
+    {% endif %}
 </fieldset>
 
 {% if caps.supports_screenshots %}

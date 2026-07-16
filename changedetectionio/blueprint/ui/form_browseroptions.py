@@ -49,9 +49,6 @@ class BrowserOptionsForm(Form):
         validators.Length(min=1, max=120),
     ], render_kw={"placeholder": _l("e.g. Desktop Full-HD, Mobile de-DE")})
 
-    # Which base engine/content_fetcher this config layers on top of.
-    base_fetcher = SelectField(_l('Base browser'), validators=[validators.DataRequired()])
-
     # --- FetcherConfig fields (names match the pydantic model) ---
     viewport_width = IntegerField(_l('Viewport width'), validators=[
         validators.Optional(), validators.NumberRange(min=1, max=10000)])
@@ -65,22 +62,17 @@ class BrowserOptionsForm(Form):
 
     screenshot_format = SelectField(_l('Screenshot format'), choices=SCREENSHOT_FORMATS, default='JPEG')
 
+    # Local-launch engines only (gated by supports_browser_type)
+    browser_type = SelectField(_l('Browser engine'), validators=[validators.Optional()],
+                               choices=[('chromium', 'Chromium'), ('firefox', 'Firefox'), ('webkit', 'WebKit')],
+                               default='chromium')
+    delete_created_files = BooleanField(_l('Delete temporary browser files after each check'), default=True)
+
     block_resource_types = MultiCheckboxField(_l('Block asset types'), choices=BLOCKABLE_RESOURCE_TYPES)
     block_url_patterns = StringListField(_l('Block URL patterns'), validators=[validators.Optional()],
                                          render_kw={"placeholder": "*.ttf\n*/analytics/*"})
 
     save = SubmitField(_l('Save'))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Only browser-capable fetchers make sense as a base for these settings.
-        from changedetectionio.content_fetchers.base import FetcherCapabilities
-        choices = []
-        for name, description in content_fetchers.available_fetchers():
-            caps = FetcherCapabilities.from_fetcher(getattr(content_fetchers, name, None))
-            if caps.supports_screenshots or caps.supports_xpath_element_data:
-                choices.append((name, description))
-        self.base_fetcher.choices = choices
 
     def to_fetcher_config_dict(self):
         """Map the FetcherConfig-named fields to a plain dict for FetcherConfig(**...)."""
@@ -90,6 +82,8 @@ class BrowserOptionsForm(Form):
             'locale': (self.locale.data or None),
             'timezone_id': (self.timezone_id.data or None),
             'screenshot_format': self.screenshot_format.data,
+            'browser_type': (self.browser_type.data or None),
+            'delete_created_files': bool(self.delete_created_files.data),
             'block_resource_types': self.block_resource_types.data or [],
             'block_url_patterns': self.block_url_patterns.data or [],
         }

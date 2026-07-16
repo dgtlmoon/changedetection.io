@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Tests for named browser configs (browsers.json) and the watch-level Browser picker."""
 import os
+import time
 import pytest
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 
 def _add_browser(client, label="Mobile de-DE", base_fetcher="html_webdriver", **cfg):
-    data = {'label': label, 'base_fetcher': base_fetcher, 'screenshot_format': 'JPEG'}
+    # Add via the per-base "Add variation" route (base is in the URL, not the form).
+    data = {'label': label, 'screenshot_format': 'JPEG'}
     data.update(cfg)
-    return client.post(url_for("ui.browser_config.browser_config_add"), data=data, follow_redirects=True)
+    return client.post(url_for("ui.browser_config.browser_config_add", base_fetcher=base_fetcher),
+                       data=data, follow_redirects=True)
 
 
 @pytest.mark.skipif(not os.getenv('ENABLE_DEBUG_CONTENT_FETCHER'),
@@ -23,25 +26,35 @@ def test_debug_content_fetcher_pipeline(client, live_server, measure_memory_usag
     """
     datastore = client.application.config.get('DATASTORE')
 
-    cid = datastore.browser_config_store.add(
-        label="Debug pipeline",
-        base_fetcher="html_debug_test_browser",
-        browser_config={'locale': 'de-DE', 'timezone_id': 'Europe/Berlin',
-                        'viewport_width': 1234, 'viewport_height': 567},
-    )
+    # Add the browser variation through the real Add flow (per-base route + form), not the store
+    res = _add_browser(client, label="Debug pipeline", base_fetcher="html_debug_test_browser",
+                       locale='de-DE', timezone_id='Europe/Berlin',
+                       viewport_width=1234, viewport_height=567, browser_type='firefox')
+    assert b"Debug pipeline" in res.data
+    cid = list(datastore.browser_config_store.all())[0]
 
     uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True))
     datastore.data['watching'][uuid]['fetch_backend'] = cid
 
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
+    # The debug fetcher is instant; make sure the snapshot is committed before previewing.
+    for _ in range(30):
+        if datastore.data['watching'][uuid].history_n:
+            break
+        time.sleep(0.2)
 
     res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
-    # The debug fetcher echoed the resolved browser_config into the snapshot content
+    # The debug fetcher echoed the resolved browser_config + capabilities into the snapshot
     assert b'html_debug_test_browser' in res.data   # engine resolved from the browser config
-    assert b'de-DE' in res.data
-    assert b'Europe/Berlin' in res.data
-    assert b'1234' in res.data
+    assert b'firefox' in res.data                    # resolved sub-browser (browser_type)
+    assert b'de-DE' in res.data                      # locale
+    assert b'Europe/Berlin' in res.data              # timezone
+    assert b'1234' in res.data                       # viewport
+    assert b'supports_screenshots' in res.data       # capabilities reported
+    # The browser supports screenshots, so the preview must NOT show the "requires a fetcher that
+    # supports screenshots" message (capability resolved via the config, not the watch's backend).
+    assert b'that supports screenshots' not in res.data
 
 
 def test_browser_config_crud(client, live_server, measure_memory_usage, datastore_path):
@@ -178,6 +191,35 @@ def test_html_requests_edit_hides_browser_only_fields(client, live_server, measu
     assert b'name="timezone_id"' in res.data
 
 
+def test_playwright_builtin_is_base_only(client, live_server, measure_memory_usage, datastore_path):
+    """html_playwright_builtin isn't usable directly (ready_to_use=False) - it must not appear as
+    a directly-selectable built-in browser, but it IS offered as a base engine in Add Browser,
+    and a config built on it can pick a browser_type."""
+    from changedetectionio.model.browser_config import list_builtin_browsers
+    from changedetectionio.content_fetchers import resolve_content_fetcher
+    datastore = client.application.config.get('DATASTORE')
+
+    # Not a directly-usable built-in (excluded from the watch picker list)
+    assert 'html_playwright_builtin' not in [b['id'] for b in list_builtin_browsers()]
+
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    # The overview offers "Add variation" for it (it's an available base) ...
+    assert url_for("ui.browser_config.browser_config_add", base_fetcher="html_playwright_builtin").encode() in res.data
+    # ... but NOT a direct Edit link (base-only, not usable as-is)
+    assert url_for("ui.browser_config.browser_config_edit", config_id="html_playwright_builtin").encode() not in res.data
+
+    # Add a variation on it choosing firefox, via the real add flow
+    _add_browser(client, label="Local Firefox", base_fetcher="html_playwright_builtin", browser_type="firefox")
+    cid = list(datastore.browser_config_store.all())[0]
+
+    uuid = datastore.add_watch(url="https://example.com")
+    datastore.data['watching'][uuid]['fetch_backend'] = cid
+    cls, backend_name, _url, browser_config = resolve_content_fetcher(datastore.data['watching'][uuid], datastore)
+    assert backend_name == 'html_playwright_builtin'
+    assert browser_config.browser_type == 'firefox'
+    assert cls().local_launch is True
+
+
 def test_missing_browser_config_raises(client, live_server, measure_memory_usage, datastore_path):
     import pytest
     from changedetectionio.content_fetchers import resolve_content_fetcher
@@ -250,7 +292,9 @@ def test_group_browser_config_override(client, live_server, measure_memory_usage
     from changedetectionio.model.browser_config import resolve_browser_config_override
     datastore = client.application.config.get('DATASTORE')
 
-    _add_browser(client, label="Group Mobile", viewport_width=375, locale="fr-FR")
+    # A local Playwright/Firefox browser variation, so we also exercise the sub-engine icon/title
+    _add_browser(client, label="Group Mobile", base_fetcher="html_playwright_builtin",
+                 browser_type="firefox", viewport_width=375, locale="fr-FR")
     cid = list(datastore.browser_config_store.all())[0]
 
     tag_uuid = datastore.add_tag("French mobile")
@@ -290,17 +334,22 @@ def test_group_browser_config_override(client, live_server, measure_memory_usage
     assert browser_config.viewport_width == 375
 
     # Capabilities (used to gate the Visual Selector tab) must reflect the OVERRIDING browser's
-    # engine, not the watch's own fetch_backend - the user browser is html_webdriver here.
+    # engine (playwright_builtin here), not the watch's own fetch_backend.
     from changedetectionio.pluggy_interface import get_fetcher_capabilities
     caps = get_fetcher_capabilities(datastore.data['watching'][uuid], datastore)
     assert caps['supports_screenshots'] is True
     assert caps['supports_xpath_element_data'] is True
 
-    # Effective engine (for the watchlist status icon) resolves through the override to the
-    # overriding browser's engine, and the overview renders it.
+    # Effective engine (for the watchlist status icon) resolves through the override.
     from changedetectionio.model.browser_config import resolve_watch_fetcher_engine
-    assert resolve_watch_fetcher_engine(datastore.data['watching'][uuid], datastore) == 'html_webdriver'
-    assert client.get(url_for("watchlist.index")).status_code == 200
+    assert resolve_watch_fetcher_engine(datastore.data['watching'][uuid], datastore) == 'html_playwright_builtin'
+
+    # The watchlist overview status icon shows the overriding browser's name, sub-engine and group
+    res = client.get(url_for("watchlist.index"))
+    assert res.status_code == 200
+    assert b"Group Mobile" in res.data       # config name (not a hardcoded 'Chrome')
+    assert b"firefox" in res.data            # resolved sub-engine
+    assert b"French mobile" in res.data      # from group ...
 
 
 def test_group_override_with_builtin_browser(client, live_server, measure_memory_usage, datastore_path):

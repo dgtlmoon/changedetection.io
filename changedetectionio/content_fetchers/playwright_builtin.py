@@ -22,6 +22,9 @@ class fetcher(playwright_fetcher):
     fetcher_description = "Playwright (local library)"
 
     local_launch = True
+    # Base-only: not usable directly (you must create a browser config that picks a browser_type);
+    # so it's offered as a base in the Add Browser form but never as a directly-selectable browser.
+    ready_to_use = False
     # A local launch can pick the engine and owns its temp files.
     supports_browser_type = True
     supports_delete_created_files = True

@@ -10,7 +10,7 @@ Registered as a built-in fetcher but hidden from the UI browser lists (name pref
 """
 import json
 
-from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.content_fetchers.base import Fetcher, FetcherCapabilities
 
 
 class fetcher(Fetcher):
@@ -34,8 +34,13 @@ class fetcher(Fetcher):
         payload = {
             'debug_test_browser': True,
             'backend_name': getattr(self, 'backend_name', None),
+            # The resolved sub-browser engine (firefox/chromium/webkit) when the config sets one.
+            'browser_type': (getattr(bc, 'browser_type', None) if bc is not None else None),
             'url': url,
+            # Every configurable FetcherConfig field (the full resolved config)...
             'browser_config': bc.model_dump() if (bc is not None and hasattr(bc, 'model_dump')) else bc,
+            # ...and every capability (supports_*) this fetcher advertises.
+            'capabilities': FetcherCapabilities.from_fetcher(type(self)).model_dump(),
             'request_headers': {k: v for k, v in (request_headers or {}).items()},
         }
         self.content = json.dumps(payload, indent=2, sort_keys=True, default=str)

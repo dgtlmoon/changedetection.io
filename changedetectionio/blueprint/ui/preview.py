@@ -61,7 +61,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         timestamp = None
 
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
-        is_html_webdriver = watch.fetcher_supports_screenshots
+        # Resolve via the datastore so a group override / named browser config's engine is honoured
+        # (watch.fetcher_supports_screenshots can't see the store to resolve those).
+        from changedetectionio.pluggy_interface import get_fetcher_capabilities
+        is_html_webdriver = get_fetcher_capabilities(watch, datastore).get('supports_screenshots', False)
 
         triggered_line_numbers = []
         ignored_line_numbers = []

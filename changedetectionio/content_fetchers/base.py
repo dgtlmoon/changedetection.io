@@ -71,6 +71,12 @@ class Fetcher():
     # Resolved per-watch browser behaviour (FetcherConfig), injected after construction.
     # None by default so a fetcher that never reads it is completely unaffected.
     browser_config = None
+
+    # Whether this fetcher is usable directly, out-of-the-box, as a built-in "browser" (has sane
+    # env defaults). False means it's a *base only* - it must be configured via a browser config
+    # first (e.g. html_playwright_builtin needs a browser_type chosen), so it's offered as a base
+    # in the Add Browser form but NOT shown as a directly-selectable built-in browser.
+    ready_to_use = True
     browser_connection_is_custom = None
     browser_connection_url = None
     browser_steps = None

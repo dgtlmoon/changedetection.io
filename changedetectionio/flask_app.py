@@ -397,6 +397,42 @@ def _jinja2_filter_watch_fetcher_engine(watch):
     return resolve_watch_fetcher_engine(watch, datastore)
 
 
+@app.template_filter('watch_browser_status_icon')
+def _jinja2_filter_watch_browser_status_icon(watch):
+    """Status icon HTML for the browser a watch effectively uses - honours group override,
+    named browser config, and sub-engine (firefox/webkit). The title shows the browser config
+    name (if named) or the built-in browser type + sub-engine, not a hardcoded 'Chrome'."""
+    from markupsafe import Markup, escape
+    from flask import url_for
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.base import FetcherCapabilities
+    from changedetectionio.model.browser_config import resolve_watch_browser_display
+
+    d = resolve_watch_browser_display(watch, datastore)
+    cls = getattr(content_fetchers, d['engine'], None)
+    caps = FetcherCapabilities.from_fetcher(cls)
+    # Only browser engines get an icon (html_requests etc. don't).
+    if not (caps.supports_screenshots or caps.supports_xpath_element_data):
+        return ''
+
+    # Only chrome + playwright icons ship; use the playwright icon for non-chromium sub-engines.
+    bt = (d['browser_type'] or '').lower()
+    icon = {'firefox': 'playwright-icon.png', 'webkit': 'playwright-icon.png',
+            'chromium': 'google-chrome-icon.png'}.get(bt)
+    if not icon:
+        data = cls.get_status_icon_data() if (cls and hasattr(cls, 'get_status_icon_data')) else None
+        icon = (data or {}).get('filename') or 'google-chrome-icon.png'
+
+    title = d['label'] or d['engine']
+    if bt:
+        title = f"{title} ({bt})"
+    if d['group_title']:
+        title = f"{title} — from group {d['group_title']}"
+
+    src = url_for('static_content', group='images', filename=icon)
+    return Markup('<img class="status-icon" src="{}" alt="{}" title="{}">'.format(src, escape(title), escape(title)))
+
+
 @app.template_filter('fetcher_status_icons')
 def _jinja2_filter_fetcher_status_icons(fetcher_name):
     """Get status icon HTML for a given fetcher.

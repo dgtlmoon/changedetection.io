@@ -250,8 +250,15 @@ def list_builtin_browsers():
     watches already store in fetch_backend, so nothing breaks and they always show in the list.
     """
     from changedetectionio import content_fetchers
-    return [{'id': name, 'label': description, 'base_fetcher': name}
-            for name, description in content_fetchers.available_fetchers()]
+    out = []
+    for name, description in content_fetchers.available_fetchers():
+        cls = getattr(content_fetchers, name, None)
+        # Skip "base only" engines (e.g. html_playwright_builtin) - they aren't usable directly,
+        # only as the base of a browser config (chosen in the Add Browser form).
+        if cls is not None and not getattr(cls, 'ready_to_use', True):
+            continue
+        out.append({'id': name, 'label': description, 'base_fetcher': name})
+    return out
 
 
 def list_watch_browser_choices(datastore):
@@ -282,6 +289,43 @@ def resolve_watch_fetcher_engine(watch, datastore):
     override = resolve_browser_config_override(watch, datastore)
     selected = override['config_id'] if override else watch.get('fetch_backend', 'system')
     return base_fetcher_for(selected, datastore)
+
+
+def resolve_watch_browser_display(watch, datastore):
+    """Display info for the watchlist status icon: which browser a watch effectively uses.
+
+    Returns dict: {engine, browser_type, label, is_named, group_title} where `label` is the
+    named browser-config's label (or the built-in engine description), `browser_type` is the
+    resolved sub-engine (firefox/chromium/webkit) if set, and `group_title` is set when a group
+    override supplies it.
+    """
+    from changedetectionio import content_fetchers
+    store = getattr(datastore, 'browser_config_store', None)
+
+    override = resolve_browser_config_override(watch, datastore)
+    selected = override['config_id'] if override else watch.get('fetch_backend', 'system')
+    if not selected or selected == 'system':
+        selected = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+
+    entry = store.get(selected) if (store and selected) else None
+    if entry:
+        engine = entry.get('base_fetcher') or 'html_webdriver'
+        browser_type = (entry.get('browser_config') or {}).get('browser_type')
+        label = entry.get('label')
+        is_named = True
+    else:
+        engine = selected
+        browser_type = None
+        label = dict(content_fetchers.available_fetchers()).get(engine, engine)
+        is_named = False
+
+    return {
+        'engine': engine,
+        'browser_type': browser_type,
+        'label': label,
+        'is_named': is_named,
+        'group_title': override['group_title'] if override else None,
+    }
 
 
 def resolve_browser_config_override(watch, datastore):

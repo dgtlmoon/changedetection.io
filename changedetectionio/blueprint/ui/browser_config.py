@@ -17,22 +17,27 @@ from changedetectionio.flask_app import login_optionally_required
 
 
 def _base_fetchers(datastore):
-    """List of built-in engine 'browsers' with capabilities and any stored overrides.
-
-    Each built-in may have a browsers.json entry keyed by the engine name (created when the
-    user edits it); if so we surface its stored browser_config so the overview shows it.
+    """Browser-capable base engines shown as rows - each offers "Add variation" to create a
+    config based on it. Includes base-only engines (e.g. html_playwright_builtin); `ready_to_use`
+    tells the template which extra actions apply (Edit / Make default only for ready-to-use ones).
+    A ready-to-use engine may have a stored built-in override config (keyed by the engine name).
     """
     from changedetectionio import content_fetchers
     from changedetectionio.content_fetchers.base import FetcherCapabilities
     out = []
     for name, description in content_fetchers.available_fetchers():
-        caps = FetcherCapabilities.from_fetcher(getattr(content_fetchers, name, None))
+        cls = getattr(content_fetchers, name, None)
+        caps = FetcherCapabilities.from_fetcher(cls)
+        # Only browsers (support screenshots / visual-selector) are configurable base rows.
+        if not (caps.supports_screenshots or caps.supports_xpath_element_data):
+            continue
         stored = datastore.browser_config_store.get(name) or {}
         out.append({
             'name': name,
             'description': description,
             'capabilities': caps.model_dump(),
             'browser_config': stored.get('browser_config') or {},
+            'ready_to_use': getattr(cls, 'ready_to_use', True),
         })
     return out
 
@@ -46,11 +51,8 @@ def _caps_for(base_name):
 
 
 def _entry_to_formdata(entry):
-    """Flatten a browsers.json entry into flat form field values."""
-    data = {
-        'label': entry.get('label'),
-        'base_fetcher': entry.get('base_fetcher'),
-    }
+    """Flatten a browsers.json entry into flat form field values (base is contextual, not a field)."""
+    data = {'label': entry.get('label')}
     data.update(entry.get('browser_config') or {})
     return data
 
@@ -58,32 +60,16 @@ def _entry_to_formdata(entry):
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_config_blueprint = Blueprint('browser_config', __name__, template_folder="templates")
 
-    def _render_overview(add_form=None, open_add_form=False):
-        from .form_browseroptions import BrowserOptionsForm
-        if add_form is None:
-            add_form = BrowserOptionsForm()
-        # A browser config only makes sense if a browser-capable engine exists; the form's
-        # base_fetcher choices are already filtered to those, so an empty list => none.
-        browser_engine_available = bool(add_form.base_fetcher.choices)
-        # Gate the add form's fields by its selected (default first) base engine's capabilities.
-        add_base = add_form.base_fetcher.data or (add_form.base_fetcher.choices[0][0]
-                                                  if add_form.base_fetcher.choices else None)
+    @browser_config_blueprint.route("/browsers", methods=['GET'])
+    @login_optionally_required
+    def browsers_overview():
         return render_template(
             "browsers-overview.html",
             base_fetchers=_base_fetchers(datastore),
             browser_configs=datastore.browser_config_store.all(),
-            add_form=add_form,
-            open_add_form=open_add_form,
-            browser_engine_available=browser_engine_available,
             # The default browser is the global system fetch_backend (single source of truth).
             default_browser_id=datastore.data['settings']['application'].get('fetch_backend'),
-            caps=_caps_for(add_base) if add_base else {},
         )
-
-    @browser_config_blueprint.route("/browsers", methods=['GET'])
-    @login_optionally_required
-    def browsers_overview():
-        return _render_overview()
 
     def _label_is_taken(label, exclude_id=None):
         """True if another browser config already uses this label (case-insensitive).
@@ -113,16 +99,25 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     flash(err['msg'], 'error')
             return None
 
-    @browser_config_blueprint.route("/browsers/add", methods=['GET', 'POST'])
+    @browser_config_blueprint.route("/browsers/add/<string:base_fetcher>", methods=['GET', 'POST'])
     @login_optionally_required
-    def browser_config_add():
+    def browser_config_add(base_fetcher):
+        """Add a browser config *variation* based on a specific engine (from the row's link).
+        The base is fixed by the URL, so the form's fields gate correctly for that engine."""
         from .form_browseroptions import BrowserOptionsForm
-        # The add form lives inline on the overview page; a bare GET just goes there.
-        if request.method == 'GET':
-            return redirect(url_for('ui.browser_config.browsers_overview'))
+        from changedetectionio import content_fetchers
+        from changedetectionio.content_fetchers.base import FetcherCapabilities
 
-        form = BrowserOptionsForm(request.form)
-        if form.validate():
+        cls = getattr(content_fetchers, base_fetcher, None)
+        caps = FetcherCapabilities.from_fetcher(cls)
+        # Must be a real browser-capable engine
+        if cls is None or not (caps.supports_screenshots or caps.supports_xpath_element_data):
+            flash(gettext("Unknown base browser"), 'error')
+            return redirect(url_for('ui.browser_config.browsers_overview'))
+        base_label = dict(content_fetchers.available_fetchers()).get(base_fetcher, base_fetcher)
+
+        form = BrowserOptionsForm(request.form if request.method == 'POST' else None)
+        if request.method == 'POST' and form.validate():
             if _label_is_taken(form.label.data):
                 form.label.errors.append(gettext("A browser with this name already exists"))
             else:
@@ -130,14 +125,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if cfg is not None:
                     datastore.browser_config_store.add(
                         label=form.label.data,
-                        base_fetcher=form.base_fetcher.data,
+                        base_fetcher=base_fetcher,
                         browser_config=cfg.model_dump(exclude_defaults=True),
                     )
                     flash(gettext("Browser added"))
                     return redirect(url_for('ui.browser_config.browsers_overview'))
 
-        # Invalid - re-render the overview with the form open and errors shown inline.
-        return _render_overview(add_form=form, open_add_form=True)
+        return render_template("browser-config-form.html", form=form, mode='add',
+                               base_fetcher=base_fetcher, base_label=base_label, caps=caps.model_dump(),
+                               form_action=url_for('ui.browser_config.browser_config_add', base_fetcher=base_fetcher))
 
     @browser_config_blueprint.route("/browsers/edit/<string:config_id>", methods=['GET', 'POST'])
     @login_optionally_required
@@ -147,7 +143,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Built-in engine browsers are editable too: their config is stored in browsers.json
         # keyed by the engine name (e.g. 'html_webdriver'), and the resolver picks it up when a
-        # watch/global uses that engine. The engine is fixed (base_fetcher == the id).
+        # watch/global uses that engine. The engine is fixed (never user-choosable on edit).
         builtins = {b['id']: b for b in list_builtin_browsers()}
         is_builtin = config_id in builtins
         entry = datastore.browser_config_store.get(config_id)
@@ -155,40 +151,33 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("Browser config not found"), 'error')
             return redirect(url_for('ui.browser_config.browsers_overview'))
 
+        base = config_id if is_builtin else (entry or {}).get('base_fetcher')
+        base_label = str(builtins[config_id]['label']) if is_builtin else base
+
         if request.method == 'POST':
             form = BrowserOptionsForm(request.form)
-            if is_builtin:
-                # Lock the engine to this built-in; the label is fixed too.
-                form.base_fetcher.choices = [(config_id, builtins[config_id]['label'])]
             if form.validate():
                 if (not is_builtin) and _label_is_taken(form.label.data, exclude_id=config_id):
                     form.label.errors.append(gettext("A browser with this name already exists"))
                 else:
                     cfg = _validate_and_build_config(form)
                     if cfg is not None:
-                        base = config_id if is_builtin else form.base_fetcher.data
                         datastore.browser_config_store.upsert(
                             config_id,
-                            # built-in labels come from lazy_gettext - coerce to a plain str for storage
-                            label=(str(builtins[config_id]['label']) if is_builtin else form.label.data),
+                            label=(base_label if is_builtin else form.label.data),
                             base_fetcher=base,
                             browser_config=cfg.model_dump(exclude_defaults=True),
                         )
                         flash(gettext("Browser config updated"))
                         return redirect(url_for('ui.browser_config.browsers_overview'))
         else:
-            if entry:
-                form = BrowserOptionsForm(data=_entry_to_formdata(entry))
-            else:
-                # Built-in with no overrides yet - prefill with its identity.
-                form = BrowserOptionsForm(data={'label': builtins[config_id]['label'], 'base_fetcher': config_id})
-            if is_builtin:
-                form.base_fetcher.choices = [(config_id, builtins[config_id]['label'])]
+            form = BrowserOptionsForm(data=_entry_to_formdata(entry) if entry else {'label': base_label})
 
-        edit_base = config_id if is_builtin else ((entry or {}).get('base_fetcher') or form.base_fetcher.data)
-        return render_template("browser-config-edit.html", form=form, mode='edit',
+        return render_template("browser-config-form.html", form=form, mode='edit',
                                config_id=config_id, is_builtin=is_builtin,
-                               caps=_caps_for(edit_base) if edit_base else {})
+                               base_fetcher=base, base_label=base_label,
+                               caps=_caps_for(base) if base else {},
+                               form_action=url_for('ui.browser_config.browser_config_edit', config_id=config_id))
 
     @browser_config_blueprint.route("/browsers/remove/<string:config_id>", methods=['POST'])
     @login_optionally_required

@@ -3,11 +3,10 @@
 
 <div class="edit-form">
     <div class="box-wrap inner">
-        <form class="pure-form pure-form-stacked" method="POST"
-              action="{{ url_for('ui.browser_config.browser_config_edit', config_id=config_id) }}">
+        <form class="pure-form pure-form-stacked" method="POST" action="{{ form_action }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <h4>{{ _('Edit browser') }}</h4>
+            <h4>{% if mode == 'edit' %}{{ _('Edit browser') }}{% else %}{{ _('Add browser variation') }}{% endif %}</h4>
 
             {% include "_browser_config_fields.html" %}
 
