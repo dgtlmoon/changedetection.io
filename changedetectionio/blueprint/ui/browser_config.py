@@ -42,6 +42,19 @@ def _base_fetchers(datastore):
     return out
 
 
+def _autocomplete_choices():
+    """(locales, timezones) for the datalist autocompletes - same sources the FetcherConfig
+    validators use (babel CLDR + stdlib zoneinfo)."""
+    from zoneinfo import available_timezones
+    timezones = sorted(available_timezones())
+    try:
+        from babel.localedata import locale_identifiers
+        locales = sorted({lid.replace('_', '-') for lid in locale_identifiers()})
+    except Exception:
+        locales = ['en-US', 'en-GB', 'de-DE', 'fr-FR', 'es-ES', 'it-IT', 'ja-JP', 'zh-CN', 'pt-BR', 'nl-NL']
+    return locales, timezones
+
+
 def _caps_for(base_name):
     """Capability dict for an engine, so the form renders only the fields it can honour
     (e.g. html_requests has no screenshots -> no viewport/locale/timezone)."""
@@ -131,8 +144,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     flash(gettext("Browser added"))
                     return redirect(url_for('ui.browser_config.browsers_overview'))
 
+        locale_choices, timezone_choices = _autocomplete_choices()
         return render_template("browser-config-form.html", form=form, mode='add',
                                base_fetcher=base_fetcher, base_label=base_label, caps=caps.model_dump(),
+                               locale_choices=locale_choices, timezone_choices=timezone_choices,
                                form_action=url_for('ui.browser_config.browser_config_add', base_fetcher=base_fetcher))
 
     @browser_config_blueprint.route("/browsers/edit/<string:config_id>", methods=['GET', 'POST'])
@@ -173,10 +188,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         else:
             form = BrowserOptionsForm(data=_entry_to_formdata(entry) if entry else {'label': base_label})
 
+        locale_choices, timezone_choices = _autocomplete_choices()
         return render_template("browser-config-form.html", form=form, mode='edit',
                                config_id=config_id, is_builtin=is_builtin,
                                base_fetcher=base, base_label=base_label,
                                caps=_caps_for(base) if base else {},
+                               locale_choices=locale_choices, timezone_choices=timezone_choices,
                                form_action=url_for('ui.browser_config.browser_config_edit', config_id=config_id))
 
     @browser_config_blueprint.route("/browsers/remove/<string:config_id>", methods=['POST'])

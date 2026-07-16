@@ -56,9 +56,9 @@ class BrowserOptionsForm(Form):
         validators.Optional(), validators.NumberRange(min=1, max=10000)])
 
     locale = StringField(_l('Locale'), validators=[validators.Optional(), validators.Length(max=35)],
-                         render_kw={"placeholder": "de-DE"})
+                         render_kw={"placeholder": "de-DE", "list": "locale-datalist", "autocomplete": "off"})
     timezone_id = StringField(_l('Timezone'), validators=[validators.Optional(), validators.Length(max=64)],
-                              render_kw={"placeholder": "Europe/Berlin"})
+                              render_kw={"placeholder": "Europe/Berlin", "list": "timezone-datalist", "autocomplete": "off"})
 
     screenshot_format = SelectField(_l('Screenshot format'), choices=SCREENSHOT_FORMATS, default='JPEG')
 

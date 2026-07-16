@@ -222,6 +222,13 @@ class difference_detection_processor():
         # Inject the resolved per-watch browser behaviour; fetchers that read it apply what
         # they can, others ignore it. Never None so consumers can read attributes freely.
         self.fetcher.browser_config = browser_config
+        try:
+            logger.debug(
+                f"Watch {self.watch.get('uuid')} fetch: backend='{prefer_fetch_backend}' "
+                f"browser_config={browser_config.model_dump() if browser_config else None}"
+            )
+        except Exception as e:
+            logger.debug(f"Could not log browser_config: {e}")
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

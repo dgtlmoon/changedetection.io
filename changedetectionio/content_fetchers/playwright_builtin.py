@@ -10,6 +10,7 @@ Only registered when the playwright library is importable (see register_builtin_
 Cross-platform temp isolation: a per-fetch temp dir with best-effort cleanup (tolerates the
 Windows file-lock case). Browser processes are separate OS processes reclaimed on close().
 """
+import os
 import shutil
 import tempfile
 
@@ -37,6 +38,9 @@ class fetcher(playwright_fetcher):
     async def _get_browser(self, browser_type):
         # Dedicated per-fetch dir; tempfile respects TMPDIR/%TEMP% so it's cross-platform.
         self._local_tmp_dir = tempfile.mkdtemp(prefix='cdio-playwright-')
+        engine = self._resolve_browser_type_name()
+        logger.info(f"html_playwright_builtin: launching LOCAL headless '{engine}' for watch "
+                    f"{getattr(self, 'watch_uuid', None)} - temp/downloads dir: {self._local_tmp_dir}")
         return await browser_type.launch(headless=True, downloads_path=self._local_tmp_dir)
 
     async def quit(self, watch=None):
@@ -45,11 +49,20 @@ class fetcher(playwright_fetcher):
         try:
             await super().quit(watch=watch)
         finally:
+            tmp = self._local_tmp_dir
             bc = getattr(self, 'browser_config', None)
             delete = True if bc is None else bool(getattr(bc, 'delete_created_files', True))
-            if self._local_tmp_dir and delete:
+            if not tmp:
+                logger.info("html_playwright_builtin: no local temp dir to clean up")
+            elif delete:
+                existed = os.path.isdir(tmp)
                 # ignore_errors tolerates Windows file locks / an already-removed dir.
-                shutil.rmtree(self._local_tmp_dir, ignore_errors=True)
+                shutil.rmtree(tmp, ignore_errors=True)
+                logger.info(f"html_playwright_builtin: cleaned up temp browser dir {tmp} "
+                            f"(existed={existed}, removed={not os.path.isdir(tmp)})")
+            else:
+                logger.info(f"html_playwright_builtin: keeping temp browser dir {tmp} "
+                            f"(delete_created_files is off)")
             self._local_tmp_dir = None
 
 

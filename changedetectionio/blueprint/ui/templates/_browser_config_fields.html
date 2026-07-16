@@ -44,11 +44,17 @@
     <legend>{{ _('Language & timezone') }}</legend>
     <div class="pure-control-group">
         {{ render_field(form.locale) }}
-        <span class="pure-form-message-inline">{{ _('e.g. <code>de-DE</code>, <code>en-GB</code>.')|safe }}</span>
+        <datalist id="locale-datalist">
+            {% for l in locale_choices or [] %}<option value="{{ l }}"></option>{% endfor %}
+        </datalist>
+        <span class="pure-form-message-inline">{{ _('Start typing to search - e.g. <code>de-DE</code>, <code>en-GB</code>.')|safe }}</span>
     </div>
     <div class="pure-control-group">
         {{ render_field(form.timezone_id) }}
-        <span class="pure-form-message-inline">{{ _('e.g. <code>Europe/Berlin</code>.')|safe }}</span>
+        <datalist id="timezone-datalist">
+            {% for tz in timezone_choices or [] %}<option value="{{ tz }}"></option>{% endfor %}
+        </datalist>
+        <span class="pure-form-message-inline">{{ _('Start typing to search - e.g. <code>Europe/Berlin</code>.')|safe }}</span>
     </div>
 </fieldset>
 {% endif %}
