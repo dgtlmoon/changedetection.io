@@ -120,18 +120,44 @@ def resolve_content_fetcher(watch, datastore):
       - html_webdriver + browser_steps -> playwright override (puppeteer steps incomplete)
 
     Returns:
-        tuple: (fetcher_class, backend_name, custom_browser_connection_url)
-        where `backend_name` is the fully-resolved concrete backend name the
-        caller should stamp onto the fetcher instance as `.backend_name`.
+        tuple: (fetcher_class, backend_name, custom_browser_connection_url, browser_config)
+        where `backend_name` is the fully-resolved concrete backend name the caller should
+        stamp onto the fetcher instance as `.backend_name`, and `browser_config` is the
+        resolved FetcherConfig to inject as `.browser_config`.
     """
     this_module = sys.modules[__name__]
+    from changedetectionio.model.browser_config import (
+        FetcherConfig, resolve_browser_config_override, BrowserConfigDoesntExist,
+    )
 
-    # 1. Watch preference (later: watch -> group -> system)
-    prefer_fetch_backend = watch.get('fetch_backend', 'system')
+    # Default behaviour = empty config (built-in engines / system default).
+    browser_config = FetcherConfig()
 
-    # 2/3. Fall back to the global/system default
-    if not prefer_fetch_backend or prefer_fetch_backend == 'system':
-        prefer_fetch_backend = datastore.data['settings']['application'].get('fetch_backend')
+    # Selection order: a group override wins, else the watch's own selector value.
+    # The value is either a built-in engine name ('html_requests', 'html_webdriver',
+    # 'extra_browser_*'), the sentinel 'system', or the stable id of a user browser config.
+    override = resolve_browser_config_override(watch, datastore)
+    selected = override['config_id'] if override else watch.get('fetch_backend', 'system')
+
+    # 'system' -> the global default, which may itself be a browser-config id or an engine name.
+    if not selected or selected == 'system':
+        selected = datastore.data['settings']['application'].get('fetch_backend')
+
+    store = getattr(datastore, 'browser_config_store', None)
+    entry = store.get(selected) if (store and selected) else None
+    if entry:
+        # A user-defined browser: its base_fetcher is the engine, plus its behaviour config.
+        prefer_fetch_backend = entry.get('base_fetcher') or 'html_webdriver'
+        browser_config = FetcherConfig(**(entry.get('browser_config') or {}))
+    else:
+        # Not a stored browser config. The only valid non-config values are a built-in engine
+        # name or 'extra_browser_*'. Anything else is a reference to a browser config that has
+        # been deleted - fail loudly instead of silently defaulting.
+        if selected and selected != 'system' \
+                and not selected.startswith('extra_browser_') \
+                and not hasattr(this_module, selected):
+            raise BrowserConfigDoesntExist(config_id=selected, uuid=watch.get('uuid'))
+        prefer_fetch_backend = selected
 
     # Custom browser endpoint (extra_browser_<key>) -> webdriver with a specific connection URL
     custom_browser_connection_url = None
@@ -172,7 +198,7 @@ def resolve_content_fetcher(watch, datastore):
 
     _log_fetcher_capabilities(fetcher_obj, prefer_fetch_backend, uuid=watch.get('uuid'))
 
-    return fetcher_obj, prefer_fetch_backend, custom_browser_connection_url
+    return fetcher_obj, prefer_fetch_backend, custom_browser_connection_url, browser_config
 
 
 # Decide which is the 'real' HTML webdriver, this is more a system wide config

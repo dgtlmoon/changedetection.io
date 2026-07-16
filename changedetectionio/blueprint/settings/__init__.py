@@ -66,6 +66,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                         extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
+        # The global default fetch method is now the "Default browser": the always-present
+        # built-in engines + the user's saved browsers (no 'system' - this IS the system
+        # default). Everything else in the app resolves 'system' back to this value.
+        from changedetectionio.model.browser_config import list_builtin_browsers
+        default_browser_choices = [(b['id'], b['label']) for b in list_builtin_browsers()]
+        default_browser_choices += [(cid, e.get('label') or cid)
+                                    for cid, e in datastore.browser_config_store.all().items()]
+        form.application.form.fetch_backend.choices = default_browser_choices
+        form.application.form.fetch_backend.label.text = gettext('Default browser')
+        # Accept legacy raw-engine values / ids not in the (dynamic) choice list.
+        form.application.form.fetch_backend.validate_choice = False
+
         # Remove the last option 'System default'
         form.application.form.notification_format.choices.pop()
 

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="edit-form">
+    <div class="box-wrap inner">
+        <form class="pure-form pure-form-stacked" method="POST"
+              action="{{ url_for('ui.browser_config.browser_config_edit', config_id=config_id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <h4>{{ _('Edit browser') }}</h4>
+
+            {% include "_browser_config_fields.html" %}
+
+            <div class="pure-control-group">
+                {{ form.save(class="pure-button pure-button-primary") }}
+                <a class="pure-button button-cancel" href="{{ url_for('ui.browser_config.browsers_overview') }}">{{ _('Cancel') }}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

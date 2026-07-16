@@ -178,9 +178,8 @@ window.watchOverviewI18n = {
     {# Option lists for the bulk Browser / Proxy modals (rendered by watch-overview.js into a ModalDialog).
        Mirrors the choices on the watch edit page. Kept inert inside <template> until the modal is opened. #}
     <template id="bulk-browser-options">
-        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="system" checked> {{ _('System settings default') }}</label>
-        {% for key, label in available_fetchers %}
-        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="{{ key }}"> {{ label }}</label>
+        {% for key, label in browser_choices %}
+        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ label }}</label>
         {% endfor %}
     </template>
     {% if has_proxies %}

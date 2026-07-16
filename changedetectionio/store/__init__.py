@@ -58,6 +58,12 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.datastore_path = datastore_path
         self.start_time = time.time()
+
+        # Named browser configs (browsers.json) - optional, backup-friendly, lazy-loaded.
+        # Set here in __init__ so it exists on every path (fresh install included).
+        from changedetectionio.model.browser_config import BrowserConfigStore
+        self.browser_config_store = BrowserConfigStore(self.datastore_path, self.lock)
+
         self.save_version_copy_json_db(version_tag)
         self.reload_state(datastore_path=datastore_path, include_default_watches=include_default_watches, version_tag=version_tag)
 

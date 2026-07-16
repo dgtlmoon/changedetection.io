@@ -456,12 +456,10 @@ def get_fetcher_capabilities(watch, datastore):
                 'supports_xpath_element_data': bool
             }
     """
-    # Get the fetcher name from watch
-    fetcher_name = watch.get('fetch_backend', 'system')
-
-    # Resolve 'system' to actual fetcher
-    if fetcher_name == 'system':
-        fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+    # Resolve the watch's fetch_backend (which may be a browser-config id, engine name or
+    # 'system') to the concrete engine name via the shared browser-config helper.
+    from changedetectionio.model.browser_config import base_fetcher_for
+    fetcher_name = base_fetcher_for(watch.get('fetch_backend', 'system'), datastore)
 
     # Get the fetcher class
     from changedetectionio import content_fetchers

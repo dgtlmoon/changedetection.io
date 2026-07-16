@@ -405,10 +405,15 @@ class model(EntityPersistenceMixin, watch_base):
         """
         from changedetectionio import content_fetchers
         from changedetectionio.content_fetchers.base import FetcherCapabilities
+        from changedetectionio.model.browser_config import base_fetcher_for
 
-        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
-        if not fetcher_name or fetcher_name == 'system':
-            fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
+        # get_fetch_backend handles is_pdf; base_fetcher_for maps a browser-config id / 'system'
+        # to the concrete engine name (and PDF -> html_requests is preserved by get_fetch_backend).
+        fetch_backend = self.get_fetch_backend
+        if fetch_backend == 'html_requests':
+            fetcher_name = 'html_requests'
+        else:
+            fetcher_name = base_fetcher_for(fetch_backend, self._datastore)
 
         # Shared capability model - handles an unknown/None fetcher class (all-False)
         fetcher_class = getattr(content_fetchers, fetcher_name, None)

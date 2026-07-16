@@ -195,7 +195,7 @@ class difference_detection_processor():
         # truth (watch -> group -> system, extra_browser_/pdf/browser_steps overrides etc);
         # the resolved backend name is stamped onto the fetcher instance below.
         from changedetectionio.content_fetchers import resolve_content_fetcher
-        fetcher_obj, prefer_fetch_backend, custom_browser_connection_url = resolve_content_fetcher(
+        fetcher_obj, prefer_fetch_backend, custom_browser_connection_url, browser_config = resolve_content_fetcher(
             watch=self.watch, datastore=self.datastore)
 
         proxy_url = None
@@ -219,6 +219,9 @@ class difference_detection_processor():
         # Stamp the resolved backend name so downstream consumers (processors, plugins)
         # can read it directly instead of re-deriving it from the fetcher class name.
         self.fetcher.backend_name = prefer_fetch_backend
+        # Inject the resolved per-watch browser behaviour; fetchers that read it apply what
+        # they can, others ignore it. Never None so consumers can read attributes freely.
+        self.fetcher.browser_config = browser_config
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

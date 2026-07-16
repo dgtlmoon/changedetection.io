@@ -17,6 +17,7 @@ class FetcherCapabilities(BaseModel):
     supports_browser_steps: bool = False       # Can execute browser automation steps
     supports_screenshots: bool = False         # Can capture page screenshots
     supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
+    supports_request_blocking: bool = False    # Can block requests by resource-type / URL pattern
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -65,6 +66,9 @@ class Fetcher():
     # (e.g. 'html_requests', 'html_webdriver'). Set by resolve_content_fetcher()
     # so downstream consumers don't have to re-derive it from the class name.
     backend_name = None
+    # Resolved per-watch browser behaviour (FetcherConfig), injected after construction.
+    # None by default so a fetcher that never reads it is completely unaffected.
+    browser_config = None
     browser_connection_is_custom = None
     browser_connection_url = None
     browser_steps = None
