@@ -8,7 +8,7 @@ from changedetectionio.tests.util import wait_for_all_checks
 def test_check_plugin_processor(client, live_server, measure_memory_usage, datastore_path):
     # requires os-int intelligence plugin installed (first basic one we test with)
 
-    res = client.get(url_for("watchlist.index"))
+    res = client.get(url_for("add_watch_ui.add_watch_ui_index"))
     assert b'OSINT Reconnaissance' in res.data, "Must have the OSINT plugin installed at test time"
     assert b'<input checked id="processor-0" name="processor" type="radio" value="text_json_diff">' in res.data, "But the first text_json_diff processor should always be selected by default in quick watch form"
 

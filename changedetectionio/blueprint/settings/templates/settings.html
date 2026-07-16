@@ -2,17 +2,10 @@
 
 {% block content %}
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field, render_fieldlist_with_inline_errors %}
-{% from '_common_fields.html' import render_common_settings_form, show_token_placeholders %}
-<script>
-    const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="global-settings")}}";
-{% if emailprefix %}
-    const email_notification_prefix=JSON.parse('{{emailprefix|tojson}}');
-{% endif %}
-</script>
+{% from '_common_fields.html' import show_token_placeholders %}
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
-<script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
@@ -20,7 +13,6 @@
     <div class="tabs collapsable">
         <ul>
             <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
-            <li class="tab"><a href="#notifications">{{ _('Notifications') }}</a></li>
             <li class="tab"><a href="#fetching">{{ _('Fetching') }}</a></li>
             <li class="tab"><a href="#filters">{{ _('Global Filters') }}</a></li>
             <li class="tab"><a href="#ui-options">{{ _('UI Options') }}</a></li>
@@ -48,7 +40,6 @@
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
 
-                        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                         <span class="pure-form-message-inline">{{ _('Default recheck time for all watches, current system minimum is') }} <i>{{min_system_recheck_seconds}}</i> {{ _('seconds') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">{{ _('more info') }}</a>).</span>
                             <div id="time-between-check-schedule">
                                 <!-- Start Time and End Time {{ timezone_default_config }} -->
@@ -84,7 +75,9 @@
                             <span class="pure-form-message-inline">{{ _('Password is locked.') }}</span>
                         {% endif %}
                     </div>
-
+                    <div class="pure-control-group">
+                      <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">{{ _('Clear Snapshot History') }}</a>
+                    </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.shared_diff_access, class="shared_diff_access") }}
                         <span class="pure-form-message-inline">{{ _('Allow access to the watch change history page when password is enabled (Good for sharing the diff page)') }}</span>
@@ -104,20 +97,6 @@
                 {% endif %}
 
                 </fieldset>
-            </div>
-
-            <div class="tab-pane-inner" id="notifications">
-                <fieldset>
-                    {{ render_common_settings_form(form.application.form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
-                </fieldset>
-                <div class="pure-control-group" id="notification-base-url">
-                    {{ render_field(form.application.form.base_url, class="m-d") }}
-                    <span class="pure-form-message-inline">
-                        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
-                        {{ _('Base URL used for the') }} <code>{{ '{{ base_url }}' }}</code> {{ _('token in notification links.') }}<br>
-                        {{ _('Default value is the system environment variable') }} '<code>BASE_URL</code>' - <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">{{ _('read more here') }}</a>.
-                    </span>
-                </div>
             </div>
 
             <div class="tab-pane-inner" id="fetching">
@@ -142,7 +121,6 @@
                     {{ render_field(form.requests.form.workers) }}
                     {% set worker_info = get_worker_status_info() %}
                     <span class="pure-form-message-inline">{{ _('Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.') }}<br>
-                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     {{ _('Currently running:') }} <strong>{{ worker_info.count }}</strong> {{ _('operational') }} {{ worker_info.type }} {{ _('workers') }}{% if worker_info.active_workers > 0 %} ({{ worker_info.active_workers }} {{ _('actively processing') }}){% endif %}.</span>
                 </div>
                 <div class="pure-control-group">
@@ -157,7 +135,6 @@
                     {{ render_field(form.requests.form.default_ua) }}
                     <span class="pure-form-message-inline">
                         {{ _('Applied to all requests.') }}<br><br>
-                        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                         {{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.
                     </span>
                 </div>
@@ -225,7 +202,6 @@ nav
 
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
-                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     <div class="pure-form-message-inline">{{ _('Restrict API access limit by using') }} <code>x-api-key</code> {{ _('header - required for the Chrome Extension to work') }}</div><br>
                     <div class="pure-form-message-inline"><br>{{ _('API Key') }} <span id="api-key">{{api_key}}</span>
                         <span style="display:none;" id="api-key-copy" >{{ _('copy') }}</span>
@@ -313,6 +289,14 @@ nav
                 <div class="pure-control-group">
                     {{ render_field(form.application.form.pager_size) }}
                     <span class="pure-form-message-inline">{{ _('Number of items per page in the watch overview list, 0 to disable.') }}</span>
+                </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.application.form.ui.form.timeago_format) }}
+                    <span class="pure-form-message-inline">{{ _('How "Checked" and "Changed" times are shown in the watch overview list.') }}</span>
+                </div>
+                <div class="pure-control-group">
+                    {{ render_field(form.application.form.ui.form.sidebar_mode) }}
+                    <span class="pure-form-message-inline">{{ _('"Collapsed icon rail" keeps the left navigation slim and reveals labels on mouse-over; "Always expanded" keeps labels visible.') }}</span>
                 </div>
 
             </div>
@@ -421,8 +405,6 @@ nav
             <div id="actions">
                 <div class="pure-control-group">
                     {{ render_button(form.save_button) }}
-                    <a href="{{url_for('watchlist.index')}}" class="pure-button button-cancel">{{ _('Back') }}</a>
-                    <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">{{ _('Clear Snapshot History') }}</a>
                 </div>
             </div>
         </form>

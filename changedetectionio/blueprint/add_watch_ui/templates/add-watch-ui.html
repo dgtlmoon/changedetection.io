@@ -1,0 +1,97 @@
+{%- extends 'base.html' -%}
+{%- block content -%}
+{%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field -%}
+
+<div class="box" id="add-watch-ui">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Filled in by the visual selector when "Select by element" is used -->
+        <input type="hidden" name="include_filters" id="include_filters" value="">
+        <!-- UUID of the parked live snapshot, so submit can promote it without re-fetching -->
+        <input type="hidden" name="temporary_uuid" id="temporary_uuid" value="">
+
+        <div id="add-watch-fieldset">
+            <h3 id="add-watch-legend">{{ _('Add a new web page change detection watch') }}</h3>
+
+            <!-- TOP : enter the URL and fetch a live preview -->
+            <div id="add-watch-url-row">
+                {{ render_nolabel_field(form.url, placeholder="https://...", required=true, class="pure-input-1") }}
+                <button type="button" id="add-watch-go" class="pure-button pure-button-primary">{{ _('Go') }}</button>
+            </div>
+
+            <div id="add-watch-panes">
+
+                <!-- LEFT : live visual-selector preview -->
+                <div id="add-watch-selector-pane">
+                    <div id="add-watch-empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <strong>{{ _('Enter a URL to get started!') }}</strong>
+                        <span>{{ _('Enter a URL in the input box above to get started.') }}</span>
+                    </div>
+
+                    <div id="add-watch-spinner" style="display: none;">
+                        <div class="spinner"></div>
+                        <span class="fetching-update-notice">{{ _('Fetching screenshot and element information…') }}</span>
+                    </div>
+
+                    <div id="add-watch-error" style="display: none;"></div>
+
+                    <!-- The visual selector markup the shared initVisualSelector() expects -->
+                    <div id="selector-wrapper" style="display: none;">
+                        <img id="selector-background">
+                        <canvas id="selector-canvas"></canvas>
+                    </div>
+                    <div id="selector-current-xpath" style="display: none;"><strong>{{ _('Currently:') }}</strong>&nbsp;<span class="text"></span></div>
+                </div>
+
+                <!-- RIGHT : options -->
+                <div id="add-watch-options-pane">
+                    <div class="add-watch-option-group" id="quick-watch-processor-type">
+                        {{ render_simple_field(form.processor) }}
+                    </div>
+
+                    <div class="add-watch-option-group" id="by-element-toggle-group">
+                        <label class="pure-checkbox" for="by-element-toggle">
+                            <input type="checkbox" id="by-element-toggle"> {{ _('Select by element') }}
+                        </label>
+                        <span class="pure-form-message-inline">{{ _('Hover & click the preview to watch just one part of the page.') }}</span>
+                        <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="display: none;">{{ _('Clear selection') }}</a>
+                    </div>
+
+                    {% if llm_configured %}
+                    <div class="add-watch-option-group" id="quick-watch-llm-intent">
+                        <label for="quick_watch_llm_intent"><strong>{{ _('What matters — when to notify me') }}</strong></label>
+                        <textarea name="llm_intent"
+                                  id="quick_watch_llm_intent"
+                                  rows="4"
+                                  class="pure-input-1"
+                                  placeholder="{{ _('e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants appear. Skip review additions.') }}"></textarea>
+                    </div>
+                    {% endif %}
+
+                    <div class="add-watch-option-group" id="watch-group-tag">
+                        {{ render_field(form.tags, value='', placeholder=_("Watch group / tag"), class="transparent-field") }}
+                    </div>
+
+                    <div class="add-watch-option-group" id="add-watch-submit-row">
+                        {{ render_nolabel_field(form.watch_submit_button, title=_("Watch this URL!")) }}
+                        {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Edit first then Watch")) }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    const add_watch_snapshot_url = "{{ url_for('add_watch_ui.add_watch_ui_snapshot') }}";
+</script>
+<script src="{{url_for('static_content', group='js', filename='plugins.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='visual-selector.js')}}"></script>
+<script src="{{url_for('add_watch_ui.static', filename='add-watch.js')}}"></script>
+{%- endblock -%}

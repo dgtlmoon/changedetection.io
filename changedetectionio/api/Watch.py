@@ -447,6 +447,9 @@ class WatchFavicon(Resource):
             # Use cached MIME type detection
             filepath = os.path.join(watch.data_dir, favicon_filename)
             mime = get_favicon_mime_type(filepath)
+            if 'text' in mime:
+                logger.debug(f"Aborting favicon request for {filepath} because mimetype might be text (bad mimetype) '{mime}'")
+                abort(404)
 
             response = make_response(send_from_directory(watch.data_dir, favicon_filename))
             response.headers['Content-type'] = mime

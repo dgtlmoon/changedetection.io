@@ -6,7 +6,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: $common-gap;
   z-index: 10001;
   position: relative;
 
@@ -26,11 +26,12 @@
   flex-direction: column;
   justify-content: space-between;
 
+  /* actual stripes */
   span {
     display: block;
     height: 3px;
     width: 100%;
-    background: var(--color-text);
+    background: var(--color-white);
     border-radius: 2px;
     transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     transform-origin: center;
@@ -38,6 +39,14 @@
 }
 
 .hamburger-menu.active {
+
+  /* actual stripes */
+  .hamburger-icon {
+    span {
+      background-color: var(--color-text);
+    }
+  }
+
   .hamburger-icon span:nth-child(1) {
     transform: translateY(8.5px) rotate(45deg);
   }
@@ -86,6 +95,21 @@
   overflow-y: auto;
   padding-top: 60px;
 
+
+  #cdio-logo {
+    color: var(--color-text);
+
+    #logo-short {
+      display: none;
+    }
+
+    #logo-expanded {
+      display: inline-block;
+    }
+  }
+  .action-icon {
+    stroke: var(--color-text);
+  }
   &.active {
     right: 0;
   }

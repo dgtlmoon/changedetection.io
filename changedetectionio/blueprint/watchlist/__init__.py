@@ -7,12 +7,16 @@ from flask_babel import gettext as _
 
 from changedetectionio import forms
 from changedetectionio import processors
+from changedetectionio import worker_pool
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
+# Shared filtering — the single source of truth, also used by the ui blueprint's
+# bulk actions so a filtered view and the actions taken on it always agree.
+from changedetectionio.blueprint.watchlist import filters as wl_filters
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
-    
+
     @watchlist_blueprint.route("/", methods=['GET'])
     @login_optionally_required
     def index():
@@ -44,28 +48,39 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
-        with_errors = request.args.get('with_errors') == "1"
-        unread_only = request.args.get('unread') == "1"
+        active_processor = request.args.get('processor', '').strip()
+        # Toolbar facet counts are tallied over the tag/processor/search context but
+        # independently of the active status toggle, so the .seg numbers stay stable
+        # as you switch between All / Unread / Deals / With errors.
         errored_count = 0
-        search_q = request.args.get('q').strip().lower() if request.args.get('q') else False
+        deals_count = 0
+        unread_count = 0
+        processor_counts = {}
+        list_filters = wl_filters.list_filters_from_args(datastore, request.args)
         for uuid, watch in datastore.data['watching'].items():
-            if with_errors and not watch.get('last_error'):
+            # The processor facet is counted over the tag/search base (ignoring the
+            # selected processor) so every detected processor shows up and you can
+            # switch between them.
+            if not wl_filters.watch_matches_tag(watch, list_filters):
                 continue
-
-            if unread_only and (watch.viewed or watch.last_changed == 0) :
+            if not wl_filters.watch_passes_search(watch, list_filters):
                 continue
+            proc = watch.get('processor')
+            if proc:
+                processor_counts[proc] = processor_counts.get(proc, 0) + 1
 
-            if active_tag_uuid and not active_tag_uuid in watch['tags']:
-                    continue
+            # Narrow to the selected processor for the remaining facets + the list.
+            if list_filters['processor'] and proc != list_filters['processor']:
+                continue
             if watch.get('last_error'):
                 errored_count += 1
-
-            if search_q:
-                if (watch.get('title') and search_q in watch.get('title').lower()) or search_q in watch.get('url', '').lower():
-                    sorted_watches.append(watch)
-                elif watch.get('last_error') and search_q in watch.get('last_error').lower():
-                    sorted_watches.append(watch)
-            else:
+            if wl_filters.watch_is_deal(watch):
+                deals_count += 1
+            # Unread = changed and not yet viewed — same test the 'unread' status
+            # filter uses, so this count matches what clicking Unread shows.
+            if not (watch.viewed or watch.last_changed == 0):
+                unread_count += 1
+            if wl_filters.watch_passes_status(watch, list_filters):
                 sorted_watches.append(watch)
 
         form = forms.quickWatchForm(request.form)
@@ -83,6 +98,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         proxy_list = datastore.proxy_list
 
+        from changedetectionio import content_fetchers
+        available_fetchers = content_fetchers.available_fetchers()
+
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
         from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
         llm_configured = bool(_get_llm_config(datastore))
@@ -91,15 +109,22 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             "watch-overview.html",
             active_tag=active_tag,
             active_tag_uuid=active_tag_uuid,
+            active_processor=active_processor,
+            checking_now_size=len(worker_pool.get_running_uuids()),
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             datastore=datastore,
             errored_count=errored_count,
+            deals_count=deals_count,
+            unread_count=unread_count,
+            processor_counts=processor_counts,
             extra_classes=' '.join(filter(None, ['has-queue' if not update_q.empty() else '', 'llm-configured' if llm_configured else ''])),
             form=form,
             generate_tag_colors=processors.generate_processor_badge_colors,
             wcag_text_color=processors.wcag_text_color,
             guid=datastore.data['app_guid'],
             has_proxies=proxy_list,
+            available_fetchers=available_fetchers,
+            #header=_("todo - tag name etc"),
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
             now_time_server=round(time.time()),
             pagination=pagination,
@@ -108,6 +133,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             processor_descriptions=processors.get_processor_descriptions(),
             queue_size=update_q.qsize(),
             queued_uuids=update_q.get_queued_uuids(),
+            # Active view filters (tag/processor/q/unread/...) so links (e.g. column sorting)
+            # can re-apply them and not drop the operator's current filtered view.
+            active_filters=wl_filters.filter_query_args(request.args),
             search_q=request.args.get('q', '').strip(),
             sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
             sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
@@ -141,5 +169,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             resp.set_cookie('order', request.args.get('order'))
 
         return resp
-        
+
+    @watchlist_blueprint.route("/uuids", methods=['GET'])
+    @login_optionally_required
+    def uuids():
+        """All watch UUIDs matching the current filter (tag/search/status/processor).
+
+        Backs the client "select all matching" feature: the watchlist page only
+        renders one page of rows, so to select across pages the browser fetches the
+        full matching id list from here and holds it in its selection store.
+        """
+        from flask import jsonify
+        return jsonify({'uuids': wl_filters.matching_watch_uuids(datastore, request.args)})
+
     return watchlist_blueprint

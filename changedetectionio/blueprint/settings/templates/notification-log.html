@@ -5,6 +5,9 @@
      <div class="inner">
 
          <h4 style="margin-top: 0px;">{{ _('Notification debug log') }}</h4>
+             <span class="pure-form-message-inline">
+                {{ _('For security this log is emptied on restart.') }}
+            </span>
                 <div id="notification-error-log">
                 <ul style="font-size: 80%; margin:0px; padding: 0 0 0 7px">
                 {% for log in logs|reverse %}

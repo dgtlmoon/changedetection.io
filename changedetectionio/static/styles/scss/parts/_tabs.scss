@@ -15,6 +15,13 @@ body.wrapped-tabs {
 }
 
 .tabs {
+  // Take the full width of the centered content column so the wrap-detector JS
+  // (see base.html) has the real available space to measure against. Without
+  // this, align-items:center on .content-main shrinks .tabs to its intrinsic
+  // width and the auto-fill grid in wrapped mode has nothing to fill.
+  //width: 100%;
+  //align-self: stretch;
+
   ul {
     margin: 0px;
     padding: 0px;

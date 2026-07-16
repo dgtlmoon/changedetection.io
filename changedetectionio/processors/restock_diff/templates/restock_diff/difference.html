@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="box" id="restock-diff">
+    <div id="restock-diff-header">
+        <h3 style="margin: 0 0 0.25rem;">{{ _('Price & stock history') }}</h3>
+
+        {% if restock_latest %}
+        <div id="restock-diff-summary">
+            {% if restock_latest.in_stock is not none %}
+                <span class="restock-badge {{ 'in-stock' if restock_latest.in_stock else 'out-of-stock' }}">
+                    {{ _('In stock') if restock_latest.in_stock else _('Out of stock') }}
+                </span>
+            {% endif %}
+            {% if restock_latest.price is not none %}
+                <span class="restock-latest-price">{{ restock_currency }}{{ restock_latest.price }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="tabs">
+        <ul>
+            <li class="tab" id="price-history-tab"><a href="#price-history">{{ _('Price history') }}</a></li>
+            <li class="tab" id="screenshot-tab"><a href="#screenshot">{{ _('Current screenshot') }}</a></li>
+        </ul>
+    </div>
+
+    <div id="restock-tabs">
+        <div class="tab-pane-inner" id="price-history">
+        {% if has_enough_history %}
+            <div id="restock-graph">
+                <p class="pure-form-message-inline" id="restock-graph-loading">{{ _('Loading price history…') }}</p>
+            </div>
+
+            {# Full data table, shown by default. Rows are filled by the graph JS from the same
+               fetched data; the XLSX export is generated server-side for correct number formats. #}
+            <div id="restock-history-table-wrap" style="margin-top: 1.2rem;">
+                <div class="restock-table-toolbar">
+                    <strong>{{ _('Price history') }}</strong>
+                    <a href="{{ url_for('ui.ui_diff.diff_history_page_processor_export', uuid=uuid) }}"
+                       class="pure-button button-secondary button-xsmall">{{ _('Download as XLSX') }}</a>
+                </div>
+                <table class="pure-table" id="restock-history-table">
+                    <thead>
+                        <tr>
+                            <th>{{ _('When') }}</th>
+                            <th>{{ _('Stock') }}</th>
+                            <th>{{ _('Price') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="pure-form-message-inline" style="margin-top: 1rem;">
+                {{ _('Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here.') }}
+            </p>
+        {% endif %}
+        </div>
+
+        <div class="tab-pane-inner" id="screenshot">
+        {% if screenshot %}
+            <div class="snapshot-age">{{ watch.snapshot_screenshot_ctime|format_timestamp_timeago }}</div>
+            <img style="max-width: 100%;" alt="{{ _('Current screenshot from most recent request') }}"
+                 src="{{ url_for('static_content', group='screenshot', filename=uuid) }}">
+        {% else %}
+            <p class="pure-form-message-inline">{{ _('No screenshot available just yet! Try rechecking the page.') }}</p>
+        {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+<script>
+    // The graph data (full timeline) is fetched from this endpoint to keep it out of the HTML.
+    window.restock_data_url = {{ processor_data_url|tojson }};
+    // i18n strings for the JS-built table + states.
+    window.restock_i18n = {
+        in_stock: {{ _('In stock')|tojson }},
+        out_of_stock: {{ _('Out of stock')|tojson }},
+        no_data: {{ _('No price data available to graph yet.')|tojson }},
+        load_error: {{ _('Could not load price history.')|tojson }},
+        changes: {{ _('Changes')|tojson }},
+        avg_price: {{ _('Average price')|tojson }},
+        price_low: {{ _('Currently low')|tojson }},
+        price_typical: {{ _('Currently typical')|tojson }},
+        price_high: {{ _('Currently high')|tojson }},
+        cheaper_than: {{ _('cheaper than %s% of tracked prices')|tojson }},
+        pricier_than: {{ _('more expensive than %s% of tracked prices')|tojson }},
+        typical_note: {{ _('around the usual price')|tojson }},
+        avg_label: {{ _('avg')|tojson }}
+    };
+</script>
+<script src="{{ url_for('static_content', group='js', filename='restock-price-graph.js') }}" defer></script>
+{% endblock %}
