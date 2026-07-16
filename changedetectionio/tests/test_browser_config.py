@@ -92,6 +92,10 @@ def test_watch_browser_picker_and_resolution(client, live_server, measure_memory
                 follow_redirects=True)
     assert datastore.data['watching'][uuid]['fetch_backend'] == cid
 
+    # Watchlist renders fine for a watch whose fetch_backend is a browser-config id - the
+    # status icon resolves to the underlying base engine (html_webdriver) as before.
+    assert client.get(url_for("watchlist.index")).status_code == 200
+
     # Resolver maps the browser id -> engine + FetcherConfig
     _cls, backend_name, _url, browser_config = resolve_content_fetcher(datastore.data['watching'][uuid], datastore)
     assert backend_name == 'html_webdriver'
@@ -250,6 +254,13 @@ def test_group_browser_config_override(client, live_server, measure_memory_usage
     _cls, backend_name, _url, browser_config = resolve_content_fetcher(datastore.data['watching'][uuid], datastore)
     assert browser_config.locale == 'fr-FR'
     assert browser_config.viewport_width == 375
+
+    # Capabilities (used to gate the Visual Selector tab) must reflect the OVERRIDING browser's
+    # engine, not the watch's own fetch_backend - the user browser is html_webdriver here.
+    from changedetectionio.pluggy_interface import get_fetcher_capabilities
+    caps = get_fetcher_capabilities(datastore.data['watching'][uuid], datastore)
+    assert caps['supports_screenshots'] is True
+    assert caps['supports_xpath_element_data'] is True
 
 
 def test_group_override_with_builtin_browser(client, live_server, measure_memory_usage, datastore_path):

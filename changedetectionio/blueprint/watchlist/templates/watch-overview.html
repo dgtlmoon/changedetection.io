@@ -389,7 +389,7 @@ window.watchOverviewI18n = {
                         <div class="favicon">
                             <a target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">
                                 {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
-                                <img alt="Favicon thumbnail"
+                                <img alt="{{ _('Favicon thumbnail') }}"
                                      class="favicon lazy-favicon"
                                      loading="lazy"
                                      decoding="async"
@@ -429,7 +429,10 @@ window.watchOverviewI18n = {
                         </div>
                     <div class="status-icons">
                             <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="{{ _('Create a link to share watch config with others') }}" ></a>
-                            {%- set effective_fetcher = watch.get_fetch_backend if watch.get_fetch_backend != "system" else system_default_fetcher -%}
+                            {%- set _fb = watch.get_fetch_backend if watch.get_fetch_backend != "system" else system_default_fetcher -%}
+                            {# The watch may store a browser-config id - resolve it to the underlying engine so the status icon (built-in or plugin) matches by engine name. #}
+                            {%- set _bc = datastore.browser_config_store.get(_fb) -%}
+                            {%- set effective_fetcher = _bc.base_fetcher if _bc else _fb -%}
                             {%- if effective_fetcher and ("html_webdriver" in effective_fetcher or "html_" in effective_fetcher or "extra_browser_" in effective_fetcher) -%}
                                 {{ effective_fetcher|fetcher_status_icons }}
                             {%- endif -%}

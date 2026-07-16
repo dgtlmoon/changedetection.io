@@ -456,10 +456,14 @@ def get_fetcher_capabilities(watch, datastore):
                 'supports_xpath_element_data': bool
             }
     """
-    # Resolve the watch's fetch_backend (which may be a browser-config id, engine name or
-    # 'system') to the concrete engine name via the shared browser-config helper.
-    from changedetectionio.model.browser_config import base_fetcher_for
-    fetcher_name = base_fetcher_for(watch.get('fetch_backend', 'system'), datastore)
+    # Resolve the EFFECTIVE browser to a concrete engine name, mirroring resolve_content_fetcher:
+    # a group override wins over the watch's own fetch_backend. Then map that (browser-config id,
+    # engine name or 'system') to the engine so capability checks (Visual Selector etc.) reflect
+    # what will actually fetch the page.
+    from changedetectionio.model.browser_config import base_fetcher_for, resolve_browser_config_override
+    override = resolve_browser_config_override(watch, datastore)
+    selected = override['config_id'] if override else watch.get('fetch_backend', 'system')
+    fetcher_name = base_fetcher_for(selected, datastore)
 
     # Get the fetcher class
     from changedetectionio import content_fetchers
