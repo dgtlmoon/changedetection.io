@@ -2942,6 +2942,10 @@ msgid "UnMute notification"
 msgstr "Включить уведомление"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Favicon thumbnail"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Goto web page"
 msgstr ""
 

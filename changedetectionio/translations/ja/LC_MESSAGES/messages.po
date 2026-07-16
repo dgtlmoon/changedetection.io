@@ -2847,6 +2847,10 @@ msgid "UnMute notification"
 msgstr "通知のミュートを解除"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Favicon thumbnail"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Goto web page"
 msgstr ""
 

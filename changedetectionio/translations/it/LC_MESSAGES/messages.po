@@ -2830,6 +2830,10 @@ msgid "UnMute notification"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Favicon thumbnail"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Goto web page"
 msgstr ""
 
