@@ -299,11 +299,42 @@ def register_builtin_fetchers():
     This is called from content_fetchers/__init__.py after all fetchers are imported
     to avoid circular import issues.
     """
-    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium, html_debug_test_browser
+
+    # These builtin plugins are registered AFTER content_fetchers finished importing (and after
+    # get_plugin_fetchers() ran its setattr pass), so their classes aren't module attributes yet.
+    # resolve_content_fetcher() resolves engines via getattr(content_fetchers, name), so expose
+    # them explicitly here.
+    def _register_fetcher(plugin, plugin_name, fetcher_key, fetcher_cls):
+        plugin_manager.register(plugin, plugin_name)
+        setattr(content_fetchers, fetcher_key, fetcher_cls)
 
     # Register each built-in fetcher plugin
     if hasattr(requests, 'requests_plugin'):
         plugin_manager.register(requests.requests_plugin, 'builtin_requests')
+
+    # Debug/test fetcher - echoes the resolved browser config as JSON content. Opt-in only via
+    # ENABLE_DEBUG_CONTENT_FETCHER (never registered in production).
+    # Enables strong end-to-end pipeline tests without a real browser.
+    import os
+    from changedetectionio.strtobool import strtobool
+    if strtobool(os.getenv('ENABLE_DEBUG_CONTENT_FETCHER', 'False')) \
+            and hasattr(html_debug_test_browser, 'debug_test_browser_plugin'):
+        _register_fetcher(html_debug_test_browser.debug_test_browser_plugin, 'builtin_debug_test_browser',
+                          'html_debug_test_browser', html_debug_test_browser.fetcher)
+        logger.info("Registered debug content fetcher (ENABLE_DEBUG_CONTENT_FETCHER)")
+
+    # html_playwright_builtin - local Playwright launch, only when the playwright library is
+    # importable (no env default; opt-in via a browser config).
+    try:
+        import playwright as _playwright_lib  # noqa: F401
+        from changedetectionio.content_fetchers import playwright_builtin
+        if hasattr(playwright_builtin, 'playwright_builtin_plugin'):
+            _register_fetcher(playwright_builtin.playwright_builtin_plugin, 'builtin_playwright_builtin',
+                              'html_playwright_builtin', playwright_builtin.fetcher)
+    except ImportError:
+        logger.debug("playwright library not installed - html_playwright_builtin fetcher not offered")
 
     if hasattr(playwright, 'playwright_plugin'):
         plugin_manager.register(playwright.playwright_plugin, 'builtin_playwright')
@@ -456,14 +487,10 @@ def get_fetcher_capabilities(watch, datastore):
                 'supports_xpath_element_data': bool
             }
     """
-    # Resolve the EFFECTIVE browser to a concrete engine name, mirroring resolve_content_fetcher:
-    # a group override wins over the watch's own fetch_backend. Then map that (browser-config id,
-    # engine name or 'system') to the engine so capability checks (Visual Selector etc.) reflect
-    # what will actually fetch the page.
-    from changedetectionio.model.browser_config import base_fetcher_for, resolve_browser_config_override
-    override = resolve_browser_config_override(watch, datastore)
-    selected = override['config_id'] if override else watch.get('fetch_backend', 'system')
-    fetcher_name = base_fetcher_for(selected, datastore)
+    # The effective engine that will fetch this watch (honours a group override + browser-config
+    # id + 'system'), so capability checks (Visual Selector etc.) reflect reality.
+    from changedetectionio.model.browser_config import resolve_watch_fetcher_engine
+    fetcher_name = resolve_watch_fetcher_engine(watch, datastore)
 
     # Get the fetcher class
     from changedetectionio import content_fetchers

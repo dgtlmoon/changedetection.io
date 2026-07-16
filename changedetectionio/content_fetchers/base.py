@@ -18,6 +18,8 @@ class FetcherCapabilities(BaseModel):
     supports_screenshots: bool = False         # Can capture page screenshots
     supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
     supports_request_blocking: bool = False    # Can block requests by resource-type / URL pattern
+    supports_browser_type: bool = False        # Can choose the browser engine (chromium/firefox/webkit)
+    supports_delete_created_files: bool = False # Launches locally & can clean up its temp files
 
     @classmethod
     def from_fetcher(cls, fetcher_class):

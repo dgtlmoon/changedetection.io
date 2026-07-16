@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Tests for named browser configs (browsers.json) and the watch-level Browser picker."""
+import os
+import pytest
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
@@ -8,6 +10,38 @@ def _add_browser(client, label="Mobile de-DE", base_fetcher="html_webdriver", **
     data = {'label': label, 'base_fetcher': base_fetcher, 'screenshot_format': 'JPEG'}
     data.update(cfg)
     return client.post(url_for("ui.browser_config.browser_config_add"), data=data, follow_redirects=True)
+
+
+@pytest.mark.skipif(not os.getenv('ENABLE_DEBUG_CONTENT_FETCHER'),
+                    reason="Needs ENABLE_DEBUG_CONTENT_FETCHER (set in the test-browser-config CI step)")
+def test_debug_content_fetcher_pipeline(client, live_server, measure_memory_usage, datastore_path):
+    """End-to-end: prove a browser config's FetcherConfig actually reaches the fetcher.
+
+    Uses the debug fetcher (ENABLE_DEBUG_CONTENT_FETCHER, set in conftest), which echoes the
+    injected browser_config as JSON content - so a real watch check exercises the whole
+    resolve -> select engine -> inject FetcherConfig -> fetch pipeline, with no real browser.
+    """
+    datastore = client.application.config.get('DATASTORE')
+
+    cid = datastore.browser_config_store.add(
+        label="Debug pipeline",
+        base_fetcher="html_debug_test_browser",
+        browser_config={'locale': 'de-DE', 'timezone_id': 'Europe/Berlin',
+                        'viewport_width': 1234, 'viewport_height': 567},
+    )
+
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True))
+    datastore.data['watching'][uuid]['fetch_backend'] = cid
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+    # The debug fetcher echoed the resolved browser_config into the snapshot content
+    assert b'html_debug_test_browser' in res.data   # engine resolved from the browser config
+    assert b'de-DE' in res.data
+    assert b'Europe/Berlin' in res.data
+    assert b'1234' in res.data
 
 
 def test_browser_config_crud(client, live_server, measure_memory_usage, datastore_path):
@@ -261,6 +295,12 @@ def test_group_browser_config_override(client, live_server, measure_memory_usage
     caps = get_fetcher_capabilities(datastore.data['watching'][uuid], datastore)
     assert caps['supports_screenshots'] is True
     assert caps['supports_xpath_element_data'] is True
+
+    # Effective engine (for the watchlist status icon) resolves through the override to the
+    # overriding browser's engine, and the overview renders it.
+    from changedetectionio.model.browser_config import resolve_watch_fetcher_engine
+    assert resolve_watch_fetcher_engine(datastore.data['watching'][uuid], datastore) == 'html_webdriver'
+    assert client.get(url_for("watchlist.index")).status_code == 200
 
 
 def test_group_override_with_builtin_browser(client, live_server, measure_memory_usage, datastore_path):

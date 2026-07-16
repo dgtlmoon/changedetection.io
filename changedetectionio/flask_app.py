@@ -389,6 +389,14 @@ def _jinja2_filter_format_duration(seconds):
 
     return ", ".join(parts)
 
+@app.template_filter('watch_fetcher_engine')
+def _jinja2_filter_watch_fetcher_engine(watch):
+    """Resolve a watch to the concrete engine that will fetch it (honours group override,
+    browser-config id, 'system'), so the watchlist status icon matches by engine name."""
+    from changedetectionio.model.browser_config import resolve_watch_fetcher_engine
+    return resolve_watch_fetcher_engine(watch, datastore)
+
+
 @app.template_filter('fetcher_status_icons')
 def _jinja2_filter_fetcher_status_icons(fetcher_name):
     """Get status icon HTML for a given fetcher.

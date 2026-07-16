@@ -81,6 +81,17 @@ class FetcherConfig(BaseModel):
     # Cost / bandwidth - block assets (capability-gated by supports_request_blocking)
     block_resource_types: List[str] = Field(default_factory=list)  # e.g. ['image', 'font', 'media']
     block_url_patterns: List[str] = Field(default_factory=list)    # globs, e.g. ['*.ttf', '*/analytics/*']
+    # Local-launch engines only (capability-gated by supports_browser_type)
+    browser_type: Optional[str] = None         # 'chromium' | 'firefox' | 'webkit'
+    # Delete the per-fetch temp profile after use (capability-gated by supports_delete_created_files)
+    delete_created_files: bool = True
+
+    @field_validator('browser_type')
+    @classmethod
+    def _validate_browser_type(cls, v):
+        if v and v not in ('chromium', 'firefox', 'webkit'):
+            raise ValueError(f"Unknown browser_type '{v}' - use chromium, firefox or webkit")
+        return v
 
     @field_validator('locale')
     @classmethod
@@ -258,6 +269,19 @@ def list_watch_browser_choices(datastore):
 def _system_default_label(datastore):
     from flask_babel import gettext
     return gettext('Default (system settings)')
+
+
+def resolve_watch_fetcher_engine(watch, datastore):
+    """The concrete engine name that will actually fetch this watch.
+
+    Single place that mirrors resolve_content_fetcher's *selection*: a group override wins,
+    else the watch's own browser selection (a browser-config id or engine name or 'system'),
+    then mapped to the underlying engine. Used by capability checks and the watchlist status
+    icon so they all agree with what fetches the page.
+    """
+    override = resolve_browser_config_override(watch, datastore)
+    selected = override['config_id'] if override else watch.get('fetch_backend', 'system')
+    return base_fetcher_for(selected, datastore)
 
 
 def resolve_browser_config_override(watch, datastore):
