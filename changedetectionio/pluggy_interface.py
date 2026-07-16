@@ -466,34 +466,21 @@ def get_fetcher_capabilities(watch, datastore):
     # Get the fetcher class
     from changedetectionio import content_fetchers
 
-    # Try to get from built-in fetchers first
+    # Try built-in fetchers first, then plugin-provided fetchers
+    fetcher_class = None
     if hasattr(content_fetchers, fetcher_name):
         fetcher_class = getattr(content_fetchers, fetcher_name)
-        return {
-            'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
-            'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
-            'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
-        }
+    else:
+        # Query all plugins for registered fetchers
+        for fetcher_registration in plugin_manager.hook.register_content_fetcher():
+            if fetcher_registration and fetcher_registration[0] == fetcher_name:
+                fetcher_class = fetcher_registration[1]
+                break
 
-    # Try to get from plugin-provided fetchers
-    # Query all plugins for registered fetchers
-    plugin_fetchers = plugin_manager.hook.register_content_fetcher()
-    for fetcher_registration in plugin_fetchers:
-        if fetcher_registration:
-            name, fetcher_class = fetcher_registration
-            if name == fetcher_name:
-                return {
-                    'supports_browser_steps': getattr(fetcher_class, 'supports_browser_steps', False),
-                    'supports_screenshots': getattr(fetcher_class, 'supports_screenshots', False),
-                    'supports_xpath_element_data': getattr(fetcher_class, 'supports_xpath_element_data', False)
-                }
-
-    # Default: no capabilities
-    return {
-        'supports_browser_steps': False,
-        'supports_screenshots': False,
-        'supports_xpath_element_data': False
-    }
+    # Log + build from the shared FetcherCapabilities model. Return a plain dict so
+    # callers (e.g. blueprint/ui/edit.py) can still add their own extra capability keys.
+    caps = content_fetchers._log_fetcher_capabilities(fetcher_class, fetcher_name, uuid=watch.get('uuid'))
+    return caps.model_dump()
 
 
 def get_plugin_settings_tabs():

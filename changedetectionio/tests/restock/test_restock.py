@@ -11,6 +11,29 @@ from changedetectionio.notification import (
 )
 
 
+def get_browser_fetcher_backend():
+    """Examine the app's available fetchers and return the name of a browser-capable
+    one (supports screenshots + visual-selector xpath data) if one is actually usable
+    here, otherwise None.
+
+    "Usable" means both: a fetcher class advertising browser capabilities is registered,
+    AND a browser driver is configured in the environment to connect to. Without a driver
+    the class still reports the capability but can't actually fetch.
+    """
+    if not (os.getenv('PLAYWRIGHT_DRIVER_URL') or os.getenv('WEBDRIVER_URL')):
+        return None
+
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.base import FetcherCapabilities
+
+    for name, _description in content_fetchers.available_fetchers():
+        caps = FetcherCapabilities.from_fetcher(getattr(content_fetchers, name, None))
+        if caps.supports_screenshots and caps.supports_xpath_element_data:
+            return name
+
+    return None
+
+
 def set_original_response(datastore_path):
     test_return_data = """<html>
        <body>
@@ -159,11 +182,23 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
 def test_restock_detection(client, live_server, measure_memory_usage, datastore_path):
 
     set_original_response(datastore_path=datastore_path)
-    #assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
-   #  live_server_setup(live_server) # Setup on conftest per function
+
     #####################
     notification_url = url_for('test_notification_endpoint', _external=True).replace('http://localhost', 'http://changedet').replace('http', 'json')
 
+    # Prefer a browser fetcher (supports screenshots + visual selector) when one is
+    # actually configured/usable here, otherwise fall back to the plain HTTP fetcher so
+    # the restock logic is still exercised without needing a browser driver.
+    fetch_backend = get_browser_fetcher_backend() or "html_requests"
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-empty_pages_are_a_change": "y",
+              "requests-time_between_check-minutes": 180,
+              'application-fetch_backend': fetch_backend,
+              },
+        follow_redirects=True
+    )
 
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
@@ -175,8 +210,12 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
               "notification_format": default_notification_format},
         follow_redirects=True
     )
-    # Add our URL to the import page, because the docker container (playwright/selenium) wont be able to connect to our usual test url
-    test_url = url_for('test_endpoint', _external=True).replace('http://localhost', 'http://changedet')
+    # When using a browser fetcher the docker container (playwright/selenium) can't reach our
+    # usual localhost test url, so rewrite it to the reachable host. With the in-process
+    # html_requests fetcher we must keep the real localhost url.
+    test_url = url_for('test_endpoint', _external=True)
+    if fetch_backend != "html_requests":
+        test_url = test_url.replace('http://localhost', 'http://changedet')
 
 
     client.post(

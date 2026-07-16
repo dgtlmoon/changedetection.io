@@ -404,16 +404,15 @@ class model(EntityPersistenceMixin, watch_base):
         the actual fetcher class. Works for built-in and plugin fetchers alike.
         """
         from changedetectionio import content_fetchers
+        from changedetectionio.content_fetchers.base import FetcherCapabilities
 
         fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
         if not fetcher_name or fetcher_name == 'system':
             fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
 
+        # Shared capability model - handles an unknown/None fetcher class (all-False)
         fetcher_class = getattr(content_fetchers, fetcher_name, None)
-        if fetcher_class is None:
-            return False
-
-        return bool(getattr(fetcher_class, 'supports_screenshots', False))
+        return FetcherCapabilities.from_fetcher(fetcher_class).supports_screenshots
 
     @property
     def is_pdf(self):

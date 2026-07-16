@@ -495,19 +495,9 @@ class perform_site_check(difference_detection_processor):
 
         if not (has_price and has_availability):
             from changedetectionio.pluggy_interface import get_itemprop_availability_from_plugin
-            fetcher_name = watch.get('fetch_backend', 'html_requests')
-
-            # Resolve 'system' to the actual fetcher being used
-            # This allows plugins to work even when watch uses "system settings default"
-            if fetcher_name == 'system':
-                # Get the actual fetcher that was used (from self.fetcher)
-                # Fetcher class name gives us the actual backend (e.g., 'html_requests', 'html_webdriver')
-                actual_fetcher = type(self.fetcher).__name__
-                if 'html_requests' in actual_fetcher.lower():
-                    fetcher_name = 'html_requests'
-                elif 'webdriver' in actual_fetcher.lower() or 'playwright' in actual_fetcher.lower():
-                    fetcher_name = 'html_webdriver'
-                logger.debug(f"Resolved 'system' fetcher to actual fetcher: {fetcher_name}")
+            # The concrete backend was already resolved when the fetcher was set up
+            # (see resolve_content_fetcher) and stamped onto the fetcher instance.
+            fetcher_name = self.fetcher.backend_name
 
             # Try plugin override - plugins can decide if they support this fetcher
             if fetcher_name:

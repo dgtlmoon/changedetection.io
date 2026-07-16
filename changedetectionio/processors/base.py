@@ -187,54 +187,16 @@ class difference_detection_processor():
 
         await self.validate_iana_url()
 
-        # Requests, playwright, other browser via wss:// etc, fetch_extra_something
-        prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
-
         # Proxy ID "key"
         preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(
             uuid=self.watch.get('uuid'))
 
-        # Pluggable content self.fetcher
-        if not prefer_fetch_backend or prefer_fetch_backend == 'system':
-            prefer_fetch_backend = self.datastore.data['settings']['application'].get('fetch_backend')
-
-        # In the case that the preferred fetcher was a browser config with custom connection URL..
-        # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
-        custom_browser_connection_url = None
-        if prefer_fetch_backend.startswith('extra_browser_'):
-            (t, key) = prefer_fetch_backend.split('extra_browser_')
-            connection = list(
-                filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
-            if connection:
-                prefer_fetch_backend = 'html_webdriver'
-                custom_browser_connection_url = connection[0].get('browser_connection_url')
-
-        # PDF should be html_requests because playwright will serve it up (so far) in a embedded page
-        # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
-        # @todo needs test to or a fix
-        if self.watch.is_pdf:
-            logger.warning(
-                f"Watch {self.watch.get('uuid')} is_pdf detected (content-type/url) - forcing the "
-                f"'html_requests' fetcher because browser support isn't complete yet for "
-                f"saving/downloading the PDF. Overriding requested backend '{prefer_fetch_backend}'."
-            )
-            prefer_fetch_backend = "html_requests"
-
-        # Grab the right kind of 'fetcher', (playwright, requests, etc)
-        from changedetectionio import content_fetchers
-        if hasattr(content_fetchers, prefer_fetch_backend):
-            # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
-            if prefer_fetch_backend == 'html_webdriver' and self.watch.has_browser_steps:
-                # This is never supported in selenium anyway
-                logger.warning(
-                    "Using playwright fetcher override for possible puppeteer request in browsersteps, because puppetteer:browser steps is incomplete.")
-                from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
-                fetcher_obj = playwright_fetcher
-            else:
-                fetcher_obj = getattr(content_fetchers, prefer_fetch_backend)
-        else:
-            # What it referenced doesnt exist, Just use a default
-            fetcher_obj = getattr(content_fetchers, "html_requests")
+        # Resolve which content fetcher this watch should use. This is the single source of
+        # truth (watch -> group -> system, extra_browser_/pdf/browser_steps overrides etc);
+        # the resolved backend name is stamped onto the fetcher instance below.
+        from changedetectionio.content_fetchers import resolve_content_fetcher
+        fetcher_obj, prefer_fetch_backend, custom_browser_connection_url = resolve_content_fetcher(
+            watch=self.watch, datastore=self.datastore)
 
         proxy_url = None
         if preferred_proxy_id:
@@ -253,6 +215,10 @@ class difference_detection_processor():
                                    custom_browser_connection_url=custom_browser_connection_url,
                                    screenshot_format=self.screenshot_format
                                    )
+
+        # Stamp the resolved backend name so downstream consumers (processors, plugins)
+        # can read it directly instead of re-deriving it from the fetcher class name.
+        self.fetcher.backend_name = prefer_fetch_backend
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

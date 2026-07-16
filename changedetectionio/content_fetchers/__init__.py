@@ -88,6 +88,93 @@ def get_plugin_fetchers():
 _plugin_fetchers = get_plugin_fetchers()
 
 
+def _log_fetcher_capabilities(fetcher_class, backend_name, uuid=None):
+    """logger.info the capabilities of a resolved content fetcher class.
+
+    Returns the FetcherCapabilities instance so callers can reuse it.
+    """
+    from changedetectionio.content_fetchers.base import FetcherCapabilities
+    caps = FetcherCapabilities.from_fetcher(fetcher_class)
+    logger.info(
+        f"Content fetcher '{backend_name}' ({getattr(fetcher_class, 'fetcher_description', 'No description')})"
+        f"{f' for watch {uuid}' if uuid else ''} - capabilities: "
+        f"browser_steps={caps.supports_browser_steps}, "
+        f"screenshots={caps.supports_screenshots}, "
+        f"xpath_element_data={caps.supports_xpath_element_data}"
+    )
+    return caps
+
+
+def resolve_content_fetcher(watch, datastore):
+    """Single source of truth for resolving which content fetcher a watch should use.
+
+    Resolution order (room to grow):
+      1. Watch-level `fetch_backend`
+      2. (future) group-level default
+      3. System/global default from application settings
+
+    Also collapses the special backend forms into a concrete fetcher:
+      - 'system'                    -> global application default
+      - 'extra_browser_<key>'       -> html_webdriver + custom connection URL
+      - is_pdf watch                -> forced html_requests (browser PDF support incomplete)
+      - html_webdriver + browser_steps -> playwright override (puppeteer steps incomplete)
+
+    Returns:
+        tuple: (fetcher_class, backend_name, custom_browser_connection_url)
+        where `backend_name` is the fully-resolved concrete backend name the
+        caller should stamp onto the fetcher instance as `.backend_name`.
+    """
+    this_module = sys.modules[__name__]
+
+    # 1. Watch preference (later: watch -> group -> system)
+    prefer_fetch_backend = watch.get('fetch_backend', 'system')
+
+    # 2/3. Fall back to the global/system default
+    if not prefer_fetch_backend or prefer_fetch_backend == 'system':
+        prefer_fetch_backend = datastore.data['settings']['application'].get('fetch_backend')
+
+    # Custom browser endpoint (extra_browser_<key>) -> webdriver with a specific connection URL
+    custom_browser_connection_url = None
+    if prefer_fetch_backend and prefer_fetch_backend.startswith('extra_browser_'):
+        (t, key) = prefer_fetch_backend.split('extra_browser_')
+        connection = list(
+            filter(lambda s: (s['browser_name'] == key),
+                   datastore.data['settings']['requests'].get('extra_browsers', [])))
+        if connection:
+            prefer_fetch_backend = 'html_webdriver'
+            custom_browser_connection_url = connection[0].get('browser_connection_url')
+
+    # PDF should be html_requests because playwright will serve it up (so far) in an embedded page
+    # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
+    if getattr(watch, 'is_pdf', False):
+        logger.warning(
+            f"Watch {watch.get('uuid')} is_pdf detected (content-type/url) - forcing the "
+            f"'html_requests' fetcher because browser support isn't complete yet for "
+            f"saving/downloading the PDF. Overriding requested backend '{prefer_fetch_backend}'."
+        )
+        prefer_fetch_backend = "html_requests"
+
+    # Grab the right kind of 'fetcher' class (playwright, requests, plugin-provided, etc)
+    if prefer_fetch_backend and hasattr(this_module, prefer_fetch_backend):
+        # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
+        if prefer_fetch_backend == 'html_webdriver' and getattr(watch, 'has_browser_steps', False):
+            # This is never supported in selenium anyway
+            logger.warning(
+                "Using playwright fetcher override for possible puppeteer request in browsersteps, "
+                "because puppetteer:browser steps is incomplete.")
+            from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
+            fetcher_obj = playwright_fetcher
+        else:
+            fetcher_obj = getattr(this_module, prefer_fetch_backend)
+    else:
+        # What it referenced doesn't exist, just use a default
+        fetcher_obj = getattr(this_module, "html_requests")
+
+    _log_fetcher_capabilities(fetcher_obj, prefer_fetch_backend, uuid=watch.get('uuid'))
+
+    return fetcher_obj, prefer_fetch_backend, custom_browser_connection_url
+
+
 # Decide which is the 'real' HTML webdriver, this is more a system wide config
 # rather than site-specific.
 use_playwright_as_chrome_fetcher = os.getenv('PLAYWRIGHT_DRIVER_URL', False)
