@@ -448,6 +448,7 @@ msgstr ""
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "Základní URL použita pro"
@@ -515,6 +516,7 @@ msgstr "AI / LLM"
 msgid "Info"
 msgstr "Info"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Výchozí čas opětovné kontroly pro všechna sledování, aktuální systémové minimum je"
@@ -587,6 +589,7 @@ msgstr "Toto počká <i>n</i> sekund před extrahováním textu."
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "Počet souběžných pracovních procesů sledování. Více procesů = rychlejší zpracování, ale vyšší spotřeba paměti."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "Aktuálně běží:"
@@ -615,6 +618,7 @@ msgstr "Pro běžné základní požadavky (bez použití chrome), maximální p
 msgid "Applied to all requests."
 msgstr "Nastaveno pro všechny požadavky."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "Pozn.: Pouhá změna hodnoty User-Agent často neobejde technologie zamezující přístup robotů, je třeba vzít v potaz"
@@ -700,6 +704,7 @@ msgstr "Ovládejte svou changedetection.io pomocí API, Více o"
 msgid "API access and examples here"
 msgstr "přístupu k API a příklady zde"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "Omezit API přístupový limit použitím"
@@ -3936,6 +3941,7 @@ msgstr ""
 msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "Tělo pro všechna oznámení — Můžete použít"
@@ -3993,6 +3999,7 @@ msgstr ""
 msgid "The diff output - only changes, additions, and removals"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr ""
@@ -4079,6 +4086,7 @@ msgstr ""
 msgid "The AI Change Intent that was evaluated."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr ""
@@ -4137,6 +4145,7 @@ msgstr ""
 msgid "Show advanced help and tips"
 msgstr "Zobrazit pokročilou nápovědu a tipy"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr ""
@@ -4157,6 +4166,7 @@ msgstr "textu oznámení včetně názvu."
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr ""
@@ -4165,6 +4175,7 @@ msgstr ""
 msgid "(or use plaintext/markdown format)"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr ""
@@ -4190,6 +4201,7 @@ msgstr ""
 msgid "Title for all notifications"
 msgstr "Nadpis pro všechna oznámení"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr ""
@@ -4198,6 +4210,7 @@ msgstr ""
 msgid "without quotes for automatic escaping, for example -"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr ""
@@ -4206,6 +4219,7 @@ msgstr ""
 msgid "for example -"
 msgstr "například -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr ""
@@ -4218,6 +4232,7 @@ msgstr ""
 msgid "Format for all notifications"
 msgstr "Formát pro všechna oznámení"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr ""

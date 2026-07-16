@@ -455,6 +455,7 @@ msgstr ""
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "Şunun için kullanılan temel URL"
@@ -522,6 +523,7 @@ msgstr ""
 msgid "Info"
 msgstr "Bilgi"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Tüm izleyiciler için varsayılan yeniden kontrol süresi, mevcut sistem minimumu"
@@ -604,6 +606,7 @@ msgstr ""
 "İzleyicileri işlemek için eşzamanlı çalışan sayısı. Daha fazla çalışan = daha hızlı işleme ancak daha yüksek bellek "
 "kullanımı."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "Şu anda çalışan:"
@@ -632,6 +635,7 @@ msgstr "Normal düz istekler için (chrome tabanlı olmayan), zaman aşımına k
 msgid "Applied to all requests."
 msgstr "Tüm isteklere uygulanır."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "Not: Sadece User-Agent'ı değiştirmek genellikle anti-robot teknolojilerini alt etmez, şunları dikkate almak önemlidir"
@@ -725,6 +729,7 @@ msgstr "changedetection.io'nuzu API üzerinden yönlendirin, Daha fazlası"
 msgid "API access and examples here"
 msgstr "API erişimi ve örnekler burada"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "Şunu kullanarak API erişim sınırını kısıtlayın"
@@ -3981,6 +3986,7 @@ msgstr "İzleyici protokolüne izin verilmiyor veya geçersiz URL formatı"
 msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr "İzleyici sınırına ulaşıldı ({current}/{limit} izleyici). Daha fazla izleyici eklenemez."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "Tüm bildirimler için gövde — Bildirim başlığı, gövdesi ve URL'sinde"
@@ -4038,6 +4044,7 @@ msgstr "İzleyici için fark çıktısının URL'si."
 msgid "The diff output - only changes, additions, and removals"
 msgstr "Fark çıktısı - yalnızca değişiklikler, eklemeler ve kaldırmalar"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr ""
@@ -4124,6 +4131,7 @@ msgstr ""
 msgid "The AI Change Intent that was evaluated."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "Uyarı: Şunun içerikleri"
@@ -4184,6 +4192,7 @@ msgstr "<i>Önemli yapılandırma notları için lütfen buradaki bildirim hizme
 msgid "Show advanced help and tips"
 msgstr "Gelişmiş yardım ve ipuçlarını göster"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "(veya"
@@ -4204,6 +4213,7 @@ msgstr "başlık da dahil olmak üzere bildirim metni."
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "botlar diğer botlara mesaj gönderemez, bu nedenle bot olmayan kullanıcının sohbet kimliğini belirtmelisiniz."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "yalnızca çok sınırlı HTML'yi destekler ve ekstra etiketler gönderildiğinde başarısız olabilir,"
@@ -4212,6 +4222,7 @@ msgstr "yalnızca çok sınırlı HTML'yi destekler ve ekstra etiketler gönderi
 msgid "(or use plaintext/markdown format)"
 msgstr "(veya düz metin/markdown biçimini kullanın)"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "doğrudan API çağrıları için (veya şunu atlayın"
@@ -4237,6 +4248,7 @@ msgstr ""
 msgid "Title for all notifications"
 msgstr "Tüm bildirimler için başlık"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "JSON yükleri için"
@@ -4245,6 +4257,7 @@ msgstr "JSON yükleri için"
 msgid "without quotes for automatic escaping, for example -"
 msgstr "filtresini otomatik kaçış için tırnak işareti olmadan kullanın, örneğin:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "URL kodlaması için"
@@ -4253,6 +4266,7 @@ msgstr "URL kodlaması için"
 msgid "for example -"
 msgstr "kullanın, örneğin:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "Düzenli ifade değişimi için"
@@ -4265,6 +4279,7 @@ msgstr "Tüm Jinja2 yerleşik filtrelerinin tam bir referansı için kullanıcı
 msgid "Format for all notifications"
 msgstr "Tüm bildirimler için format"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr ""

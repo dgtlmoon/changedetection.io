@@ -451,6 +451,7 @@ msgstr ""
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "URL base usada para o"
@@ -518,6 +519,7 @@ msgstr ""
 msgid "Info"
 msgstr "Informações"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Tempo padrão de rechecagem para todos os monitoramentos, o mínimo do sistema é"
@@ -600,6 +602,7 @@ msgstr ""
 "Número de workers simultâneos para processar monitoramentos. Mais workers = processamento rápido, mas maior uso de "
 "memória."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "Executando no momento:"
@@ -628,6 +631,7 @@ msgstr "Para solicitações comuns (não baseadas em Chrome), número máximo de
 msgid "Applied to all requests."
 msgstr "Aplicado a todas as solicitações."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "Nota: Mudar apenas o User-Agent geralmente não supera tecnologias anti-robô, é importante considerar"
@@ -715,6 +719,7 @@ msgstr "Controle seu changedetection.io via API, mais sobre"
 msgid "API access and examples here"
 msgstr "acesso à API e exemplos aqui"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "Restringir o limite de acesso à API usando"
@@ -3978,6 +3983,7 @@ msgstr "O protocolo de monitoramento não é permitido ou o formato da URL é in
 msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr "Limite de monitoramentos atingido ({current}/{limit}). Não é possível adicionar mais."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "Corpo para todas as notificações — Você pode usar"
@@ -4035,6 +4041,7 @@ msgstr "A URL da saída de diff para o monitoramento."
 msgid "The diff output - only changes, additions, and removals"
 msgstr "A saída de diff - apenas mudanças, adições e remoções"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr "Todas as variantes de diff aceitam"
@@ -4121,6 +4128,7 @@ msgstr ""
 msgid "The AI Change Intent that was evaluated."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "Aviso: O conteúdo de"
@@ -4181,6 +4189,7 @@ msgstr "<i>Por favor, leia a wiki dos serviços de notificação aqui para notas
 msgid "Show advanced help and tips"
 msgstr "Mostrar ajuda avançada e dicas"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "(ou"
@@ -4201,6 +4210,7 @@ msgstr "de texto de notificação, incluindo o título."
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "bots não podem enviar mensagens para outros bots, então você deve especificar o ID do chat de um usuário humano."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "suporta apenas HTML muito limitado e pode falhar quando tags extras são enviadas,"
@@ -4209,6 +4219,7 @@ msgstr "suporta apenas HTML muito limitado e pode falhar quando tags extras são
 msgid "(or use plaintext/markdown format)"
 msgstr "(ou use o formato plaintext/markdown)"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "para chamadas diretas de API (ou omita o"
@@ -4234,6 +4245,7 @@ msgstr ""
 msgid "Title for all notifications"
 msgstr "Título para todas as notificações"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "Para payloads JSON, use"
@@ -4242,6 +4254,7 @@ msgstr "Para payloads JSON, use"
 msgid "without quotes for automatic escaping, for example -"
 msgstr "sem aspas para escape automático, por exemplo -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "Codificação de URL, use"
@@ -4250,6 +4263,7 @@ msgstr "Codificação de URL, use"
 msgid "for example -"
 msgstr "por exemplo -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "Substituição por expressão regular, use"
@@ -4262,6 +4276,7 @@ msgstr "Para uma referência completa de todos os filtros nativos do Jinja2, os 
 msgid "Format for all notifications"
 msgstr "Formato para todas as notificações"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr ""
