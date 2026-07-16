@@ -368,6 +368,10 @@ msgid "Watch %(uuid)s does not have enough history snapshots to show changes (ne
 msgstr "모니터링 %(uuid)s에 변경 내용을 표시할 기록 스냅샷이 충분하지 않습니다. (최소 2개 필요)"
 
 #: changedetectionio/blueprint/settings/__init__.py
+msgid "Default browser"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "비밀번호 보호가 해제되었습니다."
 
@@ -1040,10 +1044,12 @@ msgid "This will remove your saved AI provider, model, and API key."
 msgstr "저장된 AI 프로바이더, 모델, API 키가 제거됩니다."
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Remove"
 msgstr "제거"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/browser-config-edit.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "취소"
@@ -1304,6 +1310,14 @@ msgid "Activate for individual watches in this tag/group?"
 msgstr "이 태그/그룹의 개별 모니터링에도 활성화할까요?"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Override each watch's browser with"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Browser config"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Auto-apply to watches with URLs matching"
 msgstr "URL이 다음과 일치하는 모니터링에 자동 적용"
 
@@ -1318,6 +1332,12 @@ msgstr "태그 색상"
 #: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "태그 이름"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Browser"
+msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
@@ -1340,6 +1360,14 @@ msgstr "사용자 지정 색상"
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr "체크하지 않으면 태그 이름을 기준으로 자동 생성된 색상을 사용합니다."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Manage browsers"
+msgstr ""
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -1404,6 +1432,7 @@ msgid "Mute notifications"
 msgstr "알림 음소거"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
 msgstr "편집"
@@ -1592,6 +1621,30 @@ msgstr "공유할 수 없습니다. 공유 서버와 통신하는 중 문제가 
 msgid "Language set to auto-detect from browser"
 msgstr "브라우저 자동 감지로 언어 설정"
 
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "A browser with this name already exists"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser added"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config not found"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config updated"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config removed"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Default browser set"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/diff.py changedetectionio/blueprint/ui/preview.py
 msgid "No history found for the specified link, bad link?"
 msgstr "지정한 링크의 기록을 찾을 수 없습니다. 링크가 올바른가요?"
@@ -1629,11 +1682,8 @@ msgstr "'{}' 프로세서를 불러올 수 없습니다. 프로세서 플러그�
 msgid "Could not load '{}' processor, processor plugin might be missing."
 msgstr "'{}' 프로세서를 불러올 수 없습니다. 프로세서 플러그인이 없을 수 있습니다."
 
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "System settings default"
-msgstr "시스템 설정 기본값"
-
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/ui/templates/browsers-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Default"
 msgstr "기본값"
 
@@ -1644,6 +1694,74 @@ msgstr "모니터링이 업데이트되었고 일시중지가 해제되었습니
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch."
 msgstr "모니터링 설정이 업데이트되었습니다."
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Images"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Fonts"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Media (audio/video)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Stylesheets (CSS)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Scripts (JS)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "XHR / fetch"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "WebSockets"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Give this browser config a name"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "e.g. Desktop Full-HD, Mobile de-DE"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Base browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Viewport width"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Viewport height"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Locale"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Screenshot format"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Block asset types"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Block URL patterns"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
@@ -1665,6 +1783,100 @@ msgstr ""
 #: changedetectionio/blueprint/ui/queue.py
 #, python-brace-format
 msgid "Queue cleared ({} items removed)."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "A friendly name, e.g. “Mobile” or “German desktop”."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Screen size"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Desktop"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Laptop"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Tablet"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Mobile"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html changedetectionio/blueprint/ui/templates/queue.html
+msgid "Clear"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Language & timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "e.g. <code>de-DE</code>, <code>en-GB</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "e.g. <code>Europe/Berlin</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Skip downloads (save bandwidth)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "One address pattern per line, e.g. <code>*.ttf</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-edit.html
+msgid "Edit browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
+msgid "Browsers"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Save a browser once (its screen size, language, timezone…) and reuse it on any watch or group."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Your browsers"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Setup"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Built-in"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "no"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Make default"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Remove this browser?"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "No interactive browser is connected, so there's nothing to configure yet."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"Connect a Chrome/Playwright browser (set the <code>PLAYWRIGHT_DRIVER_URL</code> environment variable) to add custom "
+"browsers here."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
@@ -1919,6 +2131,20 @@ msgstr "필터가 페이지에 더 이상 보이지 않을 때 알림을 보냅�
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
 msgstr "비워 두면 시스템 설정 기본값을 사용합니다."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Using browser config"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "from group"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"This group overrides the fetch method for its watches. Change it in the group settings, or turn off the override "
+"there to choose per-watch."
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
@@ -2291,10 +2517,6 @@ msgid "<p>This will remove every pending check from the queue.</p><p>Running che
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Clear"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear Queue"
 msgstr ""
 
@@ -2524,10 +2746,6 @@ msgstr "태그"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set browser / fetch method for selected"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Browser"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3094,7 +3312,7 @@ msgid "Not set"
 msgstr "설정되지 않음"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/form_browseroptions.py changedetectionio/forms.py
 msgid "Save"
 msgstr "저장"
 
@@ -3303,7 +3521,8 @@ msgstr "잘못된 템플릿 구문: %(error)s"
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr "\"%(header)s\" 헤더의 템플릿 구문이 올바르지 않습니다: %(error)s"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/forms.py
 msgid "Name"
 msgstr "이름"
 
@@ -3700,6 +3919,10 @@ msgstr "%s년 전"
 #, python-format
 msgid "in %syr"
 msgstr "%s년 후"
+
+#: changedetectionio/model/browser_config.py
+msgid "Default (system settings)"
+msgstr ""
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
@@ -4837,18 +5060,6 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Browsers (coming soon)"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Browsers"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "soon"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
