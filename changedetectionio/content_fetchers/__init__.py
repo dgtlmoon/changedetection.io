@@ -134,12 +134,11 @@ def resolve_content_fetcher(watch, datastore):
     selected = watch.get_fetch_backend
 
     store = getattr(datastore, 'browser_config_store', None)
-    entry = store.get(selected) if (store and selected) else None
-    if entry:
-        # A user-defined browser: its base_fetcher is the engine, plus its behaviour config.
-        prefer_fetch_backend = entry.get('base_fetcher') or 'html_webdriver'
-        browser_config = FetcherConfig(**(entry.get('browser_config') or {}))
+    if store is not None:
+        entry, prefer_fetch_backend, browser_config = store.engine_and_config(selected)
     else:
+        entry, prefer_fetch_backend = None, selected
+    if entry is None:
         # Not a stored browser config. The only valid non-config values are a built-in engine
         # name or 'extra_browser_*'. Anything else is a reference to a browser config that has
         # been deleted - fail loudly instead of silently defaulting.

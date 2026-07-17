@@ -460,12 +460,11 @@ class model(EntityPersistenceMixin, watch_base):
         """The concrete engine name behind .get_fetch_backend - maps a browser-config id to its
         base_fetcher, or passes a built-in engine name straight through. Used for capability
         checks and the watchlist status icon so they agree with what actually fetches the page."""
-        value = self.get_fetch_backend
         store = self.browser_config_store
-        entry = store.get(value) if (store and value) else None
-        if entry:
-            return entry.get('base_fetcher') or 'html_webdriver'
-        return value or 'html_requests'
+        if store is None:
+            return self.get_fetch_backend or 'html_requests'
+        _entry, engine, _cfg = store.engine_and_config(self.get_fetch_backend)
+        return engine or 'html_requests'
 
     @property
     def fetcher_supports_screenshots(self):

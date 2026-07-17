@@ -616,12 +616,11 @@ msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier o
 msgstr "示例 - 3 秒随机抖动可能导致提前最多 3 秒或延后最多 3 秒触发"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
-msgstr "对于普通明文请求（非 Chrome），超时时间上限为 1-999 秒。"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Applied to all requests."
-msgstr "适用于所有请求。"
+#, python-format
+msgid ""
+"The plain-requests timeout and the default User-Agent are now set per browser on the <a href=\"%(url)s\">Browsers</a>"
+" page (Edit the browser, under “HTTP request options”)."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
@@ -1769,6 +1768,14 @@ msgstr ""
 msgid "Block URL patterns"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Request timeout (seconds)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "User-Agent"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "无法预览 - 尚未完成抓取/检查或未满足触发条件"
@@ -1840,6 +1847,18 @@ msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "HTTP request options"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Maximum seconds to wait for the response (plain HTTP client only)."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Sent as the User-Agent header for requests using this browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Skip downloads (save bandwidth)"
 msgstr ""
 
@@ -1907,6 +1926,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "needs setup"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "plain text, no JavaScript"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -3602,14 +3625,6 @@ msgid "Browser URLs must start with wss:// or ws://"
 msgstr "浏览器 URL 必须以 wss:// 或 ws:// 开头"
 
 #: changedetectionio/forms.py
-msgid "Plaintext requests"
-msgstr "纯文本请求"
-
-#: changedetectionio/forms.py
-msgid "Chrome requests"
-msgstr "Chrome 请求"
-
-#: changedetectionio/forms.py
 msgid "Default proxy"
 msgstr "默认代理"
 
@@ -3624,18 +3639,6 @@ msgstr "抓取工作线程数"
 #: changedetectionio/forms.py
 msgid "Should be between 1 and 50"
 msgstr "应介于 1 到 50 之间"
-
-#: changedetectionio/forms.py
-msgid "Requests timeout in seconds"
-msgstr "请求超时（秒）"
-
-#: changedetectionio/forms.py
-msgid "Should be between 1 and 999"
-msgstr "应介于 1 到 999 之间"
-
-#: changedetectionio/forms.py
-msgid "Default User-Agent overrides"
-msgstr "默认 User-Agent 覆盖"
 
 #: changedetectionio/forms.py
 msgid "Both a name, and a Proxy URL is required."

@@ -911,4 +911,43 @@ class DatastoreUpdatesMixin:
             f"update_34: normalised global Default browser (fetch_backend) from '{current}' to '{default}'"
         )
 
+    def update_35(self):
+        """Migrate the per-engine request timeout + default User-Agent out of global settings into
+        browser configs keyed by the engine name (html_requests / html_webdriver), so all fetch
+        behaviour lives on the /browsers tab.
+
+        Watches/global defaults set to those engine names pick the same-keyed config up
+        automatically (BrowserConfigStore.engine_and_config), so nothing needs repointing. Only
+        migrates values not already present on an existing (user-edited) config, then drops the old
+        settings keys. Idempotent: once they're gone there is nothing left to move.
+        """
+        req = self.data['settings']['requests']
+        timeout = req.get('timeout')
+        default_ua = req.get('default_ua') or {}
+        if timeout is None and not default_ua:
+            return  # already migrated / nothing to move
+
+        from changedetectionio import content_fetchers
+        descriptions = dict(content_fetchers.available_fetchers())
+        store = self.browser_config_store
+
+        def _merge(engine, updates):
+            updates = {k: v for k, v in updates.items() if v}
+            if not updates:
+                return
+            existing = store.get(engine)
+            bc = dict((existing or {}).get('browser_config') or {})
+            for k, v in updates.items():
+                bc.setdefault(k, v)  # never clobber a value a user already set on the config
+            label = (existing or {}).get('label') or str(descriptions.get(engine, engine))
+            store.upsert(engine, label=label, base_fetcher=engine, browser_config=bc)
+            logger.info(f"update_35: migrated {sorted(updates)} into browser config '{engine}'")
+
+        _merge('html_requests', {'timeout': timeout, 'user_agent': default_ua.get('html_requests')})
+        _merge('html_webdriver', {'user_agent': default_ua.get('html_webdriver')})
+
+        req.pop('timeout', None)
+        req.pop('default_ua', None)
+        logger.info("update_35: removed migrated requests.timeout / requests.default_ua from settings")
+
 

@@ -613,12 +613,11 @@ msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier o
 msgstr "Příklad - 3 sekundový náhodný rozptyl může spustit o 3 sekundy dříve nebo až 3 sekundy později"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
-msgstr "Pro běžné základní požadavky (bez použití chrome), maximální počet sekund do vypršení, 1-999."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Applied to all requests."
-msgstr "Nastaveno pro všechny požadavky."
+#, python-format
+msgid ""
+"The plain-requests timeout and the default User-Agent are now set per browser on the <a href=\"%(url)s\">Browsers</a>"
+" page (Edit the browser, under “HTTP request options”)."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
@@ -1770,6 +1769,14 @@ msgstr ""
 msgid "Block URL patterns"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Request timeout (seconds)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "User-Agent"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Náhled nedostupný - stažení/kontrola nedokončena nebo nebyly splněny podmínky kontroly"
@@ -1841,6 +1848,18 @@ msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "HTTP request options"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Maximum seconds to wait for the response (plain HTTP client only)."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Sent as the User-Agent header for requests using this browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Skip downloads (save bandwidth)"
 msgstr ""
 
@@ -1908,6 +1927,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "needs setup"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "plain text, no JavaScript"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -3604,14 +3627,6 @@ msgid "Browser URLs must start with wss:// or ws://"
 msgstr "Adresy URL prohlížeče musí začínat wss:// nebo ws://"
 
 #: changedetectionio/forms.py
-msgid "Plaintext requests"
-msgstr "Požadavky na prostý text"
-
-#: changedetectionio/forms.py
-msgid "Chrome requests"
-msgstr "Chrome požadavky"
-
-#: changedetectionio/forms.py
 msgid "Default proxy"
 msgstr "Výchozí proxy"
 
@@ -3626,18 +3641,6 @@ msgstr "Počet procesů kontrol"
 #: changedetectionio/forms.py
 msgid "Should be between 1 and 50"
 msgstr "Mělo by být mezi 1 a 50"
-
-#: changedetectionio/forms.py
-msgid "Requests timeout in seconds"
-msgstr "Časový limit vypršení kontrol v sekundách"
-
-#: changedetectionio/forms.py
-msgid "Should be between 1 and 999"
-msgstr "Nastavit mezi 1 a 999"
-
-#: changedetectionio/forms.py
-msgid "Default User-Agent overrides"
-msgstr "Změna výchozího nastavení hodnoty User-Agent"
 
 #: changedetectionio/forms.py
 msgid "Both a name, and a Proxy URL is required."

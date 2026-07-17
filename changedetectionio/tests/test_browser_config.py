@@ -190,6 +190,65 @@ def test_html_requests_edit_hides_browser_only_fields(client, live_server, measu
     assert b'name="viewport_width"' in res.data
     assert b'name="timezone_id"' in res.data
 
+    # ...but the plain client DOES render its HTTP options (timeout + user-agent)
+    res = client.get(url_for("ui.browser_config.browser_config_edit", config_id="html_requests"))
+    assert b'name="timeout"' in res.data
+    assert b'name="user_agent"' in res.data
+    assert b'name="viewport_width"' not in res.data
+
+
+def test_plain_requests_engine_is_selectable_default_in_overview(client, live_server, measure_memory_usage, datastore_path):
+    """The plain HTTP client (html_requests) - and any non-browser fetcher a plugin registers -
+    must ALWAYS appear in /browsers so it can be set as the global default (it's the most common
+    one), and it supports variations (HTTP timeout + user-agent) so Add-variation/Edit show too."""
+    datastore = client.application.config.get('DATASTORE')
+
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    assert res.status_code == 200
+    # Present as a row with a default radio
+    assert b'value="html_requests"' in res.data
+    assert b'class="browser-default-radio"' in res.data
+    # It's configurable (HTTP options) so Add-variation + Edit ARE offered
+    assert url_for("ui.browser_config.browser_config_add", base_fetcher="html_requests").encode() in res.data
+    assert url_for("ui.browser_config.browser_config_edit", config_id="html_requests").encode() in res.data
+
+    # It can be made the default from here
+    res = client.post(url_for("ui.browser_config.browser_config_set_default", config_id="html_requests"),
+                      follow_redirects=True)
+    assert b"Default browser set" in res.data
+    assert datastore.data['settings']['application']['fetch_backend'] == 'html_requests'
+
+
+def test_html_requests_variation_timeout_and_user_agent(client, live_server, measure_memory_usage, datastore_path):
+    """A variation on the plain client stores + resolves HTTP timeout + user-agent, and the
+    requests fetcher honours them (overriding the caller's timeout/UA)."""
+    from changedetectionio.content_fetchers import resolve_content_fetcher
+    datastore = client.application.config.get('DATASTORE')
+
+    # Create a plain-client variation with a custom timeout + user-agent via the real Add flow
+    res = _add_browser(client, label="Slow bot", base_fetcher="html_requests",
+                       timeout=77, user_agent="MyCrawler/1.0")
+    assert b"Slow bot" in res.data
+    cid = list(datastore.browser_config_store.all())[0]
+    cfg = datastore.browser_config_store.get(cid)['browser_config']
+    assert cfg['timeout'] == 77
+    assert cfg['user_agent'] == "MyCrawler/1.0"
+
+    # A watch using it resolves to html_requests + that FetcherConfig
+    uuid = datastore.add_watch(url="https://example.com")
+    datastore.data['watching'][uuid]['fetch_backend'] = cid
+    _cls, backend_name, _url, browser_config = resolve_content_fetcher(datastore.data['watching'][uuid], datastore)
+    assert backend_name == 'html_requests'
+    assert browser_config.timeout == 77
+    assert browser_config.user_agent == "MyCrawler/1.0"
+
+    # The shared abstractions: timeout override (requests-only) + universal UA application
+    # (replacing the User-Agent case-insensitively).
+    assert browser_config.effective_timeout(5) == 77
+    headers = browser_config.apply_user_agent({'user-agent': 'default-ua'})
+    assert headers.get('User-Agent') == "MyCrawler/1.0"
+    assert 'user-agent' not in headers  # old-cased key removed, not duplicated
+
 
 def test_playwright_builtin_is_base_only(client, live_server, measure_memory_usage, datastore_path):
     """html_playwright_builtin isn't usable directly (ready_to_use=False) - it must not appear as
@@ -462,6 +521,34 @@ def test_update_34_normalises_default_browser(client, live_server, measure_memor
     app['fetch_backend'] = cid
     datastore.update_34()
     assert app['fetch_backend'] == cid
+
+
+def test_update_35_migrates_timeout_and_default_ua(client, live_server, measure_memory_usage, datastore_path):
+    """update_35 moves settings.requests.timeout + default_ua into engine-keyed browser configs
+    (html_requests: timeout + UA; html_webdriver: UA) and removes the old settings keys."""
+    datastore = client.application.config.get('DATASTORE')
+    req = datastore.data['settings']['requests']
+
+    # Simulate a pre-migration install
+    req['timeout'] = 33
+    req['default_ua'] = {'html_requests': 'ReqUA/1', 'html_webdriver': 'ChromeUA/2'}
+
+    datastore.update_35()
+
+    # Old settings removed
+    assert 'timeout' not in req
+    assert 'default_ua' not in req
+
+    # Migrated into engine-keyed configs
+    rq = datastore.browser_config_store.get('html_requests')['browser_config']
+    assert rq['timeout'] == 33
+    assert rq['user_agent'] == 'ReqUA/1'
+    wd = datastore.browser_config_store.get('html_webdriver')['browser_config']
+    assert wd['user_agent'] == 'ChromeUA/2'
+
+    # Idempotent - a second run with nothing to migrate is a no-op
+    datastore.update_35()
+    assert datastore.browser_config_store.get('html_requests')['browser_config']['timeout'] == 33
 
 
 def test_group_override_with_builtin_browser(client, live_server, measure_memory_usage, datastore_path):

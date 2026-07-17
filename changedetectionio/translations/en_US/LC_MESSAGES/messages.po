@@ -611,11 +611,10 @@ msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier o
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Applied to all requests."
+#, python-format
+msgid ""
+"The plain-requests timeout and the default User-Agent are now set per browser on the <a href=\"%(url)s\">Browsers</a>"
+" page (Edit the browser, under “HTTP request options”)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -1764,6 +1763,14 @@ msgstr ""
 msgid "Block URL patterns"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Request timeout (seconds)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "User-Agent"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr ""
@@ -1835,6 +1842,18 @@ msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "HTTP request options"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Maximum seconds to wait for the response (plain HTTP client only)."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Sent as the User-Agent header for requests using this browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Skip downloads (save bandwidth)"
 msgstr ""
 
@@ -1902,6 +1921,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "needs setup"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "plain text, no JavaScript"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -3596,14 +3619,6 @@ msgid "Browser URLs must start with wss:// or ws://"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Plaintext requests"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Chrome requests"
-msgstr ""
-
-#: changedetectionio/forms.py
 msgid "Default proxy"
 msgstr ""
 
@@ -3617,18 +3632,6 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Should be between 1 and 50"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Requests timeout in seconds"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Should be between 1 and 999"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Default User-Agent overrides"
 msgstr ""
 
 #: changedetectionio/forms.py

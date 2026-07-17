@@ -17,9 +17,14 @@ from changedetectionio.flask_app import login_optionally_required
 
 
 def _base_fetchers(datastore):
-    """Browser-capable base engines shown as rows - each offers "Add variation" to create a
-    config based on it. Includes base-only engines (e.g. html_playwright_builtin); `ready_to_use`
-    tells the template which extra actions apply (Edit / Make default only for ready-to-use ones).
+    """Every available base engine shown as a row in "Available browsers".
+
+    Includes the plain HTTP client ('html_requests') and any other non-browser fetchers, not just
+    browser-capable engines: /browsers is the only place the global Default browser is set, and the
+    plaintext client is the most common default, so it MUST be selectable here. Per-row flags tell
+    the template which actions apply:
+      - is_browser (supports screenshots / visual-selector) -> can "Add variation" + "Edit"
+      - ready_to_use (usable directly, not base-only like html_playwright_builtin) -> can be default
     A ready-to-use engine may have a stored built-in override config (keyed by the engine name).
     """
     from changedetectionio import content_fetchers
@@ -28,9 +33,6 @@ def _base_fetchers(datastore):
     for name, description in content_fetchers.available_fetchers():
         cls = getattr(content_fetchers, name, None)
         caps = FetcherCapabilities.from_fetcher(cls)
-        # Only browsers (support screenshots / visual-selector) are configurable base rows.
-        if not (caps.supports_screenshots or caps.supports_xpath_element_data):
-            continue
         stored = datastore.browser_config_store.get(name) or {}
         out.append({
             'name': name,
@@ -38,7 +40,11 @@ def _base_fetchers(datastore):
             'capabilities': caps.model_dump(),
             'browser_config': stored.get('browser_config') or {},
             'ready_to_use': getattr(cls, 'ready_to_use', True),
+            'is_browser': caps.is_browser,
+            'configurable': caps.can_host_variation,
         })
+    # Browsers first (richer rows), plain fetchers (e.g. html_requests) after, stable by name.
+    out.sort(key=lambda f: (not f['is_browser'], f['name']))
     return out
 
 
@@ -123,8 +129,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         cls = getattr(content_fetchers, base_fetcher, None)
         caps = FetcherCapabilities.from_fetcher(cls)
-        # Must be a real browser-capable engine
-        if cls is None or not (caps.supports_screenshots or caps.supports_xpath_element_data):
+        # Must be an engine that has something to configure (a browser, or the plain client).
+        if cls is None or not caps.can_host_variation:
             flash(gettext("Unknown base browser"), 'error')
             return redirect(url_for('ui.browser_config.browsers_overview'))
         base_label = dict(content_fetchers.available_fetchers()).get(base_fetcher, base_fetcher)

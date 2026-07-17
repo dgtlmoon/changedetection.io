@@ -1033,12 +1033,10 @@ class SingleExtraBrowser(Form):
         ValidateSimpleURL()
     ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
 
-class DefaultUAInputForm(Form):
-    html_requests = StringField(_l('Plaintext requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
-    if os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv("WEBDRIVER_URL"):
-        html_webdriver = StringField(_l('Chrome requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
-
 # datastore.data['settings']['requests']..
+# NOTE: the plain-client request timeout and per-engine default User-Agent were migrated out of
+# here to per-engine browser configs on the /browsers tab (update_35), so there is no `timeout`
+# field or `default_ua` sub-form anymore.
 class globalSettingsRequestForm(Form):
     time_between_check = RequiredFormField(TimeBetweenCheckForm, label=_l('Time Between Check'))
     time_schedule_limit = FormField(ScheduleLimitForm)
@@ -1046,21 +1044,14 @@ class globalSettingsRequestForm(Form):
     jitter_seconds = IntegerField(_l('Random jitter seconds ± check'),
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message=_l("Should contain zero or more seconds"))])
-    
+
     workers = IntegerField(_l('Number of fetch workers'),
                           render_kw={"style": "width: 5em;"},
                           validators=[validators.NumberRange(min=1, max=50,
                                                              message=_l("Should be between 1 and 50"))])
 
-    timeout = IntegerField(_l('Requests timeout in seconds'),
-                           render_kw={"style": "width: 5em;"},
-                           validators=[validators.NumberRange(min=1, max=999,
-                                                              message=_l("Should be between 1 and 999"))])
-
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
     extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
-
-    default_ua = FormField(DefaultUAInputForm, label=_l("Default User-Agent overrides"))
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:

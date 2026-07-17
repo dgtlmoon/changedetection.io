@@ -85,6 +85,33 @@ class FetcherConfig(BaseModel):
     browser_type: Optional[str] = None         # 'chromium' | 'firefox' | 'webkit'
     # Delete the per-fetch temp profile after use (capability-gated by supports_delete_created_files)
     delete_created_files: bool = True
+    # timeout: plain HTTP client only (capability-gated by supports_request_timeout).
+    timeout: Optional[int] = None              # request timeout in seconds; None -> global default
+    # user_agent: honoured by every engine (capability supports_custom_user_agent) via the
+    # request_headers User-Agent channel.
+    user_agent: Optional[str] = None           # overrides the User-Agent header for this profile
+
+    @field_validator('timeout')
+    @classmethod
+    def _validate_timeout(cls, v):
+        if v is not None and not (1 <= v <= 999):
+            raise ValueError("Timeout must be between 1 and 999 seconds")
+        return v
+
+    def apply_user_agent(self, request_headers):
+        """Set this profile's User-Agent on request_headers (the channel every fetcher - plain
+        client and browsers - uses), if configured. Applied early (before a watch's own headers)
+        so an explicit per-watch User-Agent still wins. Works for dict / CaseInsensitiveDict.
+        A None user_agent is a no-op. Returns request_headers for chaining."""
+        if self.user_agent:
+            for k in [k for k in list(request_headers.keys()) if k.lower() == 'user-agent']:
+                del request_headers[k]
+            request_headers['User-Agent'] = self.user_agent
+        return request_headers
+
+    def effective_timeout(self, default):
+        """This profile's request timeout, else the caller's default (plain HTTP client only)."""
+        return self.timeout or default
 
     @field_validator('browser_type')
     @classmethod
@@ -234,6 +261,21 @@ class BrowserConfigStore:
             return None
         return FetcherConfig(**(raw.get('browser_config') or {}))
 
+    def engine_and_config(self, selected):
+        """Map an already-resolved selector to (entry, engine_name, FetcherConfig).
+
+        The single place the trio of resolvers (content fetcher, watchlist status icon,
+        capability checks) turns a selector into its engine + behaviour:
+          - a stored browser config -> (entry, its base_fetcher, its FetcherConfig)
+          - a built-in engine name  -> (None, that name, empty FetcherConfig)
+        `entry is None` also tells the caller the selector wasn't a saved config (so it can do
+        the built-in / extra_browser / dangling-id handling).
+        """
+        entry = self.get(selected) if selected else None
+        if entry:
+            return entry, (entry.get('base_fetcher') or 'html_webdriver'), FetcherConfig(**(entry.get('browser_config') or {}))
+        return None, selected, FetcherConfig()
+
 
 # One BrowserConfigStore instance per datastore path, so the mtime cache is shared by everything
 # reading browsers.json (the ChangeDetectionStore and every Watch, which only holds the data dict
@@ -321,23 +363,16 @@ def resolve_watch_browser_display(watch, datastore=None):
     store = watch.browser_config_store
     override = watch.browser_config_override
 
-    selected = watch.get_fetch_backend
-    entry = store.get(selected) if (store and selected) else None
+    entry, engine, cfg = store.engine_and_config(watch.get_fetch_backend)
     if entry:
-        engine = entry.get('base_fetcher') or 'html_webdriver'
-        browser_type = (entry.get('browser_config') or {}).get('browser_type')
         label = entry.get('label')
-        is_named = True
     else:
-        engine = selected
-        browser_type = None
         label = dict(content_fetchers.available_fetchers()).get(engine, engine)
-        is_named = False
 
     return {
         'engine': engine,
-        'browser_type': browser_type,
+        'browser_type': cfg.browser_type,
         'label': label,
-        'is_named': is_named,
+        'is_named': entry is not None,
         'group_title': override['group_title'] if override else None,
     }

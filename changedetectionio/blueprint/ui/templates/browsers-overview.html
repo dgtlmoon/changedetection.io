@@ -97,15 +97,19 @@
                         {% for cap, on in f.capabilities.items() %}
                             {% if on %}<span class="browser-chip browser-chip--cap">{{ cap.replace('supports_', '')|replace('_', ' ') }}</span>{% endif %}
                         {% endfor %}
+                        {% if not f.is_browser %}<span class="browser-chip">{{ _('plain text, no JavaScript') }}</span>{% endif %}
                     </td>
                     <td style="text-align:right; white-space:nowrap">
-                        {# ready-to-use engines are usable directly: they can be edited #}
-                        {% if f.ready_to_use %}
+                        {# Engines with configurable behaviour can be edited (browser fields, or HTTP options). #}
+                        {% if f.ready_to_use and f.configurable %}
                             <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=f.name) }}">{{ _('Edit') }}</a>
                         {% endif %}
                     </td>
                     <td style="text-align:right; white-space:nowrap">
+                        {# "Add variation" for any configurable engine - browsers or the plain client. #}
+                        {% if f.configurable %}
                         <a class="pure-button button-small pure-button-primary" href="{{ url_for('ui.browser_config.browser_config_add', base_fetcher=f.name) }}">+ {{ _('Add variation') }}</a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

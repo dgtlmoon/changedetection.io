@@ -72,6 +72,13 @@ class BrowserOptionsForm(Form):
     block_url_patterns = StringListField(_l('Block URL patterns'), validators=[validators.Optional()],
                                          render_kw={"placeholder": "*.ttf\n*/analytics/*"})
 
+    # Plain HTTP client options (gated by supports_http_options)
+    timeout = IntegerField(_l('Request timeout (seconds)'), validators=[
+        validators.Optional(), validators.NumberRange(min=1, max=999)],
+        render_kw={"placeholder": "30", "style": "width: 6em;"})
+    user_agent = StringField(_l('User-Agent'), validators=[validators.Optional(), validators.Length(max=500)],
+                             render_kw={"placeholder": "Mozilla/5.0 (…)"})
+
     save = SubmitField(_l('Save'))
 
     def to_fetcher_config_dict(self):
@@ -86,4 +93,6 @@ class BrowserOptionsForm(Form):
             'delete_created_files': bool(self.delete_created_files.data),
             'block_resource_types': self.block_resource_types.data or [],
             'block_url_patterns': self.block_url_patterns.data or [],
+            'timeout': self.timeout.data,
+            'user_agent': (self.user_agent.data or None),
         }

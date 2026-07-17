@@ -132,14 +132,9 @@
                     <span class="pure-form-message-inline">{{ _('Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later') }}</span>
                 </div>
                 <div class="pure-control-group">
-                    {{ render_field(form.requests.form.timeout) }}
-                    <span class="pure-form-message-inline">{{ _('For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.') }}</span><br>
-                </div>
-                <div class="pure-control-group inline-radio">
-                    {{ render_field(form.requests.form.default_ua) }}
                     <span class="pure-form-message-inline">
-                        {{ _('Applied to all requests.') }}<br><br>
-                        {{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.
+                        <p>{{ _('The plain-requests timeout and the default User-Agent are now set per browser on the <a href="%(url)s">Browsers</a> page (Edit the browser, under “HTTP request options”).', url=url_for('ui.browser_config.browsers_overview'))|safe }}</p>
+                        <p>{{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.</p>
                     </span>
                 </div>
                 <div class="pure-control-group">

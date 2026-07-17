@@ -628,14 +628,11 @@ msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier o
 msgstr "Пример. Случайное дрожание длительностью 3 секунды может сработать на 3 секунды раньше или на 3 секунды позже."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
+#, python-format
+msgid ""
+"The plain-requests timeout and the default User-Agent are now set per browser on the <a href=\"%(url)s\">Browsers</a>"
+" page (Edit the browser, under “HTTP request options”)."
 msgstr ""
-"Для обычных простых запросов (не на основе Chrome) максимальное количество секунд до истечения времени ожидания — "
-"1–999."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Applied to all requests."
-msgstr "Применяется ко всем запросам."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
@@ -1858,6 +1855,14 @@ msgstr ""
 msgid "Block URL patterns"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Request timeout (seconds)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "User-Agent"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Предварительный просмотр недоступен: выборка/проверка не завершена или триггеры не достигнуты."
@@ -1929,6 +1934,18 @@ msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "HTTP request options"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Maximum seconds to wait for the response (plain HTTP client only)."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Sent as the User-Agent header for requests using this browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Skip downloads (save bandwidth)"
 msgstr ""
 
@@ -1996,6 +2013,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "needs setup"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "plain text, no JavaScript"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -3714,14 +3735,6 @@ msgid "Browser URLs must start with wss:// or ws://"
 msgstr "URL-адреса браузера должны начинаться с wss:// или ws://."
 
 #: changedetectionio/forms.py
-msgid "Plaintext requests"
-msgstr "Открытые текстовые запросы"
-
-#: changedetectionio/forms.py
-msgid "Chrome requests"
-msgstr "Запросы Chrome"
-
-#: changedetectionio/forms.py
 msgid "Default proxy"
 msgstr "Прокси по умолчанию"
 
@@ -3736,18 +3749,6 @@ msgstr "Количество работников по выборке"
 #: changedetectionio/forms.py
 msgid "Should be between 1 and 50"
 msgstr "Должно быть от 1 до 50"
-
-#: changedetectionio/forms.py
-msgid "Requests timeout in seconds"
-msgstr "Запрашивает таймаут в секундах"
-
-#: changedetectionio/forms.py
-msgid "Should be between 1 and 999"
-msgstr "Должно быть от 1 до 999"
-
-#: changedetectionio/forms.py
-msgid "Default User-Agent overrides"
-msgstr "Переопределения User-Agent по умолчанию"
 
 #: changedetectionio/forms.py
 msgid "Both a name, and a Proxy URL is required."

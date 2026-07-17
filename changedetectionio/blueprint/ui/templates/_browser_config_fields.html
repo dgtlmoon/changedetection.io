@@ -59,6 +59,24 @@
 </fieldset>
 {% endif %}
 
+{% if caps.supports_request_timeout or caps.supports_custom_user_agent %}
+<fieldset>
+    <legend>{{ _('HTTP request options') }}</legend>
+    {% if caps.supports_request_timeout %}
+    <div class="pure-control-group">
+        {{ render_field(form.timeout) }}
+        <span class="pure-form-message-inline">{{ _('Maximum seconds to wait for the response (plain HTTP client only).') }}</span>
+    </div>
+    {% endif %}
+    {% if caps.supports_custom_user_agent %}
+    <div class="pure-control-group">
+        {{ render_field(form.user_agent) }}
+        <span class="pure-form-message-inline">{{ _('Sent as the User-Agent header for requests using this browser.') }}</span>
+    </div>
+    {% endif %}
+</fieldset>
+{% endif %}
+
 {% if caps.supports_request_blocking %}
 <fieldset>
     <legend>{{ _('Skip downloads (save bandwidth)') }}</legend>

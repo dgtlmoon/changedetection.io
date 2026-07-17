@@ -238,9 +238,11 @@ class difference_detection_processor():
         from changedetectionio.jinja2_custom import render as jinja_render
         request_headers = CaseInsensitiveDict()
 
-        ua = self.datastore.data['settings']['requests'].get('default_ua')
-        if ua and ua.get(prefer_fetch_backend):
-            request_headers.update({'User-Agent': ua.get(prefer_fetch_backend)})
+        # Profile-level User-Agent from the selected browser config (migrated from the old
+        # per-backend settings.requests.default_ua). Applied before the watch's own headers so an
+        # explicit per-watch User-Agent still overrides it. Honoured by every engine.
+        if self.fetcher.browser_config:
+            self.fetcher.browser_config.apply_user_agent(request_headers)
 
         request_headers.update(self.watch.get('headers', {}))
         request_headers.update(self.datastore.get_all_base_headers())
@@ -255,7 +257,12 @@ class difference_detection_processor():
         for header_name in request_headers:
             request_headers.update({header_name: jinja_render(template_str=request_headers.get(header_name))})
 
-        timeout = self.datastore.data['settings']['requests'].get('timeout')
+        # Requests timeout was migrated out of global settings into the plain client's browser
+        # config (update_35); fall back to the env default when neither is set. Browsers ignore
+        # this (they use their own navigation timeouts); the requests fetcher applies its
+        # browser_config.timeout override on top.
+        timeout = self.datastore.data['settings']['requests'].get('timeout') \
+            or int(os.getenv('DEFAULT_SETTINGS_REQUESTS_TIMEOUT', 45))
 
         request_body = self.watch.get('body')
         if request_body:
