@@ -8,16 +8,27 @@
         <p class="pure-form-message-inline">
             {{ _('Save a browser once (its screen size, language, timezone…) and reuse it on any watch or group. Add a variation from one of the available browsers below.') }}
         </p>
+        <p class="pure-form-message-inline">
+            {{ _('The <strong>Default browser</strong> (chosen with the radio button below) is used by every watch unless the watch — or its group — picks another one. This is the same value shown on the <a href="%(url)s#fetching">Settings → Fetching</a> page.', url=url_for('settings.settings_page'))|safe }}
+        </p>
 
         {# ---- User-created browser variations ---- #}
         <h5 style="margin-top:1.5em">{{ _('Your browsers') }}</h5>
         {% if browser_configs %}
-        <table class="pure-table" style="width:100%; margin-top:0.5em;">
-            <thead><tr><th>{{ _('Name') }}</th><th>{{ _('Setup') }}</th><th></th><th></th></tr></thead>
+        <table class="pure-table browsers-table" style="width:100%; margin-top:0.5em;">
+            <thead><tr><th style="width:5em; text-align:center">{{ _('Default') }}</th><th>{{ _('Name') }}</th><th>{{ _('Setup') }}</th><th></th></tr></thead>
             <tbody>
                 {% for cid, entry in browser_configs.items() %}
                 {% set bc = entry.get('browser_config') or {} %}
-                <tr>
+                <tr class="{% if cid == default_browser_id %}is-default{% endif %}">
+                    <td style="text-align:center">
+                        <form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=cid) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="radio" class="browser-default-radio" name="browser_default" value="{{ cid }}"
+                                   title="{{ _('Set as the default browser') }}"
+                                   {% if cid == default_browser_id %}checked{% endif %}>
+                        </form>
+                    </td>
                     <td>
                         <strong>{{ entry.get('label') }}</strong>
                         <span class="browser-chip">{{ entry.get('base_fetcher') }}</span>
@@ -29,14 +40,6 @@
                         {% if bc.get('locale') %}<span class="browser-chip">{{ bc.locale }}</span>{% endif %}
                         {% if bc.get('timezone_id') %}<span class="browser-chip">{{ bc.timezone_id }}</span>{% endif %}
                         {% if bc.get('block_resource_types') %}<span class="browser-chip">{{ _('no') }} {{ bc.block_resource_types|join(', ') }}</span>{% endif %}
-                    </td>
-                    <td style="text-align:right; white-space:nowrap">
-                        {% if cid != default_browser_id %}
-                        <form method="POST" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=cid) }}" style="display:inline">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button class="pure-button button-small" type="submit">{{ _('Make default') }}</button>
-                        </form>
-                        {% endif %}
                     </td>
                     <td style="text-align:right; white-space:nowrap">
                         <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=cid) }}">{{ _('Edit') }}</a>
@@ -57,12 +60,23 @@
         {# ---- Available base browsers - each offers "Add variation" ---- #}
         <h5 style="margin-top:2em">{{ _('Available browsers') }}</h5>
         {% if base_fetchers %}
-        <table class="pure-table" style="width:100%; margin-top:0.5em;">
-            <thead><tr><th>{{ _('Browser') }}</th><th>{{ _('Capabilities') }}</th><th></th><th></th></tr></thead>
+        <table class="pure-table browsers-table" style="width:100%; margin-top:0.5em;">
+            <thead><tr><th style="width:5em; text-align:center">{{ _('Default') }}</th><th>{{ _('Browser') }}</th><th>{{ _('Capabilities') }}</th><th></th><th></th></tr></thead>
             <tbody>
                 {% for f in base_fetchers %}
                 {% set fbc = f.browser_config or {} %}
-                <tr>
+                <tr class="{% if f.ready_to_use and f.name == default_browser_id %}is-default{% endif %}">
+                    <td style="text-align:center">
+                        {# Only ready-to-use engines can be the default (base-only engines aren't usable directly) #}
+                        {% if f.ready_to_use %}
+                        <form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=f.name) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="radio" class="browser-default-radio" name="browser_default" value="{{ f.name }}"
+                                   title="{{ _('Set as the default browser') }}"
+                                   {% if f.name == default_browser_id %}checked{% endif %}>
+                        </form>
+                        {% endif %}
+                    </td>
                     <td>
                         <strong>{{ f.description }}</strong>
                         {% if not f.ready_to_use %}<span class="browser-chip">{{ _('needs setup') }}</span>{% endif %}
@@ -74,14 +88,8 @@
                         {% endfor %}
                     </td>
                     <td style="text-align:right; white-space:nowrap">
-                        {# ready-to-use engines are usable directly: can be edited + made default #}
+                        {# ready-to-use engines are usable directly: they can be edited #}
                         {% if f.ready_to_use %}
-                            {% if f.name != default_browser_id %}
-                            <form method="POST" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=f.name) }}" style="display:inline">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button class="pure-button button-small" type="submit">{{ _('Make default') }}</button>
-                            </form>
-                            {% endif %}
                             <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=f.name) }}">{{ _('Edit') }}</a>
                         {% endif %}
                     </td>
@@ -102,6 +110,21 @@
     </div>
 </div>
 
+<script>
+// Radio buttons live in per-row mini-forms (so each posts its own set-default action). They
+// share a name so they read as one group; on change we clear the others for instant feedback,
+// then submit — the server persists the choice and the reloaded page reflects it authoritatively.
+document.querySelectorAll('.browser-default-radio').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+        if (!radio.checked) return;
+        document.querySelectorAll('.browser-default-radio').forEach(function (other) {
+            if (other !== radio) other.checked = false;
+        });
+        radio.closest('form').submit();
+    });
+});
+</script>
+
 <style>
 .browser-chip {
     display: inline-block;
@@ -113,6 +136,9 @@
     white-space: nowrap;
 }
 .browser-chip--default { background: #d4edda; color: #155724; }
+.browsers-table tr.is-default { background: rgba(21,87,36,0.06); }
+.browser-default-radio { transform: scale(1.3); cursor: pointer; }
+.set-default-form { margin: 0; display: inline; }
 .browser-empty {
     margin-top: 0.75em;
     padding: 2em;

@@ -121,8 +121,9 @@ class BrowserConfigEntry(BaseModel):
     """One browsers.json entry (the id is the dict key, not stored in the entry).
 
     Note: there is deliberately no `is_default` here. The default browser is the global
-    application `fetch_backend` (a single source of truth that can point at a built-in engine
-    OR a browser-config id), so it doesn't live per-entry - see base_fetcher_for().
+    settings.application.fetch_backend (a single source of truth that can point at a built-in
+    engine OR a browser-config id), so it doesn't live per-entry - see
+    ChangeDetectionStore.get_default_backend() / Watch.get_fetch_backend.
     """
     label: str = ''
     base_fetcher: str = 'html_webdriver'
@@ -135,27 +136,44 @@ class BrowserConfigStore:
     def __init__(self, datastore_path, lock):
         self._path = os.path.join(datastore_path, 'browsers.json')
         self._lock = lock
+        # mtime-keyed cache of the parsed file. all()/get() are hit per-watch on every watchlist
+        # render + fetch resolution, so re-reading + re-parsing browsers.json each time is real
+        # amplification (cf. the favicon-glob fix). Cache the parsed dict and only re-read when
+        # the file's mtime changes - picks up edits (save bumps mtime) without staleness.
+        self._cache = None
+        self._cache_mtime = None
 
     # ---- low level load/save ----
     def all(self):
-        """Raw dict {id: entry-dict}. Empty dict when the file is absent."""
-        if not path.isfile(self._path):
+        """Raw dict {id: entry-dict}. Empty dict when the file is absent. mtime-cached."""
+        try:
+            mtime = os.path.getmtime(self._path)
+        except OSError:
+            # File absent (or unreadable) - nothing configured yet.
+            self._cache, self._cache_mtime = {}, None
             return {}
+        if self._cache is not None and self._cache_mtime == mtime:
+            return self._cache
         try:
             if HAS_ORJSON:
                 with open(self._path, 'rb') as f:
-                    return orjson.loads(f.read()) or {}
-            with open(self._path, encoding='utf-8') as f:
-                return json.load(f) or {}
+                    data = orjson.loads(f.read()) or {}
+            else:
+                with open(self._path, encoding='utf-8') as f:
+                    data = json.load(f) or {}
         except Exception as e:
             logger.error(f"Could not load browsers.json: {e}")
             return {}
+        self._cache, self._cache_mtime = data, mtime
+        return data
 
     def _save(self, configs):
         # Deferred import avoids a model -> store import cycle at module load.
         from changedetectionio.store.file_saving_datastore import save_json_atomic
         with self._lock:
             save_json_atomic(self._path, configs, label="browsers")
+        # Invalidate so the next all()/get() re-reads (its mtime will differ anyway).
+        self._cache, self._cache_mtime = None, None
 
     # ---- CRUD ----
     def get(self, config_id):
@@ -217,28 +235,24 @@ class BrowserConfigStore:
         return FetcherConfig(**(raw.get('browser_config') or {}))
 
 
-def base_fetcher_for(value, datastore):
-    """Map any fetch_backend value to the concrete engine/fetcher name.
+# One BrowserConfigStore instance per datastore path, so the mtime cache is shared by everything
+# reading browsers.json (the ChangeDetectionStore and every Watch, which only holds the data dict
+# + its path). The ChangeDetectionStore registers its own (lock-bearing) instance here so writes
+# and the watch-side reads go through the same cache.
+_STORE_REGISTRY = {}
 
-    Accepts a user browser-config id, a built-in engine name ('html_requests'/'html_webdriver'/
-    'extra_browser_*'), or the sentinel 'system'. This is the single place the rest of the
-    codebase should go through when it needs the *engine* behind a watch/global fetch_backend
-    (capability checks, screenshot support, etc.). 'system' resolves to the global default,
-    which may itself be a browser-config id.
-    """
-    # `datastore` may be the ChangeDetectionStore (has .browser_config_store and .data) or the
-    # raw settings data dict (Watch._datastore). Tolerate both; browser-config lookups are only
-    # possible when the store object is available.
-    store = getattr(datastore, 'browser_config_store', None)
-    data = getattr(datastore, 'data', datastore)
-    entry = store.get(value) if (store and value) else None
-    if entry:
-        return entry.get('base_fetcher') or 'html_webdriver'
-    if not value or value == 'system':
-        gd = data['settings']['application'].get('fetch_backend', 'html_requests')
-        gd_entry = store.get(gd) if (store and gd) else None
-        return (gd_entry.get('base_fetcher') if gd_entry else gd) or 'html_requests'
-    return value
+
+def register_browser_config_store(datastore_path, store):
+    _STORE_REGISTRY[datastore_path] = store
+
+
+def get_browser_config_store(datastore_path):
+    """The shared BrowserConfigStore for a datastore path (created read-only if none registered)."""
+    store = _STORE_REGISTRY.get(datastore_path)
+    if store is None:
+        store = BrowserConfigStore(datastore_path, lock=None)
+        _STORE_REGISTRY[datastore_path] = store
+    return store
 
 
 def list_builtin_browsers():
@@ -278,20 +292,24 @@ def _system_default_label(datastore):
     return gettext('Default (system settings)')
 
 
-def resolve_watch_fetcher_engine(watch, datastore):
-    """The concrete engine name that will actually fetch this watch.
+# --- Thin free-function delegators --------------------------------------------------------
+# The resolution chain (PDF / group override / watch / 'system' -> global default) lives on the
+# Watch model now (Watch.get_fetch_backend & friends) - only watches fetch, so the watch owns
+# "what do I fetch with?". These wrappers keep the historical (watch, datastore) call shape for
+# templates/blueprints/tests; `datastore` is accepted but unused (the Watch self-resolves).
 
-    Single place that mirrors resolve_content_fetcher's *selection*: a group override wins,
-    else the watch's own browser selection (a browser-config id or engine name or 'system'),
-    then mapped to the underlying engine. Used by capability checks and the watchlist status
-    icon so they all agree with what fetches the page.
-    """
-    override = resolve_browser_config_override(watch, datastore)
-    selected = override['config_id'] if override else watch.get('fetch_backend', 'system')
-    return base_fetcher_for(selected, datastore)
+def resolve_watch_fetcher_engine(watch, datastore=None):
+    """The concrete engine name that will actually fetch this watch. See Watch.resolved_fetch_engine."""
+    return watch.resolved_fetch_engine
 
 
-def resolve_watch_browser_display(watch, datastore):
+def resolve_browser_config_override(watch, datastore=None):
+    """If a group/tag overrides this watch's browser config, describe it, else None.
+    See Watch.browser_config_override."""
+    return watch.browser_config_override
+
+
+def resolve_watch_browser_display(watch, datastore=None):
     """Display info for the watchlist status icon: which browser a watch effectively uses.
 
     Returns dict: {engine, browser_type, label, is_named, group_title} where `label` is the
@@ -300,13 +318,10 @@ def resolve_watch_browser_display(watch, datastore):
     override supplies it.
     """
     from changedetectionio import content_fetchers
-    store = getattr(datastore, 'browser_config_store', None)
+    store = watch.browser_config_store
+    override = watch.browser_config_override
 
-    override = resolve_browser_config_override(watch, datastore)
-    selected = override['config_id'] if override else watch.get('fetch_backend', 'system')
-    if not selected or selected == 'system':
-        selected = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
-
+    selected = watch.get_fetch_backend
     entry = store.get(selected) if (store and selected) else None
     if entry:
         engine = entry.get('base_fetcher') or 'html_webdriver'
@@ -326,37 +341,3 @@ def resolve_watch_browser_display(watch, datastore):
         'is_named': is_named,
         'group_title': override['group_title'] if override else None,
     }
-
-
-def resolve_browser_config_override(watch, datastore):
-    """If a group/tag overrides this watch's browser config, describe it, else None.
-
-    Uses the group's own dedicated enabler (browser_config_overrides_watch), NOT the coarse
-    legacy `overrides_watch` flag. Tags are checked in the watch's tag-list order; the first
-    one whose enabler is on and whose selected config still exists wins (deterministic).
-
-    Returns: {group_uuid, group_title, config_id, label} or None.
-    """
-    tags = datastore.data['settings']['application'].get('tags', {})
-    builtins = {b['id']: b for b in list_builtin_browsers()}
-    for tag_uuid in (watch.get('tags') or []):
-        tag = tags.get(tag_uuid)
-        if not tag:
-            continue
-        if tag.get('browser_config_overrides_watch') and tag.get('browser_config'):
-            cid = tag.get('browser_config')
-            entry = datastore.browser_config_store.get(cid)
-            # The override may point at a user browser (uuid) OR a built-in engine (id == name).
-            if entry:
-                label = entry.get('label')
-            elif cid in builtins:
-                label = builtins[cid]['label']
-            else:
-                continue  # dangling / unknown - don't apply
-            return {
-                'group_uuid': tag_uuid,
-                'group_title': tag.get('title'),
-                'config_id': cid,
-                'label': label,
-            }
-    return None

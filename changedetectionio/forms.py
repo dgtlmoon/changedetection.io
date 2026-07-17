@@ -1091,7 +1091,11 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))}
                            )
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
-    fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    # NOTE: the global "Default browser" is NOT a field here anymore - all browser choice was
+    # migrated to the /browsers tab (set-default writes settings.application.fetch_backend). The
+    # inherited commonSettingsForm.fetch_backend field is del()'d from this form in the settings
+    # blueprint so a settings save never touches the default. Watches still pick a browser via
+    # their own commonSettingsForm.fetch_backend (processor_text_json_diff_form).
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
     global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField(_l('Ignore whitespace'))

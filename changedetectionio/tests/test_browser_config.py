@@ -352,6 +352,118 @@ def test_group_browser_config_override(client, live_server, measure_memory_usage
     assert b"French mobile" in res.data      # from group ...
 
 
+def test_settings_default_browser_is_readonly_and_browsers_tab_owns_it(client, live_server, measure_memory_usage, datastore_path):
+    """All browser choice moved to /browsers. The Settings->Fetching page shows the global
+    Default browser read-only (no editable radio) and a settings save must NOT clobber it."""
+    datastore = client.application.config.get('DATASTORE')
+
+    _add_browser(client, label="Settings Default", viewport_width=800)
+    cid = list(datastore.browser_config_store.all())[0]
+    client.post(url_for("ui.browser_config.browser_config_set_default", config_id=cid), follow_redirects=True)
+    assert datastore.data['settings']['application']['fetch_backend'] == cid
+
+    # Settings page shows the read-only summary (label + link to /browsers) and NO editable radio.
+    res = client.get(url_for("settings.settings_page"))
+    assert b"Default browser" in res.data
+    assert b"Settings Default" in res.data
+    assert url_for("ui.browser_config.browsers_overview").encode() in res.data
+    assert b'name="application-fetch_backend"' not in res.data
+
+    # A settings save (the form no longer carries fetch_backend) leaves the default untouched.
+    res = client.post(url_for("settings.settings_page"),
+                      data={"requests-time_between_check-minutes": 180,
+                            "application-empty_pages_are_a_change": ""},
+                      follow_redirects=True)
+    assert b"Settings updated." in res.data
+    assert datastore.data['settings']['application']['fetch_backend'] == cid
+
+
+def test_browsers_overview_default_radio(client, live_server, measure_memory_usage, datastore_path):
+    """Each usable browser row exposes a radio to set it as default; the current default is checked."""
+    import re
+    datastore = client.application.config.get('DATASTORE')
+    _add_browser(client, label="Radio Mobile", viewport_width=390)
+    cid = list(datastore.browser_config_store.all())[0]
+    client.post(url_for("ui.browser_config.browser_config_set_default", config_id=cid), follow_redirects=True)
+
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    assert b'class="browser-default-radio"' in res.data
+    # Built-in engines each have a radio too (usable ones)
+    assert b'value="html_webdriver"' in res.data
+    # The checked radio is our default config id
+    checked = re.findall(rb'<input type="radio"[^>]*?>', res.data)
+    assert any(cid.encode() in tag and b'checked' in tag for tag in checked)
+
+
+def test_watch_get_fetch_backend_resolution_chain(client, live_server, measure_memory_usage, datastore_path):
+    """Watch.get_fetch_backend owns the whole chain: PDF / watch / 'system'->global / group override."""
+    datastore = client.application.config.get('DATASTORE')
+
+    # Global Default browser = html_webdriver (what /browsers set-default writes)
+    datastore.data['settings']['application']['fetch_backend'] = 'html_webdriver'
+
+    uuid = datastore.add_watch(url="https://example.com")
+    watch = datastore.data['watching'][uuid]
+
+    # 'system' resolves to the global default (and maps to the same engine)
+    watch['fetch_backend'] = 'system'
+    assert watch.get_fetch_backend == 'html_webdriver'
+    assert watch.resolved_fetch_engine == 'html_webdriver'
+
+    # A watch-level choice wins over the global default
+    watch['fetch_backend'] = 'html_requests'
+    assert watch.get_fetch_backend == 'html_requests'
+
+    # PDF forces html_requests regardless of the selected browser
+    watch['fetch_backend'] = 'html_webdriver'
+    watch['url'] = 'https://example.com/doc.pdf'
+    assert watch.get_fetch_backend == 'html_requests'
+    watch['url'] = 'https://example.com'
+
+    # A group override beats the watch's own selection
+    tag_uuid = datastore.add_tag("Force webdriver")
+    client.post(url_for("tags.form_tag_edit_submit", uuid=tag_uuid),
+                data={'title': 'Force webdriver', 'browser_config_overrides_watch': 'y',
+                      'browser_config': 'html_webdriver'}, follow_redirects=True)
+    watch['fetch_backend'] = 'html_requests'
+    watch['tags'] = [tag_uuid]
+    assert watch.get_fetch_backend == 'html_webdriver'
+
+
+def test_update_34_normalises_default_browser(client, live_server, measure_memory_usage, datastore_path):
+    """update_34 turns a blank/'system'/dangling global default into a concrete built-in engine,
+    but leaves an already-valid default (engine name or saved config id) untouched."""
+    datastore = client.application.config.get('DATASTORE')
+    app = datastore.data['settings']['application']
+
+    # Blank -> concrete default
+    app['fetch_backend'] = ''
+    datastore.update_34()
+    assert app['fetch_backend'] in ('html_requests', 'html_webdriver')
+
+    # 'system' at the global level is invalid (it IS the system default) -> normalised
+    app['fetch_backend'] = 'system'
+    datastore.update_34()
+    assert app['fetch_backend'] != 'system'
+
+    # A dangling browser-config id -> normalised to a concrete engine
+    app['fetch_backend'] = 'deleted-id-9999'
+    datastore.update_34()
+    assert app['fetch_backend'] != 'deleted-id-9999'
+
+    # A valid built-in engine is left untouched (idempotent)
+    app['fetch_backend'] = 'html_webdriver'
+    datastore.update_34()
+    assert app['fetch_backend'] == 'html_webdriver'
+
+    # A valid saved browser-config id is left untouched
+    _add_browser(client, label="Keeper", viewport_width=800)
+    cid = list(datastore.browser_config_store.all())[0]
+    app['fetch_backend'] = cid
+    datastore.update_34()
+    assert app['fetch_backend'] == cid
+
+
 def test_group_override_with_builtin_browser(client, live_server, measure_memory_usage, datastore_path):
     """A group can also override with a built-in engine (e.g. html_webdriver), not just a user browser."""
     from changedetectionio.model.browser_config import resolve_browser_config_override

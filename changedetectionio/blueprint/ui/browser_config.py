@@ -208,12 +208,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_config_blueprint.route("/browsers/set-default/<string:config_id>", methods=['POST'])
     @login_optionally_required
     def browser_config_set_default(config_id):
-        # "Default" is the global system fetch_backend - the single source of truth that a
-        # watch/group set to 'system' resolves to. This is settable from here or from Settings.
+        # "Default browser" is the global settings.application.fetch_backend - the single source
+        # of truth a watch/group set to 'system' resolves to. This /browsers tab is now the only
+        # place it's set (the Settings page shows it read-only). Only usable (ready-to-use)
+        # built-in engines or saved browser configs may be the default.
         from changedetectionio.model.browser_config import list_builtin_browsers
         builtins = {b['id'] for b in list_builtin_browsers()}
         if config_id in builtins or datastore.browser_config_store.get(config_id):
             datastore.data['settings']['application']['fetch_backend'] = config_id
+            logger.debug(f"Default browser (settings.application.fetch_backend) set to '{config_id}'")
             flash(gettext("Default browser set"))
         else:
             flash(gettext("Browser config not found"), 'error')

@@ -871,4 +871,44 @@ class DatastoreUpdatesMixin:
             restock.pop('prev_price', None)
             watch.commit()
 
+    def update_34(self):
+        """Make the global 'Default browser' a concrete, valid selection for the /browsers tab.
+
+        All browser choice is managed on /browsers now; the default is
+        settings.application.fetch_backend (the single source of truth that the per-row radio
+        writes and every watch/group set to 'system' resolves to). Older installs may hold a
+        blank/missing value, the sentinel 'system', or a browser-config id that has since been
+        deleted - any of which would leave the /browsers "Default" radio with nothing selected
+        (and a watch on 'system' with no concrete engine). Normalise those to a concrete built-in
+        engine, honouring DEFAULT_FETCH_BACKEND (the same env var fresh installs use), else
+        'html_requests'.
+
+        Concrete values already stored - a built-in engine name (e.g. 'html_webdriver'), an
+        'extra_browser_*' key, or a still-existing saved browser-config id - are left untouched.
+        Idempotent.
+        """
+        app = self.data['settings']['application']
+        current = app.get('fetch_backend')
+
+        def _is_valid_default(value):
+            if not value or value == 'system':
+                return False
+            if value.startswith('extra_browser_'):
+                return True
+            # A saved browser config?
+            if self.browser_config_store.get(value):
+                return True
+            # A built-in engine that actually exists in this build?
+            from changedetectionio import content_fetchers
+            return hasattr(content_fetchers, value)
+
+        if _is_valid_default(current):
+            return  # already a concrete, resolvable default - nothing to do
+
+        default = os.getenv('DEFAULT_FETCH_BACKEND', 'html_requests') or 'html_requests'
+        app['fetch_backend'] = default
+        logger.info(
+            f"update_34: normalised global Default browser (fetch_backend) from '{current}' to '{default}'"
+        )
+
 

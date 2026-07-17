@@ -17,13 +17,20 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage, data
         data={
             "application-empty_pages_are_a_change": "",
             "requests-time_between_check-minutes": 180,
-            'application-fetch_backend': "html_webdriver",
             'application-ui-favicons_enabled': "y",
         },
         follow_redirects=True
     )
 
     assert b"Settings updated." in res.data
+
+    # The global "Default browser" is now set on the /browsers tab (was application-fetch_backend
+    # on the settings page). Make html_webdriver the default so 'system' watches use it.
+    res = client.post(
+        url_for("ui.browser_config.browser_config_set_default", config_id="html_webdriver"),
+        follow_redirects=True
+    )
+    assert b"Default browser set" in res.data
 
     # Add our URL to the import page
     res = client.post(

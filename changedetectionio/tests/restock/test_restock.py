@@ -195,10 +195,17 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
         url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "y",
               "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': fetch_backend,
               },
         follow_redirects=True
     )
+
+    # The global "Default browser" is now set on the /browsers tab (was the settings-page
+    # application-fetch_backend radio).
+    res = client.post(
+        url_for("ui.browser_config.browser_config_set_default", config_id=fetch_backend),
+        follow_redirects=True
+    )
+    assert b"Default browser set" in res.data
 
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details

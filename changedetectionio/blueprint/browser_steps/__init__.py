@@ -266,9 +266,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Resolve the fetcher backend for this watch so we can ask it to launch its own browser
         # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)
         watch = datastore.data['watching'][watch_uuid]
-        fetcher_name = watch.get_fetch_backend or 'system'
-        if fetcher_name == 'system':
-            fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+        # get_fetch_backend is fully resolved (group override / watch / 'system' -> global default).
+        fetcher_name = watch.get_fetch_backend
 
         browser, playwright_context = await acquire_browser_for_fetcher(fetcher_name, proxy=proxy, keepalive_ms=keepalive_ms)
 
