@@ -1059,7 +1059,7 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/blueprint/ui/templates/browser-config-edit.html
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "Abbrechen"
@@ -1639,6 +1639,10 @@ msgid "Language set to auto-detect from browser"
 msgstr "Sprache auf automatische Erkennung vom Browser gesetzt"
 
 #: changedetectionio/blueprint/ui/browser_config.py
+msgid "Unknown base browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
 msgid "A browser with this name already exists"
 msgstr ""
 
@@ -1749,10 +1753,6 @@ msgid "e.g. Desktop Full-HD, Mobile de-DE"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
-msgid "Base browser"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/form_browseroptions.py
 msgid "Viewport width"
 msgstr ""
 
@@ -1770,6 +1770,14 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
 msgid "Screenshot format"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Browser engine"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Delete temporary browser files after each check"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
@@ -1803,7 +1811,15 @@ msgid "Queue cleared ({} items removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Based on browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "A friendly name, e.g. “Mobile” or “German desktop”."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Which browser engine to launch locally."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -1835,11 +1851,11 @@ msgid "Language & timezone"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "e.g. <code>de-DE</code>, <code>en-GB</code>."
+msgid "Start typing to search - e.g. <code>de-DE</code>, <code>en-GB</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "e.g. <code>Europe/Berlin</code>."
+msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -1850,8 +1866,12 @@ msgstr ""
 msgid "One address pattern per line, e.g. <code>*.ttf</code>."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/browser-config-edit.html
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
 msgid "Edit browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+msgid "Add browser variation"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
@@ -1859,7 +1879,9 @@ msgid "Browsers"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Save a browser once (its screen size, language, timezone…) and reuse it on any watch or group."
+msgid ""
+"Save a browser once (its screen size, language, timezone…) and reuse it on any watch or group. Add a variation from "
+"one of the available browsers below."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -1868,10 +1890,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Setup"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Built-in"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -1887,13 +1905,33 @@ msgid "Remove this browser?"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "No interactive browser is connected, so there's nothing to configure yet."
+msgid "You haven't added any browser variations yet — add one from an available browser below."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Available browsers"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Capabilities"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "needs setup"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Add variation"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "No interactive browser is available."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid ""
-"Connect a Chrome/Playwright browser (set the <code>PLAYWRIGHT_DRIVER_URL</code> environment variable) to add custom "
-"browsers here."
+"Connect a Chrome/Playwright browser (e.g. set <code>PLAYWRIGHT_DRIVER_URL</code>) or install the Playwright library "
+"to configure browsers here."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
