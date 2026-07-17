@@ -371,10 +371,6 @@ msgstr ""
 "menos 2)"
 
 #: changedetectionio/blueprint/settings/__init__.py
-msgid "Default browser"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "Proteção por senha removida."
 
@@ -570,19 +566,22 @@ msgstr "Quando uma solicitação não retorna conteúdo, ou o HTML não contém 
 msgid "Choose a default proxy for all watches"
 msgstr "Escolha um proxy padrão para todos os monitoramentos"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Default browser"
 msgstr ""
-"Use o método <strong>Básico</strong> (padrão) quando os sites monitorados não precisarem de Javascript para "
-"renderizar."
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
-" by the ENV var 'WEBDRIVER_URL'."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage browsers &amp; set default"
 msgstr ""
-"O método <strong>Chrome/Javascript</strong> requer uma conexão de rede a um servidor WebDriver+Chrome em execução, "
-"definido pela variável de ambiente 'WEBDRIVER_URL'."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Every watch uses this browser unless it (or its group) picks another one."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Add screen sizes, languages, timezones and choose the default on the <a href=\"%(url)s\">Browsers</a> page."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
@@ -1892,6 +1891,14 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#, python-format
+msgid ""
+"The <strong>Default browser</strong> (chosen with the radio button below) is used by every watch unless the watch — "
+"or its group — picks another one. This is the same value shown on the <a href=\"%(url)s#fetching\">Settings → "
+"Fetching</a> page."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Your browsers"
 msgstr ""
 
@@ -1900,11 +1907,11 @@ msgid "Setup"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "no"
+msgid "Set as the default browser"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Make default"
+msgid "no"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -2211,6 +2218,20 @@ msgid ""
 "This group overrides the fetch method for its watches. Change it in the group settings, or turn off the override "
 "there to choose per-watch."
 msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
+msgstr ""
+"Use o método <strong>Básico</strong> (padrão) quando os sites monitorados não precisarem de Javascript para "
+"renderizar."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
+msgstr ""
+"O método <strong>Chrome/Javascript</strong> requer uma conexão de rede a um servidor WebDriver+Chrome em execução, "
+"definido pela variável de ambiente 'WEBDRIVER_URL'."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."

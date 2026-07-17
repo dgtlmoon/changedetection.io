@@ -370,10 +370,6 @@ msgid "Watch %(uuid)s does not have enough history snapshots to show changes (ne
 msgstr ""
 
 #: changedetectionio/blueprint/settings/__init__.py
-msgid "Default browser"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "密碼保護已移除。"
 
@@ -567,15 +563,22 @@ msgstr ""
 msgid "Choose a default proxy for all watches"
 msgstr "為所有監測任務選擇預設代理伺服器"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
-msgstr "使用 <strong>基本</strong> 方法（預設），適用於您監測的網站不需要 Javascript 渲染的情況。"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Default browser"
+msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
-" by the ENV var 'WEBDRIVER_URL'."
-msgstr "<strong>Chrome / Javascript</strong> 方法需要連線到執行中的 WebDriver + Chrome 伺服器，其位址由環境變數 'WEBDRIVER_URL' 設定。"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage browsers &amp; set default"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Every watch uses this browser unless it (or its group) picks another one."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Add screen sizes, languages, timezones and choose the default on the <a href=\"%(url)s\">Browsers</a> page."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
@@ -1862,6 +1865,14 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#, python-format
+msgid ""
+"The <strong>Default browser</strong> (chosen with the radio button below) is used by every watch unless the watch — "
+"or its group — picks another one. This is the same value shown on the <a href=\"%(url)s#fetching\">Settings → "
+"Fetching</a> page."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Your browsers"
 msgstr ""
 
@@ -1870,11 +1881,11 @@ msgid "Setup"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "no"
+msgid "Set as the default browser"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Make default"
+msgid "no"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -2177,6 +2188,16 @@ msgid ""
 "This group overrides the fetch method for its watches. Change it in the group settings, or turn off the override "
 "there to choose per-watch."
 msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
+msgstr "使用 <strong>基本</strong> 方法（預設），適用於您監測的網站不需要 Javascript 渲染的情況。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
+msgstr "<strong>Chrome / Javascript</strong> 方法需要連線到執行中的 WebDriver + Chrome 伺服器，其位址由環境變數 'WEBDRIVER_URL' 設定。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
