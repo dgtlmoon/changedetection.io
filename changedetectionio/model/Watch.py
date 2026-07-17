@@ -246,6 +246,14 @@ class model(EntityPersistenceMixin, watch_base):
         if self.get('default'):
             del self['default']
 
+        # restock is persisted as a plain dict; rehydrate it into the Restock model
+        # so callers always get its helpers (get_price_change_percent, etc.) and
+        # never just a dict. Lazy import avoids a model<->processor import cycle.
+        if self.get('restock') is not None:
+            from changedetectionio.processors.restock_diff import Restock
+            if not isinstance(self['restock'], Restock):
+                self['restock'] = Restock(self['restock'])
+
         # Be sure the cached timestamp is ready
         bump = self.history
 
@@ -396,16 +404,15 @@ class model(EntityPersistenceMixin, watch_base):
         the actual fetcher class. Works for built-in and plugin fetchers alike.
         """
         from changedetectionio import content_fetchers
+        from changedetectionio.content_fetchers.base import FetcherCapabilities
 
         fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
         if not fetcher_name or fetcher_name == 'system':
             fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
 
+        # Shared capability model - handles an unknown/None fetcher class (all-False)
         fetcher_class = getattr(content_fetchers, fetcher_name, None)
-        if fetcher_class is None:
-            return False
-
-        return bool(getattr(fetcher_class, 'supports_screenshots', False))
+        return FetcherCapabilities.from_fetcher(fetcher_class).supports_screenshots
 
     @property
     def is_pdf(self):

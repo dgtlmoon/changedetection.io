@@ -4,9 +4,10 @@
   Usage:
     {% from '_stab.html' import stab_shell, stab_pane %}
 
+    ('icon' is a Feather icon name — rendered as <i data-feather="...">)
     {% call stab_shell('my-shell-id', [
-        {'id': 'overview', 'label': _('Overview'), 'icon': '✦'},
-        {'id': 'settings', 'label': _('Settings'), 'icon': '⚙'},
+        {'id': 'overview', 'label': _('Overview'), 'icon': 'info'},
+        {'id': 'settings', 'label': _('Settings'), 'icon': 'settings'},
     ]) %}
       {% call stab_pane('overview') %}
         <p>Overview content…</p>
@@ -28,7 +29,7 @@
   <nav class="stab-nav" aria-label="{{ _('Settings sections') }}">
     {%- for tab in tabs %}
     <button class="stab-btn" type="button" data-stab="{{ tab.id }}" aria-controls="stab-pane-{{ tab.id }}">
-      {%- if tab.get('icon') %}<span class="stab-icon" aria-hidden="true">{{ tab.icon }}</span>{% endif -%}
+      {%- if tab.get('icon') %}<span class="stab-icon" aria-hidden="true"><i data-feather="{{ tab.icon }}"></i></span>{% endif -%}
       {{ tab.label }}
     </button>
     {%- endfor %}

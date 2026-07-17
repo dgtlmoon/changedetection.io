@@ -367,9 +367,10 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
     # A change in price, should trigger a change by default
     wait_for_all_checks(client)
 
-    # Should see new tokens register
-    res = client.get(url_for("settings.settings_page"))
-    
+    # Should see new tokens register — the placeholder table lives on the
+    # notifications page now (post-/settings refactor).
+    res = client.get(url_for("settings.notifications.apprise"))
+
     assert b'{{restock.last_price}}' in res.data
     assert b'{{restock.previous_price}}' in res.data
     assert b'Price at the previous check' in res.data
@@ -377,13 +378,11 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "title new price {{restock.price}}",
-              "application-notification_body": "new price {{restock.price}} previous price {{restock.previous_price}} instock {{restock.in_stock}}",
-              "application-notification_format": default_notification_format,
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "title new price {{restock.price}}",
+              "notification_body": "new price {{restock.price}} previous price {{restock.previous_price}} instock {{restock.in_stock}}",
+              "notification_format": default_notification_format},
         follow_redirects=True
     )
 
@@ -523,3 +522,100 @@ def test_itemprop_as_str(client, live_server, measure_memory_usage, datastore_pa
 
     res = client.get(url_for("watchlist.index"))
     assert b'767.55' in res.data
+
+
+def test_restock_diff_price_data_ajax(client, live_server, measure_memory_usage, datastore_path):
+    """The restock history graph fetches its timeline from the processor-data callback
+    (restock_diff/difference.py::get_data, served at /diff/<uuid>/processor-data)."""
+    import json
+
+    test_url = url_for('test_endpoint', _external=True)
+
+    # First snapshot - in stock @ 190.95
+    set_original_response(props_markup=instock_props[0], price="190.95", datastore_path=datastore_path)
+    client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+    uuid = extract_UUID_from_client(client)
+
+    # Second snapshot - price changes to 180.45 (still in stock) -> a new history point
+    set_original_response(props_markup=instock_props[0], price='180.45', datastore_path=datastore_path)
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    # The AJAX/plugin data callback
+    res = client.get(url_for("ui.ui_diff.diff_history_page_processor_data", uuid=uuid))
+    assert res.status_code == 200
+    data = json.loads(res.data)
+
+    assert 'series' in data
+    assert 'currency' in data
+    series = data['series']
+    assert len(series) >= 2
+
+    # Every point exposes the parsed timestamp + price + stock state
+    for point in series:
+        assert 'timestamp' in point
+        assert 'price' in point
+        assert 'in_stock' in point
+
+    prices = [p['price'] for p in series]
+    assert 190.95 in prices
+    assert 180.45 in prices
+    # These snapshots were all "in stock"
+    assert series[-1]['in_stock'] is True
+
+    # Price summary (deal-score inputs) is computed and returned
+    assert data.get('summary')
+    summary = data['summary']
+    for key in ('count', 'min', 'max', 'avg', 'median', 'p25', 'p75', 'current', 'status', 'all_time_low'):
+        assert key in summary
+    assert summary['status'] in ('low', 'typical', 'high')
+    assert summary['min'] <= summary['avg'] <= summary['max']
+
+    # XLSX export of the history
+    res = client.get(url_for("ui.ui_diff.diff_history_page_processor_export", uuid=uuid))
+    assert res.status_code == 200
+    assert res.headers['Content-Type'] == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    assert 'attachment' in res.headers.get('Content-Disposition', '')
+    # Valid xlsx with the expected header row + numeric prices
+    import io
+    from openpyxl import load_workbook
+    wb = load_workbook(io.BytesIO(res.data))
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    assert rows[0] == ('Date', 'Stock status', 'Price', 'Currency')
+    xlsx_prices = [r[2] for r in rows[1:]]
+    assert 190.95 in xlsx_prices
+    assert 180.45 in xlsx_prices
+
+    delete_all_watches(client)
+
+
+def test_restock_edit_has_ai_llm_section(client, live_server, measure_memory_usage, datastore_path):
+    """restock_diff watches must expose the AI / LLM tab content on the edit page, the same as
+    text_json_diff. Regression: the AI section used to be gated to text_json_diff only, so the
+    #ai-llm tab rendered empty for restock watches."""
+    test_url = url_for('test_endpoint', _external=True)
+    set_original_response(props_markup=instock_props[0], datastore_path=datastore_path)
+    client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff'},
+        follow_redirects=True
+    )
+    wait_for_all_checks(client)
+    uuid = extract_UUID_from_client(client)
+
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    assert res.status_code == 200
+    # The AI / LLM tab link exists...
+    assert b'#ai-llm' in res.data
+    # ...and crucially its section now renders for restock_diff (either the configured fields
+    # block or the "configure a provider" disabled block — both carry this id). Before the fix
+    # this was absent for restock watches.
+    assert b'llm-intent-section' in res.data
+
+    delete_all_watches(client)

@@ -4,32 +4,31 @@
 
 {% if current_user.is_authenticated or not has_password %}
 {% if not current_diff_url %}
-    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('tags.') %}active{% endif %}">
-        <a href="{{ url_for('tags.tags_overview_page') }}" class="pure-menu-link">{{ _('GROUPS') }}</a>
-    </li>
-    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('settings.') %}active{% endif %}">
-        <a href="{{ url_for('settings.settings_page') }}" class="pure-menu-link">{{ _('SETTINGS') }}</a>
-    </li>
-    <li class="pure-menu-item menu-collapsible {% if request.endpoint.startswith('imports.') %}active{% endif %}">
-        <a href="{{ url_for('imports.import_page') }}" class="pure-menu-link">{{ _('IMPORT') }}</a>
-    </li>
     <li class="pure-menu-item" id="menu-pause">
-        <a href="{{ url_for('settings.toggle_all_paused') }}" ><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="{% if all_paused %}{{ _('Resume automatic scheduling') }}{% else %}{{ _('Pause auto-queue scheduling of watches') }}{% endif %}" title="{% if all_paused %}{{ _('Scheduling is paused - click to resume') }}{% else %}{{ _('Pause auto-queue scheduling of watches') }}{% endif %}" class="icon icon-pause"{% if not all_paused %} style="opacity: 0.3"{% endif %}></a>
+        <a class="status-pill {{ 'paused' if all_paused }}" href="{{ url_for('settings.toggle_all_paused') }}" aria-label="{% if all_paused %}{{ _('Resume automatic scheduling') }}{% else %}{{ _('Pause auto-queue scheduling of watches') }}{% endif %}" title="{% if all_paused %}{{ _('Scheduling paused — click to resume') }}{% else %}{{ _('Scheduling active — click to pause all') }}{% endif %}"><span class="live-dot"></span>{% if all_paused %}{{ _('Paused') }}{% else %}{{ _('Live') }}{% endif %}</a>
     </li>
     <li class="pure-menu-item " id="menu-mute">
-        <a href="{{ url_for('settings.toggle_all_muted') }}" ><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}" class="icon icon-mute"{% if not all_muted %} style="opacity: 0.3"{% endif %}></a>
+        <a class="status-pill {{ 'muted' if all_muted }}" href="{{ url_for('settings.toggle_all_muted') }}" aria-label="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}"><i data-feather="{{ 'bell-off' if all_muted else 'bell' }}" class="action-icon"></i>{% if all_muted %}{{ _('Muted') }}{% else %}{{ _('Alerts on') }}{% endif %}</a>
     </li>
+{%- if current_user.is_authenticated -%}
+    <li class="pure-menu-item menu-collapsible">
+        <a href="{{ url_for('logout', redirect=request.path) }}" ><i data-feather="log-out" class="action-icon"></i>&nbsp;{{ _('Log out') }}</a>
+    </li>
+{%- endif -%}
+
+    <li class="pure-menu-item " id="menu-settings">
+        <a href="{{ url_for('settings.settings_page') }}" title="{{ _('Settings') }}"><i data-feather="settings" class="action-icon"></i>&nbsp;<span>{{ ('Settings') }}</span></a>
+    </li>
+    <li class="pure-menu-item " id="menu-ui-language">
+        <a class="language-selector"><span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span></a>
+    </li>
+
 {% else %}
     <li class="pure-menu-item menu-collapsible">
         <a href="{{ url_for('ui.ui_edit.edit_page', uuid=uuid, next='diff') }}"
            class="pure-menu-link">{{ _('EDIT') }}</a>
     </li>
 {% endif %}
-{%- if current_user.is_authenticated -%}
-    <li class="pure-menu-item menu-collapsible">
-        <a href="{{ url_for('logout', redirect=request.path) }}" class="pure-menu-link">{{ _('LOG OUT') }}</a>
-    </li>
-{%- endif -%}
 
 {% else %}
     <li class="pure-menu-item menu-collapsible">
@@ -37,29 +36,26 @@
     </li>
 {% endif %}
     <li class="pure-menu-item menu-collapsible" id="inline-menu-extras-group">
+{% if current_user.is_authenticated or not has_password %}
+    {% if not current_diff_url %}
         {% if not llm_features_disabled %}
         <button class="toggle-button toggle-ai-mode" type="button" title="{{ _('Toggle AI Mode') }}" data-llm-configured="{{ 'true' if llm_configured else 'false' }}" data-llm-settings-url="{{ url_for('settings.settings_page') }}#ai">
             <span class="visually-hidden">{{ _('Toggle AI mode') }}</span>
             {% include "svgs/ai-mode-icon.svg" %}<span class="ai-mode-label">LLM</span>
         </button>
         {% endif %}
+    {% endif %}
+{% endif %}
+
         <button class="toggle-button toggle-light-mode " type="button" title="{{ _('Toggle Light/Dark Mode') }}">
             <span class="visually-hidden">{{ _('Toggle light/dark mode') }}</span>
-            <span class="icon-light">
-            {% include "svgs/light-mode-toggle-icon.svg" %}
-          </span>
-            <span class="icon-dark">
-            {% include "svgs/dark-mode-toggle-icon.svg" %}
-          </span>
-        </button>
-        <button class="toggle-button language-selector" type="button" title="{{ _('Change Language') }}">
-            <span class="visually-hidden">{{ _('Change language') }}</span>
-            <span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span>
+            <span class="icon-light"><i data-feather="sun"></i></span>
+            <span class="icon-dark"><i data-feather="moon"></i></span>
         </button>
         <a class="github-link" href="https://github.com/dgtlmoon/changedetection.io"
-           target="_blank" 
-          rel="noopener" >
-            {% include "svgs/github.svg" %}
+           target="_blank"
+          rel="noopener" title="GitHub">
+            <i data-feather="github"></i>
         </a>
     </li>
 

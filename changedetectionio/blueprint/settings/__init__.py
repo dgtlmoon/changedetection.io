@@ -20,6 +20,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
         settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
 
+    # Notification settings live in their own child blueprint so future backends
+    # (simple_email, webhooks, etc.) slot in as /settings/notifications/<backend>
+    # without further URL-shaping churn.
+    from changedetectionio.blueprint.settings.notifications import construct_notifications_blueprint
+    settings_blueprint.register_blueprint(
+        construct_notifications_blueprint(datastore), url_prefix='/notifications',
+    )
+
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
@@ -86,6 +94,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Never update password with '' or False (Added by wtforms when not in submission)
                 if 'password' in app_update and not app_update['password']:
                     del (app_update['password'])
+
+                # Notification fields live on the dedicated /settings/notifications page now.
+                # The application sub-form still defines them (inherited from commonSettingsForm),
+                # so an unrelated save here would clobber the stored values with empty WTForms
+                # defaults. Drop them from the merge to leave the notifications config alone.
+                for nf in ('notification_urls', 'notification_title', 'notification_body',
+                           'notification_format', 'base_url'):
+                    app_update.pop(nf, None)
 
                 datastore.data['settings']['application'].update(app_update)
 

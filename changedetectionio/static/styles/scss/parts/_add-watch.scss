@@ -1,0 +1,256 @@
+/* Add Watch UI - 3-pane workspace (top: URL+Go, left: live visual selector, right: options) */
+@use "../settings" as *;
+
+body {
+ &.blueprint-add_watch_ui {
+    @media (min-width: 901px) {
+      #add-watch-ui {
+        width: 80%;
+      }
+    }
+ }
+}
+
+#add-watch-ui {
+  padding: 0;
+  /* TOP : URL input + Go */
+  #add-watch-url-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+    margin-bottom: 1rem;
+
+    // render_nolabel_field wraps the input in a <span>
+    > span {
+      flex: 1 1 auto;
+      min-width: 0;
+
+      input {
+        width: 100%;
+      }
+    }
+
+    #add-watch-go {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+  }
+
+  /* PANES */
+  #add-watch-panes {
+    display: flex;
+    gap: $common-gap;
+    align-items: stretch;
+
+    @media (max-width: 900px) {
+      flex-direction: column;
+    }
+  }
+
+  /* LEFT : live visual-selector preview */
+  #add-watch-selector-pane {
+    flex: 1 1 62%;
+    min-width: 0;
+    min-height: 380px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; // pane clips to its (flex-bounded) height; the wrapper below is the scroller
+    border: 1px solid var(--color-background-tab);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 0.75rem;
+
+    // Transient states fill and centre over the whole pane (only one is visible at a time)
+    #add-watch-empty-state,
+    #add-watch-spinner,
+    #add-watch-error {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    #add-watch-empty-state {
+      opacity: 0.8;
+
+      svg {
+        opacity: 0.55;
+      }
+
+      strong {
+        font-size: 1.05rem;
+      }
+
+      span {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        max-width: 32ch;
+      }
+    }
+
+    #add-watch-spinner {
+      gap: 1.2rem;
+
+      .spinner {
+        font-size: 5px; // scales the em-based spinner up a little
+      }
+
+      .fetching-update-notice {
+        font-size: 0.85rem;
+        opacity: 0.85;
+      }
+    }
+
+    #add-watch-error {
+      color: #ffb4b4;
+      font-size: 0.9rem;
+      word-break: break-word;
+    }
+
+    // Pin the highlight canvas exactly over the screenshot. The shared selector CSS
+    // (parts/_visualselector.scss) positions the img absolutely + canvas in-flow inside
+    // an overflow-y:scroll wrapper, whose scrollbar gutter offsets the two in this
+    // narrower pane. Here the img drives the layout (in normal flow) and the canvas is
+    // overlaid on top, so they stay pixel-aligned regardless of scrollbars.
+    #selector-wrapper {
+      position: relative;
+      display: block;
+      width: 100%;
+      // Bound the wrapper to the pane's height via flex (NOT height:100% - a percentage
+      // height won't resolve against a flex-stretched parent, so it falls back to auto and
+      // the wrapper grows to the full screenshot height, e.g. 4000px). flex + min-height:0
+      // forces it to the available height so tall snapshots scroll inside here.
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow-y: auto;
+      overflow-x: hidden;
+      text-align: left;
+
+      > img {
+        position: relative;
+        display: block;
+        max-width: 100%;
+        height: auto;
+        z-index: 4;
+      }
+
+      > canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        max-width: none;
+        z-index: 5;
+      }
+    }
+  }
+
+  /* RIGHT : options */
+  #add-watch-options-pane {
+    flex: 0 0 34%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+
+    @media (max-width: 900px) {
+      flex: 1 1 auto;
+    }
+
+    .add-watch-option-group {
+      label {
+        display: inline-block;
+      }
+    }
+
+    #by-element-toggle-group {
+      .pure-form-message-inline {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+
+      #clear-selector {
+        margin-top: 0.5rem;
+      }
+    }
+
+    #quick-watch-llm-intent {
+      label {
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+    }
+
+    #add-watch-submit-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  }
+}
+
+/* Give the Add Watch workspace a tall, near-full-height feel without forcing a 100vh
+   fill (which overflowed by a few px once the box padding/border + toolbar were added on
+   top). A bounded 90vh leaves headroom for the toolbar and never triggers a scrollbar.
+   The inner flex chain lets the panes consume that height. Scoped to the add-watch page
+   via the body blueprint class so other pages are unaffected. */
+body.blueprint-add_watch_ui {
+  #add-watch-ui {
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // The ex-<fieldset> is now a plain <div> (fieldset is an awkward flex container).
+  #add-watch-fieldset {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border: 0;
+    margin: 0;
+    padding: 0;
+  }
+  #add-watch-legend {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  #new-watch-form {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // Desktop: panes sit side-by-side and consume the leftover height. The panes already
+  // use align-items:stretch, so each pane stretches to the full row height automatically.
+  @media (min-width: 901px) {
+    #add-watch-panes {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    // Pane fills the row height (via #add-watch-panes' align-items:stretch); min-height:0
+    // lets the container height win so tall snapshots scroll INSIDE the pane (overflow:auto
+    // is already set) instead of stretching the box past 90vh.
+    #add-watch-selector-pane {
+      min-height: 0;
+    }
+  }
+
+  // Mobile: panes stack - let the box size to its content (no 90vh) and the panes keep
+  // their natural heights (the selector pane's own min-height keeps it usable).
+  @media (max-width: 900px) {
+    #add-watch-ui { height: auto; }
+    #add-watch-panes { flex: 0 0 auto; }
+  }
+}

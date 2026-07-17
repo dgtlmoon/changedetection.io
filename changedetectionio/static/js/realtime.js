@@ -27,13 +27,21 @@ $(document).ready(function () {
         });
 
 
-        $('#checkbox-operations button').on('click.socketHandlerNamespace', function (e) {
+        // Only the actual operation buttons carry name="op"; this excludes UI-only
+        // buttons in the bar such as "Invert" (client-side selection toggle).
+        $('#checkbox-operations button[name="op"]').on('click.socketHandlerNamespace', function (e) {
             e.preventDefault();
             const $button = $(this);
             const op = $button.val();
-            const checkedUuids = $('input[name="uuids"]:checked').map(function () {
-                return this.value.trim();
-            }).get();
+            // The cross-page selection store (watch-overview.js) is the source of
+            // truth when present — it includes rows selected on other pages, not
+            // just the visible checked boxes. Fall back to the DOM if absent.
+            const watchSel = window.cdioWatchSelection;
+            const checkedUuids = watchSel
+                ? watchSel.all()
+                : $('input[name="uuids"]:checked').map(function () {
+                    return this.value.trim();
+                }).get();
 
             // Check if this button requires confirmation
             console.log('Button clicked, op:', op, 'requires-confirm:', $button.is('[data-requires-confirm]'));
@@ -52,8 +60,13 @@ $(document).ready(function () {
                             uuids: checkedUuids,
                             extra_data: $('#op_extradata').val()
                         });
-                        $('input[name="uuids"]:checked').prop('checked', false);
-                        $('#check-all:checked').prop('checked', false);
+                        // Keep the rows selected after the operation so further
+                        // actions can be applied to the same selection — except
+                        // delete, where the rows (and their UUIDs) are now gone.
+                        if (op === 'delete' && watchSel) {
+                            watchSel.clear();
+                            if (watchSel.refreshUI) watchSel.refreshUI();
+                        }
                     }
                 };
                 ModalDialog.confirm(config);
@@ -64,8 +77,8 @@ $(document).ready(function () {
                     uuids: checkedUuids,
                     extra_data: $('#op_extradata').val()
                 });
-                $('input[name="uuids"]:checked').prop('checked', false);
-                $('#check-all:checked').prop('checked', false);
+                // Keep the rows selected after the operation so further actions
+                // can be applied to the same selection.
             }
 
             return false;
@@ -74,9 +87,13 @@ $(document).ready(function () {
     }
 
 
-    // Cache DOM elements for performance
+    // Cache DOM elements for performance.
+    // queue-size-int is a class (not an id) because the count is rendered in
+    // BOTH the desktop sidebar and the hamburger drawer — keep them in sync.
     const queueBubble = document.getElementById('queue-bubble');
-    const queueSizePagerInfoText = document.getElementById('queue-size-int');
+    const queueSizeNodes = document.querySelectorAll('.queue-size-int');
+    // "Checking now" count - rendered in both the desktop sidebar and the hamburger drawer.
+    const checkingNowNodes = document.querySelectorAll('.checking-now-int');
     // Only try to connect if authentication isn't required or user is authenticated
     // The 'is_authenticated' variable will be set in the template
     if (typeof is_authenticated !== 'undefined' ? is_authenticated : true) {
@@ -89,6 +106,11 @@ $(document).ready(function () {
                 reconnectionDelay: 3000,
                 reconnectionAttempts: 25
             });
+
+            // Expose the socket so other pages can attach their own listeners
+            // (e.g. the queue page reacts to watch_update / queue_size events).
+            window.cdioSocket = socket;
+            document.dispatchEvent(new CustomEvent('cdio:socket-ready', { detail: { socket: socket } }));
 
             // Connection status logging
             socket.on('connect', function () {
@@ -126,9 +148,8 @@ $(document).ready(function () {
 
             socket.on('queue_size', function (data) {
                 console.log(`${data.event_timestamp} - Queue size update: ${data.q_length}`);
-                if(queueSizePagerInfoText) {
-                    queueSizePagerInfoText.textContent = parseInt(data.q_length).toLocaleString() || 'None';
-                }
+                const formattedCount = parseInt(data.q_length).toLocaleString() || 'None';
+                queueSizeNodes.forEach(node => { node.textContent = formattedCount; });
                 document.body.classList.toggle('has-queue', parseInt(data.q_length) > 0);
 
                 // Update queue bubble in action sidebar
@@ -166,13 +187,28 @@ $(document).ready(function () {
                 }
             })
 
+            socket.on('checking_now', function (data) {
+                console.log(`${data.event_timestamp} - Checking now update: ${data.count}`);
+                const formattedCount = parseInt(data.count).toLocaleString() || 'None';
+                checkingNowNodes.forEach(node => { node.textContent = formattedCount; });
+                document.body.classList.toggle('is-checking-now', parseInt(data.count) > 0);
+            })
+
             // Listen for operation results
             socket.on('operation_result', function (data) {
                 if (data.success) {
                     console.log(`Socket.IO: Operation '${data.operation}' completed successfully for UUID ${data.uuid}`);
                 } else {
                     console.error(`Socket.IO: Operation failed: ${data.error}`);
-                    alert("There was a problem processing the request: " + data.error);
+                    alert(i18nT('requestProblem', 'There was a problem processing the request: %(error)s').split('%(error)s').join(data.error));
+                }
+            });
+
+            // Server-driven feedback for bulk checkbox operations (real count / error from the server)
+            socket.on('toast', function (data) {
+                if (data && data.message && window.Toast) {
+                    const fn = window.Toast[data.type] || window.Toast.info;
+                    fn(data.message);
                 }
             });
 
@@ -206,11 +242,16 @@ $(document).ready(function () {
             })
 
             socket.on('general_stats_update', function (general_stats) {
-                // Tabs at bottom of list
                 $('#watch-table-wrapper').toggleClass("has-unread-changes", general_stats.unread_changes_count !==0)
                 $('#watch-table-wrapper').toggleClass("has-error", general_stats.count_errors !== 0)
-                $('#post-list-with-errors a').text(`With errors (${ new Intl.NumberFormat(navigator.language).format(general_stats.count_errors) })`);
-                $('#unread-tab-counter').text(new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count));
+                // NB: the watch-list status .seg counts (unread/errors/deals) are
+                // server-rendered and SCOPED to the current tag/processor/search, so we
+                // deliberately don't overwrite them here with these GLOBAL totals — doing
+                // so would show e.g. the whole-list unread count on a filtered view.
+
+                // The left-rail "Page Watches" unread badge IS global — keep it live.
+                const unreadText = new Intl.NumberFormat(navigator.language).format(general_stats.unread_changes_count);
+                $('.js-unread-count').text(unreadText).toggle(general_stats.unread_changes_count !== 0);
             });
 
             socket.on('watch_update', function (data) {

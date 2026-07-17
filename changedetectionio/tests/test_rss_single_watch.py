@@ -270,17 +270,39 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
     rss_token = extract_rss_token_from_UI(client)
 
 
+    # Notification body belongs to the notifications page now; rss_template_type
+    # still belongs to the main settings RSS section. Split the save.
+    res = client.post(
+        url_for("settings.notifications.apprise"),
+        data={
+              "notification_body": 'Boo yeah hello from main settings notification body<br>\nTitle: {{ watch_title }} changed',
+              "notification_format": default_notification_format,
+              "notification_urls": "",
+              },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    # Now flip rss_template_type so the RSS feed uses the notification_body
+    # we just saved.
     res = client.post(
         url_for("settings.settings_page"),
         data={
-              "application-fetch_backend": "html_requests",
-              "application-minutes_between_check": 180,
-              "application-notification_body": 'Boo yeah hello from main settings notification body<br>\nTitle: {{ watch_title }} changed',
-              "application-notification_format": default_notification_format,
-              "application-rss_template_type" : 'notification_body',
-              "application-notification_urls": "",
-
-              },
+            "application-rss_template_type": 'notification_body',
+            "application-pager_size": '50',
+            "application-notification_format": 'html',
+            "application-fetch_backend": 'html_requests',
+            "application-rss_diff_length": '5',
+            "application-filter_failure_notification_threshold_attempts": '0',
+            "requests-time_between_check-days": '0',
+            "requests-time_between_check-hours": '0',
+            "requests-time_between_check-minutes": '5',
+            "requests-time_between_check-seconds": '0',
+            "requests-time_between_check-weeks": '0',
+            "requests-jitter_seconds": '0',
+            "requests-workers": '10',
+            "requests-timeout": '60',
+        },
         follow_redirects=True
     )
     assert b'Settings updated' in res.data

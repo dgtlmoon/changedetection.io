@@ -189,17 +189,19 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             # stay on a small base cap (matching upstream's pre-existing behavior) and only
             # reasoning-capable endpoints (Ollama, openai_compatible) opt into the extra
             # headroom needed for chain-of-thought to complete.
-            # Timeout: omit the override so the test inherits DEFAULT_TIMEOUT (60s, tunable
-            # via LLM_TIMEOUT). A shorter test-only timeout falsely fails on cold-starting
-            # cloud reasoning models (e.g. ollama.com hosting qwen3.5:397b takes ~60s on
-            # first hit) even though the same call succeeds in production.
-            from changedetectionio.llm.evaluator import apply_local_token_multiplier, get_llm_settings
+            # Timeout: resolve it the same way production calls do — cloud gets
+            # DEFAULT_TIMEOUT (300s, tunable via LLM_TIMEOUT), and local/self-hosted
+            # endpoints (IANA-restricted api_base) get the relaxed 1800s local cap so
+            # a cold-starting or slow-prefilling local model doesn't falsely fail the
+            # test even though the same call would succeed in production (issue #4225).
+            from changedetectionio.llm.evaluator import apply_local_token_multiplier, get_llm_settings, resolve_llm_timeout
             text, total_tokens, input_tokens, output_tokens = completion(
                 model=model,
                 messages=[{'role': 'user', 'content':
                     'Respond with just the word: ready'}],
                 api_key=llm_cfg.get('api_key') or None,
                 api_base=api_base or None,
+                timeout=resolve_llm_timeout(llm_cfg),
                 max_tokens=apply_local_token_multiplier(200, llm_cfg),
                 debug=get_llm_settings(datastore).debug,
             )

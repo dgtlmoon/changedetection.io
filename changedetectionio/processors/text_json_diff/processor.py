@@ -320,7 +320,15 @@ class ContentProcessor:
     def preprocess_json(self, raw_content):
         """Format and sort JSON content."""
         # Then we re-format it, else it does have filters (later on) which will reformat it anyway
-        content = html_tools.extract_json_as_string(content=raw_content, json_filter="json:$")
+        try:
+            content = html_tools.extract_json_as_string(content=raw_content, json_filter="json:$")
+        except html_tools.JSONNotFound:
+            # The Content-Type header indicated JSON, but no parsable JSON was found in the body
+            # (e.g. GWT-RPC or other formats that some servers mislabel as application/json).
+            # Don't error the whole watch - keep the raw content so it can still be shown/diffed.
+            # Re https://github.com/dgtlmoon/changedetection.io/issues/3827
+            logger.warning("Content-Type indicated JSON but no parsable JSON was found, keeping raw content")
+            return raw_content
 
         # Sort JSON to avoid false alerts from reordering
         try:

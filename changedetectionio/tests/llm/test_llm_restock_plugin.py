@@ -8,6 +8,19 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 
+@pytest.fixture(autouse=True)
+def _clear_llm_result_cache():
+    """The plugin keeps a module-level result cache (keyed by model+prompt) so it won't
+    re-bill the LLM when the meaningful page content is unchanged. That cache persists
+    across tests in the same process, which makes token-accounting assertions order
+    dependent (a cache hit returns zeroed tokens). Clear it before every test so each
+    one exercises a fresh extraction."""
+    from changedetectionio.processors.restock_diff.plugins import llm_restock
+    llm_restock._LLM_RESULT_CACHE.clear()
+    yield
+    llm_restock._LLM_RESULT_CACHE.clear()
+
+
 def _make_datastore(llm_model='gpt-4o-mini', enabled=True):
     """Minimal datastore mock with the fields the plugin reads."""
     ds = MagicMock()
@@ -213,7 +226,7 @@ class TestLLMRestockPluginIntent:
         llm_restock.datastore = ds
 
         captured = {}
-        def fake_completion(model, messages, api_key, api_base, max_tokens):
+        def fake_completion(model, messages, api_key, api_base, max_tokens, extra_body=None, timeout=None):
             captured['messages'] = messages
             return ('{"price": 299.0, "currency": "USD", "availability": "instock"}', 50, 40, 10)
 
@@ -237,7 +250,7 @@ class TestLLMRestockPluginIntent:
         llm_restock.datastore = ds
 
         captured = {}
-        def fake_completion(model, messages, api_key, api_base, max_tokens):
+        def fake_completion(model, messages, api_key, api_base, max_tokens, extra_body=None, timeout=None):
             captured['messages'] = messages
             return ('{"price": 9.99, "currency": "USD", "availability": "instock"}', 20, 15, 5)
 

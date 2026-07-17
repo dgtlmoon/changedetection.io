@@ -248,7 +248,7 @@ $(document).ready(function () {
             data: data,
             statusCode: {
                 400: function () {
-                    alert("There was a problem processing the request, please reload the page.");
+                    alert(i18nT('reloadProblem', "There was a problem processing the request, please reload the page."));
                     $("#loading-status-text").hide();
                     $('#browser-steps-ui .loader .spinner').fadeOut();
                 },
@@ -289,7 +289,7 @@ $(document).ready(function () {
             statusCode: {
                 400: function () {
                     // More than likely the CSRF token was lost when the server restarted
-                    alert("There was a problem processing the request, please reload the page.");
+                    alert(i18nT('reloadProblem', "There was a problem processing the request, please reload the page."));
                 },
                 401: function (err) {
                     // This will be a custom error
@@ -307,7 +307,7 @@ $(document).ready(function () {
 
         }).fail(function (data) {
             console.log(data);
-            alert('There was an error communicating with the server.');
+            alert(i18nT('serverCommError', 'There was an error communicating with the server.'));
         });
 
     }

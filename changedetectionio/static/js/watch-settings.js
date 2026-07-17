@@ -39,17 +39,17 @@ function request_textpreview_update() {
                 {
                     'color': 'var(--highlight-trigger-text-bg-color)',
                     'lines': data['trigger_line_numbers'],
-                    'title': "Triggers a change if this text appears, AND something changed in the document."
+                    'title': i18nT('highlightTrigger', "Triggers a change if this text appears, AND something changed in the document.")
                 },
                 {
                     'color': 'var(--highlight-ignored-text-bg-color)',
                     'lines': data['ignore_line_numbers'],
-                    'title': "Ignored for calculating changes, but still shown."
+                    'title': i18nT('highlightIgnored', "Ignored for calculating changes, but still shown.")
                 },
                 {
                     'color': 'var(--highlight-blocked-text-bg-color)',
                     'lines': data['blocked_line_numbers'],
-                    'title': "No change-detection will occur because this text exists."
+                    'title': i18nT('highlightBlocked', "No change-detection will occur because this text exists.")
                 }
             ])
 
@@ -107,9 +107,9 @@ $(document).ready(function () {
         $('#filters-and-triggers input')[method]('change', request_textpreview_update.throttle(1000));
         $("#filters-and-triggers-tab")[method]('click', request_textpreview_update.throttle(1000));
     });
-    $('.minitabs-wrapper').miniTabs({
-        "Content after filters": "#text-preview-inner",
-        "Content raw/before filters": "#text-preview-before-inner"
-    });
+    var _mt = {};
+    _mt[i18nT('tabContentAfter', 'Content after filters')] = "#text-preview-inner";
+    _mt[i18nT('tabContentBefore', 'Content raw/before filters')] = "#text-preview-before-inner";
+    $('.minitabs-wrapper').miniTabs(_mt);
 });
 

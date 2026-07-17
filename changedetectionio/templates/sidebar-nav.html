@@ -1,0 +1,142 @@
+{# Shared left-rail / drawer navigation items #}
+{# Used by base.html (desktop left sidebar) and mobile hamburger drawer #}
+
+{%- set ep = request.endpoint or '' -%}
+
+<ul class="action-sidebar-list action-sidebar-list--top">
+    <li class="action-sidebar-li" id="action-sidebar-logo">
+
+        {%- if has_password and not current_user.is_authenticated -%}
+          <a id="cdio-logo" href="https://changedetection.io" rel="noopener">
+              <span id="logo-expanded"><strong>Change</strong>Detection.io</span>
+              <span id="logo-short"><strong>CD</strong>IO</span>
+          </a>
+        {%- else -%}
+          <a id="cdio-logo" href="{{url_for('watchlist.index')}}">
+              <span id="logo-expanded"><strong>Change</strong>Detection.io</span>
+              <span id="logo-short"><strong>CD</strong>IO</span>
+          </a>
+        {%- endif -%}
+    </li>
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
+           class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
+           title="{{ _('Add a page watch') }}">
+            {# Inverted "add" glyph: a solid (currentColor) rounded square with the
+               plus knocked out to transparency via a mask, so the plus shows the
+               rail behind it rather than a painted colour. #}
+            {%- set _add_mask_id = 'action-add-knockout-' ~ (sidebar_scope | default('nav')) -%}
+            <svg id="add-page-watch-svg" class="action-icon action-icon--filled" viewBox="0 0 24 24" aria-hidden="true">
+                <mask id="{{ _add_mask_id }}">
+                    <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="white"/>
+                    <line x1="12" y1="8" x2="12" y2="16" stroke="black" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="8" y1="12" x2="16" y2="12" stroke="black" stroke-width="3" stroke-linecap="round"/>
+                </mask>
+                <rect x="3" y="3" width="18" height="18" rx="4" ry="4" fill="currentColor" stroke="none" mask="url(#{{ _add_mask_id }})"/>
+            </svg>
+            <span class="action-label">{{ _('Add a page watch') }}</span>
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('watchlist.index') }}"
+           class="action-sidebar-item {% if ep == 'watchlist.index' or ep.startswith('ui.ui_views') or ep.startswith('ui.ui_edit') %}active{% endif %}"
+           title="{{ _('Page Watches') }}">
+            <i data-feather="eye" class="action-icon"></i>
+            <span class="action-label">{{ _('Page Watches') }}</span>
+            {# Unread (changed, not-yet-viewed) count. Class hook (not id) because this
+               partial renders twice — desktop rail + mobile drawer. Hidden at 0; shown
+               and kept in sync live by realtime.js (general_stats_update). #}
+            <span class="action-badge action-badge--count js-unread-count"
+                  title="{{ _('Unread changes') }}"
+                  {% if not unread_changes_count %}style="display: none"{% endif %}>{{ unread_changes_count|default(0)|format_int_locale }}</span>
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('tags.tags_overview_page') }}"
+           class="action-sidebar-item {% if ep.startswith('tags.') %}active{% endif %}"
+           title="{{ _('Watch Groups') }}">
+            <i data-feather="layers" class="action-icon"></i>
+            <span class="action-label">{{ _('Watch Groups') }}</span>
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+      <a href="{{ url_for('imports.import_page') }}"
+           class="action-sidebar-item {% if ep.startswith('imports.') %}active{% endif %}"
+           title="{{ _('Import lists of web pages') }}">
+            <i data-feather="upload" class="action-icon"></i>
+            <span class="action-label">{{ _('Import') }}</span>
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+        <a href="#"
+           class="action-sidebar-item is-disabled"
+           title="{{ _('Browsers (coming soon)') }}"
+           aria-disabled="true"
+           tabindex="-1">
+            <i data-feather="globe" class="action-icon"></i>
+            <span class="action-label">{{ _('Browsers') }}</span>
+            <span class="action-badge">{{ _('soon') }}</span>
+        </a>
+    </li>
+    {% if not current_diff_url %}
+    <li class="action-sidebar-li">
+        <button type="button"
+                class="action-sidebar-item action-sidebar-item--button js-open-search-modal"
+                title="{{ _('Search, or Use Alt+S Key') }}">
+            <i data-feather="search" class="action-icon"></i>
+            <span class="action-label">{{ _('Search') }}</span>
+        </button>
+    </li>
+    {% endif %}
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('ui.ui_queue.queue_page') }}"
+           class="action-sidebar-item {% if ep.startswith('ui.ui_queue') %}active{% endif %}"
+           title="{{ _('Queue') }}">
+            <i data-feather="list" class="action-icon"></i>
+            <span class="action-label">{{ _('Queue') }}</span>
+
+
+            <span class="action-badge action-badge--count  queue-size-int">{{ queue_size }}</span>
+
+
+        </a>
+    </li>
+    <li class="action-sidebar-li">
+        <a href="{{ url_for('settings.notifications.apprise') }}"
+           class="action-sidebar-item"
+           title="{{ _('Notifications') }}">
+            <i data-feather="bell" class="action-icon"></i>
+            <span class="action-label">{{ _('Notifications') }}</span>
+        </a>
+    </li>
+</ul>
+
+{# Footer group — pushed to the bottom of the rail via `margin-top: auto`
+   (see .action-sidebar-list--bottom). Mirrors the demo's bottom-aligned rail
+   footer (status counters, live spark, version). #}
+<ul class="action-sidebar-list action-sidebar-list--bottom">
+    <li class="action-sidebar-divider" aria-hidden="true"></li>
+
+    <li class="action-sidebar-li" id="checking-now-stats-sidebar">
+        <a href="{{ url_for('ui.ui_queue.queue_page') }}" class="action-sidebar-item">{{ _('Checking now') }}:&nbsp;<span class="checking-now-int">{{ checking_now_size }}</span></a>
+    </li>
+    {% if socket_io_enabled %}
+    <li class="action-sidebar-li action-sidebar-li--spark" aria-hidden="true">
+        <canvas class="queue-spark" title="{{ _('Live activity') }}" ></canvas>
+    </li>
+    {% endif %}
+    <li class="action-sidebar-li">
+        {% if right_sticky %}
+          <div class="action-sidebar-item" id="right-sticky">{{ right_sticky }}</div>
+        {% endif %}
+    </li>
+
+      {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
+      <li class="action-sidebar-li">
+        <span id="new-version-text" class="action-sidebar-item">
+          <a href="https://changedetection.io">{{ _('A new version is available') }}</a>
+        </span>
+      </li>
+      {% endif %}
+
+</ul>

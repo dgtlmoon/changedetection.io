@@ -12,6 +12,11 @@ Environment variable overrides (take priority over datastore settings):
   LLM_MODEL    — model string (e.g. "gpt-4o-mini", "ollama/llama3.2")
   LLM_API_KEY  — API key for cloud providers
   LLM_API_BASE — base URL for local/custom endpoints (e.g. http://localhost:11434)
+  LLM_TIMEOUT       — per-request timeout in seconds (default 300). When set, it
+                      applies to every endpoint (a single hard ceiling).
+  LLM_LOCAL_TIMEOUT — timeout in seconds for local/self-hosted endpoints (api_base
+                      on a private/LAN address); default 1800. Applied automatically
+                      unless LLM_TIMEOUT is set. See resolve_llm_timeout().
 """
 
 import hashlib
@@ -141,7 +146,7 @@ DEFAULT_CHANGE_SUMMARY_PROMPT = (
     "For large blocks of new text (full articles, documents, long paragraphs): briefly summarise "
     "the substance in 1-2 sentences capturing the key point — do not just repeat the title.\n\n"
     "Do not quote non-English text verbatim; translate and summarise all content into English. "
-    "Your entire response must be in English."
+    "Do not give partial listings such as 'Examples include:', always be thorough."
 )
 
 
@@ -182,6 +187,50 @@ def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
     # absurdly large max_tokens caps and exhaust local-endpoint memory.
     multiplier = max(1, min(multiplier, 20))
     return base_max_tokens * multiplier
+
+
+def _is_local_llm_endpoint(llm_cfg: dict) -> bool:
+    """
+    True when the configured `api_base` points at an IANA-restricted host
+    (private / loopback / link-local / reserved) — i.e. a local or LAN
+    self-hosted LLM (Ollama, vLLM, LM Studio, llama.cpp, ...).
+
+    Detection is purely by the api_base host, reusing the same IANA check the
+    SSRF guard uses (is_private_hostname). Because it resolves DNS, docker
+    service names (`http://ollama:11434`), `host.docker.internal`, and bare LAN
+    IPs are all recognised. No api_base (cloud providers) → False.
+    """
+    api_base = ((llm_cfg or {}).get('api_base') or '').strip()
+    if not api_base:
+        return False
+    try:
+        from urllib.parse import urlparse
+        from changedetectionio.validate_url import is_private_hostname
+        host = urlparse(api_base).hostname
+        return bool(host) and is_private_hostname(host)
+    except Exception:
+        # Never let timeout resolution break an LLM call — fall back to "not local".
+        return False
+
+
+def resolve_llm_timeout(llm_cfg: dict) -> int:
+    """
+    Per-request timeout (seconds) for an LLM call.
+
+    Cloud providers get client.DEFAULT_TIMEOUT (300s, tunable via LLM_TIMEOUT).
+    Local / self-hosted endpoints run on modest hardware and can spend many minutes
+    on prompt prefill before the first token, so a 300s cap trips prematurely
+    (issue #4225). When the api_base host is IANA-restricted (see
+    _is_local_llm_endpoint) we grant client.DEFAULT_LOCAL_TIMEOUT (1800s, tunable
+    via LLM_LOCAL_TIMEOUT) — mirroring how Hermes relaxes its timeouts for local
+    endpoints. An explicit LLM_TIMEOUT always wins, even for local endpoints, for
+    operators who want a single hard ceiling regardless.
+    """
+    if os.getenv('LLM_TIMEOUT', '').strip():
+        return llm_client.DEFAULT_TIMEOUT
+    if _is_local_llm_endpoint(llm_cfg):
+        return llm_client.DEFAULT_LOCAL_TIMEOUT
+    return llm_client.DEFAULT_TIMEOUT
 
 
 # ---------------------------------------------------------------------------
@@ -469,6 +518,7 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            timeout=resolve_llm_timeout(cfg),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
             debug=settings.debug,
@@ -617,6 +667,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            timeout=resolve_llm_timeout(cfg),
             max_tokens=apply_local_token_multiplier(
                 _summary_max_tokens(diff, max_cap=settings.max_summary_tokens),
                 cfg,
@@ -684,6 +735,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            timeout=resolve_llm_timeout(cfg),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
             debug=settings.debug,
@@ -770,6 +822,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             ],
             api_key=cfg.get('api_key'),
             api_base=cfg.get('api_base'),
+            timeout=resolve_llm_timeout(cfg),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
             debug=settings.debug,

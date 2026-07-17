@@ -671,7 +671,13 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         self.__data['watching'][uuid].clear_watch()
         self.__data['watching'][uuid].commit()
 
-    def add_watch(self, url, tag='', extras=None, tag_uuids=None, save_immediately=True):
+    def add_watch(self, url, tag='', extras=None, tag_uuids=None, save_immediately=True, seed_data_dir=None):
+        """
+        seed_data_dir: optional path to an existing directory (already in the watch's
+        on-disk format, e.g. last-screenshot.png + elements.deflate) that becomes this
+        watch's data_dir via a single rename(). Used to "promote" a temporary add-watch
+        snapshot into a real watch without re-fetching. See make_temporary_watch_active_watch().
+        """
 
         if extras is None:
             extras = {}
@@ -781,6 +787,17 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             apply_extras['date_created'] = int(time.time())
 
         new_watch.update(apply_extras)
+
+        # Promote a pre-seeded directory into this watch's data_dir via a single rename()
+        # (cheap: same filesystem, no copy). The seed must already be in final on-disk format.
+        if seed_data_dir and os.path.isdir(seed_data_dir):
+            target_dir = os.path.join(self.datastore_path, new_uuid)
+            try:
+                shutil.move(seed_data_dir, target_dir)
+                logger.debug(f"Seeded watch {new_uuid} data_dir from {seed_data_dir}")
+            except Exception as e:
+                logger.error(f"Could not seed watch {new_uuid} from {seed_data_dir}: {e}")
+
         new_watch.ensure_data_dir_exists()
         self.__data['watching'][new_uuid] = new_watch
 
@@ -792,6 +809,49 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         logger.debug(f"Added '{url}'")
 
         return new_uuid
+
+    # Where add-watch-ui parks freshly-fetched (but not-yet-saved) snapshots.
+    TEMPORARY_WATCH_DIR = "temporary"
+
+    def get_temporary_watch_dir(self, temp_uuid):
+        """Resolve datastore_path/temporary/{temp_uuid}, rejecting anything that would
+        escape the temporary/ directory (the temp_uuid arrives from a client POST field)."""
+        if not temp_uuid or not re.match(r'^[0-9a-fA-F-]{36}$', str(temp_uuid)):
+            return None
+        base = os.path.realpath(os.path.join(self.datastore_path, self.TEMPORARY_WATCH_DIR))
+        target = os.path.realpath(os.path.join(base, str(temp_uuid)))
+        if os.path.dirname(target) != base:
+            logger.warning(f"Rejected temporary watch path outside {base}: {temp_uuid}")
+            return None
+        return target
+
+    def make_temporary_watch_active_watch(self, temp_uuid, url, tag='', extras=None):
+        """Promote a temporary add-watch snapshot into a real watch.
+
+        The snapshot directory (datastore_path/temporary/{temp_uuid}, already holding
+        last-screenshot.png + elements.deflate in final on-disk format) is renamed into
+        place as the new watch's data_dir - no re-fetch, no copy. If the temp_uuid is
+        missing/expired/invalid we fall back to a normal add_watch() so the UI still works.
+        """
+        seed_dir = self.get_temporary_watch_dir(temp_uuid)
+        if not (seed_dir and os.path.isdir(seed_dir)):
+            seed_dir = None
+        return self.add_watch(url=url, tag=tag, extras=extras, seed_data_dir=seed_dir)
+
+    def cleanup_temporary_watches(self, ttl_seconds=3600):
+        """Remove orphaned snapshot dirs (user clicked Go but never submitted)."""
+        base = os.path.join(self.datastore_path, self.TEMPORARY_WATCH_DIR)
+        if not os.path.isdir(base):
+            return
+        now = time.time()
+        for name in os.listdir(base):
+            d = os.path.join(base, name)
+            try:
+                if os.path.isdir(d) and (now - os.path.getmtime(d)) > ttl_seconds:
+                    shutil.rmtree(d, ignore_errors=True)
+                    logger.debug(f"Cleaned orphaned temporary watch {name}")
+            except Exception as e:
+                logger.error(f"Failed cleaning temporary watch {d}: {e}")
 
     def _watch_resource_exists(self, watch_uuid, resource_name):
         """

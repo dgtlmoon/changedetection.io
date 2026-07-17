@@ -7,13 +7,46 @@
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='restock-price-graph.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 <script>let nowtimeserver={{ now_time_server }};</script>
 <script>let favicon_baseURL="{{ url_for('static_content', group='favicon', filename="PLACEHOLDER")}}";</script>
 <script>
-// Initialize Feather icons after the page loads
+// Cross-page selection: total rows matching the current filter, and the endpoint
+// that lists all matching UUIDs for the "select all matching" action.
+window.watchListSelection = {
+    total: {{ pagination.total }},
+    uuidsUrl: "{{ url_for('watchlist.uuids') }}"
+};
+</script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-    feather.replace();
+    // (Feather icons are rendered app-wide from base.html.)
+
+    // Placeholder shown when a favicon fails to load (network error, or the URL
+    // returned HTML instead of an image etc). Same round outline as the loading
+    // placeholder, but with a small red dot to signify the error state.
+    const FAVICON_ERROR_SRC = 'data:image/svg+xml;utf8,' +
+        '%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E' +
+        '%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E' +
+        '%3Ccircle cx="5.4" cy="5.4" r="0.7" fill="%23d9534f"/%3E' +
+        '%3C/svg%3E';
+
+    // Load the real favicon URL stored in data-src, falling back to an error
+    // placeholder (and a console error) if the image can't be loaded.
+    function loadFavicon(img) {
+        const src = img.getAttribute('data-src');
+        if (!src) {
+            return;
+        }
+        img.removeAttribute('data-src');
+        img.addEventListener('error', function onError() {
+            img.removeEventListener('error', onError);
+            console.error('Favicon failed to load (network error or non-image response):', src);
+            img.src = FAVICON_ERROR_SRC;
+        });
+        img.src = src;
+    }
 
     // Intersection Observer for lazy loading favicons
     // Only load favicon images when they enter the viewport
@@ -21,17 +54,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const faviconObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    const img = entry.target;
-                    const src = img.getAttribute('data-src');
-
-                    if (src) {
-                        // Load the actual favicon
-                        img.src = src;
-                        img.removeAttribute('data-src');
-                    }
+                    loadFavicon(entry.target);
 
                     // Stop observing this image
-                    observer.unobserve(img);
+                    observer.unobserve(entry.target);
                 }
             });
         }, {
@@ -46,13 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } else {
         // Fallback for older browsers: load all favicons immediately
-        document.querySelectorAll('.lazy-favicon').forEach(img => {
-            const src = img.getAttribute('data-src');
-            if (src) {
-                img.src = src;
-                img.removeAttribute('data-src');
-            }
-        });
+        document.querySelectorAll('.lazy-favicon').forEach(loadFavicon);
     }
 });
 </script>
@@ -69,134 +89,134 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* Auto-generated tag colors */
 {%- for uuid, tag in tags -%}
-{%- if tag and tag.title -%}
-{%- set class_name = tag.title|sanitize_tag_class -%}
-{%- if tag.get('tag_colour') -%}
-.button-tag.tag-{{ class_name }},
-.watch-tag-list.tag-{{ class_name }} {
-  background-color: {{ tag.tag_colour }};
-  color: {{ wcag_text_color(tag.tag_colour) }};
-}
-{%- else -%}
-{%- set colors = generate_tag_colors(tag.title) -%}
-.button-tag.tag-{{ class_name }} {
-  background-color: {{ colors['light']['bg'] }};
-  color: {{ colors['light']['color'] }};
-}
+    {%- if tag and tag.title -%}
+    {%- set class_name = tag.title|sanitize_tag_class -%}
+        {%- if tag.get('tag_colour') -%}
+            .button-tag.tag-{{ class_name }},
+            .watch-tag-list.tag-{{ class_name }} {
+              background-color: {{ tag.tag_colour }};
+              color: {{ wcag_text_color(tag.tag_colour) }};
+            }
+            {%- else -%}
+                {%- set colors = generate_tag_colors(tag.title) -%}
+                .button-tag.tag-{{ class_name }} {
+                  background-color: {{ colors['light']['bg'] }};
+                  color: {{ colors['light']['color'] }};
+                }
 
-.watch-tag-list.tag-{{ class_name }} {
-  background-color: {{ colors['light']['bg'] }};
-  color: {{ colors['light']['color'] }};
-}
+                .watch-tag-list.tag-{{ class_name }} {
+                  background-color: {{ colors['light']['bg'] }};
+                  color: {{ colors['light']['color'] }};
+                }
 
-html[data-darkmode="true"] .button-tag.tag-{{ class_name }} {
-  background-color: {{ colors['dark']['bg'] }};
-  color: {{ colors['dark']['color'] }};
-}
+                html[data-darkmode="true"] .button-tag.tag-{{ class_name }} {
+                  background-color: {{ colors['dark']['bg'] }};
+                  color: {{ colors['dark']['color'] }};
+                }
 
-html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
-  background-color: {{ colors['dark']['bg'] }};
-  color: {{ colors['dark']['color'] }};
-}
-{%- endif -%}
-{%- endif -%}
-{%- endfor -%}
+                html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
+                  background-color: {{ colors['dark']['bg'] }};
+                  color: {{ colors['dark']['color'] }};
+                }
+            {%- endif -%}
+        {%- endif -%}
+    {%- endfor -%}
 </style>
-<div class="box" id="form-quick-watch-add">
 
-    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
-        <fieldset>
-            <legend>{{ _('Add a new web page change detection watch') }}</legend>
-            <div id="watch-add-wrapper-zone">
-                    {{ render_nolabel_field(form.url, placeholder="https://...", required=true) }}
-                    {{ render_nolabel_field(form.watch_submit_button, title=_("Watch this URL!") ) }}
-                    {{ render_nolabel_field(form.edit_and_watch_submit_button, title=_("Edit first then Watch") ) }}
-            </div>
-            {% if llm_configured %}
-            <div id="quick-watch-llm-intent" style="display:none; margin-top: 0.5em;">
-                <textarea name="llm_intent"
-                          id="quick_watch_llm_intent"
-                          rows="2"
-                          class="pure-input-1"
-                          placeholder="{{ _('AI — Notify when…') }} {{ llm_intent_watch_placeholder }}"
-                ></textarea>
-            </div>
-            {% endif %}
-            <div id="watch-group-tag">
-               {{ render_field(form.tags, value=active_tag.title if active_tag_uuid else '', placeholder=_("Watch group / tag"), class="transparent-field") }}
-            </div>
-            <div id="quick-watch-processor-type">
-                {{ render_simple_field(form.processor) }}
-            </div>
-
-        </fieldset>
-        <span style="color:#eee; font-size: 80%;">
-            <strong>Tip: </strong> {{ tips | random | safe }}
-        </span>
-    </form>
-</div>
 {% if llm_configured %}
 <script>
 window.watchOverviewI18n = {
-    generatingSummary: {{ _('Generating summary…')|tojson }},
-    gotoHistory:       {{ _('Goto full history')|tojson }}
+    generatingSummary: {{ _('Generating change summary…')|tojson }},
+    gotoHistory:       {{ _('Goto full history')|tojson }},
+    loadingPriceHistory: {{ _('Loading price history…')|tojson }},
+    inStock:           {{ _('In stock')|tojson }},
+    outOfStock:        {{ _('Out of stock')|tojson }},
+    noPriceData:       {{ _('No price data available to graph yet.')|tojson }},
+    priceHistoryError: {{ _('Could not load price history.')|tojson }},
+    changes:           {{ _('Changes')|tojson }},
+    avgPrice:          {{ _('Average price')|tojson }},
+    priceLow:          {{ _('Currently low')|tojson }},
+    priceTypical:      {{ _('Currently typical')|tojson }},
+    priceHigh:         {{ _('Currently high')|tojson }},
+    cheaperThan:       {{ _('cheaper than %s% of tracked prices')|tojson }},
+    pricierThan:       {{ _('more expensive than %s% of tracked prices')|tojson }},
+    typicalNote:       {{ _('around the usual price')|tojson }},
+    avgLabel:          {{ _('avg')|tojson }}
 };
 </script>
 {% endif %}
+
+
+<div class="box" id="add-watch-ui">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
+        <div id="add-watch-url-row">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="url"><strong>{{ _('Web page URL') }}</strong></label><br>
+            {{ render_nolabel_field(form.url, placeholder="https://...", required=true, class="pure-input-1") }}
+            <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
+        </div>
+        {% if llm_configured %}
+        <div class="add-watch-option-group" id="quick-watch-llm-intent">
+            <label for="quick_watch_llm_intent"><strong>{{ _('What matters — when to notify me') }}</strong></label>
+            <textarea name="llm_intent"
+                      id="quick_watch_llm_intent"
+                      rows="4"
+                      class="pure-input-1"
+                      placeholder="{{ _('e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants appear. Skip review additions.') }}"></textarea>
+        </div>
+        {% endif %}
+        <div class="add-watch-option-group" id="quick-watch-processor-type">
+            {{ render_simple_field(form.processor) }}
+        </div>
+    </form>
+</div>
+
 <div class="box">
     <form class="pure-form" action="{{ url_for('ui.form_watch_list_checkbox_operations') }}" method="POST" id="watch-list-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
     <input type="hidden" id="op_extradata" name="op_extradata" value="" >
-    <div id="checkbox-operations">
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Pause') }}</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('UnPause') }}</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute"><i data-feather="volume-x" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Mute') }}</button>
-        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute"><i data-feather="volume-2" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('UnMute') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck"><i data-feather="refresh-cw" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Recheck') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag"><i data-feather="tag" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Tag') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Mark viewed') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Use default notification') }}</button>
-        <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors"><i data-feather="x-circle" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Clear errors') }}</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history"
-                       data-requires-confirm
-                       data-confirm-type="danger"
-                       data-confirm-title="{{ _('Clear Histories') }}"
-                       data-confirm-message="{{ _('<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>') }}"
-                       {# TRANSLATORS: Universally recognized; typically left as-is. dennis-ignore: W302 #}
-                       data-confirm-button="{{ _('OK') }}"><i data-feather="trash-2" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Clear/reset history') }}</button>
-        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete"
-                       data-requires-confirm
-                       data-confirm-type="danger"
-                       data-confirm-title="{{ _('Delete Watches?') }}"
-                       data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
-                       data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" style="width: 14px; height: 14px; stroke: white; margin-right: 4px;"></i>{{ _('Delete') }}</button>
-    </div>
+    {# Option lists for the bulk Browser / Proxy modals (rendered by watch-overview.js into a ModalDialog).
+       Mirrors the choices on the watch edit page. Kept inert inside <template> until the modal is opened. #}
+    <template id="bulk-browser-options">
+        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="system" checked> {{ _('System settings default') }}</label>
+        {% for key, label in available_fetchers %}
+        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="{{ key }}"> {{ label }}</label>
+        {% endfor %}
+    </template>
+    {% if has_proxies %}
+    <template id="bulk-proxy-options">
+        <label class="bulk-choice-row"><input type="radio" name="bulk-proxy" value="" checked> {{ _('Default') }}</label>
+        {% for key, meta in has_proxies.items() %}
+        <label class="bulk-choice-row"><input type="radio" name="bulk-proxy" value="{{ key }}"> {{ meta.label }}</label>
+        {% endfor %}
+    </template>
+    {% endif %}
+    {# "Select all matching" banner — shown by watch-overview.js when the whole
+       visible page is selected but more matching rows exist on other pages. #}
+    <div id="select-all-banner" class="select-all-banner" style="display: none;"
+         data-select-all-tmpl="{{ _('All %(page)s on this page are selected.') }}"
+         data-select-all-action="{{ _('Select all %(total)s matching') }}"
+         data-all-selected-tmpl="{{ _('All %(total)s matching are selected.') }}"
+         data-clear-action="{{ _('Clear selection') }}"></div>
 
     <div id="stats_row">
-        <div class="left">{%- if watches|length >= pagination.per_page -%}{{ pagination.info }}{%- endif -%}</div>
-        <div class="right" >{{ _('Queued size') }}: <span id="queue-size-int">{{ queue_size }}</span></div>
+        <div class="left">{%- if watches|length >= pagination.per_page -%}{{ pagination.info }}{%- endif -%}
+            {# Live count of selected rows; %(count)s is filled (locale-formatted) by watch-overview.js #}
+            <div id="records-selected" class="records-selected" data-template="{{ _('%(count)s records selected') }}" style="display: none;"></div>
+        </div>
     </div>
 
 
 
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
-    <div>
-        <a href="{{url_for('watchlist.index')}}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">{{ _('All') }}</a>
 
-    <!-- tag list -->
-    {%- for uuid, tag in tags -%}
-        {%- if tag != "" -%}
-            <a href="{{url_for('watchlist.index', tag=uuid) }}" class="pure-button button-tag tag-{{ tag.title|sanitize_tag_class }} {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
-        {%- endif -%}
-    {%- endfor -%}
-    </div>
 
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
     {%- set cols_required = 6 -%}
     {%- set any_has_restock_price_processor = datastore.any_watches_have_processor_by_name("restock_diff") -%}
+    {%- set any_has_restock_price_processor = 0 -%}
     {%- if any_has_restock_price_processor -%}
         {%- set cols_required = cols_required + 1 -%}
     {%- endif -%}
@@ -206,26 +226,119 @@ window.watchOverviewI18n = {
         'has-error' if errored_count else '',
     ] -%}
     <div id="watch-table-wrapper" class="{{ wrapper_classes | reject('equalto', '') | join(' ') }}">
+        <div id="tag-lister" class="{% if active_tag %}active-tag{% endif %}">
+            <a id="tag-all" href="{{ filter_url(tag=None) }}" class="pure-button button-tag {{'active' if not active_tag_uuid }}">{{ _('All') }}</a>
+            <!-- tag list -->
+            {%- for uuid, tag in tags -%}
+                {%- if tag != "" -%}
+                    <a href="{{ filter_url(tag=uuid) }}" class="pure-button button-tag tag-{{ tag.title|sanitize_tag_class }} {{'active' if active_tag_uuid == uuid }}">{{ tag.title }}</a>
+                {%- endif -%}
+            {%- endfor -%}
+        </div>
+
+        <div id="list-related-buttons">
+            {# Status-view filters as a segmented control. Counts are scoped to the
+               current tag/processor/search context (computed in index()), so each
+               option only appears when it has matches in the current view. #}
+            <div class="seg" role="group" aria-label="{{ _('Filter watches') }}">
+                <a class="{{ 'active' if not request.args.get('unread') and not request.args.get('with_errors') and not request.args.get('deals') }}"
+                   href="{{ filter_url(unread=None, with_errors=None, deals=None) }}">{{ _('All') }}</a>
+                {% if unread_count %}
+                <a id="post-list-unread" class="{{ 'active' if request.args.get('unread') == '1' }}"
+                   href="{{ filter_url(unread=1, with_errors=None, deals=None) }}">{{ _('Unread') }} <span class="seg-count seg-count--unread" id="unread-tab-counter">{{ unread_count|format_int_locale }}</span></a>
+                {% endif %}
+                {# Deals appears only when a price drop has been detected in the current view. #}
+                {% if deals_count %}
+                <a id="post-list-deals" class="{{ 'active' if request.args.get('deals') == '1' }}"
+                   href="{{ filter_url(deals=1, unread=None, with_errors=None) }}">{{ _('Deals') }} <span class="seg-count seg-count--deal" id="deals-tab-counter">{{ deals_count|format_int_locale }}</span></a>
+                {% endif %}
+                {% if errored_count %}
+                <a id="post-list-with-errors" class="{{ 'active' if request.args.get('with_errors') == '1' }}"
+                   href="{{ filter_url(with_errors=1, unread=None, deals=None) }}">{{ _('With errors') }} <span class="seg-count seg-count--error" id="with-errors-tab-counter">{{ errored_count|format_int_locale }}</span></a>
+                {% endif %}
+            </div>
+            {# Processor (watch type) filter — only when more than one type is in use.
+               Counted over the current tag/search context; labels from the processor
+               registry's short badge texts. #}
+            {% if processor_counts|length > 1 %}
+            <div class="seg" role="group" aria-label="{{ _('Filter by type') }}">
+                <a class="{{ 'active' if not active_processor }}"
+                   href="{{ filter_url(processor=None) }}">{{ _('All types') }}</a>
+                {% for proc, label in processor_badge_texts.items() if proc in processor_counts %}
+                <a class="{{ 'active' if active_processor == proc }}"
+                   href="{{ filter_url(processor=proc) }}">{{ label }} <span class="seg-count">{{ processor_counts[proc]|format_int_locale }}</span></a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div id="buttons-for-all-watches">
+                {%- if unread_count -%}
+                <a id="post-list-mark-views" class="cdio-btn" href="{{ filtered_action_url('ui.mark_all_viewed') }}"><i data-feather="eye"></i>{{ _('Mark all viewed') }}</a>
+                {%- endif -%}
+                <a id="recheck-all" class="cdio-btn" href="{{ filtered_action_url('ui.form_watch_checknow') }}"><i data-feather="refresh-cw"></i>{{ _('Recheck all') }} {% if active_tag_uuid %}{{ _("in '%(title)s'", title=active_tag.title) }}{% endif %}</a>
+            </div>
+            <a title="{{ _('RSS Feed') }}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
+        </div>
+
+    <div id="checkbox-operations">
+        <button type="button" class="pure-button button-secondary button-xsmall" id="check-invert"><i data-feather="repeat" ></i>&nbsp;{{ _('Invert') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" ></i>&nbsp;{{ _('Pause') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" ></i>&nbsp;{{ _('UnPause') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="mute"><i data-feather="volume-x" ></i>&nbsp;{{ _('Mute') }}</button>
+        <button class="pure-button button-secondary button-xsmall"  name="op" value="unmute"><i data-feather="volume-2" ></i>&nbsp;{{ _('UnMute') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="recheck"><i data-feather="refresh-cw" ></i>&nbsp;{{ _('Recheck') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="assign-tag" id="checkbox-assign-tag"><i data-feather="tag" ></i>&nbsp;{{ _('Tag') }}</button>
+        <button type="button" class="pure-button button-secondary button-xsmall" id="checkbox-set-browser"
+                data-modal-title="{{ _('Set browser / fetch method for selected') }}"
+                data-modal-apply="{{ _('Apply') }}"><i data-feather="globe" ></i>&nbsp;{{ _('Browser') }}</button>
+        {% if has_proxies %}
+        <button type="button" class="pure-button button-secondary button-xsmall" id="checkbox-set-proxy"
+                data-modal-title="{{ _('Set proxy for selected') }}"
+                data-modal-apply="{{ _('Apply') }}"><i data-feather="server" ></i>&nbsp;{{ _('Proxy') }}</button>
+        {% endif %}
+        {# Hidden real operation buttons triggered by the Browser/Proxy modals once a choice is made #}
+        <button type="submit" name="op" value="set-fetch-backend" id="op-set-fetch-backend" hidden></button>
+        <button type="submit" name="op" value="set-proxy" id="op-set-proxy" hidden></button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" ></i>&nbsp;{{ _('Mark viewed') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" ></i>&nbsp;{{ _('Use default notification') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors"><i data-feather="x-circle" ></i>&nbsp;{{ _('Clear errors') }}</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="{{ _('Clear Histories') }}"
+                       data-confirm-message="{{ _('<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>') }}"
+                       {# TRANSLATORS: Universally recognized; typically left as-is. dennis-ignore: W302 #}
+                       data-confirm-button="{{ _('OK') }}"><i data-feather="trash-2" ></i>&nbsp;{{ _('Clear/reset history') }}</button>
+        <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="delete"
+                       data-requires-confirm
+                       data-confirm-type="danger"
+                       data-confirm-title="{{ _('Delete Watches?') }}"
+                       data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
+                       data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" ></i>&nbsp;{{ _('Delete') }}</button>
+        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
+    </div>
+
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
-        <table class="pure-table pure-table-striped watch-table {{ table_classes | reject('equalto', '') | join(' ') }}">
+        <div class="cdio-table-clip">
+        <table class="pure-table cdio-table watch-table {{ table_classes | reject('equalto', '') | join(' ') }}">
             <thead>
             <tr>
                 {%- set link_order = "desc" if sort_order  == 'asc' else "asc" -%}
                 {%- set arrow_span = "" -%}
-                <th><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('watchlist.index', sort='date_created', order=link_order, tag=active_tag_uuid)}}"># <span class='arrow {{link_order}}'></span></a></th>
-                <th>
-                    <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, tag=active_tag_uuid)}}"><i data-feather="pause" style="vertical-align: bottom; width: 14px; height: 14px;  margin-right: 4px;"></i><span class='arrow {{link_order}}'></span></a>
-                    &nbsp;
-                    <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, tag=active_tag_uuid)}}"><i data-feather="volume-2" style="vertical-align: bottom; width: 14px; height: 14px;  margin-right: 4px;"></i><span class='arrow {{link_order}}'></span></a>
+                <th style="white-space: nowrap; text-align: center;"><input style="vertical-align: middle" type="checkbox" id="check-all" > <a class="{{ 'active '+link_order if sort_attribute == 'date_created' else 'inactive' }}"  href="{{url_for('watchlist.index', sort='date_created', order=link_order, **active_filters)}}"># <span class='arrow {{link_order}}'></span></a></th>
+                <th id="mute-pause">
+                    <div>
+                        <a class="{{ 'active '+link_order if sort_attribute == 'paused' else 'inactive' }}" href="{{url_for('watchlist.index', sort='paused', order=link_order, **active_filters)}}"><i data-feather="pause" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
+                        <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, **active_filters)}}"><i data-feather="volume-2" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
+                    </div>
                 </th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, tag=active_tag_uuid)}}">{{ _('Website') }} <span class='arrow {{link_order}}'></span></a></th>
+                <th id="th-webpage"><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, **active_filters)}}">{{ _('Web page') }} <span class='arrow {{link_order}}'></span></a></th>
              {%- if any_has_restock_price_processor -%}
                 <th>{{ _('Restock & Price') }}</th>
              {%- endif -%}
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Last Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
-                <th><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, tag=active_tag_uuid)}}"><span class="hide-on-mobile">{{ _('Last Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
             </tr>
             </thead>
@@ -243,8 +356,8 @@ window.watchOverviewI18n = {
                 {%- set error_texts = watch.compile_error_texts(has_proxies=has_proxies) -%}
                 {%- set system_use_url_watchlist = datastore.data['settings']['application']['ui'].get('use_page_title_in_list')  -%}
                 {#  Class settings mirrored in changedetectionio/static/js/realtime.js for the frontend #}
+{#                    loop.cycle('pure-table-odd', 'pure-table-even'),#}
                 {%- set row_classes = [
-                    loop.cycle('pure-table-odd', 'pure-table-even'),
                     'processor-' ~ watch['processor'],
                     'has-error' if error_texts|length > 2 else '',
                     'paused' if watch.paused is defined and watch.paused != False else '',
@@ -261,35 +374,39 @@ window.watchOverviewI18n = {
                     'use-html-title' if system_use_url_watchlist else 'no-html-title',
                 ] -%}
             <tr id="{{ watch.uuid }}" data-watch-uuid="{{ watch.uuid }}" class="{{ row_classes | reject('equalto', '') | join(' ') }}">
-                <td class="inline checkbox-uuid" ><div><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " > <span class="counter-i">{{ loop.index+pagination.skip }}</span></div></td>
+                <td class="inline checkbox-uuid" ><div><input name="uuids"  type="checkbox" value="{{ watch.uuid}} " >{# <span class="counter-i">{{ loop.index+pagination.skip }}</span>#}</div></td>
                 <td class="inline watch-controls">
                     <div>
-                    <a class="ajax-op state-off pause-toggle" data-op="pause" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='pause.svg')}}" alt="{{ _('Pause checks') }}" title="{{ _('Pause checks') }}" class="icon icon-pause" ></a>
-                    <a class="ajax-op state-on pause-toggle"  data-op="pause" style="display: none" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='play.svg')}}" alt="{{ _('UnPause checks') }}" title="{{ _('UnPause checks') }}" class="icon icon-unpause" ></a>
-                    <a class="ajax-op state-off mute-toggle" data-op="mute" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ _('Mute notification') }}" title="{{ _('Mute notification') }}" class="icon icon-mute" ></a>
-                    <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><img src="{{url_for('static_content', group='images', filename='bell-off.svg')}}" alt="{{ _('UnMute notification') }}" title="{{ _('UnMute notification') }}" class="icon icon-mute" ></a>
+                        <a class="ajax-op state-off pause-toggle" data-op="pause" aria-label="{{ _('Pause checks') }}" title="{{ _('Pause checks') }}" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><i data-feather="pause" class="icon icon-pause"></i></a>
+                        <a class="ajax-op state-on pause-toggle"  data-op="pause" style="display: none" aria-label="{{ _('UnPause checks') }}" title="{{ _('UnPause checks') }}" href="{{url_for('watchlist.index', op='pause', uuid=watch.uuid, tag=active_tag_uuid)}}"><i data-feather="play" class="icon icon-unpause"></i></a>
+                        <a class="ajax-op state-off mute-toggle" data-op="mute" aria-label="{{ _('Mute notification') }}" title="{{ _('Mute notification') }}" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><i data-feather="bell" class="icon icon-mute"></i></a>
+                        <a class="ajax-op state-on mute-toggle" data-op="mute"  style="display: none" aria-label="{{ _('UnMute notification') }}" title="{{ _('UnMute notification') }}" href="{{url_for('watchlist.index', op='mute', uuid=watch.uuid, tag=active_tag_uuid)}}"><i data-feather="bell-off" class="icon icon-mute"></i></a>
                     </div>
                 </td>
 
                 <td class="title-col inline">
-                    <div class="flex-wrapper">
+                    <div class="grid-wrapper">
                     {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
-                        <div>
-                            {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
-                            <img alt="Favicon thumbnail"
-                                 class="favicon lazy-favicon"
-                                 loading="lazy"
-                                 decoding="async"
-                                 fetchpriority="low"
-                                 {% if favicon %}
-                                 data-src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"
-                                 {% endif %}
-                                 src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E'>
+                        <div class="favicon">
+                            <a target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">
+                                {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
+                                <img alt="Favicon thumbnail"
+                                     class="favicon lazy-favicon"
+                                     loading="lazy"
+                                     decoding="async"
+                                     title="{{ _('Goto web page') }}"
+                                     alt="{{ _('Goto web page') }}"
+                                     fetchpriority="low"
+                                     {% if favicon %}
+                                     data-src="{{url_for('static_content', group='favicon', filename=watch.uuid)}}"
+                                     {% endif %}
+                                     src='data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="7.087" height="7.087" viewBox="0 0 7.087 7.087"%3E%3Ccircle cx="3.543" cy="3.543" r="3.279" stroke="%23e1e1e1" stroke-width="0.45" fill="none" opacity="0.74"/%3E%3C/svg%3E'>
+                            </a>
                         </div>
                     {%  endif %}
-                        <div>
+                        <div class="watch-text-info">
                             {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
-                                <span class="processor-badge processor-badge-{{ watch['processor'] }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</span>
+                                <a href="{{ url_for('watchlist.index', tag=active_tag_uuid, processor=watch['processor']) }}" class="processor-badge processor-badge-{{ watch['processor'] }}{{ ' active' if active_processor == watch['processor'] else '' }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</a>
                             {%- endif -%}
                             <span class="watch-title">
                                 {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
@@ -297,8 +414,12 @@ window.watchOverviewI18n = {
                                 {% else %}
                                     {{ watch.get('title') or watch.link }}
                                 {% endif %}
-                               <a class="external" target="_blank" rel="noopener noreferrer" title="{{ watch.link }}" href="{{ url_for('ui.form_watch_open', uuid=watch.uuid) }}">&nbsp;</a>
+                                <a class="external" target="_blank" rel="noopener noreferrer" title="{{ watch.link }}" href="{{ url_for('ui.form_watch_open', uuid=watch.uuid) }}">&nbsp;</a>
                             </span>
+
+                            {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
+                              <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
+                            {%- endfor -%}
                             <div class="error-text" style="display:none;">{{ error_texts|safe }}</div>
                             {%- if watch['processor'] == 'text_json_diff'  -%}
                                 {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
@@ -306,9 +427,6 @@ window.watchOverviewI18n = {
                                 {%- endif -%}
                             {%- endif -%}
 
-                            {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
-                              <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
-                            {%- endfor -%}
                         </div>
                     <div class="status-icons">
                             <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="{{ _('Create a link to share watch config with others') }}" ></a>
@@ -318,90 +436,86 @@ window.watchOverviewI18n = {
                             {%- endif -%}
                             {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
                             {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
+                    </div>
+{%- if watch['processor'] == 'restock_diff'  -%}
+    {#-  @todo - this could be injected somehow watch.extra_row_info or something -#}
+                    <div class="restock-info-wrap">
+                            {%- if watch.has_restock_info -%}
+                                <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="{{ _('Detecting restock and price') }}">
+                                    <!-- maybe some object watch['processor'][restock_diff] or.. -->
+                                     {%- if watch['restock']['in_stock']-%}  {{ _('In stock') }} {%- else-%}  {{ _('Not in stock') }} {%- endif -%}
+                                </span>
+                            {%- endif -%}
 
+                            {%- if watch.get('restock') and watch['restock'].get('price') -%}
+                                {%- set restock = watch['restock'] -%}
+                                {%- set price = restock.get('price') -%}
+                                {%- set currency = restock.get('currency') if restock.get('currency','') else '' -%}
+
+                                {%- if price is not none and (price|string)|regex_search('\d') -%}
+                                  <span class="restock-label price" title="{{ _('Price') }}">
+                                  {# @todo: make parse_currency/parse_decimal aware of the locale of the actual web page and use that instead changedetectionio/processors/restock_diff/__init__.py #}
+                                    {%- if price is number -%}{# It's a number so we can convert it to their locale' #}
+                                      {{ price|format_number_locale }} {{ currency }}<!-- as number -->
+                                    {%- else -%}{# It's totally fine if it arrives as something else, the website might be something weird in this field #}
+                                      {{ price }} {{ currency }}<!-- as string -->
+                                    {%- endif -%}
+                                  </span>
+                                  {%- set price_change_pct = restock.get_price_change_percent() -%}
+                                  {%- if price_change_pct is not none -%}
+                                    {%- set prev_price = restock.get('last_price') -%}
+                                    {%- set prev_disp = (prev_price|format_number_locale ~ ' ' ~ currency) if prev_price is number else prev_price -%}
+                                    {%- if price_change_pct < 0 -%}
+                                      <span class="price-change down" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▼ {{ '%g'|format(price_change_pct) }}%</span>
+                                    {%- else -%}
+                                      <span class="price-change up" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▲ +{{ '%g'|format(price_change_pct) }}%</span>
+                                    {%- endif -%}
+                                  {%- endif -%}
+                                {%- endif -%}
+                            {%- elif not watch.has_restock_info -%}
+                                <span class="restock-label error">{{ _('No information') }}</span>
+                            {%- endif -%}
                     </div>
-                    </div>
+{%- endif -%}
+                </div>
+
                 </td>
+{#
 {%- if any_has_restock_price_processor -%}
                 <td class="restock-and-price">
-                    {%- if watch['processor'] == 'restock_diff'  -%}
-                        {%- if watch.has_restock_info -%}
-                            <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="{{ _('Detecting restock and price') }}">
-                                <!-- maybe some object watch['processor'][restock_diff] or.. -->
-                                 {%- if watch['restock']['in_stock']-%}  {{ _('In stock') }} {%- else-%}  {{ _('Not in stock') }} {%- endif -%}
-                            </span>
-                        {%- endif -%}
-
-                        {%- if watch.get('restock') and watch['restock'].get('price') -%}
-                            {%- set restock = watch['restock'] -%}
-                            {%- set price = restock.get('price') -%}
-                            {%- set cur = restock.get('currency','') -%}
-
-                            {%- if price is not none and (price|string)|regex_search('\d') -%}
-                              <span class="restock-label price" title="{{ _('Price') }}">
-                              {# @todo: make parse_currency/parse_decimal aware of the locale of the actual web page and use that instead changedetectionio/processors/restock_diff/__init__.py #}
-                                {%- if price is number -%}{# It's a number so we can convert it to their locale' #}
-                                  {{ price|format_number_locale }} {{ cur }}<!-- as number -->
-                                {%- else -%}{# It's totally fine if it arrives as something else, the website might be something weird in this field #}
-                                  {{ price }} {{ cur }}<!-- as string -->
-                                {%- endif -%}
-                              </span>
-                            {%- endif -%}
-                        {%- elif not watch.has_restock_info -%}
-                            <span class="restock-label error">{{ _('No information') }}</span>
-                        {%- endif -%}
-                    {%- endif -%}
                 </td>
 {%- endif -%}
+#}
             {#last_checked becomes fetch-start-time#}
-                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ _('Last Checked') }}">
+                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ _('Checked') }}">
                     <div class="spinner-wrapper" style="display:none;" >
                         <span class="spinner"></span><span class="status-text">&nbsp;{{ watch['__check_status'] or _('Checking now') }}</span>
                     </div>
                     <span class="innertext">{{watch|format_last_checked_time|safe}}</span>
                 </td>
-                <td class="last-changed" data-timestamp="{{ watch.last_changed }}" data-label="{{ _('Last Changed') }}">{%- if watch.history_n >=2 and watch.last_changed >0 -%}
+                <td class="last-changed" data-timestamp="{{ watch.last_changed }}" data-label="{{ _('Changed') }}">
+                    <span class="innertext">{%- if watch.history_n >=2 and watch.last_changed >0 -%}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {%- else -%}
                     {{ _('Not yet') }}
                     {%- endif -%}
+                    </span>
                 </td>
                 <td class="buttons">
                     <div>
                     {%- set target_attr = ' target="' ~ watch.uuid ~ '"' if datastore.data['settings']['application']['ui'].get('open_diff_in_new_tab') else '' -%}
-                    <a href="" class="already-in-queue-button recheck pure-button pure-button-primary" style="display: none;" disabled="disabled">{{ _('Queued') }}</a>
-                    <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" data-op='recheck' class="ajax-op recheck pure-button pure-button-primary">{{ _('Recheck') }}</a>
-                    <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="pure-button pure-button-primary">{{ _('Edit') }}</a>
-                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>
-                    <a href="{{ url_for('ui.ui_preview.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="pure-button pure-button-primary preview-link" style="display: none;">{{ _('Preview') }}</a>
+                    <a href="" class="already-in-queue-button recheck cdio-btn cdio-btn--primary cdio-btn--sm" style="display: none;" disabled="disabled"><i data-feather="clock"></i>{{ _('Queued') }}</a>
+                    <a href="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}" data-op='recheck' class="ajax-op recheck cdio-btn cdio-btn--primary cdio-btn--sm"><i data-feather="refresh-cw"></i>{{ _('Recheck') }}</a>
+                    <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="cdio-btn cdio-btn--primary cdio-btn--sm">{{ _('Edit') }}</a>
+                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}" data-processor-data-url="{{ url_for('ui.ui_diff.diff_history_page_processor_data', uuid=watch.uuid) }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>
+                    <a href="{{ url_for('ui.ui_preview.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm preview-link" style="display: none;">{{ _('Preview') }}</a>
                     </div>
                 </td>
             </tr>
             {%- endfor -%}
             </tbody>
         </table>
-        <ul id="post-list-buttons">
-            <li id="post-list-with-errors" style="display: none;" >
-                <a href="{{url_for('watchlist.index', with_errors=1, tag=request.args.get('tag')) }}" class="pure-button button-tag button-error">{{ _('With errors') }} ({{ errored_count }})</a>
-            </li>
-            <li id="post-list-mark-views" style="display: none;" >
-                <a href="{{url_for('ui.mark_all_viewed',with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag " id="mark-all-viewed">{{ _('Mark all viewed') }}</a>
-            </li>
-        {%-  if active_tag_uuid -%}
-            <li id="post-list-mark-views-tag">
-                <a href="{{url_for('ui.mark_all_viewed', tag=active_tag_uuid) }}" class="pure-button button-tag " id="mark-all-viewed">{{ _("Mark all viewed in '%(title)s'", title=active_tag.title) }}</a>
-            </li>
-        {%-  endif -%}
-            <li id="post-list-unread" style="display: none;" >
-                <a href="{{url_for('watchlist.index', unread=1, tag=request.args.get('tag')) }}" class="pure-button button-tag">{{ _('Unread') }} (<span id="unread-tab-counter">{{ unread_changes_count }}</span>)</a>
-            </li>
-            <li>
-               <a href="{{ url_for('ui.form_watch_checknow', tag=active_tag_uuid, with_errors=request.args.get('with_errors',0)) }}" class="pure-button button-tag" id="recheck-all">{{ _('Recheck all') }} {% if active_tag_uuid %}  {{ _("in '%(title)s'", title=active_tag.title) }}{%endif%}</a>
-            </li>
-            <li>
-                <a href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
-            </li>
-        </ul>
+        </div>
         {{ pagination.links }}
     </div>
     </form>

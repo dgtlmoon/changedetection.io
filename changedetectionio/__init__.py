@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 # Semver means never use .01, or 00. Should be .1.
-__version__ = '0.55.7'
+__version__ = '0.55.8'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -635,6 +635,7 @@ def main():
                     all_paused=datastore.data['settings']['application'].get('all_paused', False),
                     all_muted=datastore.data['settings']['application'].get('all_muted', False),
                     llm_configured=bool(_get_llm_config(datastore)),
+                    unread_changes_count=datastore.unread_changes_count,
                     )
 
     # Monitored websites will not receive a Referer header when a user clicks on an outgoing link.
