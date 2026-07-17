@@ -16,7 +16,12 @@
         <h5 style="margin-top:1.5em">{{ _('Your browsers') }}</h5>
         {% if browser_configs %}
         <table class="pure-table browsers-table" style="width:100%; margin-top:0.5em;">
-            <thead><tr><th style="width:5em; text-align:center">{{ _('Default') }}</th><th>{{ _('Name') }}</th><th>{{ _('Setup') }}</th><th></th></tr></thead>
+            <thead><tr>
+                <th style="width:5em; text-align:center">{{ _('Default') }}</th>
+                <th>{{ _('Name') }}</th>
+                <th>{{ _('Setup') }}</th>
+                <th></th>
+            </tr></thead>
             <tbody>
                 {% for cid, entry in browser_configs.items() %}
                 {% set bc = entry.get('browser_config') or {} %}
@@ -61,7 +66,13 @@
         <h5 style="margin-top:2em">{{ _('Available browsers') }}</h5>
         {% if base_fetchers %}
         <table class="pure-table browsers-table" style="width:100%; margin-top:0.5em;">
-            <thead><tr><th style="width:5em; text-align:center">{{ _('Default') }}</th><th>{{ _('Browser') }}</th><th>{{ _('Capabilities') }}</th><th></th><th></th></tr></thead>
+            <thead><tr>
+                <th style="width:5em; text-align:center">{{ _('Default') }}</th>
+                <th>{{ _('Browser') }}</th>
+                <th>{{ _('Capabilities') }}</th>
+                <th></th>
+                <th></th>
+            </tr></thead>
             <tbody>
                 {% for f in base_fetchers %}
                 {% set fbc = f.browser_config or {} %}
