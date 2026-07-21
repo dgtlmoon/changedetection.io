@@ -16,9 +16,11 @@ def get_browser_fetcher_backend():
     one (supports screenshots + visual-selector xpath data) if one is actually usable
     here, otherwise None.
 
-    "Usable" means both: a fetcher class advertising browser capabilities is registered,
-    AND a browser driver is configured in the environment to connect to. Without a driver
-    the class still reports the capability but can't actually fetch.
+    "Usable" means all of: a fetcher class advertising browser capabilities is registered,
+    a browser driver is configured in the environment to connect to (without one the class
+    still reports the capability but can't actually fetch), AND the engine is directly
+    selectable (ready_to_use) rather than a base-only engine like html_playwright_builtin,
+    which is a template for the "Add variation" flow and can't be set as the default browser.
     """
     if not (os.getenv('PLAYWRIGHT_DRIVER_URL') or os.getenv('WEBDRIVER_URL')):
         return None
@@ -27,7 +29,10 @@ def get_browser_fetcher_backend():
     from changedetectionio.content_fetchers.base import FetcherCapabilities
 
     for name, _description in content_fetchers.available_fetchers():
-        caps = FetcherCapabilities.from_fetcher(getattr(content_fetchers, name, None))
+        cls = getattr(content_fetchers, name, None)
+        if cls is None or not getattr(cls, 'ready_to_use', True):
+            continue
+        caps = FetcherCapabilities.from_fetcher(cls)
         if caps.supports_screenshots and caps.supports_xpath_element_data:
             return name
 
