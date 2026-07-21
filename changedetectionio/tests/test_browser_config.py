@@ -571,3 +571,48 @@ def test_group_override_with_builtin_browser(client, live_server, measure_memory
     uuid = datastore.add_watch(url="https://example.com", tag_uuids=[tag_uuid])
     override = resolve_browser_config_override(datastore.data['watching'][uuid], datastore)
     assert override is not None and override['config_id'] == 'html_webdriver'
+
+
+def test_browsers_json_corruption_is_tolerated(tmp_path):
+    """browsers.json can be hand-edited / restored / corrupted, so BrowserConfigStore.all() is the
+    single read-side validation gate: it never lets a malformed file take down its consumers.
+    Good entries survive (normalized), bad entries are dropped, extra keys are tolerated."""
+    import json
+    from changedetectionio.model.browser_config import BrowserConfigStore
+
+    def store_with(text):
+        p = tmp_path / "browsers.json"
+        p.write_text(text)
+        return BrowserConfigStore(str(tmp_path), lock=None)
+
+    # Syntactically broken JSON -> empty, never raises
+    assert store_with("{ not valid json ,,,").all() == {}
+
+    # Top level isn't an id->entry object (a list) -> empty, never raises
+    assert store_with(json.dumps([1, 2, 3])).all() == {}
+
+    # An entry that isn't even a dict -> dropped, never raises
+    assert store_with(json.dumps({"x": "i am a string"})).all() == {}
+
+    # An entry with a bad-typed inner field -> dropped
+    assert store_with(json.dumps({
+        "x": {"label": "L", "base_fetcher": "html_requests",
+              "browser_config": {"viewport_width": "not-a-number"}}
+    })).all() == {}
+
+    # Unknown extra keys (top level AND inside browser_config) are tolerated for version skew
+    good = store_with(json.dumps({
+        "keep": {"label": "Good", "base_fetcher": "html_requests", "is_default": True,
+                 "browser_config": {"timeout": 5, "future_field": "ignored"}}
+    })).all()
+    assert list(good) == ["keep"]
+    assert good["keep"]["label"] == "Good"
+    assert good["keep"]["browser_config"]["timeout"] == 5
+    assert "future_field" not in good["keep"]["browser_config"]  # unknown inner key stripped
+
+    # Mixed file: the good entry survives, only the bad one is dropped
+    mixed = store_with(json.dumps({
+        "good": {"label": "G", "base_fetcher": "html_requests", "browser_config": {}},
+        "bad": "nope",
+    })).all()
+    assert list(mixed) == ["good"]

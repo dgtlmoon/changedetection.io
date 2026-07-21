@@ -29,7 +29,7 @@ from os import path
 from typing import List, Optional
 
 from loguru import logger
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 try:
     import orjson
@@ -172,7 +172,15 @@ class BrowserConfigStore:
 
     # ---- low level load/save ----
     def all(self):
-        """Raw dict {id: entry-dict}. Empty dict when the file is absent. mtime-cached."""
+        """Validated dict {id: entry-dict}. Empty dict when the file is absent. mtime-cached.
+
+        This is the single read-side validation gate: browsers.json can be hand-edited, restored
+        from an older/newer version, or corrupted, so every entry is coerced through
+        BrowserConfigEntry here rather than trusted raw. A malformed entry is dropped (with a
+        warning) instead of crashing every consumer downstream - callers get clean, normalized
+        dicts with the expected shape. Unknown extra keys inside browser_config are still tolerated
+        (FetcherConfig has no extra='forbid') for cross-version compatibility.
+        """
         try:
             mtime = os.path.getmtime(self._path)
         except OSError:
@@ -191,8 +199,19 @@ class BrowserConfigStore:
         except Exception as e:
             logger.error(f"Could not load browsers.json: {e}")
             return {}
-        self._cache, self._cache_mtime = data, mtime
-        return data
+        # Top level must be an id->entry mapping; anything else (a list, a scalar) is corrupt.
+        if not isinstance(data, dict):
+            logger.error(f"browsers.json is not a JSON object (got {type(data).__name__}) - ignoring")
+            self._cache, self._cache_mtime = {}, mtime
+            return {}
+        clean = {}
+        for cid, raw in data.items():
+            try:
+                clean[cid] = BrowserConfigEntry(**raw).model_dump()
+            except (ValidationError, TypeError) as e:
+                logger.warning(f"Dropping malformed browsers.json entry '{cid}': {e}")
+        self._cache, self._cache_mtime = clean, mtime
+        return clean
 
     def _save(self, configs):
         # Deferred import avoids a model -> store import cycle at module load.
