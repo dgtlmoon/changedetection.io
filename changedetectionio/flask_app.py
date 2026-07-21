@@ -196,6 +196,14 @@ def get_darkmode_state():
 def get_css_version():
     return __version__
 
+@app.template_global()
+def browser_config_locked():
+    """True when LOCKED_BROWSER_CONFIG is set: the /browsers page is still listed and you can
+    still choose the default browser, but adding / editing / removing browser configs is
+    disabled - the add/edit/remove buttons are hidden and those routes reject the request.
+    Loading and using browsers.json is unaffected."""
+    return bool(strtobool(os.getenv('LOCKED_BROWSER_CONFIG', 'False')))
+
 @app.template_global('filtered_action_url')
 def _filtered_action_url(endpoint, **overrides):
     """Build a URL to `endpoint` carrying the CURRENT watch-list filters (query args)

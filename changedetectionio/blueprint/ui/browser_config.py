@@ -7,13 +7,24 @@ datastore.browser_config_store.
 
 Registered as a sub-blueprint of `ui`, so endpoints are `ui.browser_config.*`.
 """
+import os
+
 from flask import Blueprint, request, render_template, redirect, url_for, flash
 from flask_babel import gettext
 from loguru import logger
 from pydantic import ValidationError
 
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.strtobool import strtobool
 from changedetectionio.flask_app import login_optionally_required
+
+
+def _browser_config_locked():
+    """LOCKED_BROWSER_CONFIG: viewing + choosing the default browser stay available, but
+    adding / editing / removing configs is disabled. Mirrors the browser_config_locked()
+    template global (same env + strtobool contract) - kept here to avoid importing view
+    helpers back into the blueprint."""
+    return bool(strtobool(os.getenv('LOCKED_BROWSER_CONFIG', 'False')))
 
 
 def _base_fetchers(datastore):
@@ -136,6 +147,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def browser_config_add(base_fetcher):
         """Add a browser config *variation* based on a specific engine (from the row's link).
         The base is fixed by the URL, so the form's fields gate correctly for that engine."""
+        if _browser_config_locked():
+            flash(gettext("Browser configuration is locked on this instance"), 'error')
+            return redirect(url_for('ui.browser_config.browsers_overview'))
         from .form_browseroptions import BrowserOptionsForm
         from changedetectionio import content_fetchers
         from changedetectionio.content_fetchers.base import FetcherCapabilities
@@ -172,6 +186,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_config_blueprint.route("/browsers/edit/<string:config_id>", methods=['GET', 'POST'])
     @login_optionally_required
     def browser_config_edit(config_id):
+        if _browser_config_locked():
+            flash(gettext("Browser configuration is locked on this instance"), 'error')
+            return redirect(url_for('ui.browser_config.browsers_overview'))
         from .form_browseroptions import BrowserOptionsForm
         from changedetectionio.model.browser_config import list_builtin_browsers
 
@@ -218,6 +235,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_config_blueprint.route("/browsers/remove/<string:config_id>", methods=['POST'])
     @login_optionally_required
     def browser_config_remove(config_id):
+        if _browser_config_locked():
+            flash(gettext("Browser configuration is locked on this instance"), 'error')
+            return redirect(url_for('ui.browser_config.browsers_overview'))
         if datastore.browser_config_store.delete(config_id):
             flash(gettext("Browser config removed"))
         else:

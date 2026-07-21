@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-21 17:23+0200\n"
+"POT-Creation-Date: 2026-07-21 17:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -560,6 +560,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default browser"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set default browser"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -1613,6 +1617,10 @@ msgid "Language set to auto-detect from browser"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser configuration is locked on this instance"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
 msgid "Unknown base browser"
 msgstr ""
 
@@ -1870,6 +1878,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
 msgid "Browsers"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"These are the available browsers. Adding, editing and removing browsers is locked on this instance — you can still "
+"choose the default browser below."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html

@@ -5,9 +5,15 @@
     <div class="box-wrap inner">
 
         <h4 style="margin-top:0">{{ _('Browsers') }}</h4>
+        {% if browser_config_locked() %}
+        <p class="pure-form-message-inline">
+            {{ _('These are the available browsers. Adding, editing and removing browsers is locked on this instance — you can still choose the default browser below.') }}
+        </p>
+        {% else %}
         <p class="pure-form-message-inline">
             {{ _('These are the available browsers. Save a variation of one (its screen size, language, timezone…) with <strong>+ Add variation</strong> and reuse it on any watch or group — your variations appear nested (↳) under the browser they extend.')|safe }}
         </p>
+        {% endif %}
         <p class="pure-form-message-inline">
             {{ _('The <strong>Default browser</strong> (chosen with the radio button) is used by every watch unless the watch — or its group — picks another one. This is the same value shown on the <a href="%(url)s#fetching">Settings → Fetching</a> page.', url=url_for('settings.settings_page'))|safe }}
         </p>
@@ -49,6 +55,8 @@
                         {% if not f.is_browser %}<span class="browser-chip">{{ _('plain text, no JavaScript') }}</span>{% endif %}
                     </td>
                     <td style="text-align:right; white-space:nowrap">
+                        {# When browser config is locked, only setting the default is allowed - hide edit/add. #}
+                        {% if not browser_config_locked() %}
                         {# Engines with configurable behaviour can be edited (browser fields, or HTTP options). #}
                         {% if f.ready_to_use and f.configurable %}
                             <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=f.name) }}">{{ _('Edit') }}</a>
@@ -56,6 +64,7 @@
                         {# "Add variation" for any configurable engine - browsers or the plain client. #}
                         {% if f.configurable %}
                         <a class="pure-button button-small pure-button-primary" href="{{ url_for('ui.browser_config.browser_config_add', base_fetcher=f.name) }}">+ {{ _('Add variation') }}</a>
+                        {% endif %}
                         {% endif %}
                     </td>
                 </tr>
@@ -84,12 +93,14 @@
                         {% if bc.get('block_resource_types') %}<span class="browser-chip">{{ _('no') }} {{ bc.block_resource_types|join(', ') }}</span>{% endif %}
                     </td>
                     <td style="text-align:right; white-space:nowrap">
+                        {% if not browser_config_locked() %}
                         <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=v.id) }}">{{ _('Edit') }}</a>
                         <form method="POST" action="{{ url_for('ui.browser_config.browser_config_remove', config_id=v.id) }}" style="display:inline"
                               onsubmit="return confirm('{{ _('Remove this browser?') }}');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="pure-button button-small button-error" type="submit">{{ _('Remove') }}</button>
                         </form>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

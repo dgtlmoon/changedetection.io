@@ -616,3 +616,78 @@ def test_browsers_json_corruption_is_tolerated(tmp_path):
         "bad": "nope",
     })).all()
     assert list(mixed) == ["good"]
+
+
+def test_locked_browser_config_flag(monkeypatch):
+    """LOCKED_BROWSER_CONFIG gates the /browsers editing UI. browser_config_locked() is the single
+    source of truth used by BOTH the blueprint registration guard and every template that links to
+    the endpoint, so verify the env->bool contract here."""
+    from changedetectionio.flask_app import browser_config_locked
+
+    monkeypatch.delenv('LOCKED_BROWSER_CONFIG', raising=False)
+    assert browser_config_locked() is False  # absent -> unlocked (default)
+
+    for truthy in ('true', '1', 'yes', 'True'):
+        monkeypatch.setenv('LOCKED_BROWSER_CONFIG', truthy)
+        assert browser_config_locked() is True, truthy
+
+    for falsy in ('false', '0', 'no', ''):
+        monkeypatch.setenv('LOCKED_BROWSER_CONFIG', falsy)
+        assert browser_config_locked() is False, repr(falsy)
+
+
+def test_browsers_page_registered_and_reachable(client, live_server, measure_memory_usage, datastore_path):
+    """Sanity: the /browsers page is always registered and reachable (locking only disables the
+    add/edit/remove actions, it never withdraws the page - see the lock test below)."""
+    endpoints = {r.endpoint for r in client.application.url_map.iter_rules()}
+    assert 'ui.browser_config.browsers_overview' in endpoints
+    assert client.get(url_for('ui.browser_config.browsers_overview')).status_code == 200
+
+
+def test_locked_browser_config_blocks_mutations(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """LOCKED_BROWSER_CONFIG keeps /browsers viewable and set-default working, but disables
+    add/edit/remove - both the UI affordances AND the routes (defends against a direct POST).
+    The route guards read the env per-request, so toggling it here exercises the real path."""
+    datastore = client.application.config.get('DATASTORE')
+
+    # A pre-existing user variation to attempt edit/remove on (created while unlocked)
+    cid = datastore.browser_config_store.add(label="Prelocked", base_fetcher="html_requests",
+                                             browser_config={'timeout': 7})
+
+    monkeypatch.setenv('LOCKED_BROWSER_CONFIG', 'true')
+
+    # Overview still renders and lists the browser, but offers no add/edit/remove affordances
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    assert res.status_code == 200
+    assert b"Prelocked" in res.data
+    assert url_for("ui.browser_config.browser_config_edit", config_id=cid).encode() not in res.data
+    assert url_for("ui.browser_config.browser_config_remove", config_id=cid).encode() not in res.data
+    assert b"Add variation" not in res.data
+    # ...while the set-default control is still present
+    assert url_for("ui.browser_config.browser_config_set_default", config_id=cid).encode() in res.data
+
+    # Add is rejected server-side, nothing is created
+    res = _add_browser(client, label="ShouldNotExist", base_fetcher="html_requests")
+    assert b"locked" in res.data.lower()
+    assert not any(e.get('label') == 'ShouldNotExist' for e in datastore.browser_config_store.all().values())
+
+    # Edit is rejected, the entry is untouched
+    res = client.post(url_for("ui.browser_config.browser_config_edit", config_id=cid),
+                      data={'label': 'Renamed', 'base_fetcher': 'html_requests', 'timeout': 99,
+                            'screenshot_format': 'JPEG'},
+                      follow_redirects=True)
+    assert b"locked" in res.data.lower()
+    assert datastore.browser_config_store.get(cid)['label'] == 'Prelocked'
+
+    # Remove is rejected, the entry survives
+    res = client.post(url_for("ui.browser_config.browser_config_remove", config_id=cid), follow_redirects=True)
+    assert b"locked" in res.data.lower()
+    assert datastore.browser_config_store.get(cid) is not None
+
+    # Choosing the default IS still allowed
+    client.post(url_for("ui.browser_config.browser_config_set_default", config_id=cid), follow_redirects=True)
+    assert datastore.data['settings']['application']['fetch_backend'] == cid
+
+    # Clean up so the shared datastore doesn't leak this config into other tests
+    monkeypatch.delenv('LOCKED_BROWSER_CONFIG', raising=False)
+    datastore.browser_config_store.delete(cid)

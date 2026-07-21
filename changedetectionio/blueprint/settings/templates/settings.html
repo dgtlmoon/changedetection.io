@@ -104,11 +104,13 @@
                     <label>{{ _('Default browser') }}</label>
                     <div class="default-browser-summary" style="margin:0.3em 0;">
                         <strong style="margin-right:0.75em;">{{ default_browser_label }}</strong>
-                        <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browsers_overview') }}">{{ _('Manage browsers &amp; set default')|safe }}</a>
+                        <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browsers_overview') }}">{% if browser_config_locked() %}{{ _('Set default browser') }}{% else %}{{ _('Manage browsers &amp; set default')|safe }}{% endif %}</a>
                     </div>
                     <span class="pure-form-message-inline">
                         <p>{{ _('Every watch uses this browser unless it (or its group) picks another one.')|safe }}</p>
+                        {% if not browser_config_locked() %}
                         <p>{{ _('Add screen sizes, languages, timezones and choose the default on the <a href="%(url)s">Browsers</a> page.', url=url_for('ui.browser_config.browsers_overview'))|safe }}</p>
+                        {% endif %}
                     </span>
                 </div>
                 <fieldset class="pure-group" id="webdriver-override-options">
@@ -133,7 +135,9 @@
                 </div>
                 <div class="pure-control-group">
                     <span class="pure-form-message-inline">
+                        {% if not browser_config_locked() %}
                         <p>{{ _('The plain-requests timeout and the default User-Agent are now set per browser on the <a href="%(url)s">Browsers</a> page (Edit the browser, under “HTTP request options”).', url=url_for('ui.browser_config.browsers_overview'))|safe }}</p>
+                        {% endif %}
                         <p>{{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.</p>
                     </span>
                 </div>
