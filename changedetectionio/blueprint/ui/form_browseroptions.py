@@ -83,7 +83,7 @@ class BrowserOptionsForm(Form):
 
     def to_fetcher_config_dict(self):
         """Map the FetcherConfig-named fields to a plain dict for FetcherConfig(**...)."""
-        return {
+        data = {
             'viewport_width': self.viewport_width.data,
             'viewport_height': self.viewport_height.data,
             'locale': (self.locale.data or None),
@@ -93,6 +93,10 @@ class BrowserOptionsForm(Form):
             'delete_created_files': bool(self.delete_created_files.data),
             'block_resource_types': self.block_resource_types.data or [],
             'block_url_patterns': self.block_url_patterns.data or [],
-            'timeout': self.timeout.data,
             'user_agent': (self.user_agent.data or None),
         }
+        # Blank timeout means "use the model default" (DEFAULT_REQUEST_TIMEOUT_SECONDS), so omit the
+        # key entirely rather than passing None (which would override that default).
+        if self.timeout.data is not None:
+            data['timeout'] = self.timeout.data
+        return data

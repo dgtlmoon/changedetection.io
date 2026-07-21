@@ -39,6 +39,14 @@ except ImportError:
     HAS_ORJSON = False
 
 
+# Default plain-HTTP-client request timeout (seconds). Fixed, NOT read from the environment at
+# call time: the old settings.requests.timeout was baked once at startup, and resolving it lazily
+# per-fetch made tests (which set DEFAULT_SETTINGS_REQUESTS_TIMEOUT low) time out on slow endpoints.
+# A user who wants a different value sets it per-browser on the /browsers tab; upgrades preserve the
+# old global value via update_35.
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 45
+
+
 class BrowserConfigDoesntExist(Exception):
     """A watch/group references a browser config id that no longer exists in browsers.json."""
     def __init__(self, config_id, uuid=None):
@@ -86,7 +94,11 @@ class FetcherConfig(BaseModel):
     # Delete the per-fetch temp profile after use (capability-gated by supports_delete_created_files)
     delete_created_files: bool = True
     # timeout: plain HTTP client only (capability-gated by supports_request_timeout).
-    timeout: Optional[int] = None              # request timeout in seconds; None -> global default
+    # Defaults to DEFAULT_REQUEST_TIMEOUT_SECONDS (45s) so a fresh install / built-in html_requests
+    # config has a sane, browser-like read timeout without relying on any global setting. An
+    # existing install's previous settings.requests.timeout is carried onto its html_requests
+    # config by update_35 (the migration hook), so upgrades keep whatever the user had.
+    timeout: Optional[int] = DEFAULT_REQUEST_TIMEOUT_SECONDS   # request timeout in seconds
     # user_agent: honoured by every engine (capability supports_custom_user_agent) via the
     # request_headers User-Agent channel.
     user_agent: Optional[str] = None           # overrides the User-Agent header for this profile

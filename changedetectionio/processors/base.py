@@ -257,10 +257,11 @@ class difference_detection_processor():
         for header_name in request_headers:
             request_headers.update({header_name: jinja_render(template_str=request_headers.get(header_name))})
 
-        # Requests timeout was migrated out of global settings into the plain client's browser
-        # config (update_35); fall back to the env default when neither is set. Browsers ignore
-        # this (they use their own navigation timeouts); the requests fetcher applies its
-        # browser_config.timeout override on top.
+        # Requests timeout now lives on the plain client's browser config (FetcherConfig.timeout,
+        # default DEFAULT_REQUEST_TIMEOUT_SECONDS; existing installs migrated by update_35), and the
+        # requests fetcher applies that via effective_timeout(). This is only a defensive base value
+        # for the unusual case where no browser config is resolved at all; browsers ignore it (they
+        # use their own navigation timeouts).
         timeout = self.datastore.data['settings']['requests'].get('timeout') \
             or int(os.getenv('DEFAULT_SETTINGS_REQUESTS_TIMEOUT', 45))
 
