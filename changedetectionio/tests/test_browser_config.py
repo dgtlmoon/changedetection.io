@@ -74,6 +74,12 @@ def test_browser_config_crud(client, live_server, measure_memory_usage, datastor
     assert configs[cid]['browser_config']['locale'] == 'en-GB'
     assert configs[cid]['browser_config']['viewport_width'] == 1920
 
+    # The variation renders nested (↳) under its base browser row, not in a separate table
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    assert b"browser-variation-row" in res.data
+    assert b"Desktop Full-HD" in res.data
+    assert b"Your browsers" not in res.data  # the old separate table is gone
+
     # Invalid locale is rejected with an inline error, nothing stored
     res = _add_browser(client, label="Bad", locale="xx-ZZ")
     assert b"Unknown locale" in res.data

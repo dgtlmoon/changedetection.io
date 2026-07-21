@@ -1920,48 +1920,25 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid ""
-"Save a browser once (its screen size, language, timezone…) and reuse it on any watch or group. Add a variation from "
-"one of the available browsers below."
+"These are the available browsers. Save a variation of one (its screen size, language, timezone…) with <strong>+ Add "
+"variation</strong> and reuse it on any watch or group — your variations appear nested (↳) under the browser they "
+"extend."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 #, python-format
 msgid ""
-"The <strong>Default browser</strong> (chosen with the radio button below) is used by every watch unless the watch — "
-"or its group — picks another one. This is the same value shown on the <a href=\"%(url)s#fetching\">Settings → "
-"Fetching</a> page."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Your browsers"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Setup"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Set as the default browser"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "no"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Remove this browser?"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "You haven't added any browser variations yet — add one from an available browser below."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Available browsers"
+"The <strong>Default browser</strong> (chosen with the radio button) is used by every watch unless the watch — or its "
+"group — picks another one. This is the same value shown on the <a href=\"%(url)s#fetching\">Settings → Fetching</a> "
+"page."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Capabilities"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Set as the default browser"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -1974,6 +1951,19 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Add variation"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#, python-format
+msgid "Variation of %(base)s"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "no"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Remove this browser?"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -3671,7 +3661,7 @@ msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr "Sintaxis de plantilla no válida en \"%(header)s\"encabezado:%(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/forms.py
+#: changedetectionio/forms.py
 msgid "Name"
 msgstr "Nombre"
 

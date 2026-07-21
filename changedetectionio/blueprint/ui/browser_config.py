@@ -82,10 +82,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @browser_config_blueprint.route("/browsers", methods=['GET'])
     @login_optionally_required
     def browsers_overview():
+        base_fetchers = _base_fetchers(datastore)
+        # Nest each user-created variation under the engine it extends, so a variation reads as a
+        # child of its base browser (↳) instead of living in a separate "Your browsers" table.
+        # Variations are uuid-keyed with a `base_fetcher`; built-in engine override configs are
+        # keyed by the engine name itself (cid == base_fetcher) - those are the base row's own
+        # "Edit", not a variation, so they're skipped here.
+        variations_by_base = {}
+        for cid, entry in datastore.browser_config_store.all().items():
+            base = entry.get('base_fetcher')
+            if cid == base:
+                continue
+            variations_by_base.setdefault(base, []).append({'id': cid, **entry})
+        for f in base_fetchers:
+            f['variations'] = variations_by_base.get(f['name'], [])
         return render_template(
             "browsers-overview.html",
-            base_fetchers=_base_fetchers(datastore),
-            browser_configs=datastore.browser_config_store.all(),
+            base_fetchers=base_fetchers,
             # The default browser is the global system fetch_backend (single source of truth).
             default_browser_id=datastore.data['settings']['application'].get('fetch_backend'),
         )

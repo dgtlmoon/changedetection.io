@@ -6,77 +6,26 @@
 
         <h4 style="margin-top:0">{{ _('Browsers') }}</h4>
         <p class="pure-form-message-inline">
-            {{ _('Save a browser once (its screen size, language, timezone…) and reuse it on any watch or group. Add a variation from one of the available browsers below.') }}
+            {{ _('These are the available browsers. Save a variation of one (its screen size, language, timezone…) with <strong>+ Add variation</strong> and reuse it on any watch or group — your variations appear nested (↳) under the browser they extend.')|safe }}
         </p>
         <p class="pure-form-message-inline">
-            {{ _('The <strong>Default browser</strong> (chosen with the radio button below) is used by every watch unless the watch — or its group — picks another one. This is the same value shown on the <a href="%(url)s#fetching">Settings → Fetching</a> page.', url=url_for('settings.settings_page'))|safe }}
+            {{ _('The <strong>Default browser</strong> (chosen with the radio button) is used by every watch unless the watch — or its group — picks another one. This is the same value shown on the <a href="%(url)s#fetching">Settings → Fetching</a> page.', url=url_for('settings.settings_page'))|safe }}
         </p>
 
-        {# ---- User-created browser variations ---- #}
-        <h5 style="margin-top:1.5em">{{ _('Your browsers') }}</h5>
-        {% if browser_configs %}
-        <table class="pure-table browsers-table" style="width:100%; margin-top:0.5em;">
-            <thead><tr>
-                <th style="width:5em; text-align:center">{{ _('Default') }}</th>
-                <th>{{ _('Name') }}</th>
-                <th>{{ _('Setup') }}</th>
-                <th></th>
-            </tr></thead>
-            <tbody>
-                {% for cid, entry in browser_configs.items() %}
-                {% set bc = entry.get('browser_config') or {} %}
-                <tr class="{% if cid == default_browser_id %}is-default{% endif %}">
-                    <td style="text-align:center">
-                        <form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=cid) }}">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="radio" class="browser-default-radio" name="browser_default" value="{{ cid }}"
-                                   title="{{ _('Set as the default browser') }}"
-                                   {% if cid == default_browser_id %}checked{% endif %}>
-                        </form>
-                    </td>
-                    <td>
-                        <strong>{{ entry.get('label') }}</strong>
-                        <span class="browser-chip">{{ entry.get('base_fetcher') }}</span>
-                        {% if cid == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
-                    </td>
-                    <td>
-                        {% if bc.get('browser_type') %}<span class="browser-chip">{{ bc.browser_type }}</span>{% endif %}
-                        {% if bc.get('viewport_width') %}<span class="browser-chip">{{ bc.viewport_width }}×{{ bc.viewport_height or '?' }}</span>{% endif %}
-                        {% if bc.get('locale') %}<span class="browser-chip">{{ bc.locale }}</span>{% endif %}
-                        {% if bc.get('timezone_id') %}<span class="browser-chip">{{ bc.timezone_id }}</span>{% endif %}
-                        {% if bc.get('block_resource_types') %}<span class="browser-chip">{{ _('no') }} {{ bc.block_resource_types|join(', ') }}</span>{% endif %}
-                    </td>
-                    <td style="text-align:right; white-space:nowrap">
-                        <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=cid) }}">{{ _('Edit') }}</a>
-                        <form method="POST" action="{{ url_for('ui.browser_config.browser_config_remove', config_id=cid) }}" style="display:inline"
-                              onsubmit="return confirm('{{ _('Remove this browser?') }}');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button class="pure-button button-small button-error" type="submit">{{ _('Remove') }}</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p class="pure-form-message-inline" style="color:#777">{{ _("You haven't added any browser variations yet — add one from an available browser below.") }}</p>
-        {% endif %}
-
-        {# ---- Available base browsers - each offers "Add variation" ---- #}
-        <h5 style="margin-top:2em">{{ _('Available browsers') }}</h5>
+        {# One table: each available base browser, with its user-created variations nested directly
+           beneath it as child rows (↳). No separate "Your browsers" table. #}
         {% if base_fetchers %}
-        <table class="pure-table browsers-table" style="width:100%; margin-top:0.5em;">
+        <table class="pure-table browsers-table" style="width:100%; margin-top:1em;">
             <thead><tr>
                 <th style="width:5em; text-align:center">{{ _('Default') }}</th>
                 <th>{{ _('Browser') }}</th>
                 <th>{{ _('Capabilities') }}</th>
                 <th></th>
-                <th></th>
             </tr></thead>
             <tbody>
                 {% for f in base_fetchers %}
-                {% set fbc = f.browser_config or {} %}
-                <tr class="{% if f.ready_to_use and f.name == default_browser_id %}is-default{% endif %}">
+                {# ---- Base browser (parent) row ---- #}
+                <tr class="browser-base-row {% if f.ready_to_use and f.name == default_browser_id %}is-default{% endif %}">
                     <td style="text-align:center">
                         {# Only ready-to-use engines can be the default (base-only engines aren't usable directly) #}
                         {% if f.ready_to_use %}
@@ -104,14 +53,46 @@
                         {% if f.ready_to_use and f.configurable %}
                             <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=f.name) }}">{{ _('Edit') }}</a>
                         {% endif %}
-                    </td>
-                    <td style="text-align:right; white-space:nowrap">
                         {# "Add variation" for any configurable engine - browsers or the plain client. #}
                         {% if f.configurable %}
                         <a class="pure-button button-small pure-button-primary" href="{{ url_for('ui.browser_config.browser_config_add', base_fetcher=f.name) }}">+ {{ _('Add variation') }}</a>
                         {% endif %}
                     </td>
                 </tr>
+                {# ---- User variations of this base (child rows) ---- #}
+                {% for v in f.variations %}
+                {% set bc = v.get('browser_config') or {} %}
+                <tr class="browser-variation-row {% if v.id == default_browser_id %}is-default{% endif %}">
+                    <td style="text-align:center">
+                        <form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=v.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="radio" class="browser-default-radio" name="browser_default" value="{{ v.id }}"
+                                   title="{{ _('Set as the default browser') }}"
+                                   {% if v.id == default_browser_id %}checked{% endif %}>
+                        </form>
+                    </td>
+                    <td class="browser-variation-name">
+                        <i data-feather="corner-down-right" class="browser-variation-arrow" title="{{ _('Variation of %(base)s', base=f.description) }}"></i>
+                        <strong>{{ v.get('label') }}</strong>
+                        {% if v.id == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if bc.get('browser_type') %}<span class="browser-chip">{{ bc.browser_type }}</span>{% endif %}
+                        {% if bc.get('viewport_width') %}<span class="browser-chip">{{ bc.viewport_width }}×{{ bc.viewport_height or '?' }}</span>{% endif %}
+                        {% if bc.get('locale') %}<span class="browser-chip">{{ bc.locale }}</span>{% endif %}
+                        {% if bc.get('timezone_id') %}<span class="browser-chip">{{ bc.timezone_id }}</span>{% endif %}
+                        {% if bc.get('block_resource_types') %}<span class="browser-chip">{{ _('no') }} {{ bc.block_resource_types|join(', ') }}</span>{% endif %}
+                    </td>
+                    <td style="text-align:right; white-space:nowrap">
+                        <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=v.id) }}">{{ _('Edit') }}</a>
+                        <form method="POST" action="{{ url_for('ui.browser_config.browser_config_remove', config_id=v.id) }}" style="display:inline"
+                              onsubmit="return confirm('{{ _('Remove this browser?') }}');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="pure-button button-small button-error" type="submit">{{ _('Remove') }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
                 {% endfor %}
             </tbody>
         </table>
@@ -152,6 +133,14 @@ document.querySelectorAll('.browser-default-radio').forEach(function (radio) {
 }
 .browser-chip--default { background: #d4edda; color: #155724; }
 .browsers-table tr.is-default { background: rgba(21,87,36,0.06); }
+/* A base browser and its variations read as one group: the base has a firm top border, its
+   children a lighter tint and no internal separators, so the nesting is obvious at a glance. */
+.browsers-table tr.browser-base-row td { border-top: 2px solid rgba(127,127,127,0.35); }
+.browsers-table tr.browser-variation-row td { background: rgba(127,127,127,0.05); border-top: none; }
+.browsers-table tr.browser-variation-row.is-default td { background: rgba(21,87,36,0.06); }
+.browser-variation-name { padding-left: 1.5em; }
+/* Feather renders an inline <svg>, so size it with width/height (font-size won't apply). */
+.browser-variation-arrow { width: 16px; height: 16px; margin-right: 0.4em; color: #999; vertical-align: middle; }
 .browser-default-radio { transform: scale(1.3); cursor: pointer; }
 .set-default-form { margin: 0; display: inline; }
 .browser-empty {
