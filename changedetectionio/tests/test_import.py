@@ -34,6 +34,35 @@ https://example.com tag1, other tag"""
     res = client.get( url_for("watchlist.index"))
     res = client.get( url_for("watchlist.index"))
 
+def test_import_url_with_jinja2_whitespace(client, live_server, measure_memory_usage, datastore_path):
+    """Spaces inside a jinja2 block are part of the URL, not the URL/tag separator #1516"""
+    wait_for_all_checks(client)
+
+    test_url = url_for('test_return_query', _external=True)
+    full_url = test_url + "?date={% now 'utc', '%d' %}"
+
+    res = client.post(
+        url_for("imports.import_page"),
+        data={
+            "distill-io": "",
+            "urls": full_url + " tag-a"
+        },
+        follow_redirects=True,
+    )
+
+    assert b"1 Imported" in res.data
+    assert b"tag-a" in res.data
+
+    # The jinja2 block should survive intact, only the space after it separates the tags
+    urls = [watch.get('url') for watch in live_server.app.config['DATASTORE'].data['watching'].values()]
+    assert urls == [full_url]
+
+    delete_all_watches(client)
+
+    # Clear flask alerts
+    res = client.get( url_for("watchlist.index"))
+    res = client.get( url_for("watchlist.index"))
+
 def xtest_import_skip_url(client, live_server, measure_memory_usage, datastore_path):
 
 
