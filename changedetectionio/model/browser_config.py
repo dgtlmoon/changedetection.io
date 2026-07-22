@@ -365,6 +365,65 @@ def _system_default_label(datastore):
     return gettext('Default (system settings)')
 
 
+def _fetcher_supports_visual(engine_name):
+    """True if `engine_name` is a real interactive browser: it can capture a screenshot AND expose
+    xpath element data (the visual selector). The plain HTTP client and other non-browser engines
+    return False. Single source of truth for "can this engine drive the Add-Watch visual flow?"."""
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.base import FetcherCapabilities
+    caps = FetcherCapabilities.from_fetcher(getattr(content_fetchers, engine_name, None))
+    return bool(caps.supports_screenshots and caps.supports_xpath_element_data)
+
+
+def _visual_engine_is_usable(engine_name):
+    """A visual engine also has to be actually drivable, not just capability-advertising. The
+    default remote browser (`html_webdriver` -> the Playwright/WebDriver server) can only connect
+    when its endpoint env var is set; every other registered visual engine (local Playwright
+    launch, plugin browsers) can run as-is. This is why the plain fallback build (Selenium
+    registered but no driver URL) does NOT count as an available browser."""
+    if engine_name == 'html_webdriver':
+        return bool(os.getenv('PLAYWRIGHT_DRIVER_URL') or os.getenv('WEBDRIVER_URL'))
+    return True
+
+
+def _engine_is_visual_and_usable(engine_name):
+    return _fetcher_supports_visual(engine_name) and _visual_engine_is_usable(engine_name)
+
+
+def list_visual_browser_choices(datastore):
+    """(value, label) browser choices restricted to real interactive browsers (screenshots + visual
+    selector) that are actually drivable - used by the Add-Watch-with-a-browser flow. Built-in
+    engines are filtered by their own capabilities + connection; user browser configs by their
+    base_fetcher. There is deliberately NO 'system' entry: this flow must drive a concrete
+    interactive browser, and the global default may be the plain HTTP client."""
+    choices = []
+    for b in list_builtin_browsers():
+        if _engine_is_visual_and_usable(b['base_fetcher']):
+            choices.append((b['id'], b['label']))
+    for cid, entry in datastore.browser_config_store.all().items():
+        if _engine_is_visual_and_usable(entry.get('base_fetcher') or ''):
+            choices.append((cid, entry.get('label') or cid))
+    return choices
+
+
+def has_visual_browser(datastore):
+    """True when at least one interactive browser (screenshots + visual selector) is available, i.e.
+    the Add-Watch-with-a-browser flow can work at all. Drives the sidebar link visibility and the
+    blueprint guard."""
+    return bool(list_visual_browser_choices(datastore))
+
+
+def default_visual_browser(datastore):
+    """Value to pre-select in the visual-browser picker: the global default browser when it is
+    itself a visual one, else the first available visual browser (None when there are none)."""
+    choices = list_visual_browser_choices(datastore)
+    if not choices:
+        return None
+    default = datastore.data['settings']['application'].get('fetch_backend')
+    values = [v for v, _ in choices]
+    return default if default in values else values[0]
+
+
 # --- Thin free-function delegators --------------------------------------------------------
 # The resolution chain (PDF / group override / watch / 'system' -> global default) lives on the
 # Watch model now (Watch.get_fetch_backend & friends) - only watches fetch, so the watch owns

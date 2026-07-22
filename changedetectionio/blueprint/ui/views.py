@@ -94,6 +94,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         if llm_intent:
             extras['llm_intent'] = llm_intent
 
+        # The Add-Watch-with-a-browser page posts the chosen interactive browser as fetch_backend so
+        # the created watch keeps using it. Validate against the visual-browser list (a form-only
+        # value, but never trust the client) before persisting it onto the watch.
+        fetch_backend = request.form.get('fetch_backend', '').strip()
+        if fetch_backend:
+            from changedetectionio.model.browser_config import list_visual_browser_choices
+            if fetch_backend in {v for v, _ in list_visual_browser_choices(datastore)}:
+                extras['fetch_backend'] = fetch_backend
+
         # Filters picked with the Add Watch visual selector ("by element" mode)
         include_filters = [l.strip() for l in request.form.get('include_filters', '').split('\n') if l.strip()]
         if include_filters:

@@ -18,6 +18,7 @@
           </a>
         {%- endif -%}
     </li>
+    {% if add_watch_ui_available() %}
     <li class="action-sidebar-li">
         <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
            class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
@@ -37,6 +38,7 @@
             <span class="action-label">{{ _('Add a page watch') }}</span>
         </a>
     </li>
+    {% endif %}
     <li class="action-sidebar-li">
         <a href="{{ url_for('watchlist.index') }}"
            class="action-sidebar-item {% if ep == 'watchlist.index' or ep.startswith('ui.ui_views') or ep.startswith('ui.ui_edit') %}active{% endif %}"

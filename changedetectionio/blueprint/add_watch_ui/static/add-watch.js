@@ -51,9 +51,12 @@ $(document).ready(() => {
         // A previous parked snapshot is now stale; drop it until this fetch succeeds.
         $temporaryUuid.val('');
 
+        // Preview with whichever interactive browser the user picked (defaults to the checked one).
+        const browser = $('input[name="fetch_backend"]:checked').val() || '';
+
         $.ajax({
             url: add_watch_snapshot_url,
-            data: {url: url},
+            data: {url: url, browser: browser},
             dataType: 'json',
         }).done((data) => {
             showState('ready');

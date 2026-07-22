@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, jsonify, make_response
+from flask import Blueprint, render_template, request, jsonify, make_response, redirect, url_for, flash
+from flask_babel import gettext
 from loguru import logger
 
 from changedetectionio import forms
@@ -14,8 +15,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def add_watch_ui_index():
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
         from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
+        from changedetectionio.model.browser_config import list_visual_browser_choices, default_visual_browser
+
+        # This flow drives a live interactive browser (screenshot + visual selector), so it's only
+        # usable when such a browser exists. The sidebar link is already hidden in that case; guard
+        # here too for anyone hitting the URL directly.
+        browser_choices = list_visual_browser_choices(datastore)
+        if not browser_choices:
+            flash(gettext("Add a page watch with a browser needs an interactive browser "
+                          "(screenshots + visual selector) - none is configured."), 'error')
+            return redirect(url_for('watchlist.index'))
 
         form = forms.quickWatchForm(None)
+        # This page drives the live visual selector, so only offer processors that support it.
+        # (The watch-list "add" form uses the same field unfiltered.)
+        from changedetectionio import processors
+        form.processor.choices = processors.available_processors(processor_filter={'supports_visual_selector': True})
+
         llm_configured = bool(_get_llm_config(datastore))
 
         return render_template(
@@ -23,6 +39,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             form=form,
             llm_configured=llm_configured,
             llm_intent_watch_placeholder=LLM_INTENT_WATCH_PLACEHOLDER,
+            browser_choices=browser_choices,
+            default_browser=default_visual_browser(datastore),
         )
 
     @add_watch_ui_blueprint.route("/snapshot", methods=['GET'])
@@ -51,10 +69,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if not url or not url.lower().startswith(('http://', 'https://')):
             return make_response('Please enter a valid http(s):// URL', 400)
 
-        # Use whatever fetcher the application is configured to use by default
-        # (e.g. CloakBrowser, Playwright/sockpuppet) so the preview matches real checks.
-        fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
-        logger.debug(f"Add-watch snapshot: fetching '{url}' using system default fetcher '{fetcher_name}'")
+        from changedetectionio.model.browser_config import list_visual_browser_choices, default_visual_browser
+
+        # The browser to preview with is chosen by the radio picker on the page. Validate it against
+        # the visual-browser list (so a request can't drive an arbitrary/non-visual engine), then
+        # resolve the selector to its concrete engine name (a user browser config maps to its
+        # base_fetcher; a built-in engine maps to itself). Fall back to the default visual browser.
+        selected = (request.args.get('browser') or '').strip()
+        allowed = {v for v, _ in list_visual_browser_choices(datastore)}
+        if selected not in allowed:
+            selected = default_visual_browser(datastore)
+        if not selected:
+            return make_response('No interactive browser (screenshots + visual selector) is configured', 400)
+
+        _entry, fetcher_name, _cfg = datastore.browser_config_store.engine_and_config(selected)
+        logger.debug(f"Add-watch snapshot: fetching '{url}' using selected browser '{selected}' (engine '{fetcher_name}')")
 
         async def _fetch_snapshot():
             keepalive_ms = 30 * 1000

@@ -50,6 +50,23 @@
 
                 <!-- RIGHT : options -->
                 <div id="add-watch-options-pane">
+                    <!-- Which interactive browser fetches the live preview (and the created watch).
+                         Only browsers that support screenshots + the visual selector are listed. -->
+                    <div class="add-watch-option-group" id="quick-watch-browser">
+                        <label><strong>{{ _('Fetch with browser') }}</strong></label>
+                        <ul class="pure-radio-list" id="add-watch-browser-list">
+                            {% for value, label in browser_choices %}
+                            <li>
+                                <label class="pure-radio">
+                                    <input type="radio" name="fetch_backend" value="{{ value }}"
+                                           {% if value == default_browser %}checked{% endif %}>
+                                    {{ label }}
+                                </label>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
                     <div class="add-watch-option-group" id="quick-watch-processor-type">
                         {{ render_simple_field(form.processor) }}
                     </div>

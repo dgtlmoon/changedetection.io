@@ -19,6 +19,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Add a page watch with a browser needs an interactive browser (screenshots + visual selector) - none is configured."
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Add a new web page change detection watch"
 msgstr "Adicionar um novo monitoramento de detecção de mudança de página"
@@ -43,6 +47,10 @@ msgstr ""
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Currently:"
 msgstr "Atualmente:"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Fetch with browser"
+msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Select by element"

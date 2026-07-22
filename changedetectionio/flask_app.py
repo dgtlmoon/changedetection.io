@@ -204,6 +204,14 @@ def browser_config_locked():
     Loading and using browsers.json is unaffected."""
     return bool(strtobool(os.getenv('LOCKED_BROWSER_CONFIG', 'False')))
 
+@app.template_global()
+def add_watch_ui_available():
+    """True when the Add-Watch-with-a-browser flow is usable - i.e. at least one interactive
+    browser (screenshots + visual selector) is available. Used to hide the sidebar link when the
+    only fetcher is the plain HTTP client (which can't drive the live visual preview)."""
+    from changedetectionio.model.browser_config import has_visual_browser
+    return has_visual_browser(datastore)
+
 @app.template_global('filtered_action_url')
 def _filtered_action_url(endpoint, **overrides):
     """Build a URL to `endpoint` carrying the CURRENT watch-list filters (query args)
