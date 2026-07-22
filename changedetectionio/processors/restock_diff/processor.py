@@ -369,7 +369,7 @@ def get_itemprop_availability(html_content) -> Restock:
                                            value.get('availability').strip(' "\'').lower()) if value.get('availability') else None
 
         # Second, go dig OpenGraph which is something that jsonpath_ng cant do because of the tuples and double-dots (:)
-        if not value.get('price') or value.get('availability'):
+        if not value.get('price') or not value.get('availability') or not value.get('currency'):
             logger.debug("Alternatively digging through OpenGraph properties for restock/price info..")
             jsonpath_expr = parse('$..properties')
 
