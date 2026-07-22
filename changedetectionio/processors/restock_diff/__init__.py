@@ -115,10 +115,13 @@ class Watch(BaseWatch):
             history = self.history
             if history and len(history) >=2:
                 """Unfortunately for now timestamp is stored as string key"""
+                # Keys are stored oldest-first (ascending). worker.py saves the new snapshot
+                # BEFORE sending the notification, so the newest key ([-1]) is the current check
+                # and the previous check is the second-newest ([-2]). Guaranteed to exist here
+                # because len(history) >= 2.
                 sorted_keys = sorted(list(history), key=lambda x: int(x))
-                sorted_keys.reverse()
 
-                price_str = self.get_history_snapshot(timestamp=sorted_keys[-1])
+                price_str = self.get_history_snapshot(timestamp=sorted_keys[-2])
                 if price_str:
                     values['restock']['previous_price'] = get_price_from_history_str(price_str)
         return values
