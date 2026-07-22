@@ -61,7 +61,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # The processor facet is counted over the tag/search base (ignoring the
             # selected processor) so every detected processor shows up and you can
             # switch between them.
-            if not wl_filters.watch_matches_tag(watch, list_filters):
+            if not wl_filters.watch_matches_tag(datastore, watch, list_filters):
                 continue
             if not wl_filters.watch_passes_search(watch, list_filters):
                 continue

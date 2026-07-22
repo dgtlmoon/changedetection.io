@@ -243,7 +243,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             marked_count = 0
             try:
                 for watch_uuid, watch in datastore.data['watching'].items():
-                    if not wl_filters.watch_matches_filters(watch, list_filters):
+                    if not wl_filters.watch_matches_filters(datastore, watch, list_filters):
                         continue
 
                     datastore.set_last_viewed(watch_uuid, now)
@@ -322,7 +322,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
                 watch_uuid = k[0]
                 watch = k[1]
-                if not watch['paused'] and watch_uuid and wl_filters.watch_matches_filters(watch, list_filters):
+                if not watch['paused'] and watch_uuid and wl_filters.watch_matches_filters(datastore, watch, list_filters):
                     watches_to_queue.append(watch_uuid)
 
             # If less than 20 watches, queue synchronously for immediate feedback
