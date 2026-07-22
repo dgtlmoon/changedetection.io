@@ -871,6 +871,15 @@ class model(EntityPersistenceMixin, watch_base):
             logger.warning(f"UUID: {self.get('uuid')} Favicon too large ({len(decoded)} bytes), skipping")
             return None
 
+        # Reject non-image payloads such as an HTML soft-404 or SPA catch-all page that a server
+        # returns with HTTP 200 for /favicon.ico - otherwise the raw markup gets written out as
+        # the favicon. https://github.com/dgtlmoon/changedetection.io/issues/4207
+        normalized_mime = mime_type.lower().split(';')[0].strip() if mime_type else ''
+        head = decoded[:512].lstrip().lower()
+        if normalized_mime in ('text/html', 'application/xhtml+xml') or head.startswith((b'<!doctype html', b'<html')):
+            logger.warning(f"UUID: {self.get('uuid')} Favicon from '{url}' looks like an HTML page, not an image - skipping")
+            return None
+
         try:
             with open(fname, 'wb') as f:
                 f.write(decoded)

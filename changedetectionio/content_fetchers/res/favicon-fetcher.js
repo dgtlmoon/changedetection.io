@@ -87,6 +87,12 @@
 
         const blob = await resp.blob();
 
+        // A server may answer /favicon.ico (or a declared icon URL) with HTTP 200 and an HTML
+        // body - a soft-404 or SPA catch-all page. Skip obvious non-image content types so the
+        // markup is never handed back as an icon. https://github.com/dgtlmoon/changedetection.io/issues/4207
+        const contentType = (blob.type || '').split(';')[0].trim().toLowerCase();
+        if (contentType === 'text/html' || contentType === 'application/xhtml+xml' || contentType === 'text/plain') continue;
+
         if (blob.size > MAX_BYTES) continue;
 
         // Convert blob to base64

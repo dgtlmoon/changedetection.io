@@ -133,6 +133,31 @@ def test_favicon_oversized_rejected(client, live_server, measure_memory_usage, d
     assert watch.get_favicon_filename() is None, "No favicon file should have been written"
 
 
+def test_favicon_html_page_rejected(client, live_server, measure_memory_usage, datastore_path):
+    """
+    A server can answer /favicon.ico (or a declared icon URL) with HTTP 200 and an HTML body -
+    a soft-404 or SPA catch-all page. That markup must never be saved as the favicon.
+    https://github.com/dgtlmoon/changedetection.io/issues/4207
+    """
+    import base64
+
+    html_page = b'<!DOCTYPE html>\n<html><head><title>Not found</title></head><body>404</body></html>'
+    html_b64 = base64.b64encode(html_page).decode()
+
+    # The server was honest about the content type (blob.type == 'text/html')
+    uuid = client.application.config.get('DATASTORE').add_watch(url='https://localhost')
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    result = watch.bump_favicon(url='https://example.com/favicon.ico', favicon_base_64=html_b64, mime_type='text/html')
+    assert result is None, "bump_favicon should reject an HTML payload"
+    assert watch.get_favicon_filename() is None, "HTML must not be saved as a favicon (#4207)"
+
+    # The content type was missing/misleading, so the payload itself has to be sniffed
+    uuid2 = client.application.config.get('DATASTORE').add_watch(url='https://localhost')
+    watch2 = live_server.app.config['DATASTORE'].data['watching'][uuid2]
+    watch2.bump_favicon(url='https://example.com/favicon.ico', favicon_base_64=html_b64, mime_type=None)
+    assert watch2.get_favicon_filename() is None, "HTML must not be saved even with no content type (#4207)"
+
+
 def test_bad_access(client, live_server, measure_memory_usage, datastore_path):
 
     res = client.post(
