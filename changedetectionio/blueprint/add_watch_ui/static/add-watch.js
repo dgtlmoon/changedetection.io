@@ -14,6 +14,13 @@ $(document).ready(() => {
     const $includeFilters = $('#include_filters');
     const $temporaryUuid = $('#temporary_uuid');
     const $processorPreview = $('#processor-add-watch-ui-preview-text');
+    // The Watch / Edit>Watch buttons only make sense once we have a fetched page to submit, so they
+    // stay disabled + dimmed until a snapshot comes back, then fade in.
+    const $submitButtons = $('#add-watch-submit-row').find('input[type="submit"], button');
+
+    function setSubmitEnabled(enabled) {
+        $submitButtons.prop('disabled', !enabled).toggleClass('add-watch-submit-ready', enabled);
+    }
 
     // Per-processor previews from the last snapshot ({processor_name: "line to show"}).
     let processorPreviews = {};
@@ -48,6 +55,8 @@ $(document).ready(() => {
         $wrapper.toggle(ready);
         $xpathRow.toggle(ready && $byElement.is(':checked'));
         $clear.toggle(ready && $byElement.is(':checked'));
+        // Only allow submitting once a live snapshot is loaded.
+        setSubmitEnabled(ready);
     }
 
     function fetchSnapshot() {
