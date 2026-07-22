@@ -316,12 +316,7 @@ class fetcher(Fetcher):
                 context_kwargs['service_workers'] = os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow')
             _bc = getattr(self, 'browser_config', None)
             if _bc is not None:
-                if getattr(_bc, 'locale', None):
-                    context_kwargs['locale'] = _bc.locale
-                if getattr(_bc, 'timezone_id', None):
-                    context_kwargs['timezone_id'] = _bc.timezone_id
-                if getattr(_bc, 'viewport_width', None) and getattr(_bc, 'viewport_height', None):
-                    context_kwargs['viewport'] = {'width': _bc.viewport_width, 'height': _bc.viewport_height}
+                context_kwargs.update(_bc.browser_context_kwargs())
 
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py

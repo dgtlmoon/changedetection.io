@@ -121,6 +121,22 @@ class FetcherConfig(BaseModel):
             request_headers['User-Agent'] = self.user_agent
         return request_headers
 
+    def browser_context_kwargs(self):
+        """The per-profile browser-context options this config implies (viewport / locale /
+        timezone). Unset fields are omitted so engine defaults are preserved. Single source of
+        truth so every caller (the real fetch, the Browser Steps live UI, the Add-Watch preview)
+        just does `context_kwargs.update(cfg.browser_context_kwargs())` instead of repeating field
+        names. The key/value shape follows the CDP/Playwright `new_context()` dialect, which the
+        browser engines that honour these fields (Playwright, CloakBrowser, playwright_builtin) use."""
+        kwargs = {}
+        if self.locale:
+            kwargs['locale'] = self.locale
+        if self.timezone_id:
+            kwargs['timezone_id'] = self.timezone_id
+        if self.viewport_width and self.viewport_height:
+            kwargs['viewport'] = {'width': self.viewport_width, 'height': self.viewport_height}
+        return kwargs
+
     def effective_timeout(self, default):
         """This profile's request timeout, else the caller's default (plain HTTP client only)."""
         return self.timeout or default
@@ -365,43 +381,34 @@ def _system_default_label(datastore):
     return gettext('Default (system settings)')
 
 
-def _fetcher_supports_visual(engine_name):
-    """True if `engine_name` is a real interactive browser: it can capture a screenshot AND expose
-    xpath element data (the visual selector). The plain HTTP client and other non-browser engines
-    return False. Single source of truth for "can this engine drive the Add-Watch visual flow?"."""
+def _engine_supports_interactive_browser(engine_name):
+    """True if `engine_name` can drive the LIVE interactive browser flow used by /add-watch-ui and
+    Browser Steps - i.e. a Playwright-family engine (screenshots + visual selector + browser steps).
+
+    We key off the fetcher's own `supports_browser_steps` capability rather than a driver env var,
+    because that flag already reflects the env-driven `html_webdriver` alias: with a Playwright/
+    Puppeteer driver configured `html_webdriver` is the Playwright fetcher (True), otherwise it's
+    Selenium (False). Selenium can screenshot but CANNOT drive the live Playwright session, so it's
+    correctly excluded. The extra screenshots/xpath checks are belt-and-braces (every
+    browser-steps-capable engine also has them)."""
     from changedetectionio import content_fetchers
     from changedetectionio.content_fetchers.base import FetcherCapabilities
     caps = FetcherCapabilities.from_fetcher(getattr(content_fetchers, engine_name, None))
-    return bool(caps.supports_screenshots and caps.supports_xpath_element_data)
-
-
-def _visual_engine_is_usable(engine_name):
-    """A visual engine also has to be actually drivable, not just capability-advertising. The
-    default remote browser (`html_webdriver` -> the Playwright/WebDriver server) can only connect
-    when its endpoint env var is set; every other registered visual engine (local Playwright
-    launch, plugin browsers) can run as-is. This is why the plain fallback build (Selenium
-    registered but no driver URL) does NOT count as an available browser."""
-    if engine_name == 'html_webdriver':
-        return bool(os.getenv('PLAYWRIGHT_DRIVER_URL') or os.getenv('WEBDRIVER_URL'))
-    return True
-
-
-def _engine_is_visual_and_usable(engine_name):
-    return _fetcher_supports_visual(engine_name) and _visual_engine_is_usable(engine_name)
+    return bool(caps.supports_browser_steps and caps.supports_screenshots and caps.supports_xpath_element_data)
 
 
 def list_visual_browser_choices(datastore):
-    """(value, label) browser choices restricted to real interactive browsers (screenshots + visual
-    selector) that are actually drivable - used by the Add-Watch-with-a-browser flow. Built-in
-    engines are filtered by their own capabilities + connection; user browser configs by their
-    base_fetcher. There is deliberately NO 'system' entry: this flow must drive a concrete
-    interactive browser, and the global default may be the plain HTTP client."""
+    """(value, label) browser choices restricted to engines that can drive the live interactive
+    browser (screenshots + visual selector + browser steps = the Playwright family) - used by the
+    Add-Watch-with-a-browser flow. Built-in engines are filtered by their own capabilities; user
+    browser configs by their base_fetcher. There is deliberately NO 'system' entry: this flow must
+    drive a concrete interactive browser, and the global default may be the plain HTTP client."""
     choices = []
     for b in list_builtin_browsers():
-        if _engine_is_visual_and_usable(b['base_fetcher']):
+        if _engine_supports_interactive_browser(b['base_fetcher']):
             choices.append((b['id'], b['label']))
     for cid, entry in datastore.browser_config_store.all().items():
-        if _engine_is_visual_and_usable(entry.get('base_fetcher') or ''):
+        if _engine_supports_interactive_browser(entry.get('base_fetcher') or ''):
             choices.append((cid, entry.get('label') or cid))
     return choices
 
