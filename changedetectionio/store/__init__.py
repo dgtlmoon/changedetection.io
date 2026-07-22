@@ -58,8 +58,24 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # logging.basicConfig(filename='/dev/stdout', level=logging.INFO)
         self.datastore_path = datastore_path
         self.start_time = time.time()
+
+        # Named browser configs (browsers.json) - optional, backup-friendly, lazy-loaded.
+        # Set here in __init__ so it exists on every path (fresh install included).
+        from changedetectionio.model.browser_config import BrowserConfigStore, register_browser_config_store
+        self.browser_config_store = BrowserConfigStore(self.datastore_path, self.lock)
+        # Share this (lock-bearing, mtime-cached) instance with Watch objects, which only hold
+        # the data dict + their path and reach the store via the per-path registry.
+        register_browser_config_store(self.datastore_path, self.browser_config_store)
+
         self.save_version_copy_json_db(version_tag)
         self.reload_state(datastore_path=datastore_path, include_default_watches=include_default_watches, version_tag=version_tag)
+
+    def get_default_backend(self):
+        """The global "Default browser" (settings.application.fetch_backend) - the single source
+        of truth a watch/group set to 'system' resolves to. Set only on the /browsers tab
+        (its per-row radio); the Settings page shows it read-only. May be a built-in engine name
+        or a user browser-config id. See Watch.get_fetch_backend for the per-watch resolution."""
+        return self.__data['settings']['application'].get('fetch_backend', 'html_requests')
 
     def save_version_copy_json_db(self, version_tag):
         """

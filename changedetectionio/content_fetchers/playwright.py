@@ -170,6 +170,25 @@ class fetcher(Fetcher):
     supports_browser_steps = True
     supports_screenshots = True
     supports_xpath_element_data = True
+    supports_request_blocking = True
+
+    # When True, _get_browser() launches a local browser instead of connecting to a remote
+    # CDP endpoint (overridden by the html_playwright_builtin subclass).
+    local_launch = False
+
+    async def _get_browser(self, browser_type):
+        """Acquire a Playwright browser. Default: connect to the configured remote CDP endpoint.
+        Subclasses (local launch) override this. Kept as the single seam so the tuned run()
+        body is shared."""
+        return await browser_type.connect_over_cdp(self.browser_connection_url, timeout=60000)
+
+    def _resolve_browser_type_name(self):
+        """chromium/firefox/webkit - from the browser_config when the engine supports choosing
+        it (local launch), else the env default."""
+        bc = getattr(self, 'browser_config', None)
+        if bc is not None and getattr(bc, 'browser_type', None) and self.supports_browser_type:
+            return bc.browser_type
+        return self.browser_type
 
     @classmethod
     def get_status_icon_data(cls):
@@ -270,27 +289,38 @@ class fetcher(Fetcher):
         response = None
 
         async with async_playwright() as p:
-            browser_type = getattr(p, self.browser_type)
+            _browser_type_name = self._resolve_browser_type_name()
+            browser_type = getattr(p, _browser_type_name)
 
-            # Seemed to cause a connection Exception even tho I can see it connect
-            # self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
-            # 60,000 connection timeout only
-            browser = await browser_type.connect_over_cdp(self.browser_connection_url, timeout=60000)
+            # Acquire the browser via the seam (remote connect by default, local launch in the
+            # html_playwright_builtin subclass).
+            browser = await self._get_browser(browser_type)
 
             # SOCKS5 with authentication is not supported (yet)
             # https://github.com/microsoft/playwright/issues/10567
 
-            # Set user agent to prevent Cloudflare from blocking the browser
-            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
-            context = await browser.new_context(
+            # Per-watch browser behaviour (viewport/locale/timezone) from the resolved
+            # FetcherConfig - only added when set so defaults/behaviour are unchanged.
+            # (locale also drives the Accept-Language header - see issues #4210 #1412; timezone #3303)
+            context_kwargs = dict(
                 accept_downloads=False,  # Should never be needed
                 bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
                 extra_http_headers=request_headers,
                 ignore_https_errors=True,
                 proxy=self.proxy,
-                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
                 user_agent=manage_user_agent(headers=request_headers),
             )
+            # service_workers is a chromium-only new_context option - Firefox/WebKit reject it,
+            # so only pass it for chromium (matters for the local html_playwright_builtin fetcher).
+            if _browser_type_name == 'chromium':
+                context_kwargs['service_workers'] = os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow')
+            _bc = getattr(self, 'browser_config', None)
+            if _bc is not None:
+                context_kwargs.update(_bc.browser_context_kwargs())
+
+            # Set user agent to prevent Cloudflare from blocking the browser
+            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
+            context = await browser.new_context(**context_kwargs)
 
             self.page = await context.new_page()
 

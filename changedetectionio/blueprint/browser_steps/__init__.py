@@ -264,11 +264,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
 
         # Resolve the fetcher backend for this watch so we can ask it to launch its own browser
-        # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)
+        # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP).
         watch = datastore.data['watching'][watch_uuid]
-        fetcher_name = watch.get_fetch_backend or 'system'
-        if fetcher_name == 'system':
-            fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+        # get_fetch_backend is the fully-resolved SELECTOR (group override / watch / 'system' ->
+        # global default) - but it may be a browser-config id, not an engine name. Map it to the
+        # concrete engine (for launching) AND its FetcherConfig (viewport/locale/timezone) so the
+        # live browser-steps session matches what the watch actually fetches with.
+        _entry, fetcher_name, browser_config = datastore.browser_config_store.engine_and_config(watch.get_fetch_backend)
 
         browser, playwright_context = await acquire_browser_for_fetcher(fetcher_name, proxy=proxy, keepalive_ms=keepalive_ms)
 
@@ -279,7 +281,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             playwright_browser=browser,
             proxy=proxy,
             start_url=watch.link,
-            headers=watch.get('headers')
+            headers=watch.get('headers'),
+            browser_config=browser_config,
         )
         await browserstepper.connect(proxy=proxy)
         browsersteps_start_session['browserstepper'] = browserstepper

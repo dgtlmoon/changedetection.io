@@ -178,9 +178,8 @@ window.watchOverviewI18n = {
     {# Option lists for the bulk Browser / Proxy modals (rendered by watch-overview.js into a ModalDialog).
        Mirrors the choices on the watch edit page. Kept inert inside <template> until the modal is opened. #}
     <template id="bulk-browser-options">
-        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="system" checked> {{ _('System settings default') }}</label>
-        {% for key, label in available_fetchers %}
-        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="{{ key }}"> {{ label }}</label>
+        {% for key, label in browser_choices %}
+        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ label }}</label>
         {% endfor %}
     </template>
     {% if has_proxies %}
@@ -390,7 +389,7 @@ window.watchOverviewI18n = {
                         <div class="favicon">
                             <a target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">
                                 {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
-                                <img alt="Favicon thumbnail"
+                                <img alt="{{ _('Favicon thumbnail') }}"
                                      class="favicon lazy-favicon"
                                      loading="lazy"
                                      decoding="async"
@@ -430,10 +429,9 @@ window.watchOverviewI18n = {
                         </div>
                     <div class="status-icons">
                             <a class="link-spread" href="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="{{ _('Create a link to share watch config with others') }}" ></a>
-                            {%- set effective_fetcher = watch.get_fetch_backend if watch.get_fetch_backend != "system" else system_default_fetcher -%}
-                            {%- if effective_fetcher and ("html_webdriver" in effective_fetcher or "html_" in effective_fetcher or "extra_browser_" in effective_fetcher) -%}
-                                {{ effective_fetcher|fetcher_status_icons }}
-                            {%- endif -%}
+                            {# Browser status icon for the browser this watch effectively uses (group
+                               override / named config / sub-engine), with a title showing its name/type. #}
+                            {{ watch|watch_browser_status_icon }}
                             {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
                             {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
                     </div>

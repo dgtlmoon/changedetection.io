@@ -1,5 +1,6 @@
 from wtforms import (
     Form,
+    SelectField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -14,6 +15,13 @@ from changedetectionio.llm.evaluator import DEFAULT_CHANGE_SUMMARY_PROMPT
 
 class group_restock_settings_form(restock_settings_form):
     overrides_watch = BooleanField(_l('Activate for individual watches in this tag/group?'), default=False)
+
+    # Browser config override for this group. Its own dedicated enabler (NOT the coarse
+    # legacy `overrides_watch` above) - see resolve_browser_config_override(). When the
+    # enabler is on and a config is chosen, member watches use this group's browser config
+    # and their own Fetch Method selector is hidden. Choices are set in the tags blueprint.
+    browser_config_overrides_watch = BooleanField(_l("Override each watch's browser with"), default=False)
+    browser_config = SelectField(_l('Browser config'), validators=[validators.Optional()], choices=[])
     url_match_pattern = StringField(_l('Auto-apply to watches with URLs matching'),
                                     render_kw={"placeholder": _l("e.g. *://example.com/* or github.com/myorg")})
     tag_colour = StringField(_l('Tag colour'), default='')

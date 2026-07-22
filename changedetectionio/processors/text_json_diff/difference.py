@@ -140,7 +140,11 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
 
     screenshot_url = watch.get_screenshot()
 
-    is_html_webdriver = watch.fetcher_supports_screenshots
+    # Whether the browser this watch effectively uses can screenshot. Resolve via the datastore
+    # (honours a group override + a named browser config's engine) rather than the watch's own
+    # fetch_backend - watch.fetcher_supports_screenshots can't see the store to resolve those.
+    from changedetectionio.pluggy_interface import get_fetcher_capabilities
+    is_html_webdriver = get_fetcher_capabilities(watch, datastore).get('supports_screenshots', False)
 
     password_enabled_and_share_is_off = False
     if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):

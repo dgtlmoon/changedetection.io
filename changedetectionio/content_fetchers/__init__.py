@@ -106,32 +106,47 @@ def _log_fetcher_capabilities(fetcher_class, backend_name, uuid=None):
 
 
 def resolve_content_fetcher(watch, datastore):
-    """Single source of truth for resolving which content fetcher a watch should use.
+    """Build the concrete content-fetcher class + config for a watch.
 
-    Resolution order (room to grow):
-      1. Watch-level `fetch_backend`
-      2. (future) group-level default
-      3. System/global default from application settings
-
-    Also collapses the special backend forms into a concrete fetcher:
-      - 'system'                    -> global application default
+    *Which* browser/engine is selected is owned by the Watch model (watch.get_fetch_backend:
+    PDF / group override / watch / 'system' -> global Default browser). This function takes that
+    resolved selector and turns it into a fetcher instance, collapsing the special forms:
+      - a user browser-config id    -> its base_fetcher engine + its FetcherConfig
       - 'extra_browser_<key>'       -> html_webdriver + custom connection URL
-      - is_pdf watch                -> forced html_requests (browser PDF support incomplete)
       - html_webdriver + browser_steps -> playwright override (puppeteer steps incomplete)
+      - a deleted browser-config id -> raises BrowserConfigDoesntExist
 
     Returns:
-        tuple: (fetcher_class, backend_name, custom_browser_connection_url)
-        where `backend_name` is the fully-resolved concrete backend name the
-        caller should stamp onto the fetcher instance as `.backend_name`.
+        tuple: (fetcher_class, backend_name, custom_browser_connection_url, browser_config)
+        where `backend_name` is the fully-resolved concrete backend name the caller should
+        stamp onto the fetcher instance as `.backend_name`, and `browser_config` is the
+        resolved FetcherConfig to inject as `.browser_config`.
     """
     this_module = sys.modules[__name__]
+    from changedetectionio.model.browser_config import FetcherConfig, BrowserConfigDoesntExist
 
-    # 1. Watch preference (later: watch -> group -> system)
-    prefer_fetch_backend = watch.get('fetch_backend', 'system')
+    # Default behaviour = empty config (built-in engines / system default).
+    browser_config = FetcherConfig()
 
-    # 2/3. Fall back to the global/system default
-    if not prefer_fetch_backend or prefer_fetch_backend == 'system':
-        prefer_fetch_backend = datastore.data['settings']['application'].get('fetch_backend')
+    # THE single resolved selector for this watch (PDF / group override / watch / 'system' ->
+    # global default) - the Watch owns this chain so every codepath agrees. The value is a
+    # built-in engine name, 'extra_browser_*', or the stable id of a user browser config.
+    selected = watch.get_fetch_backend
+
+    store = getattr(datastore, 'browser_config_store', None)
+    if store is not None:
+        entry, prefer_fetch_backend, browser_config = store.engine_and_config(selected)
+    else:
+        entry, prefer_fetch_backend = None, selected
+    if entry is None:
+        # Not a stored browser config. The only valid non-config values are a built-in engine
+        # name or 'extra_browser_*'. Anything else is a reference to a browser config that has
+        # been deleted - fail loudly instead of silently defaulting.
+        if selected and selected != 'system' \
+                and not selected.startswith('extra_browser_') \
+                and not hasattr(this_module, selected):
+            raise BrowserConfigDoesntExist(config_id=selected, uuid=watch.get('uuid'))
+        prefer_fetch_backend = selected
 
     # Custom browser endpoint (extra_browser_<key>) -> webdriver with a specific connection URL
     custom_browser_connection_url = None
@@ -144,15 +159,9 @@ def resolve_content_fetcher(watch, datastore):
             prefer_fetch_backend = 'html_webdriver'
             custom_browser_connection_url = connection[0].get('browser_connection_url')
 
-    # PDF should be html_requests because playwright will serve it up (so far) in an embedded page
-    # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
-    if getattr(watch, 'is_pdf', False):
-        logger.warning(
-            f"Watch {watch.get('uuid')} is_pdf detected (content-type/url) - forcing the "
-            f"'html_requests' fetcher because browser support isn't complete yet for "
-            f"saving/downloading the PDF. Overriding requested backend '{prefer_fetch_backend}'."
-        )
-        prefer_fetch_backend = "html_requests"
+    # PDF watches are already forced to 'html_requests' by Watch.get_fetch_backend (playwright
+    # can't render a PDF in-page yet - @todo https://github.com/dgtlmoon/changedetection.io/issues/2019),
+    # so no extra handling is needed here.
 
     # Grab the right kind of 'fetcher' class (playwright, requests, plugin-provided, etc)
     if prefer_fetch_backend and hasattr(this_module, prefer_fetch_backend):
@@ -172,7 +181,7 @@ def resolve_content_fetcher(watch, datastore):
 
     _log_fetcher_capabilities(fetcher_obj, prefer_fetch_backend, uuid=watch.get('uuid'))
 
-    return fetcher_obj, prefer_fetch_backend, custom_browser_connection_url
+    return fetcher_obj, prefer_fetch_backend, custom_browser_connection_url, browser_config
 
 
 # Decide which is the 'real' HTML webdriver, this is more a system wide config

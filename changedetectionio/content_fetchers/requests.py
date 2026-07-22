@@ -15,6 +15,9 @@ from changedetectionio.validate_url import is_private_hostname, is_url_private_o
 # "html_requests" is listed as the default fetcher in store.py!
 class fetcher(Fetcher):
     fetcher_description = _l("Basic fast Plaintext/HTTP Client")
+    # Only the plain client honours a per-profile request timeout (browsers use their own
+    # navigation timeouts). The per-profile User-Agent is honoured by all fetchers (base class).
+    supports_request_timeout = True
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
@@ -41,6 +44,19 @@ class fetcher(Fetcher):
 
         if self.browser_steps:
             raise BrowserStepsInUnsupportedFetcher(url=url)
+
+        # Per-profile request timeout from the selected browser config overrides the caller's
+        # default (requests-only; the User-Agent is already applied to request_headers upstream).
+        if self.browser_config:
+            timeout = self.browser_config.effective_timeout(timeout)
+
+        # Fall back to a browser-like default User-Agent when nothing upstream set one (a browser
+        # config, a per-watch header, or the fetch-time headers). Preserves the old behaviour that
+        # lived in settings.requests.default_ua['html_requests'] - sites often block the bare
+        # python-requests UA.
+        if not any(k.lower() == 'user-agent' for k in request_headers.keys()):
+            from changedetectionio.model.App import DEFAULT_SETTINGS_HEADERS_USERAGENT
+            request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT", DEFAULT_SETTINGS_HEADERS_USERAGENT)
 
         proxies = {}
 

@@ -27,6 +27,7 @@
     <div class="tabs collapsable">
         <ul>
             <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
+            <li class="tab"><a href="#browser">{{ _('Browser') }}</a></li>
             {% if llm_configured %}
             <li class="tab"><a href="#ai-llm">{{ _('AI / LLM') }}</a></li>
             {% endif %}
@@ -88,6 +89,30 @@
                         });
                     })();
                     </script>
+                </fieldset>
+            </div>
+
+            <div class="tab-pane-inner" id="browser">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <div style="display:flex; align-items:center; gap:0.75em; flex-wrap:wrap;">
+                            {{ form.browser_config_overrides_watch() }}
+                            <label for="{{ form.browser_config_overrides_watch.id }}" style="margin:0">{{ form.browser_config_overrides_watch.label.text }}</label>
+                            {{ form.browser_config() }}
+                        </div>
+                        <span class="pure-form-message-inline">
+                            {{ _('When enabled, watches in this group use the selected browser and their own Browser choice is hidden.') }}
+                            <a href="{{ url_for('ui.browser_config.browsers_overview') }}">{{ _('Manage browsers') }}</a>
+                        </span>
+                        <script>
+                        (function () {
+                            var en = document.getElementById('{{ form.browser_config_overrides_watch.id }}');
+                            var sel = document.getElementById('{{ form.browser_config.id }}');
+                            function sync() { if (sel) sel.disabled = !en.checked; }
+                            if (en) { en.addEventListener('change', sync); sync(); }
+                        })();
+                        </script>
+                    </div>
                 </fieldset>
             </div>
 

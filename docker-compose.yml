@@ -73,6 +73,11 @@ services:
   #        Disable all LLM / AI features, prompts etc
   #      - LLM_FEATURES_DISABLED=true
   #
+  #        Lock the browser configs: the /browsers page stays visible and you can still choose the
+  #        default browser, but adding/editing/removing browser configs is disabled (browsers.json
+  #        is still loaded and used, its entries just can't be changed from the web UI)
+  #      - LOCKED_BROWSER_CONFIG=true
+  #
   #        How much of the page text the AI reads when finding the price/stock, default 15000 characters.
   #        Raise it if the price is missed (some shops put it far down the page).
   #        Using a local model (Ollama)? It may only read the first part unless you raise its context size

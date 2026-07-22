@@ -193,6 +193,22 @@ body {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
+
+      // Submit is meaningless until a live snapshot has come back, so the buttons start dimmed
+      // and non-interactive, then fade in + activate once add-watch.js marks them ready.
+      input[type="submit"],
+      button {
+        opacity: 0.5;
+        transition: opacity 0.25s ease-in-out;
+
+        &:disabled {
+          cursor: not-allowed;
+        }
+
+        &.add-watch-submit-ready {
+          opacity: 1;
+        }
+      }
     }
   }
 }

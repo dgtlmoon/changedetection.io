@@ -257,7 +257,47 @@ def _available_processors_cached(locale_str):
     # Return as tuples without weight (for backwards compatibility)
     return [(name, desc) for name, desc, weight in available]
 
-def available_processors():
+def _processor_capability(name, capability, default=False):
+    """Read a boolean capability flag (e.g. 'supports_visual_selector') for a processor by name.
+
+    Flags are declared on the processor package __init__ (the parent module, e.g.
+    changedetectionio/processors/restock_diff/__init__.py), falling back to the processor module,
+    then to `default`. Plugin processors that don't declare the flag get `default`.
+    """
+    for module, sub_package_name in find_processors():
+        if sub_package_name != name:
+            continue
+        parent = get_parent_module(module)
+        if parent is not None and hasattr(parent, capability):
+            return getattr(parent, capability)
+        if hasattr(module, capability):
+            return getattr(module, capability)
+        break
+    return default
+
+
+def get_processor_preview(datastore, name, html_content, url=None):
+    """Run a processor's OPTIONAL Add-Watch-UI preview and return a short human string (or None).
+
+    A processor opts in by overriding `add_watch_ui_processor_preview(self, html_content, url=None)`
+    on its `perform_site_check` class (default on the base ABC returns None). We instantiate it with
+    no watch (watch_uuid=None is tolerated) since the preview runs against the raw fetched HTML, not
+    a saved watch. Best-effort UI sugar: a missing override, an error, or a None/empty return all
+    yield None so the caller shows nothing for that processor. Never raises.
+    """
+    module = get_processor_module(name)
+    if not module or not hasattr(module, 'perform_site_check'):
+        return None
+    try:
+        handler = module.perform_site_check(datastore=datastore, watch_uuid=None)
+        preview = handler.add_watch_ui_processor_preview(html_content=html_content, url=url)
+        return preview or None
+    except Exception as e:
+        logger.debug(f"Processor '{name}' add-watch-ui preview failed: {e}")
+        return None
+
+
+def available_processors(processor_filter=None):
     """
     Get a list of processors by name and description for the UI elements.
     Can be filtered via DISABLED_PROCESSORS environment variable (comma-separated list).
@@ -265,13 +305,27 @@ def available_processors():
     This function delegates to a locale-aware cached version to ensure translations
     are cached per-language instead of globally.
 
+    :param processor_filter: optional dict of capability requirements, e.g.
+        {'supports_visual_selector': True}. A processor is included only when it matches EVERY
+        entry (an unset flag counts as False). None/empty means no filtering. This is the single
+        entry point for every processor radio list - the watch-list "add" form passes no filter,
+        while the Add-Watch-with-a-browser flow passes {'supports_visual_selector': True} so it
+        only offers processors that can drive the live visual selector.
     :return: A list of tuples (processor_name, translated_description)
     """
     # Get current locale and use it as cache key
     # Convert Babel Locale object to string for use as cache key
     locale = get_locale()
     locale_str = str(locale) if locale else 'en'
-    return _available_processors_cached(locale_str)
+    processors = _available_processors_cached(locale_str)
+
+    if processor_filter:
+        processors = [
+            (name, desc) for (name, desc) in processors
+            if all(_processor_capability(name, key) == want for key, want in processor_filter.items())
+        ]
+
+    return processors
 
 
 def get_default_processor():

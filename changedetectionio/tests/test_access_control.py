@@ -152,7 +152,9 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert b"Import" in res.data
         assert b"/logout" in res.data
         assert b"time_between_check-minutes" in res.data
-        assert b"fetch_backend" in res.data
+        # The global browser default moved to the /browsers tab; the settings page now shows it
+        # read-only as "Default browser" (the editable radio was removed).
+        assert b"Default browser" in res.data
 
         ##################################################
         # Remove password button, and check that it worked
@@ -161,7 +163,6 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             url_for("settings.settings_page"),
             data={
                 "requests-time_between_check-minutes": 180,
-                "application-fetch_backend": "html_webdriver",
                 "application-removepassword_button": "Remove password"
             },
             follow_redirects=True,

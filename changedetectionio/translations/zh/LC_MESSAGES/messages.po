@@ -18,6 +18,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Add a page watch with a browser needs an interactive browser (screenshots + visual selector) - none is configured."
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Add a new web page change detection watch"
 msgstr "新增网页变更监控"
@@ -42,6 +46,10 @@ msgstr ""
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Currently:"
 msgstr "当前："
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Fetch with browser"
+msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Select by element"
@@ -564,15 +572,26 @@ msgstr "当请求无内容返回，或 HTML 不包含任何文本时，是否视
 msgid "Choose a default proxy for all watches"
 msgstr "为所有监视器选择默认代理"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
-msgstr "使用 <strong>基础</strong> 方式（默认），适用于您要监控的无需 JavaScript 渲染的网站。"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Default browser"
+msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
-" by the ENV var 'WEBDRIVER_URL'."
-msgstr "<strong>Chrome/JavaScript</strong> 方式需要连接到运行中的 WebDriver+Chrome 服务器，其地址通过环境变量 'WEBDRIVER_URL' 设置。"
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set default browser"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage browsers &amp; set default"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Every watch uses this browser unless it (or its group) picks another one."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Add screen sizes, languages, timezones and choose the default on the <a href=\"%(url)s\">Browsers</a> page."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
@@ -609,12 +628,11 @@ msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier o
 msgstr "示例 - 3 秒随机抖动可能导致提前最多 3 秒或延后最多 3 秒触发"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
-msgstr "对于普通明文请求（非 Chrome），超时时间上限为 1-999 秒。"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Applied to all requests."
-msgstr "适用于所有请求。"
+#, python-format
+msgid ""
+"The plain-requests timeout and the default User-Agent are now set per browser on the <a href=\"%(url)s\">Browsers</a>"
+" page (Edit the browser, under “HTTP request options”)."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
@@ -1037,10 +1055,12 @@ msgid "This will remove your saved AI provider, model, and API key."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Remove"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "取消"
@@ -1301,6 +1321,14 @@ msgid "Activate for individual watches in this tag/group?"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Override each watch's browser with"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Browser config"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Auto-apply to watches with URLs matching"
 msgstr ""
 
@@ -1314,6 +1342,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Browser"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
@@ -1336,6 +1370,14 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Manage browsers"
 msgstr ""
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
@@ -1399,6 +1441,7 @@ msgid "Mute notifications"
 msgstr "静音通知"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Edit"
 msgstr "编辑"
@@ -1587,6 +1630,38 @@ msgstr "无法分享，与分享服务器通信时出错 - {}"
 msgid "Language set to auto-detect from browser"
 msgstr "已设置为从浏览器自动检测语言"
 
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser configuration is locked on this instance"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Unknown base browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "A browser with this name already exists"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser added"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config not found"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config updated"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config removed"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Default browser set"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/diff.py changedetectionio/blueprint/ui/preview.py
 msgid "No history found for the specified link, bad link?"
 msgstr "未找到该链接的历史记录，链接是否有误？"
@@ -1624,11 +1699,8 @@ msgstr ""
 msgid "Could not load '{}' processor, processor plugin might be missing."
 msgstr ""
 
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "System settings default"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/ui/templates/browsers-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Default"
 msgstr ""
 
@@ -1639,6 +1711,86 @@ msgstr "监控项已更新并取消暂停！"
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch."
 msgstr "监控项已更新。"
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Images"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Fonts"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Media (audio/video)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Stylesheets (CSS)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Scripts (JS)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "XHR / fetch"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "WebSockets"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Give this browser config a name"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "e.g. Desktop Full-HD, Mobile de-DE"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Viewport width"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Viewport height"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Locale"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Screenshot format"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Browser engine"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Delete temporary browser files after each check"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Block asset types"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Block URL patterns"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Request timeout (seconds)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "User-Agent"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
@@ -1660,6 +1812,150 @@ msgstr ""
 #: changedetectionio/blueprint/ui/queue.py
 #, python-brace-format
 msgid "Queue cleared ({} items removed)."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Based on browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "A friendly name, e.g. “Mobile” or “German desktop”."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Which browser engine to launch locally."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Screen size"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Desktop"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Laptop"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Tablet"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Mobile"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html changedetectionio/blueprint/ui/templates/queue.html
+msgid "Clear"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Language & timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Start typing to search - e.g. <code>de-DE</code>, <code>en-GB</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "HTTP request options"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Maximum seconds to wait for the response (plain HTTP client only)."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Sent as the User-Agent header for requests using this browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Skip downloads (save bandwidth)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "One address pattern per line, e.g. <code>*.ttf</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+msgid "Edit browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+msgid "Add browser variation"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
+msgid "Browsers"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"These are the available browsers. Adding, editing and removing browsers is locked on this instance — you can still "
+"choose the default browser below."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"These are the available browsers. Save a variation of one (its screen size, language, timezone…) with <strong>+ Add "
+"variation</strong> and reuse it on any watch or group — your variations appear nested (↳) under the browser they "
+"extend."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#, python-format
+msgid ""
+"The <strong>Default browser</strong> (chosen with the radio button) is used by every watch unless the watch — or its "
+"group — picks another one. This is the same value shown on the <a href=\"%(url)s#fetching\">Settings → Fetching</a> "
+"page."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Capabilities"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Set as the default browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "needs setup"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "plain text, no JavaScript"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Add variation"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#, python-format
+msgid "Variation of %(base)s"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "no"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Remove this browser?"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "No interactive browser is available."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"Connect a Chrome/Playwright browser (e.g. set <code>PLAYWRIGHT_DRIVER_URL</code>) or install the Playwright library "
+"to configure browsers here."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
@@ -1914,6 +2210,30 @@ msgstr "当页面上找不到该过滤器时发送通知，便于知晓页面已
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
 msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Using browser config"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "from group"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"This group overrides the fetch method for its watches. Change it in the group settings, or turn off the override "
+"there to choose per-watch."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
+msgstr "使用 <strong>基础</strong> 方式（默认），适用于您要监控的无需 JavaScript 渲染的网站。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
+msgstr "<strong>Chrome/JavaScript</strong> 方式需要连接到运行中的 WebDriver+Chrome 服务器，其地址通过环境变量 'WEBDRIVER_URL' 设置。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
@@ -2287,10 +2607,6 @@ msgid "<p>This will remove every pending check from the queue.</p><p>Running che
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Clear"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear Queue"
 msgstr ""
 
@@ -2523,10 +2839,6 @@ msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Browser"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
 msgstr ""
 
@@ -2613,6 +2925,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "UnMute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Favicon thumbnail"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3090,7 +3406,7 @@ msgid "Not set"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/ui/form_browseroptions.py changedetectionio/forms.py
 msgid "Save"
 msgstr "保存"
 
@@ -3299,7 +3615,8 @@ msgstr "模板语法无效：%(error)s"
 msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr "“%(header)s”请求头中的模板语法无效：%(error)s"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
+#: changedetectionio/forms.py
 msgid "Name"
 msgstr "名称"
 
@@ -3320,14 +3637,6 @@ msgid "Browser URLs must start with wss:// or ws://"
 msgstr "浏览器 URL 必须以 wss:// 或 ws:// 开头"
 
 #: changedetectionio/forms.py
-msgid "Plaintext requests"
-msgstr "纯文本请求"
-
-#: changedetectionio/forms.py
-msgid "Chrome requests"
-msgstr "Chrome 请求"
-
-#: changedetectionio/forms.py
 msgid "Default proxy"
 msgstr "默认代理"
 
@@ -3342,18 +3651,6 @@ msgstr "抓取工作线程数"
 #: changedetectionio/forms.py
 msgid "Should be between 1 and 50"
 msgstr "应介于 1 到 50 之间"
-
-#: changedetectionio/forms.py
-msgid "Requests timeout in seconds"
-msgstr "请求超时（秒）"
-
-#: changedetectionio/forms.py
-msgid "Should be between 1 and 999"
-msgstr "应介于 1 到 999 之间"
-
-#: changedetectionio/forms.py
-msgid "Default User-Agent overrides"
-msgstr "默认 User-Agent 覆盖"
 
 #: changedetectionio/forms.py
 msgid "Both a name, and a Proxy URL is required."
@@ -3697,6 +3994,10 @@ msgstr "%s年前"
 msgid "in %syr"
 msgstr "%s年后"
 
+#: changedetectionio/model/browser_config.py
+msgid "Default (system settings)"
+msgstr ""
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "扫描全部监控历史未找到匹配该正则的内容。"
@@ -3843,6 +4144,29 @@ msgstr "适用于单一商品页面的补货与价格检测"
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Detects if the product goes back to in-stock"
 msgstr "检测商品是否恢复有库存"
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "More than one price detected on this page - restock/price detection needs a single-product page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "No price or stock information was detected on this page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "price: %(price)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "availability: %(availability)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "Detected — %(details)s"
+msgstr ""
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
@@ -4825,18 +5149,6 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Browsers (coming soon)"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Browsers"
-msgstr ""
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "soon"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
