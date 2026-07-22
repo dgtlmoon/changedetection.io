@@ -405,6 +405,23 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
         assert "title new price 1950.45" in notification
         assert "previous price 960.45" in notification
 
+    # Regression for #4260: with 3+ snapshots, {{restock.previous_price}} must report the price at
+    # the PREVIOUS check (1950.45), not the first-ever price in history (960.45). Before the fix the
+    # newest-first history list was indexed at [-1] (the oldest snapshot), so from the 3rd check on
+    # this was stuck on the first price ever recorded. The two-snapshot case above passed only by
+    # coincidence (with two entries the oldest snapshot IS the previous check).
+    os.unlink(os.path.join(datastore_path, "notification.txt"))
+    set_original_response(props_markup=instock_props[0], price='2500.45', datastore_path=datastore_path)
+    client.get(url_for("ui.form_watch_checknow"))
+    wait_for_all_checks(client)
+    wait_for_notification_endpoint_output(datastore_path=datastore_path)
+    assert os.path.isfile(os.path.join(datastore_path, "notification.txt")), "Notification received"
+    with open(os.path.join(datastore_path, "notification.txt"), 'r') as f:
+        notification = f.read()
+        assert "new price 2500.45" in notification
+        assert "previous price 1950.45" in notification          # the actual previous check
+        assert "previous price 960.45" not in notification        # the pre-fix bug (first-ever price)
+
     ## Now test the "SEND TEST NOTIFICATION" is working
     os.unlink(os.path.join(datastore_path, "notification.txt"))
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
