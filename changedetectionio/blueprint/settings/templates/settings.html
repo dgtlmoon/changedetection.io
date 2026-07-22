@@ -276,6 +276,10 @@ nav
                     <span class="pure-form-message-inline">{{ _('Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab.') }}</span>
                 </div>
                 <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.ui.form.mark_viewed_on_external_open) }}
+                    <span class="pure-form-message-inline">{{ _('When enabled, opening the external page link from the watch list marks that watch as viewed.') }}</span>
+                </div>
+                <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.form.socket_io_enabled, class="socket_io_enabled") }}
                     <span class="pure-form-message-inline">{{ _('Realtime UI Updates Enabled - (Restart required if this is changed)') }}</span>
                 </div>
