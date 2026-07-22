@@ -829,6 +829,10 @@ msgstr ""
 "página de diferencias se abrirá en la pestaña actual."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "When enabled, opening the external page link from the watch list marks that watch as viewed."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
 msgstr "Actualizaciones de UI en tiempo real habilitadas: (es necesario reiniciar si se cambia esto)"
 
@@ -3429,6 +3433,10 @@ msgstr "Se requieren tanto un nombre como una URL de proxy."
 #: changedetectionio/forms.py
 msgid "Open 'History' page in a new tab"
 msgstr "Abra la página 'Historial' en una nueva pestaña"
+
+#: changedetectionio/forms.py
+msgid "Mark a watch as viewed when opening its page"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Realtime UI Updates Enabled"

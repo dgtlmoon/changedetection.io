@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-13 11:51+0200\n"
+"POT-Creation-Date: 2026-07-22 15:10+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -789,6 +789,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "When enabled, opening the external page link from the watch list marks that watch as viewed."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -3354,6 +3358,10 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Open 'History' page in a new tab"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Mark a watch as viewed when opening its page"
 msgstr ""
 
 #: changedetectionio/forms.py

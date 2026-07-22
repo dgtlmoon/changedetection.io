@@ -311,6 +311,37 @@ def test_open_watch_marks_it_viewed(client, live_server, measure_memory_usage, d
     datastore = client.application.config.get('DATASTORE')
     watch_uuid, watch = next(iter(datastore.data['watching'].items()))
     open_url = url_for('ui.form_watch_open', uuid=watch_uuid)
+    ui_settings = datastore.data['settings']['application']['ui']
+
+    # Older datastores will not contain this setting. Missing/default-off must
+    # preserve the direct external link and leave the watch unread.
+    ui_settings.pop('mark_viewed_on_external_open', None)
+    res = client.get(url_for("settings.settings_page"))
+    setting_checkbox = BeautifulSoup(res.data, 'html.parser').find(
+        'input', attrs={'name': 'application-ui-mark_viewed_on_external_open'}
+    )
+    assert setting_checkbox is not None
+    assert not setting_checkbox.has_attr('checked')
+
+    res = client.get(url_for("watchlist.index"))
+    external_link = BeautifulSoup(res.data, 'html.parser').find('a', class_='external', href=test_url)
+    assert external_link is not None
+    assert external_link['target'] == '_blank'
+    assert external_link['rel'] == ['noopener', 'noreferrer']
+    assert external_link['title'] == test_url
+    assert watch.has_unviewed
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-ui-mark_viewed_on_external_open": "1"},
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+    assert datastore.data['settings']['application']['ui']['mark_viewed_on_external_open'] is True
+    setting_checkbox = BeautifulSoup(res.data, 'html.parser').find(
+        'input', attrs={'name': 'application-ui-mark_viewed_on_external_open'}
+    )
+    assert setting_checkbox.has_attr('checked')
 
     res = client.get(url_for("watchlist.index"))
     external_link = BeautifulSoup(res.data, 'html.parser').select_one(f'a.external[href="{open_url}"]')
@@ -335,6 +366,26 @@ def test_open_watch_marks_it_viewed(client, live_server, measure_memory_usage, d
     assert res.status_code == 302
     assert res.headers['Location'] == test_url
     assert res.headers['Referrer-Policy'] == 'no-referrer'
+    assert watch.has_unviewed
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-ui-mark_viewed_on_external_open": ""},
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+    assert datastore.data['settings']['application']['ui']['mark_viewed_on_external_open'] is False
+    setting_checkbox = BeautifulSoup(res.data, 'html.parser').find(
+        'input', attrs={'name': 'application-ui-mark_viewed_on_external_open'}
+    )
+    assert not setting_checkbox.has_attr('checked')
+
+    res = client.get(url_for("watchlist.index"))
+    external_link = BeautifulSoup(res.data, 'html.parser').find('a', class_='external', href=test_url)
+    assert external_link is not None
+    assert external_link['target'] == '_blank'
+    assert external_link['rel'] == ['noopener', 'noreferrer']
+    assert external_link['title'] == test_url
     assert watch.has_unviewed
 
     delete_all_watches(client)

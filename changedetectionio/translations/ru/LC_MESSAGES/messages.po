@@ -830,6 +830,10 @@ msgstr ""
 "различий откроется на текущей вкладке."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "When enabled, opening the external page link from the watch list marks that watch as viewed."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
 msgstr "Обновления пользовательского интерфейса в реальном времени включены — (если это изменено, требуется перезагрузка)"
 
@@ -3474,6 +3478,10 @@ msgstr "Требуется как имя, так и URL-адрес прокси-
 #: changedetectionio/forms.py
 msgid "Open 'History' page in a new tab"
 msgstr "Открыть страницу «История» в новой вкладке"
+
+#: changedetectionio/forms.py
+msgid "Mark a watch as viewed when opening its page"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Realtime UI Updates Enabled"
