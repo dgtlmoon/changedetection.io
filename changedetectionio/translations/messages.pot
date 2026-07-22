@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-22 10:10+0200\n"
+"POT-Creation-Date: 2026-07-22 15:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4136,6 +4136,29 @@ msgstr ""
 
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Detects if the product goes back to in-stock"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "More than one price detected on this page - restock/price detection needs a single-product page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "No price or stock information was detected on this page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "price: %(price)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "availability: %(availability)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "Detected — %(details)s"
 msgstr ""
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html

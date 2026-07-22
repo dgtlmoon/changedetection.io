@@ -97,6 +97,17 @@ class difference_detection_processor():
             logger.warning(f"Failed to read checksum file for {self.watch_uuid}: {e}")
             self.last_raw_content_checksum = None
 
+    def add_watch_ui_processor_preview(self, html_content, url=None):
+        """Optional Add-Watch-UI preview hook.
+
+        Return a short human string describing what THIS processor would read off the just-fetched
+        page (shown under the processor picker on /add-watch-ui, so the user can see the processor
+        "works" before saving), or None for no preview. Best-effort UI sugar - the caller swallows
+        exceptions and treats None/empty as "show nothing". Override in a processor to opt in; the
+        default is no preview. Runs against the raw fetched HTML, so it does not need a saved watch.
+        """
+        return None
+
     async def validate_iana_url(self):
         """Pre-flight SSRF check — runs DNS lookup in executor to avoid blocking the event loop.
         Covers all fetchers (requests, playwright, puppeteer, plugins) since every fetch goes

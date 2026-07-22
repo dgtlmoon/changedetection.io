@@ -276,6 +276,27 @@ def _processor_capability(name, capability, default=False):
     return default
 
 
+def get_processor_preview(datastore, name, html_content, url=None):
+    """Run a processor's OPTIONAL Add-Watch-UI preview and return a short human string (or None).
+
+    A processor opts in by overriding `add_watch_ui_processor_preview(self, html_content, url=None)`
+    on its `perform_site_check` class (default on the base ABC returns None). We instantiate it with
+    no watch (watch_uuid=None is tolerated) since the preview runs against the raw fetched HTML, not
+    a saved watch. Best-effort UI sugar: a missing override, an error, or a None/empty return all
+    yield None so the caller shows nothing for that processor. Never raises.
+    """
+    module = get_processor_module(name)
+    if not module or not hasattr(module, 'perform_site_check'):
+        return None
+    try:
+        handler = module.perform_site_check(datastore=datastore, watch_uuid=None)
+        preview = handler.add_watch_ui_processor_preview(html_content=html_content, url=url)
+        return preview or None
+    except Exception as e:
+        logger.debug(f"Processor '{name}' add-watch-ui preview failed: {e}")
+        return None
+
+
 def available_processors(processor_filter=None):
     """
     Get a list of processors by name and description for the UI elements.

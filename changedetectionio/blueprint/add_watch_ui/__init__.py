@@ -142,10 +142,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             logger.error(f"Add-watch snapshot: could not park temporary data for {url}: {e}")
             temp_uuid = None
 
+        # Optional per-processor previews of what each would read off this page (e.g. restock shows
+        # the detected price/stock). Computed once here from the fetched HTML for every processor
+        # offered on the page; the client shows the one for the selected processor and swaps on
+        # change. Only processors that implement the hook and return something are included.
+        previews = {}
+        if html:
+            from changedetectionio import processors
+            for pname, _ in processors.available_processors(processor_filter={'supports_visual_selector': True}):
+                preview = processors.get_processor_preview(datastore, pname, html, url=url)
+                if preview:
+                    previews[pname] = preview
+
         return jsonify({
             "temporary_uuid": temp_uuid,
             "screenshot": f"data:image/jpeg;base64,{base64.b64encode(screenshot).decode('ascii')}",
             "xpath_data": xpath_data,
+            "processor_previews": previews,
         })
 
     return add_watch_ui_blueprint

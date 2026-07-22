@@ -69,6 +69,10 @@
 
                     <div class="add-watch-option-group" id="quick-watch-processor-type">
                         {{ render_simple_field(form.processor) }}
+                        <!-- Per-processor preview of what it would read off the fetched page
+                             (e.g. restock shows the detected price/stock); filled in by add-watch.js
+                             from the snapshot response, and swapped when the processor changes. -->
+                        <div id="processor-add-watch-ui-preview-text" style="display: none;"></div>
                     </div>
 
                     <div class="add-watch-option-group" id="by-element-toggle-group">

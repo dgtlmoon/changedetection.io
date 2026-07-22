@@ -4149,6 +4149,29 @@ msgstr "단일 제품이 포함된 페이지의 재입고 및 가격 감지"
 msgid "Detects if the product goes back to in-stock"
 msgstr "제품이 다시 재고 있음 상태가 되었는지 감지합니다."
 
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "More than one price detected on this page - restock/price detection needs a single-product page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "No price or stock information was detected on this page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "price: %(price)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "availability: %(availability)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "Detected — %(details)s"
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
 msgstr ""

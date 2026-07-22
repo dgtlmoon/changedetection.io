@@ -4199,6 +4199,29 @@ msgstr "Wiederauffüllung und Preiserkennung für Seiten mit einem EINZELNEN Pro
 msgid "Detects if the product goes back to in-stock"
 msgstr "Erkennt, ob das Produkt wieder auf Lager ist"
 
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "More than one price detected on this page - restock/price detection needs a single-product page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "No price or stock information was detected on this page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "price: %(price)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "availability: %(availability)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "Detected — %(details)s"
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
 msgstr ""

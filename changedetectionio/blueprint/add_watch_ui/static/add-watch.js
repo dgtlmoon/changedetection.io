@@ -13,6 +13,16 @@ $(document).ready(() => {
     const $clear = $('#clear-selector');
     const $includeFilters = $('#include_filters');
     const $temporaryUuid = $('#temporary_uuid');
+    const $processorPreview = $('#processor-add-watch-ui-preview-text');
+
+    // Per-processor previews from the last snapshot ({processor_name: "line to show"}).
+    let processorPreviews = {};
+
+    function renderProcessorPreview() {
+        const selected = $('input[name="processor"]:checked').val();
+        const text = selected ? processorPreviews[selected] : null;
+        $processorPreview.text(text || '').toggle(!!text);
+    }
 
     const vs = window.initVisualSelector({
         $canvas: $('#selector-canvas'),
@@ -50,6 +60,8 @@ $(document).ready(() => {
         showState('loading');
         // A previous parked snapshot is now stale; drop it until this fetch succeeds.
         $temporaryUuid.val('');
+        processorPreviews = {};
+        renderProcessorPreview();
 
         // Preview with whichever interactive browser the user picked (defaults to the checked one).
         const browser = $('input[name="fetch_backend"]:checked').val() || '';
@@ -61,6 +73,8 @@ $(document).ready(() => {
         }).done((data) => {
             showState('ready');
             $temporaryUuid.val(data.temporary_uuid || '');
+            processorPreviews = data.processor_previews || {};
+            renderProcessorPreview();
             vs.load({screenshotSrc: data.screenshot, xpathData: data.xpath_data});
         }).fail((xhr) => {
             const msg = (xhr && xhr.responseText) ? xhr.responseText : 'Could not fetch a preview for that URL.';
@@ -68,6 +82,9 @@ $(document).ready(() => {
             showState('error');
         });
     }
+
+    // Swap the preview line when the processor selection changes (no re-fetch needed).
+    $(document).on('change', 'input[name="processor"]', renderProcessorPreview);
 
     $go.on('click', fetchSnapshot);
 
