@@ -22,6 +22,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.jinja2_custom import render as jinja_render
 
         from changedetectionio.notification.apprise_plugin.custom_handlers import apprise_http_custom_handler
+        from changedetectionio.notification.apprise_plugin.flowtriq import NotifyFlowtriq  # noqa: F401
 
         apobj = apprise.Apprise(asset=apprise_asset)
 
