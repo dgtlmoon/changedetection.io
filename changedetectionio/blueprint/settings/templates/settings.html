@@ -40,6 +40,7 @@
                     <div class="pure-control-group">
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
 
+                        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                         <span class="pure-form-message-inline">{{ _('Default recheck time for all watches, current system minimum is') }} <i>{{min_system_recheck_seconds}}</i> {{ _('seconds') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">{{ _('more info') }}</a>).</span>
                             <div id="time-between-check-schedule">
                                 <!-- Start Time and End Time {{ timezone_default_config }} -->
@@ -121,6 +122,7 @@
                     {{ render_field(form.requests.form.workers) }}
                     {% set worker_info = get_worker_status_info() %}
                     <span class="pure-form-message-inline">{{ _('Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.') }}<br>
+                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     {{ _('Currently running:') }} <strong>{{ worker_info.count }}</strong> {{ _('operational') }} {{ worker_info.type }} {{ _('workers') }}{% if worker_info.active_workers > 0 %} ({{ worker_info.active_workers }} {{ _('actively processing') }}){% endif %}.</span>
                 </div>
                 <div class="pure-control-group">
@@ -135,6 +137,7 @@
                     {{ render_field(form.requests.form.default_ua) }}
                     <span class="pure-form-message-inline">
                         {{ _('Applied to all requests.') }}<br><br>
+                        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                         {{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.
                     </span>
                 </div>
@@ -202,6 +205,7 @@ nav
 
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
+                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     <div class="pure-form-message-inline">{{ _('Restrict API access limit by using') }} <code>x-api-key</code> {{ _('header - required for the Chrome Extension to work') }}</div><br>
                     <div class="pure-form-message-inline"><br>{{ _('API Key') }} <span id="api-key">{{api_key}}</span>
                         <span style="display:none;" id="api-key-copy" >{{ _('copy') }}</span>
