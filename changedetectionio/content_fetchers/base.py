@@ -191,7 +191,7 @@ class Fetcher():
     async def iterate_browser_steps(self, start_url=None):
         from changedetectionio.browser_steps.browser_steps import steppable_browser_interface, browser_steps_get_valid_steps
         from playwright._impl._errors import TimeoutError, Error
-        from changedetectionio.jinja2_custom import render as jinja_render
+        from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
         step_n = 0
 
         if self.browser_steps:
@@ -209,9 +209,9 @@ class Fetcher():
                     optional_value = step['optional_value']
                     selector = step['selector']
                     # Support for jinja2 template in step values, with date module added
-                    if '{%' in step['optional_value'] or '{{' in step['optional_value']:
+                    if JINJA2_MARKER_PATTERN.search(step['optional_value']):
                         optional_value = jinja_render(template_str=step['optional_value'])
-                    if '{%' in step['selector'] or '{{' in step['selector']:
+                    if JINJA2_MARKER_PATTERN.search(step['selector']):
                         selector = jinja_render(template_str=step['selector'])
 
                     await getattr(interface, "call_action")(action_name=step['operation'],
