@@ -41,10 +41,13 @@ def _annotate_moved_lines(diff_text: str) -> str:
 
 
 def build_eval_prompt(intent: str, diff: str, current_snapshot: str = '',
-                      url: str = '', title: str = '') -> str:
+                      url: str = '', title: str = '', metadata: str = '') -> str:
     """
     Build the user message for a diff evaluation call.
     The system prompt is kept separate (see build_eval_system_prompt).
+
+    `metadata` is verbatim current-state structured data (JSON-LD/OpenGraph) appended
+    last so the model can compare the diff against canonical current values.
     """
     parts = []
 
@@ -61,6 +64,9 @@ def build_eval_prompt(intent: str, diff: str, current_snapshot: str = '',
             parts.append(f"\nCurrent page state (relevant excerpt):\n{excerpt}")
 
     parts.append(f"\nWhat changed (diff):\n{diff}")
+
+    if metadata:
+        parts.append(f"\n{metadata}")
 
     return '\n'.join(parts)
 
@@ -132,7 +138,8 @@ def build_preview_system_prompt() -> str:
 
 
 def build_change_summary_prompt(diff: str, custom_prompt: str,
-                                current_snapshot: str = '', url: str = '', title: str = '') -> str:
+                                current_snapshot: str = '', url: str = '', title: str = '',
+                                metadata: str = '') -> str:
     """
     Build the user message for an AI Change Summary call.
     The user supplies their own instructions (custom_prompt); this wraps them
@@ -152,6 +159,8 @@ def build_change_summary_prompt(diff: str, custom_prompt: str,
         parts.append(f"Page title: {title}")
     parts.append(f"Instructions: {custom_prompt}")
     parts.append(f"\nWhat changed (diff):\n{_annotate_moved_lines(diff)}")
+    if metadata:
+        parts.append(f"\n{metadata}")
     return '\n'.join(parts)
 
 

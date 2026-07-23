@@ -7,6 +7,7 @@ import pytest
 from changedetectionio.llm.prompt_builder import (
     build_eval_prompt,
     build_eval_system_prompt,
+    build_change_summary_prompt,
     build_setup_prompt,
     build_setup_system_prompt,
     SNAPSHOT_CONTEXT_CHARS,
@@ -69,6 +70,49 @@ class TestBuildEvalPrompt:
         prompt_without = build_eval_prompt(intent='x', diff='d', current_snapshot='')
         # Without snapshot should be shorter
         assert len(prompt_without) < len(prompt_with)
+
+
+class TestMetadataEnrichmentInPrompts:
+    """The verbatim structured-metadata block must land in the eval/summary/preview
+    user prompts when provided, and leave them unchanged when absent."""
+
+    METADATA = (
+        "Page context: site: ExampleShop | og:type: product\n"
+        "Structured metadata found on the page (JSON-LD):\n"
+        '{"@type":"Product","name":"Acme Widget","sku":"12345","color":"blue"}'
+    )
+
+    def test_eval_prompt_includes_metadata(self):
+        prompt = build_eval_prompt(intent='alert on SKU change', diff='- a\n+ b',
+                                   metadata=self.METADATA)
+        assert self.METADATA in prompt
+        # A field we never whitelisted must survive verbatim
+        assert '"sku":"12345"' in prompt
+        assert '"color":"blue"' in prompt
+        # The block is appended AFTER the diff (diff stays the freshest pre-metadata content)
+        assert prompt.index('What changed (diff):') < prompt.index('Structured metadata found')
+
+    def test_eval_prompt_unchanged_without_metadata(self):
+        with_meta = build_eval_prompt(intent='i', diff='d', metadata=self.METADATA)
+        without = build_eval_prompt(intent='i', diff='d')
+        assert 'Structured metadata found' not in without
+        assert len(without) < len(with_meta)
+
+    def test_summary_prompt_includes_metadata(self):
+        prompt = build_change_summary_prompt(diff='- a\n+ b', custom_prompt='list the SKUs',
+                                             metadata=self.METADATA)
+        assert self.METADATA in prompt
+        assert '"sku":"12345"' in prompt
+
+    def test_summary_prompt_unchanged_without_metadata(self):
+        without = build_change_summary_prompt(diff='- a\n+ b', custom_prompt='x')
+        assert 'Structured metadata found' not in without
+
+    def test_empty_metadata_appends_nothing(self):
+        # Falsy metadata ('') must not add a trailing block/whitespace section
+        assert build_eval_prompt(intent='i', diff='d', metadata='') == build_eval_prompt(intent='i', diff='d')
+        assert (build_change_summary_prompt(diff='d', custom_prompt='c', metadata='')
+                == build_change_summary_prompt(diff='d', custom_prompt='c'))
 
 
 class TestBuildEvalSystemPrompt:

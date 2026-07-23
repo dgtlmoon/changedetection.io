@@ -210,7 +210,8 @@ class TestEvaluateChange:
 
         diff = '- $500\n+ $400'
         intent = 'flag price drops'
-        cache_key = hashlib.sha256(f"{intent}||{diff}".encode()).hexdigest()
+        metadata = ''  # no enrichment in this test; folded into the key as a trailing ||
+        cache_key = hashlib.sha256(f"{intent}||{diff}||{metadata}".encode()).hexdigest()
         watch['llm_evaluation_cache'] = {
             cache_key: {'important': True, 'summary': 'cached result'}
         }

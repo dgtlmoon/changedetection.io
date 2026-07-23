@@ -176,6 +176,30 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
+    def llm_context_enrich(watch, html_content, datastore):
+        """Return extra current-state context to append to LLM intent/summary prompts.
+
+        Called for any watch with an LLM intent or change-summary when raw HTML is
+        available. Plugins can surface structured facts the html-to-text snapshot has
+        dropped — e.g. JSON-LD / OpenGraph product metadata — so the model can answer
+        intents like "alert when the SKU changes" or "list the product IDs".
+
+        The returned text is appended verbatim to the prompt; the caller is responsible
+        for fitting it within the configurable max_input_chars budget (it drops the
+        enrichment if it would not fit), so implementations should NOT impose their own
+        size limits.
+
+        Args:
+            watch: The watch dict being evaluated.
+            html_content: The raw HTML of the current page (may be '' / None).
+            datastore: The application datastore.
+
+        Returns:
+            str or None: Context text to append, or None if nothing to add.
+        """
+        pass
+
+    @hookspec
     def get_html_head_extras():
         """Return HTML to inject into the <head> of every page via base.html.
 
@@ -323,14 +347,17 @@ def register_builtin_restock_plugins():
     (restock_diff/__init__.py → model.Watch → content_fetchers → pluggy_interface).
     """
     import importlib
-    module_path = 'changedetectionio.processors.restock_diff.plugins.llm_restock'
-    try:
-        module = importlib.import_module(module_path)
-        if not plugin_manager.is_registered(module):
-            plugin_manager.register(module, 'llm_restock')
-            logger.debug("Registered built-in restock plugin: llm_restock")
-    except Exception as e:
-        logger.error(f"Failed to register llm_restock plugin: {e}")
+    for module_path, plugin_name in (
+        ('changedetectionio.processors.restock_diff.plugins.llm_restock', 'llm_restock'),
+        ('changedetectionio.processors.restock_diff.plugins.llm_metadata_enrich', 'llm_metadata_enrich'),
+    ):
+        try:
+            module = importlib.import_module(module_path)
+            if not plugin_manager.is_registered(module):
+                plugin_manager.register(module, plugin_name)
+                logger.debug(f"Registered built-in restock plugin: {plugin_name}")
+        except Exception as e:
+            logger.error(f"Failed to register {plugin_name} plugin: {e}")
 
 # Helper function to collect UI stats extras from all plugins
 def collect_ui_edit_stats_extras(watch):
@@ -401,6 +428,27 @@ def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instanc
                     return result
 
     return None
+
+
+def collect_llm_context_enrichment(watch, html_content, datastore):
+    """Collect and combine LLM context enrichment from all plugins.
+
+    Returns the concatenated non-empty plugin strings (blank-line separated), or ''
+    when no plugin contributes anything. No size limit is applied here — the caller
+    enforces the single configurable max_input_chars budget.
+    """
+    try:
+        results = plugin_manager.hook.llm_context_enrich(
+            watch=watch,
+            html_content=html_content,
+            datastore=datastore,
+        )
+    except Exception as e:
+        logger.debug(f"llm_context_enrich hook failed: {e}")
+        return ''
+
+    parts = [r.strip() for r in results if r and isinstance(r, str) and r.strip()]
+    return '\n\n'.join(parts) if parts else ''
 
 
 def get_active_plugins():
