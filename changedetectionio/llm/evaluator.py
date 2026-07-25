@@ -405,23 +405,25 @@ def accumulate_global_tokens(datastore, tokens: int,
 
     current_month = _get_month_key()
     cost = _estimate_cost_usd(model, input_tokens, output_tokens)
-    settings = get_llm_settings(datastore)
 
-    # Month rollover: reset monthly counters
-    if settings.tokens_month_key != current_month:
-        settings.tokens_this_month = 0
-        settings.cost_usd_this_month = 0.0
-        settings.tokens_month_key = current_month
+    with datastore.lock:
+        settings = get_llm_settings(datastore)
 
-    settings.tokens_total_cumulative += tokens
-    settings.tokens_this_month       += tokens
-    settings.cost_usd_total_cumulative += cost
-    settings.cost_usd_this_month       += cost
+        # Month rollover: reset monthly counters
+        if settings.tokens_month_key != current_month:
+            settings.tokens_this_month = 0
+            settings.cost_usd_this_month = 0.0
+            settings.tokens_month_key = current_month
 
-    # Round-trip through model_dump so storage stays a plain dict and the schema
-    # contract (extra='forbid', type coercion) is re-enforced on every write.
-    datastore.data['settings']['application']['llm'] = settings.model_dump()
-    datastore.commit()
+        settings.tokens_total_cumulative += tokens
+        settings.tokens_this_month += tokens
+        settings.cost_usd_total_cumulative += cost
+        settings.cost_usd_this_month += cost
+
+        # Round-trip through model_dump so storage stays a plain dict and the schema
+        # contract (extra='forbid', type coercion) is re-enforced on every write.
+        datastore.data['settings']['application']['llm'] = settings.model_dump()
+        datastore.commit()
 
 
 def is_global_token_budget_exceeded(datastore) -> bool:
