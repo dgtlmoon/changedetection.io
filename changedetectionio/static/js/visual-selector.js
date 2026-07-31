@@ -253,7 +253,8 @@ window.initVisualSelector = function (opts) {
     }
 
     function setCurrentSelectedText(s) {
-        $selectorCurrentXpathElem[0].innerHTML = s;
+        // Selectors come from the scraped page, display them as text and never as markup
+        $selectorCurrentXpathElem[0].textContent = s;
     }
 
     function drawHighlight(sel) {
