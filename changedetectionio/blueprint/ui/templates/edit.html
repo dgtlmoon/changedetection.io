@@ -78,6 +78,7 @@
                 <fieldset>
                     <div class="pure-control-group">
                         {{ render_field(form.url, placeholder="https://...", required=true, class="m-d") }}
+                        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                         <div class="pure-form-message">{{ _('Some sites use JavaScript to create the content, for this you should') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">{{ _('use the Chrome/WebDriver Fetcher') }}</a></div>
                         <div class="pure-form-message">{{ _('Variables are supported in the URL') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">{{ _('help and examples here') }}</a>).</div>
                     </div>
@@ -276,6 +277,7 @@ Math: {{ 1 + 1 }}") }}
             {% else %}
                 <p>
                     <strong>{{ _('Sorry, this functionality only works with fetchers that support interactive Javascript (so far only Playwright based fetchers)') }}<br>
+                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     {{ _('You need to') }} <a href="#request">{{ _('Set the fetch method') }}</a> {{ _('to one that supports interactive Javascript.') }}</strong>
                 </p>
             {% endif %}
@@ -319,6 +321,7 @@ Math: {{ 1 + 1 }}") }}
                     <div class="pure-form-message-inline">
 
                         <p id="verify-state-text">{{ _('Use the verify (✓) button to test if a condition passes against the current snapshot.') }}</p>
+                       {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                        {{ _('Read a quick tutorial about') }} <a href="https://changedetection.io/tutorial/conditional-actions-web-page-changes">{{ _('using conditional web page changes here') }}</a>.<br>
                     </div>
                 </div>
@@ -342,6 +345,7 @@ Math: {{ 1 + 1 }}") }}
                                     {{ _('Use the preview page to see your filters and triggers highlighted.') }}
                                 </li>
                                 <li>
+                                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                                     {{ _('Some sites use JavaScript to create the content, for this you should') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Fetching-pages-with-WebDriver">{{ _('use the Chrome/WebDriver Fetcher') }}</a>
                                 </li>
                             </ul>
@@ -356,7 +360,9 @@ Math: {{ 1 + 1 }}") }}
                         {{ render_checkbox_field(form.filter_text_replaced) }}
                         {{ render_checkbox_field(form.filter_text_removed) }}
                     <span class="pure-form-message-inline">{{ _('Note: Depending on the length and similarity of the text on each line, the algorithm may consider an <strong>addition</strong> instead of <strong>replacement</strong> for example.')|safe }}</span><br>
+                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     <span class="pure-form-message-inline">&nbsp;{{ _('So it\'s always better to select') }} <strong>{{ _('Added') }}</strong>+<strong>{{ _('Replaced') }}</strong> {{ _('when you\'re interested in new content.') }}</span><br>
+                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     <span class="pure-form-message-inline">&nbsp;{{ _('When content is merely moved in a list, it will also trigger an') }} <strong>{{ _('addition') }}</strong>, {{ _('consider enabling') }} <code><strong>{{ _('Only trigger when unique lines appear') }}</strong></code></span>
                 </fieldset>
                 <fieldset class="pure-control-group">
@@ -429,6 +435,7 @@ Math: {{ 1 + 1 }}") }}
                         {% if capabilities.supports_screenshots and capabilities.supports_xpath_element_data %}
                             {% if visual_selector_data_ready %}
                                 <span class="pure-form-message-inline" id="visual-selector-heading">
+                                    {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                                     {{ _('The Visual Selector tool lets you select the') }} <i>{{ _('text') }}</i> {{ _('elements that will be used for the change detection. It automatically fills-in the filters in the "CSS/JSONPath/JQ/XPath Filters" box of the') }} <a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a> {{ _('tab. Use') }} <strong>{{ _('Shift+Click') }}</strong> {{ _('to select multiple items.') }}
                                 </span>
 
@@ -467,6 +474,7 @@ Math: {{ 1 + 1 }}") }}
                     {% else %}
                         <p>
                             <strong>{{ _('Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc).') }}<br>
+                            {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                             {{ _('You need to') }} <a href="#request">{{ _('Set the fetch method') }}</a> {{ _('to one that supports Javascript and screenshots.') }}</strong>
                         </p>
                     {% endif %}

@@ -275,6 +275,7 @@ msgstr ".XLSX a Wachete"
 msgid "Backup Restore"
 msgstr "Obnova zálohy"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "Možnost obnovení changedetection.io zálohy je v"
@@ -317,6 +318,7 @@ msgstr "Jak exportovat?"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "V případě potřeby nastavte výchozí nástroj pro načítání na Chrome."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "Tabulka vlastního mapování sloupců a datových typů pro"
@@ -446,6 +448,7 @@ msgstr ""
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "Základní URL použita pro"
@@ -513,6 +516,7 @@ msgstr "AI / LLM"
 msgid "Info"
 msgstr "Info"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Výchozí čas opětovné kontroly pro všechna sledování, aktuální systémové minimum je"
@@ -585,6 +589,7 @@ msgstr "Toto počká <i>n</i> sekund před extrahováním textu."
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "Počet souběžných pracovních procesů sledování. Více procesů = rychlejší zpracování, ale vyšší spotřeba paměti."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "Aktuálně běží:"
@@ -613,6 +618,7 @@ msgstr "Pro běžné základní požadavky (bez použití chrome), maximální p
 msgid "Applied to all requests."
 msgstr "Nastaveno pro všechny požadavky."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "Pozn.: Pouhá změna hodnoty User-Agent často neobejde technologie zamezující přístup robotů, je třeba vzít v potaz"
@@ -698,6 +704,7 @@ msgstr "Ovládejte svou changedetection.io pomocí API, Více o"
 msgid "API access and examples here"
 msgstr "přístupu k API a příklady zde"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "Omezit API přístupový limit použitím"
@@ -1667,6 +1674,7 @@ msgstr ""
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr "Toto odstraní historii verzí (snímky) pro VŠECHNA sledování, ale ponechá seznam URL adres!"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "Možná budete chtít použít"
@@ -1683,6 +1691,7 @@ msgstr "nejprve odkaz."
 msgid "Confirmation text"
 msgstr "Potvrzovací text"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "Zadejte slovo"
@@ -1874,6 +1883,7 @@ msgstr "Podmínky"
 msgid "Stats"
 msgstr "Statistiky"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "Některé stránky používají k vytváření obsahu JavaScript, proto byste měli"
@@ -2002,6 +2012,7 @@ msgstr ""
 msgid "to one that supports interactive Javascript."
 msgstr "na ten, který podporuje interaktivní Javascript."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "musíte"
@@ -2014,6 +2025,7 @@ msgstr "Nastavte metodu načítání"
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "Přečtěte si rychlý tutoriál o"
@@ -2044,6 +2056,7 @@ msgid ""
 "<strong>addition</strong> instead of <strong>replacement</strong> for example."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "Vždy je tedy lepší vybírat"
@@ -2052,6 +2065,7 @@ msgstr "Vždy je tedy lepší vybírat"
 msgid "when you're interested in new content."
 msgstr "když vás zajímá nový obsah."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "Když se obsah pouze přesune v seznamu, spustí se také"
@@ -2091,6 +2105,7 @@ msgstr ""
 msgid "Loading..."
 msgstr "Načítání..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "Nástroj Visual Selector umožňuje vybrat"
@@ -2591,6 +2606,7 @@ msgstr "Zkontrolováno"
 msgid "Changed"
 msgstr "Změněno"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "Nejsou nakonfigurována žádná sledování webových stránek, do výše uvedeného pole přidejte adresu URL nebo"
@@ -3894,6 +3910,7 @@ msgstr ""
 msgid "Be sure to test your RegEx here."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr ""
@@ -3924,6 +3941,7 @@ msgstr ""
 msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "Tělo pro všechna oznámení — Můžete použít"
@@ -3981,6 +3999,7 @@ msgstr ""
 msgid "The diff output - only changes, additions, and removals"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr ""
@@ -4067,6 +4086,7 @@ msgstr ""
 msgid "The AI Change Intent that was evaluated."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr ""
@@ -4125,6 +4145,7 @@ msgstr ""
 msgid "Show advanced help and tips"
 msgstr "Zobrazit pokročilou nápovědu a tipy"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr ""
@@ -4145,6 +4166,7 @@ msgstr "textu oznámení včetně názvu."
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr ""
@@ -4153,6 +4175,7 @@ msgstr ""
 msgid "(or use plaintext/markdown format)"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr ""
@@ -4178,6 +4201,7 @@ msgstr ""
 msgid "Title for all notifications"
 msgstr "Nadpis pro všechna oznámení"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr ""
@@ -4186,6 +4210,7 @@ msgstr ""
 msgid "without quotes for automatic escaping, for example -"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr ""
@@ -4194,6 +4219,7 @@ msgstr ""
 msgid "for example -"
 msgstr "například -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr ""
@@ -4206,6 +4232,7 @@ msgstr ""
 msgid "Format for all notifications"
 msgstr "Formát pro všechna oznámení"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr ""
@@ -4641,6 +4668,7 @@ msgstr ""
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr ""
@@ -4719,6 +4747,7 @@ msgstr ""
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr ""
