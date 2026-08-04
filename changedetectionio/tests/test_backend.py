@@ -211,14 +211,15 @@ def test_requests_timeout(client, live_server, measure_memory_usage, datastore_p
     delay = 2
     test_url = url_for('test_endpoint', delay=delay, _external=True)
 
+    # The request timeout is now a per-browser setting on the plain client's config (migrated out
+    # of settings.requests.timeout). Set it via the /browsers Edit page.
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-ui-use_page_title_in_list": "",
-              "requests-time_between_check-minutes": 180,
-              "requests-timeout": delay - 1,
-              'application-fetch_backend': "html_requests"},
+        url_for("ui.browser_config.browser_config_edit", config_id="html_requests"),
+        data={"label": "Basic fast Plaintext/HTTP Client", "base_fetcher": "html_requests",
+              "timeout": delay - 1},
         follow_redirects=True
     )
+    assert b"Browser config updated" in res.data
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
@@ -231,13 +232,12 @@ def test_requests_timeout(client, live_server, measure_memory_usage, datastore_p
 
     ##### Now set a longer timeout
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-ui-use_page_title_in_list": "",
-              "requests-time_between_check-minutes": 180,
-              "requests-timeout": delay + 1, # timeout should be a second more than the reply time
-              'application-fetch_backend': "html_requests"},
+        url_for("ui.browser_config.browser_config_edit", config_id="html_requests"),
+        data={"label": "Basic fast Plaintext/HTTP Client", "base_fetcher": "html_requests",
+              "timeout": delay + 1},  # timeout should be a second more than the reply time
         follow_redirects=True
     )
+    assert b"Browser config updated" in res.data
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)

@@ -8,6 +8,20 @@ from changedetectionio.flask_app import login_optionally_required
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
 
 
+def _browser_config_choices(datastore):
+    """Browsers the group can override with: the always-present built-in engines, then the
+    user's saved browsers - the same set a watch can pick. No 'None' entry: the enabler
+    checkbox (browser_config_overrides_watch) is what turns the override on/off, and the
+    select is disabled when it's unchecked."""
+    from changedetectionio.model.browser_config import list_builtin_browsers
+    choices = []
+    for b in list_builtin_browsers():
+        choices.append((b['id'], b['label']))
+    for cid, entry in datastore.browser_config_store.all().items():
+        choices.append((cid, entry.get('label') or cid))
+    return choices
+
+
 def construct_blueprint(datastore: ChangeDetectionStore):
     tags_blueprint = Blueprint('tags', __name__, template_folder="templates")
 
@@ -163,6 +177,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                        extra_notification_tokens=datastore.get_unique_notification_tokens_available(),
                                        default_system_settings = datastore.data['settings'],
                                        )
+        form.browser_config.choices = _browser_config_choices(datastore)
 
         # Bridge API-stored processor_config_* values into the form's FormField sub-forms.
         # The API stores processor_config_restock_diff in the tag dict; find the matching
@@ -244,6 +259,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                data=tag,
                                extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                )
+        form.browser_config.choices = _browser_config_choices(datastore)
         # @todo subclass form so validation works
         #if not form.validate():
 #            for widget, l in form.errors.items():

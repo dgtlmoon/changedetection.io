@@ -158,11 +158,12 @@ class Import(Resource):
         if 'fetch_backend' in extras:
             from changedetectionio.content_fetchers import available_fetchers
             available = [f[0] for f in available_fetchers()]
-            # Also allow 'system' and extra_browser_* patterns
+            # Also allow 'system', extra_browser_* patterns, and a saved browser-config id.
             is_valid = (
                 extras['fetch_backend'] == 'system' or
                 extras['fetch_backend'] in available or
-                extras['fetch_backend'].startswith('extra_browser_')
+                extras['fetch_backend'].startswith('extra_browser_') or
+                bool(self.datastore.browser_config_store.get(extras['fetch_backend']))
             )
             if not is_valid:
                 return f"Invalid fetch_backend '{extras['fetch_backend']}'. Available: system, {', '.join(available)}", 400

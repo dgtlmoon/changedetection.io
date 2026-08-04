@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="edit-form">
+    <div class="box-wrap inner">
+
+        <h4 style="margin-top:0">{{ _('Browsers') }}</h4>
+        {% if browser_config_locked() %}
+        <p class="pure-form-message-inline">
+            {{ _('These are the available browsers. Adding, editing and removing browsers is locked on this instance — you can still choose the default browser below.') }}
+        </p>
+        {% else %}
+        <p class="pure-form-message-inline">
+            {{ _('These are the available browsers. Save a variation of one (its screen size, language, timezone…) with <strong>+ Add variation</strong> and reuse it on any watch or group — your variations appear nested (↳) under the browser they extend.')|safe }}
+        </p>
+        {% endif %}
+        <p class="pure-form-message-inline">
+            {{ _('The <strong>Default browser</strong> (chosen with the radio button) is used by every watch unless the watch — or its group — picks another one. This is the same value shown on the <a href="%(url)s#fetching">Settings → Fetching</a> page.', url=url_for('settings.settings_page'))|safe }}
+        </p>
+
+        {# One table: each available base browser, with its user-created variations nested directly
+           beneath it as child rows (↳). No separate "Your browsers" table. #}
+        {% if base_fetchers %}
+        <table class="pure-table browsers-table" style="width:100%; margin-top:1em;">
+            <thead><tr>
+                <th style="width:5em; text-align:center">{{ _('Default') }}</th>
+                <th>{{ _('Browser') }}</th>
+                <th>{{ _('Capabilities') }}</th>
+                <th></th>
+            </tr></thead>
+            <tbody>
+                {% for f in base_fetchers %}
+                {# ---- Base browser (parent) row ---- #}
+                <tr class="browser-base-row {% if f.ready_to_use and f.name == default_browser_id %}is-default{% endif %}">
+                    <td style="text-align:center">
+                        {# Only ready-to-use engines can be the default (base-only engines aren't usable directly) #}
+                        {% if f.ready_to_use %}
+                        <form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=f.name) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="radio" class="browser-default-radio" name="browser_default" value="{{ f.name }}"
+                                   title="{{ _('Set as the default browser') }}"
+                                   {% if f.name == default_browser_id %}checked{% endif %}>
+                        </form>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ f.description }}</strong>
+                        {% if not f.ready_to_use %}<span class="browser-chip">{{ _('needs setup') }}</span>{% endif %}
+                        {% if f.ready_to_use and f.name == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% for cap, on in f.capabilities.items() %}
+                            {% if on %}<span class="browser-chip browser-chip--cap">{{ cap.replace('supports_', '')|replace('_', ' ') }}</span>{% endif %}
+                        {% endfor %}
+                        {% if not f.is_browser %}<span class="browser-chip">{{ _('plain text, no JavaScript') }}</span>{% endif %}
+                    </td>
+                    <td style="text-align:right; white-space:nowrap">
+                        {# When browser config is locked, only setting the default is allowed - hide edit/add. #}
+                        {% if not browser_config_locked() %}
+                        {# Engines with configurable behaviour can be edited (browser fields, or HTTP options). #}
+                        {% if f.ready_to_use and f.configurable %}
+                            <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=f.name) }}">{{ _('Edit') }}</a>
+                        {% endif %}
+                        {# "Add variation" for any configurable engine - browsers or the plain client. #}
+                        {% if f.configurable %}
+                        <a class="pure-button button-small pure-button-primary" href="{{ url_for('ui.browser_config.browser_config_add', base_fetcher=f.name) }}">+ {{ _('Add variation') }}</a>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {# ---- User variations of this base (child rows) ---- #}
+                {% for v in f.variations %}
+                {% set bc = v.get('browser_config') or {} %}
+                <tr class="browser-variation-row {% if v.id == default_browser_id %}is-default{% endif %}">
+                    <td style="text-align:center">
+                        <form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=v.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="radio" class="browser-default-radio" name="browser_default" value="{{ v.id }}"
+                                   title="{{ _('Set as the default browser') }}"
+                                   {% if v.id == default_browser_id %}checked{% endif %}>
+                        </form>
+                    </td>
+                    <td class="browser-variation-name">
+                        <i data-feather="corner-down-right" class="browser-variation-arrow" title="{{ _('Variation of %(base)s', base=f.description) }}"></i>
+                        <strong>{{ v.get('label') }}</strong>
+                        {% if v.id == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if bc.get('browser_type') %}<span class="browser-chip">{{ bc.browser_type }}</span>{% endif %}
+                        {% if bc.get('viewport_width') %}<span class="browser-chip">{{ bc.viewport_width }}×{{ bc.viewport_height or '?' }}</span>{% endif %}
+                        {% if bc.get('locale') %}<span class="browser-chip">{{ bc.locale }}</span>{% endif %}
+                        {% if bc.get('timezone_id') %}<span class="browser-chip">{{ bc.timezone_id }}</span>{% endif %}
+                        {% if bc.get('block_resource_types') %}<span class="browser-chip">{{ _('no') }} {{ bc.block_resource_types|join(', ') }}</span>{% endif %}
+                    </td>
+                    <td style="text-align:right; white-space:nowrap">
+                        {% if not browser_config_locked() %}
+                        <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=v.id) }}">{{ _('Edit') }}</a>
+                        <form method="POST" action="{{ url_for('ui.browser_config.browser_config_remove', config_id=v.id) }}" style="display:inline"
+                              onsubmit="return confirm('{{ _('Remove this browser?') }}');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="pure-button button-small button-error" type="submit">{{ _('Remove') }}</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="browser-empty">
+            <p>{{ _("No interactive browser is available.") }}</p>
+            <p class="pure-form-message-inline">{{ _('Connect a Chrome/Playwright browser (e.g. set <code>PLAYWRIGHT_DRIVER_URL</code>) or install the Playwright library to configure browsers here.')|safe }}</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+// Radio buttons live in per-row mini-forms (so each posts its own set-default action). They
+// share a name so they read as one group; on change we clear the others for instant feedback,
+// then submit — the server persists the choice and the reloaded page reflects it authoritatively.
+document.querySelectorAll('.browser-default-radio').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+        if (!radio.checked) return;
+        document.querySelectorAll('.browser-default-radio').forEach(function (other) {
+            if (other !== radio) other.checked = false;
+        });
+        radio.closest('form').submit();
+    });
+});
+</script>
+
+<style>
+.browser-chip {
+    display: inline-block;
+    padding: 0.1em 0.6em;
+    margin: 0.1em;
+    border-radius: 1em;
+    font-size: 0.8rem;
+    background: rgba(127,127,127,0.15);
+    white-space: nowrap;
+}
+.browser-chip--default { background: #d4edda; color: #155724; }
+.browsers-table tr.is-default { background: rgba(21,87,36,0.06); }
+/* A base browser and its variations read as one group: the base has a firm top border, its
+   children a lighter tint and no internal separators, so the nesting is obvious at a glance. */
+.browsers-table tr.browser-base-row td { border-top: 2px solid rgba(127,127,127,0.35); }
+.browsers-table tr.browser-variation-row td { background: rgba(127,127,127,0.05); border-top: none; }
+.browsers-table tr.browser-variation-row.is-default td { background: rgba(21,87,36,0.06); }
+.browser-variation-name { padding-left: 1.5em; }
+/* Feather renders an inline <svg>, so size it with width/height (font-size won't apply). */
+.browser-variation-arrow { width: 16px; height: 16px; margin-right: 0.4em; color: #999; vertical-align: middle; }
+.browser-default-radio { transform: scale(1.3); cursor: pointer; }
+.set-default-form { margin: 0; display: inline; }
+.browser-empty {
+    margin-top: 0.75em;
+    padding: 2em;
+    text-align: center;
+    border: 1px dashed rgba(127,127,127,0.35);
+    border-radius: 0.5em;
+}
+.browser-empty p { color: #777; margin-top: 0; }
+</style>
+{% endblock %}

@@ -17,6 +17,11 @@ class FetcherCapabilities(BaseModel):
     supports_browser_steps: bool = False       # Can execute browser automation steps
     supports_screenshots: bool = False         # Can capture page screenshots
     supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
+    supports_request_blocking: bool = False    # Can block requests by resource-type / URL pattern
+    supports_browser_type: bool = False        # Can choose the browser engine (chromium/firefox/webkit)
+    supports_delete_created_files: bool = False # Launches locally & can clean up its temp files
+    supports_request_timeout: bool = False     # Plain HTTP client: honours a per-profile request timeout
+    supports_custom_user_agent: bool = False   # Honours a per-profile User-Agent (all fetchers)
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -25,6 +30,19 @@ class FetcherCapabilities(BaseModel):
             name: getattr(fetcher_class, name, False)
             for name in cls.model_fields
         })
+
+    @property
+    def is_browser(self):
+        """A real browser: can screenshot / extract element positions (visual selector)."""
+        return bool(self.supports_screenshots or self.supports_xpath_element_data)
+
+    @property
+    def can_host_variation(self):
+        """True if this engine has per-profile behaviour worth saving as a browser config -
+        a real browser (viewport/locale/…), the plain client's request timeout, or a custom
+        user-agent (all fetchers). Single source of truth for the /browsers 'Add variation' +
+        'Edit' actions."""
+        return bool(self.is_browser or self.supports_request_timeout or self.supports_custom_user_agent)
 
 
 def manage_user_agent(headers, current_ua=''):
@@ -65,6 +83,19 @@ class Fetcher():
     # (e.g. 'html_requests', 'html_webdriver'). Set by resolve_content_fetcher()
     # so downstream consumers don't have to re-derive it from the class name.
     backend_name = None
+    # Resolved per-watch browser behaviour (FetcherConfig), injected after construction.
+    # None by default so a fetcher that never reads it is completely unaffected.
+    browser_config = None
+
+    # Whether this fetcher is usable directly, out-of-the-box, as a built-in "browser" (has sane
+    # env defaults). False means it's a *base only* - it must be configured via a browser config
+    # first (e.g. html_playwright_builtin needs a browser_type chosen), so it's offered as a base
+    # in the Add Browser form but NOT shown as a directly-selectable built-in browser.
+    ready_to_use = True
+    # Every fetcher sends an HTTP User-Agent (browsers via the request_headers channel -> the
+    # browser context, the plain client directly), so all support a per-profile UA override.
+    # Set here on the base so browser configs can carry a user_agent for any engine.
+    supports_custom_user_agent = True
     browser_connection_is_custom = None
     browser_connection_url = None
     browser_steps = None

@@ -525,6 +525,10 @@ class watch_base(dict):
         instance_attrs = {}
         for attr_name in dir(self):
             if attr_name.startswith('_') and not attr_name.startswith('__'):
+                # Skip computed properties/descriptors - they have no stored state and
+                # often can't be set back (read-only properties), which breaks __setstate__.
+                if isinstance(getattr(type(self), attr_name, None), property):
+                    continue
                 try:
                     attr_value = getattr(self, attr_name)
                     # Exclude large reference objects and caches from serialization

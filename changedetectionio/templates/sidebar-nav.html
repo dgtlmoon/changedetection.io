@@ -18,6 +18,7 @@
           </a>
         {%- endif -%}
     </li>
+    {% if add_watch_ui_available() %}
     <li class="action-sidebar-li">
         <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
            class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
@@ -37,6 +38,7 @@
             <span class="action-label">{{ _('Add a page watch') }}</span>
         </a>
     </li>
+    {% endif %}
     <li class="action-sidebar-li">
         <a href="{{ url_for('watchlist.index') }}"
            class="action-sidebar-item {% if ep == 'watchlist.index' or ep.startswith('ui.ui_views') or ep.startswith('ui.ui_edit') %}active{% endif %}"
@@ -68,14 +70,11 @@
         </a>
     </li>
     <li class="action-sidebar-li">
-        <a href="#"
-           class="action-sidebar-item is-disabled"
-           title="{{ _('Browsers (coming soon)') }}"
-           aria-disabled="true"
-           tabindex="-1">
+        <a href="{{ url_for('ui.browser_config.browsers_overview') }}"
+           class="action-sidebar-item {% if ep.startswith('ui.browser_config') %}active{% endif %}"
+           title="{{ _('Browsers') }}">
             <i data-feather="globe" class="action-icon"></i>
             <span class="action-label">{{ _('Browsers') }}</span>
-            <span class="action-badge">{{ _('soon') }}</span>
         </a>
     </li>
     {% if not current_diff_url %}

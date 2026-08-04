@@ -404,6 +404,32 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
+    def add_watch_ui_processor_preview(self, html_content, url=None):
+        """Add-Watch-UI preview: reuse the exact price/availability extraction the real check uses,
+        so the line shown under the processor picker matches what a saved watch would detect."""
+        from flask_babel import gettext
+        try:
+            r = extract_itemprop_availability_safe(html_content)
+        except MoreThanOnePriceFound:
+            return gettext("More than one price detected on this page - restock/price detection needs a single-product page.")
+        except Exception:
+            return None
+
+        price = r.get('price')
+        availability = r.get('availability')
+        if price is None and not availability:
+            return gettext("No price or stock information was detected on this page.")
+
+        parts = []
+        if price is not None:
+            currency = r.get('currency') or ''
+            parts.append(gettext("price: %(price)s", price=f"{currency}{price}".strip()))
+        if availability:
+            # availability is often a schema.org URL (e.g. https://schema.org/InStock) - show the tail.
+            parts.append(gettext("availability: %(availability)s",
+                                 availability=str(availability).rstrip('/').split('/')[-1]))
+        return gettext("Detected — %(details)s", details=", ".join(parts))
+
     def run_changedetection(self, watch, force_reprocess=False):
         import hashlib
 

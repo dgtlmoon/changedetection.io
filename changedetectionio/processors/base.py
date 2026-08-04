@@ -97,6 +97,17 @@ class difference_detection_processor():
             logger.warning(f"Failed to read checksum file for {self.watch_uuid}: {e}")
             self.last_raw_content_checksum = None
 
+    def add_watch_ui_processor_preview(self, html_content, url=None):
+        """Optional Add-Watch-UI preview hook.
+
+        Return a short human string describing what THIS processor would read off the just-fetched
+        page (shown under the processor picker on /add-watch-ui, so the user can see the processor
+        "works" before saving), or None for no preview. Best-effort UI sugar - the caller swallows
+        exceptions and treats None/empty as "show nothing". Override in a processor to opt in; the
+        default is no preview. Runs against the raw fetched HTML, so it does not need a saved watch.
+        """
+        return None
+
     async def validate_iana_url(self):
         """Pre-flight SSRF check — runs DNS lookup in executor to avoid blocking the event loop.
         Covers all fetchers (requests, playwright, puppeteer, plugins) since every fetch goes
@@ -195,7 +206,7 @@ class difference_detection_processor():
         # truth (watch -> group -> system, extra_browser_/pdf/browser_steps overrides etc);
         # the resolved backend name is stamped onto the fetcher instance below.
         from changedetectionio.content_fetchers import resolve_content_fetcher
-        fetcher_obj, prefer_fetch_backend, custom_browser_connection_url = resolve_content_fetcher(
+        fetcher_obj, prefer_fetch_backend, custom_browser_connection_url, browser_config = resolve_content_fetcher(
             watch=self.watch, datastore=self.datastore)
 
         proxy_url = None
@@ -219,6 +230,16 @@ class difference_detection_processor():
         # Stamp the resolved backend name so downstream consumers (processors, plugins)
         # can read it directly instead of re-deriving it from the fetcher class name.
         self.fetcher.backend_name = prefer_fetch_backend
+        # Inject the resolved per-watch browser behaviour; fetchers that read it apply what
+        # they can, others ignore it. Never None so consumers can read attributes freely.
+        self.fetcher.browser_config = browser_config
+        try:
+            logger.debug(
+                f"Watch {self.watch.get('uuid')} fetch: backend='{prefer_fetch_backend}' "
+                f"browser_config={browser_config.model_dump() if browser_config else None}"
+            )
+        except Exception as e:
+            logger.debug(f"Could not log browser_config: {e}")
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
@@ -228,9 +249,11 @@ class difference_detection_processor():
         from changedetectionio.jinja2_custom import render as jinja_render
         request_headers = CaseInsensitiveDict()
 
-        ua = self.datastore.data['settings']['requests'].get('default_ua')
-        if ua and ua.get(prefer_fetch_backend):
-            request_headers.update({'User-Agent': ua.get(prefer_fetch_backend)})
+        # Profile-level User-Agent from the selected browser config (migrated from the old
+        # per-backend settings.requests.default_ua). Applied before the watch's own headers so an
+        # explicit per-watch User-Agent still overrides it. Honoured by every engine.
+        if self.fetcher.browser_config:
+            self.fetcher.browser_config.apply_user_agent(request_headers)
 
         request_headers.update(self.watch.get('headers', {}))
         request_headers.update(self.datastore.get_all_base_headers())
@@ -245,7 +268,13 @@ class difference_detection_processor():
         for header_name in request_headers:
             request_headers.update({header_name: jinja_render(template_str=request_headers.get(header_name))})
 
-        timeout = self.datastore.data['settings']['requests'].get('timeout')
+        # Requests timeout now lives on the plain client's browser config (FetcherConfig.timeout,
+        # default DEFAULT_REQUEST_TIMEOUT_SECONDS; existing installs migrated by update_35), and the
+        # requests fetcher applies that via effective_timeout(). This is only a defensive base value
+        # for the unusual case where no browser config is resolved at all; browsers ignore it (they
+        # use their own navigation timeouts).
+        timeout = self.datastore.data['settings']['requests'].get('timeout') \
+            or int(os.getenv('DEFAULT_SETTINGS_REQUESTS_TIMEOUT', 45))
 
         request_body = self.watch.get('body')
         if request_body:

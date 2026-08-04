@@ -141,6 +141,21 @@
 
             {% if capabilities.supports_request_type %}
             <div class="tab-pane-inner" id="request">
+                    {% if browser_config_group_override %}
+                    <div class="pure-control-group">
+                        <div class="fetch-backend-group-override">
+                            {{ _('Using browser config') }}
+                            <strong>{{ browser_config_group_override.label }}</strong>
+                            {{ _('from group') }}
+                            <a href="{{ url_for('tags.form_tag_edit', uuid=browser_config_group_override.group_uuid) }}">{{ browser_config_group_override.group_title }}</a>.
+                        </div>
+                        <span class="pure-form-message-inline">
+                            {{ _('This group overrides the fetch method for its watches. Change it in the group settings, or turn off the override there to choose per-watch.') }}
+                        </span>
+                        {# Keep the value submitted so nothing is lost, but hidden - the group config wins at resolve time. #}
+                        <div style="display:none">{{ form.fetch_backend(class="fetch-backend") }}</div>
+                    </div>
+                    {% else %}
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.fetch_backend, class="fetch-backend") }}
                         <span class="pure-form-message-inline">
@@ -149,6 +164,7 @@
                             {{ _('Tip:') }} <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#brightdata-proxy-support">{{ _('Connect using Bright Data and Oxylabs Proxies, find out more here.') }}</a>
                         </span>
                     </div>
+                    {% endif %}
                 {% if form.proxy %}
                     <div class="pure-control-group inline-radio">
                           <div>{{ form.proxy.label }} <a href="" id="check-all-proxies" class="pure-button button-secondary button-xsmall" >{{ _('Check/Scan all') }}</a></div>

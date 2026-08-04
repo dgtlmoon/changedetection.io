@@ -250,16 +250,18 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
     ##  live_server_setup(live_server) # Setup on conftest per function
     test_url = url_for('test_headers', _external=True)
 
+    # The default User-Agent for the plain client now lives on its browser config (html_requests),
+    # set via the /browsers Edit page (migrated out of settings.requests.default_ua).
     res = client.post(
-        url_for("settings.settings_page"),
+        url_for("ui.browser_config.browser_config_edit", config_id="html_requests"),
         data={
-            "application-fetch_backend": "html_requests",
-            "application-minutes_between_check": 180,
-            "requests-default_ua-html_requests": "html-requests-user-agent"
+            "label": "Basic fast Plaintext/HTTP Client",
+            "base_fetcher": "html_requests",
+            "user_agent": "html-requests-user-agent",
         },
         follow_redirects=True
     )
-    assert b'Settings updated' in res.data
+    assert b"Browser config updated" in res.data
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -310,30 +312,24 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
         # Because its no longer calling back to localhost but from the browser container, set in test-only.yml
         test_url = test_url.replace('localhost', 'cdio')
 
-    form_data = {
-        "application-fetch_backend": "html_requests",
-        "application-minutes_between_check": 180,
-        "requests-default_ua-html_requests": requests_ua
-    }
-
-    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        form_data["requests-default_ua-html_webdriver"] = webdriver_ua
-
+    # Per-engine default User-Agent now lives on each engine's browser config (migrated out of
+    # settings.requests.default_ua). Set them via the /browsers Edit page.
     res = client.post(
-        url_for("settings.settings_page"),
-        data=form_data,
+        url_for("ui.browser_config.browser_config_edit", config_id="html_requests"),
+        data={"label": "Basic fast Plaintext/HTTP Client", "base_fetcher": "html_requests",
+              "user_agent": requests_ua},
         follow_redirects=True
     )
-    assert b'Settings updated' in res.data
+    assert b"Browser config updated" in res.data
 
-    res = client.get(url_for("settings.settings_page"))
-
-    # Only when some kind of real browser is setup
     if os.getenv('PLAYWRIGHT_DRIVER_URL'):
-        assert b'requests-default_ua-html_webdriver' in res.data
-
-    # Field should always be there
-    assert b"requests-default_ua-html_requests" in res.data
+        res = client.post(
+            url_for("ui.browser_config.browser_config_edit", config_id="html_webdriver"),
+            data={"label": "html_webdriver", "base_fetcher": "html_webdriver",
+                  "user_agent": webdriver_ua},
+            follow_redirects=True
+        )
+        assert b"Browser config updated" in res.data
 
     # Add the test URL twice, we will check
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
