@@ -255,3 +255,65 @@ def test_browsersteps_edit_UI_startsession(client, live_server, measure_memory_u
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
+
+def test_visual_selector_xpath_carries_no_page_markup(client, live_server, measure_memory_usage, datastore_path):
+    # The scraped element id ends up in the selector that the Visual Selector displays, so it must
+    # not be able to carry markup from the watched page into it.
+    import json
+    import zlib
+
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+
+    # The same id on two elements, findUpTag() only returns a selector when the id is unique on the
+    # page, so this is what reaches the fallback xpath builder
+    duplicate_id = 'dupe"><img src=x onerror=console.log(1)>'
+    page_content = f"""<html><body>
+    <div id='{duplicate_id}' style="width:400px;height:300px">first</div>
+    <div id='{duplicate_id}' style="width:400px;height:300px">second</div>
+    <p id="unique" style="width:400px;height:60px">unique id, stays on the id shortcut</p>
+    </body></html>"""
+
+    test_url = url_for('test_endpoint', content=page_content, _external=True)
+    test_url = test_url.replace('localhost.localdomain', 'cdio')
+    test_url = test_url.replace('localhost', 'cdio')
+
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'edit_and_watch_submit_button': 'Edit > Watch'},
+        follow_redirects=True
+    )
+    assert b"Watch added in Paused state, saving will unpause" in res.data
+
+    uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid, unpause_on_save=1),
+        data={
+            "url": test_url,
+            "tags": "",
+            'fetch_backend': "html_webdriver",
+            "time_between_check_use_default": "y",
+        },
+        follow_redirects=True
+    )
+    assert b"unpaused" in res.data
+    wait_for_all_checks(client)
+
+    with open(os.path.join(datastore_path, uuid, 'elements.deflate'), 'rb') as f:
+        xpath_data = json.loads(zlib.decompress(f.read()).decode('utf-8'))
+
+    xpaths = [str(sel.get('xpath')) for sel in xpath_data['size_pos']]
+    assert xpaths, "Elements were scraped"
+
+    for xpath in xpaths:
+        assert '<' not in xpath, f"No markup from the page in the selector: {xpath}"
+        assert '>' not in xpath, f"No markup from the page in the selector: {xpath}"
+
+    # The two divs are still scraped, just addressed by their position instead
+    assert any(x.startswith('/html/body/div') for x in xpaths), f"Duplicate-id elements still have a selector: {xpaths}"
+    # A well behaved id is untouched
+    assert '#unique' in xpaths, f"Unique id still uses the id selector: {xpaths}"
+
+    client.get(
+        url_for("ui.form_delete", uuid="all"),
+        follow_redirects=True
+    )
