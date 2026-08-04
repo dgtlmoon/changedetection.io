@@ -125,6 +125,10 @@
                 <td><code>{{ '{{llm_intent}}' }}</code></td>
                 <td>{{ _('The AI Change Intent that was evaluated.') }}</td>
             </tr>
+            <tr>
+                <td><code>{{ '{{llm_error}}' }}</code></td>
+                <td>{{ _('True when this notification fired because the AI Change Intent call itself failed (bad model/params, provider outage, etc.) rather than a genuine "important" verdict — use to avoid mistaking an AI outage for working filtering.') }}</td>
+            </tr>
             {% endif %}
                 {% if extra_notification_token_placeholder_info %}
                     {% for token in extra_notification_token_placeholder_info %}
