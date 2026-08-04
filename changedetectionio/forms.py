@@ -1071,6 +1071,7 @@ class globalSettingsRequestForm(Form):
 
 class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField(_l("Open 'History' page in a new tab"), default=True, validators=[validators.Optional()])
+    mark_viewed_on_external_open = BooleanField(_l('Mark a watch as viewed when opening its page'), default=False, validators=[validators.Optional()])
     socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True

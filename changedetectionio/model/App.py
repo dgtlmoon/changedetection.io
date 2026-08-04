@@ -77,6 +77,7 @@ class model(dict):
                     'ui': {
                         'use_page_title_in_list': True,
                         'open_diff_in_new_tab': True,
+                        'mark_viewed_on_external_open': False,
                         'socket_io_enabled': True,
                         'favicons_enabled': True,
                         'timeago_format': 'long',  # 'long' = "1 minute ago", 'short' = "1m ago"

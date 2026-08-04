@@ -800,6 +800,10 @@ msgid "Enable this setting to open the diff page in a new tab. If disabled, the 
 msgstr "この設定を有効にすると差分ページが新しいタブで開きます。無効の場合は現在のタブで開きます。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "When enabled, opening the external page link from the watch list marks that watch as viewed."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
 msgstr "リアルタイムUI更新を有効化（変更した場合は再起動が必要です）"
 
@@ -3375,6 +3379,10 @@ msgstr "名前とプロキシURLの両方が必要です。"
 #: changedetectionio/forms.py
 msgid "Open 'History' page in a new tab"
 msgstr "「履歴」ページを新しいタブで開く"
+
+#: changedetectionio/forms.py
+msgid "Mark a watch as viewed when opening its page"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Realtime UI Updates Enabled"
