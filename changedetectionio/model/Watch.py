@@ -45,7 +45,7 @@ BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRE
 
 # Module-level favicon filename cache: data_dir → basename (or None)
 # Keyed by data_dir so it survives Watch object recreation, deepcopy, and concurrent requests.
-# Invalidated explicitly in bump_favicon() when a new favicon is saved.
+# Invalidated explicitly when the favicon is saved or the watch history is cleared.
 _FAVICON_FILENAME_CACHE: dict = {}
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
@@ -333,6 +333,8 @@ class model(EntityPersistenceMixin, watch_base):
             if item.name in processor_config_files:
                 continue
             os.unlink(item)
+
+        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
 
         # Force the attr to recalculate
         bump = self.history
@@ -896,7 +898,7 @@ class model(EntityPersistenceMixin, watch_base):
 
         Uses a module-level cache keyed by data_dir to survive Watch object recreation,
         deepcopy (which drops instance attrs), and concurrent request races.
-        Invalidated by bump_favicon() when a new favicon is saved.
+        Invalidated when a favicon is saved or the watch history is cleared.
 
         Returns:
             str: Basename of the favicon file, or None if not found.
