@@ -293,6 +293,13 @@ components:
           format: uri
           description: URL to monitor for changes
           maxLength: 5000
+        link_to_open:
+          type: string
+          description: |
+            Optional human-facing URL to open instead of `url`. Use when `url` points at something
+            that is not meant to be read in a browser (an API endpoint or RSS feed, for example).
+            An empty string means "use `url`". Exposed rendered as `open_link`.
+          maxLength: 5000
         title:
           type: [string, 'null']
           description: Custom title for the web page change monitor (watch), not to be confused with page_title
@@ -679,6 +686,12 @@ components:
               type: string
               format: string
               description: The watch URL rendered in case of any Jinja2 markup, always use this for listing.
+              readOnly: true
+              x-computed: true
+            open_link:
+              type: string
+              format: string
+              description: The URL a human should be sent to - `link_to_open` when set, otherwise the same as `link`.
               readOnly: true
               x-computed: true
             page_title:
