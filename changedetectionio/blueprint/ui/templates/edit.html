@@ -82,6 +82,10 @@
                         <div class="pure-form-message">{{ _('Variables are supported in the URL') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">{{ _('help and examples here') }}</a>).</div>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_field(form.link_to_open, placeholder="https://...", class="m-d") }}
+                        <span class="pure-form-message-inline">{{ _('Automatically uses the Web Page URL, you can override here if you want to open a different URL') }}</span>
+                    </div>
+                    <div class="pure-control-group">
                         {{ render_field(form.tags) }}
                         <span class="pure-form-message-inline">{{ _('Organisational tag/group name used in the main listing page') }}</span>
                         {% if auto_applied_tags %}

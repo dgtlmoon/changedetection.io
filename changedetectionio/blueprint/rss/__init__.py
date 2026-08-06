@@ -24,4 +24,4 @@ RSS_TEMPLATE_PLAINTEXT_DEFAULT = "<pre>{{watch_label}} had a change.\n\n{{diff}}
 
 # @todo add some [edit]/[history]/[goto] etc links
 # @todo need {{watch_edit_link}} + delete + history link token
-RSS_TEMPLATE_HTML_DEFAULT = "<html><body>\n<h4><a href=\"{{watch_url}}\">{{watch_label}}</a></h4>\n<p>{{diff}}</p>\n</body></html>\n"
+RSS_TEMPLATE_HTML_DEFAULT = "<html><body>\n<h4><a href=\"{{watch_open_url}}\">{{watch_label}}</a></h4>\n<p>{{diff}}</p>\n</body></html>\n"

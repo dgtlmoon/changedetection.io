@@ -211,6 +211,7 @@ class watch_base(dict):
             'last_error': False,
             'last_notification_error': None,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
+            'link_to_open': '',  # Optional human-facing URL to open instead of 'url' (eg. watch an API/RSS endpoint, open the real page)
             'method': 'GET',
             'notification_alert_count': 0,
             'notification_body': None,
