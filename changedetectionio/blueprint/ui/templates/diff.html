@@ -8,7 +8,7 @@
     {% endif %}
 
     const highlight_submit_ignore_url="{{url_for('ui.ui_edit.highlight_submit_ignore_url', uuid=uuid)}}";
-    const watch_url= {{watch_a.link|tojson}};
+    const watch_url= {{watch_a.open_link|tojson}};
 
     // Initial scroll position: if set, scroll to this line number in #difference on page load
     const initialScrollToLineNumber = {{ initial_scroll_line_number|default('null') }};

@@ -141,6 +141,7 @@ class Watch(Resource):
         watch['last_changed'] = watch_obj.last_changed
         watch['viewed'] = watch_obj.viewed
         watch['link'] = watch_obj.link
+        watch['open_link'] = watch_obj.open_link
 
         # Resolved processor config: tag override wins over watch-level config (mirrors restock processor logic)
         import json
@@ -596,6 +597,7 @@ class CreateWatch(Resource):
                 'last_checked': watch['last_checked'],
                 'last_error': watch['last_error'],
                 'link': watch.link,
+                'open_link': watch.open_link,
                 'page_title': watch['page_title'],
                 'tags': [*tags],  # Unpack dict keys to list (can't use list() since variable named 'list')
                 'title': watch['title'],
