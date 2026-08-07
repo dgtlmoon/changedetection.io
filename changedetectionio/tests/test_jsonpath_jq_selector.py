@@ -121,6 +121,44 @@ and it can also be repeated
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
 
+def test_lone_surrogate_escapes_do_not_break_filters():
+    """A \\uD800-style escape in the watched JSON must not take the whole document down.
+
+    jq re-serializes the document for its own C parser, which rejects a lone high surrogate,
+    so every jq:/jqraw: filter on the page used to error even when pointing at an unrelated
+    field. On the json: path the surrogate instead reached the caller intact and blew up later
+    in checksums and history writes. Valid pairs must keep working untouched.
+    See: https://github.com/dgtlmoon/changedetection.io/issues/4273
+    """
+    from .. import html_tools
+
+    BS = chr(92)  # build the escapes at runtime so no quoting layer eats them
+    lone_high = '{"title": "Example ' + BS + 'uD800", "other": "untouched"}'
+    lone_low = '{"title": "Example ' + BS + 'uDC00", "other": "untouched"}'
+    valid_pair = '{"title": "smile ' + BS + 'uD83D' + BS + 'uDE00", "other": "untouched"}'
+
+    filters = ["json:$.%s", "jq:.%s", "jqraw:.%s"] if jq_support else ["json:$.%s"]
+
+    for content in (lone_high, lone_low):
+        for f in filters:
+            # An unrelated field must still be reachable
+            text = html_tools.extract_json_as_string(content, f % "other")
+            assert "untouched" in text
+
+            # And the offending field itself resolves, with the surrogate replaced
+            text = html_tools.extract_json_as_string(content, f % "title")
+            assert "Example" in text
+            assert not any(0xD800 <= ord(c) <= 0xDFFF for c in text)
+            # Whatever comes back has to survive the downstream checksum/history write
+            text.encode('utf-8')
+
+    # A well-formed surrogate pair is a normal emoji and must be preserved as-is
+    for f in filters:
+        text = html_tools.extract_json_as_string(valid_pair, f % "title")
+        assert '\U0001F600' in text
+        text.encode('utf-8')
+
+
 def test_unittest_inline_extract_body():
     content = """
     <html>

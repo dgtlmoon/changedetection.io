@@ -406,9 +406,44 @@ def extract_element(find='title', html_content=''):
 
     return element_text
 
+# Any surrogate still present after json.loads() is a lone one - the decoder already folds
+# well-formed pairs (😀 -> a single emoji character) before we see them. Lone ones
+# come from escapes like \uD800 in the source document, which travel as plain ASCII and so
+# pass straight through the fetched-content sanitizer in processors/base.py.
+_LONE_SURROGATE_RE = re.compile(r'[\ud800-\udfff]')
+
+def _has_lone_surrogate(value):
+    if isinstance(value, str):
+        return bool(_LONE_SURROGATE_RE.search(value))
+    if isinstance(value, dict):
+        return any(_has_lone_surrogate(k) or _has_lone_surrogate(v) for k, v in value.items())
+    if isinstance(value, list):
+        return any(_has_lone_surrogate(v) for v in value)
+    return False
+
+def _sanitize_lone_surrogates(value):
+    if isinstance(value, str):
+        return _LONE_SURROGATE_RE.sub('\ufffd', value)
+    if isinstance(value, dict):
+        return {_sanitize_lone_surrogates(k): _sanitize_lone_surrogates(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_lone_surrogates(v) for v in value]
+    return value
+
 #
 def _parse_json(json_data, json_filter):
     from jsonpath_ng.ext import parse
+
+    # Replace lone surrogates with U+FFFD, matching what processors/base.py already does for
+    # fetched content. Two separate failures otherwise, neither of which is confined to the
+    # offending value: jq re-serializes the whole document for its own C parser, which rejects
+    # a lone high surrogate, so every jq:/jqraw: filter on the page errors even when it points
+    # at an unrelated field; and on the json: path the surrogate reaches the caller intact and
+    # raises UnicodeEncodeError later in checksums and history writes.
+    # See: https://github.com/dgtlmoon/changedetection.io/issues/4273
+    if _has_lone_surrogate(json_data):
+        logger.warning("Lone unicode surrogate(s) in JSON document, replacing with U+FFFD before filtering")
+        json_data = _sanitize_lone_surrogates(json_data)
 
     if json_filter.startswith("json:"):
         jsonpath_expression = parse(json_filter.replace('json:', ''))
