@@ -319,6 +319,99 @@ def test_watch_prompt_overrides_tag_and_global(
     delete_all_watches(client)
 
 
+def test_append_mode_saved_via_edit_form_and_applied(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Choosing "add to the end of the inherited prompt" in the watch edit form persists,
+    and the watch's text is then appended to the global default rather than replacing it.
+    Re #4251.
+    """
+    from changedetectionio.llm.evaluator import get_effective_summary_prompt
+
+    _set_response(datastore_path, HTML_V1)
+    _configure_llm(client)
+    ds = client.application.config.get('DATASTORE')
+    _set_global_default(ds, 'Global: summarise as one sentence.')
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = ds.add_watch(url=test_url)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            "url": test_url,
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y",
+            "llm_change_summary": "Also flag anything mentioning a recall.",
+            "llm_change_summary_mode": "append",
+        },
+        follow_redirects=True,
+    )
+    assert b"Updated watch." in res.data
+
+    watch = ds.data['watching'][uuid]
+    assert watch.get('llm_change_summary_mode') == 'append'
+    assert get_effective_summary_prompt(watch, ds) == (
+        'Global: summarise as one sentence.\n\nAlso flag anything mentioning a recall.'
+    )
+
+    delete_all_watches(client)
+
+
+def test_edit_form_defaults_to_replace_preserving_old_behaviour(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    A form submitted without the mode field (the pre-#4251 shape) must still replace,
+    so upgrading does not silently change what existing watches send to the LLM.
+    """
+    from changedetectionio.llm.evaluator import get_effective_summary_prompt
+
+    _set_response(datastore_path, HTML_V1)
+    _configure_llm(client)
+    ds = client.application.config.get('DATASTORE')
+    _set_global_default(ds, 'Global: summarise as one sentence.')
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = ds.add_watch(url=test_url)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            "url": test_url,
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y",
+            "llm_change_summary": "Only tell me the new price.",
+        },
+        follow_redirects=True,
+    )
+    assert b"Updated watch." in res.data
+
+    watch = ds.data['watching'][uuid]
+    assert get_effective_summary_prompt(watch, ds) == 'Only tell me the new price.'
+
+    delete_all_watches(client)
+
+
+def test_edit_page_renders_the_prompt_mode_radio(
+        client, live_server, measure_memory_usage, datastore_path):
+    """Both radio options must be present on the watch edit page."""
+    _set_response(datastore_path, HTML_V1)
+    _configure_llm(client)
+    ds = client.application.config.get('DATASTORE')
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = ds.add_watch(url=test_url)
+
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    body = res.data.decode('utf-8', errors='replace')
+
+    assert 'name="llm_change_summary_mode"' in body
+    assert 'value="replace"' in body
+    assert 'value="append"' in body
+
+    delete_all_watches(client)
+
+
 def test_hardcoded_fallback_when_nothing_set(
         client, live_server, measure_memory_usage, datastore_path):
     """
