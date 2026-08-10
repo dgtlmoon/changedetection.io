@@ -37,8 +37,12 @@ class TestDiffBuilder(unittest.TestCase):
 
         value = restock_diff.get_itemprop_availability(html_content)
         assert value.get('price') == 155.55, "price should be found via JSON-LD"
-        assert value.get('availability') == 'in stock', "availability should be found via OpenGraph fallback"
         assert value.get('currency') == 'EUR', "currency should be found via OpenGraph fallback"
+        # Normalised the same way a schema.org value is, so that the in-stock matcher
+        # (which looks for 'instock') sees it. OpenGraph spells it 'in stock'.
+        assert value.get('availability') == 'instock', "availability should be found via OpenGraph fallback and normalised"
+        assert any(s in value.get('availability') for s in ['instock', 'instoreonly']), \
+            "a product advertised as available must read as in stock, not out of stock"
 
 if __name__ == '__main__':
     unittest.main()
