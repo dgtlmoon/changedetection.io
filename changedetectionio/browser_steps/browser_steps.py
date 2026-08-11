@@ -5,7 +5,7 @@ from random import randint
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
-from changedetectionio.content_fetchers.base import manage_user_agent
+from changedetectionio.content_fetchers.base import get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.jinja2_custom import render as jinja_render
 
 def browser_steps_get_valid_steps(browser_steps: list):
@@ -358,7 +358,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = await self.playwright_browser.new_context(
             accept_downloads=False,  # Should never be needed
-            bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+            bypass_csp=get_playwright_bypass_csp(),
             extra_http_headers=self.headers,
             ignore_https_errors=True,
             proxy=proxy,
@@ -505,4 +505,3 @@ class browsersteps_live_ui(steppable_browser_interface):
             pass
             
         return (screenshot, xpath_data)
-
