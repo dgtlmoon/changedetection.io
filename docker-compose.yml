@@ -26,7 +26,7 @@ services:
   #
   #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
   #      - PLAYWRIGHT_DRIVER_URL=ws://browser-sockpuppet-chrome:3000
-  #      # Disable when the remote CDP implementation does not support Page.setBypassCSP.
+  #      # Disable when the remote CDP implementation does not support `Page.setBypassCSP` - like with Obscura browser.
   #      - PLAYWRIGHT_BYPASS_CSP=false
   #
   #
