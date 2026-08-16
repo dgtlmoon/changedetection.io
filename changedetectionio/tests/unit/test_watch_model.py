@@ -6,6 +6,7 @@
 import unittest
 import os
 import pickle
+import tempfile
 from copy import deepcopy
 
 from changedetectionio.model import Watch, Tag
@@ -248,6 +249,35 @@ class TestDiffBuilder(unittest.TestCase):
         # If datastore was copied, it would take much longer
         self.assertLess(elapsed, 0.5,
                        f"Deepcopy too slow ({elapsed:.3f}s for 10 copies) - might be copying datastore")
+
+
+class TestFaviconFilenameCache(unittest.TestCase):
+
+    def test_clear_watch_invalidates_cached_favicon_filename(self):
+        from changedetectionio.model.Watch import _FAVICON_FILENAME_CACHE
+
+        mock_datastore = {'settings': {'application': {}}, 'watching': {}}
+
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = Watch.model(
+                datastore_path=datastore_path,
+                __datastore=mock_datastore,
+                default={'url': 'https://example.com'}
+            )
+            watch.ensure_data_dir_exists()
+            self.addCleanup(_FAVICON_FILENAME_CACHE.pop, watch.data_dir, None)
+
+            favicon_path = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(favicon_path, 'wb') as favicon_file:
+                favicon_file.write(b'favicon')
+
+            self.assertEqual(watch.get_favicon_filename(), 'favicon.ico')
+
+            watch.clear_watch()
+
+            self.assertFalse(os.path.exists(favicon_path))
+            self.assertIsNone(watch.get_favicon_filename())
+
 
 class TestLLMDiffSummaryCache(unittest.TestCase):
     """Tests for get_llm_diff_summary / save_llm_diff_summary — version-pair + prompt-hash caching."""
