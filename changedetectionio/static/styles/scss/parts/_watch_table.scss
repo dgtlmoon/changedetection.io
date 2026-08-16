@@ -425,6 +425,20 @@ body.watch-selection-active  {
   flex-wrap: wrap;
   gap: $common-gap;
   margin: 0;
+
+  /* Always in the DOM so realtime can reveal/hide it in any open tab (it used to be
+     {% if unread_count %}'d away, so another tab could never show it). Revealed by
+     body.has-any-unviewed - a body class rather than a selector tied to this toolbar,
+     so it keeps working if the button moves, and it follows the same convention as
+     body.has-queue / body.is-checking-now. Set server-side via extra_classes and kept
+     live by the general_stats_update socket event. */
+  #post-list-mark-views {
+    display: none;
+  }
+}
+
+body.has-any-unviewed #post-list-mark-views {
+  display: inline-flex !important;
 }
 
 #watch-table-wrapper {
@@ -452,9 +466,11 @@ body.watch-selection-active  {
     }
   }
 
+  /* #post-list-mark-views is no longer keyed off this class — see body.has-any-unviewed.
+     Two classes tracking one fact is how they drift, so prefer the body class for anything new. */
   &.has-unread-changes {
     #list-related-buttons {
-      #post-list-unread, #post-list-mark-views {
+      #post-list-unread {
         display: inline-flex !important;
       }
     }

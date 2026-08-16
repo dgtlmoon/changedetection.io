@@ -121,7 +121,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             deals_count=deals_count,
             unread_count=unread_count,
             processor_counts=processor_counts,
-            extra_classes=' '.join(filter(None, ['has-queue' if not update_q.empty() else '', 'llm-configured' if llm_configured else ''])),
+            # body classes for app-wide state; realtime.js keeps these in sync live
+            # (has-any-unviewed reveals the "Mark all viewed" button - see _watch_table.scss)
+            extra_classes=' '.join(filter(None, ['has-queue' if not update_q.empty() else '',
+                                                 'llm-configured' if llm_configured else '',
+                                                 'has-any-unviewed' if datastore.unread_changes_count else ''])),
             form=form,
             generate_tag_colors=processors.generate_processor_badge_colors,
             wcag_text_color=processors.wcag_text_color,

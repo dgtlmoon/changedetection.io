@@ -268,9 +268,11 @@ window.watchOverviewI18n = {
             </div>
             {% endif %}
             <div id="buttons-for-all-watches">
-                {%- if unread_count -%}
+                {# Always rendered, hidden by CSS unless #watch-table-wrapper has .has-unread-changes.
+                   It used to be {% if unread_count %}-gated, which meant it could not exist in the DOM
+                   of another open tab — so marking viewed (or a new change arriving) in one tab could
+                   never show/hide it in the other. Presence in the DOM is what lets realtime toggle it. #}
                 <a id="post-list-mark-views" class="cdio-btn" href="{{ filtered_action_url('ui.mark_all_viewed') }}"><i data-feather="eye"></i>{{ _('Mark all viewed') }}</a>
-                {%- endif -%}
                 <a id="recheck-all" class="cdio-btn" href="{{ filtered_action_url('ui.form_watch_checknow') }}"><i data-feather="refresh-cw"></i>{{ _('Recheck all') }} {% if active_tag_uuid %}{{ _("in '%(title)s'", title=active_tag.title) }}{% endif %}</a>
             </div>
             <a title="{{ _('RSS Feed') }}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
