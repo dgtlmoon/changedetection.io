@@ -13,6 +13,7 @@ from changedetectionio.auth_decorator import login_optionally_required
 # Shared filtering — the single source of truth, also used by the ui blueprint's
 # bulk actions so a filtered view and the actions taken on it always agree.
 from changedetectionio.blueprint.watchlist import filters as wl_filters
+from changedetectionio.blueprint.watchlist.row_context import watch_row_context
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
@@ -96,8 +97,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
 
-        proxy_list = datastore.proxy_list
-
         from changedetectionio import content_fetchers
         available_fetchers = content_fetchers.available_fetchers()
 
@@ -105,14 +104,19 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
         llm_configured = bool(_get_llm_config(datastore))
 
+        # Everything the row markup itself needs comes from here, shared with the Socket.IO
+        # row push so a live-updated row can't drift from the server-rendered one.
+        row_ctx = watch_row_context(datastore,
+                                    active_tag_uuid=active_tag_uuid,
+                                    queued_uuids=update_q.get_queued_uuids())
+
         output = render_template(
             "watch-overview.html",
+            **row_ctx,
             active_tag=active_tag,
-            active_tag_uuid=active_tag_uuid,
             active_processor=active_processor,
             checking_now_size=len(worker_pool.get_running_uuids()),
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
-            datastore=datastore,
             errored_count=errored_count,
             deals_count=deals_count,
             unread_count=unread_count,
@@ -122,7 +126,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             generate_tag_colors=processors.generate_processor_badge_colors,
             wcag_text_color=processors.wcag_text_color,
             guid=datastore.data['app_guid'],
-            has_proxies=proxy_list,
             available_fetchers=available_fetchers,
             #header=_("todo - tag name etc"),
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
@@ -130,16 +133,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             pagination=pagination,
             processor_badge_css=processors.get_processor_badge_css(),
             processor_badge_texts=processors.get_processor_badge_texts(),
-            processor_descriptions=processors.get_processor_descriptions(),
             queue_size=update_q.qsize(),
-            queued_uuids=update_q.get_queued_uuids(),
             # Active view filters (tag/processor/q/unread/...) so links (e.g. column sorting)
             # can re-apply them and not drop the operator's current filtered view.
             active_filters=wl_filters.filter_query_args(request.args),
             search_q=request.args.get('q', '').strip(),
             sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
             sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
-            system_default_fetcher=datastore.data['settings']['application'].get('fetch_backend'),
             tags=sorted_tags,
             unread_changes_count=datastore.unread_changes_count,
             watches=sorted_watches,
