@@ -1,5 +1,7 @@
 from .util import live_server_setup, wait_for_all_checks
 from flask import url_for
+from changedetectionio import __version__
+import re
 import time
 
 def test_check_access_control(app, client, live_server, measure_memory_usage, datastore_path):
@@ -43,6 +45,8 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         res = c.get(url_for("watchlist.index"), follow_redirects=True)
         # Should be logged out
         assert b"Login" in res.data
+        # The login page must not leak the running version via the static asset cache-busters (#2190)
+        assert not re.search(rb'\?v(?:er)?=' + re.escape(__version__.encode()), res.data)
 
         # The diff page should return something valid when logged out
         res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))

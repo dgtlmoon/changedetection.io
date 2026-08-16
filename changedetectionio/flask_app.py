@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import flask_login
+import hashlib
 import locale
 import os
 import queue
@@ -194,7 +195,16 @@ def get_darkmode_state():
 
 @app.template_global()
 def get_css_version():
-    return __version__
+    """Cache-busting token for static assets.
+
+    Changes on every upgrade (so browsers refetch CSS/JS) but is not the raw
+    version string - the raw version was leaking to anonymous visitors on the
+    login page via `?v=x.y.z`, which allows exposed instances to be fingerprinted
+    for known-vulnerable releases (#2190). Salted with the per-installation
+    app_guid so it can't be reversed to the version.
+    """
+    salt = datastore.data.get('app_guid', '') if datastore else ''
+    return hashlib.sha256(f"{salt}{__version__}".encode('utf-8')).hexdigest()[:10]
 
 @app.template_global('filtered_action_url')
 def _filtered_action_url(endpoint, **overrides):
