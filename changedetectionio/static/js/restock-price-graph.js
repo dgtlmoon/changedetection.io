@@ -260,9 +260,9 @@
             $pill.append($('<span class="rg-status-label"></span>').text(i18n['price_' + summary.status] || ''));
             let sub;
             if (summary.status === 'low') {
-                sub = (i18n.cheaper_than || '').replace('%s', summary.cheaper_than_pct);
+                sub = (i18n.cheaper_than || '').replace('%(percent)s%%', summary.cheaper_than_pct + '%');
             } else if (summary.status === 'high') {
-                sub = (i18n.pricier_than || '').replace('%s', summary.pricier_than_pct);
+                sub = (i18n.pricier_than || '').replace('%(percent)s%%', summary.pricier_than_pct + '%');
             } else {
                 sub = i18n.typical_note || '';
             }
