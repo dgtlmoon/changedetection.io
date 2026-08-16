@@ -455,14 +455,21 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     # Watch Management Methods
     # ============================================================================
 
-    def set_last_viewed(self, uuid, timestamp):
+    def set_last_viewed(self, uuid, timestamp, send_signal=True):
         logger.debug(f"Setting watch UUID: {uuid} last viewed to {int(timestamp)}")
         self.data['watching'][uuid].update({'last_viewed': int(timestamp)})
         self.data['watching'][uuid].commit()
 
-        watch_check_update = signal('watch_check_update')
-        if watch_check_update:
-            watch_check_update.send(watch_uuid=uuid)
+        # Bulk callers (mark-all-viewed) pass send_signal=False and emit one summary event
+        # afterwards instead. Each signal fans out to handle_watch_update(), which rescans
+        # EVERY watch twice (errored_count + unread_changes_count), takes the queue and
+        # worker-pool locks, and broadcasts 3 socket events — so signalling per watch makes
+        # a bulk mark O(n^2) with 3n emits, and floods every connected browser with n
+        # row updates it will immediately re-render anyway.
+        if send_signal:
+            watch_check_update = signal('watch_check_update')
+            if watch_check_update:
+                watch_check_update.send(watch_uuid=uuid)
 
     def remove_password(self):
         self.__data['settings']['application']['password'] = False
