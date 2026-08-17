@@ -285,7 +285,7 @@ def load_all_watches(datastore_path, rehydrate_entity_func):
     Returns:
         Dictionary of uuid -> Watch object
     """
-    start_time = time.time()
+    start_time = time.perf_counter()
     logger.info("Loading watches from individual watch.json files...")
 
     watching = {}
@@ -294,9 +294,9 @@ def load_all_watches(datastore_path, rehydrate_entity_func):
         return watching
 
     # Find all watch.json files using glob (faster than manual directory traversal)
-    glob_start = time.time()
+    glob_start = time.perf_counter()
     watch_files = glob.glob(os.path.join(datastore_path, "*", "watch.json"))
-    glob_time = time.time() - glob_start
+    glob_time = time.perf_counter() - glob_start
 
     total = len(watch_files)
     logger.debug(f"Found {total} watch.json files in {glob_time:.3f}s")
@@ -318,16 +318,17 @@ def load_all_watches(datastore_path, rehydrate_entity_func):
             # load_watch_from_file already logged the specific error
             failed += 1
 
-    elapsed = time.time() - start_time
+    elapsed = time.perf_counter() - start_time
+    load_rate = loaded / elapsed if elapsed > 0 else 0
 
     if failed > 0:
         logger.critical(
             f"LOAD COMPLETE: {loaded} watches loaded successfully, "
             f"{failed} watches FAILED to load (corrupted or invalid) "
-            f"in {elapsed:.2f}s ({loaded/elapsed:.0f} watches/sec)"
+            f"in {elapsed:.2f}s ({load_rate:.0f} watches/sec)"
         )
     else:
-        logger.info(f"Loaded {loaded} watches from disk in {elapsed:.2f}s ({loaded/elapsed:.0f} watches/sec)")
+        logger.info(f"Loaded {loaded} watches from disk in {elapsed:.2f}s ({load_rate:.0f} watches/sec)")
 
     return watching
 

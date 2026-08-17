@@ -1404,11 +1404,12 @@ msgid "Mute notifications"
 msgstr "알림 음소거"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "편집"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "재확인"
@@ -2278,7 +2279,8 @@ msgstr ""
 msgid "Running now"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/ui/templates/queue.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Queued"
 msgstr "대기 중"
 
@@ -2335,6 +2337,88 @@ msgstr "모니터링이 추가되었습니다."
 msgid "records"
 msgstr "항목"
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Pause checks"
+msgstr "확인 일시중지"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnPause checks"
+msgstr "확인 재개"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Mute notification"
+msgstr "알림 음소거"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnMute notification"
+msgstr "알림 음소거 해제"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Goto web page"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Create a link to share watch config with others"
+msgstr "다른 사람과 모니터링 설정을 공유할 링크 만들기"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Detecting restock and price"
+msgstr "재입고 및 가격 감지"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Not in stock"
+msgstr "재고 없음"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "In stock"
+msgstr "재고 있음"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price"
+msgstr "가격"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "No information"
+msgstr "정보 없음"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Checked"
+msgstr "확인됨"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Checking now"
+msgstr "지금 확인 중"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changed"
+msgstr "변경됨"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Summary"
+msgstr "요약"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "기록"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Preview"
+msgstr "미리보기"
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "changedetection.io는 웹페이지 외에도 다양한 대상을 모니터링할 수 있습니다. 플러그인을 확인해 보세요."
@@ -2355,12 +2439,6 @@ msgstr "전체 기록으로 이동"
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Loading price history…"
 msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "In stock"
-msgstr "재고 있음"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/difference.py
@@ -2588,85 +2666,12 @@ msgid "Restock & Price"
 msgstr "재입고 및 가격"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Checked"
-msgstr "확인됨"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Changed"
-msgstr "변경됨"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "설정된 웹페이지 변경 감지 모니터링이 없습니다. 위 입력란에 URL을 추가하거나"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "목록 가져오기"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Pause checks"
-msgstr "확인 일시중지"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnPause checks"
-msgstr "확인 재개"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mute notification"
-msgstr "알림 음소거"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnMute notification"
-msgstr "알림 음소거 해제"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Goto web page"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a link to share watch config with others"
-msgstr "다른 사람과 모니터링 설정을 공유할 링크 만들기"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Detecting restock and price"
-msgstr "재입고 및 가격 감지"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Not in stock"
-msgstr "재고 없음"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price"
-msgstr "가격"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Price change since previous price (%(prev)s)"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "No information"
-msgstr "정보 없음"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Checking now"
-msgstr "지금 확인 중"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Summary"
-msgstr "요약"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/text_json_diff/difference.py
-msgid "History"
-msgstr "기록"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Preview"
-msgstr "미리보기"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"
@@ -2830,7 +2835,7 @@ msgstr "단어 수는 텍스트를 공백 기준으로 나누어 계산하는 �
 msgid "Basic fast Plaintext/HTTP Client"
 msgstr "일반 텍스트/HTTP 클라이언트"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "아직 없음"
@@ -4796,7 +4801,7 @@ msgid "Paused"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "Live"
+msgid "Running"
 msgstr ""
 
 #: changedetectionio/templates/menu.html

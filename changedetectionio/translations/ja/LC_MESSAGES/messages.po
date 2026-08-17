@@ -1402,11 +1402,12 @@ msgid "Mute notifications"
 msgstr "通知をミュート"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "編集"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "再チェック"
@@ -2287,7 +2288,8 @@ msgstr ""
 msgid "Running now"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/ui/templates/queue.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Queued"
 msgstr "キュー済み"
 
@@ -2344,6 +2346,88 @@ msgstr "ウォッチを追加しました。"
 msgid "records"
 msgstr "件"
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Pause checks"
+msgstr "チェックを一時停止"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnPause checks"
+msgstr "チェックを再開"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Mute notification"
+msgstr "通知をミュート"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnMute notification"
+msgstr "通知のミュートを解除"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Goto web page"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Create a link to share watch config with others"
+msgstr "ウォッチ設定を他の人と共有するリンクを作成"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Detecting restock and price"
+msgstr "在庫補充と価格を検知中"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Not in stock"
+msgstr "在庫なし"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "In stock"
+msgstr "在庫あり"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price"
+msgstr "価格"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "No information"
+msgstr "情報なし"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Checked"
+msgstr "チェック済み"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Checking now"
+msgstr "今すぐチェック"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changed"
+msgstr "変更済み"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Summary"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "履歴"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Preview"
+msgstr "プレビュー"
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "Changedetection.io はウェブページ以外も監視できます！プラグインをご覧ください！"
@@ -2364,12 +2448,6 @@ msgstr ""
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Loading price history…"
 msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "In stock"
-msgstr "在庫あり"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/difference.py
@@ -2597,85 +2675,12 @@ msgid "Restock & Price"
 msgstr "在庫補充＆価格"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Checked"
-msgstr "チェック済み"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Changed"
-msgstr "変更済み"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "ウェブページ変更検知ウォッチが設定されていません。上のボックスにURLを追加するか、"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "リストをインポート"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Pause checks"
-msgstr "チェックを一時停止"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnPause checks"
-msgstr "チェックを再開"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mute notification"
-msgstr "通知をミュート"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnMute notification"
-msgstr "通知のミュートを解除"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Goto web page"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a link to share watch config with others"
-msgstr "ウォッチ設定を他の人と共有するリンクを作成"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Detecting restock and price"
-msgstr "在庫補充と価格を検知中"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Not in stock"
-msgstr "在庫なし"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price"
-msgstr "価格"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Price change since previous price (%(prev)s)"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "No information"
-msgstr "情報なし"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Checking now"
-msgstr "今すぐチェック"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Summary"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/text_json_diff/difference.py
-msgid "History"
-msgstr "履歴"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Preview"
-msgstr "プレビュー"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"
@@ -2839,7 +2844,7 @@ msgstr "単語数はコンテンツの長さを示す簡易指標で、テキス
 msgid "Basic fast Plaintext/HTTP Client"
 msgstr "基本 (高速なプレーンテキスト/HTTPクライアント)"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "未実施"
@@ -4819,7 +4824,7 @@ msgid "Paused"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "Live"
+msgid "Running"
 msgstr ""
 
 #: changedetectionio/templates/menu.html

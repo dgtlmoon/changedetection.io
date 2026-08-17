@@ -1488,11 +1488,12 @@ msgid "Mute notifications"
 msgstr "Отключить уведомления"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "Редактировать"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "Перепроверить"
@@ -2382,7 +2383,8 @@ msgstr ""
 msgid "Running now"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/ui/templates/queue.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Queued"
 msgstr "В очереди"
 
@@ -2439,6 +2441,88 @@ msgstr "Часы добавлены."
 msgid "records"
 msgstr "записи"
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Pause checks"
+msgstr "Приостановить проверки"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnPause checks"
+msgstr "Возобновить проверку"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Mute notification"
+msgstr "Отключить уведомление"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnMute notification"
+msgstr "Включить уведомление"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Goto web page"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Create a link to share watch config with others"
+msgstr "Создайте ссылку, чтобы поделиться конфигурацией часов с другими"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Detecting restock and price"
+msgstr "Обнаружение пополнения запасов и цены"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Not in stock"
+msgstr "Нет в наличии"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "In stock"
+msgstr "В наличии"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price"
+msgstr "Цена"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "No information"
+msgstr "Нет информации"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Checked"
+msgstr "Проверено"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Checking now"
+msgstr "Проверяю сейчас"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changed"
+msgstr "Измененный"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Summary"
+msgstr "Краткое содержание"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "История"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Preview"
+msgstr "Предварительный просмотр"
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr "Changedetection.io может отслеживать не только веб-страницы! Посмотрите наши плагины!"
@@ -2459,12 +2543,6 @@ msgstr "Перейти к полной истории"
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Loading price history…"
 msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "In stock"
-msgstr "В наличии"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/difference.py
@@ -2692,85 +2770,12 @@ msgid "Restock & Price"
 msgstr "Пополнение и цена"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Checked"
-msgstr "Проверено"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Changed"
-msgstr "Измененный"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "Не настроено наблюдение за обнаружением изменений веб-страниц. Добавьте URL-адрес в поле выше или"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "импортировать список"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Pause checks"
-msgstr "Приостановить проверки"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnPause checks"
-msgstr "Возобновить проверку"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mute notification"
-msgstr "Отключить уведомление"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnMute notification"
-msgstr "Включить уведомление"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Goto web page"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a link to share watch config with others"
-msgstr "Создайте ссылку, чтобы поделиться конфигурацией часов с другими"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Detecting restock and price"
-msgstr "Обнаружение пополнения запасов и цены"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Not in stock"
-msgstr "Нет в наличии"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price"
-msgstr "Цена"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Price change since previous price (%(prev)s)"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "No information"
-msgstr "Нет информации"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Checking now"
-msgstr "Проверяю сейчас"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Summary"
-msgstr "Краткое содержание"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/text_json_diff/difference.py
-msgid "History"
-msgstr "История"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Preview"
-msgstr "Предварительный просмотр"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"
@@ -2936,7 +2941,7 @@ msgstr "Количество слов — простая мера длины с�
 msgid "Basic fast Plaintext/HTTP Client"
 msgstr "Базовый быстрый текстовый/HTTP-клиент"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "Еще нет"
@@ -4937,7 +4942,7 @@ msgid "Paused"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "Live"
+msgid "Running"
 msgstr ""
 
 #: changedetectionio/templates/menu.html

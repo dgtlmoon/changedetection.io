@@ -1,5 +1,6 @@
 import time
 import threading
+from blinker import signal
 from flask import Blueprint, request, redirect, url_for, flash, render_template, session, current_app
 from flask_babel import gettext
 from loguru import logger
@@ -237,32 +238,32 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         list_filters = wl_filters.list_filters_from_args(datastore, request.args)
         now = int(time.time())
 
-        # Mark watches as viewed - use background thread only for large watch counts
-        def mark_viewed_impl():
-            """Mark watches as viewed - can run synchronously or in background thread."""
-            marked_count = 0
-            try:
-                for watch_uuid, watch in datastore.data['watching'].items():
-                    if not wl_filters.watch_matches_filters(datastore, watch, list_filters):
-                        continue
+        # Runs SYNCHRONOUSLY, and must stay that way. Re #4021: this used to hand the work to a
+        # background thread and redirect immediately, so the watch list re-rendered from a
+        # datastore that was still being marked and showed rows as unviewed until a manual
+        # refresh. The realtime events that would have corrected it were emitted while the
+        # browser was mid-navigation with no socket connected, so they went nowhere.
+        # It is cheap enough to do inline: the per-watch signal is suppressed below (that was
+        # the actual cost, not the disk write, which measures ~0.05ms per watch).
+        marked_count = 0
+        try:
+            for watch_uuid, watch in datastore.data['watching'].items():
+                if not wl_filters.watch_matches_filters(datastore, watch, list_filters):
+                    continue
 
-                    datastore.set_last_viewed(watch_uuid, now)
-                    marked_count += 1
+                datastore.set_last_viewed(watch_uuid, now, send_signal=False)
+                marked_count += 1
 
-                logger.info(f"Marking complete: {marked_count} watches marked as viewed")
-            except Exception as e:
-                logger.error(f"Error marking as viewed: {e}")
+            logger.info(f"Marking complete: {marked_count} watches marked as viewed")
+        except Exception as e:
+            logger.error(f"Error marking as viewed: {e}")
 
-        # For small watch counts (< 10), run synchronously to avoid race conditions in tests
-        # For larger counts, use background thread to avoid blocking the UI
-        watch_count = len(datastore.data['watching'])
-        if watch_count < 10:
-            # Run synchronously for small watch counts
-            mark_viewed_impl()
-        else:
-            # Start background thread for large watch counts
-            thread = threading.Thread(target=mark_viewed_impl, daemon=True)
-            thread.start()
+        # One summary event instead of one per watch, so other open tabs refresh their counters.
+        # This page doesn't need it - the redirect below re-renders it from the marked datastore.
+        if marked_count:
+            general_stats_update = signal('general_stats_update')
+            if general_stats_update:
+                general_stats_update.send()
 
         return redirect(url_for('watchlist.index', **wl_filters.filter_query_args(request.args)))
 

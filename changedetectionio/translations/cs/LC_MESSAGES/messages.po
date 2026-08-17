@@ -1398,11 +1398,12 @@ msgid "Mute notifications"
 msgstr "Ztlumit oznámení"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "Upravit"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "Znovu zkontrolovat"
@@ -2274,7 +2275,8 @@ msgstr ""
 msgid "Running now"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/ui/templates/queue.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Queued"
 msgstr "Ve frontě"
 
@@ -2331,6 +2333,88 @@ msgstr ""
 msgid "records"
 msgstr "záznamy"
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Pause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnPause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Mute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnMute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Goto web page"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Create a link to share watch config with others"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Detecting restock and price"
+msgstr "Kontrola zásob a ceny"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Not in stock"
+msgstr "Není skladem"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "In stock"
+msgstr "Skladem"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price"
+msgstr "Cena"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "No information"
+msgstr "Žádné informace"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Checked"
+msgstr "Zkontrolováno"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Checking now"
+msgstr "Probíhá kontrola"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changed"
+msgstr "Změněno"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Summary"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "Historie"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Preview"
+msgstr "Náhled"
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
 msgstr ""
@@ -2351,12 +2435,6 @@ msgstr ""
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Loading price history…"
 msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "In stock"
-msgstr "Skladem"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/difference.py
@@ -2584,85 +2662,12 @@ msgid "Restock & Price"
 msgstr "Doplnění zásob a cena"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Checked"
-msgstr "Zkontrolováno"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Changed"
-msgstr "Změněno"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "Nejsou nakonfigurována žádná sledování webových stránek, do výše uvedeného pole přidejte adresu URL nebo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "importovat seznam"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Pause checks"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnPause checks"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mute notification"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnMute notification"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Goto web page"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a link to share watch config with others"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Detecting restock and price"
-msgstr "Kontrola zásob a ceny"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Not in stock"
-msgstr "Není skladem"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price"
-msgstr "Cena"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Price change since previous price (%(prev)s)"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "No information"
-msgstr "Žádné informace"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Checking now"
-msgstr "Probíhá kontrola"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Summary"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/text_json_diff/difference.py
-msgid "History"
-msgstr "Historie"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Preview"
-msgstr "Náhled"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"
@@ -2826,7 +2831,7 @@ msgstr ""
 msgid "Basic fast Plaintext/HTTP Client"
 msgstr ""
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "Ještě ne"
@@ -4784,7 +4789,7 @@ msgid "Paused"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "Live"
+msgid "Running"
 msgstr ""
 
 #: changedetectionio/templates/menu.html
