@@ -3108,7 +3108,7 @@ msgstr "minuta"
 
 #: changedetectionio/flask_app.py
 msgid "minutes"
-msgstr "protokół"
+msgstr "minut"
 
 #: changedetectionio/flask_app.py
 msgid "second"
@@ -3117,7 +3117,7 @@ msgstr "drugi"
 #: changedetectionio/blueprint/settings/templates/settings.html
 #: changedetectionio/flask_app.py
 msgid "seconds"
-msgstr "sekundy"
+msgstr "sekund"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
