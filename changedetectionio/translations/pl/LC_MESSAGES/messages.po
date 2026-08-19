@@ -1386,7 +1386,7 @@ msgstr "żetony"
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 #, python-format
 msgid "%(percent)s%% of %(budget)s"
-msgstr "%(procent)s%% z %(budżetu)s"
+msgstr "%(percent)s%% z %(budget)s"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "All-time total"
