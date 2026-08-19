@@ -2178,7 +2178,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Request"
-msgstr "Prośba"
+msgstr "Żądanie"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
