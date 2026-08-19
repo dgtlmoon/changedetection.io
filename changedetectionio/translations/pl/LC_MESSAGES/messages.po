@@ -1897,8 +1897,8 @@ msgid ""
 "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets"
 " next month."
 msgstr ""
-"Miesięczny limit tokenów AI wynoszący %(budget) tokenów został osiągnięty "
-"(wykorzystano %(used) tokenów). Limit zostanie zresetowany w przyszłym "
+"Miesięczny limit tokenów AI wynoszący %(budget)s tokenów został osiągnięty "
+"(wykorzystano %(used)s tokenów). Limit zostanie zresetowany w przyszłym "
 "miesiącu."
 
 #: changedetectionio/blueprint/ui/edit.py
