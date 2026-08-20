@@ -1,11 +1,8 @@
-import asyncio
-import re
 import hashlib
 
 from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
 from changedetectionio.content_fetchers.base import Fetcher
-from changedetectionio.strtobool import strtobool
-from changedetectionio.validate_url import is_private_hostname, is_url_private_or_parser_confused
+from changedetectionio.validate_url import validate_fetch_url_async
 from copy import deepcopy
 from abc import abstractmethod
 import os
@@ -97,22 +94,19 @@ class difference_detection_processor():
             logger.warning(f"Failed to read checksum file for {self.watch_uuid}: {e}")
             self.last_raw_content_checksum = None
 
-    async def validate_iana_url(self):
-        """Pre-flight SSRF check — runs DNS lookup in executor to avoid blocking the event loop.
-        Covers all fetchers (requests, playwright, puppeteer, plugins) since every fetch goes
-        through call_browser().
+    async def validate_url_is_fetchable(self):
+        """Pre-flight fetch gate for the regular check path (all fetchers, since they all come
+        through call_browser()). The scheme/file:///private-IP rules live in
+        validate_url.is_fetch_url_allowed() so that the fetch paths which do NOT come through
+        here - the live Browser Steps UI, the Add Watch snapshot preview, and individual
+        'Goto URL' browser steps - enforce exactly the same rules.
         """
-        if strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')):
-            return
-        loop = asyncio.get_running_loop()
-        # Use the parser-agnostic check so urlparse/urllib3 differentials (GHSA-rph4-96w6-q594)
-        # can't slip a private/internal hostname past this pre-flight gate.
-        if await loop.run_in_executor(None, is_url_private_or_parser_confused, self.watch.link):
-            raise Exception(
-                f"Fetch blocked: '{self.watch.link}' resolves to a private/reserved IP address "
-                f"or contains a parser-differential payload. "
-                f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow."
-            )
+        try:
+            await validate_fetch_url_async(self.watch.link)
+        except ValueError as e:
+            # Re-raised as a plain Exception so it lands in the watch's last_error like every other
+            # fetch failure, instead of looking like an internal type error.
+            raise Exception(str(e)) from e
 
     def _consume_preloaded_fetch(self):
         """One-shot: if the Add Watch page parked a freshly-fetched snapshot for this
@@ -178,14 +172,8 @@ class difference_detection_processor():
 
         url = self.watch.link
 
-        # Protect against file:, file:/, file:// access, check the real "link" without any meta "source:" etc prepended.
-        if re.search(r'^file:', url.strip(), re.IGNORECASE):
-            if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
-                raise Exception(
-                    "file:// type access is denied for security reasons."
-                )
-
-        await self.validate_iana_url()
+        # Scheme allowlist (file:// etc), parser-differential and private/reserved IP checks.
+        await self.validate_url_is_fetchable()
 
         # Proxy ID "key"
         preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(

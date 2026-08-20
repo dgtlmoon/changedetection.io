@@ -7,6 +7,7 @@ from loguru import logger
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
 from changedetectionio.content_fetchers.base import manage_user_agent
 from changedetectionio.jinja2_custom import render as jinja_render
+from changedetectionio.validate_url import validate_fetch_url_async
 
 def browser_steps_get_valid_steps(browser_steps: list):
     if browser_steps is not None and len(browser_steps):
@@ -135,7 +136,15 @@ class steppable_browser_interface():
         if not value:
             logger.warning("No URL provided for goto_url action")
             return None
-            
+
+        # Every browser navigation we initiate funnels through here - the "Goto URL" step, the
+        # "Goto site" step, the live Browser Steps UI and the Add Watch snapshot preview - so this
+        # is the one place that has to enforce the fetch rules. Step values are plain user-supplied
+        # strings (forms.SingleBrowserStep.optional_value, or the browser_steps[] API field) and are
+        # NOT covered by the watch URL validation, which is what made file:///etc/passwd readable
+        # and private-IP SSRF possible via a browser step (GHSA-hm22-wg2m-35v4).
+        await validate_fetch_url_async(value)
+
         now = time.time()
         response = await self.page.goto(value, timeout=0, wait_until='load')
         logger.debug(f"Time to goto URL {time.time()-now:.2f}s")

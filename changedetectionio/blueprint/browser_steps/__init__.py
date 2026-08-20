@@ -18,6 +18,7 @@ import os
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
+from changedetectionio.validate_url import validate_fetch_url_async
 from loguru import logger
 
 browsersteps_sessions = {}
@@ -266,6 +267,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Resolve the fetcher backend for this watch so we can ask it to launch its own browser
         # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)
         watch = datastore.data['watching'][watch_uuid]
+
+        # Live preview sessions also return rendered screenshots to the caller and never pass
+        # through difference_detection_processor.call_browser(), so validate before we even spend
+        # a browser on it - otherwise a watch pointed at a private address is refused at real check
+        # time but happily previewed (and exfiltrated) here.
+        await validate_fetch_url_async(watch.link)
+
         fetcher_name = watch.get_fetch_backend or 'system'
         if fetcher_name == 'system':
             fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
