@@ -219,7 +219,11 @@ class Fetcher():
                                                       optional_value=optional_value)
                     await self.screenshot_step(step_n)
                     await self.save_step_html(step_n)
-                except (Error, TimeoutError) as e:
+                except (Error, TimeoutError, ValueError) as e:
+                    # ValueError is what validate_fetch_url_async() raises when a step's URL is
+                    # refused (file://, private IP, bad scheme) - report it against the offending
+                    # step number like any other step failure, rather than failing the whole watch
+                    # with an opaque error.
                     logger.debug(str(e))
                     # Stop processing here
                     raise BrowserStepsStepException(step_n=step_n, original_e=e)
