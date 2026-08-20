@@ -24,7 +24,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         # causes a 'Popped wrong request context.' error when client. is accessed?
         wait_for_all_checks(client)
 
-        res = c.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        res = c.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         assert b'Queued 1 watch for rechecking.' in res.data
         wait_for_all_checks(client)
 
