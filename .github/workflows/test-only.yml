@@ -33,7 +33,7 @@ jobs:
           done
       - name: Lint .pot template with dennis
         run: |
-          pip install "$(grep -E '^dennis ?>=' requirements.txt)"
+          pip install "$(grep -E '^dennis ?>=' requirements-dev.txt)"
           dennis-cmd lint --strict changedetectionio/translations/messages.pot
       - name: Lint .po files with dennis
         run: |
