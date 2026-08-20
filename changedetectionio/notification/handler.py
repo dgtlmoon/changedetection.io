@@ -311,6 +311,8 @@ def process_notification(n_object: NotificationContextData, datastore):
     from .apprise_plugin.custom_handlers import apprise_http_custom_handler
     # Register custom Discord plugin
     from .apprise_plugin.discord import NotifyDiscordCustom
+    # Register Flowtriq plugin
+    from .apprise_plugin.flowtriq import NotifyFlowtriq
 
     if not isinstance(n_object, NotificationContextData):
         raise TypeError(f"Expected NotificationContextData, got {type(n_object)}")
@@ -353,6 +355,9 @@ def process_notification(n_object: NotificationContextData, datastore):
     # First remove the built-in discord plugin, then add our custom one
     apprise.plugins.N_MGR.remove('discord')
     apprise.plugins.N_MGR.add(NotifyDiscordCustom, schemas='discord')
+
+    # Register Flowtriq notification plugin
+    apprise.plugins.N_MGR.add(NotifyFlowtriq, schemas='flowtriq')
 
     if not n_object.get('notification_urls'):
         return None

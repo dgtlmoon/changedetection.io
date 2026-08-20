@@ -508,6 +508,7 @@ class ValidateAppRiseServers(object):
         import apprise
         from .notification.apprise_plugin.assets import apprise_asset
         from .notification.apprise_plugin.custom_handlers import apprise_http_custom_handler  # noqa: F401
+        from .notification.apprise_plugin.flowtriq import NotifyFlowtriq  # noqa: F401
         from changedetectionio.jinja2_custom import render as jinja_render
 
         apobj = apprise.Apprise(asset=apprise_asset)
