@@ -628,9 +628,13 @@ def main():
     @app.context_processor
     def inject_template_globals():
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
-        return dict(right_sticky="v"+__version__,
+        from flask_login import current_user
+        has_password = datastore.data['settings']['application']['password'] != False
+        # Don't reveal the running version to anonymous visitors when password protection is enabled (#2190)
+        show_version = current_user.is_authenticated or not has_password
+        return dict(right_sticky="v"+__version__ if show_version else None,
                     new_version_available=app.config['NEW_VERSION_AVAILABLE'],
-                    has_password=datastore.data['settings']['application']['password'] != False,
+                    has_password=has_password,
                     socket_io_enabled=datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True),
                     all_paused=datastore.data['settings']['application'].get('all_paused', False),
                     all_muted=datastore.data['settings']['application'].get('all_muted', False),
