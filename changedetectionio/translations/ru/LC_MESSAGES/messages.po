@@ -1397,6 +1397,10 @@ msgid "Tag colour"
 msgstr "Цвет тега"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Must be a hex colour, for example #4f8ef7"
+msgstr "Должен быть шестнадцатеричный цвет, например #4f8ef7"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "Имя тега"
 

@@ -10,6 +10,21 @@ from . import auth
 from . import validate_openapi_request, strip_internal_api_fields
 
 
+def validate_tag_colour(json_data):
+    """Return an error message when tag_colour is set to anything but a hex colour.
+
+    The value is rendered into a <style> block, so anything else is CSS injection.
+    The OpenAPI schema carries the same pattern, this is the belt to that's braces.
+    """
+    from changedetectionio.blueprint.tags.colour import is_safe_css_colour
+
+    tag_colour = json_data.get('tag_colour')
+    if tag_colour and not is_safe_css_colour(tag_colour):
+        return "tag_colour: must be a hex colour, for example #4f8ef7"
+
+    return None
+
+
 class Tag(Resource):
     def __init__(self, **kwargs):
         # datastore is a black box dependency
@@ -148,6 +163,10 @@ class Tag(Resource):
         if unknown_fields:
             return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
 
+        colour_error = validate_tag_colour(json_data)
+        if colour_error:
+            return colour_error, 400
+
         tag.update(json_data)
         tag.commit()
 
@@ -177,6 +196,10 @@ class Tag(Resource):
         unknown_fields = set(json_data.keys()) - valid_fields
         if unknown_fields:
             return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
+
+        colour_error = validate_tag_colour(json_data)
+        if colour_error:
+            return colour_error, 400
 
         new_uuid = self.datastore.add_tag(title=title)
         if new_uuid:

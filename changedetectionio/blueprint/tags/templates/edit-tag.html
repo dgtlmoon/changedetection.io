@@ -64,15 +64,16 @@
                     {% endif %}
                     <div class="pure-control-group">
                         <label>{{ _('Tag colour') }}</label>
+                        {%- set tag_colour = data.get('tag_colour')|safe_css_colour -%}
                         <div style="display:flex; align-items:center; gap:0.75em;">
                             <input type="checkbox" id="use_custom_colour"
-                                   {% if data.get('tag_colour') %}checked{% endif %}>
+                                   {% if tag_colour %}checked{% endif %}>
                             <label for="use_custom_colour" style="margin:0">{{ _('Custom colour') }}</label>
                             <input type="color" id="tag_colour_picker"
-                                   value="{{ data.get('tag_colour') or '#4f8ef7' }}"
-                                   {% if not data.get('tag_colour') %}disabled{% endif %}>
+                                   value="{{ tag_colour or '#4f8ef7' }}"
+                                   {% if not tag_colour %}disabled{% endif %}>
                             <input type="hidden" name="tag_colour" id="tag_colour_hidden"
-                                   value="{{ data.get('tag_colour', '') }}">
+                                   value="{{ tag_colour }}">
                         </div>
                         <span class="pure-form-message-inline">{{ _('Leave unchecked to use the auto-generated colour based on the tag name.') }}</span>
                     </div>
