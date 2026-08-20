@@ -3,6 +3,7 @@ from flask import Blueprint, request, render_template, flash, url_for, redirect
 from flask_babel import gettext
 from loguru import logger
 
+from changedetectionio.blueprint.tags.colour import safe_css_colour
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
@@ -10,6 +11,9 @@ from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     tags_blueprint = Blueprint('tags', __name__, template_folder="templates")
+
+    # Used by any template that writes a tag colour into a <style> block
+    tags_blueprint.add_app_template_filter(safe_css_colour, 'safe_css_colour')
 
     @tags_blueprint.route("/list", methods=['GET'])
     @login_optionally_required
@@ -249,6 +253,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 #            for widget, l in form.errors.items():
 #                flash(','.join(l), 'error')
 #           return redirect(url_for('tags.form_tag_edit_submit', uuid=uuid))
+
+        # Until then, validate the fields that must not be taken on trust - tag_colour is
+        # rendered into a <style> block, where anything but a hex colour is CSS injection
+        if not form.tag_colour.validate(form):
+            for message in form.tag_colour.errors:
+                flash(message, 'error')
+            return redirect(url_for('tags.form_tag_edit', uuid=uuid))
 
         tag.update(form.data)
         tag['processor'] = 'restock_diff'
