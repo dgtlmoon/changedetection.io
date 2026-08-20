@@ -157,12 +157,7 @@ rank-bm25>=0.2.2
 # Needed for testing, cross-platform for process and system monitoring
 psutil==7.2.2
 
-ruff >= 0.11.2
-pre_commit >= 4.2.0
-dennis >= 1.3.0
-
 # For events between checking and socketio updates
 blinker
 pytest-xdist
-
 
