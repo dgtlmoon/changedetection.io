@@ -112,7 +112,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
             # Should get set to the actual text (jinja2 rendered)
             'browser_steps-5-optional_value': "Hello-Jinja2-{% now  'Europe/Berlin', '%Y-%m-%d' %}",
             'browser_steps-8-operation': 'Click element',
-            'browser_steps-8-selector': 'button[name=test-button]',
+            'browser_steps-8-selector': "{% if true %}button[name=test-button]{% endif %}",
             'browser_steps-8-optional_value': '',
             # For now, cookies doesnt work in headers because it must be a full cookiejar object
             'headers': "testheader: yes\buser-agent: MyCustomAgent",
@@ -128,7 +128,7 @@ def test_basic_browserstep(client, live_server, measure_memory_usage, datastore_
     # 3874 - should have tidied up any blanks
     watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
     assert watch['browser_steps'][0].get('operation') == 'Enter text in field'
-    assert watch['browser_steps'][1].get('selector') == 'button[name=test-button]'
+    assert watch['browser_steps'][1].get('selector') == "{% if true %}button[name=test-button]{% endif %}"
 
 
     # This part actually needs the browser, before this we are just testing data

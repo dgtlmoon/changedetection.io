@@ -4,6 +4,7 @@
 # python3 -m unittest changedetectionio.tests.unit.test_jinja2_security
 
 import unittest
+import pytest
 from changedetectionio import jinja2_custom as safe_jinja
 
 
@@ -54,6 +55,27 @@ class TestJinja2SSTI(unittest.TestCase):
     def test_jinja2_escaped_html(self):
         x = safe_jinja.render_fully_escaped('woo <a href="https://google.com">dfdfd</a>')
         self.assertEqual(x, "woo &lt;a href=&#34;https://google.com&#34;&gt;dfdfd&lt;/a&gt;")
+
+
+@pytest.mark.parametrize("text", [
+    'https://example.com/{{watch_url}}',
+    'https://example.com/{% if foo %}bar{% endif %}',
+    "https://example.com/{% now 'Europe/Berlin', '%Y' %}",
+    '{%- if foo -%}',
+    '{%+ if foo +%}',
+])
+def test_jinja2_marker_pattern_true_positives(text):
+    from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN
+    assert JINJA2_MARKER_PATTERN.search(text)
+
+
+@pytest.mark.parametrize("text", [
+    '',
+    'https://example.com/api?q={%22key%22:1}',
+])
+def test_jinja2_marker_pattern_false_positives(text):
+    from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN
+    assert not JINJA2_MARKER_PATTERN.search(text)
 
 
 
