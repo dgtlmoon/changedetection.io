@@ -38,8 +38,13 @@
                 <a class="pure-button pure-button-primary"
                    href="{{ url_for('backups.request_backup') }}">{{ _('Create backup') }}</a>
                 {% if available_backups %}
-                    <a class="pure-button button-small button-error "
-                       href="{{ url_for('backups.remove_backups') }}">{{ _('Remove backups') }}</a>
+                    {# POST + CSRF token: this permanently deletes every backup archive, so it must
+                       not be reachable from a bare GET (an <img src=...> on any page the operator
+                       visits would have triggered it). A real form keeps it working without JS. #}
+                    <form method="POST" action="{{ url_for('backups.remove_backups') }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="pure-button button-small button-error">{{ _('Remove backups') }}</button>
+                    </form>
                 {% endif %}
 
             </div>

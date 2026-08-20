@@ -13,6 +13,10 @@
   border: 1px solid var(--color-border-table-cell);
   background: var(--color-background);
   color: var(--color-text-input-description);
+  // <button> does not inherit font-family from the page, and this class is used on both
+  // anchors and submit buttons (toolbar actions are buttons so they can POST) - without this
+  // the buttons render in the browser's UI font while the links next to them don't.
+  font-family: inherit;
   font-size: 0.8rem;
   font-weight: 600;
   line-height: 1;

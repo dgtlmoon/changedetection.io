@@ -176,7 +176,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  )
         return output
 
-    @backups_blueprint.route("/remove-backups", methods=['GET'])
+    @backups_blueprint.route("/remove-backups", methods=['POST'])
     @login_optionally_required
     def remove_backups():
 

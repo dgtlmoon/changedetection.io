@@ -287,7 +287,7 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage, da
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -311,7 +311,7 @@ def check_json_filter(json_filter, client, live_server, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": json_filter.splitlines()})
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -328,7 +328,7 @@ def check_json_filter(json_filter, client, live_server, datastore_path):
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -362,14 +362,14 @@ def check_json_filter_bool_val(json_filter, client, live_server, datastore_path)
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": [json_filter]})
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     #  Make a change
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -404,7 +404,7 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
@@ -434,7 +434,7 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
     set_modified_ext_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -474,7 +474,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage, datastore_
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -482,7 +482,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage, datastore_
         f.write('{"world" : 123, "hello": 123}')
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
@@ -493,7 +493,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage, datastore_
         f.write('{"world" : 123, "hello": 124}')
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
@@ -511,7 +511,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage, datast
     # Check weird casing is cleaned up and detected also
     test_url = url_for('test_endpoint', content_type="aPPlication/JSon", uppercase_headers=True, _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
 
@@ -550,7 +550,7 @@ def test_content_type_json_with_unparsable_body(client, live_server, measure_mem
 
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # The watch should not be left in an error state complaining about JSON parsing

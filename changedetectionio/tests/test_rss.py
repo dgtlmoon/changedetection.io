@@ -86,10 +86,10 @@ def test_rss_and_token(client, live_server, measure_memory_usage, datastore_path
     rss_token = extract_rss_token_from_UI(client)
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_random_content_endpoint', _external=True))
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Add our URL to the import page
@@ -119,7 +119,7 @@ def test_basic_cdata_rss_markup(client, live_server, measure_memory_usage, datas
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -213,7 +213,7 @@ def test_rss_bad_chars_breaking(client, live_server, measure_memory_usage, datas
 
         f.write(jpeg_bytes)
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     rss_token = extract_rss_token_from_UI(client)
@@ -251,7 +251,7 @@ def test_rss_single_watch_feed(client, live_server, measure_memory_usage, datast
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(
@@ -263,7 +263,7 @@ def test_rss_single_watch_feed(client, live_server, measure_memory_usage, datast
     assert b'not have enough history' in res.data
 
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(
@@ -318,7 +318,7 @@ def test_rss_single_watch_feed(client, live_server, measure_memory_usage, datast
     # Test RSS entry order: Create multiple versions and verify newest appears first
     for version in range(3, 6):  # Create versions 3, 4, 5
         set_html_content(datastore_path, f"Version {version} content")
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         time.sleep(0.5)  # Small delay to ensure different timestamps
 

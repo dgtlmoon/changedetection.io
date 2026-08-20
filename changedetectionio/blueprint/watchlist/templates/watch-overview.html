@@ -272,8 +272,14 @@ window.watchOverviewI18n = {
                    It used to be {% if unread_count %}-gated, which meant it could not exist in the DOM
                    of another open tab — so marking viewed (or a new change arriving) in one tab could
                    never show/hide it in the other. Presence in the DOM is what lets realtime toggle it. #}
-                <a id="post-list-mark-views" class="cdio-btn" href="{{ filtered_action_url('ui.mark_all_viewed') }}"><i data-feather="eye"></i>{{ _('Mark all viewed') }}</a>
-                <a id="recheck-all" class="cdio-btn" href="{{ filtered_action_url('ui.form_watch_checknow') }}"><i data-feather="refresh-cw"></i>{{ _('Recheck all') }} {% if active_tag_uuid %}{{ _("in '%(title)s'", title=active_tag.title) }}{% endif %}</a>
+                {# Submit button rather than a link: these mutate state, so they must not be
+                   reachable by GET (an <img src=...> would fire them). formaction/formmethod
+                   retarget the enclosing #watch-list-form, whose csrf_token comes along - and
+                   avoids a nested <form>, which is invalid HTML and silently dropped. #}
+                <button type="submit" id="post-list-mark-views" class="cdio-btn"
+                        formmethod="post" formaction="{{ filtered_action_url('ui.mark_all_viewed') }}"><i data-feather="eye"></i>{{ _('Mark all viewed') }}</button>
+                <button type="submit" id="recheck-all" class="cdio-btn"
+                        formmethod="post" formaction="{{ filtered_action_url('ui.form_watch_checknow') }}"><i data-feather="refresh-cw"></i>{{ _('Recheck all') }} {% if active_tag_uuid %}{{ _("in '%(title)s'", title=active_tag.title) }}{% endif %}</button>
             </div>
             <a title="{{ _('RSS Feed') }}" href="{{ url_for('rss.feed', tag=active_tag_uuid, token=app_rss_token)}}"><img alt="RSS Feed" id="feed-icon" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
         </div>

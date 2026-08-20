@@ -535,7 +535,7 @@ def test_tag_delete_removes_from_watches(client, live_server):
     # watch3 has no tags
 
     # Delete the tag
-    response = client.get(url_for("tags.delete", uuid=tag_uuid))
+    response = client.post(url_for("tags.delete", uuid=tag_uuid))
     assert response.status_code == 302
 
     # Wait for background thread to complete

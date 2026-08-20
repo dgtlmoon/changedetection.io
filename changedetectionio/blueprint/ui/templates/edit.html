@@ -540,6 +540,7 @@ Math: {{ 1 + 1 }}") }}
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('ui.form_delete', uuid=uuid)}}"
                        class="pure-button button-error"
+                       data-method="POST"
                        data-requires-confirm
                        data-confirm-type="danger"
                        data-confirm-title="{{ _('Delete Watch?') }}"
@@ -547,12 +548,14 @@ Math: {{ 1 + 1 }}") }}
                        data-confirm-button="{{ _('Delete') }}">{{ _('Delete') }}</a>
                     {% if watch.history_n %}<a href="{{url_for('ui.clear_watch_history', uuid=uuid)}}"
                        class="pure-button button-error"
+                       data-method="POST"
                        data-requires-confirm
                        data-confirm-type="warning"
                        data-confirm-title="{{ _('Clear History?') }}"
                        data-confirm-message="<p>{{ _('Are you sure you want to clear all history for:') }}</p><p><strong>{{ watch.get('url', 'this watch') }}</strong></p><p>{{ _('This will remove all snapshots and previous versions. This action cannot be undone.') }}</p>"
                        data-confirm-button="{{ _('Clear History') }}">{{ _('Clear History') }}</a>{% endif %}
                     <a href="{{url_for('ui.form_clone', uuid=uuid)}}"
+                       data-method="POST"
                        class="pure-button">{{ _('Clone & Edit') }}</a>
                  <a href="{{ url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token)}}"><img alt="{{ _('RSS Feed for this watch') }}" style="padding: .5em 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
                 </div>

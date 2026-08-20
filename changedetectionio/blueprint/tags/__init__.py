@@ -67,7 +67,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             tag.commit()
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/delete/<uuid_str:uuid>", methods=['GET'])
+    @tags_blueprint.route("/delete/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def delete(uuid):
         # Delete the tag from settings immediately
@@ -94,7 +94,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("Tag deleted, removing from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/unlink/<uuid_str:uuid>", methods=['GET'])
+    @tags_blueprint.route("/unlink/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def unlink(uuid):
         # Unlink tag from all watches in background thread to avoid blocking
@@ -117,7 +117,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("Unlinking tag from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
-    @tags_blueprint.route("/delete_all", methods=['GET'])
+    @tags_blueprint.route("/delete_all", methods=['POST'])
     @login_optionally_required
     def delete_all():
 
