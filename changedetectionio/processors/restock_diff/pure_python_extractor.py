@@ -287,3 +287,84 @@ def query_price_availability(extracted_data):
     # using something like babel you need to know the locale of the website and even then it can be problematic
     # we dont really do anything with the price data so far.. so just accept it the way it comes.
     return result
+
+
+# =============================================================================
+# Structured metadata for the LLM enricher — passed through verbatim
+# =============================================================================
+#
+# This surfaces the page's structured metadata (JSON-LD + OpenGraph site/type)
+# as-is for the LLM intent/summary prompts. We deliberately do NOT curate, field-
+# cherry-pick, or impose a size limit here:
+#
+#   * LLMs are trained on schema.org JSON-LD and read it natively, so handing it
+#     over verbatim lets ANY user intent ("list the SKUs", "did the release date
+#     change?", "is it a recipe or a product?") work without us pre-guessing which
+#     fields matter — and it covers non-product pages (NewsArticle, Event, JobPosting…)
+#     for free.
+#   * There is exactly one configurable budget for how much text reaches the LLM —
+#     max_input_chars (env LLM_MAX_INPUT_CHARS → settings → default), enforced by the
+#     evaluator. A second hardcoded cap here would be a competing, non-configurable
+#     source of truth. The caller decides how much fits.
+#
+# Extraction reuses the memory-safe extract_metadata_pure_python() (stdlib
+# html.parser, no lxml/libxml2) so it is safe to call on every changed watch
+# without the C-level leak extruct/lxml carries, and it is robust to dangling/
+# unclosed <script type="application/ld+json"> blocks (HTMLParser only emits a
+# block on a real closing tag, so an unterminated blob is dropped rather than
+# swallowing the rest of the document the way a greedy regex would).
+# =============================================================================
+
+
+def extract_metadata_for_llm(html_content) -> str:
+    """
+    Return the page's structured metadata verbatim for LLM context, or '' if none.
+
+    Output (either part omitted when absent):
+
+        Page context: site: ExampleShop | og:type: product
+        Structured metadata found on the page (JSON-LD):
+        {"@type":"Product","name":"Acme Widget","sku":"12345", ...}
+        {"@type":"BreadcrumbList", ...}
+
+    JSON-LD blocks are re-serialised compactly (this only strips source whitespace
+    — the data is byte-for-byte the same schema.org structure). No truncation or
+    field selection is applied; sizing is the caller's single configurable budget.
+    """
+    if not html_content:
+        return ''
+
+    try:
+        data = extract_metadata_pure_python(html_content)
+    except Exception as e:
+        logger.debug(f"Metadata for LLM: extraction failed: {e}")
+        return ''
+
+    parts = []
+
+    # OpenGraph site/type — page-kind context that is NOT carried in JSON-LD,
+    # so the model can tell an e-shop listing from a news feed.
+    og = data.get('opengraph', {})
+    ctx = []
+    if og.get('og:site_name'):
+        ctx.append(f"site: {og['og:site_name']}")
+    if og.get('og:type'):
+        ctx.append(f"og:type: {og['og:type']}")
+    if ctx:
+        parts.append('Page context: ' + ' | '.join(ctx))
+
+    # JSON-LD verbatim (compact re-dump only — whitespace normalisation, not curation).
+    nodes = data.get('json-ld', [])
+    if nodes:
+        try:
+            blob = '\n'.join(
+                json.dumps(n, ensure_ascii=False, separators=(',', ':'))
+                for n in nodes
+            )
+        except (TypeError, ValueError) as e:
+            logger.debug(f"Metadata for LLM: JSON-LD re-serialise failed: {e}")
+            blob = ''
+        if blob:
+            parts.append('Structured metadata found on the page (JSON-LD):\n' + blob)
+
+    return '\n'.join(parts)
