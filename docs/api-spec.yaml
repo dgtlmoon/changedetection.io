@@ -811,6 +811,13 @@ components:
                 Supports fnmatch wildcards (* and ?): e.g. *://example.com/* or github.com/myorg.
                 Plain strings are matched as case-insensitive substrings.
                 Leave empty to disable auto-matching.
+            tag_colour:
+              type: string
+              pattern: '^(#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$'
+              description: |
+                Background colour for this tag's badge, as a hex colour (#rgb or #rrggbb), e.g. #4f8ef7.
+                Only hex colours are accepted - the value is rendered into a CSS stylesheet.
+                Leave empty to use the colour auto-generated from the tag name.
             # Future: Aggregated statistics from all watches with this tag
             # check_count:
             #   type: integer
