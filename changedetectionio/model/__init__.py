@@ -191,6 +191,7 @@ class watch_base(dict):
             # LLM intent-based evaluation
             'llm_intent': '',                # Plain-English description of what the user cares about (change filter)
             'llm_change_summary': '',        # Prompt for AI Change Summary — replaces {{ diff }} in notifications
+            'llm_change_summary_mode': 'replace',  # 'replace' the inherited prompt, or 'append' to it
             'llm_prefilter': None,           # CSS selector derived at setup time (semantic only, e.g. "footer")
             'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
             'fetch_backend': 'system',  # plaintext, playwright etc

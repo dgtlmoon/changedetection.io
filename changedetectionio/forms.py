@@ -6,7 +6,13 @@ from flask_babel import lazy_gettext as _l, gettext
 
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
-from changedetectionio.llm.evaluator import DEFAULT_CHANGE_SUMMARY_PROMPT, LLM_DEFAULT_MAX_SUMMARY_TOKENS, LLM_DEFAULT_THINKING_BUDGET
+from changedetectionio.llm.evaluator import (
+    DEFAULT_CHANGE_SUMMARY_PROMPT,
+    LLM_DEFAULT_MAX_SUMMARY_TOKENS,
+    LLM_DEFAULT_THINKING_BUDGET,
+    LLM_PROMPT_MODE_APPEND,
+    LLM_PROMPT_MODE_REPLACE,
+)
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
 from changedetectionio.strtobool import strtobool
@@ -885,6 +891,15 @@ class processor_text_json_diff_form(commonSettingsForm):
     llm_change_summary = TextAreaField(_l('AI Change Summary'), validators=[validators.Optional(), validators.Length(max=2000)],
                                render_kw={"rows": "5", "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT},
                                default='')
+
+    llm_change_summary_mode = RadioField(
+        _l('How this prompt combines with the inherited one'),
+        choices=[
+            (LLM_PROMPT_MODE_REPLACE, _l('Replace the inherited prompt')),
+            (LLM_PROMPT_MODE_APPEND,  _l('Append to the inherited prompt')),
+        ],
+        default=LLM_PROMPT_MODE_REPLACE,
+    )
 
     include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')
 

@@ -149,6 +149,13 @@ DEFAULT_CHANGE_SUMMARY_PROMPT = (
     "Do not give partial listings such as 'Examples include:', always be thorough."
 )
 
+# How a watch's or tag's llm_change_summary combines with the prompt it inherits.
+# 'replace' is the default and the historical behaviour; 'append' lets a watch add a line
+# or two to the inherited prompt instead of holding a full private copy of it, so later
+# edits to the global prompt still reach that watch. Re #4251.
+LLM_PROMPT_MODE_REPLACE = 'replace'
+LLM_PROMPT_MODE_APPEND = 'append'
+
 
 def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS) -> int:
     """Scale completion tokens to diff size: floor 400, ~1 token per 4 chars, ceiling max_cap."""
@@ -539,16 +546,54 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
 # AI Change Summary — human-readable description of what changed
 # ---------------------------------------------------------------------------
 
+def _first_tag_with_field(watch, datastore, field: str):
+    """Return (value, tag) for the first linked tag with a non-empty `field`, else ('', None).
+
+    Same first-match-wins order as resolve_llm_field(); this variant also hands back the
+    tag itself so the caller can read sibling keys such as the prompt mode.
+    """
+    for tag_uuid in watch.get('tags', []):
+        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+        if tag:
+            value = (tag.get(field) or '').strip()
+            if value:
+                return value, tag
+    return '', None
+
+
+def _apply_prompt_layer(inherited: str, value: str, mode: str) -> str:
+    """Fold one cascade level's prompt onto what it inherited.
+
+    'append' keeps the inherited prompt and adds `value` after it, so a watch can add a
+    sentence or two without pinning a private copy of the prompt above it (see #4251).
+    Anything else replaces, which is the historical behaviour and stays the default.
+    """
+    if not value:
+        return inherited
+    if mode == LLM_PROMPT_MODE_APPEND and inherited:
+        return f"{inherited}\n\n{value}"
+    return value
+
+
 def get_effective_summary_prompt(watch, datastore) -> str:
     """Return the prompt that summarise_change will use.
 
-    Cascade: watch → tag → global settings default → hardcoded fallback.
+    Cascade: hardcoded fallback → global settings default → tag → watch. Each level with a
+    value either replaces what it inherited or appends to it, per its own
+    `llm_change_summary_mode`. With every level left on the default 'replace' this reduces
+    to the original watch → tag → global → hardcoded first-non-empty-wins behaviour.
     """
-    prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
-    if prompt:
-        return prompt
-    global_default = get_llm_settings(datastore).change_summary_default.strip()
-    return global_default or DEFAULT_CHANGE_SUMMARY_PROMPT
+    prompt = get_llm_settings(datastore).change_summary_default.strip() or DEFAULT_CHANGE_SUMMARY_PROMPT
+
+    tag_value, tag = _first_tag_with_field(watch, datastore, 'llm_change_summary')
+    if tag_value:
+        prompt = _apply_prompt_layer(prompt, tag_value, tag.get('llm_change_summary_mode'))
+
+    watch_value = (watch.get('llm_change_summary') or '').strip()
+    if watch_value:
+        prompt = _apply_prompt_layer(prompt, watch_value, watch.get('llm_change_summary_mode'))
+
+    return prompt
 
 
 def compute_summary_cache_key(diff_text: str, prompt: str) -> str:
