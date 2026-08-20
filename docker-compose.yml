@@ -67,6 +67,9 @@ services:
   #        If you want to watch local files file:///path/to/file.txt (careful! security implications!)
   #      - ALLOW_FILE_URI=False
   #
+  #        Off by default - Private lan, local-only, testing/documentation, multicast, protocol infrastructure, and ranges intentionally not usable as normal public unicast IPs
+  #      - ALLOW_IANA_RESTRICTED_ADDRESSES=true
+  #
   #        For complete privacy if you don't want to use the 'check version' / telemetry service
   #      - DISABLE_VERSION_CHECK=true
   #
