@@ -5,6 +5,7 @@ import importlib
 import inspect
 import os
 import pkgutil
+import re
 
 def find_sub_packages(package_name):
     """
@@ -455,6 +456,15 @@ def save_processor_config(datastore, watch_uuid, config_data):
             return False
 
         processor_name = watch.get('processor', 'text_json_diff')
+
+        # The processor name becomes a filename below, and it is not enum-validated on every
+        # write path (/imports/import accepts it verbatim), so treat it as untrusted: a value
+        # like '../../../../tmp/pwned' would otherwise escape the watch directory.
+        # update_extra_watch_config() also contains the path, this is the second layer.
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', processor_name or ''):
+            logger.error(f"Refusing to save processor config: unsafe processor name {processor_name!r} "
+                         f"on watch {watch_uuid}")
+            return False
 
         # Create a processor instance to access config methods
         processor_instance = difference_detection_processor(datastore, watch_uuid)

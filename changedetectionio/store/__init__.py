@@ -32,7 +32,7 @@ try:
 except ImportError:
     HAS_ORJSON = False
 
-from ..processors import get_custom_watch_obj_for_processor
+from ..processors import get_custom_watch_obj_for_processor, find_processors
 
 # Import the base class and helpers
 from .file_saving_datastore import FileSavingDataStore, load_all_watches, load_all_tags, save_json_atomic
@@ -777,6 +777,19 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # Make any uuids unique
         if apply_extras.get('tags'):
             apply_extras['tags'] = list(set(apply_extras.get('tags')))
+
+        # 'processor' reaches here from callers that do NOT enum-validate it the way the API does:
+        # /imports/import passes request.values through verbatim, and the share-link path above
+        # takes it straight out of remote JSON. It later becomes a config filename
+        # (f'{processor}.json'), so an unknown value is both a data-integrity problem and how
+        # GHSA-mh42-m7cg-49fr escaped the watch directory. Drop it rather than store it; the
+        # write paths are contained too, this stops it being persisted at all.
+        if apply_extras.get('processor'):
+            known_processors = [name for _module, name in find_processors()]
+            if apply_extras['processor'] not in known_processors:
+                logger.error(f"Ignoring unknown processor {apply_extras['processor']!r} when adding "
+                             f"'{url}' - falling back to the default. Known: {known_processors}")
+                del apply_extras['processor']
 
         # If the processor also has its own Watch implementation
         watch_class = get_custom_watch_obj_for_processor(apply_extras.get('processor'))
