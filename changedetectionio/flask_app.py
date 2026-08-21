@@ -160,6 +160,18 @@ csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log=[]
 
+@app.after_request
+def add_no_cache_headers(response):
+    # Dynamic/authenticated pages (forms with CSRF tokens, watch data, settings, etc.) must
+    # never be cached by an intermediate CDN or reverse proxy — a cached copy would serve a
+    # stale CSRF token (breaking form submissions) or, worse, leak one session's page to another
+    # since most edge caches key purely on URL and ignore cookies.
+    # Routes that explicitly set their own Cache-Control (static assets, screenshots, favicons)
+    # are left untouched.
+    if 'Cache-Control' not in response.headers:
+        response.headers['Cache-Control'] = 'no-store, private'
+    return response
+
 # Locale for correct presentation of prices etc
 default_locale = locale.getdefaultlocale()
 logger.info(f"System locale default is {default_locale}")
