@@ -381,11 +381,17 @@ def process_notification(n_object: NotificationContextData, datastore):
     if _llm_change_summary and _override_diff:
         n_object['diff'] = _llm_change_summary
 
-    # Lazily populate llm_summary / llm_intent if used in notification template
+    # Lazily populate llm_summary / llm_intent / llm_error if used in notification template
     scan_text = n_object.get('notification_body', '') + n_object.get('notification_title', '')
-    if 'llm_summary' in scan_text or 'llm_intent' in scan_text or 'raw_diff' in scan_text:
+    if 'llm_summary' in scan_text or 'llm_intent' in scan_text or 'llm_error' in scan_text or 'raw_diff' in scan_text:
         n_object['llm_summary'] = _llm_change_summary or (n_object.get('_llm_result') or {}).get('summary', '')
         n_object['llm_intent'] = n_object.get('_llm_intent', '')
+        # True when the last AI Change Intent evaluation fell back to "important"
+        # because the LLM call itself failed (bad model/params, provider outage,
+        # auth error, ...) — not because the model genuinely judged the change
+        # important. Lets a template surface "AI check failed, notified anyway"
+        # instead of silently looking like a normal positive match.
+        n_object['llm_error'] = bool((n_object.get('_llm_result') or {}).get('llm_error'))
 
     # Escape diff/snapshot variables before Jinja renders them into an HTML notification.
     # GHSA-q8xq-qg4x-wphg: inscriptis decodes HTML entities when converting text/html

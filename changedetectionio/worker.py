@@ -502,6 +502,16 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                 f"(intent from {_llm_intent_source}): "
                                                 f"{_llm_result.get('summary', '')[:80]}"
                                             )
+                                        elif _llm_result and _llm_result.get('llm_error'):
+                                            # The 'important: True' verdict above is a fail-open
+                                            # fallback, not a real match — call this out at the
+                                            # point notifications get sent, since it's otherwise
+                                            # indistinguishable from working intent-matching.
+                                            logger.warning(
+                                                f"LLM evaluation failed for {uuid} — notification "
+                                                f"will fire unfiltered (AI Change Intent is not "
+                                                f"actually being applied right now)"
+                                            )
 
                                     # Step 2: AI Change Summary — only compute it when a notification
                                     # is actually going to be sent, because that's the only place
