@@ -86,6 +86,16 @@ def completion(model: str, messages: list, api_key: str = None,
 
     _timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
 
+    # OrcaRouter (https://www.orcarouter.ai) is an OpenAI-compatible model-routing
+    # gateway: the /models dropdown stores ids as 'orcarouter/<router-id>' where the
+    # router id is itself provider-prefixed (openai/gpt-4o, anthropic/claude-…).
+    # litellm keys the provider off the first path segment, so a bare 'orcarouter/…'
+    # has no litellm provider. Rewrite to 'openai/<router-id>' — litellm strips the
+    # leading 'openai/' it recognises itself and sends the full router id on the
+    # wire to api.orcarouter.ai.
+    if model.startswith('orcarouter/'):
+        model = 'openai/' + model[len('orcarouter/'):]
+
     kwargs = {
         'model': model,
         'messages': messages,
