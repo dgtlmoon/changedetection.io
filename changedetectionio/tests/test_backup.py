@@ -72,7 +72,7 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     assert 'secret.txt' not in l, "secret.txt (Flask session key) must not be included in backup"
 
     # Get the latest one
-    res = client.get(
+    res = client.post(
         url_for("backups.remove_backups"),
         follow_redirects=True
     )
@@ -88,7 +88,7 @@ def test_watch_data_package_download(client, live_server, measure_memory_usage, 
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
     tag_uuid = client.application.config.get('DATASTORE').add_tag(title="Tasty backup tag")
     tag_uuid2 = client.application.config.get('DATASTORE').add_tag(title="Tasty backup tag number two")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -132,7 +132,7 @@ def test_backup_restore(client, live_server, measure_memory_usage, datastore_pat
     tag_uuid = datastore.add_tag(title="Tasty backup tag")
     tag_uuid2 = datastore.add_tag(title="Tasty backup tag number two")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Create a full backup
@@ -153,7 +153,7 @@ def test_backup_restore(client, live_server, measure_memory_usage, datastore_pat
 
     # --- Wipe everything ---
     datastore.delete('all')
-    client.get(url_for("tags.delete_all"), follow_redirects=True)
+    client.post(url_for("tags.delete_all"), follow_redirects=True)
 
     assert uuid not in datastore.data['watching'], "Watch should be gone after delete"
     assert tag_uuid not in datastore.data['settings']['application']['tags'], "Tag 1 should be gone after delete"

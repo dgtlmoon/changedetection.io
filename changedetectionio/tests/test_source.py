@@ -13,7 +13,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -32,7 +32,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     set_modified_response(datastore_path=datastore_path)
 
     # Force recheck
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -58,7 +58,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage, datast
     test_url = 'source:'+url_for('test_endpoint', _external=True)
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -71,7 +71,7 @@ def test_check_ignore_elements(client, live_server, measure_memory_usage, datast
         follow_redirects=True
     )
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 

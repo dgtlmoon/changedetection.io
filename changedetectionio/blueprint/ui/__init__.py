@@ -182,7 +182,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required
 
-    @ui_blueprint.route("/clear_history/<uuid_str:uuid>", methods=['GET'])
+    @ui_blueprint.route("/clear_history/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def clear_watch_history(uuid):
         try:
@@ -227,7 +227,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         return output
 
     # Clear all statuses, so we do not see the 'unviewed' class
-    @ui_blueprint.route("/form/mark-all-viewed", methods=['GET'])
+    @ui_blueprint.route("/form/mark-all-viewed", methods=['POST'])
     @login_optionally_required
     def mark_all_viewed():
         # Save the current newest history as the most recently viewed. Operate on
@@ -267,7 +267,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index', **wl_filters.filter_query_args(request.args)))
 
-    @ui_blueprint.route("/delete", methods=['GET'])
+    @ui_blueprint.route("/delete", methods=['POST'])
     @login_optionally_required
     def form_delete():
         uuid = request.args.get('uuid')
@@ -284,7 +284,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index'))
 
-    @ui_blueprint.route("/clone", methods=['GET'])
+    @ui_blueprint.route("/clone", methods=['POST'])
     @login_optionally_required
     def form_clone():
         uuid = request.args.get('uuid')
@@ -301,7 +301,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for("ui.ui_edit.edit_page", uuid=new_uuid))
 
-    @ui_blueprint.route("/checknow", methods=['GET'])
+    @ui_blueprint.route("/checknow", methods=['POST'])
     @login_optionally_required
     def form_watch_checknow():
         # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))

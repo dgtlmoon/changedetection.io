@@ -16,7 +16,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage, datastore_path):
 
     test_url = url_for('test_pdf_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -44,7 +44,7 @@ def test_fetch_pdf(client, live_server, measure_memory_usage, datastore_path):
 
     shutil.copy("tests/test2.pdf", os.path.join(datastore_path, "endpoint-test.pdf"))
     changed_md5 = hashlib.md5(open(os.path.join(datastore_path, "endpoint-test.pdf"), 'rb').read()).hexdigest().upper()
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)

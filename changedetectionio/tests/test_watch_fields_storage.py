@@ -12,7 +12,7 @@ def test_check_watch_field_storage(client, live_server, measure_memory_usage, da
     test_url = "http://somerandomsitewewatch.com"
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
 
     res = client.post(

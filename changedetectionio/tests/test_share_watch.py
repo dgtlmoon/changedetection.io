@@ -16,7 +16,7 @@ def test_share_watch(client, live_server, measure_memory_usage, datastore_path):
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page

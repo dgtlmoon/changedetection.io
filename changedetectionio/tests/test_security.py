@@ -252,10 +252,10 @@ def test_xss(client, live_server, measure_memory_usage, datastore_path):
     set_original_response(datastore_path=datastore_path)
     XSS_HACK = 'javascript:alert(document.domain)'
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     live_server.app.config['DATASTORE'].data['watching'][uuid]['url']=XSS_HACK
@@ -957,7 +957,7 @@ def test_ghsa_8757_69j2_hx56_backup_restore_history_path_traversal(client, live_
 
     # Create a real watch and trigger a check so we have a valid backup structure
     uuid = datastore.add_watch(url=watch_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Download a legitimate backup to use as a template

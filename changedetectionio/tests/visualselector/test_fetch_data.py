@@ -81,7 +81,7 @@ def test_visual_selector_content_ready(client, live_server, measure_memory_usage
         follow_redirects=True
     )
     assert b'notification_screenshot' in res.data
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -189,7 +189,7 @@ def test_non_200_errors_report_browsersteps(client, live_server, measure_memory_
 
     assert b'Error - 404' in res.data
 
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -251,7 +251,7 @@ def test_browsersteps_edit_UI_startsession(client, live_server, measure_memory_u
     assert uuid not in browsersteps_watch_to_session
 
     # Cleanup
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -313,7 +313,7 @@ def test_visual_selector_xpath_carries_no_page_markup(client, live_server, measu
     # A well behaved id is untouched
     assert '#unique' in xpaths, f"Unique id still uses the id selector: {xpaths}"
 
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )

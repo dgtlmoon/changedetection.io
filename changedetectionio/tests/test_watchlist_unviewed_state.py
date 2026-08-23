@@ -43,7 +43,7 @@ def test_mark_all_viewed_button_is_always_in_the_dom(client, live_server, measur
 
     # A real change lands -> unviewed
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
@@ -51,7 +51,7 @@ def test_mark_all_viewed_button_is_always_in_the_dom(client, live_server, measur
     assert _body_has_any_unviewed(res), "Unviewed change present, so the body class must be set"
 
     # Mark all viewed runs synchronously (Re #4021), so the redirect must already reflect it
-    res = client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    res = client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     assert not _body_has_any_unviewed(res), \
         "mark_all_viewed must be applied before the redirect renders - it used to run in a " \
         "background thread and the page rendered mid-marking"

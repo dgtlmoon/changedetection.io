@@ -150,7 +150,8 @@ def populate_feed_entry(fe, watch, content, guid, timestamp, link=None, title_su
     fe.guid(guid, permalink=False)
 
     # Set pubDate using the timestamp of this specific change
-    dt = datetime.datetime.fromtimestamp(int(timestamp))
-    dt = dt.replace(tzinfo=pytz.UTC)
+    # Note: tz= must be passed to fromtimestamp(), otherwise we get a naive datetime in the
+    # container's local timezone and relabelling it as UTC shifts every pubDate by the local offset
+    dt = datetime.datetime.fromtimestamp(int(timestamp), tz=pytz.UTC)
     fe.pubDate(dt)
 

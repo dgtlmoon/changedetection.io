@@ -97,6 +97,23 @@
     <div style="margin-top: 0.3em;">
         <a href="#" class="pure-button button-xsmall" onclick="var t=document.getElementById('llm_change_summary'); if(!t.value&amp;&amp;t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
     </div>
+    <div class="pure-control-group" style="margin-top: 0.6em;">
+        <label>{{ form.llm_change_summary_mode.label.text }}</label>
+        <div>
+            {% for subfield in form.llm_change_summary_mode %}
+            <label class="pure-radio" style="display:block; font-weight:normal; margin-bottom:0.3em;">
+                {{ subfield() }} {{ subfield.label.text }}
+            </label>
+            {% endfor %}
+        </div>
+        <span class="pure-form-message-inline">
+        {% if watch is defined and watch %}
+            {{ _('Appending keeps the prompt inherited from the group or from global settings and adds your text after it, so later edits to that prompt still reach this watch.') }}
+        {% else %}
+            {{ _('Appending keeps the prompt inherited from global settings and adds your text after it, so later edits to that prompt still reach this group.') }}
+        {% endif %}
+        </span>
+    </div>
     {% if watch is defined and watch %}
     <div class="pure-form-message-inline">
         <strong>{{ _('Examples:') }}</strong>

@@ -556,3 +556,87 @@ class TestSummaryCacheKey:
         ds = _make_datastore(tags={'t1': tag})
         watch = _make_watch(llm_change_summary='', tags=['t1'])
         assert get_effective_summary_prompt(watch, ds) == 'tag-level prompt'
+
+
+# ---------------------------------------------------------------------------
+# llm_change_summary_mode — append vs replace (#4251)
+# ---------------------------------------------------------------------------
+
+class TestSummaryPromptAppendMode:
+    """A watch/tag may add to the prompt it inherits instead of holding a private copy.
+
+    Everything here must leave the legacy 'replace' path byte-identical — that is what
+    the TestSummaryCacheKey cases above pin.
+    """
+
+    def test_global_default_used_as_base_when_nothing_else_set(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'})
+        assert get_effective_summary_prompt(_make_watch(), ds) == 'GLOBAL'
+
+    def test_watch_appends_to_global_default(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'})
+        watch = _make_watch(llm_change_summary='Also mention the SKU.')
+        watch['llm_change_summary_mode'] = 'append'
+        assert get_effective_summary_prompt(watch, ds) == 'GLOBAL\n\nAlso mention the SKU.'
+
+    def test_watch_appends_to_hardcoded_default_when_no_global_set(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt, DEFAULT_CHANGE_SUMMARY_PROMPT
+        ds = _make_datastore()
+        watch = _make_watch(llm_change_summary='Also mention the SKU.')
+        watch['llm_change_summary_mode'] = 'append'
+        result = get_effective_summary_prompt(watch, ds)
+        assert result == f'{DEFAULT_CHANGE_SUMMARY_PROMPT}\n\nAlso mention the SKU.'
+
+    def test_watch_append_targets_the_tag_prompt_when_a_tag_supplies_one(self):
+        """The watch appends to what it would otherwise have inherited — here the tag."""
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        tag = {'title': 'grp', 'llm_change_summary': 'TAG'}
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'}, tags={'t1': tag})
+        watch = _make_watch(llm_change_summary='WATCH', tags=['t1'])
+        watch['llm_change_summary_mode'] = 'append'
+        assert get_effective_summary_prompt(watch, ds) == 'TAG\n\nWATCH'
+
+    def test_tag_and_watch_can_both_append_forming_a_chain(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        tag = {'title': 'grp', 'llm_change_summary': 'TAG', 'llm_change_summary_mode': 'append'}
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'}, tags={'t1': tag})
+        watch = _make_watch(llm_change_summary='WATCH', tags=['t1'])
+        watch['llm_change_summary_mode'] = 'append'
+        assert get_effective_summary_prompt(watch, ds) == 'GLOBAL\n\nTAG\n\nWATCH'
+
+    def test_tag_appends_while_watch_replaces(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        tag = {'title': 'grp', 'llm_change_summary': 'TAG', 'llm_change_summary_mode': 'append'}
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'}, tags={'t1': tag})
+        watch = _make_watch(llm_change_summary='WATCH', tags=['t1'])
+        assert get_effective_summary_prompt(watch, ds) == 'WATCH'
+
+    def test_append_mode_with_empty_text_changes_nothing(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'})
+        watch = _make_watch(llm_change_summary='')
+        watch['llm_change_summary_mode'] = 'append'
+        assert get_effective_summary_prompt(watch, ds) == 'GLOBAL'
+
+    def test_missing_mode_key_behaves_as_replace(self):
+        """Watches stored before this feature have no mode key at all."""
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'})
+        watch = _make_watch(llm_change_summary='WATCH')
+        assert 'llm_change_summary_mode' not in watch
+        assert get_effective_summary_prompt(watch, ds) == 'WATCH'
+
+    def test_append_changes_the_cache_key(self):
+        """Toggling the mode must invalidate cached summaries, not silently reuse them."""
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt, compute_summary_cache_key
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'})
+
+        replacing = _make_watch(llm_change_summary='WATCH')
+        appending = _make_watch(llm_change_summary='WATCH')
+        appending['llm_change_summary_mode'] = 'append'
+
+        key_replace = compute_summary_cache_key('diff', get_effective_summary_prompt(replacing, ds))
+        key_append = compute_summary_cache_key('diff', get_effective_summary_prompt(appending, ds))
+        assert key_replace != key_append

@@ -1401,6 +1401,10 @@ msgid "Tag colour"
 msgstr "Цвет тега"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Must be a hex colour, for example #4f8ef7"
+msgstr "Должен быть шестнадцатеричный цвет, например #4f8ef7"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "Имя тега"
 
@@ -3162,6 +3166,18 @@ msgstr "Изменение намерения ИИ"
 msgid "AI Change Summary"
 msgstr "Обзор изменений ИИ"
 
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "How this prompt combines with the inherited one"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Replace the inherited prompt"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Append to the inherited prompt"
+msgstr ""
+
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
 msgstr "Фильтры CSS/JSONPath/JQ/XPath"
@@ -4575,6 +4591,18 @@ msgstr ""
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Describe how changes should be summarised in notifications for all watches in this group."
 msgstr "Опишите, как изменения должны отражаться в уведомлениях для всех часов в этой группе."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Appending keeps the prompt inherited from the group or from global settings and adds your text after it, so later "
+"edits to that prompt still reach this watch."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Appending keeps the prompt inherited from global settings and adds your text after it, so later edits to that prompt "
+"still reach this group."
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "List each new item added with its name and price. Translate to English."

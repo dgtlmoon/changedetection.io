@@ -22,7 +22,7 @@ def test_check_plugin_processor(client, live_server, measure_memory_usage, datas
         follow_redirects=True
     )
     assert b"Watch added" in res.data
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -39,7 +39,7 @@ def test_check_plugin_processor(client, live_server, measure_memory_usage, datas
     # Now change it to something that doesnt exist
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
     live_server.app.config['DATASTORE'].data['watching'][uuid]['processor'] = "now_missing"
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b"Exception: Processor module" in res.data and b'now_missing' in res.data, f'Should register that the plugin is missing for {uuid}'

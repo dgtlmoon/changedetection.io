@@ -1320,6 +1320,10 @@ msgid "Tag colour"
 msgstr "태그 색상"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Must be a hex colour, for example #4f8ef7"
+msgstr "16진수 색상이어야 합니다. 예: #4f8ef7"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "태그 이름"
 
@@ -3056,6 +3060,18 @@ msgstr "AI 판단 기준"
 msgid "AI Change Summary"
 msgstr "AI 변경 요약"
 
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "How this prompt combines with the inherited one"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Replace the inherited prompt"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Append to the inherited prompt"
+msgstr ""
+
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
 msgstr "CSS/JSONPath/JQ/XPath 필터"
@@ -4447,6 +4463,18 @@ msgstr "변경이 감지되면 AI가 지시에 따라 이를 설명하고 알림
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Describe how changes should be summarised in notifications for all watches in this group."
 msgstr "이 그룹의 모든 모니터링 알림에서 변경 사항을 어떻게 요약할지 설명하세요."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Appending keeps the prompt inherited from the group or from global settings and adds your text after it, so later "
+"edits to that prompt still reach this watch."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Appending keeps the prompt inherited from global settings and adds your text after it, so later edits to that prompt "
+"still reach this group."
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "List each new item added with its name and price. Translate to English."

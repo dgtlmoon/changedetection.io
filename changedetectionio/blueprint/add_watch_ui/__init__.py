@@ -4,6 +4,7 @@ from loguru import logger
 from changedetectionio import forms
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.validate_url import is_fetch_url_allowed
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -47,9 +48,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Opportunistically sweep snapshots that were fetched but never saved.
         datastore.cleanup_temporary_watches()
 
+        # This endpoint makes the server-side browser fetch an arbitrary URL and returns the
+        # rendered result (screenshot + xpath element data) straight back in the HTTP response, so
+        # it is a direct SSRF-with-exfiltration primitive if left unvalidated. It used to only
+        # check startswith('http://', 'https://'), which skipped the private-IP gate AND the
+        # backslash/parser-differential rejection of GHSA-rph4-96w6-q594 (GHSA-56fq-63vj-9992).
+        # Note this fetch never reaches difference_detection_processor.call_browser(), so it gets
+        # no gating from there - it has to validate for itself.
         url = (request.args.get('url') or '').strip()
-        if not url or not url.lower().startswith(('http://', 'https://')):
-            return make_response('Please enter a valid http(s):// URL', 400)
+        ok, reason = is_fetch_url_allowed(url)
+        if not ok:
+            logger.warning(f"Add-watch snapshot: refused '{url}' - {reason}")
+            return make_response(reason, 400)
 
         # Use whatever fetcher the application is configured to use by default
         # (e.g. CloakBrowser, Playwright/sockpuppet) so the preview matches real checks.
