@@ -524,10 +524,6 @@ msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Tiempo de revisión predeterminado para todos los monitores, el mínimo actual del sistema es"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "seconds"
-msgstr "segundos"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
 msgstr "más información"
 
@@ -1444,7 +1440,7 @@ msgstr "No hay etiquetas/grupos organizativos del sitio web configurados"
 msgid "Mute notifications"
 msgstr "Silenciar notificaciones"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "Editar"
@@ -1697,6 +1693,10 @@ msgstr "Monitor actualizado."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Vista previa no disponible: no se completó la búsqueda/verificación o no se alcanzaron los activadores"
 
+#: changedetectionio/blueprint/ui/preview.py
+msgid "Diff"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
 msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
@@ -1847,7 +1847,8 @@ msgstr "Texto"
 msgid "Current screenshot"
 msgstr "Captura de pantalla actual"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
+#: changedetectionio/processors/templates/extract.html
 msgid "Extract Data"
 msgstr "Extraer datos"
 
@@ -2467,12 +2468,13 @@ msgid "Changed"
 msgstr "Cambiado"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "History"
-msgstr "Historia"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Summary"
 msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "Historia"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Preview"
@@ -2840,8 +2842,58 @@ msgstr ""
 msgid "Levenshtein - Text change distance"
 msgstr ""
 
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Not enough history to calculate Levenshtein metrics"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Snapshot too large for edit statistics, skipping."
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Unable to calculate Levenshtein metrics"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein Text Similarity Details"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Raw distance (edits needed)"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Similarity ratio"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Percent similar"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid ""
+"Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
+"into the other."
+msgstr ""
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Error calculating Levenshtein metrics"
+msgstr ""
+
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count of content"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Content Analysis"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count (latest snapshot)"
+msgstr ""
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
 msgstr ""
 
 #: changedetectionio/content_fetchers/requests.py
@@ -2856,6 +2908,62 @@ msgstr "Aún no"
 #: changedetectionio/flask_app.py
 msgid "0 seconds"
 msgstr "0 segundos"
+
+#: changedetectionio/flask_app.py
+msgid "year"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "years"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "month"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "months"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "week"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "weeks"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "day"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "days"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "hour"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "hours"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "minute"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "minutes"
+msgstr ""
+
+#: changedetectionio/flask_app.py
+msgid "second"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
+msgid "seconds"
+msgstr "segundos"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
@@ -3767,6 +3875,11 @@ msgstr ""
 msgid "Currency"
 msgstr ""
 
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price history"
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
 msgstr "Detección de reabastecimiento"
@@ -3821,10 +3934,6 @@ msgstr "Detecta si el producto vuelve a estar en stock"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
-msgstr ""
-
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price history"
 msgstr ""
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html

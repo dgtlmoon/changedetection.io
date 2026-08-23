@@ -532,10 +532,6 @@ msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Domyślny czas ponownego sprawdzania dla wszystkich obserwacji; aktualne minimalne ustawienie systemowe wynosi"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "seconds"
-msgstr "sekund"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
 msgstr "więcej informacji"
 
@@ -1529,7 +1525,7 @@ msgstr "Nie skonfigurowano żadnych tagów/grup organizacyjnych dla tej witryny"
 msgid "Mute notifications"
 msgstr "Wyłącz powiadomienia"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "Edytuj"
@@ -1782,6 +1778,10 @@ msgstr "Zaktualizowano obserwację."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Podgląd niedostępny — nie zakończono pobierania/sprawdzania lub nie osiągnięto wyzwalaczy"
 
+#: changedetectionio/blueprint/ui/preview.py
+msgid "Diff"
+msgstr "Różnice"
+
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
 msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
@@ -1932,7 +1932,8 @@ msgstr "Tekst"
 msgid "Current screenshot"
 msgstr "Aktualny zrzut ekranu"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
+#: changedetectionio/processors/templates/extract.html
 msgid "Extract Data"
 msgstr "Pobierz dane"
 
@@ -2555,12 +2556,13 @@ msgid "Changed"
 msgstr "Zmieniono"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "History"
-msgstr "Historia"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Summary"
 msgstr "Podsumowanie"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "Historia"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Preview"
@@ -2924,9 +2926,61 @@ msgstr "Wskaźnik podobieństwa tekstu według Levenshteina"
 msgid "Levenshtein - Text change distance"
 msgstr "Levenshtein – odległość zmian tekstowych"
 
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Not enough history to calculate Levenshtein metrics"
+msgstr "Brak wystarczającej historii do obliczenia metryk Levenshteina"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Snapshot too large for edit statistics, skipping."
+msgstr "Migawka jest zbyt duża, aby obliczyć statystyki edycji — pomijam."
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Unable to calculate Levenshtein metrics"
+msgstr "Nie można obliczyć metryk Levenshteina"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein Text Similarity Details"
+msgstr "Szczegóły podobieństwa tekstu metodą Levenshteina"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Raw distance (edits needed)"
+msgstr "Surowa odległość (wymagane edycje)"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Similarity ratio"
+msgstr "Współczynnik podobieństwa"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Percent similar"
+msgstr "Procent podobieństwa"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid ""
+"Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
+"into the other."
+msgstr ""
+"Metryki Levenshteina porównują dwie ostatnie migawki, określając liczbę zmian znaków potrzebnych do przekształcenia "
+"jednej w drugą."
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Error calculating Levenshtein metrics"
+msgstr "Błąd podczas obliczania metryk Levenshteina"
+
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count of content"
 msgstr "Liczba słów w treści"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Content Analysis"
+msgstr "Analiza treści"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count (latest snapshot)"
+msgstr "Liczba słów (najnowsza migawka)"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
+msgstr "Liczba słów to prosta miara długości treści, obliczana przez podzielenie tekstu według białych znaków."
 
 #: changedetectionio/content_fetchers/requests.py
 msgid "Basic fast Plaintext/HTTP Client"
@@ -2940,6 +2994,62 @@ msgstr "Jeszcze nie"
 #: changedetectionio/flask_app.py
 msgid "0 seconds"
 msgstr "0 sekund"
+
+#: changedetectionio/flask_app.py
+msgid "year"
+msgstr "rok"
+
+#: changedetectionio/flask_app.py
+msgid "years"
+msgstr "lata"
+
+#: changedetectionio/flask_app.py
+msgid "month"
+msgstr "miesiąc"
+
+#: changedetectionio/flask_app.py
+msgid "months"
+msgstr "miesiące"
+
+#: changedetectionio/flask_app.py
+msgid "week"
+msgstr "tydzień"
+
+#: changedetectionio/flask_app.py
+msgid "weeks"
+msgstr "tygodnie"
+
+#: changedetectionio/flask_app.py
+msgid "day"
+msgstr "dzień"
+
+#: changedetectionio/flask_app.py
+msgid "days"
+msgstr "dni"
+
+#: changedetectionio/flask_app.py
+msgid "hour"
+msgstr "godzina"
+
+#: changedetectionio/flask_app.py
+msgid "hours"
+msgstr "godziny"
+
+#: changedetectionio/flask_app.py
+msgid "minute"
+msgstr "minuta"
+
+#: changedetectionio/flask_app.py
+msgid "minutes"
+msgstr "minuty"
+
+#: changedetectionio/flask_app.py
+msgid "second"
+msgstr "sekunda"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
+msgid "seconds"
+msgstr "sekund"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
@@ -3851,6 +3961,11 @@ msgstr "Stan zapasów"
 msgid "Currency"
 msgstr "Waluta"
 
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price history"
+msgstr "Historia cen"
+
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
 msgstr "Wykrywanie uzupełnienia zapasów"
@@ -3906,10 +4021,6 @@ msgstr "Wykrywa, czy produkt ponownie pojawił się w magazynie"
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
 msgstr "Historia cen i stanów magazynowych"
-
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price history"
-msgstr "Historia cen"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Download as XLSX"
