@@ -525,6 +525,10 @@ msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Tüm izleyiciler için varsayılan yeniden kontrol süresi, mevcut sistem minimumu"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "seconds"
+msgstr "saniye"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
 msgstr "daha fazla bilgi"
 
@@ -1430,7 +1434,7 @@ msgstr "Yapılandırılmış web sitesi organizasyonel etiketi/grubu yok"
 msgid "Mute notifications"
 msgstr "Bildirimleri sessize al"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "Düzenle"
@@ -1679,10 +1683,6 @@ msgstr "İzleyici güncellendi."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Önizleme kullanılamıyor - Getirme/kontrol tamamlanmadı veya tetikleyicilere ulaşılamadı"
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr ""
-
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
 msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
@@ -1833,8 +1833,7 @@ msgstr "Metin"
 msgid "Current screenshot"
 msgstr "Mevcut ekran görüntüsü"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
-#: changedetectionio/processors/templates/extract.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Extract Data"
 msgstr "Veriyi Çıkar"
 
@@ -2450,13 +2449,12 @@ msgid "Changed"
 msgstr "Değiştirildi"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Summary"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "Geçmiş"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Summary"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Preview"
@@ -2527,13 +2525,13 @@ msgstr ""
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 #, python-format
-msgid "cheaper than %s% of tracked prices"
+msgid "cheaper than %s%% of tracked prices"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 #, python-format
-msgid "more expensive than %s% of tracked prices"
+msgid "more expensive than %s%% of tracked prices"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -2820,58 +2818,8 @@ msgstr ""
 msgid "Levenshtein - Text change distance"
 msgstr ""
 
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Not enough history to calculate Levenshtein metrics"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Snapshot too large for edit statistics, skipping."
-msgstr ""
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Unable to calculate Levenshtein metrics"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Levenshtein Text Similarity Details"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Raw distance (edits needed)"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Similarity ratio"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Percent similar"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid ""
-"Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
-"into the other."
-msgstr ""
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Error calculating Levenshtein metrics"
-msgstr ""
-
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count of content"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Content Analysis"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Word count (latest snapshot)"
-msgstr ""
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
 msgstr ""
 
 #: changedetectionio/content_fetchers/requests.py
@@ -2886,62 +2834,6 @@ msgstr "Henüz değil"
 #: changedetectionio/flask_app.py
 msgid "0 seconds"
 msgstr "0 saniye"
-
-#: changedetectionio/flask_app.py
-msgid "year"
-msgstr "yıl"
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr "yıl"
-
-#: changedetectionio/flask_app.py
-msgid "month"
-msgstr "ay"
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr "ay"
-
-#: changedetectionio/flask_app.py
-msgid "week"
-msgstr "hafta"
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr "hafta"
-
-#: changedetectionio/flask_app.py
-msgid "day"
-msgstr "gün"
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr "gün"
-
-#: changedetectionio/flask_app.py
-msgid "hour"
-msgstr "saat"
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr "saat"
-
-#: changedetectionio/flask_app.py
-msgid "minute"
-msgstr "dakika"
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr "dakika"
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr "saniye"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "saniye"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
@@ -3839,11 +3731,6 @@ msgstr ""
 msgid "Currency"
 msgstr ""
 
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price history"
-msgstr ""
-
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
 msgstr "Yeniden stok tespiti"
@@ -3898,6 +3785,10 @@ msgstr "Ürünün tekrar stoka girip girmediğini tespit eder"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price history"
 msgstr ""
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
