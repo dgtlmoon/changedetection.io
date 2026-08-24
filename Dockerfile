@@ -44,7 +44,7 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   --target=/dependencies \
   -r /requirements.txt
 
-# Playwright is an alternative to Selenium
+# Patchright provides the Playwright API without detectable Runtime.enable calls.
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
 RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
@@ -52,8 +52,8 @@ RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   --prefer-binary \
   --cache-dir=/tmp/pip-cache \
   --target=/dependencies \
-  playwright~=1.56.0 \
-  || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
+  patchright~=1.56.0 \
+  || echo "WARN: Failed to install Patchright. The application can still run, but the Playwright option will be disabled."
 
 # OpenCV is optional for fast image comparison (pixelmatch is the fallback)
 # Skip on arm/v7 and arm/v8 where builds take weeks - excluded from requirements.txt
@@ -148,5 +148,4 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # Default command (can be overridden in docker-compose.yml)
 CMD ["python", "./changedetection.py", "-d", "/datastore"]
-
 

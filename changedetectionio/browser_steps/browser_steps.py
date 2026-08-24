@@ -196,7 +196,7 @@ class steppable_browser_interface():
         await self.page.click(selector=selector, timeout=self.action_timeout + 20 * 1000, delay=randint(200, 500))
 
     async def action_click_element_if_exists(self, selector, value):
-        import playwright._impl._errors as _api_types
+        import patchright._impl._errors as _api_types
         logger.debug("Clicking element if exists")
         if not selector or not len(selector.strip()):
             return
@@ -514,4 +514,3 @@ class browsersteps_live_ui(steppable_browser_interface):
             pass
             
         return (screenshot, xpath_data)
-

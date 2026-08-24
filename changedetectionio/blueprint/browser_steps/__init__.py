@@ -141,7 +141,7 @@ async def acquire_browser_for_fetcher(fetcher_name, proxy=None, keepalive_ms=Non
     Playwright/sockpuppetbrowser driver. Returns (browser, playwright_context).
     """
     from changedetectionio import content_fetchers
-    from playwright.async_api import async_playwright
+    from patchright.async_api import async_playwright
 
     logger.debug(f"acquire_browser_for_fetcher: requested fetcher='{fetcher_name}', proxy={'yes' if proxy else 'no'}, keepalive_ms={keepalive_ms}")
 
@@ -243,7 +243,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     async def start_browsersteps_session(watch_uuid):
         from changedetectionio.browser_steps import browser_steps
         import time
-        from playwright.async_api import async_playwright
+        from patchright.async_api import async_playwright
 
         keepalive_seconds = int(os.getenv('BROWSERSTEPS_MINUTES_KEEPALIVE', 10)) * 60
         keepalive_ms = ((keepalive_seconds + 3) * 1000)
@@ -442,5 +442,4 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return response
 
     return browser_steps_blueprint
-
 

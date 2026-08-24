@@ -190,7 +190,7 @@ class Fetcher():
 
     async def iterate_browser_steps(self, start_url=None):
         from changedetectionio.browser_steps.browser_steps import steppable_browser_interface, browser_steps_get_valid_steps
-        from playwright._impl._errors import TimeoutError, Error
+        from patchright._impl._errors import TimeoutError, Error
         from changedetectionio.jinja2_custom import render as jinja_render
         step_n = 0
 
