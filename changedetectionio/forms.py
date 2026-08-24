@@ -663,12 +663,14 @@ class ValidateCSSJSONXPATHInput(object):
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 import elementpath
-                from changedetectionio.html_tools import SafeXPath3Parser
-                tree = html.fromstring("<html></html>")
+                from changedetectionio.html_tools import SafeXPath3Parser, lxml_guard, lxml_html_parser
                 line = line.replace('xpath:', '')
 
                 try:
-                    elementpath.select(tree, line.strip(), parser=SafeXPath3Parser)
+                    # Runs on a Flask request thread - must share the worker's lxml lock.
+                    with lxml_guard():
+                        tree = html.fromstring("<html></html>", parser=lxml_html_parser())
+                        elementpath.select(tree, line.strip(), parser=SafeXPath3Parser)
                 except elementpath.ElementPathError as e:
                     message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
                     raise ValidationError(message % {'expression': line, 'error': str(e)})
@@ -679,11 +681,14 @@ class ValidateCSSJSONXPATHInput(object):
                 if not self.allow_xpath:
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
-                tree = html.fromstring("<html></html>")
+                from changedetectionio.html_tools import lxml_guard, lxml_html_parser
                 line = re.sub(r'^xpath1:', '', line)
 
                 try:
-                    tree.xpath(line.strip())
+                    # Runs on a Flask request thread - must share the worker's lxml lock.
+                    with lxml_guard():
+                        tree = html.fromstring("<html></html>", parser=lxml_html_parser())
+                        tree.xpath(line.strip())
                 except etree.XPathEvalError as e:
                     message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
                     raise ValidationError(message % {'expression': line, 'error': str(e)})
