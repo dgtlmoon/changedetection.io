@@ -344,13 +344,15 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None):
+    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None, flaresolverr_cookies=None, flaresolverr_user_agent=None):
         self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
         self.start_url = start_url
         self._is_cleaned_up = False
         self.proxy = proxy
+        self.flaresolverr_cookies = flaresolverr_cookies
+        self.flaresolverr_user_agent = flaresolverr_user_agent
         # Note: connect() is now async and must be called separately
 
     def __del__(self):
@@ -365,6 +367,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         now = time.time()
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
+        _ua = self.flaresolverr_user_agent or manage_user_agent(headers=self.headers)
         self.context = await self.playwright_browser.new_context(
             accept_downloads=False,  # Should never be needed
             bypass_csp=get_playwright_bypass_csp(),
@@ -373,8 +376,24 @@ class browsersteps_live_ui(steppable_browser_interface):
             proxy=proxy,
             service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
             # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-            user_agent=manage_user_agent(headers=self.headers),
+            user_agent=_ua,
         )
+        if self.flaresolverr_cookies:
+            try:
+                _cookies = []
+                for c in self.flaresolverr_cookies:
+                    _cc = dict(c)
+                    if 'expires' in _cc and isinstance(_cc['expires'], (int, float)):
+                        _cc['expires'] = float(_cc['expires'])
+                    if 'sameSite' in _cc:
+                        _v = _cc.pop('sameSite')
+                        if _v in ('Strict', 'Lax', 'None'):
+                            _cc['sameSite'] = _v
+                    _cookies.append(_cc)
+                await self.context.add_cookies(_cookies)
+                logger.info(f"FlareSolverr injected {len(_cookies)} cookies via BrowserSteps live UI")
+            except Exception as e:
+                logger.warning(f"FlareSolverr cookie inject failed (live UI): {e}")
 
         self.page = await self.context.new_page()
 
