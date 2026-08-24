@@ -325,7 +325,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         continue
 
                     error_step = e.step_n
-                    from playwright._impl._errors import TimeoutError, Error
+                    from patchright._impl._errors import TimeoutError, Error
 
                     # Generally enough info for TimeoutError (couldnt locate the element after default seconds)
                     err_text = f"Browser step at position {error_step} could not run, check the watch, add a delay if necessary, view Browser Steps to see screenshot at that step."

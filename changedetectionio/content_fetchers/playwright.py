@@ -262,8 +262,8 @@ class fetcher(Fetcher):
                   watch_uuid=None,
                   ):
 
-        from playwright.async_api import async_playwright
-        import playwright._impl._errors
+        from patchright.async_api import async_playwright
+        import patchright._impl._errors
         import time
         self.delete_browser_steps_screenshots()
         self.watch_uuid = watch_uuid  # Store for use in screenshot_step
@@ -320,7 +320,7 @@ class fetcher(Fetcher):
             try:
                 if self.webdriver_js_execute_code is not None and len(self.webdriver_js_execute_code):
                     await browsersteps_interface.action_execute_js(value=self.webdriver_js_execute_code, selector=None)
-            except playwright._impl._errors.TimeoutError as e:
+            except patchright._impl._errors.TimeoutError as e:
                 await context.close()
                 await browser.close()
                 # This can be ok, we will try to grab what we could retrieve
@@ -469,6 +469,3 @@ class PlaywrightFetcherPlugin:
 
 # Create module-level instance for plugin registration
 playwright_plugin = PlaywrightFetcherPlugin()
-
-
-
