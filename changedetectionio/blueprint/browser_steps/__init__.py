@@ -275,6 +275,31 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # time but happily previewed (and exfiltrated) here.
         await validate_fetch_url_async(watch.link)
 
+        # FlareSolverr overlay for live UI - inject cf_clearance + UA when watch is FlareSolverr-effective
+        flaresolverr_cookies = None
+        flaresolverr_user_agent = None
+        try:
+            from changedetectionio.flaresolverr_pool import is_flaresolverr_effective, get_global_pool
+            from changedetectionio.jinja2_custom import render as jinja_render
+            if is_flaresolverr_effective(watch, datastore):
+                pool = get_global_pool()
+                _method = watch.get('method') or 'GET'
+                _body = watch.get('body')
+                if _body:
+                    try:
+                        _body = jinja_render(template_str=_body)
+                    except Exception:
+                        pass
+                _proxy_url = proxy.get('server') if proxy else None
+                import asyncio as _asyncio
+                _loop = _asyncio.get_running_loop()
+                flaresolverr_solution = await _loop.run_in_executor(None, lambda: pool.solve(watch.link, proxy_url=_proxy_url, method=_method, post_data=_body if _method.upper() == 'POST' else None))
+                flaresolverr_cookies = flaresolverr_solution.get('cookies')
+                flaresolverr_user_agent = flaresolverr_solution.get('userAgent')
+                logger.info(f"FlareSolverr live UI solved {watch.link} via session {flaresolverr_solution.get('session_id')}")
+        except Exception as e:
+            logger.warning(f"FlareSolverr live UI solve failed for {watch.link}: {e}")
+
         fetcher_name = watch.get_fetch_backend or 'system'
         if fetcher_name == 'system':
             fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
@@ -288,7 +313,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             playwright_browser=browser,
             proxy=proxy,
             start_url=watch.link,
-            headers=watch.get('headers')
+            headers=watch.get('headers'),
+            flaresolverr_cookies=flaresolverr_cookies,
+            flaresolverr_user_agent=flaresolverr_user_agent,
         )
         await browserstepper.connect(proxy=proxy)
         browsersteps_start_session['browserstepper'] = browserstepper
