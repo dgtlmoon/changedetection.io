@@ -182,7 +182,8 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
-
+        self.flaresolverr_cookies = kwargs.get('flaresolverr_cookies')
+        self.flaresolverr_user_agent = kwargs.get('flaresolverr_user_agent')
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
         if custom_browser_connection_url:
@@ -282,6 +283,7 @@ class fetcher(Fetcher):
 
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
+            _ua = self.flaresolverr_user_agent or manage_user_agent(headers=request_headers)
             context = await browser.new_context(
                 accept_downloads=False,  # Should never be needed
                 # Enabled by default because sites such as GitHub need it for injected JavaScript.
@@ -291,9 +293,24 @@ class fetcher(Fetcher):
                 ignore_https_errors=True,
                 proxy=self.proxy,
                 service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-                user_agent=manage_user_agent(headers=request_headers),
+                user_agent=_ua,
             )
-
+            if self.flaresolverr_cookies:
+                try:
+                    _cookies = []
+                    for c in self.flaresolverr_cookies:
+                        _cc = dict(c)
+                        if 'expires' in _cc and isinstance(_cc['expires'], (int, float)):
+                            _cc['expires'] = float(_cc['expires'])
+                        if 'sameSite' in _cc:
+                            _v = _cc.pop('sameSite')
+                            if _v in ('Strict', 'Lax', 'None'):
+                                _cc['sameSite'] = _v
+                        _cookies.append(_cc)
+                    await context.add_cookies(_cookies)
+                    logger.info(f"FlareSolverr injected {len(_cookies)} cookies via Playwright")
+                except Exception as e:
+                    logger.warning(f"FlareSolverr cookie inject failed: {e}")
             self.page = await context.new_page()
 
             # Listen for all console events and handle errors

@@ -77,6 +77,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             for p in datastore.proxy_list:
                 form.requests.form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
 
+        # FlareSolverr env gate
+        from changedetectionio.flaresolverr_pool import get_flaresolverr_url
+
+        flaresolverr_available = bool(get_flaresolverr_url())
+        # Remove per-watch radio from global form (only global boolean belongs here)
+        if hasattr(form.application.form, 'flaresolverr'):
+            try:
+                del form.application.form.flaresolverr
+            except Exception:
+                pass
+        if not flaresolverr_available:
+            if hasattr(form.application.form, 'flaresolverr_enabled'):
+                try:
+                    del form.application.form.flaresolverr_enabled
+                except Exception:
+                    pass
+
         if request.method == 'POST':
             # Password unset is a GET, but we can lock the session to a salted env password to always need the password
             if form.application.form.data.get('removepassword_button', False):
@@ -102,6 +119,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 for nf in ('notification_urls', 'notification_title', 'notification_body',
                            'notification_format', 'base_url'):
                     app_update.pop(nf, None)
+                # Per-watch flaresolverr radio should not be stored globally
+                app_update.pop('flaresolverr', None)
+                # Keep flaresolverr_enabled in sync to requests for backwards compat
+                if 'flaresolverr_enabled' in app_update:
+                    datastore.data['settings']['requests']['flaresolverr_enabled'] = app_update['flaresolverr_enabled']
 
                 datastore.data['settings']['application'].update(app_update)
 
@@ -250,6 +272,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
+                                flaresolverr_available=flaresolverr_available,
+                                flaresolverr_url=get_flaresolverr_url(),
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 llm_config=llm_config,
                                 llm_env_configured=llm_env_configured,

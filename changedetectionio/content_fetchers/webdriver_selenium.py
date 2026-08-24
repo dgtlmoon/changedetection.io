@@ -30,6 +30,8 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
+        self.flaresolverr_cookies = kwargs.get('flaresolverr_cookies')
+        self.flaresolverr_user_agent = kwargs.get('flaresolverr_user_agent')
         from urllib.parse import urlparse
         from selenium.webdriver.common.proxy import Proxy
 
@@ -127,6 +129,22 @@ class fetcher(Fetcher):
                 raise e
 
             try:
+                if self.flaresolverr_cookies:
+                    try:
+                        driver.get(url)
+                        for c in self.flaresolverr_cookies:
+                            _cc = dict(c)
+                            _cc.pop('expires', None)
+                            _cc.pop('sameSite', None)
+                            if _cc.get('domain', '').startswith('.'):
+                                _cc['domain'] = _cc['domain'].lstrip('.')
+                            try:
+                                driver.add_cookie(_cc)
+                            except Exception:
+                                pass
+                        logger.info(f"FlareSolverr injected {len(self.flaresolverr_cookies)} cookies via Selenium")
+                    except Exception as e:
+                        logger.warning(f"FlareSolverr cookie inject failed: {e}")
                 driver.get(url)
 
                 if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):
