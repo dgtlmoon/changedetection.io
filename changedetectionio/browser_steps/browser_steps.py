@@ -368,6 +368,10 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.context = await self.playwright_browser.new_context(
             accept_downloads=False,  # Should never be needed
             bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+            viewport={
+                "width": int(os.getenv('PLAYWRIGHT_VIEWPORT_WIDTH', '1920')),
+                "height": int(os.getenv('PLAYWRIGHT_VIEWPORT_HEIGHT', '1024')),
+            },
             extra_http_headers=self.headers,
             ignore_https_errors=True,
             proxy=proxy,
@@ -514,4 +518,3 @@ class browsersteps_live_ui(steppable_browser_interface):
             pass
             
         return (screenshot, xpath_data)
-
