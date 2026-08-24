@@ -624,8 +624,13 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted - static flag icons need to load on login page
             elif request.endpoint and request.endpoint == 'static_flags':
                 return None
-            # Permitted - language selection should work on login page
-            elif request.endpoint and request.endpoint == 'set_language':
+            # Permitted - language selection should work on login page.
+            # Both halves of the language modal must be exempt: it renders for anonymous
+            # users (base.html deliberately leaves it outside the is_authenticated guard),
+            # so exempting only set_language let you pick a language but bounced
+            # "Auto-detect from browser" to /login without clearing the session locale.
+            elif request.endpoint and request.endpoint in ('set_language',
+                                                           'ui.delete_locale_language_session_var_if_it_exists'):
                 return None
             # Permitted
             elif request.endpoint and 'login' in request.endpoint:

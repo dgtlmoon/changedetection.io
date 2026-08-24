@@ -7,7 +7,7 @@ from changedetectionio.store import ChangeDetectionStore
 from functools import wraps
 
 from flask import Blueprint
-from flask_login import login_required
+from changedetectionio.auth_decorator import login_optionally_required
 
 STATUS_CHECKING = 0
 STATUS_FAILED = 1
@@ -94,14 +94,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return results
 
-    @login_required
     @check_proxies_blueprint.route("/<uuid_str:uuid>/status", methods=['GET'])
+    @login_optionally_required
     def get_recheck_status(uuid):
         results = _recalc_check_status(uuid=uuid)
         return results
 
-    @login_required
     @check_proxies_blueprint.route("/<uuid_str:uuid>/start", methods=['GET'])
+    @login_optionally_required
     def start_check(uuid):
 
         if not datastore.proxy_list:

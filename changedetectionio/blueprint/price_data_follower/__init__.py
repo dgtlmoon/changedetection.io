@@ -1,7 +1,7 @@
 
 from changedetectionio.strtobool import strtobool
 from flask import Blueprint, flash, redirect, url_for
-from flask_login import login_required
+from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio import queuedWatchMetaData
 from changedetectionio import worker_pool
@@ -14,8 +14,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q: PriorityQueue
 
     price_data_follower_blueprint = Blueprint('price_data_follower', __name__)
 
-    @login_required
     @price_data_follower_blueprint.route("/<uuid_str:uuid>/accept", methods=['GET'])
+    @login_optionally_required
     def accept(uuid):
         datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_ACCEPT
         datastore.data['watching'][uuid]['processor'] = 'restock_diff'
@@ -24,8 +24,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q: PriorityQueue
         worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
         return redirect(url_for("watchlist.index"))
 
-    @login_required
     @price_data_follower_blueprint.route("/<uuid_str:uuid>/reject", methods=['GET'])
+    @login_optionally_required
     def reject(uuid):
         datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_REJECT
         datastore.data['watching'][uuid].commit()
