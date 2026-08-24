@@ -284,7 +284,11 @@ class fetcher(Fetcher):
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = await browser.new_context(
                 accept_downloads=False,  # Should never be needed
-                bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+                bypass_csp=False,
+                viewport={
+                    "width": int(os.getenv('PLAYWRIGHT_VIEWPORT_WIDTH', '1920')),
+                    "height": int(os.getenv('PLAYWRIGHT_VIEWPORT_HEIGHT', '1024')),
+                },
                 extra_http_headers=request_headers,
                 ignore_https_errors=True,
                 proxy=self.proxy,
@@ -469,6 +473,5 @@ class PlaywrightFetcherPlugin:
 
 # Create module-level instance for plugin registration
 playwright_plugin = PlaywrightFetcherPlugin()
-
 
 

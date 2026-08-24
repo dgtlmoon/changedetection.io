@@ -27,6 +27,10 @@ services:
   #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
   #      - PLAYWRIGHT_DRIVER_URL=ws://browser-sockpuppet-chrome:3000
   #
+  #       Browser context viewport dimensions. Defaults are shown below.
+  #      - PLAYWRIGHT_VIEWPORT_WIDTH=1920
+  #      - PLAYWRIGHT_VIEWPORT_HEIGHT=1024
+  #
   #
   #       Alternative WebDriver/selenium URL, do not use "'s or 's! (old, deprecated, does not support screenshots very well, Can't handle custom headers etc)
   #      - WEBDRIVER_URL=http://browser-selenium-chrome:4444/wd/hub
@@ -158,4 +162,3 @@ services:
 
 volumes:
   changedetection-data:
-
