@@ -14,6 +14,7 @@ from changedetectionio.diff import (
     CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED
 )
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.blueprint import plaintext_response
 from changedetectionio.auth_decorator import login_optionally_required
 
 
@@ -516,20 +517,36 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            return make_response('Watch not found', 404)
+            return plaintext_response('Watch not found', 404)
 
         dates = list(watch.history.keys())
         if len(dates) < 2:
-            return make_response('Not enough history', 400)
+            return plaintext_response('Not enough history', 400)
 
         from_version = request.args.get('from_version', dates[-2])
         to_version   = request.args.get('to_version',   dates[-1])
+
+        # Validate before use. get_history_snapshot() does a plain dict lookup, so an
+        # unknown key raises KeyError whose str() carries the raw query parameter - which
+        # the error path below used to reflect into a text/html response, giving reflected
+        # XSS (GHSA-23mp-8222-96fr). This mirrors the check the API resource already
+        # performs for the same operation in api/Watch.py.
+        for timestamp in (from_version, to_version):
+            if timestamp not in watch.history:
+                return plaintext_response('Snapshot not found', 404)
 
         try:
             from_text = watch.get_history_snapshot(timestamp=from_version)
             to_text   = watch.get_history_snapshot(timestamp=to_version)
         except Exception as e:
-            return make_response(f'Could not read snapshots: {e}', 500)
+            # Never reflect the exception text. Besides the KeyError guarded above, this
+            # also catches brotli decode failures and the data-dir containment guard in
+            # get_history_snapshot(), whose messages carry filesystem paths. Send the
+            # detail to the log and keep the response text/plain regardless, matching the
+            # pattern already applied to rss/single_watch.py, so nothing that reaches the
+            # body can be parsed as HTML by the browser.
+            logger.error(f"download-patch: could not read snapshots for watch {uuid}: {e}")
+            return plaintext_response('Could not read snapshots', 500)
 
         diff_lines = list(difflib.unified_diff(
             from_text.splitlines(keepends=True),
