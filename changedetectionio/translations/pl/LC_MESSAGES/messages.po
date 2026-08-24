@@ -2633,14 +2633,14 @@ msgstr "Obecnie wysoki"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 #, python-format
-msgid "cheaper than %s%% of tracked prices"
-msgstr "tańsze niż %s%% spośród monitorowanych cen"
+msgid "cheaper than %s% of tracked prices"
+msgstr "tańsze niż %s% spośród monitorowanych cen"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 #, python-format
-msgid "more expensive than %s%% of tracked prices"
-msgstr "droższe niż %s%% spośród monitorowanych cen"
+msgid "more expensive than %s% of tracked prices"
+msgstr "droższe niż %s% spośród monitorowanych cen"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
