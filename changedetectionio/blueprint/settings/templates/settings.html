@@ -138,6 +138,16 @@
                         {{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.
                     </span>
                 </div>
+                {% if flaresolverr_available and form.application.form.flaresolverr_enabled is defined %}
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.flaresolverr_enabled) }}
+                    <span class="pure-form-message-inline">{{ _('When enabled, watches using "System default" will be fetched via FlareSolverr at') }} <code>{{ flaresolverr_url }}</code> {{ _('to bypass Cloudflare / DDoS-Guard challenges. Per-watch override is available in Edit Watch → Request.') }}</span>
+                </div>
+                {% elif not flaresolverr_available %}
+                <div class="pure-control-group">
+                    <span class="pure-form-message-inline"><i>{{ _('FlareSolverr not configured — set FLARESOLVERR_URL=http://flaresolverr:8191/v1 to enable. See') }} <a href="https://github.com/FlareSolverr/FlareSolverr">FlareSolverr</a>.</i></span>
+                </div>
+                {% endif %}
                 <div class="pure-control-group">
                 <br>
                     {{ _('Tip:') }} <a href="{{ url_for('settings.settings_page')}}#proxies">{{ _('Connect using Bright Data proxies, find out more here.') }}</a>

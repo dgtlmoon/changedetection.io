@@ -871,4 +871,18 @@ class DatastoreUpdatesMixin:
             restock.pop('prev_price', None)
             watch.commit()
 
+    def update_34(self):
+        """FlareSolverr overlay: add global flaresolverr_enabled and per-watch flaresolverr."""
+        if 'flaresolverr_enabled' not in self.data['settings']['application']:
+            self.data['settings']['application']['flaresolverr_enabled'] = False
+            logger.info("update_34: added application.flaresolverr_enabled=False")
+        if 'flaresolverr_enabled' not in self.data['settings']['requests']:
+            self.data['settings']['requests']['flaresolverr_enabled'] = False
+            logger.info("update_34: added requests.flaresolverr_enabled=False")
+        for uuid, watch in self.data['watching'].items():
+            if 'flaresolverr' not in watch:
+                watch['flaresolverr'] = 'system'
+                watch.commit()
+        logger.info("update_34: ensured per-watch flaresolverr='system'")
+
 

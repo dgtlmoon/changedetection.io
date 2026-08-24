@@ -866,6 +866,7 @@ class commonSettingsForm(Form):
         self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
     fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    flaresolverr = RadioField(_l('FlareSolverr'), choices=[('system', _l('System default')), ('enabled', _l('Enabled')), ('disabled', _l('Disabled'))], default='system')
     notification_body = TextAreaField(_l('Notification Body'), default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
     notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
     notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
@@ -1175,6 +1176,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            )
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
     fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    flaresolverr_enabled = BooleanField(_l('Enable FlareSolverr'), default=False)
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
     global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField(_l('Ignore whitespace'))

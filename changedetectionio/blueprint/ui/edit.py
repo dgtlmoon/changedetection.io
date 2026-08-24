@@ -176,6 +176,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             for p in datastore.proxy_list:
                 form.proxy.choices.append(tuple((p, datastore.proxy_list[p]['label'])))
 
+        # FlareSolverr env gate - hide field if not configured
+        from changedetectionio.flaresolverr_pool import get_flaresolverr_url
+
+        flaresolverr_available = bool(get_flaresolverr_url())
+        if not flaresolverr_available:
+            if hasattr(form, 'flaresolverr'):
+                try:
+                    del form.flaresolverr
+                except Exception:
+                    pass
+
 
         if request.method == 'POST' and form.validate():
 
@@ -324,6 +335,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
                 'extra_processor_config': form.extra_tab_content(),
                 'extra_title': f" - {gettext('Edit')} - {watch.label}",
+                'flaresolverr_available': flaresolverr_available,
+                'flaresolverr_url': get_flaresolverr_url(),
                 'form': form,
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,

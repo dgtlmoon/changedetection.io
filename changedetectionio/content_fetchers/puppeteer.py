@@ -202,7 +202,8 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
-
+        self.flaresolverr_cookies = kwargs.get('flaresolverr_cookies')
+        self.flaresolverr_user_agent = kwargs.get('flaresolverr_user_agent')
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
@@ -342,17 +343,32 @@ class fetcher(Fetcher):
             await inject_evasions_into_page(self.page)
 
         # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
-        user_agent = None
-        if request_headers and request_headers.get('User-Agent'):
-            # Request_headers should now be CaaseInsensitiveDict
-            # Remove it so it's not sent again with headers after
-            user_agent = request_headers.pop('User-Agent').strip()
+        if self.flaresolverr_user_agent:
+            user_agent = self.flaresolverr_user_agent
             await self.page.setUserAgent(user_agent)
+            try:
+                request_headers.pop('User-Agent', None)
+            except Exception:
+                pass
+        else:
+            user_agent = None
+            if request_headers and request_headers.get('User-Agent'):
+                user_agent = request_headers.pop('User-Agent').strip()
+                await self.page.setUserAgent(user_agent)
+            if not user_agent:
+                await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
+        if self.flaresolverr_user_agent:
+            try:
+                await self.page.setUserAgent(self.flaresolverr_user_agent)
+            except Exception:
+                pass
 
-        if not user_agent:
-            # Attempt to strip 'HeadlessChrome' etc
-            await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
-
+        if self.flaresolverr_cookies:
+            try:
+                await self.page.setCookie(*self.flaresolverr_cookies)
+                logger.info(f"FlareSolverr injected {len(self.flaresolverr_cookies)} cookies via Puppeteer")
+            except Exception as e:
+                logger.warning(f"FlareSolverr cookie inject failed: {e}")
         await _configure_puppeteer_csp(self.page)
         if request_headers:
             await self.page.setExtraHTTPHeaders(request_headers)

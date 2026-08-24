@@ -30,6 +30,12 @@ services:
   #      - PLAYWRIGHT_BYPASS_CSP=false
   #
   #
+  #       FlareSolverr anti-bot bypass (undetected_chromedriver)
+  #      - FLARESOLVERR_URL=http://flaresolverr:8191/v1
+  #      - FLARESOLVERR_MAX_SESSIONS=10
+  #      - FLARESOLVERR_TTL_MINUTES=60
+  #      - FLARESOLVERR_TIMEOUT=60
+  #
   #       Alternative WebDriver/selenium URL, do not use "'s or 's! (old, deprecated, does not support screenshots very well, Can't handle custom headers etc)
   #      - WEBDRIVER_URL=http://browser-selenium-chrome:4444/wd/hub
   #
@@ -122,8 +128,24 @@ services:
 #              condition: service_started
 
 
-     # Sockpuppetbrowser is basically chrome wrapped in an API for allowing fast fetching of web-pages.
-     # RECOMMENDED FOR FETCHING PAGES WITH CHROME, be sure to enable the "PLAYWRIGHT_DRIVER_URL" env variable in the main changedetection container
+#    depends_on:
+#      flaresolverr:
+#        condition: service_started
+#    environment:
+#      - FLARESOLVERR_URL=http://flaresolverr:8191/v1
+#      - FLARESOLVERR_MAX_SESSIONS=10
+#      - FLARESOLVERR_TTL_MINUTES=60
+#    flaresolverr:
+#        image: ghcr.io/flaresolverr/flaresolverr:latest
+#        container_name: flaresolverr
+#        environment:
+#            - LOG_LEVEL=info
+#        ports:
+#            - 8191:8191
+#        restart: unless-stopped
+
+      # Sockpuppetbrowser is basically chrome wrapped in an API for allowing fast fetching of web-pages.
+      # RECOMMENDED FOR FETCHING PAGES WITH CHROME, be sure to enable the "PLAYWRIGHT_DRIVER_URL" env variable in the main changedetection container
 #    browser-sockpuppet-chrome:
 #        hostname: browser-sockpuppet-chrome
 #        image: dgtlmoon/sockpuppetbrowser:latest
