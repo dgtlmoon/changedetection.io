@@ -2636,6 +2636,7 @@ msgstr "Obecnie wysoki"
 msgid "cheaper than %s% of tracked prices"
 msgstr "tańsze niż %s% spośród monitorowanych cen"
 
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 #, python-format
