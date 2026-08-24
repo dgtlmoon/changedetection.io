@@ -161,7 +161,7 @@
                 {% if flaresolverr_available and form.flaresolverr is defined %}
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.flaresolverr) }}
-                        <span class="pure-form-message-inline">{{ _('Route this watch via FlareSolverr') }} <code>{{ flaresolverr_url }}</code> {{ _('to bypass Cloudflare. "System default" follows Settings → Fetching → FlareSolverr.') }}</span>
+                        <span class="pure-form-message-inline">{{ _('Route this watch via FlareSolverr at %(url)s to bypass Cloudflare. "System default" follows Settings → Fetching → FlareSolverr.', url='<code>'~flaresolverr_url~'</code>')|safe }}</span>
                     </div>
                 {% elif not flaresolverr_available %}
                     <div class="pure-control-group">
