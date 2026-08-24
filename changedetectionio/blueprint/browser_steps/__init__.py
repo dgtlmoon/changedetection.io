@@ -17,6 +17,7 @@ from flask import Blueprint, request, make_response
 import os
 
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.blueprint import plaintext_response
 from changedetectionio.flask_app import login_optionally_required
 from changedetectionio.validate_url import validate_fetch_url_async
 from loguru import logger
@@ -400,8 +401,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         except Exception as e:
             logger.error(f"Exception when calling step operation {step_operation} {str(e)}")
-            # Try to find something of value to give back to the user
-            return make_response(str(e).splitlines()[0], 401)
+            # Try to find something of value to give back to the user.
+            # text/plain: the message can contain the user's own selectors/values, so it
+            # must not be parsed as HTML by the browser (GHSA-23mp-8222-96fr pattern).
+            return plaintext_response(str(e).splitlines()[0], 401)
 
         # Screenshots and other info only needed on requesting a step (POST)
         try:
@@ -418,7 +421,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     watch.save_xpath_data(data=xpath_data)
 
         except Exception as e:
-            return make_response(f"Error fetching screenshot and element data - {str(e)}", 401)
+            return plaintext_response(f"Error fetching screenshot and element data - {str(e)}", 401)
 
         # SEND THIS BACK TO THE BROWSER
         output = {
