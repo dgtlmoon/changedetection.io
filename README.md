@@ -279,6 +279,21 @@ When you enable a `json:` or `jq:` filter, you can even automatically extract an
 
 The application also supports notifying you that it can follow this information automatically
 
+## Monitor X (Twitter) search results with Xquik
+
+The normal X search page needs JavaScript and does not expose its results to the basic fetcher. The opt-in Xquik fetch method turns an existing X search URL into stable JSON for change detection.
+
+1. Create an API key in the [Xquik dashboard](https://dashboard.xquik.com/en/account?tab=api-keys).
+2. Set `XQUIK_API_KEY` in the changedetection.io server environment.
+3. Add an `https://x.com/search?q=...` watch URL.
+4. Edit the watch. Select **Xquik X search API (metered)** under **Request > Fetch Method**.
+
+Each check requests up to 25 latest matches and uses Xquik credits. The fetcher returns Tweet IDs, text, timestamps, usernames, and canonical URLs. It omits engagement counters so routine count changes do not create false alerts. Watch headers never leave changedetection.io.
+
+Use JSONPath or jq filters to narrow the result. The API key stays on the server. Public Tweet search does not require a connected X account.
+
+Xquik is an independent third-party service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.
+
 
 ## Proxy Configuration
 

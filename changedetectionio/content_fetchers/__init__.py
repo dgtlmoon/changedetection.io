@@ -28,6 +28,7 @@ SCREENSHOT_SIZE_STITCH_THRESHOLD = int(os.getenv("SCREENSHOT_CHUNK_HEIGHT", 1000
 # available_fetchers() will scan this implementation looking for anything starting with html_
 # this information is used in the form selections
 from changedetectionio.content_fetchers.requests import fetcher as html_requests
+from changedetectionio.content_fetchers.xquik import fetcher as html_xquik
 
 
 import importlib.resources
@@ -36,7 +37,7 @@ INSTOCK_DATA_JS = importlib.resources.files("changedetectionio.content_fetchers.
 FAVICON_FETCHER_JS = importlib.resources.files("changedetectionio.content_fetchers.res").joinpath('favicon-fetcher.js').read_text(encoding='utf-8')
 
 
-def available_fetchers():
+def available_fetchers(include_watch_only=True):
     # See the if statement at the bottom of this file for how we switch between playwright and webdriver
     import inspect
     p = []
@@ -49,12 +50,16 @@ def available_fetchers():
             if name.startswith('html_'):
                 # Skip plugin fetchers that were already registered
                 if name not in _plugin_fetchers:
+                    if not include_watch_only and not getattr(obj, 'supports_global_default', True):
+                        continue
                     t = tuple([name, obj.fetcher_description])
                     p.append(t)
 
     # Get plugin fetchers from cache (already loaded at module init)
     for name, fetcher_class in _plugin_fetchers.items():
         if hasattr(fetcher_class, 'fetcher_description'):
+            if not include_watch_only and not getattr(fetcher_class, 'supports_global_default', True):
+                continue
             t = tuple([name, fetcher_class.fetcher_description])
             p.append(t)
         else:
@@ -195,4 +200,3 @@ else:
 # Register built-in fetchers as plugins after all imports are complete
 from changedetectionio.pluggy_interface import register_builtin_fetchers
 register_builtin_fetchers()
-

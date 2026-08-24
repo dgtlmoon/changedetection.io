@@ -1978,6 +1978,12 @@ msgid "Variables are supported in the request body"
 msgstr "リクエストボディで変数を使用できます"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Use an https://x.com/search?q=... URL. Each check retrieves up to 25 latest matches through Xquik and uses credits. "
+"Set XQUIK_API_KEY in the server environment. Watch headers are not sent to Xquik."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Variables are supported in the request header values"
 msgstr "リクエストヘッダー値で変数を使用できます"
 
@@ -2862,6 +2868,10 @@ msgstr "単語数はコンテンツの長さを示す簡易指標で、テキス
 #: changedetectionio/content_fetchers/requests.py
 msgid "Basic fast Plaintext/HTTP Client"
 msgstr "基本 (高速なプレーンテキスト/HTTPクライアント)"
+
+#: changedetectionio/content_fetchers/xquik.py
+msgid "Xquik X search API (metered)"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
