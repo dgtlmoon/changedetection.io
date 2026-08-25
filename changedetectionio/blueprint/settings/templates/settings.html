@@ -141,7 +141,7 @@
                 {% if flaresolverr_available and form.application.form.flaresolverr_enabled is defined %}
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.flaresolverr_enabled) }}
-                    <span class="pure-form-message-inline">{{ _('When enabled, watches using "System default" will be fetched via FlareSolverr at %(url)s to bypass Cloudflare / DDoS-Guard challenges. Per-watch override is available in Edit Watch → Request.', url='<code>'~flaresolverr_url~'</code>')|safe }}</span>
+                    <span class="pure-form-message-inline">{{ _('When enabled, watches using "System default" will be fetched via FlareSolverr at %(url)s to bypass Cloudflare / DDoS-Guard challenges. Per-watch override is available in Edit Watch → Request.', url='<code>'~flaresolverr_url|e~'</code>')|safe }}</span>
                 </div>
                 {% elif not flaresolverr_available %}
                 <div class="pure-control-group">

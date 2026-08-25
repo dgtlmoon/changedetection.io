@@ -131,18 +131,28 @@ class fetcher(Fetcher):
             try:
                 if self.flaresolverr_cookies:
                     try:
+                        from changedetectionio.flaresolverr_pool import is_cookie_domain_valid
+                        from urllib.parse import urlparse as _urlparse
+
+                        _host = _urlparse(url).netloc.lower() if url else ""
                         driver.get(url)
+                        _valid = 0
                         for c in self.flaresolverr_cookies:
                             _cc = dict(c)
+                            _domain = _cc.get("domain", "")
+                            if _domain and not is_cookie_domain_valid(_domain, _host):
+                                logger.warning(f"FlareSolverr cookie domain mismatch: {_domain} vs host {_host} — dropping")
+                                continue
                             _cc.pop('expires', None)
                             _cc.pop('sameSite', None)
                             if _cc.get('domain', '').startswith('.'):
                                 _cc['domain'] = _cc['domain'].lstrip('.')
                             try:
                                 driver.add_cookie(_cc)
+                                _valid += 1
                             except Exception:
                                 pass
-                        logger.info(f"FlareSolverr injected {len(self.flaresolverr_cookies)} cookies via Selenium")
+                        logger.info(f"FlareSolverr injected {_valid} cookies via Selenium")
                     except Exception as e:
                         logger.warning(f"FlareSolverr cookie inject failed: {e}")
                 driver.get(url)
@@ -202,7 +212,7 @@ class fetcher(Fetcher):
             driver.quit()
 
         # Run the selenium operations in a thread pool to avoid blocking the event loop
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, _run_sync)
 
 

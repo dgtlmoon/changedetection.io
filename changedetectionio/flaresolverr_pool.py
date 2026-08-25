@@ -1,9 +1,17 @@
 import hashlib
 import os
+import threading
+import time
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse
 
 from loguru import logger
+
+# Dedicated executor for blocking FlareSolverr HTTP calls — avoids starving the loop's default executor
+# which is also used by validate_fetch_url_async and other I/O. 5 workers is enough for 10 concurrent watches
+# with 60s timeout without exhausting the default pool (min(32, cpu+4) ≈10).
+FLARESOLVERR_EXECUTOR = ThreadPoolExecutor(max_workers=5, thread_name_prefix="FlareSolverr")
 
 
 class FlareSolverrException(Exception):
@@ -15,7 +23,19 @@ def get_flaresolverr_url():
 
 
 def is_flaresolverr_enabled():
-    return bool(get_flaresolverr_url())
+    url = get_flaresolverr_url()
+    if not url:
+        return False
+    # Basic safety: must be http(s) and not file://, no backslash, valid URL — but allow private/docker DNS
+    if "\\" in url:
+        logger.warning(f"FLARESOLVERR_URL contains backslash — ignored: {url}")
+        return False
+    from changedetectionio.validate_url import is_safe_valid_url
+
+    if not is_safe_valid_url(url):
+        logger.warning(f"FLARESOLVERR_URL is not a safe http(s) URL: {url}")
+        return False
+    return True
 
 
 def get_flaresolverr_max_sessions():
@@ -72,6 +92,18 @@ def _session_id_for_host(host):
     return f"cdio-{h}"
 
 
+def is_cookie_domain_valid(cookie_domain, host):
+    """Validate cookie domain matches host to prevent session fixation via evil domain."""
+    if not cookie_domain:
+        return True  # No domain, will be scoped via url
+    # Strip port from host
+    host = host.split(":")[0].lower()
+    domain = cookie_domain.lstrip(".").lower()
+    if not domain:
+        return False
+    return host == domain or host.endswith("." + domain)
+
+
 class FlarePool:
     def __init__(self, max_sessions=None, ttl_minutes=None, timeout=None, flaresolverr_url=None):
         self.max_sessions = (
@@ -86,80 +118,121 @@ class FlarePool:
         )
         # host -> {session_id, cookies, userAgent, ts}
         self._lru = OrderedDict()
+        self._lock = threading.RLock()
 
     def _ensure_url(self):
-        if not self.flaresolverr_url:
-            self.flaresolverr_url = get_flaresolverr_url()
-        # Re-read dynamic envs
-        self.max_sessions = get_flaresolverr_max_sessions()
-        self.ttl_minutes = get_flaresolverr_ttl_minutes()
-        self.timeout = get_flaresolverr_timeout()
+        # Re-read dynamic envs under lock? Called from within locked sections and also from get_global_pool
+        with self._lock:
+            if not self.flaresolverr_url:
+                self.flaresolverr_url = get_flaresolverr_url()
+            # Re-read dynamic envs
+            self.max_sessions = get_flaresolverr_max_sessions()
+            self.ttl_minutes = get_flaresolverr_ttl_minutes()
+            self.timeout = get_flaresolverr_timeout()
+
+    def _is_expired(self, entry):
+        ts = entry.get("ts")
+        if not ts:
+            return False
+        return (time.time() - ts) > (self.ttl_minutes * 60)
 
     def _evict_if_needed(self):
-        while self.max_sessions > 0 and len(self._lru) >= self.max_sessions:
-            old_host, old_data = self._lru.popitem(last=False)
-            sid = old_data.get("session_id")
-            logger.info(f"FlareSolverr LRU evict host {old_host} session {sid}")
-            try:
-                self._destroy_session(sid)
-            except Exception as e:
-                logger.debug(f"Failed to destroy evicted session {sid}: {e}")
+        with self._lock:
+            # MAX=0 means ephemeral, no LRU at all — ensure empty
+            if self.max_sessions == 0:
+                # Clear any stale entries (should be empty, but defensive)
+                for _, data in list(self._lru.items()):
+                    try:
+                        self._destroy_session(data.get("session_id"))
+                    except Exception:
+                        pass
+                self._lru.clear()
+                return
+            while self.max_sessions > 0 and len(self._lru) >= self.max_sessions:
+                old_host, old_data = self._lru.popitem(last=False)
+                sid = old_data.get("session_id")
+                logger.info(f"FlareSolverr LRU evict host {old_host} session {sid}")
+                try:
+                    self._destroy_session(sid)
+                except Exception as e:
+                    logger.debug(f"Failed to destroy evicted session {sid}: {e}")
 
     def _destroy_session(self, session_id):
         if not session_id:
             return
-        self._ensure_url()
-        if not self.flaresolverr_url:
+        # _ensure_url already handles lock
+        url = self.flaresolverr_url or get_flaresolverr_url()
+        if not url:
             return
         try:
             import requests
 
             payload = {"cmd": "sessions.destroy", "session": session_id}
-            requests.post(self.flaresolverr_url, json=payload, timeout=5)
+            requests.post(url, json=payload, timeout=5)
             logger.debug(f"Destroyed FlareSolverr session {session_id}")
         except Exception as e:
             logger.debug(f"Error destroying FlareSolverr session {session_id}: {e}")
 
     def clear(self):
-        for _, data in list(self._lru.items()):
-            try:
-                self._destroy_session(data.get("session_id"))
-            except Exception:
-                pass
-        self._lru.clear()
+        with self._lock:
+            for _, data in list(self._lru.items()):
+                try:
+                    self._destroy_session(data.get("session_id"))
+                except Exception:
+                    pass
+            self._lru.clear()
 
     def get_cached(self, url):
         host = _host_from_url(url)
-        data = self._lru.get(host)
-        if data:
-            # move to end (most recent)
-            self._lru.move_to_end(host)
-        return data
+        with self._lock:
+            data = self._lru.get(host)
+            if data:
+                if self._is_expired(data):
+                    # Expired — evict
+                    try:
+                        self._destroy_session(data.get("session_id"))
+                    except Exception:
+                        pass
+                    self._lru.pop(host, None)
+                    return None
+                # move to end (most recent)
+                self._lru.move_to_end(host)
+            return data
 
     def solve(self, url, proxy_url=None, method="GET", post_data=None):
+        # SSRF gate for watch URL — defense in depth (processors/base already validates, but pool may be called from other paths)
+        from changedetectionio.validate_url import is_fetch_url_allowed
+
+        ok, reason = is_fetch_url_allowed(url)
+        if not ok:
+            raise FlareSolverrException(f"FlareSolverr blocked fetch URL: {reason}")
+
         self._ensure_url()
         if not self.flaresolverr_url:
             raise FlareSolverrException("FLARESOLVERR_URL not set")
 
         host = _host_from_url(url)
-        # Check cache first? No, we always solve fresh but reuse session_id for warmth.
-        # LRU handles session reuse.
         session_id = None
-        if self.max_sessions > 0:
-            # Reuse or create session_id for this host
-            cached = self._lru.get(host)
-            if cached:
-                session_id = cached.get("session_id")
-                self._lru.move_to_end(host)
+        with self._lock:
+            if self.max_sessions == 0:
+                session_id = None
             else:
-                session_id = _session_id_for_host(host)
-                # Evict before adding new host
-                self._evict_if_needed()
-                # Insert placeholder; will fill after solve
-                self._lru[host] = {"session_id": session_id}
-        else:
-            # Ephemeral, no session
-            session_id = None
+                cached = self._lru.get(host)
+                if cached and not self._is_expired(cached):
+                    session_id = cached.get("session_id")
+                    self._lru.move_to_end(host)
+                elif cached and self._is_expired(cached):
+                    try:
+                        self._destroy_session(cached.get("session_id"))
+                    except Exception:
+                        pass
+                    self._lru.pop(host, None)
+                    cached = None
+                if not cached:
+                    session_id = _session_id_for_host(host)
+                    self._evict_if_needed()
+                    # Insert placeholder with ts; will fill after solve
+                    self._lru[host] = {"session_id": session_id, "ts": time.time()}
 
         payload = {
             "cmd": f"request.{method.lower()}" if method.upper() == "POST" else "request.get",
@@ -197,11 +270,12 @@ class FlarePool:
         if status != "ok":
             # If session was used and challenge failed, destroy it so next try is fresh
             if session_id and self.max_sessions > 0:
-                try:
-                    self._destroy_session(session_id)
-                    self._lru.pop(host, None)
-                except Exception:
-                    pass
+                with self._lock:
+                    try:
+                        self._destroy_session(session_id)
+                        self._lru.pop(host, None)
+                    except Exception:
+                        pass
             raise FlareSolverrException(f"FlareSolverr error status={status} msg={message}")
 
         cookies = solution.get("cookies") or []
@@ -216,9 +290,12 @@ class FlarePool:
                 f"FlareSolverr empty solution status={status} msg={message}"
             )
 
-        # Update LRU cache
-        if self.max_sessions > 0 and host in self._lru:
-            self._lru[host].update({"cookies": cookies, "userAgent": ua, "response": response_html})
+        # Update LRU cache with ts
+        if self.max_sessions > 0:
+            with self._lock:
+                if host in self._lru:
+                    self._lru[host].update({"cookies": cookies, "userAgent": ua, "response": response_html, "ts": time.time()})
+                    self._lru.move_to_end(host)
 
         return {
             "cookies": cookies,
@@ -233,13 +310,15 @@ class FlarePool:
 
 # Global singleton shared between A and C paths
 _global_pool = None
+_global_pool_lock = threading.Lock()
 
 
 def get_global_pool():
     global _global_pool
-    if _global_pool is None:
-        _global_pool = FlarePool()
-    else:
-        # Refresh env-driven settings
-        _global_pool._ensure_url()
-    return _global_pool
+    with _global_pool_lock:
+        if _global_pool is None:
+            _global_pool = FlarePool()
+        else:
+            # Refresh env-driven settings
+            _global_pool._ensure_url()
+        return _global_pool

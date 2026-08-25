@@ -201,7 +201,7 @@ class difference_detection_processor():
         flaresolverr_solution = None
         flaresolverr_effective = False
         try:
-            from changedetectionio.flaresolverr_pool import is_flaresolverr_effective, get_global_pool
+            from changedetectionio.flaresolverr_pool import is_flaresolverr_effective, get_global_pool, FLARESOLVERR_EXECUTOR
             flaresolverr_effective = is_flaresolverr_effective(self.watch, self.datastore)
         except Exception:
             flaresolverr_effective = False
@@ -217,8 +217,8 @@ class difference_detection_processor():
                         _body = _jinja_render(template_str=_body)
                     except Exception:
                         pass
-                loop = asyncio.get_event_loop()
-                flaresolverr_solution = await loop.run_in_executor(None, lambda: pool.solve(url, proxy_url=proxy_url, method=_method, post_data=_body if _method.upper() == 'POST' else None))
+                loop = asyncio.get_running_loop()
+                flaresolverr_solution = await loop.run_in_executor(FLARESOLVERR_EXECUTOR, lambda: pool.solve(url, proxy_url=proxy_url, method=_method, post_data=_body if _method.upper() == 'POST' else None))
                 _host = __import__('urllib.parse', fromlist=['urlparse']).urlparse(url).netloc
                 logger.info(f"FlareSolverr solved {url} host={_host} via session {flaresolverr_solution.get('session_id')}")
             except Exception as e:
@@ -228,9 +228,6 @@ class difference_detection_processor():
         if is_bare:
             self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format)
             self.fetcher.backend_name = prefer_fetch_backend + "+flaresolverr"
-            if self.watch.has_browser_steps:
-                self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
-                self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
             _resp = flaresolverr_solution.get('response') or ''
             _status = flaresolverr_solution.get('status') or 200
             _headers = flaresolverr_solution.get('headers') or {}
