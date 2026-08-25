@@ -10,9 +10,15 @@ from loguru import logger
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
-from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
+from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
+
+
+async def _configure_puppeteer_csp(page):
+    """Enable CSP bypass without requiring unsupported CDP methods when disabled."""
+    if get_playwright_bypass_csp():
+        await page.setBypassCSP(True)
 
 
 # Bug 3 in Playwright screenshot handling
@@ -347,7 +353,7 @@ class fetcher(Fetcher):
             # Attempt to strip 'HeadlessChrome' etc
             await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
 
-        await self.page.setBypassCSP(True)
+        await _configure_puppeteer_csp(self.page)
         if request_headers:
             await self.page.setExtraHTTPHeaders(request_headers)
 
