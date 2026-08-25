@@ -487,13 +487,17 @@ class ValidateContentFetcherIsReady(object):
         #         raise ValidationError(message % (field.data, e))
 
 
-class ValidateBrowserCanRenderLivePreview(object):
-    """The Add-Watch page can only work with a browser that renders a live preview.
+class ValidateKnownContentFetcher(object):
+    """The posted fetch_backend has to name a fetcher this install actually has.
 
-    Optional by design: the watch-list quick-add form posts no browser at all, which
-    means "leave it on the system default" and skips this. When a value *is* posted it
-    is checked against the same capability lookup that built the list, so an invented
-    name or a listed-but-disabled option is rejected here rather than saved.
+    Deliberately *not* a live-preview capability check. This validator sits on the
+    shared quick-add form, whose POST endpoint is also how the watch list (and tests,
+    and scripts) add a watch with any legal backend - 'html_requests' included. Which
+    browsers the Add-Watch page *offers* is a rendering decision (see the add_watch_ui
+    blueprint's browser_config), and whether one can render a live preview is enforced
+    where that matters, in /snapshot.
+
+    Optional: no value posted means "leave it on the system default", as before.
     """
 
     def __init__(self, message=None):
@@ -501,14 +505,19 @@ class ValidateBrowserCanRenderLivePreview(object):
 
     def __call__(self, form, field):
         from flask import current_app
-        from changedetectionio.blueprint.add_watch_ui import browser_config
+        from changedetectionio import content_fetchers
 
-        datastore = current_app.config.get('DATASTORE')
-        if not field.data or not datastore:
+        if not field.data:
             return
 
-        if not browser_config.is_visual_capable(field.data, datastore):
-            raise ValidationError(self.message or gettext("That browser can't render a live preview, pick another."))
+        allowed = {'system'} | {name for name, _description in content_fetchers.available_fetchers()}
+        datastore = current_app.config.get('DATASTORE')
+        if datastore:
+            allowed |= {value for value, _label in datastore.extra_browsers}
+
+        if field.data not in allowed:
+            logger.warning(f"Rejected unknown fetch_backend {field.data!r} - known: {sorted(allowed)}")
+            raise ValidationError(self.message or gettext("Unknown fetch method."))
 
 
 class ValidateNotificationBodyAndTitleWhenURLisSet(object):
@@ -829,16 +838,20 @@ class quickWatchForm(Form):
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     # Only the Add-Watch page renders this; the watch-list quick-add posts nothing, which
-    # leaves the new watch on 'system' exactly as before. validate_choice is off because
-    # the capability validator is the real gate - the choice list carries a deliberately
-    # disabled entry, which pre_validate() would happily accept.
+    # leaves the new watch on 'system' exactly as before.
+    #
     # A radio list rather than a dropdown: fetcher descriptions run long (they include the
     # driver URL) and a wrapping label reads fine in a narrow pane, where a <select> would
     # either overflow or need truncating.
+    #
+    # choices is only what the Add-Watch page *offers* (browsers that can render a live
+    # preview), so validate_choice has to stay off: this same endpoint legitimately receives
+    # any installed backend from the watch-list quick-add, and pre_validate() would reject
+    # e.g. 'html_requests' for not being in the offered list.
     fetch_backend = RadioField(_l('Browser'),
                                choices=visual_browser_choices,
                                validate_choice=False,
-                               validators=[ValidateBrowserCanRenderLivePreview()])
+                               validators=[ValidateKnownContentFetcher()])
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 

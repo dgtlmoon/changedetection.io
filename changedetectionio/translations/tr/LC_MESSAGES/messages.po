@@ -3059,7 +3059,7 @@ msgid "Seconds"
 msgstr "Saniye"
 
 #: changedetectionio/forms.py
-msgid "That browser can't render a live preview, pick another."
+msgid "Unknown fetch method."
 msgstr ""
 
 #: changedetectionio/forms.py
