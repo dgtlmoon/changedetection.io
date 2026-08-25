@@ -169,6 +169,54 @@ body {
       }
     }
 
+    // Browser picker: fetcher descriptions are long (they carry the driver URL), so this is
+    // a radio list whose labels wrap inside the narrow pane instead of a <select> that would
+    // overflow it. The system-default entry is listed even when it can't render a preview.
+    #quick-watch-fetch-backend {
+      ul {
+        margin: 0.35rem 0 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5em;
+        padding: 0.15rem 0;
+
+        input[type="radio"] {
+          flex: 0 0 auto;
+          margin-top: 0.2em;
+        }
+
+        label {
+          // Wrap rather than push the pane wider
+          display: block;
+          min-width: 0;
+          overflow-wrap: anywhere;
+          font-size: 0.85rem;
+          line-height: 1.35;
+        }
+      }
+
+      li.unusable {
+        opacity: 0.55;
+        cursor: not-allowed;
+
+        label {
+          cursor: not-allowed;
+        }
+      }
+
+      .pure-form-message-inline {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+    }
+
     #by-element-toggle-group {
       .pure-form-message-inline {
         display: block;

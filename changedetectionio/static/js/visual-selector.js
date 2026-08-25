@@ -119,13 +119,17 @@ window.initVisualSelector = function (opts) {
                 c = $selectorCanvasElem[0];
                 xctx = c.getContext("2d");
                 ctx = c.getContext("2d");
+                // Drop any handlers left over from a previous load BEFORE (re)building the
+                // selector - applyElementData() runs synchronously for inline xpathData and
+                // binds the element handlers itself, so unbinding afterwards would silently
+                // kill hover/click selection on the add-watch snapshot path.
+                $selectorCanvasElem.off("mousemove mousedown mouseleave");
                 if (source.xpathData) {
                     // Inline data (add-watch snapshot) - no extra round trip needed
                     applyElementData(source.xpathData);
                 } else {
                     fetchData();
                 }
-                $selectorCanvasElem.off("mousemove mousedown");
             });
 
         // data: URIs must be used verbatim; real URLs get a cache-buster

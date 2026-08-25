@@ -487,6 +487,39 @@ class ValidateContentFetcherIsReady(object):
         #         raise ValidationError(message % (field.data, e))
 
 
+class ValidateKnownContentFetcher(object):
+    """The posted fetch_backend has to name a fetcher this install actually has.
+
+    Deliberately *not* a live-preview capability check. This validator sits on the
+    shared quick-add form, whose POST endpoint is also how the watch list (and tests,
+    and scripts) add a watch with any legal backend - 'html_requests' included. Which
+    browsers the Add-Watch page *offers* is a rendering decision (see the add_watch_ui
+    blueprint's browser_config), and whether one can render a live preview is enforced
+    where that matters, in /snapshot.
+
+    Optional: no value posted means "leave it on the system default", as before.
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from flask import current_app
+        from changedetectionio import content_fetchers
+
+        if not field.data:
+            return
+
+        allowed = {'system'} | {name for name, _description in content_fetchers.available_fetchers()}
+        datastore = current_app.config.get('DATASTORE')
+        if datastore:
+            allowed |= {value for value, _label in datastore.extra_browsers}
+
+        if field.data not in allowed:
+            logger.warning(f"Rejected unknown fetch_backend {field.data!r} - known: {sorted(allowed)}")
+            raise ValidationError(self.message or gettext("Unknown fetch method."))
+
+
 class ValidateNotificationBodyAndTitleWhenURLisSet(object):
     """
        Validates that they entered something in both notification title+body when the URL is set
@@ -784,11 +817,41 @@ class ValidateStartsWithRegex(object):
             if not self.pattern.match(stripped):
                 raise ValidationError(self.message or _l("Invalid value."))
 
+def visual_browser_choices():
+    """Browsers that can render the Add-Watch live preview, as RadioField choices.
+
+    Lazy import (the add_watch_ui blueprint imports this module) and empty outside an
+    app context, because WTForms evaluates a choices callable on field construction.
+    """
+    from flask import current_app, has_app_context
+    from changedetectionio.blueprint.add_watch_ui import browser_config
+
+    if not has_app_context():
+        return []
+    datastore = current_app.config.get('DATASTORE')
+    return browser_config.radio_choices(datastore) if datastore else []
+
+
 class quickWatchForm(Form):
     url = StringField('URL', validators=[validateURL()])
     tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
+    # Only the Add-Watch page renders this; the watch-list quick-add posts nothing, which
+    # leaves the new watch on 'system' exactly as before.
+    #
+    # A radio list rather than a dropdown: fetcher descriptions run long (they include the
+    # driver URL) and a wrapping label reads fine in a narrow pane, where a <select> would
+    # either overflow or need truncating.
+    #
+    # choices is only what the Add-Watch page *offers* (browsers that can render a live
+    # preview), so validate_choice has to stay off: this same endpoint legitimately receives
+    # any installed backend from the watch-list quick-add, and pre_validate() would reject
+    # e.g. 'html_requests' for not being in the offered list.
+    fetch_backend = RadioField(_l('Browser'),
+                               choices=visual_browser_choices,
+                               validate_choice=False,
+                               validators=[ValidateKnownContentFetcher()])
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
