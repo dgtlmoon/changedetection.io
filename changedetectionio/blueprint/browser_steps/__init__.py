@@ -279,7 +279,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flaresolverr_cookies = None
         flaresolverr_user_agent = None
         try:
-            from changedetectionio.flaresolverr_pool import is_flaresolverr_effective, get_global_pool
+            from changedetectionio.flaresolverr_pool import is_flaresolverr_effective, get_global_pool, FLARESOLVERR_EXECUTOR
             from changedetectionio.jinja2_custom import render as jinja_render
             if is_flaresolverr_effective(watch, datastore):
                 pool = get_global_pool()
@@ -293,7 +293,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 _proxy_url = proxy.get('server') if proxy else None
                 import asyncio as _asyncio
                 _loop = _asyncio.get_running_loop()
-                flaresolverr_solution = await _loop.run_in_executor(None, lambda: pool.solve(watch.link, proxy_url=_proxy_url, method=_method, post_data=_body if _method.upper() == 'POST' else None))
+                flaresolverr_solution = await _loop.run_in_executor(FLARESOLVERR_EXECUTOR, lambda: pool.solve(watch.link, proxy_url=_proxy_url, method=_method, post_data=_body if _method.upper() == 'POST' else None))
                 flaresolverr_cookies = flaresolverr_solution.get('cookies')
                 flaresolverr_user_agent = flaresolverr_solution.get('userAgent')
                 logger.info(f"FlareSolverr live UI solved {watch.link} via session {flaresolverr_solution.get('session_id')}")
