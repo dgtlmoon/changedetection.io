@@ -365,8 +365,21 @@ class fetcher(Fetcher):
 
         if self.flaresolverr_cookies:
             try:
-                await self.page.setCookie(*self.flaresolverr_cookies)
-                logger.info(f"FlareSolverr injected {len(self.flaresolverr_cookies)} cookies via Puppeteer")
+                from changedetectionio.flaresolverr_pool import is_cookie_domain_valid
+
+                _host = urlparse(url).netloc.lower() if url else ""
+                _filtered = []
+                for c in self.flaresolverr_cookies:
+                    _domain = c.get("domain")
+                    if _domain and not is_cookie_domain_valid(_domain, _host):
+                        logger.warning(f"FlareSolverr cookie domain mismatch: {_domain} vs host {_host} — dropping")
+                        continue
+                    _filtered.append(c)
+                if _filtered:
+                    await self.page.setCookie(*_filtered)
+                    logger.info(f"FlareSolverr injected {len(_filtered)} cookies via Puppeteer")
+                else:
+                    logger.warning("FlareSolverr no valid cookies to inject via Puppeteer")
             except Exception as e:
                 logger.warning(f"FlareSolverr cookie inject failed: {e}")
         await _configure_puppeteer_csp(self.page)

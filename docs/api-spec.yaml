@@ -327,6 +327,11 @@ components:
             - Plugin-provided fetchers (if installed)
           pattern: '^(system|html_requests|html_webdriver|extra_browser_.+)$'
           default: system
+        flaresolverr:
+          type: string
+          enum: [system, enabled, disabled]
+          default: system
+          description: FlareSolverr anti-bot bypass. `system` inherits global `application.flaresolverr_enabled`.
         headers:
           type: object
           additionalProperties:
