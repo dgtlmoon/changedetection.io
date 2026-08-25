@@ -487,6 +487,30 @@ class ValidateContentFetcherIsReady(object):
         #         raise ValidationError(message % (field.data, e))
 
 
+class ValidateBrowserCanRenderLivePreview(object):
+    """The Add-Watch page can only work with a browser that renders a live preview.
+
+    Optional by design: the watch-list quick-add form posts no browser at all, which
+    means "leave it on the system default" and skips this. When a value *is* posted it
+    is checked against the same capability lookup that built the list, so an invented
+    name or a listed-but-disabled option is rejected here rather than saved.
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from flask import current_app
+        from changedetectionio.blueprint.add_watch_ui import browser_config
+
+        datastore = current_app.config.get('DATASTORE')
+        if not field.data or not datastore:
+            return
+
+        if not browser_config.is_visual_capable(field.data, datastore):
+            raise ValidationError(self.message or gettext("That browser can't render a live preview, pick another."))
+
+
 class ValidateNotificationBodyAndTitleWhenURLisSet(object):
     """
        Validates that they entered something in both notification title+body when the URL is set
@@ -784,11 +808,37 @@ class ValidateStartsWithRegex(object):
             if not self.pattern.match(stripped):
                 raise ValidationError(self.message or _l("Invalid value."))
 
+def visual_browser_choices():
+    """Browsers that can render the Add-Watch live preview, as RadioField choices.
+
+    Lazy import (the add_watch_ui blueprint imports this module) and empty outside an
+    app context, because WTForms evaluates a choices callable on field construction.
+    """
+    from flask import current_app, has_app_context
+    from changedetectionio.blueprint.add_watch_ui import browser_config
+
+    if not has_app_context():
+        return []
+    datastore = current_app.config.get('DATASTORE')
+    return browser_config.radio_choices(datastore) if datastore else []
+
+
 class quickWatchForm(Form):
     url = StringField('URL', validators=[validateURL()])
     tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
+    # Only the Add-Watch page renders this; the watch-list quick-add posts nothing, which
+    # leaves the new watch on 'system' exactly as before. validate_choice is off because
+    # the capability validator is the real gate - the choice list carries a deliberately
+    # disabled entry, which pre_validate() would happily accept.
+    # A radio list rather than a dropdown: fetcher descriptions run long (they include the
+    # driver URL) and a wrapping label reads fine in a narrow pane, where a <select> would
+    # either overflow or need truncating.
+    fetch_backend = RadioField(_l('Browser'),
+                               choices=visual_browser_choices,
+                               validate_choice=False,
+                               validators=[ValidateBrowserCanRenderLivePreview()])
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 

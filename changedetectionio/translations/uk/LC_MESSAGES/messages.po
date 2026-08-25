@@ -17,6 +17,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: changedetectionio/blueprint/add_watch_ui/browser_config.py
+#, python-format
+msgid "System settings default (%(browser)s)"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/browser_config.py
+#, python-format
+msgid "System settings default (%(browser)s - no live preview)"
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Add a new web page change detection watch"
 msgstr "Додати нове завдання відстеження змін веб-сторінки"
@@ -41,6 +51,11 @@ msgstr ""
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Currently:"
 msgstr "В даний час:"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#, python-format
+msgid "%(browser)s cannot render a live preview, choose a browser below"
+msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Select by element"
@@ -2631,10 +2646,6 @@ msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Browser"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
 msgstr ""
 
@@ -3027,6 +3038,10 @@ msgid "Seconds"
 msgstr "Секунди"
 
 #: changedetectionio/forms.py
+msgid "That browser can't render a live preview, pick another."
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Notification Body and Title is required when a Notification URL is used"
 msgstr "Тіло та заголовок сповіщення обов'язкові, якщо використовується URL сповіщення"
 
@@ -3075,6 +3090,10 @@ msgstr "Завдання"
 #: changedetectionio/forms.py
 msgid "Processor"
 msgstr "Процесор"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
+msgid "Browser"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Edit > Watch"

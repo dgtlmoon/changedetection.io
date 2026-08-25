@@ -14,6 +14,12 @@ $(document).ready(() => {
     const $includeFilters = $('#include_filters');
     const $temporaryUuid = $('#temporary_uuid');
 
+    // When the LLM intent box isn't available (LLM_FEATURES_DISABLED / not configured) the
+    // template renders no "Select by element" checkbox - element selection is the only thing
+    // this page can do, so it is on from the start and can't be turned off.
+    const selectionAlwaysOn = $byElement.length === 0;
+    const selectionEnabled = () => selectionAlwaysOn || $byElement.is(':checked');
+
     const vs = window.initVisualSelector({
         $canvas: $('#selector-canvas'),
         $includeFilters: $includeFilters,
@@ -22,7 +28,7 @@ $(document).ready(() => {
         $fetchingNotice: $('#add-watch-spinner .fetching-update-notice'),
         $wrapper: $wrapper,
         $clearButton: $clear,
-        enableSelection: false, // off until the user opts into "Select by element"
+        enableSelection: selectionAlwaysOn, // otherwise off until the user opts into "Select by element"
         processorIsImage: false,
         // The snapshot comes from the live browser-steps capture, so scale X by the page
         // CSS width (browser_width) like browser-steps.js - handles device-scale-factor != 1.
@@ -36,8 +42,8 @@ $(document).ready(() => {
         $error.toggle(which === 'error');
         const ready = which === 'ready';
         $wrapper.toggle(ready);
-        $xpathRow.toggle(ready && $byElement.is(':checked'));
-        $clear.toggle(ready && $byElement.is(':checked'));
+        $xpathRow.toggle(ready && selectionEnabled());
+        $clear.toggle(ready && selectionEnabled());
     }
 
     function fetchSnapshot() {
@@ -53,7 +59,9 @@ $(document).ready(() => {
 
         $.ajax({
             url: add_watch_snapshot_url,
-            data: {url: url},
+            // Preview with the browser picked in the list - that same browser is what
+            // gets saved on the watch, so what you see here is what it will check with.
+            data: {url: url, fetch_backend: $('input[name="fetch_backend"]:checked').val() || ''},
             dataType: 'json',
         }).done((data) => {
             showState('ready');

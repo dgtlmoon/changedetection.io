@@ -18,6 +18,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: changedetectionio/blueprint/add_watch_ui/browser_config.py
+#, python-format
+msgid "System settings default (%(browser)s)"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/browser_config.py
+#, python-format
+msgid "System settings default (%(browser)s - no live preview)"
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Add a new web page change detection watch"
 msgstr "Ajouter une nouvelle surveillance de détection de changement de page Web"
@@ -42,6 +52,11 @@ msgstr ""
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Currently:"
 msgstr "Actuellement:"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#, python-format
+msgid "%(browser)s cannot render a live preview, choose a browser below"
+msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Select by element"
@@ -2610,10 +2625,6 @@ msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Browser"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
 msgstr ""
 
@@ -3008,6 +3019,10 @@ msgid "Seconds"
 msgstr "secondes"
 
 #: changedetectionio/forms.py
+msgid "That browser can't render a live preview, pick another."
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Notification Body and Title is required when a Notification URL is used"
 msgstr "Le corps et le titre de la notification sont requis lorsqu'une URL de notification est utilisée"
 
@@ -3056,6 +3071,10 @@ msgstr "Moniteur"
 #: changedetectionio/forms.py
 msgid "Processor"
 msgstr "Processeur"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
+msgid "Browser"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Edit > Watch"

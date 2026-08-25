@@ -35,7 +35,8 @@ except ImportError:
 from ..processors import get_custom_watch_obj_for_processor, find_processors
 
 # Import the base class and helpers
-from .file_saving_datastore import FileSavingDataStore, load_all_watches, load_all_tags, save_json_atomic
+from .file_saving_datastore import (FileSavingDataStore, load_all_watches, load_all_tags, load_watch_from_file,
+                                    save_json_atomic)
 from .updates import DatastoreUpdatesMixin
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
@@ -852,10 +853,26 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         last-screenshot.png + elements.deflate in final on-disk format) is renamed into
         place as the new watch's data_dir - no re-fetch, no copy. If the temp_uuid is
         missing/expired/invalid we fall back to a normal add_watch() so the UI still works.
+
+        Settings the snapshot recorded for itself in its own watch.json (currently just
+        fetch_backend - the browser that rendered the preview) win over the posted form,
+        because they describe what actually fetched. add_watch() -> commit() rewrites that
+        file in full once the directory has been promoted.
         """
         seed_dir = self.get_temporary_watch_dir(temp_uuid)
         if not (seed_dir and os.path.isdir(seed_dir)):
             seed_dir = None
+
+        extras = dict(extras or {})
+        seed_watch_json = os.path.join(seed_dir, "watch.json") if seed_dir else None
+        # isfile() first - a snapshot parked before this file existed is normal, not an error
+        if seed_watch_json and os.path.isfile(seed_watch_json):
+            seed_watch = load_watch_from_file(seed_watch_json, temp_uuid, self.rehydrate_entity)
+            if seed_watch and seed_watch.get('fetch_backend'):
+                extras['fetch_backend'] = seed_watch.get('fetch_backend')
+                logger.debug(f"Promoting temporary watch {temp_uuid} with its recorded "
+                             f"fetch_backend '{extras['fetch_backend']}'")
+
         return self.add_watch(url=url, tag=tag, extras=extras, seed_data_dir=seed_dir)
 
     def cleanup_temporary_watches(self, ttl_seconds=3600):
