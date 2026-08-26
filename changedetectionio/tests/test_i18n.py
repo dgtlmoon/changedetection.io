@@ -68,7 +68,7 @@ def test_zh_Hant_TW_timeago_integration():
     assert '天前' in result_3d, f"Expected '天前' in '{result_3d}'"
 
 
-def test_language_switching(client, live_server, measure_memory_usage, datastore_path):
+def test_language_switching(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """
     Test that the language switching functionality works correctly.
 
@@ -76,6 +76,14 @@ def test_language_switching(client, live_server, measure_memory_usage, datastore
     2. Verify that Italian text appears on the page
     3. Switch back to English and verify English text appears
     """
+
+    # The Add-Watch page is only served when a browser that can render a live preview is
+    # installed (it is the page this test reads translated processor labels off). A plain
+    # test container has none - without PLAYWRIGHT_DRIVER_URL html_webdriver is Selenium,
+    # which cannot - so pretend one exists rather than assert against a redirect.
+    from changedetectionio.blueprint.add_watch_ui import browser_config
+    monkeypatch.setattr(browser_config, 'list_visual_browser_choices',
+                        lambda datastore: [('html_webdriver', 'WebDriver Chrome/Javascript')])
 
     # Establish session cookie
     client.get(url_for("add_watch_ui.add_watch_ui_index"), follow_redirects=True)

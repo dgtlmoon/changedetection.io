@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, jsonify, make_response
+from flask import Blueprint, render_template, request, jsonify, make_response, flash, redirect, url_for
+from flask_babel import gettext
 from loguru import logger
 
 from changedetectionio import forms
@@ -16,6 +17,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def add_watch_ui_index():
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
         from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
+
+        # Same gate that hides the sidebar link (sidebar-nav.html): with no browser that can
+        # render a preview there is nothing for the visual selector to work on, so bounce
+        # direct navigation rather than serving a page whose only outcome is an error.
+        if not browser_config.has_visual_browser(datastore):
+            flash(gettext("Adding a watch with a browser needs an interactive browser "
+                          "(screenshots + element data) - none is configured."), 'error')
+            return redirect(url_for('watchlist.index'))
 
         form = forms.quickWatchForm(None)
         llm_configured = bool(_get_llm_config(datastore))

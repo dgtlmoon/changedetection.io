@@ -387,8 +387,8 @@ body.watch-selection-active #checkbox-operations {
         transparent
       );
       outline-offset: 1px;
-      border-radius: 4px;
     }
+    border-radius: var(--common-round-border);
   }
 
   // Reserved for future use

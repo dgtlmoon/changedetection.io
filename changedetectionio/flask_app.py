@@ -611,6 +611,14 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio.llm.evaluator import is_llm_features_disabled
         return dict(llm_features_disabled=is_llm_features_disabled())
 
+    @app.context_processor
+    def inject_has_visual_browser():
+        # Whether any installed content fetcher can render the Add-Watch live preview -
+        # sidebar-nav.html hides the Add-Watch link without one. Same capability lookup the
+        # page's browser picker and /snapshot use, so they can't disagree.
+        from changedetectionio.blueprint.add_watch_ui import browser_config
+        return dict(has_visual_browser=browser_config.has_visual_browser(datastore))
+
     # Set up a request hook to check authentication for all routes
     @app.before_request
     def check_authentication():
