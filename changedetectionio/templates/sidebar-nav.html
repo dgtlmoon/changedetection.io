@@ -18,6 +18,9 @@
           </a>
         {%- endif -%}
     </li>
+    {# Add-Watch needs a browser that can render a live preview (see the add_watch_ui
+       blueprint's browser_config) - without one the page can only fail, so don't offer it #}
+    {%- if has_visual_browser -%}
     <li class="action-sidebar-li">
         <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
            class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
@@ -37,6 +40,7 @@
             <span class="action-label">{{ _('Add a page watch') }}</span>
         </a>
     </li>
+    {%- endif -%}
     <li class="action-sidebar-li">
         <a href="{{ url_for('watchlist.index') }}"
            class="action-sidebar-item {% if ep == 'watchlist.index' or ep.startswith('ui.ui_views') or ep.startswith('ui.ui_edit') %}active{% endif %}"

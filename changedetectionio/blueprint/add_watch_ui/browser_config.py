@@ -83,6 +83,15 @@ def list_visual_browser_choices(datastore):
     return choices
 
 
+def has_visual_browser(datastore):
+    """True when at least one installed browser can render a live preview.
+
+    Gates the whole Add-Watch page (sidebar link + the route itself): without one there
+    is nothing for the visual selector to work on, so the page can only fail.
+    """
+    return bool(list_visual_browser_choices(datastore))
+
+
 def default_visual_browser(datastore):
     """Which browser the Add-Watch page should start on.
 
