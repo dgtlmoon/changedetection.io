@@ -206,6 +206,10 @@ class FlarePool:
         ok, reason = is_fetch_url_allowed(url)
         if not ok:
             raise FlareSolverrException(f"FlareSolverr blocked fetch URL: {reason}")
+        # Guard against huge POST bodies being forwarded as amplification vector
+        if post_data and len(post_data) > 1024 * 1024:
+            logger.warning(f"FlareSolverr postData too large ({len(post_data)} bytes) for {url}, truncating to 1MB")
+            post_data = post_data[:1024*1024]
 
         self._ensure_url()
         if not self.flaresolverr_url:
