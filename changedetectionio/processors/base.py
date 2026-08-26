@@ -217,6 +217,10 @@ class difference_detection_processor():
                         _body = _jinja_render(template_str=_body)
                     except Exception:
                         pass
+                    # Guard against amplification via huge POST bodies forwarded to FlareSolverr
+                    if _body and len(_body) > 1024 * 1024:
+                        logger.warning(f"FlareSolverr POST body too large ({len(_body)} bytes), truncating to 1MB for {url}")
+                        _body = _body[:1024*1024]
                 loop = asyncio.get_running_loop()
                 flaresolverr_solution = await loop.run_in_executor(FLARESOLVERR_EXECUTOR, lambda: pool.solve(url, proxy_url=proxy_url, method=_method, post_data=_body if _method.upper() == 'POST' else None))
                 _host = __import__('urllib.parse', fromlist=['urlparse']).urlparse(url).netloc

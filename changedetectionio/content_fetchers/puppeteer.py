@@ -343,25 +343,25 @@ class fetcher(Fetcher):
             await inject_evasions_into_page(self.page)
 
         # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
+        # Work on a copy to avoid mutating the caller's CaseInsensitiveDict
+        _headers_copy = dict(request_headers) if request_headers else {}
         if self.flaresolverr_user_agent:
             user_agent = self.flaresolverr_user_agent
             await self.page.setUserAgent(user_agent)
-            try:
-                request_headers.pop('User-Agent', None)
-            except Exception:
-                pass
+            _headers_copy.pop('User-Agent', None)
+            _headers_copy.pop('user-agent', None)
         else:
             user_agent = None
-            if request_headers and request_headers.get('User-Agent'):
-                user_agent = request_headers.pop('User-Agent').strip()
+            if _headers_copy.get('User-Agent'):
+                user_agent = _headers_copy.pop('User-Agent').strip()
+                await self.page.setUserAgent(user_agent)
+            elif _headers_copy.get('user-agent'):
+                user_agent = _headers_copy.pop('user-agent').strip()
                 await self.page.setUserAgent(user_agent)
             if not user_agent:
-                await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
-        if self.flaresolverr_user_agent:
-            try:
-                await self.page.setUserAgent(self.flaresolverr_user_agent)
-            except Exception:
-                pass
+                await self.page.setUserAgent(manage_user_agent(headers=_headers_copy, current_ua=await self.page.evaluate('navigator.userAgent')))
+        # Use the copy for subsequent header handling
+        request_headers = _headers_copy
 
         if self.flaresolverr_cookies:
             try:
