@@ -100,7 +100,8 @@ def run_async_in_browser_loop(coro):
     if _browser_steps_loop and not _browser_steps_loop.is_closed():
         logger.debug("Browser steps using dedicated event loop")
         future = asyncio.run_coroutine_threadsafe(coro, _browser_steps_loop)
-        return future.result()
+        # FlareSolverr solve can take up to 60s + overhead, so allow 70s for start; normal steps 30s
+        return future.result(timeout=70)
     else:
         raise RuntimeError("Browser steps event loop is not available")
 
@@ -290,6 +291,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                         _body = jinja_render(template_str=_body)
                     except Exception:
                         pass
+                    if _body and len(_body) > 1024 * 1024:
+                        logger.warning(f"FlareSolverr live UI POST body too large ({len(_body)} bytes), truncating to 1MB for {watch.link}")
+                        _body = _body[:1024*1024]
                 _proxy_url = proxy.get('server') if proxy else None
                 import asyncio as _asyncio
                 _loop = _asyncio.get_running_loop()
