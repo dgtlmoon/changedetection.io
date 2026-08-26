@@ -161,7 +161,7 @@ $(document).ready(function () {
             // Find the best one
             if (possible_elements.length) {
                 possible_elements.forEach(function (item, index) {
-                  if (["a", "input", "textarea", "button"].includes(item['tagName'])) {
+                  if (["a", "input", "select", "textarea", "button"].includes(item['tagName'])) {
                       current_selected_i = item;
                   }
                 });
