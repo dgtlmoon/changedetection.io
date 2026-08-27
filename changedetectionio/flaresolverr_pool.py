@@ -427,3 +427,108 @@ def get_global_pool():
             # Refresh env-driven settings
             _global_pool._ensure_url()
         return _global_pool
+
+
+def resolve_flaresolverr_user_agent(flaresolverr_user_agent, headers=None):
+    """Resolve UA for browser contexts — FlareSolverr UA wins, else manage_user_agent."""
+    if flaresolverr_user_agent:
+        return flaresolverr_user_agent
+    # Lazy import to avoid circular deps (base -> validate_url, content_fetchers -> flaresolverr_pool)
+    try:
+        from changedetectionio.content_fetchers.base import manage_user_agent
+
+        return manage_user_agent(headers=headers)
+    except Exception:
+        return None
+
+
+async def apply_flaresolverr_user_agent_puppeteer(page, flaresolverr_user_agent, request_headers):
+    """Apply FlareSolverr UA or header UA to a Puppeteer page, returning filtered headers.
+
+    Handles User-Agent header deduplication: when UA is set via setUserAgent,
+    the corresponding header is removed from extra_http_headers to avoid
+    conflicting values. Returns (filtered_headers) dict to use for setExtraHTTPHeaders.
+    """
+    headers_copy = dict(request_headers) if request_headers else {}
+    try:
+        from changedetectionio.content_fetchers.base import manage_user_agent
+    except Exception:
+        manage_user_agent = None
+
+    if flaresolverr_user_agent:
+        try:
+            await page.setUserAgent(flaresolverr_user_agent)
+        except Exception:
+            pass
+        headers_copy.pop("User-Agent", None)
+        headers_copy.pop("user-agent", None)
+    else:
+        user_agent = None
+        if headers_copy.get("User-Agent"):
+            user_agent = headers_copy.pop("User-Agent").strip()
+            try:
+                await page.setUserAgent(user_agent)
+            except Exception:
+                pass
+        elif headers_copy.get("user-agent"):
+            user_agent = headers_copy.pop("user-agent").strip()
+            try:
+                await page.setUserAgent(user_agent)
+            except Exception:
+                pass
+        if not user_agent and manage_user_agent:
+            try:
+                current_ua = await page.evaluate("navigator.userAgent")
+            except Exception:
+                current_ua = None
+            ua = manage_user_agent(headers=headers_copy, current_ua=current_ua)
+            if ua:
+                try:
+                    await page.setUserAgent(ua)
+                except Exception:
+                    pass
+    return headers_copy
+
+
+async def async_flaresolverr_solve(url, proxy_url=None, method="GET", post_data=None):
+    """Async wrapper that runs blocking FlarePool.solve in FLARESOLVERR_EXECUTOR."""
+    import asyncio
+
+    pool = get_global_pool()
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(
+        FLARESOLVERR_EXECUTOR, lambda: pool.solve(url, proxy_url=proxy_url, method=method, post_data=post_data)
+    )
+
+
+async def get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=None, url_override=None):
+    """Shared helper for processors/base and browser_steps live UI.
+
+    - Checks is_flaresolverr_effective(watch, datastore)
+    - Renders POST body via jinja2 (watch.get('body')), truncates to 1MB
+    - Calls async_flaresolverr_solve with correct method/post_data
+    Returns solution dict or None if not effective. Raises FlareSolverrException on failure.
+    """
+    if not is_flaresolverr_effective(watch, datastore):
+        return None
+    url = url_override or watch.link
+    method = (watch.get("method") or "GET").upper()
+    body = watch.get("body")
+    if body:
+        try:
+            from changedetectionio.jinja2_custom import render as jinja_render
+
+            body = jinja_render(template_str=body)
+        except Exception:
+            pass
+        if body and len(body) > 1024 * 1024:
+            logger.warning(f"FlareSolverr POST body too large ({len(body)} bytes), truncating to 1MB for {url}")
+            body = body[:1024 * 1024]
+    post_data = body if method == "POST" else None
+    solution = await async_flaresolverr_solve(url, proxy_url=proxy_url, method=method, post_data=post_data)
+    try:
+        host = urlparse(url).netloc
+    except Exception:
+        host = url
+    logger.info(f"FlareSolverr solved {url} host={host} via session {solution.get('session_id')}")
+    return solution
