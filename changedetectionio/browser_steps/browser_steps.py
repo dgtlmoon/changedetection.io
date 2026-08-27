@@ -367,7 +367,9 @@ class browsersteps_live_ui(steppable_browser_interface):
         now = time.time()
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
-        _ua = self.flaresolverr_user_agent or manage_user_agent(headers=self.headers)
+        from changedetectionio.flaresolverr_pool import resolve_flaresolverr_user_agent
+
+        _ua = resolve_flaresolverr_user_agent(self.flaresolverr_user_agent, headers=self.headers)
         self.context = await self.playwright_browser.new_context(
             accept_downloads=False,  # Should never be needed
             bypass_csp=get_playwright_bypass_csp(),
