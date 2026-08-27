@@ -104,6 +104,107 @@ def is_cookie_domain_valid(cookie_domain, host):
     return host == domain or host.endswith("." + domain)
 
 
+def normalize_flaresolverr_cookies(cookies, url):
+    """Normalize and filter FlareSolverr cookies for browser injection.
+
+    Shared helper to deduplicate cookie handling across Playwright,
+    Puppeteer, Selenium and BrowserSteps. Validates domain against host,
+    normalizes expires/sameSite, and scopes url-less cookies to *url*.
+
+    Returns filtered list (may be empty). Logs warnings for drops.
+    """
+    if not cookies:
+        return []
+    host = urlparse(url).netloc.lower() if url else ""
+    normalized = []
+    for c in cookies:
+        try:
+            cc = dict(c)
+        except Exception:
+            continue
+        domain = cc.get("domain")
+        if domain and not is_cookie_domain_valid(domain, host):
+            logger.warning(f"FlareSolverr cookie domain mismatch: {domain} vs host {host} — dropping")
+            continue
+        if "expires" in cc and isinstance(cc["expires"], (int, float)):
+            try:
+                cc["expires"] = float(cc["expires"])
+            except Exception:
+                cc.pop("expires", None)
+        if "sameSite" in cc:
+            v = cc.pop("sameSite")
+            if isinstance(v, str) and v.capitalize() in ("Strict", "Lax", "None"):
+                cc["sameSite"] = v.capitalize()
+        if not cc.get("domain") and not cc.get("url") and url:
+            cc["url"] = url
+        normalized.append(cc)
+    return normalized
+
+
+async def inject_cookies_playwright(context, cookies, url, label="Playwright"):
+    """Inject normalized FlareSolverr cookies into a Playwright context."""
+    filtered = normalize_flaresolverr_cookies(cookies, url)
+    if not filtered:
+        if cookies:
+            logger.warning(f"FlareSolverr no valid cookies to inject via {label}")
+        return 0
+    try:
+        await context.add_cookies(filtered)
+        logger.info(f"FlareSolverr injected {len(filtered)} cookies via {label}")
+        return len(filtered)
+    except Exception as e:
+        logger.warning(f"FlareSolverr cookie inject failed ({label}): {e}")
+        return 0
+
+
+async def inject_cookies_puppeteer(page, cookies, url, label="Puppeteer"):
+    """Inject normalized FlareSolverr cookies into a Puppeteer page."""
+    filtered = normalize_flaresolverr_cookies(cookies, url)
+    if not filtered:
+        if cookies:
+            logger.warning(f"FlareSolverr no valid cookies to inject via {label}")
+        return 0
+    try:
+        await page.setCookie(*filtered)
+        logger.info(f"FlareSolverr injected {len(filtered)} cookies via {label}")
+        return len(filtered)
+    except Exception as e:
+        logger.warning(f"FlareSolverr cookie inject failed ({label}): {e}")
+        return 0
+
+
+def inject_cookies_selenium(driver, cookies, url, label="Selenium"):
+    """Inject FlareSolverr cookies via Selenium WebDriver.
+
+    Selenium cannot handle expires/sameSite the same way, so they are
+    stripped and leading dots are removed from domain.
+    """
+    filtered = normalize_flaresolverr_cookies(cookies, url)
+    if not filtered:
+        if cookies:
+            logger.warning(f"FlareSolverr no valid cookies to inject via {label}")
+        return 0
+    valid = 0
+    for cc in filtered:
+        # Selenium-specific tweaks
+        cc = dict(cc)
+        cc.pop("expires", None)
+        cc.pop("sameSite", None)
+        cc.pop("url", None)
+        if cc.get("domain", "").startswith("."):
+            cc["domain"] = cc["domain"].lstrip(".")
+        try:
+            driver.add_cookie(cc)
+            valid += 1
+        except Exception:
+            pass
+    if valid:
+        logger.info(f"FlareSolverr injected {valid} cookies via {label}")
+    else:
+        logger.warning(f"FlareSolverr no valid cookies to inject via {label}")
+    return valid
+
+
 class FlarePool:
     def __init__(self, max_sessions=None, ttl_minutes=None, timeout=None, flaresolverr_url=None):
         self.max_sessions = (

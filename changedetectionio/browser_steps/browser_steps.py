@@ -379,34 +379,9 @@ class browsersteps_live_ui(steppable_browser_interface):
             user_agent=_ua,
         )
         if self.flaresolverr_cookies:
-            try:
-                from changedetectionio.flaresolverr_pool import is_cookie_domain_valid
-                from urllib.parse import urlparse as _urlparse
+            from changedetectionio.flaresolverr_pool import inject_cookies_playwright
 
-                _host = _urlparse(self.start_url).netloc.lower() if self.start_url else ""
-                _cookies = []
-                for c in self.flaresolverr_cookies:
-                    _cc = dict(c)
-                    _domain = _cc.get("domain")
-                    if _domain and not is_cookie_domain_valid(_domain, _host):
-                        logger.warning(f"FlareSolverr cookie domain mismatch: {_domain} vs host {_host} — dropping (live UI)")
-                        continue
-                    if 'expires' in _cc and isinstance(_cc['expires'], (int, float)):
-                        _cc['expires'] = float(_cc['expires'])
-                    if 'sameSite' in _cc:
-                        _v = _cc.pop('sameSite')
-                        if isinstance(_v, str) and _v.capitalize() in ('Strict', 'Lax', 'None'):
-                            _cc['sameSite'] = _v.capitalize()
-                    if not _cc.get("domain") and not _cc.get("url") and self.start_url:
-                        _cc["url"] = self.start_url
-                    _cookies.append(_cc)
-                if _cookies:
-                    await self.context.add_cookies(_cookies)
-                    logger.info(f"FlareSolverr injected {len(_cookies)} cookies via BrowserSteps live UI")
-                else:
-                    logger.warning("FlareSolverr no valid cookies to inject via BrowserSteps live UI")
-            except Exception as e:
-                logger.warning(f"FlareSolverr cookie inject failed (live UI): {e}")
+            await inject_cookies_playwright(self.context, self.flaresolverr_cookies, self.start_url, label="BrowserSteps live UI")
 
         self.page = await self.context.new_page()
 
