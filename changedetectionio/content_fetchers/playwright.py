@@ -281,9 +281,9 @@ class fetcher(Fetcher):
             # SOCKS5 with authentication is not supported (yet)
             # https://github.com/microsoft/playwright/issues/10567
 
-            # Set user agent to prevent Cloudflare from blocking the browser
-            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
-            _ua = self.flaresolverr_user_agent or manage_user_agent(headers=request_headers)
+            from changedetectionio.flaresolverr_pool import resolve_flaresolverr_user_agent
+
+            _ua = resolve_flaresolverr_user_agent(self.flaresolverr_user_agent, headers=request_headers)
             context = await browser.new_context(
                 accept_downloads=False,  # Should never be needed
                 # Enabled by default because sites such as GitHub need it for injected JavaScript.
