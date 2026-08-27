@@ -342,26 +342,11 @@ class fetcher(Fetcher):
             # But I could never get it to fire reliably, so we just inject it straight after
             await inject_evasions_into_page(self.page)
 
-        # This user agent is similar to what was used when tweaking the evasions in inject_evasions_into_page(..)
-        # Work on a copy to avoid mutating the caller's CaseInsensitiveDict
-        _headers_copy = dict(request_headers) if request_headers else {}
-        if self.flaresolverr_user_agent:
-            user_agent = self.flaresolverr_user_agent
-            await self.page.setUserAgent(user_agent)
-            _headers_copy.pop('User-Agent', None)
-            _headers_copy.pop('user-agent', None)
-        else:
-            user_agent = None
-            if _headers_copy.get('User-Agent'):
-                user_agent = _headers_copy.pop('User-Agent').strip()
-                await self.page.setUserAgent(user_agent)
-            elif _headers_copy.get('user-agent'):
-                user_agent = _headers_copy.pop('user-agent').strip()
-                await self.page.setUserAgent(user_agent)
-            if not user_agent:
-                await self.page.setUserAgent(manage_user_agent(headers=_headers_copy, current_ua=await self.page.evaluate('navigator.userAgent')))
-        # Use the copy for subsequent header handling
-        request_headers = _headers_copy
+        from changedetectionio.flaresolverr_pool import apply_flaresolverr_user_agent_puppeteer
+
+        request_headers = await apply_flaresolverr_user_agent_puppeteer(
+            self.page, self.flaresolverr_user_agent, request_headers
+        )
 
         if self.flaresolverr_cookies:
             from changedetectionio.flaresolverr_pool import inject_cookies_puppeteer

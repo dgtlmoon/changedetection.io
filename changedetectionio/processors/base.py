@@ -197,37 +197,15 @@ class difference_detection_processor():
 
         logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
 
-        # FlareSolverr overlay - check env + global/per-watch toggle before fetcher run
+        # FlareSolverr overlay — shared helper handles effective check, body render, executor, logging
         flaresolverr_solution = None
-        flaresolverr_effective = False
         try:
-            from changedetectionio.flaresolverr_pool import is_flaresolverr_effective, get_global_pool, FLARESOLVERR_EXECUTOR
-            flaresolverr_effective = is_flaresolverr_effective(self.watch, self.datastore)
-        except Exception:
-            flaresolverr_effective = False
-        if flaresolverr_effective:
-            try:
-                import asyncio
-                pool = get_global_pool()
-                _method = self.watch.get('method') or 'GET'
-                _body = self.watch.get('body')
-                if _body:
-                    from changedetectionio.jinja2_custom import render as _jinja_render
-                    try:
-                        _body = _jinja_render(template_str=_body)
-                    except Exception:
-                        pass
-                    # Guard against amplification via huge POST bodies forwarded to FlareSolverr
-                    if _body and len(_body) > 1024 * 1024:
-                        logger.warning(f"FlareSolverr POST body too large ({len(_body)} bytes), truncating to 1MB for {url}")
-                        _body = _body[:1024*1024]
-                loop = asyncio.get_running_loop()
-                flaresolverr_solution = await loop.run_in_executor(FLARESOLVERR_EXECUTOR, lambda: pool.solve(url, proxy_url=proxy_url, method=_method, post_data=_body if _method.upper() == 'POST' else None))
-                _host = __import__('urllib.parse', fromlist=['urlparse']).urlparse(url).netloc
-                logger.info(f"FlareSolverr solved {url} host={_host} via session {flaresolverr_solution.get('session_id')}")
-            except Exception as e:
-                logger.error(f"FlareSolverr solve failed for {url}: {e}")
-                raise Exception(f"FlareSolverr: {e}") from e
+            from changedetectionio.flaresolverr_pool import get_flaresolverr_solution_for_watch
+
+            flaresolverr_solution = await get_flaresolverr_solution_for_watch(self.watch, self.datastore, proxy_url=proxy_url)
+        except Exception as e:
+            logger.error(f"FlareSolverr solve failed for {url}: {e}")
+            raise Exception(f"FlareSolverr: {e}") from e
         is_bare = flaresolverr_solution is not None and prefer_fetch_backend == 'html_requests' and not self.watch.has_browser_steps
         if is_bare:
             self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format)
