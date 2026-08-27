@@ -296,36 +296,9 @@ class fetcher(Fetcher):
                 user_agent=_ua,
             )
             if self.flaresolverr_cookies:
-                try:
-                    from changedetectionio.flaresolverr_pool import is_cookie_domain_valid
+                from changedetectionio.flaresolverr_pool import inject_cookies_playwright
 
-                    _host = urlparse(url).netloc.lower() if url else ""
-                    _cookies = []
-                    for c in self.flaresolverr_cookies:
-                        _cc = dict(c)
-                        # Validate domain to prevent evil.com injection
-                        _domain = _cc.get("domain")
-                        if _domain and not is_cookie_domain_valid(_domain, _host):
-                            logger.warning(f"FlareSolverr cookie domain mismatch: {_domain} vs host {_host} — dropping")
-                            continue
-                        if 'expires' in _cc and isinstance(_cc['expires'], (int, float)):
-                            _cc['expires'] = float(_cc['expires'])
-                        if 'sameSite' in _cc:
-                            _v = _cc.pop('sameSite')
-                            # Case-insensitive: Chrome may return 'lax' lower
-                            if isinstance(_v, str) and _v.capitalize() in ('Strict', 'Lax', 'None'):
-                                _cc['sameSite'] = _v.capitalize()
-                        # If no domain and no url, scope to current url
-                        if not _cc.get("domain") and not _cc.get("url") and url:
-                            _cc["url"] = url
-                        _cookies.append(_cc)
-                    if _cookies:
-                        await context.add_cookies(_cookies)
-                        logger.info(f"FlareSolverr injected {len(_cookies)} cookies via Playwright")
-                    else:
-                        logger.warning("FlareSolverr no valid cookies to inject via Playwright")
-                except Exception as e:
-                    logger.warning(f"FlareSolverr cookie inject failed: {e}")
+                await inject_cookies_playwright(context, self.flaresolverr_cookies, url, label="Playwright")
             self.page = await context.new_page()
 
             # Listen for all console events and handle errors
