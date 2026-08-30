@@ -2005,6 +2005,12 @@ msgid "Variables are supported in the request body"
 msgstr "Variáveis são suportadas no corpo da solicitação (body)"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Use an https://x.com/search?q=... URL. Each check retrieves up to 25 latest matches through Xquik and uses credits. "
+"Set XQUIK_API_KEY in the server environment. Watch headers are not sent to Xquik."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Variables are supported in the request header values"
 msgstr "Variáveis são suportadas nos valores dos cabeçalhos da solicitação"
 
@@ -2892,6 +2898,10 @@ msgstr ""
 
 #: changedetectionio/content_fetchers/requests.py
 msgid "Basic fast Plaintext/HTTP Client"
+msgstr ""
+
+#: changedetectionio/content_fetchers/xquik.py
+msgid "Xquik X search API (metered)"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
