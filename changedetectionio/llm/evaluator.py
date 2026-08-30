@@ -97,6 +97,8 @@ def _thinking_extra_body(model: str, budget: int) -> dict | None:
     """
     if not model.startswith('gemini/'):
         return None
+    if 'flash-lite' in model.lower():
+        return None
     try:
         import litellm
         if not litellm.get_model_info(model).get('supports_reasoning'):
