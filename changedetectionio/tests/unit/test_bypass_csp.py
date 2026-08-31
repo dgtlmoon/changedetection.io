@@ -119,6 +119,9 @@ def test_puppeteer_fetcher_configures_csp_on_created_page(monkeypatch):
     page = SimpleNamespace(
         evaluate=AsyncMock(return_value='Mozilla/5.0'),
         setUserAgent=AsyncMock(),
+        # fetch_page() attaches an 'error' listener before it configures CSP - the crash
+        # handling itself is covered by test_puppeteer_page_crash.py
+        on=Mock(),
     )
     browser = SimpleNamespace(newPage=AsyncMock(return_value=page))
     pyppeteer_instance = SimpleNamespace(connect=AsyncMock(return_value=browser))
