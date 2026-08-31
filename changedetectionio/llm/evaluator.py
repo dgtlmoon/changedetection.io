@@ -94,8 +94,16 @@ def _thinking_extra_body(model: str, budget: int) -> dict | None:
     "does this model think?" decision. That picks up new Gemini variants and
     rolling aliases (`gemini-flash-latest`, etc.) as litellm's registry tracks
     them, without us hardcoding model names here.
+
+    Gemini 3.x is a special case: it deprecated `thinkingConfig.thinkingBudget`
+    in favour of a new `thinking_level` control and rejects the old shape with a
+    bare 400 INVALID_ARGUMENT. There's no safe numeric-budget → level mapping to
+    fall back to, so rather than guess we send no thinking config at all and let
+    the model use its own default (see llm_client.is_gemini_3_family).
     """
     if not model.startswith('gemini/'):
+        return None
+    if llm_client.is_gemini_3_family(model):
         return None
     try:
         import litellm
@@ -839,13 +847,14 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             f"LLM evaluate_change skipped for {watch.get('uuid')}: monthly budget {budget:,} reached "
             f"({used:,} used this month) — passing change through as important"
         )
-        # Fail open: don't suppress notifications when budget is exhausted
-        return {'important': True, 'summary': ''}
+        # Fail open: don't suppress notifications when budget is exhausted.
+        # Not an 'llm_error' — this is a deliberate, expected skip, not a failed call.
+        return {'important': True, 'summary': '', 'llm_error': False, 'llm_skipped': 'budget_exceeded'}
 
     # Check per-watch cumulative budget before making the call
     if not _check_token_budget(watch, cfg):
         # Already over budget — fail open (don't suppress notification)
-        return {'important': True, 'summary': ''}
+        return {'important': True, 'summary': '', 'llm_error': False, 'llm_skipped': 'budget_exceeded'}
 
     url = watch.get('url', '')
     title = watch.get('page_title') or watch.get('title') or ''
@@ -880,9 +889,14 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         result = parse_eval_response(raw)
     except Exception as e:
         logger.warning(f"LLM evaluation failed for {watch.get('uuid')}: {e}")
-        # On failure: don't suppress the notification — pass through as important
+        # On failure: don't suppress the notification — pass through as important.
+        # 'llm_error' distinguishes this fail-open fallback from a genuine
+        # {'important': True, ...} verdict from the model — without it, a total
+        # LLM outage (wrong model name, provider-side breaking change, etc.) is
+        # silently indistinguishable from working intent-matching that simply
+        # found every change important.
         watch['llm_last_tokens_used'] = 0
-        return {'important': True, 'summary': ''}
+        return {'important': True, 'summary': '', 'llm_error': True}
 
     # Accumulate token usage: per-watch limit and global monthly budget
     _check_token_budget(watch, cfg, tokens)

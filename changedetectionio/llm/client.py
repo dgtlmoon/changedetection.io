@@ -6,6 +6,7 @@ and makes the call easy to mock in tests.
 
 import logging
 import os
+import re
 from loguru import logger
 
 # Default output token cap for JSON-returning calls (intent eval, preview, setup).
@@ -25,6 +26,25 @@ DEFAULT_TIMEOUT = int(os.getenv('LLM_TIMEOUT', 300))
 # evaluator.resolve_llm_timeout() for how the endpoint is classified.
 DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
 DEFAULT_RETRIES = 3
+
+# Matches "gemini-3" with or without a provider prefix (gemini/gemini-3.5-flash-lite,
+# vertex_ai/gemini-3-pro-preview, plain "gemini-3-pro-preview", ...).
+_GEMINI_3_RE = re.compile(r'gemini-3', re.IGNORECASE)
+
+
+def is_gemini_3_family(model: str) -> bool:
+    """True for any Gemini 3.x model.
+
+    Google's Gemini 3.x migration deprecates the `temperature`/`top_p`/`top_k`
+    sampling params and replaces `thinkingConfig.thinkingBudget` with a new
+    `thinking_level` control. Sending the old params gets a bare 400
+    INVALID_ARGUMENT with no `details` field — litellm's model registry lags
+    brand-new releases, so we can't rely on it (or on drop_params) to catch this
+    before the request goes out. Gated on the model name directly so the very
+    first request avoids the error, rather than depending on the retry path
+    below to clean it up after the fact.
+    """
+    return bool(model) and bool(_GEMINI_3_RE.search(model))
 
 
 class _LoguruInterceptHandler(logging.Handler):
@@ -90,9 +110,12 @@ def completion(model: str, messages: list, api_key: str = None,
         'model': model,
         'messages': messages,
         'timeout': _timeout,
-        'temperature': 0,
         'max_tokens': max_tokens if max_tokens is not None else _MAX_COMPLETION_TOKENS,
     }
+    if not is_gemini_3_family(model):
+        # Gemini 3.x rejects 'temperature' outright (see is_gemini_3_family) —
+        # every other provider we support accepts temperature=0 fine.
+        kwargs['temperature'] = 0
     if api_key:
         kwargs['api_key'] = api_key
     if api_base:
@@ -181,21 +204,39 @@ def completion(model: str, messages: list, api_key: str = None,
             raise
 
         except litellm.BadRequestError as e:
-            # If the provider rejected an unsupported sampling param (and we haven't
-            # already stripped them), drop them and retry once. attempt-=1 keeps this
-            # off the timeout-retry budget; _stripped_sampling prevents a loop.
-            msg = str(e).lower()
-            if (not _stripped_sampling
-                    and any(p in kwargs for p in _sampling_params)
-                    and any(p in msg for p in _sampling_params)):
+            # If the provider rejected an unsupported sampling param or reasoning
+            # payload, drop it and retry once. We used to only do this when the
+            # error message *named* the offending field, but not every provider
+            # does that — Google's Gemini 3.x 400 INVALID_ARGUMENT responses
+            # carry no 'details' field and never mention 'temperature' or
+            # 'thinkingConfig' by name. So instead we unconditionally strip
+            # anything we ourselves added on top of the caller's messages
+            # (sampling params, Gemini's generationConfig.thinkingConfig) the
+            # first time a BadRequestError is seen, then retry once.
+            # attempt-=1 keeps this off the timeout-retry budget;
+            # _stripped_sampling prevents looping. If there's nothing of ours
+            # left to strip, `dropped` stays empty and the original error is
+            # raised immediately — this can't mask an unrelated 400 (bad key,
+            # bad model name, oversized input, ...) beyond one wasted retry.
+            if not _stripped_sampling:
                 dropped = [p for p in _sampling_params if kwargs.pop(p, None) is not None]
-                _stripped_sampling = True
-                attempt -= 1
-                logger.warning(
-                    f"LLM client: model={model!r} rejected sampling params {dropped} "
-                    f"({e}); retrying without them"
-                )
-                continue
+                extra_body = kwargs.get('extra_body')
+                if isinstance(extra_body, dict):
+                    gen_cfg = extra_body.get('generationConfig')
+                    if isinstance(gen_cfg, dict) and gen_cfg.pop('thinkingConfig', None) is not None:
+                        dropped.append('thinkingConfig')
+                        if not gen_cfg:
+                            extra_body.pop('generationConfig', None)
+                        if not extra_body:
+                            kwargs.pop('extra_body', None)
+                if dropped:
+                    _stripped_sampling = True
+                    attempt -= 1
+                    logger.warning(
+                        f"LLM client: model={model!r} rejected request ({e}); "
+                        f"stripped {dropped} and retrying once"
+                    )
+                    continue
             logger.warning(f"LLM call failed: model={model!r} error={e}")
             raise
 
