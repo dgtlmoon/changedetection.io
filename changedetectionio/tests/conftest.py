@@ -202,7 +202,7 @@ def pytest_configure(config):
     LiveServer uses nested functions that can't be pickled.
 
     Setting 'fork' explicitly:
-    - Maintains compatibility with Python 3.10-3.13 (where 'fork' was already default)
+    - Maintains compatibility with Python 3.11-3.13 (where 'fork' was already default)
     - Fixes Python 3.14 pickling errors
     - Only affects Unix-like systems (Windows uses 'spawn' regardless)
 

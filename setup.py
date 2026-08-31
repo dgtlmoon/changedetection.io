@@ -57,7 +57,7 @@ setup(
     install_requires=install_requires,
     cmdclass={'build_py': BuildPyCommand},
     license="Apache License 2.0",
-    python_requires=">= 3.10",
+    python_requires=">= 3.11",
     classifiers=['Intended Audience :: Customer Service',
                  'Intended Audience :: Developers',
                  'Intended Audience :: Education',
