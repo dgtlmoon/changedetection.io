@@ -182,7 +182,8 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
-
+        self.flaresolverr_cookies = kwargs.get('flaresolverr_cookies')
+        self.flaresolverr_user_agent = kwargs.get('flaresolverr_user_agent')
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
         if custom_browser_connection_url:
@@ -280,8 +281,9 @@ class fetcher(Fetcher):
             # SOCKS5 with authentication is not supported (yet)
             # https://github.com/microsoft/playwright/issues/10567
 
-            # Set user agent to prevent Cloudflare from blocking the browser
-            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
+            from changedetectionio.flaresolverr_pool import resolve_flaresolverr_user_agent
+
+            _ua = resolve_flaresolverr_user_agent(self.flaresolverr_user_agent, headers=request_headers)
             context = await browser.new_context(
                 accept_downloads=False,  # Should never be needed
                 # Enabled by default because sites such as GitHub need it for injected JavaScript.
@@ -291,9 +293,12 @@ class fetcher(Fetcher):
                 ignore_https_errors=True,
                 proxy=self.proxy,
                 service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-                user_agent=manage_user_agent(headers=request_headers),
+                user_agent=_ua,
             )
+            if self.flaresolverr_cookies:
+                from changedetectionio.flaresolverr_pool import inject_cookies_playwright
 
+                await inject_cookies_playwright(context, self.flaresolverr_cookies, url, label="Playwright")
             self.page = await context.new_page()
 
             # Listen for all console events and handle errors

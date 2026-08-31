@@ -654,6 +654,17 @@ msgid "all of the ways that the browser is detected"
 msgstr "todas as formas como o navegador é detectado"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid ""
+"When enabled, watches using \"System default\" will be fetched via FlareSolverr at %(url)s to bypass Cloudflare / "
+"DDoS-Guard challenges. Per-watch override is available in Edit Watch → Request."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "FlareSolverr not configured — set FLARESOLVERR_URL=http://flaresolverr:8191/v1 to enable. See"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Connect using Bright Data proxies, find out more here."
 msgstr "Conecte-se usando proxies da Bright Data, saiba mais aqui."
 
@@ -1985,6 +1996,17 @@ msgid "Choose a proxy for this watch"
 msgstr "Escolha um proxy para este monitoramento"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid ""
+"Route this watch via FlareSolverr at %(url)s to bypass Cloudflare. \"System default\" follows Settings → Fetching → "
+"FlareSolverr."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "FlareSolverr not configured — set FLARESOLVERR_URL to enable."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Using the current global default settings"
 msgstr "Usando as configurações globais padrão atuais"
 
@@ -3126,6 +3148,22 @@ msgid "Fetch Method"
 msgstr "Método de Busca"
 
 #: changedetectionio/forms.py
+msgid "FlareSolverr"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "System default"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Enabled"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Disabled"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Notification Body"
 msgstr "Corpo da Notificação"
 
@@ -3494,6 +3532,10 @@ msgstr "Verificação de segurança do token de acesso à API ativada"
 #: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"
 msgstr "Tratar páginas vazias como uma mudança?"
+
+#: changedetectionio/forms.py
+msgid "Enable FlareSolverr"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Ignore Text"

@@ -158,6 +158,16 @@
                         </span>
                     </div>
                 {% endif %}
+                {% if flaresolverr_available and form.flaresolverr is defined %}
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(form.flaresolverr) }}
+                        <span class="pure-form-message-inline">{{ _('Route this watch via FlareSolverr at %(url)s to bypass Cloudflare. "System default" follows Settings → Fetching → FlareSolverr.', url='<code>'~flaresolverr_url|e~'</code>')|safe }}</span>
+                    </div>
+                {% elif not flaresolverr_available %}
+                    <div class="pure-control-group">
+                        <span class="pure-form-message-inline"><i>{{ _('FlareSolverr not configured — set FLARESOLVERR_URL to enable.') }}</i></span>
+                    </div>
+                {% endif %}
 
                 <!-- webdriver always -->
                 <fieldset data-visible-for="fetch_backend=html_webdriver"  style="display: none;">

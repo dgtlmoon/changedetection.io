@@ -195,6 +195,7 @@ class watch_base(dict):
             'llm_prefilter': None,           # CSS selector derived at setup time (semantic only, e.g. "footer")
             'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
             'fetch_backend': 'system',  # plaintext, playwright etc
+            'flaresolverr': 'system',  # system|enabled|disabled
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
             'filter_text_added': True,

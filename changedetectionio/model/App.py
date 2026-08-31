@@ -26,6 +26,7 @@ class model(dict):
                 'requests': {
                     'extra_proxies': [], # Configurable extra proxies via the UI
                     'extra_browsers': [],  # Configurable extra proxies via the UI
+                    'flaresolverr_enabled': False,
                     'jitter_seconds': 0,
                     'proxy': None, # Preferred proxy connection
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
@@ -44,6 +45,7 @@ class model(dict):
                     'base_url' : None,
                     'empty_pages_are_a_change': False,
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
+                    'flaresolverr_enabled': False,
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,
                     'global_ignore_text': [], # List of text to ignore when calculating the comparison checksum
                     'global_subtractive_selectors': [],

@@ -644,6 +644,17 @@ msgid "all of the ways that the browser is detected"
 msgstr "浏览器被识别的各种方式"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid ""
+"When enabled, watches using \"System default\" will be fetched via FlareSolverr at %(url)s to bypass Cloudflare / "
+"DDoS-Guard challenges. Per-watch override is available in Edit Watch → Request."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "FlareSolverr not configured — set FLARESOLVERR_URL=http://flaresolverr:8191/v1 to enable. See"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Connect using Bright Data proxies, find out more here."
 msgstr ""
 
@@ -1952,6 +1963,17 @@ msgid "Choose a proxy for this watch"
 msgstr "为此监控项选择代理"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid ""
+"Route this watch via FlareSolverr at %(url)s to bypass Cloudflare. \"System default\" follows Settings → Fetching → "
+"FlareSolverr."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "FlareSolverr not configured — set FLARESOLVERR_URL to enable."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Using the current global default settings"
 msgstr "使用当前全局默认设置"
 
@@ -3082,6 +3104,22 @@ msgid "Fetch Method"
 msgstr "抓取方式"
 
 #: changedetectionio/forms.py
+msgid "FlareSolverr"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "System default"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Enabled"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Disabled"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Notification Body"
 msgstr "通知正文"
 
@@ -3450,6 +3488,10 @@ msgstr "已启用 API 访问令牌安全检查"
 #: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"
 msgstr "将空页面视为变更？"
+
+#: changedetectionio/forms.py
+msgid "Enable FlareSolverr"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Ignore Text"
