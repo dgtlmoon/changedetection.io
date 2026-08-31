@@ -60,13 +60,13 @@ def create_backup(datastore_path, watches: dict, tags: dict = None):
 
         # Create a list file with just the URLs, so it's easier to port somewhere else in the future
         list_file = "url-list.txt"
-        with open(os.path.join(datastore_path, list_file), "w") as f:
+        with open(os.path.join(datastore_path, list_file), "w", encoding="utf-8") as f:
             for uuid in watches:
                 url = watches[uuid]["url"]
                 f.write("{}\r\n".format(url))
         list_with_tags_file = "url-list-with-tags.txt"
         with open(
-                os.path.join(datastore_path, list_with_tags_file), "w"
+                os.path.join(datastore_path, list_with_tags_file), "w", encoding="utf-8"
         ) as f:
             for uuid in watches:
                 url = watches[uuid].get('url')

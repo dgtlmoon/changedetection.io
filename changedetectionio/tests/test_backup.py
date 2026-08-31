@@ -259,3 +259,45 @@ def test_backup_restore_zip_bomb_rejected(client, live_server, measure_memory_us
             )
     finally:
         restore_mod._MAX_DECOMPRESSED_BYTES = original_limit
+
+
+def test_backup_with_extended_utf8_urls_and_tags(datastore_path):
+    """Test create_backup handles extended UTF-8 characters in URLs and tags without encoding errors (issue #1805)."""
+    import os
+    import tempfile
+    from unittest.mock import MagicMock
+
+    from changedetectionio.blueprint.backups import create_backup
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        watch_mock = MagicMock()
+        watch_mock.data_dir = tmp_dir
+        watch_mock.__getitem__.side_effect = lambda key: (
+            "https://example.com/products/café-öl-日本語-🎉?query=test#section" if key == "url" else None
+        )
+        watch_mock.get.side_effect = lambda key, default=None: (
+            "https://example.com/products/café-öl-日本語-🎉?query=test#section"
+            if key == "url"
+            else (["Größe", "日本語タグ", "🏷️special"] if key == "tags" else default)
+        )
+
+        watches = {"test-uuid-1": watch_mock}
+        # Should create backup without UnicodeEncodeError
+        create_backup(datastore_path=tmp_dir, watches=watches, tags={})
+
+        url_list_path = os.path.join(tmp_dir, "url-list.txt")
+        url_list_tags_path = os.path.join(tmp_dir, "url-list-with-tags.txt")
+
+        assert os.path.isfile(url_list_path)
+        assert os.path.isfile(url_list_tags_path)
+
+        with open(url_list_path, encoding="utf-8") as f:
+            content = f.read()
+            assert "café-öl-日本語-🎉" in content
+
+        with open(url_list_tags_path, encoding="utf-8") as f:
+            content = f.read()
+            assert "café-öl-日本語-🎉" in content
+            assert "Größe" in content
+            assert "日本語タグ" in content
+            assert "🏷️special" in content
