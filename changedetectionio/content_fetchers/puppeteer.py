@@ -203,6 +203,10 @@ class fetcher(Fetcher):
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
 
+        # Renderer crashes recorded during the fetch, see the 'error' handler in fetch_page().
+        # Set up here so run()'s finally can always report, even if we never got as far as a page.
+        self.page_errors = []
+
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
@@ -324,10 +328,13 @@ class fetcher(Fetcher):
         # tab takes the whole browser with it and every later call reports the misleading
         # "Session closed. Most likely the page has been closed." Attaching a listener keeps
         # the failure local, named, and recoverable.
-        self.page_error = None
+        #
+        # A single page load can emit 'error' more than once (an iframe renderer going down, then
+        # the main one), so collect them all rather than keeping only the last.
+        self.page_errors = []
 
         def _handle_page_error(e):
-            self.page_error = e
+            self.page_errors.append(e)
             logger.error(f"[{watch_uuid}] Page error (the renderer likely crashed, often OOM): {e}")
 
         self.page.on('error', _handle_page_error)
@@ -558,6 +565,15 @@ class fetcher(Fetcher):
         except asyncio.TimeoutError:
             raise (BrowserFetchTimedOut(msg=f"Browser connected but was unable to process the page in {max_time} seconds."))
         finally:
+            # Nothing consumes page_errors yet, but a crashed renderer usually means the content we
+            # just extracted is partial or stale, so always say so - otherwise the only clue is a
+            # confusing downstream error (or worse, a silently wrong "change detected").
+            if self.page_errors:
+                logger.warning(
+                    f"[{watch_uuid}] {len(self.page_errors)} page error(s) during this fetch of '{url}', "
+                    f"content may be incomplete: {'; '.join(str(e) for e in self.page_errors)}"
+                )
+
             # Internal cleanup on any exception/timeout - call quit() immediately
             # This prevents connection leaks during exception bursts
             # Worker.py's quit() call becomes a redundant safety net (idempotent)
