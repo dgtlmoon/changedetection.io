@@ -103,15 +103,6 @@ jobs:
               sys.exit(1)
           PYEOF
 
-  test-application-3-10:
-    # Only run on push to master (including PR merges)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [lint-code, lint-translations, lint-template-i18n]
-    uses: ./.github/workflows/test-stack-reusable-workflow.yml
-    with:
-      python-version: '3.10'
-
-
   test-application-3-11:
     # Always run
     needs: [lint-code, lint-translations, lint-template-i18n]
