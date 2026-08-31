@@ -318,6 +318,20 @@ class fetcher(Fetcher):
                 self.browser = None
             raise
         
+        # A renderer crash makes pyppeteer emit Page 'error' (PageError('Page crashed!')).
+        # pyee re-raises an 'error' emission that has no listener, and that raise escapes into
+        # Connection._onMessage, whose catch-all disposes the entire connection - so one dead
+        # tab takes the whole browser with it and every later call reports the misleading
+        # "Session closed. Most likely the page has been closed." Attaching a listener keeps
+        # the failure local, named, and recoverable.
+        self.page_error = None
+
+        def _handle_page_error(e):
+            self.page_error = e
+            logger.error(f"[{watch_uuid}] Page error (the renderer likely crashed, often OOM): {e}")
+
+        self.page.on('error', _handle_page_error)
+
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
 
