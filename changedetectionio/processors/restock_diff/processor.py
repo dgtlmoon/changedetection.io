@@ -506,8 +506,11 @@ class perform_site_check(difference_detection_processor):
             # Try plugin override - plugins can decide if they support this fetcher
             if fetcher_name:
                 logger.debug(f"Calling extra plugins for getting item price/availability (fetcher: {fetcher_name})")
-                from changedetectionio.llm.evaluator import resolve_intent
-                _llm_intent, _ = resolve_intent(watch, self.datastore)
+                from changedetectionio.llm.evaluator import llm_enabled_for_watch, resolve_intent
+                # AI off for this watch (or for its group) means no intent is handed to the
+                # LLM restock plugin, so it doesn't spend tokens here either — #4204.
+                _llm_on, _ = llm_enabled_for_watch(watch, self.datastore)
+                _llm_intent, _ = resolve_intent(watch, self.datastore) if _llm_on else ('', '')
                 plugin_availability = get_itemprop_availability_from_plugin(self.fetcher.content, fetcher_name, self.fetcher, watch.link, llm_intent=_llm_intent or None)
 
                 if plugin_availability:

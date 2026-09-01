@@ -606,6 +606,17 @@ components:
           description: Logic operator - ALL (match all conditions) or ANY (match any condition)
 
         # AI / LLM
+        llm_backend_profile:
+          type: [boolean, 'null']
+          default: true
+          description: |
+            Whether AI/LLM features are enabled. On a watch this is a plain on/off (default true).
+            On a tag/group it is ternary and is that group's only AI control:
+            - true: AI on for every watch in the group, and the group's `llm_intent` /
+              `llm_change_summary` are inherited by its watches (unless a watch sets its own)
+            - false: AI off for every watch in the group
+            - null (group default): the group has no say; each watch uses its own AI settings
+            (Reserved for selecting a named LLM profile in future - currently a plain on/off.)
         llm_intent:
           type: string
           maxLength: 2000

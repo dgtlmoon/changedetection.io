@@ -455,15 +455,20 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         if changed_detected and watch.history_n >= 1:
                             try:
                                 from changedetectionio.llm.evaluator import (
-                                    evaluate_change, resolve_intent, resolve_llm_field,
-                                    summarise_change, _runtime_llm_config,
+                                    evaluate_change, llm_enabled_for_watch, resolve_intent,
+                                    resolve_llm_field, summarise_change, _runtime_llm_config,
                                 )
+                                # Per-watch (or group-wide) AI on/off — #4204. Checked before
+                                # any diff work so a switched-off watch costs nothing.
+                                _llm_on, _llm_on_source = llm_enabled_for_watch(watch, datastore)
+                                if not _llm_on:
+                                    logger.debug(f"LLM disabled for {uuid} (by {_llm_on_source}) — skipping AI intent/summary")
                                 # _runtime_llm_config returns None (and logs a debug skip
                                 # message) when the master 'llm_enabled' toggle is off, so
                                 # the whole block — diff computation, status minitext, and
                                 # the two executor dispatches — is skipped, not just the
                                 # inner LLM lookups.
-                                _llm_cfg = _runtime_llm_config(datastore)
+                                _llm_cfg = _runtime_llm_config(datastore) if _llm_on else None
                                 if _llm_cfg:
                                     # Compute unified diff once — used by both intent and summary
                                     _watch_dates = list(watch.history.keys())

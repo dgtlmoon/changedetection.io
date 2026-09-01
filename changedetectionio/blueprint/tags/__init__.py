@@ -189,6 +189,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'watch': default,
             'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
             'llm_configured': bool(_get_llm_config(datastore)),
+            # Tells the shared AI include it is rendering a group, not a watch — `watch` above
+            # is this tag, so it cannot be used to tell the two apart.
+            'llm_group_edit': True,
         }
 
         included_content = {}

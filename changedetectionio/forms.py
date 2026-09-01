@@ -968,6 +968,9 @@ class processor_text_json_diff_form(commonSettingsForm):
         ],
         default=LLM_PROMPT_MODE_REPLACE,
     )
+    # @NOTE! In the near future you should be able to select which LLM profile *OR* "off"/None for this watch/group
+    #        For now we use the 'future' field naming but keep the functionality simple.
+    llm_backend_profile = BooleanField(_l('AI enabled for this watch?'), default=True)
 
     include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')
 
