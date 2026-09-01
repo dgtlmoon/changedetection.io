@@ -132,8 +132,9 @@ def environment(mocker):
     # Fixed datetime: Wed, 09 Dec 2015 23:33:01 UTC
     # This is calculated to match the test expectations when offsets are applied
     fixed_datetime = arrow.Arrow(2015, 12, 9, 23, 33, 1, tzinfo='UTC')
-    # Patch arrow.now in the TimeExtension module where it's actually used
-    mocker.patch('changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now', return_value=fixed_datetime)
+    # Patch on the arrow module itself - TimeExtension imports arrow lazily inside its methods
+    # (import diet), so there is no module-level TimeExtension.arrow attribute to patch
+    mocker.patch('arrow.now', return_value=fixed_datetime)
     return fixed_datetime
 
 
