@@ -35,7 +35,8 @@
 
 {# ── Configured: show the intent + summary fields ────────────────── #}
 {% if llm_configured %}
-<div class="border-fieldset" id="llm-intent-section">
+<div id="llm-intent-section">
+<div class="border-fieldset" id="change-intent-notify-me-when">
     <p class="pure-form-message-inline" style="margin-top:0">
         {% if watch is defined and watch %}
             {{ _('Describe what you care about. The AI evaluates every detected change against this and only notifies you when it matches.') }}
@@ -70,7 +71,8 @@
     {% endif %}
     {% endif %}
 
-    <hr style="margin: 1.2em 0; border: none; border-top: 1px solid var(--color-border, #ddd);">
+</div>
+<div class="border-fieldset" id="change-summary">
 
     {# — AI Change Summary — #}
     <p class="pure-form-message-inline" style="margin-top:0">
@@ -115,6 +117,7 @@
         </ul>
     </div>
     {% endif %}
+</div>
 </div>
 
 {# ── Not configured: greyed-out prompt to configure ──────────────── #}
