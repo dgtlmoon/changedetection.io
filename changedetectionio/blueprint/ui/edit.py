@@ -8,7 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
-from changedetectionio.time_handler import is_within_schedule
+from changedetectionio.time_handler import default_timezone_name, is_within_schedule
 from changedetectionio import worker_pool
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
 
@@ -253,13 +253,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             watch = datastore.data['watching'].get(uuid)
 
             if watch.get('time_between_check_use_default'):
-                time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit', {})
+                time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit') or {}
             else:
-                time_schedule_limit = watch.get('time_schedule_limit')
+                time_schedule_limit = watch.get('time_schedule_limit') or {}
 
-            tz_name = time_schedule_limit.get('timezone')
-            if not tz_name:
-                tz_name = datastore.data['settings']['application'].get('scheduler_timezone_default', os.getenv('TZ', 'UTC').strip())
+            tz_name = default_timezone_name(
+                time_schedule_limit.get('timezone')
+                or datastore.data['settings']['application'].get('scheduler_timezone_default')
+            )
 
             if time_schedule_limit and time_schedule_limit.get('enabled'):
                 try:
@@ -267,9 +268,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                                       default_tz=tz_name
                                                       )
                 except Exception as e:
+                    # Only decides whether to queue an immediate recheck — the watch is
+                    # already saved by this point. Returning a bare `False` from a view
+                    # made Flask raise TypeError and the save appeared to fail with a 500.
                     logger.error(
                         f"{uuid} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
-                    return False
+                    is_in_schedule = False
 
             #############################
             if not datastore.data['watching'][uuid].get('paused') and is_in_schedule:
@@ -469,15 +473,22 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         uuid = request.args.get('uuid','')
         if datastore.data["watching"].get(uuid):
+            # Build the new list and REBIND it. Appending in place bypasses
+            # watch_base.__setitem__, so the watch is never flagged as edited and
+            # the "content unchanged since last check" skip stays active — the new
+            # ignore_text would then not take effect until the page changed on its
+            # own. Assigning the key marks the watch edited and forces reprocessing.
+            ignore_text = list(datastore.data["watching"][uuid]['ignore_text'])
             if mode == 'exact':
                 for l in selection.splitlines():
-                    datastore.data["watching"][uuid]['ignore_text'].append(l.strip())
+                    ignore_text.append(l.strip())
             elif mode == 'digit-regex':
                 for l in selection.splitlines():
                     # Replace any series of numbers with a regex
                     s = re.escape(l.strip())
                     s = re.sub(r'[0-9]+', r'\\d+', s)
-                    datastore.data["watching"][uuid]['ignore_text'].append('/' + s + '/')
+                    ignore_text.append('/' + s + '/')
+            datastore.data["watching"][uuid]['ignore_text'] = ignore_text
 
             # Save the updated ignore_text
             datastore.data["watching"][uuid].commit()

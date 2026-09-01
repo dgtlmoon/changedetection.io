@@ -569,6 +569,17 @@ components:
               $ref: '#/components/schemas/DaySchedule'
             sunday:
               $ref: '#/components/schemas/DaySchedule'
+            timezone:
+              type: string
+              nullable: true
+              description: >-
+                Optional IANA timezone name the schedule is evaluated in, e.g.
+                "America/Los_Angeles". When empty or omitted, the global
+                scheduler_timezone_default is used, falling back to $TZ then UTC.
+                Must be a name recognised by the server's timezone database -
+                an unknown value is rejected with HTTP 400, because the scheduler
+                cannot resolve it and the watch would never be checked.
+              example: America/Los_Angeles
 
         # Conditions (advanced logic)
         conditions:

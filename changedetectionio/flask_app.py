@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import flask_login
+import gc
 import hashlib
 import locale
 import os
@@ -43,7 +44,8 @@ from changedetectionio import __version__
 from changedetectionio import queuedWatchMetaData
 from changedetectionio.api import Watch, WatchHistory, WatchSingleHistory, WatchHistoryDiff, CreateWatch, Import, SystemInfo, Tag, Tags, Notifications, WatchFavicon, Spec
 from changedetectionio.api.Search import Search
-from .time_handler import is_within_schedule
+from .time_handler import default_timezone_name, is_within_schedule
+from .thread_supervisor import start_supervised_thread
 from changedetectionio.languages import get_available_languages, get_language_codes, get_flag_for_locale, get_timeago_locale
 from changedetectionio.favicon_utils import get_favicon_mime_type
 
@@ -1095,6 +1097,15 @@ def changedetection_app(config=None, datastore_o=None):
                        "snapshot reads are NOT confined to the watch data directory. "
                        "This disables protection against path traversal via restored backups (GHSA-8757-69j2-hx56).")
 
+    # Memory/CPU management -
+    # Freeze the startup object graph into the "permanent generation" so that the cyclic
+    # garbage collector never traverses it again, this allows more of the app to swap into 'cold' RAM
+    if 'pytest' not in sys.modules and 'PYTEST_CURRENT_TEST' not in os.environ \
+            and not strtobool(os.getenv('DISABLE_GC_FREEZE', 'no')):
+        gc.collect()
+        gc.freeze()
+        logger.debug(f"GC: froze {gc.get_freeze_count()} startup objects into the permanent generation")
+
     # Start the async workers during app initialization
     # Can be overridden by ENV or use the default settings
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
@@ -1105,7 +1116,19 @@ def changedetection_app(config=None, datastore_o=None):
     batch_mode = app.config.get('batch_mode', False)
     if not batch_mode:
         # @todo handle ctrl break
-        ticker_thread = threading.Thread(target=ticker_thread_check_time_launch_checks, daemon=True, name="TickerThread-ScheduleChecker").start()
+        # Supervised: if the ticker ever returns or raises it is logged CRITICAL and
+        # restarted. A bare Thread cannot be restarted once its target returns, and a
+        # dead ticker means no watch is ever checked again while the process keeps
+        # looking healthy. Note this keeps a real Thread handle - Thread(...).start()
+        # returns None, so the old assignment left `ticker_thread` permanently None.
+        ticker_thread = start_supervised_thread(
+            target=ticker_thread_check_time_launch_checks,
+            name="TickerThread-ScheduleChecker",
+            exit_event=app.config.exit,
+            # sigshutdown_handler() sets both of these; check both so a restart
+            # can never race an in-progress shutdown.
+            is_shutting_down=lambda: bool(getattr(datastore, 'stop_thread', False)),
+        )
 
         # Start configurable number of notification workers (default 1)
         notification_workers = int(os.getenv("NOTIFICATION_WORKERS", "1"))
@@ -1305,7 +1328,9 @@ def ticker_thread_check_time_launch_checks():
                 time_schedule_limit = watch.get('time_schedule_limit')
                 scheduler_source = 'watch'
 
-            tz_name = datastore.data['settings']['application'].get('scheduler_timezone_default', os.getenv('TZ', 'UTC').strip())
+            tz_name = default_timezone_name(
+                datastore.data['settings']['application'].get('scheduler_timezone_default')
+            )
 
             if time_schedule_limit and time_schedule_limit.get('enabled'):
                 logger.trace(f"{uuid} Time scheduler - Using scheduler settings from {scheduler_source}")
@@ -1317,9 +1342,13 @@ def ticker_thread_check_time_launch_checks():
                         logger.trace(f"{uuid} Time scheduler - not within schedule skipping.")
                         continue
                 except Exception as e:
+                    # `continue`, never `return` — this runs inside the ticker thread's
+                    # main `while not exit.is_set()` loop, so returning here killed the
+                    # scheduler outright and no watch was ever checked again until
+                    # restart. One watch with a bad schedule must not stop the others.
                     logger.error(
                         f"{uuid} - Recheck scheduler, error handling timezone, check skipped - TZ name '{tz_name}' - {str(e)}")
-                    return False
+                    continue
 
             # If they supplied an individual entry minutes to threshold.
             threshold = recheck_time_system_seconds if watch.get('time_between_check_use_default') else watch.threshold_seconds()
