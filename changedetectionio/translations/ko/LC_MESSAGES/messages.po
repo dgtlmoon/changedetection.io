@@ -3183,8 +3183,8 @@ msgid "Use global settings for time between check and scheduler."
 msgstr "확인 간격 및 예약 실행에 전역 설정 사용"
 
 #: changedetectionio/forms.py
-msgid "AI Change Intent"
-msgstr "AI 판단 기준"
+msgid "AI Change Intent - Notify me when.."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
 #: changedetectionio/forms.py

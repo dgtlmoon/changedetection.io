@@ -3192,7 +3192,7 @@ msgid "Use global settings for time between check and scheduler."
 msgstr "チェック間隔とスケジューラーにはグローバル設定を使用する。"
 
 #: changedetectionio/forms.py
-msgid "AI Change Intent"
+msgid "AI Change Intent - Notify me when.."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html

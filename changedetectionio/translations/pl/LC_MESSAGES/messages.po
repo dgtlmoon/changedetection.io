@@ -3332,8 +3332,8 @@ msgid "Use global settings for time between check and scheduler."
 msgstr "W przypadku funkcji sprawdzania i harmonogramu należy stosować ustawienia globalne dotyczące czasu."
 
 #: changedetectionio/forms.py
-msgid "AI Change Intent"
-msgstr "Intencja zmian AI"
+msgid "AI Change Intent - Notify me when.."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
 #: changedetectionio/forms.py

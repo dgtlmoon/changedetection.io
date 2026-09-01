@@ -953,7 +953,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_between_check_use_default = BooleanField(_l('Use global settings for time between check and scheduler.'), default=False)
 
-    llm_intent = TextAreaField(_l('AI Change Intent'), validators=[validators.Optional(), validators.Length(max=2000)],
+    llm_intent = TextAreaField(_l('AI Change Intent - Notify me when..'), validators=[validators.Optional(), validators.Length(max=2000)],
                                render_kw={"rows": "5", "placeholder": LLM_INTENT_WATCH_PLACEHOLDER})
 
     llm_change_summary = TextAreaField(_l('AI Change Summary'), validators=[validators.Optional(), validators.Length(max=2000)],

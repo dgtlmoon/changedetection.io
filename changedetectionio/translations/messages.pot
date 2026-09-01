@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-01 18:18+0200\n"
+"POT-Creation-Date: 2026-09-01 18:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3172,7 +3172,7 @@ msgid "Use global settings for time between check and scheduler."
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "AI Change Intent"
+msgid "AI Change Intent - Notify me when.."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html

@@ -28,7 +28,7 @@ class group_restock_settings_form(restock_settings_form):
                              validators=[validators.Optional(),
                                          validators.Regexp(CSS_HEX_COLOUR_REGEX,
                                                            message=_l('Must be a hex colour, for example #4f8ef7'))])
-    llm_intent = TextAreaField('AI Change Intent',
+    llm_intent = TextAreaField('AI Change Intent - Notify me when..',
                                validators=[validators.Optional(), validators.Length(max=2000)],
                                render_kw={"rows": "5", "placeholder": LLM_INTENT_TAG_PLACEHOLDER})
 
