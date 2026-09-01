@@ -36,7 +36,6 @@
 {# ── Configured: show the intent + summary fields ────────────────── #}
 {% if llm_configured %}
 <div class="border-fieldset" id="llm-intent-section">
-    <h2>&#x2728; {{ _('AI') }}</h2>
     <p class="pure-form-message-inline" style="margin-top:0">
         {% if watch is defined and watch %}
             {{ _('Describe what you care about. The AI evaluates every detected change against this and only notifies you when it matches.') }}

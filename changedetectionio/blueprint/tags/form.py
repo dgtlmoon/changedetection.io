@@ -38,7 +38,7 @@ class group_restock_settings_form(restock_settings_form):
                                default='')
 
     llm_change_summary_mode = RadioField(
-        _l('How this prompt combines with the inherited one'),
+        _l('Change Summary prompt - Append or Replace the default?'),
         choices=[
             (LLM_PROMPT_MODE_REPLACE, _l('Replace the inherited prompt')),
             (LLM_PROMPT_MODE_APPEND,  _l('Append to the inherited prompt')),

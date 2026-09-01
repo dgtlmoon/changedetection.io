@@ -3300,7 +3300,7 @@ msgid "AI Change Summary"
 msgstr "Обзор изменений ИИ"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
-msgid "How this prompt combines with the inherited one"
+msgid "Change Summary prompt - Append or Replace the default?"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
@@ -4650,10 +4650,6 @@ msgid "Enter search term..."
 msgstr "Введите поисковый запрос..."
 
 #: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI"
-msgstr "ИИ"
-
-#: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
 "Describe what you care about. The AI evaluates every detected change against this and only notifies you when it "
 "matches."
@@ -4745,6 +4741,10 @@ msgstr "Подведите итог, какие события были доба
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Describe the price change: old price, new price, percentage difference."
 msgstr "Опишите изменение цены: старая цена, новая цена, процентная разница."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI"
+msgstr "ИИ"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 #, python-format
