@@ -3227,7 +3227,7 @@ msgid "AI Change Intent"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/forms.py changedetectionio/templates/edit/include_llm_intent.html
+#: changedetectionio/forms.py
 msgid "AI Change Summary"
 msgstr ""
 
@@ -4573,10 +4573,6 @@ msgstr "Digite o termo de busca..."
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "AI"
-msgstr ""
-
-#: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI — Notify when…"
 msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
