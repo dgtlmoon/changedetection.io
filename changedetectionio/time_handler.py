@@ -1,7 +1,6 @@
 import os
 from functools import lru_cache
 
-import arrow
 from enum import IntEnum
 
 
@@ -55,6 +54,7 @@ def am_i_inside_time(
     Returns:
         bool: True if the current time is within the time range, False otherwise.
     """
+    import arrow
     # Parse the target day of the week
     try:
         target_weekday = Weekday[day_of_week.capitalize()]
@@ -114,6 +114,7 @@ def is_within_schedule(time_schedule_limit, default_tz="UTC"):
     Returns:
         bool: True if current time is within the schedule, False otherwise.
     """
+    import arrow
     if time_schedule_limit and time_schedule_limit.get('enabled'):
         # Get the timezone the time schedule is in, so we know what day it is there
         tz_name = time_schedule_limit.get('timezone')
