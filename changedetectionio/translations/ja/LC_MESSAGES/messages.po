@@ -542,6 +542,10 @@ msgid "Default recheck time for all watches, current system minimum is"
 msgstr "すべてのウォッチのデフォルト再チェック時間、現在のシステム最小値は"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "seconds"
+msgstr "秒"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "more info"
 msgstr "詳細はこちら"
 
@@ -1424,7 +1428,7 @@ msgstr "ウェブサイトの組織タグ/グループが設定されていま�
 msgid "Mute notifications"
 msgstr "通知をミュート"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "編集"
@@ -1671,10 +1675,6 @@ msgstr "ウォッチを更新しました。"
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "プレビューを表示できません - 取得/チェックが完了していないか、トリガーに達していません"
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr "差分"
-
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
 msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
@@ -1828,8 +1828,7 @@ msgstr "テキスト"
 msgid "Current screenshot"
 msgstr "現在のスクリーンショット"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
-#: changedetectionio/processors/templates/extract.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Extract Data"
 msgstr "データを抽出"
 
@@ -2439,13 +2438,12 @@ msgid "Changed"
 msgstr "変更済み"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Summary"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "履歴"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Summary"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Preview"
@@ -2805,59 +2803,9 @@ msgstr "レーベンシュタイン - テキスト類似度"
 msgid "Levenshtein - Text change distance"
 msgstr "レーベンシュタイン - テキスト変化距離"
 
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Not enough history to calculate Levenshtein metrics"
-msgstr "レーベンシュタイン指標を計算するのに十分な履歴がありません"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Snapshot too large for edit statistics, skipping."
-msgstr "スナップショットが大きすぎるため、編集統計をスキップします。"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Unable to calculate Levenshtein metrics"
-msgstr "レーベンシュタイン指標を計算できません"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Levenshtein Text Similarity Details"
-msgstr "レーベンシュタイン テキスト類似度の詳細"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Raw distance (edits needed)"
-msgstr "編集距離（必要な編集回数）"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Similarity ratio"
-msgstr "類似度"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Percent similar"
-msgstr "類似度（%）"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid ""
-"Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
-"into the other."
-msgstr "レーベンシュタイン指標は直近2つのスナップショットを比較し、一方を他方に変換するために必要な文字編集回数を測定します。"
-
-#: changedetectionio/conditions/plugins/levenshtein_plugin.py
-msgid "Error calculating Levenshtein metrics"
-msgstr "レーベンシュタイン指標の計算中にエラーが発生しました"
-
 #: changedetectionio/conditions/plugins/wordcount_plugin.py
 msgid "Word count of content"
 msgstr "コンテンツの単語数"
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Content Analysis"
-msgstr "コンテンツ分析"
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Word count (latest snapshot)"
-msgstr "単語数（最新のスナップショット）"
-
-#: changedetectionio/conditions/plugins/wordcount_plugin.py
-msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
-msgstr "単語数はコンテンツの長さを示す簡易指標で、テキストを空白で分割して計算されます。"
 
 #: changedetectionio/content_fetchers/requests.py
 msgid "Basic fast Plaintext/HTTP Client"
@@ -2871,62 +2819,6 @@ msgstr "未実施"
 #: changedetectionio/flask_app.py
 msgid "0 seconds"
 msgstr "0秒"
-
-#: changedetectionio/flask_app.py
-msgid "year"
-msgstr "年"
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr "年"
-
-#: changedetectionio/flask_app.py
-msgid "month"
-msgstr "ヶ月"
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr "ヶ月"
-
-#: changedetectionio/flask_app.py
-msgid "week"
-msgstr "週"
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr "週"
-
-#: changedetectionio/flask_app.py
-msgid "day"
-msgstr "日"
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr "日"
-
-#: changedetectionio/flask_app.py
-msgid "hour"
-msgstr "時間"
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr "時間"
-
-#: changedetectionio/flask_app.py
-msgid "minute"
-msgstr "分"
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr "分"
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr "秒"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "秒"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
@@ -3844,11 +3736,6 @@ msgstr ""
 msgid "Currency"
 msgstr ""
 
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price history"
-msgstr ""
-
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
 msgstr "在庫補充検知"
@@ -3903,6 +3790,10 @@ msgstr "製品が在庫ありに戻ったかどうかを検知します"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price history"
 msgstr ""
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
