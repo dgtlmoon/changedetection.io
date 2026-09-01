@@ -1269,11 +1269,6 @@ def ticker_thread_check_time_launch_checks():
 
             last_health_check = now
 
-        # Check if all checks are paused
-        if datastore.data['settings']['application'].get('all_paused', False):
-            app.config.exit.wait(1)
-            continue
-
         # Get a list of watches by UUID that are currently fetching data
         running_uuids = worker_pool.get_running_uuids()
 
@@ -1306,6 +1301,11 @@ def ticker_thread_check_time_launch_checks():
                 if current_queue_size >= MAX_QUEUE_SIZE:
                     logger.debug(f"Queue size limit reached ({current_queue_size}/{MAX_QUEUE_SIZE}), stopping scheduler this iteration.")
                     break
+
+            # Check if all checks are paused - this loop could get stuck on very long lists of watches, best to check here.
+            if datastore.data['settings']['application'].get('all_paused', False):
+                app.config.exit.wait(1)
+                break
 
             now = time.time()
             watch = datastore.data['watching'].get(uuid)
