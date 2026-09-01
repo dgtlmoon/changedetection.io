@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import flask_login
+import gc
 import hashlib
 import locale
 import os
@@ -1094,6 +1095,15 @@ def changedetection_app(config=None, datastore_o=None):
         logger.warning("SECURITY WARNING: HISTORY_SNAPSHOT_FILE_ALLOW_OUTSIDE_WATCH_DATADIR is enabled — "
                        "snapshot reads are NOT confined to the watch data directory. "
                        "This disables protection against path traversal via restored backups (GHSA-8757-69j2-hx56).")
+
+    # Memory/CPU management -
+    # Freeze the startup object graph into the "permanent generation" so that the cyclic
+    # garbage collector never traverses it again, this allows more of the app to swap into 'cold' RAM
+    if 'pytest' not in sys.modules and 'PYTEST_CURRENT_TEST' not in os.environ \
+            and not strtobool(os.getenv('DISABLE_GC_FREEZE', 'no')):
+        gc.collect()
+        gc.freeze()
+        logger.debug(f"GC: froze {gc.get_freeze_count()} startup objects into the permanent generation")
 
     # Start the async workers during app initialization
     # Can be overridden by ENV or use the default settings
