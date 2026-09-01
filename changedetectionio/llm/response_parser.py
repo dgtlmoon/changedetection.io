@@ -16,6 +16,14 @@ _POSITIONAL_SELECTOR_RE = re.compile(
     r'nth-child|nth-of-type|:eq\(|\[\d+\]|\/\/\*\[\d', re.IGNORECASE
 )
 
+# Reasoning models (DeepSeek-R1, Qwen reasoning, etc.) wrap their scratchpad in <think> tags.
+# Three shapes have to be handled, because the scratchpad routinely contains JSON of its own
+# ("initially I thought {"important": false}, but..."), so leaving any of it in place lets
+# _extract_json lock onto a discarded intermediate answer instead of the real one.
+_THINK_BLOCK_RE = re.compile(r'<think(?:ing)?>.*?</think(?:ing)?>', re.DOTALL | re.IGNORECASE)
+_THINK_TAIL_RE = re.compile(r'^.*</think(?:ing)?>', re.DOTALL | re.IGNORECASE)
+_THINK_OPEN_RE = re.compile(r'<think(?:ing)?>', re.IGNORECASE)
+
 
 def _to_bool(value, default: bool = False) -> bool:
     """Safely coerce boolean values from LLM responses.
@@ -33,10 +41,24 @@ def _to_bool(value, default: bool = False) -> bool:
 
 
 def _extract_json(raw: str) -> str:
-    """Strip reasoning blocks, markdown fences, and extract the first JSON object."""
+    """Strip reasoning blocks, markdown fences, and extract the first JSON object.
+
+    Raises:
+        ValueError: the response opens a reasoning block it never closes, i.e. it was cut
+            off mid-thought (usually by max_tokens) and contains no answer at all. Callers
+            in evaluator.py catch this and fall back safely - for diff evaluation that
+            means passing the change through as important rather than silently dropping it.
+    """
     raw = raw.strip()
-    # Strip <think> ... </think> blocks emitted by reasoning models (DeepSeek-R1, Qwen reasoning, etc.)
-    raw = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL | re.IGNORECASE).strip()
+    # Well-formed scratchpads.
+    raw = _THINK_BLOCK_RE.sub('', raw).strip()
+    # Some providers/chat templates emit the opening tag themselves and only the closer comes
+    # back over the wire, so anything up to the last closer is still scratchpad.
+    raw = _THINK_TAIL_RE.sub('', raw).strip()
+    # An opener with no closer means the response was truncated part-way through reasoning.
+    # There is no answer to find; the only JSON present would be a discarded intermediate one.
+    if _THINK_OPEN_RE.search(raw):
+        raise ValueError('LLM response contains an unterminated reasoning block (truncated?)')
     # Remove ```json ... ``` or ``` ... ``` fences
     raw = re.sub(r'^```(?:json)?\s*', '', raw, flags=re.MULTILINE)
     raw = re.sub(r'\s*```$', '', raw, flags=re.MULTILINE)
