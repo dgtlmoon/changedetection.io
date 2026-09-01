@@ -4,6 +4,7 @@
 # Semver means never use .01, or 00. Should be .1.
 __version__ = '0.55.8'
 
+from changedetectionio.stdlib_log_level import apply_stdlib_logger_level
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
 
@@ -359,6 +360,10 @@ def main():
     # Set both parent and child loggers since pyppeteer hardcodes DEBUG level
     logging.getLogger('pyppeteer.connection').setLevel(logging.WARNING)
     logging.getLogger('pyppeteer.connection.Connection').setLevel(logging.WARNING)
+
+    # Werkzeug access lines go through logging.getLogger('werkzeug') at INFO.
+    # LOGGER_LEVEL / -l only configured loguru, so ERROR still printed every GET (#4263).
+    apply_stdlib_logger_level(logger_level)
 
     # isnt there some @thingy to attach to each route to tell it, that this route needs a datastore
     app_config = {
