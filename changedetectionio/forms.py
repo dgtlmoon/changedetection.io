@@ -696,14 +696,14 @@ class ValidateCSSJSONXPATHInput(object):
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 import elementpath
-                from changedetectionio.html_tools import SafeXPath3Parser, lxml_guard, lxml_html_parser
+                from changedetectionio.html_tools import get_safe_xpath3_parser, lxml_guard, lxml_html_parser
                 line = line.replace('xpath:', '')
 
                 try:
                     # Runs on a Flask request thread - must share the worker's lxml lock.
                     with lxml_guard():
                         tree = html.fromstring("<html></html>", parser=lxml_html_parser())
-                        elementpath.select(tree, line.strip(), parser=SafeXPath3Parser)
+                        elementpath.select(tree, line.strip(), parser=get_safe_xpath3_parser())
                 except elementpath.ElementPathError as e:
                     message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
                     raise ValidationError(message % {'expression': line, 'error': str(e)})

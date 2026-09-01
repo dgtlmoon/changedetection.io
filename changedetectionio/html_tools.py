@@ -164,7 +164,8 @@ _DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
 ]
 
 
-def _build_safe_xpath3_parser():
+@lru_cache(maxsize=1)
+def get_safe_xpath3_parser():
     """Return an XPath3Parser subclass with filesystem/environment access functions removed.
 
     XPath 3.0 includes functions that can read arbitrary files or environment variables:
@@ -195,9 +196,6 @@ def _build_safe_xpath3_parser():
 
     return SafeXPath3Parser
 
-
-# Module-level singleton — built once, reused everywhere.
-SafeXPath3Parser = _build_safe_xpath3_parser()
 
 # Doesn't look like python supports forward slash auto enclosure in re.findall
 # So convert it to inline flag "(?i)foobar" type configuration
@@ -386,7 +384,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             # This allows //title to match elements in the default namespace
             namespaces[''] = tree.nsmap[None]
 
-        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=SafeXPath3Parser)
+        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=get_safe_xpath3_parser())
         #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
         #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
 
