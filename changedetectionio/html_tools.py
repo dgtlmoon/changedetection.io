@@ -164,7 +164,6 @@ _DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
 ]
 
 
-@lru_cache(maxsize=1)
 def get_safe_xpath3_parser():
     """Return an XPath3Parser subclass with filesystem/environment access functions removed.
 
