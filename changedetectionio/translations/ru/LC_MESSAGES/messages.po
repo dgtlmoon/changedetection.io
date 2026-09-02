@@ -899,6 +899,10 @@ msgid "Python version:"
 msgstr "Версия Python:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Maximum number of page watches:"
+msgstr "Максимальное количество отслеживаний страниц:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Plugins active:"
 msgstr "Плагины активны:"
 
@@ -4086,17 +4090,17 @@ msgstr "Обнаруживает все изменения текста, где 
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
+msgstr "Достигнут лимит отслеживаний ({current}/{limit}). Больше добавить нельзя."
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr "Ошибка при получении метаданных для {}."
 
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Протокол просмотра не разрешен или неверный формат URL."
-
-#: changedetectionio/store/__init__.py
-#, python-brace-format
-msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
-msgstr "Достигнут лимит просмотра (часы {current}/{limit}). Невозможно добавить больше часов."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

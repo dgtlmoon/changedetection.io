@@ -560,6 +560,12 @@ class CreateWatch(Resource):
 
         del extras['url']
 
+        # PAGE_WATCH_LIMIT - checked up front so a blocked add is reported as 429 rather than
+        # being guessed at from add_watch() returning None
+        if self.datastore.watch_limit_reached():
+            current_watch_count = len(self.datastore.data['watching'])
+            return f"Watch limit reached ({current_watch_count}/{self.datastore.watch_limit} watches). Cannot add more watches.", 429
+
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
 
         # Save processor config to separate JSON file
@@ -570,16 +576,6 @@ class CreateWatch(Resource):
 #            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
-            # Check if it was a limit issue
-            page_watch_limit = os.getenv('PAGE_WATCH_LIMIT')
-            if page_watch_limit:
-                try:
-                    page_watch_limit = int(page_watch_limit)
-                    current_watch_count = len(self.datastore.data['watching'])
-                    if current_watch_count >= page_watch_limit:
-                        return f"Watch limit reached ({current_watch_count}/{page_watch_limit} watches). Cannot add more watches.", 429
-                except ValueError:
-                    pass
             return "Invalid or unsupported URL", 400
 
     @auth.check_token

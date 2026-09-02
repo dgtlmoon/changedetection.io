@@ -261,6 +261,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
+                                # None unless PAGE_WATCH_LIMIT is set, which hides the row entirely
+                                watch_limit=datastore.watch_limit,
                                 available_timezones=sorted(available_timezones()),
                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.55.8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-01 19:10+0200\n"
+"POT-Creation-Date: 2026-09-02 12:06+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -856,6 +856,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Python version:"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Maximum number of page watches:"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -3967,16 +3971,16 @@ msgstr ""
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
+msgstr ""
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr ""
 
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
-msgstr ""
-
-#: changedetectionio/store/__init__.py
-#, python-brace-format
-msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html

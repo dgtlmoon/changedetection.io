@@ -293,6 +293,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
+        if not new_uuid:
+            # Refused (e.g. PAGE_WATCH_LIMIT) - the reason is already flashed
+            return redirect(url_for('watchlist.index'))
 
         if not datastore.data['watching'].get(uuid).get('paused'):
             worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))

@@ -391,6 +391,9 @@ nav
             <div class="tab-pane-inner" id="info">
                 <p><strong>{{ _('Uptime:') }}</strong> {{ uptime_seconds|format_duration }}</p>
                 <p><strong>{{ _('Python version:') }}</strong> {{ python_version }}</p>
+                {% if watch_limit is not none %}
+                <p><strong>{{ _('Maximum number of page watches:') }}</strong> {{ watch_limit }}</p>
+                {% endif %}
                 <p><strong>{{ _('Plugins active:') }}</strong></p>
                 {% if active_plugins %}
                 <ul>
