@@ -79,9 +79,8 @@
 {# Per-watch AI on/off (#4204). Resolution is global settings → group → watch, so a group that
    has taken the decision (its AI setting is On or Off rather than "leave it to each watch")
    owns this control: we disable it, show the state the group decided, and name the group.
-   A disabled input is dropped from the POST, which for a checkbox is indistinguishable from
-   "unticked" — so the watch's OWN saved preference rides along in a hidden field. It comes
-   back into effect untouched if the group later stops deciding. #}
+   The watch's own preference is not lost — because the field isn't user-writable in this
+   state, edit.py ignores whatever the POST says for it and keeps the stored value. #}
 {% set profile_group = llm_group_overrides.llm_backend_profile if llm_group_overrides is defined else none %}
 <div class="pure-control-group" id="llm-ai-enabled-row">
     {# Only the checkbox is dimmed — the explanation of *why* has to stay readable. #}
@@ -90,7 +89,6 @@
             {# Show what the group decided, not this watch's now-inert own value. #}
             {% set dummy = form.llm_backend_profile.__setattr__('checked', profile_group.value) %}
             {{ render_checkbox_field(form.llm_backend_profile, disabled=True) }}
-            {% if form.llm_backend_profile.data %}<input type="hidden" name="llm_backend_profile" value="y">{% endif %}
         {% else %}
             {{ render_checkbox_field(form.llm_backend_profile) }}
         {% endif %}

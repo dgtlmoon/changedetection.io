@@ -836,16 +836,11 @@ def test_watch_own_ai_switch_survives_being_overridden_by_a_group(
     assert ds.data['watching'][watch_uuid].get('llm_backend_profile') is True
     assert llm_enabled_for_watch(ds.data['watching'][watch_uuid], ds) == (False, 'Deciding Group')
 
-    # Save the page exactly as the browser would: the disabled checkbox sends nothing, the
-    # hidden field carries the watch's own value
-    body = client.get(url_for('ui.ui_edit.edit_page', uuid=watch_uuid)).data.decode('utf-8', errors='replace')
-    hidden = [t for t in _input_tags(body, 'llm_backend_profile') if 'type="hidden"' in t]
-    assert hidden, "the watch's own AI preference must be preserved in a hidden field"
-
+    # Save the page exactly as the browser would: the disabled checkbox sends nothing at all
     res = client.post(
         url_for('ui.ui_edit.edit_page', uuid=watch_uuid),
         data={'url': test_url, 'fetch_backend': 'html_requests',
-              'time_between_check_use_default': 'y', 'llm_backend_profile': 'y'},
+              'time_between_check_use_default': 'y'},
         follow_redirects=True,
     )
     assert b'Updated watch' in res.data
@@ -853,6 +848,16 @@ def test_watch_own_ai_switch_survives_being_overridden_by_a_group(
     watch = ds.data['watching'][watch_uuid]
     assert watch.get('llm_backend_profile') is True, \
         "saving while a group decides must not overwrite the watch's own AI preference"
+    # Not even a hand-crafted POST can write it while it isn't user-editable
+    res = client.post(
+        url_for('ui.ui_edit.edit_page', uuid=watch_uuid),
+        data={'url': test_url, 'fetch_backend': 'html_requests',
+              'time_between_check_use_default': 'y', 'llm_backend_profile': ''},
+        follow_redirects=True,
+    )
+    assert b'Updated watch' in res.data
+    watch = ds.data['watching'][watch_uuid]
+    assert watch.get('llm_backend_profile') is True
     # The group still wins for now...
     assert llm_enabled_for_watch(watch, ds) == (False, 'Deciding Group')
     # ..and when the group stops deciding, the watch's untouched preference applies again

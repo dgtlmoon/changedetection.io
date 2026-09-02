@@ -238,6 +238,16 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 extra_update_obj['filter_text_replaced'] = True
                 extra_update_obj['filter_text_removed'] = True
 
+            # A group that has taken the AI on/off decision owns that control, so the edit page
+            # renders it disabled (see include_llm_intent.html). A disabled checkbox isn't
+            # submitted at all, and for a checkbox "not submitted" is indistinguishable from
+            # "unticked" — so don't take this field from the form while a group decides. The
+            # watch keeps its own preference untouched, ready for when the group stops deciding.
+            # Resolved against the watch's *stored* tags — i.e. what the page was rendered from,
+            # so attaching or detaching a group in this same save is still honoured correctly.
+            if _resolve_llm_group_overrides(datastore.data['watching'][uuid], datastore).get('llm_backend_profile'):
+                extra_update_obj['llm_backend_profile'] = datastore.data['watching'][uuid].get('llm_backend_profile', True)
+
             # Because wtforms doesn't support accessing other data in process_ , but we convert the CSV list of tags back to a list of UUIDs
             tag_uuids = []
             if form.data.get('tags'):
