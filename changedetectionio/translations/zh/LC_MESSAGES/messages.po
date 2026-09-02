@@ -865,6 +865,10 @@ msgid "Python version:"
 msgstr "Python 版本："
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Maximum number of page watches:"
+msgstr "最大监视器数量："
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Plugins active:"
 msgstr "已启用插件："
 
@@ -3974,17 +3978,17 @@ msgstr "尽可能检测所有文本变更"
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
+msgstr "已达到监视器上限（{current}/{limit}）。无法添加更多。"
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr "获取 {} 的元数据失败"
 
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "监控协议不允许或 URL 格式无效"
-
-#: changedetectionio/store/__init__.py
-#, python-brace-format
-msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
-msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

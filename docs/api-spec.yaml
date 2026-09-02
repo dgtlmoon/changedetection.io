@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.7
+  version: 0.1.8
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -1057,6 +1057,15 @@ paths:
               schema:
                 type: string
                 example: "OK"
+        '429':
+          description: |
+            Watch limit reached (server has `PAGE_WATCH_LIMIT` set; unlimited by default).
+            No watch was created - delete one to make room.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Watch limit reached (50/50 watches). Cannot add more watches."
         '500':
           description: Server error
           content:
@@ -2151,6 +2160,16 @@ paths:
                   type: string
                   format: uuid
                 description: List of created watch UUIDs
+        '429':
+          description: |
+            Watch limit reached (server has `PAGE_WATCH_LIMIT` set; unlimited by default).
+            The batch is rejected whole - no watches are created - so the same request can be
+            retried unchanged once there is room.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Watch limit reached (48/50 watches), importing 5 URL(s) would exceed it. No watches were imported."
         '500':
           description: Server error
 

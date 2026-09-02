@@ -862,6 +862,10 @@ msgid "Python version:"
 msgstr "파이썬 버전:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Maximum number of page watches:"
+msgstr "최대 페이지 모니터링 수:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Plugins active:"
 msgstr "활성화된 플러그인:"
 
@@ -3978,17 +3982,17 @@ msgstr "가능한 경우 모든 텍스트 변경 사항을 감지합니다."
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
+msgstr "모니터링 한도에 도달했습니다. ({current}/{limit}개) 더 이상 모니터링을 추가할 수 없습니다."
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr "{}의 메타데이터를 가져오는 중 오류가 발생했습니다."
 
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "모니터링 프로토콜이 허용되지 않거나 URL 형식이 올바르지 않습니다."
-
-#: changedetectionio/store/__init__.py
-#, python-brace-format
-msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
-msgstr "모니터링 한도에 도달했습니다. ({current}/{limit}개) 더 이상 모니터링을 추가할 수 없습니다."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
