@@ -49,6 +49,9 @@ dictfilt = lambda x, y: dict([(i, x[i]) for i in x if i in set(y)])
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
+_TAG_UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+
+
 class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     __version_check = True
 
@@ -791,11 +794,31 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             return None
 
         if tag and type(tag) == str:
-            # Then it's probably a string of the actual tag by name, split and add it
-            for t in tag.split(','):
-                # for each stripped tag, add tag as UUID
-                for a_t in t.split(','):
-                    tag_uuid = self.add_tag(a_t)
+            # A comma separated string of tag *titles*, created when they don't exist yet.
+            # An existing tag's UUID is accepted here too: the API documented this field as taking
+            # a UUID for years, and honouring that beats creating a tag *titled* with the UUID.
+            existing_tag_uuids = self.__data['settings']['application'].get('tags', {})
+
+            for tag_name in tag.split(','):
+                tag_name = tag_name.strip()
+                if not tag_name:
+                    continue
+
+                if _TAG_UUID_RE.match(tag_name):
+                    if tag_name in existing_tag_uuids:
+                        apply_extras['tags'].append(tag_name)
+                        continue
+                    # UUID-shaped but no such tag, and no tag literally titled that either -
+                    # a stale or foreign ID. Skip it rather than leave behind a group named
+                    # after a UUID, which is never what the caller wanted.
+                    if not self.tag_uuid_for_title(tag_name):
+                        logger.warning(f"Tag '{tag_name}' looks like a UUID but no such tag exists, skipping")
+                        continue
+
+                tag_uuid = self.add_tag(tag_name)
+                # add_tag() returns False for a title it won't create - never let that into the list,
+                # a falsy entry blows up every lookup of watch['tags']
+                if tag_uuid:
                     apply_extras['tags'].append(tag_uuid)
 
         # Or if UUIDs given directly
@@ -1069,6 +1092,18 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         return ret
 
+    def tag_uuid_for_title(self, title):
+        """UUID of the tag with this title (case/space insensitive), or None. Creates nothing."""
+        n = title.strip().lower()
+        if not n:
+            return None
+
+        for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
+            if n == tag.get('title', '').lower().strip():
+                return uuid
+
+        return None
+
     def add_tag(self, title):
         # If name exists, return that
         n = title.strip().lower()
@@ -1076,10 +1111,10 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if not n:
             return False
 
-        for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
-            if n == tag.get('title', '').lower().strip():
-                logger.warning(f"Tag '{title}' already exists, skipping creation.")
-                return uuid
+        existing_uuid = self.tag_uuid_for_title(title)
+        if existing_uuid:
+            logger.warning(f"Tag '{title}' already exists, skipping creation.")
+            return existing_uuid
 
         # Eventually almost everything todo with a watch will apply as a Tag
         # So we use the same model as a Watch
