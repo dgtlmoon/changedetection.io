@@ -299,13 +299,24 @@ components:
           maxLength: 5000
         tag:
           type: string
-          description: Tag UUID to associate with this web page change monitor (watch)
+          deprecated: true
+          description: |
+            **Deprecated - use `tags` instead.** Kept working for API v1 and may be removed in v2.
+
+            Takes comma-separated tag *names* (not UUIDs, despite what earlier revisions of this
+            document said). Names are matched case-insensitively against existing tags and created
+            when they don't exist yet. An existing tag's UUID is also accepted and resolves to that
+            tag; a UUID matching no tag is ignored.
           maxLength: 5000
+          example: "Production, Price tracking"
         tags:
           type: array
           items:
             type: string
-          description: Array of tag UUIDs
+          description: |
+            Array of tag UUIDs. Unlike `tag`, these are applied exactly as given - no tag is ever
+            created from this field. The UUIDs are not validated: an unknown one is stored but
+            resolves to no group.
         paused:
           type: boolean
           description: Whether the web page change monitor (watch) is paused
