@@ -1153,3 +1153,7 @@ header {
     width: 1.4rem; /*it's slightly more wider than square so default auto will trim it slightly */
   }
 }
+
+textarea::placeholder {
+    white-space: pre-wrap;
+}

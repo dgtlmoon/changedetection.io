@@ -1420,6 +1420,22 @@ msgid "Must be a hex colour, for example #4f8ef7"
 msgstr "Должен быть шестнадцатеричный цвет, например #4f8ef7"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "AI for watches in this group"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "On, use the settings below"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Off for every watch"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Leave it to each watch"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "Имя тега"
 
@@ -3291,16 +3307,16 @@ msgid "Use global settings for time between check and scheduler."
 msgstr "Используйте глобальные настройки времени между проверкой и планировщиком."
 
 #: changedetectionio/forms.py
-msgid "AI Change Intent"
-msgstr "Изменение намерения ИИ"
+msgid "AI Change Intent - Notify me when.."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/forms.py changedetectionio/templates/edit/include_llm_intent.html
+#: changedetectionio/forms.py
 msgid "AI Change Summary"
 msgstr "Обзор изменений ИИ"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
-msgid "How this prompt combines with the inherited one"
+msgid "Change Summary prompt - Append or Replace the default?"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
@@ -3309,6 +3325,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Append to the inherited prompt"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "AI enabled for this watch?"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -4650,12 +4670,21 @@ msgid "Enter search term..."
 msgstr "Введите поисковый запрос..."
 
 #: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI"
-msgstr "ИИ"
+msgid ""
+"<strong>On</strong> &ndash; every watch in this group uses the AI settings below, unless it fills in its own. "
+"<strong>Off</strong> &ndash; no AI for any watch in this group. <strong>Leave it to each watch</strong> &ndash; this "
+"group has no say; each watch uses its own AI settings."
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI — Notify when…"
-msgstr "AI — Сообщить, когда…"
+#, python-format
+msgid "Group %(name)s decides this: AI is ON for every watch in that group."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "Group %(name)s decides this: AI is OFF for every watch in that group."
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -4749,6 +4778,10 @@ msgstr "Подведите итог, какие события были доба
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Describe the price change: old price, new price, percentage difference."
 msgstr "Опишите изменение цены: старая цена, новая цена, процентная разница."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI"
+msgstr "ИИ"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 #, python-format

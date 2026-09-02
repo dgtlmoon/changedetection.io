@@ -184,16 +184,11 @@ class watch_base(dict):
             'check_count': 0,
             'check_unique_lines': False,  # On change-detected, compare against all history if its something new
             'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
+            # LLM intent-based evaluation
             'content-type': None,
             'date_created': None,
             'extract_lines_containing': [],  # Keep only lines containing these substrings (plain text, case-insensitive)
             'extract_text': [],  # Extract text by regex after filters
-            # LLM intent-based evaluation
-            'llm_intent': '',                # Plain-English description of what the user cares about (change filter)
-            'llm_change_summary': '',        # Prompt for AI Change Summary — replaces {{ diff }} in notifications
-            'llm_change_summary_mode': 'replace',  # 'replace' the inherited prompt, or 'append' to it
-            'llm_prefilter': None,           # CSS selector derived at setup time (semantic only, e.g. "footer")
-            'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
@@ -202,16 +197,22 @@ class watch_base(dict):
             'filter_text_replaced': True,
             'follow_price_changes': True,
             'has_ldjson_price_data': None,
-            'history_snapshot_max_length': None,
             'headers': {},  # Extra headers to send
-            'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
+            'history_snapshot_max_length': None,
             'ignore_status_codes': None,
+            'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
             'in_stock_only': True,  # Only trigger change on going to instock from out-of-stock
             'include_filters': [],
             'last_checked': 0,
             'last_error': False,
             'last_notification_error': None,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
+            'llm_backend_profile': True, # @note - now its just a bool but in the near future we can select a LLM profile or 'off'/false
+            'llm_change_summary': '',        # Prompt for AI Change Summary — replaces {{ diff }} in notifications
+            'llm_change_summary_mode': 'replace',  # 'replace' the inherited prompt, or 'append' to it
+            'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
+            'llm_intent': '',                # Plain-English description of what the user cares about (change filter)
+            'llm_prefilter': None,           # CSS selector derived at setup time (semantic only, e.g. "footer")
             'method': 'GET',
             'notification_alert_count': 0,
             'notification_body': None,

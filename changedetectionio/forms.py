@@ -953,7 +953,7 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_between_check_use_default = BooleanField(_l('Use global settings for time between check and scheduler.'), default=False)
 
-    llm_intent = TextAreaField(_l('AI Change Intent'), validators=[validators.Optional(), validators.Length(max=2000)],
+    llm_intent = TextAreaField(_l('AI Change Intent - Notify me when..'), validators=[validators.Optional(), validators.Length(max=2000)],
                                render_kw={"rows": "5", "placeholder": LLM_INTENT_WATCH_PLACEHOLDER})
 
     llm_change_summary = TextAreaField(_l('AI Change Summary'), validators=[validators.Optional(), validators.Length(max=2000)],
@@ -961,13 +961,16 @@ class processor_text_json_diff_form(commonSettingsForm):
                                default='')
 
     llm_change_summary_mode = RadioField(
-        _l('How this prompt combines with the inherited one'),
+        _l('Change Summary prompt - Append or Replace the default?'),
         choices=[
             (LLM_PROMPT_MODE_REPLACE, _l('Replace the inherited prompt')),
             (LLM_PROMPT_MODE_APPEND,  _l('Append to the inherited prompt')),
         ],
         default=LLM_PROMPT_MODE_REPLACE,
     )
+    # @NOTE! In the near future you should be able to select which LLM profile *OR* "off"/None for this watch/group
+    #        For now we use the 'future' field naming but keep the functionality simple.
+    llm_backend_profile = BooleanField(_l('AI enabled for this watch?'), default=True)
 
     include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')
 

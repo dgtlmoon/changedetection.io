@@ -5,7 +5,8 @@ Two public entry points:
   - run_setup(watch, datastore)        — one-time: decide if pre-filter needed
   - evaluate_change(watch, datastore, diff, current_snapshot) — per-change evaluation
 
-Intent resolution: watch.llm_intent → first tag with llm_intent → None (no evaluation)
+Intent resolution: watch.llm_intent → first tag with llm_intent whose AI switch is "on"
+                   (see tag_llm_applies_to_watches) → None (no evaluation)
 Cache: each (intent, diff) pair is evaluated exactly once, result stored in watch.
 
 Environment variable overrides (take priority over datastore settings):
@@ -244,6 +245,70 @@ def resolve_llm_timeout(llm_cfg: dict) -> int:
 # Intent resolution
 # ---------------------------------------------------------------------------
 
+# A group/tag has exactly one AI control (`llm_backend_profile`), and it is ternary:
+#
+#   True  — AI on for every watch in the group, using the group's AI settings
+#           (llm_intent / llm_change_summary cascade down to the watches)
+#   False — AI off for every watch in the group; its prompts are stored but never used
+#   None  — the group has no opinion: each watch's own AI switch and prompts apply
+#
+# On a *watch* the same key is a plain bool (on/off, default on). One control per level, so
+# there is nothing to reconcile between an "override?" flag and an "enabled?" flag.
+def tag_llm_decision(tag):
+    """This group's AI decision: True (on, use its settings), False (off), or None (no opinion)."""
+    if not tag:
+        return None
+    value = tag.get('llm_backend_profile')
+    return None if value is None else bool(value)
+
+
+def tag_llm_applies_to_watches(tag) -> bool:
+    """True when this group hands its AI settings down to its watches.
+
+    Only the "on" state does that: a group set to "off" suppresses AI for its watches rather
+    than lending them prompts, and a group with no opinion leaves them alone entirely. This is
+    the single gate behind both the evaluator cascade and the watch edit page's
+    "From group ..." placeholder.
+    """
+    return tag_llm_decision(tag) is True
+
+
+def _watch_tags(watch, datastore):
+    """Yield this watch's tag dicts, in the watch's own tag order, skipping unknown UUIDs."""
+    for tag_uuid in watch.get('tags', []):
+        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+        if tag:
+            yield tag
+
+
+def _tags_applying_llm(watch, datastore):
+    """Yield this watch's groups, in order, that hand their AI settings to their watches."""
+    for tag in _watch_tags(watch, datastore):
+        if tag_llm_applies_to_watches(tag):
+            yield tag
+
+
+def llm_enabled_for_watch(watch, datastore) -> tuple[bool, str]:
+    """Is automatic AI evaluation switched on for this watch? Returns (enabled, source).
+
+    See #4204 — users with hundreds of watches want AI on only a select few.
+
+    A group with an opinion decides for all of its watches ("the group setting overrides any
+    watch on/off"), so the first such group wins over the watch's own switch; groups set to
+    "leave it to each watch" are skipped. With no group deciding, the watch decides — and a
+    missing key means on, so watches predating this switch keep working.
+
+    Only gates *automatic* spend (the worker's intent/summary passes and the restock AI
+    plugin). Explicit user actions — the diff page "Summary" button, the intent preview —
+    stay available, since those cost tokens only when someone deliberately clicks.
+    """
+    for tag in _watch_tags(watch, datastore):
+        decision = tag_llm_decision(tag)
+        if decision is not None:
+            return decision, tag.get('title', 'tag')
+    return bool(watch.get('llm_backend_profile', True)), 'watch'
+
+
 def resolve_llm_field(watch, datastore, field: str) -> tuple[str, str]:
     """
     Generic cascade resolver for any LLM per-watch field.
@@ -254,12 +319,10 @@ def resolve_llm_field(watch, datastore, field: str) -> tuple[str, str]:
     if value:
         return value, 'watch'
 
-    for tag_uuid in watch.get('tags', []):
-        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-        if tag:
-            tag_value = (tag.get(field) or '').strip()
-            if tag_value:
-                return tag_value, tag.get('title', 'tag')
+    for tag in _tags_applying_llm(watch, datastore):
+        tag_value = (tag.get(field) or '').strip()
+        if tag_value:
+            return tag_value, tag.get('title', 'tag')
 
     return '', ''
 
@@ -273,12 +336,10 @@ def resolve_intent(watch, datastore) -> tuple[str, str]:
     if intent:
         return intent, 'watch'
 
-    for tag_uuid in watch.get('tags', []):
-        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-        if tag:
-            tag_intent = (tag.get('llm_intent') or '').strip()
-            if tag_intent:
-                return tag_intent, tag.get('title', 'tag')
+    for tag in _tags_applying_llm(watch, datastore):
+        tag_intent = (tag.get('llm_intent') or '').strip()
+        if tag_intent:
+            return tag_intent, tag.get('title', 'tag')
 
     return '', ''
 
@@ -549,15 +610,14 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
 def _first_tag_with_field(watch, datastore, field: str):
     """Return (value, tag) for the first linked tag with a non-empty `field`, else ('', None).
 
-    Same first-match-wins order as resolve_llm_field(); this variant also hands back the
-    tag itself so the caller can read sibling keys such as the prompt mode.
+    Same first-match-wins order as resolve_llm_field() (so only groups opted in via
+    tag_llm_applies_to_watches() count); this variant also hands back the tag itself so
+    the caller can read sibling keys such as the prompt mode.
     """
-    for tag_uuid in watch.get('tags', []):
-        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-        if tag:
-            value = (tag.get(field) or '').strip()
-            if value:
-                return value, tag
+    for tag in _tags_applying_llm(watch, datastore):
+        value = (tag.get(field) or '').strip()
+        if value:
+            return value, tag
     return '', None
 
 
