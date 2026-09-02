@@ -194,6 +194,15 @@ class Import(Resource):
 
             urls_to_import.append(url)
 
+        # PAGE_WATCH_LIMIT - refuse the whole batch rather than importing an arbitrary prefix of
+        # it, so a 429 always means "nothing was created" and the caller can retry as-is
+        watch_limit = self.datastore.watch_limit
+        if watch_limit is not None:
+            current_watch_count = len(self.datastore.data['watching'])
+            if current_watch_count + len(urls_to_import) > watch_limit:
+                return (f"Watch limit reached ({current_watch_count}/{watch_limit} watches), importing "
+                        f"{len(urls_to_import)} URL(s) would exceed it. No watches were imported.", 429)
+
         # For small imports, process synchronously for immediate feedback
         if len(urls_to_import) < IMPORT_SWITCH_TO_BACKGROUND_THRESHOLD:
             added = []

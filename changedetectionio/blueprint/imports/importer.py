@@ -17,6 +17,7 @@ class Importer():
         self.good = 0
         self.remaining_data = []
         self.import_profile = None
+        self.limit_reported = False
 
     @abstractmethod
     def run(self,
@@ -24,6 +25,21 @@ class Importer():
             flash,
             datastore):
         pass
+
+    def watch_limit_hit(self, datastore, flash):
+        """True once PAGE_WATCH_LIMIT leaves no room - the caller must then stop importing.
+
+        Asked before each add_watch() so the limit is reported once for the whole file.
+        add_watch() would otherwise flash the same error again for every remaining row.
+        """
+        if not datastore.watch_limit_reached():
+            return False
+
+        if not self.limit_reported:
+            self.limit_reported = True
+            flash(datastore.watch_limit_message(), 'error')
+
+        return True
 
 
 class import_url_list(Importer):
@@ -44,7 +60,7 @@ class import_url_list(Importer):
         if (len(urls) > 5000):
             flash(gettext("Importing 5,000 of the first URLs from your list, the rest can be imported again."))
 
-        for url in urls:
+        for idx, url in enumerate(urls):
             url = url.strip()
             if not len(url):
                 continue
@@ -59,6 +75,12 @@ class import_url_list(Importer):
             # Up to 5000 per batch so we dont flood the server
             # @todo validators.url will fail when you add your own IP etc
             if len(url) and 'http' in url.lower() and good < 5000:
+                if self.watch_limit_hit(datastore, flash):
+                    # Hand back every line we didn't get to (originals, tags included) so they
+                    # land in the textarea to retry once there's room
+                    self.remaining_data.extend(u.strip() for u in urls[idx:] if u.strip())
+                    break
+
                 extras = None
                 if processor:
                     extras = {'processor': processor}
@@ -107,6 +129,9 @@ class import_distill_io_json(Importer):
             extras = {'title': d.get('name', None)}
 
             if len(d['uri']) and good < 5000:
+                if self.watch_limit_hit(datastore, flash):
+                    break
+
                 try:
                     # @todo we only support CSS ones at the moment
                     if d_config['selections'][0]['frames'][0]['excludes'][0]['type'] == 'css':
@@ -200,6 +225,9 @@ class import_xlsx_wachete(Importer):
                         # Don't bother processing anything else on this row
                         continue
 
+                    if self.watch_limit_hit(datastore, flash):
+                        break
+
                     new_uuid = datastore.add_watch(url=data['url'].strip(),
                                                    extras=extras,
                                                    tag=data.get('folder'),
@@ -281,6 +309,9 @@ class import_xlsx_custom(Importer):
 
                 # At minimum a URL is required.
                 if url:
+                    if self.watch_limit_hit(datastore, flash):
+                        break
+
                     new_uuid = datastore.add_watch(url=url,
                                                    extras=extras,
                                                    tag=tags,
