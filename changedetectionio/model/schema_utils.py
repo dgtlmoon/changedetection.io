@@ -29,6 +29,8 @@ SYSTEM_MANAGED_NON_SPEC_FIELDS = frozenset({
     'llm_evaluation_cache',
     'llm_last_tokens_used',
     'llm_tokens_used_cumulative',
+    'llm_tokens_this_period',
+    'llm_tokens_period_key',
 })
 
 
