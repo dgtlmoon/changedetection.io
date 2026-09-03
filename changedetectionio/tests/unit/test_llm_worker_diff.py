@@ -7,8 +7,12 @@ from changedetectionio.llm.evaluator import evaluate_change, summarise_change
 
 
 class TestLLMWorkerDiffHandling(unittest.TestCase):
-    def test_empty_diff_does_not_call_llm_and_returns_defaults(self):
-        """When unified diff has zero lines, LLM calls should not occur and default safe results returned."""
+    def test_empty_diff_returns_none_and_does_not_clear_changed_detected(self):
+        """
+        When consecutive snapshots have zero diff lines (e.g. image SSIM, restock
+        metadata, or filtered changes), evaluate_change must return None (not
+        important=False) so changed_detected is not suppressed.
+        """
         prev_text = "<html><body><h1>Hello World</h1></body></html>"
         contents = "<html><body><h1>Hello World</h1></body></html>"
 
@@ -33,11 +37,17 @@ class TestLLMWorkerDiffHandling(unittest.TestCase):
             'tags': [],
         }
 
-        # Intent evaluation on empty diff must return important=False without calling LLM
+        # 1. evaluate_change must return None on empty diff (on master this returned {'important': False, ...})
         eval_res = evaluate_change(watch, mock_ds, diff=diff_text)
-        self.assertEqual(eval_res, {'important': False, 'summary': ''})
+        self.assertIsNone(eval_res)
 
-        # Summary on empty diff must return empty string without calling LLM
+        # 2. Worker logic: empty diff must NOT suppress changed_detected
+        changed_detected = True
+        if eval_res and not eval_res.get('important', True):
+            changed_detected = False
+        self.assertTrue(changed_detected, "Empty diff must not clear changed_detected")
+
+        # 3. summarise_change must return empty string on empty diff
         summary_res = summarise_change(watch, mock_ds, diff=diff_text)
         self.assertEqual(summary_res, '')
 

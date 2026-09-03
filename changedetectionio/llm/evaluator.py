@@ -97,6 +97,8 @@ def _thinking_extra_body(model: str, budget: int) -> dict | None:
     """
     if not model.startswith('gemini/'):
         return None
+    if 'flash-lite' in model.lower():
+        return None
     try:
         import litellm
         if not litellm.get_model_info(model).get('supports_reasoning'):
@@ -819,7 +821,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         return None
 
     if not diff or not diff.strip():
-        return {'important': False, 'summary': ''}
+        return None
 
     _check_input_size(diff, _get_max_input_chars(datastore))
 

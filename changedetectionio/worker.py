@@ -484,7 +484,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                                     # Step 1: AI Change Intent — may suppress notification
                                     _llm_intent, _llm_intent_source = resolve_intent(watch, datastore)
-                                    if _llm_intent:
+                                    if _llm_intent and _diff_text:
                                         set_watch_minitext_status(watch, "AI/LLM (rules)..")
                                         _llm_result = await loop.run_in_executor(
                                             executor,
