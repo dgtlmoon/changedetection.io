@@ -34,7 +34,13 @@ CUSTOM_OPERATIONS = {
 def filter_complete_rules(ruleset):
     rules = [
         rule for rule in ruleset
-        if all(value not in ("", False, "None", None) for value in [rule["operator"], rule["field"], rule["value"]])
+        if all(
+            rule.get(k) is not None
+            and rule.get(k) is not False
+            and rule.get(k) != ""
+            and rule.get(k) != "None"
+            for k in ("operator", "field", "value")
+        )
     ]
     return rules
 
@@ -54,12 +60,20 @@ def convert_to_jsonlogic(logic_operator: str, rule_dict: list):
         field = condition["field"]
         value = condition["value"]
 
-        if not operator or operator == 'None' or not value or not field:
+        if (
+            not operator
+            or operator == 'None'
+            or not field
+            or value is None
+            or value is False
+            or value == ""
+            or value == "None"
+        ):
             raise EmptyConditionRuleRowNotUsable()
 
         # Convert value to int/float if possible
         try:
-            if isinstance(value, str) and "." in value and str != "None":
+            if isinstance(value, str) and "." in value and value != "None":
                 value = float(value)
             else:
                 value = int(value)
