@@ -1,12 +1,25 @@
+# `pre-commit install` installs both hook types, so contributors get the
+# pre-push checks too without needing to remember `-t pre-push`.
+default_install_hook_types: [pre-commit, pre-push]
+
 repos:
+  # `manual` stage only: these never run on commit or push. The full ruleset in
+  # .ruff.toml is aspirational (~600 violations are not auto-fixable and
+  # ruff-format would rewrite most of the tree), so enforcing it on commit would
+  # permanently block edits to files like changedetectionio/__init__.py.
+  # CI matches this stance: it gates on E9,F63,F7,F82,INT and runs the rest with
+  # --exit-zero. Run on demand with:
+  #   pre-commit run --hook-stage manual --all-files
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.2
     hooks:
       # Lint (and apply safe fixes)
       - id: ruff
         args: [--fix]
+        stages: [manual]
       # Fomrat
       - id: ruff-format
+        stages: [manual]
 
   - repo: local
     hooks:
@@ -15,6 +28,7 @@ repos:
         language: system
         entry: dennis-cmd lint --strict
         files: ^changedetectionio/translations/messages\.pot$
+        stages: [pre-commit]
         pass_filenames: true
 
       - id: dennis-lint-po
@@ -22,4 +36,25 @@ repos:
         language: system
         entry: dennis-cmd lint --strict --excluderules=W302
         files: ^changedetectionio/translations/\w+/LC_MESSAGES/messages\.po$
+        stages: [pre-commit]
         pass_filenames: true
+
+      # Runs at commit time so a release commit that bumps __version__ without
+      # re-running extract_messages fails *before* the release tag is created.
+      # Scoped to the two files that can drift, so unrelated commits aren't blocked.
+      - id: translations-version-sync
+        name: translations catalog version matches app version
+        language: system
+        entry: python scripts/check_translations_version.py
+        files: ^changedetectionio/(__init__\.py|translations/messages\.pot)$
+        stages: [pre-commit]
+        pass_filenames: false
+
+      # Backstop for commits made with --no-verify, and for tag-only pushes.
+      - id: translations-version-sync-push
+        name: translations catalog version matches app version (push)
+        language: system
+        entry: python scripts/check_translations_version.py
+        stages: [pre-push]
+        pass_filenames: false
+        always_run: true
