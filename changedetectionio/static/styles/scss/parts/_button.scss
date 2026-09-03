@@ -91,3 +91,25 @@
     &:hover { color: #d68a00; border-color: #d68a00; }
   }
 }
+
+// State-mutating controls have to POST, and only a <button> can submit - these strip
+// the browser's button chrome so they render exactly like the <a> they replaced.
+.bare-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+
+  &--link {
+    color: var(--color-link);
+    text-decoration: underline;
+  }
+}

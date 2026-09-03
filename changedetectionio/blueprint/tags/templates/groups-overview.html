@@ -68,7 +68,10 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                 {#-{{ loop.cycle('pure-table-odd', 'pure-table-even') }}-#}
             <tr id="{{ uuid }}" class="">
                 <td class="watch-controls">
-                    <a class="link-mute state-{{'on' if tag.notification_muted else 'off'}}" href="{{url_for('tags.mute', uuid=tag.uuid)}}" aria-label="{{ _('Mute notifications') }}" title="{{ _('Mute notifications') }}"><i data-feather="{{ 'bell-off' if tag.notification_muted else 'bell' }}" class="icon icon-mute"></i></a>
+                    <form method="POST" action="{{url_for('tags.mute', uuid=tag.uuid)}}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="bare-btn link-mute state-{{'on' if tag.notification_muted else 'off'}}" aria-label="{{ _('Mute notifications') }}" title="{{ _('Mute notifications') }}"><i data-feather="{{ 'bell-off' if tag.notification_muted else 'bell' }}" class="icon icon-mute"></i></button>
+                    </form>
                 </td>
                 <td class="watch-count">{{ "{:,}".format(tag_count[uuid]) if uuid in tag_count else 0 }}</td>
                 <td class="title-col inline"> <a href="{{url_for('watchlist.index', tag=uuid) }}" class="watch-tag-list tag-{{ tag.title|sanitize_tag_class }}">{{ tag.title }}</a></td>

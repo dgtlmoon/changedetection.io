@@ -18,6 +18,24 @@ from changedetectionio.blueprint.watchlist.row_context import watch_row_context
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
 
+    @watchlist_blueprint.route("/toggle", methods=['POST'])
+    @login_optionally_required
+    def toggle():
+        op = request.args.get('op')
+        uuid = request.args.get('uuid')
+        watch = datastore.data['watching'].get(uuid)
+
+        if not watch:
+            flash(_('Watch not found'), 'error')
+        else:
+            if op == 'pause':
+                watch.toggle_pause()
+            elif op == 'mute':
+                watch.toggle_mute()
+            watch.commit()
+
+        return redirect(url_for('watchlist.index', tag=request.args.get('tag')))
+
     @watchlist_blueprint.route("/", methods=['GET'])
     @login_optionally_required
     def index():
@@ -35,17 +53,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Redirect for the old rss path which used the /?rss=true
         if request.args.get('rss'):
             return redirect(url_for('rss.feed', tag=active_tag_uuid))
-
-        op = request.args.get('op')
-        if op:
-            uuid = request.args.get('uuid')
-            if op == 'pause':
-                datastore.data['watching'][uuid].toggle_pause()
-            elif op == 'mute':
-                datastore.data['watching'][uuid].toggle_mute()
-
-            datastore.data['watching'][uuid].commit()
-            return redirect(url_for('watchlist.index', tag = active_tag_uuid))
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
