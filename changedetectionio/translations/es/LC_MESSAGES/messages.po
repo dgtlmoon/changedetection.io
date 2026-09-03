@@ -1608,7 +1608,7 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "Se etiquetaron {} monitores"
 
-#: changedetectionio/blueprint/ui/__init__.py
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Monitor no encontrado"
 

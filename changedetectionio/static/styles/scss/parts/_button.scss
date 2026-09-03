@@ -100,7 +100,9 @@
   padding: 0;
   margin: 0;
   font: inherit;
-  color: inherit;
+  // Matches `a { color: var(--color-link) }` - these replace anchors, and the row
+  // icons stroke with currentColor, so `inherit` would pick up .watch-controls red.
+  color: var(--color-link);
   cursor: pointer;
 
   &:focus-visible {
@@ -109,7 +111,6 @@
   }
 
   &--link {
-    color: var(--color-link);
     text-decoration: underline;
   }
 }

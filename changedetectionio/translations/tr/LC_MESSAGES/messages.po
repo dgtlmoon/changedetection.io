@@ -1600,7 +1600,7 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "{} izleyici etiketlendi"
 
-#: changedetectionio/blueprint/ui/__init__.py
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "İzleyici bulunamadı"
 

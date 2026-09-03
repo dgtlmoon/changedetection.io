@@ -1565,7 +1565,7 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "{} 個監測任務已加上標籤"
 
-#: changedetectionio/blueprint/ui/__init__.py
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "找不到監測任務"
 

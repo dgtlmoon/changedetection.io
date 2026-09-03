@@ -1691,7 +1691,7 @@ msgstr "Wybrano nieprawidłowy serwer proxy"
 msgid "{} watches were tagged"
 msgstr "Oznaczono {} obserwacji"
 
-#: changedetectionio/blueprint/ui/__init__.py
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Nie znaleziono obserwacji"
 
