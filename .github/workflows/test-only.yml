@@ -52,6 +52,19 @@ jobs:
             git diff --stat changedetectionio/translations
             exit 1
           fi
+      - name: Check translation overlay
+        # Deliberately after extract_messages above, so overrides are validated against a freshly
+        # extracted messages.pot. An overlay entry is keyed on the exact upstream msgid: when a
+        # string is reworded upstream the override stops matching and silently reverts to upstream
+        # wording. This is the only thing that makes that visible.
+        # See changedetectionio/translations_overlay/README.md
+        if: hashFiles('changedetectionio/translations_overlay/**/*.po') != ''
+        run: |
+          find changedetectionio/translations_overlay -name "*.po" | while read f; do
+            echo "Checking $f"
+            msgfmt --check-format -o /dev/null "$f"
+          done
+          python changedetectionio/translations_overlay/manage.py check
 
   lint-template-i18n:
     runs-on: ubuntu-latest
