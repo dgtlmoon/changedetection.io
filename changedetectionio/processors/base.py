@@ -320,26 +320,25 @@ class difference_detection_processor():
 
         return filepath
 
-    def get_extra_watch_config(self, filename):
-        """
-        Read processor-specific JSON config file from watch data directory.
+    @classmethod
+    def get_extra_watch_config_for_watch(cls, datastore, watch_uuid, filename):
+        """Read a processor config file without constructing a processor instance.
 
-        Args:
-            filename: Name of JSON file (e.g., "visual_ssim_score.json")
-
-        Returns:
-            dict: Parsed JSON data, or empty dict if file doesn't exist
+        The watch-list and API need to inspect processor settings too, but creating a
+        processor for each rendered row would also copy the watch and load checksum state.
+        Keep the file/path handling here so those callers use the same safe reader as the
+        worker.
         """
         import json
         import os
 
-        watch = self.datastore.data['watching'].get(self.watch_uuid)
-        data_dir = watch.data_dir
+        watch = datastore.data['watching'].get(watch_uuid)
+        data_dir = getattr(watch, 'data_dir', None) if watch else None
 
         if not data_dir:
             return {}
 
-        filepath = self._resolve_watch_config_path(data_dir, filename)
+        filepath = cls._resolve_watch_config_path(data_dir, filename)
         if not filepath:
             return {}
 
@@ -349,9 +348,13 @@ class difference_detection_processor():
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
+        except (json.JSONDecodeError, IOError, UnicodeError) as e:
             logger.warning(f"Failed to read extra watch config {filename}: {e}")
             return {}
+
+    def get_extra_watch_config(self, filename):
+        """Read processor-specific JSON config for this processor's watch."""
+        return self.get_extra_watch_config_for_watch(self.datastore, self.watch_uuid, filename)
 
     def update_extra_watch_config(self, filename, data, merge=True):
         """
