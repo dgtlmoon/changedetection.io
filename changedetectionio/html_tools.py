@@ -762,7 +762,7 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
 def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     from xml.sax.saxutils import escape as xml_escape
-    pattern = '<!\[CDATA\[(\s*(?:.(?<!\]\]>)\s*)*)\]\]>'
+    pattern = r'<![CDATA[(\s*(?:.(?<!]]>)\s*)*)]]>'
     def repl(m):
         text = m.group(1)
         return xml_escape(html_to_text(html_content=text)).strip()
@@ -863,7 +863,7 @@ def workarounds_for_obfuscations(content):
     if not content:
         return content
 
-    content = re.sub('<!--\s+-->', '', content)
+    content = re.sub(r'<!--\s+-->', '', content)
 
     return content
 
