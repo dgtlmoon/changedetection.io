@@ -84,10 +84,12 @@ def test_socks5(client, live_server, measure_memory_usage, datastore_path):
     # PROXY CHECKER WIDGET CHECK - this needs more checking
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
-    res = client.get(
+    # POST only - it kicks off real fetches through every configured proxy
+    res = client.post(
         url_for("check_proxies.start_check", uuid=uuid),
         follow_redirects=True
     )
+    assert res.status_code == 200
     # It's probably already finished super fast :(
     #assert b"RUNNING" in res.data
     

@@ -59,9 +59,18 @@ $(document).ready(() => {
 
         $.ajax({
             url: add_watch_snapshot_url,
+            // POST, never GET - this makes the server-side browser fetch a URL of our
+            // choosing, so it must not be triggerable cross-origin. csrf.js adds the
+            // X-CSRFToken header to every non-GET ajax call; the CSRF field on the form
+            // is sent too so it works even if that handler hasn't run yet.
+            method: 'POST',
             // Preview with the browser picked in the list - that same browser is what
             // gets saved on the watch, so what you see here is what it will check with.
-            data: {url: url, fetch_backend: $('input[name="fetch_backend"]:checked').val() || ''},
+            data: {
+                url: url,
+                fetch_backend: $('input[name="fetch_backend"]:checked').val() || '',
+                csrf_token: $('#new-watch-form input[name="csrf_token"]').val() || '',
+            },
             dataType: 'json',
         }).done((data) => {
             showState('ready');

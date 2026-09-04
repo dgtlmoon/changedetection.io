@@ -18,10 +18,20 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5rem 0;
+
+  // The csrf mini-form around each option is layout-transparent, so the buttons
+  // stay the flex items.
+  > form {
+    display: contents;
+  }
 }
 
 .language-option {
   display: flex;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   align-items: center;
   gap: 1rem;
   padding: 0.25rem;

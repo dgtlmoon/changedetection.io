@@ -25,7 +25,7 @@ def test_language_endpoints_work_for_anonymous_users(client, live_server, measur
         follow_redirects=True)
     assert res.status_code == 200
 
-    client.get(url_for("logout"), follow_redirects=True)
+    client.post(url_for("logout"), follow_redirects=True)
 
     # Both language links are rendered on the login page, so both must be reachable
     res = client.get(url_for("login"))
@@ -33,13 +33,13 @@ def test_language_endpoints_work_for_anonymous_users(client, live_server, measur
     assert b'language-selector' in res.data, "Language modal trigger should render for anonymous users"
 
     # Picking a specific language must not redirect to the login page
-    res = client.get(url_for("set_language", locale="de"), follow_redirects=False)
+    res = client.post(url_for("set_language", locale="de"), follow_redirects=False)
     assert res.status_code == 302
     assert '/login' not in res.headers.get("Location", ""), \
         "set_language must not bounce anonymous users to /login"
 
     # ...and neither must clearing it back to auto-detect
-    res = client.get(url_for("ui.delete_locale_language_session_var_if_it_exists"), follow_redirects=False)
+    res = client.post(url_for("ui.delete_locale_language_session_var_if_it_exists"), follow_redirects=False)
     assert res.status_code == 302
     assert '/login' not in res.headers.get("Location", ""), \
         "Auto-detect must not bounce anonymous users to /login (it renders on the login page)"

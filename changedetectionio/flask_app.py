@@ -836,7 +836,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Pass the current request path so users are redirected back after login
         return redirect(url_for('login', redirect=request.path))
 
-    @app.route('/logout')
+    @app.route('/logout', methods=['POST'])
     def logout():
         flask_login.logout_user()
 
@@ -850,7 +850,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Otherwise just go to watchlist
         return redirect(url_for('watchlist.index'))
 
-    @app.route('/set-language/<locale>')
+    @app.route('/set-language/<locale>', methods=['POST'])
     def set_language(locale):
         """Set the user's preferred language in the session"""
         if not request.cookies:
