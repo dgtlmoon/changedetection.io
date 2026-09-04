@@ -939,6 +939,7 @@ class SingleBrowserStep(Form):
 class processor_text_json_diff_form(commonSettingsForm):
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
+    link_to_open = StringField(_l('Link to Open'), validators=[validators.Optional(), validateURL()], default='')
     tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
@@ -1045,6 +1046,19 @@ class processor_text_json_diff_form(commonSettingsForm):
             logger.error(e)
             self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
             result = False
+
+        # Attempt to validate jinja2 templates in the optional "Link to Open"
+        if self.link_to_open.data and self.link_to_open.data.strip():
+            try:
+                jinja_render(template_str=self.link_to_open.data)
+            except ModuleNotFoundError as e:
+                logger.error(e)
+                self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
+                result = False
 
         # Attempt to validate jinja2 templates in the body
         if self.body.data and self.body.data.strip():

@@ -207,6 +207,7 @@ class watch_base(dict):
             'last_error': False,
             'last_notification_error': None,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
+            'link_to_open': '',  # Optional human-facing URL to open instead of 'url' (eg. watch an API/RSS endpoint, open the real page)
             'llm_backend_profile': True, # @note - now its just a bool but in the near future we can select a LLM profile or 'off'/false
             'llm_change_summary': '',        # Prompt for AI Change Summary — replaces {{ diff }} in notifications
             'llm_change_summary_mode': 'replace',  # 'replace' the inherited prompt, or 'append' to it

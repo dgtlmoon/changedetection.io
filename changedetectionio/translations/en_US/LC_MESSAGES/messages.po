@@ -1929,6 +1929,10 @@ msgid "help and examples here"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Automatically uses the Web Page URL, you can override here if you want to open a different URL"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Organisational tag/group name used in the main listing page"
 msgstr "organizational tag/group name used in the main listing page"
 
@@ -3181,6 +3185,10 @@ msgid "Web Page URL"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Link to Open"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Group Tag"
 msgstr ""
 
@@ -4010,6 +4018,12 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The URL being watched."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"The Link to Open set on the watch, otherwise the same as watch_url. Use this when the watched URL is an API endpoint "
+"or RSS feed but you want to link to the real page."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
