@@ -483,13 +483,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                             lineterm='',
                                             n=3
                                         ))
-                                        _diff_text = ''.join(_diff_lines) if _diff_lines else contents
+                                        _diff_text = ''.join(_diff_lines)
                                     else:
-                                        _diff_text = contents
+                                        _diff_text = ''
 
                                     # Step 1: AI Change Intent — may suppress notification
                                     _llm_intent, _llm_intent_source = resolve_intent(watch, datastore)
-                                    if _llm_intent:
+                                    if _llm_intent and _diff_text:
                                         set_watch_minitext_status(watch, "AI/LLM (rules)..")
                                         _llm_result = await loop.run_in_executor(
                                             executor,
@@ -517,7 +517,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                     # that would spend tokens on every change for a summary nobody
                                     # may ever look at.
                                     from changedetectionio.notification_service import watch_will_send_content_changed_notification
-                                    if changed_detected and watch_will_send_content_changed_notification(datastore, watch):
+                                    if changed_detected and _diff_text and watch_will_send_content_changed_notification(datastore, watch):
                                         set_watch_minitext_status(watch, "AI/LLM (summary)..")
                                         _change_summary = await loop.run_in_executor(
                                             executor,

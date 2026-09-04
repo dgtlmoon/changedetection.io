@@ -295,19 +295,19 @@ class TestEvaluateChange:
         result = evaluate_change(watch, ds, diff='some diff')
         assert result is None
 
-    def test_returns_not_important_for_empty_diff(self):
+    def test_returns_none_for_empty_diff(self):
         from changedetectionio.llm.evaluator import evaluate_change
         ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini'})
         watch = _make_watch(llm_intent='flag price drops')
         result = evaluate_change(watch, ds, diff='')
-        assert result == {'important': False, 'summary': ''}
+        assert result is None
 
-    def test_returns_not_important_for_whitespace_diff(self):
+    def test_returns_none_for_whitespace_diff(self):
         from changedetectionio.llm.evaluator import evaluate_change
         ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini'})
         watch = _make_watch(llm_intent='flag price drops')
         result = evaluate_change(watch, ds, diff='   \n  ')
-        assert result == {'important': False, 'summary': ''}
+        assert result is None
 
     def test_calls_llm_and_returns_result(self):
         from changedetectionio.llm.evaluator import evaluate_change
