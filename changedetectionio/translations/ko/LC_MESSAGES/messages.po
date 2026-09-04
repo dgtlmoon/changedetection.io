@@ -1571,7 +1571,7 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "{}개 모니터링에 태그를 추가했습니다."
 
-#: changedetectionio/blueprint/ui/__init__.py
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "모니터링을 찾을 수 없습니다."
 

@@ -205,7 +205,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.queued {
-      a.recheck {
+      .recheck {
         display: none !important;
       }
 
@@ -216,7 +216,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.paused {
-      a.pause-toggle {
+      .pause-toggle {
         &.state-on {
           display: inline !important;
         }
@@ -228,7 +228,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.notification_muted {
-      a.mute-toggle {
+      .mute-toggle {
         &.state-on {
           display: inline !important;
         }

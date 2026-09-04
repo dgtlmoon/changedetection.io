@@ -1569,7 +1569,7 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "{} 件のウォッチにタグを付けました"
 
-#: changedetectionio/blueprint/ui/__init__.py
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "ウォッチが見つかりません"
 

@@ -33,7 +33,7 @@ def test_share_watch(client, live_server, measure_memory_usage, datastore_path):
     assert bytes(include_filters.encode('utf-8')) in res.data
 
     # click share the link
-    res = client.get(
+    res = client.post(
         url_for("ui.form_share_put_watch", uuid=uuid),
         follow_redirects=True
     )

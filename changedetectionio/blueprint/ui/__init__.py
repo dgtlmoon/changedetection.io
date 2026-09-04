@@ -407,7 +407,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         return redirect(url_for('watchlist.index'))
 
 
-    @ui_blueprint.route("/share-url/<uuid_str:uuid>", methods=['GET'])
+    @ui_blueprint.route("/share-url/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def form_share_put_watch(uuid):
         """Given a watch UUID, upload the info and return a share-link
