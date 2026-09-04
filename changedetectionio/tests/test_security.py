@@ -440,7 +440,7 @@ def test_login_redirect_with_password(client, live_server, measure_memory_usage,
     assert b"evil.com" not in res.data
 
     # Logout for cleanup
-    client.get(url_for("logout"))
+    client.post(url_for("logout"))
 
     # Test 5: Incorrect password with redirect should stay on login page
     res = client.post(
@@ -483,7 +483,7 @@ def test_login_redirect_from_protected_page(client, live_server, measure_memory_
     client.application.config['DATASTORE'].data['settings']['application']['password'] = salted_pass
 
     # Logout to ensure we're not authenticated
-    client.get(url_for("logout"))
+    client.post(url_for("logout"))
 
     # Try to access a protected page (edit page for first watch)
     res = client.get(
@@ -524,7 +524,7 @@ def test_login_redirect_from_protected_page(client, live_server, measure_memory_
     assert b'Edit' in res.data or b'Watching' in res.data
 
     # Cleanup
-    client.get(url_for("logout"))
+    client.post(url_for("logout"))
     del client.application.config['DATASTORE'].data['settings']['application']['password']
 
 
@@ -554,7 +554,7 @@ def test_logout_with_redirect(client, live_server, measure_memory_usage, datasto
     assert res.status_code == 200
 
     # Now logout with a redirect parameter (simulating logout from /settings)
-    res = client.get(
+    res = client.post(
         url_for("logout", redirect="/settings"),
         follow_redirects=False
     )
@@ -961,7 +961,7 @@ def test_ghsa_8757_69j2_hx56_backup_restore_history_path_traversal(client, live_
     wait_for_all_checks(client)
 
     # Download a legitimate backup to use as a template
-    client.get(url_for("backups.request_backup"), follow_redirects=True)
+    client.post(url_for("backups.request_backup"), follow_redirects=True)
     time.sleep(4)
     res = client.get(url_for("backups.download_backup", filename="latest"), follow_redirects=True)
     assert res.content_type == "application/zip"
