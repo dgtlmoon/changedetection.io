@@ -284,7 +284,7 @@ $(document).ready(function () {
         $('#browser-steps-ui .loader .spinner').show();
         // Request a new session
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: browser_steps_start_url,
             statusCode: {
                 400: function () {

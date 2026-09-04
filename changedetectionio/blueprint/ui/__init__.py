@@ -455,7 +455,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index'))
 
-    @ui_blueprint.route("/language/auto-detect", methods=['GET'])
+    @ui_blueprint.route("/language/auto-detect", methods=['POST'])
     def delete_locale_language_session_var_if_it_exists():
         """Clear the session locale preference to auto-detect from browser Accept-Language header"""
         if 'locale' in session:

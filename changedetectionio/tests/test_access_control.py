@@ -125,7 +125,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             follow_redirects=True
         )
 
-        res = c.get(url_for("logout"),
+        res = c.post(url_for("logout"),
             follow_redirects=True)
 
         assert b"Login" in res.data
