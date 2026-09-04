@@ -51,6 +51,10 @@
         </fieldset>
         <fieldset id="diff-style">
             <span>
+                <label for="diffChars" class="pure-checkbox">
+                <input type="radio" name="type" id="diffChars" value="diffChars" {% if diff_prefs.type == 'diffChars' %}checked=""{% endif %}> {{ _('Characters') }}</label>
+            </span>
+            <span>
                 <label for="diffWords" class="pure-checkbox">
                 <input type="radio" name="type" id="diffWords" value="diffWords" {% if diff_prefs.type == 'diffWords' %}checked=""{% endif %}> {{ _('Words') }}</label>
             </span>

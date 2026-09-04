@@ -420,8 +420,9 @@ class WatchHistoryDiff(Resource):
         # Get diff preferences from query parameters (matching UI preferences in DIFF_PREFERENCES_CONFIG)
         # Support both 'type' (UI parameter) and 'word_diff' (API parameter) for backward compatibility
         diff_type = request.args.get('type', 'diffLines')
-        if diff_type == 'diffWords':
+        if diff_type in ('diffWords', 'diffChars'):
             word_diff = True
+        tokenizer = 'chars_and_html' if diff_type == 'diffChars' else 'words_and_html'
 
         # Get boolean diff preferences with defaults from DIFF_PREFERENCES_CONFIG
         changes_only = strtobool(request.args.get('changesOnly', 'false'))
@@ -440,6 +441,7 @@ class WatchHistoryDiff(Resource):
             include_added=include_added,
             include_replaced=include_replaced,
             word_diff=word_diff,
+            tokenizer=tokenizer,
         )
 
         # Skip formatting if no_markup is set

@@ -130,6 +130,74 @@ class TestDiffBuilder(unittest.TestCase):
         self.assertEqual(output, expected)
 
 
+    def test_character_level_diff_preserves_html_tags(self):
+        """Character mode should isolate changed characters without breaking markup."""
+        before = "Price: $90.00 <span>today</span>"
+        after = "Price: $95.00 <span>today</span>"
+
+        output = diff.render_diff(
+            before,
+            after,
+            include_equal=True,
+            tokenizer='chars_and_html',
+        )
+
+        self.assertIn(f'{REMOVED_PLACEMARKER_OPEN}0{REMOVED_PLACEMARKER_CLOSED}', output)
+        self.assertIn(f'{ADDED_PLACEMARKER_OPEN}5{ADDED_PLACEMARKER_CLOSED}', output)
+        self.assertIn('<span>today</span>', output)
+        self.assertNotIn(f'{REMOVED_PLACEMARKER_OPEN}<span>', output)
+
+    def test_character_tokenizer_keeps_tags_atomic(self):
+        self.assertEqual(
+            diff.TOKENIZERS['chars_and_html']('<p>Hi</p>'),
+            ['<p>', 'H', 'i', '</p>'],
+        )
+
+    def test_character_tokenizer_handles_quoted_tag_attributes(self):
+        content = 'x <a title="a > b">link</a>'
+
+        tokens = diff.TOKENIZERS['chars_and_html'](content)
+
+        self.assertEqual(
+            tokens,
+            ['x', ' ', '<a title="a > b">', 'l', 'i', 'n', 'k', '</a>'],
+        )
+        self.assertEqual(''.join(tokens), content)
+
+    def test_character_tokenizer_keeps_literal_less_than_as_text(self):
+        content = 'a < b > c'
+
+        self.assertEqual(
+            diff.TOKENIZERS['chars_and_html'](content),
+            list(content),
+        )
+
+    def test_character_tokenizer_handles_comments_and_raw_text(self):
+        content = '<!-- a > b --><script>if (a < b) return "<tag>";</script>'
+
+        tokens = diff.TOKENIZERS['chars_and_html'](content)
+
+        self.assertEqual(tokens[0], '<!-- a > b -->')
+        self.assertEqual(tokens[1], '<script>')
+        self.assertIn('<', tokens)
+        self.assertNotIn('<tag>', tokens)
+        self.assertEqual(tokens[-1], '</script>')
+        self.assertEqual(''.join(tokens), content)
+
+    def test_character_tokenizer_handles_self_closing_and_incomplete_markup(self):
+        content = '<img alt="a > b" /><br/>😀é中'
+
+        tokens = diff.TOKENIZERS['chars_and_html'](content)
+
+        self.assertEqual(tokens[:2], ['<img alt="a > b" />', '<br/>'])
+        self.assertEqual(tokens[-3:], ['😀', 'é', '中'])
+        self.assertEqual(''.join(tokens), content)
+
+        incomplete = '<a title="unfinished'
+        self.assertEqual(
+            diff.TOKENIZERS['chars_and_html'](incomplete),
+            list(incomplete),
+        )
 
     def test_context_lines(self):
         """Test context_lines parameter"""

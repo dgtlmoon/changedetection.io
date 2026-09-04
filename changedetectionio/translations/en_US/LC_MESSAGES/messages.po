@@ -1762,6 +1762,10 @@ msgid "To"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Characters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr ""
 

@@ -241,6 +241,18 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     assert res.status_code == 200
     assert len(res.data) > 0
 
+    # Test type=diffChars for character-level diffing
+    res = client.get(
+        url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?type=diffChars&format=htmlcolor',
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 200
+    assert b'role="deletion"' in res.data
+    assert b'role="insertion"' in res.data
+    # Character mode isolates the changed case from "Which" -> "which".
+    assert b'>W</span><span' in res.data
+    assert b'>w</span>hich' in res.data
+
     # Test combined parameters: show only additions with word diff
     res = client.get(
         url_for("watchhistorydiff", uuid=watch_uuid, from_timestamp='previous', to_timestamp='latest')+'?removed=false&replaced=false&type=diffWords',

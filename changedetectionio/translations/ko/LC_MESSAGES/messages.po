@@ -1772,6 +1772,10 @@ msgid "To"
 msgstr "비교 후"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Characters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "단어"
 

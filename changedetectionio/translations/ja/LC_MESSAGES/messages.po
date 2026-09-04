@@ -1773,6 +1773,10 @@ msgid "To"
 msgstr "変更後"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Characters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "単語"
 
