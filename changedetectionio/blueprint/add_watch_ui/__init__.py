@@ -42,7 +42,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             system_default_browser=browser_config.system_default_description(datastore),
         )
 
-    @add_watch_ui_blueprint.route("/snapshot", methods=['GET'])
+    @add_watch_ui_blueprint.route("/snapshot", methods=['POST'])
     @login_optionally_required
     def add_watch_ui_snapshot():
         """One-shot live fetch of an arbitrary URL for the Add Watch visual selector.
@@ -52,6 +52,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         connect, "Goto site", grab the screenshot + xpath element data, then tear
         the browser down again. Element selection then happens client-side on the
         returned data, exactly like the watch Edit page's visual selector.
+
+        POST-only and CSRF protected on purpose: this drives a real browser fetch and
+        writes a temporary watch dir, so as a GET it could be triggered cross-origin
+        (or by any tag/link that issues a GET) without the operator's consent.
         """
         import base64
         from changedetectionio.blueprint.browser_steps import (
@@ -71,7 +75,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # backslash/parser-differential rejection of GHSA-rph4-96w6-q594 (GHSA-56fq-63vj-9992).
         # Note this fetch never reaches difference_detection_processor.call_browser(), so it gets
         # no gating from there - it has to validate for itself.
-        url = (request.args.get('url') or '').strip()
+        url = (request.form.get('url') or '').strip()
         ok, reason = is_fetch_url_allowed(url)
         if not ok:
             logger.warning(f"Add-watch snapshot: refused '{url}' - {reason}")
@@ -82,7 +86,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Either way it has to be able to render a preview - the plain HTTP client
         # produces no screenshot and no element data, so previewing with it is pointless
         # (and it used to be the silent default here, see the system-default bug).
-        fetcher_name = (request.args.get('fetch_backend') or '').strip() or browser_config.default_visual_browser(datastore)
+        fetcher_name = (request.form.get('fetch_backend') or '').strip() or browser_config.default_visual_browser(datastore)
         if not fetcher_name or not browser_config.is_visual_capable(fetcher_name, datastore):
             logger.warning(f"Add-watch snapshot: refused browser '{fetcher_name}' for '{url}'")
             return make_response('No interactive browser available that can render a live preview '
