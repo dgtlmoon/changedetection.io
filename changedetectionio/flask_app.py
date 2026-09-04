@@ -767,6 +767,18 @@ def changedetection_app(config=None, datastore_o=None):
             else:
                 return login_manager.unauthorized()
 
+    # #4299: werkzeug's send_file() (via make_conditional) injects a Date
+    # header into the WSGI response for conditional/static responses, and the
+    # Werkzeug built-in server (allow_unsafe_werkzeug=True) then writes its own
+    # Date via BaseHTTPRequestHandler.send_response() — emitting the Date
+    # header line twice, which RFC 9110 forbids and nginx rejects ("upstream
+    # sent duplicate header line"). Strip the application-side copy so the
+    # server's single header is what reaches the wire.
+    @app.after_request
+    def strip_duplicate_date_header(response):
+        response.headers.pop("Date", None)
+        return response
+
     watch_api.add_resource(
         WatchHistoryDiff,
         '/api/v1/watch/<uuid_str:uuid>/difference/<string:from_timestamp>/<string:to_timestamp>',
