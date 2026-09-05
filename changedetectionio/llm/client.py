@@ -6,6 +6,7 @@ and makes the call easy to mock in tests.
 
 import logging
 import os
+import time
 
 from loguru import logger
 
@@ -113,7 +114,13 @@ def completion(  # noqa: C901
     if extra_body:
         kwargs['extra_body'] = extra_body
 
-    _retryable = (litellm.Timeout, litellm.APIConnectionError)
+    _retryable = (
+        litellm.Timeout,
+        litellm.APIConnectionError,
+        litellm.ServiceUnavailableError,
+        litellm.RateLimitError,
+        litellm.InternalServerError,
+    )
 
     # Some models reject sampling params outright: Anthropic Claude Opus 4.7/4.8 and
     # Fable return HTTP 400 for 'temperature', and OpenAI reasoning models (o1/o3/gpt-5)
@@ -188,10 +195,12 @@ def completion(  # noqa: C901
             except Exception:
                 pass
             if attempt < DEFAULT_RETRIES:
+                _backoff = min(2 ** (attempt - 1), 8)
                 logger.warning(
-                    f"LLM call timed out/connection error (attempt {attempt}/{DEFAULT_RETRIES}), "
-                    f"retrying — model={model!r} timeout={_timeout}s error={e}"
+                    f"LLM call transient error ({type(e).__name__}, attempt {attempt}/{DEFAULT_RETRIES}), "
+                    f"retrying in {_backoff}s — model={model!r} timeout={_timeout}s error={e}"
                 )
+                time.sleep(_backoff)
                 continue
             logger.warning(
                 f"LLM call failed after {DEFAULT_RETRIES} attempts ({_timeout}s timeout) "
