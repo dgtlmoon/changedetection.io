@@ -1347,8 +1347,9 @@ paths:
         - `html`: HTML format with (removed) and (added) text
         - `htmlcolor`: Rich HTML with colored highlights (green for additions, red for deletions)
 
-        **Word-Level Diffing:**
+        **Word- and Character-Level Diffing:**
         - Enable word-level granularity with `word_diff=true` for detailed inline comparisons
+        - Use `type=diffWords` for word-level or `type=diffChars` for character-level comparisons
         - Disable with `word_diff=false` for line-level comparisons only (default false/off, line-level mode by default)
 
         **Raw Diff Output:**
@@ -1482,12 +1483,13 @@ paths:
             Diff granularity type:
             - `diffLines` (default): Line-level comparison, showing which lines changed
             - `diffWords`: Word-level comparison, showing which words changed within lines
+            - `diffChars`: Character-level comparison, showing which characters changed within lines
 
             This parameter is an alternative to `word_diff` for better alignment with the UI.
-            If both are specified, `type=diffWords` will enable word-level diffing.
+            If both are specified, `type=diffWords` or `type=diffChars` will enable the selected inline granularity.
           schema:
             type: string
-            enum: [diffLines, diffWords]
+            enum: [diffLines, diffWords, diffChars]
             default: diffLines
         - name: changesOnly
           in: query
