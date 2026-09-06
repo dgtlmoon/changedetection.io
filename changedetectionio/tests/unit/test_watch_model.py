@@ -377,8 +377,11 @@ class TestHistoryPathTraversal(unittest.TestCase):
         watch.save_history_blob(contents="hello world", timestamp=1000000000, snapshot_id=str(uuid_builder.uuid4()))
         history = watch.history
         self.assertEqual(len(history), 1, "Normal snapshot entry must be accepted")
+        # Watch.history resolves entries with os.path.realpath, so compare against a
+        # resolved data_dir. On macOS the datastore lives under /tmp, which is a symlink
+        # to /private/tmp, and an unresolved comparison fails there for a correct path.
         self.assertTrue(
-            list(history.values())[0].startswith(watch.data_dir),
+            list(history.values())[0].startswith(os.path.realpath(watch.data_dir)),
             "Resolved path must be inside the watch data directory"
         )
 
