@@ -174,6 +174,70 @@ class TestLLMClientRetryHandling(unittest.TestCase):
             self.assertEqual(mock_call.call_count, 1)
             mock_sleep.assert_not_called()
 
+    @patch("random.uniform", return_value=0.1)
+    @patch("time.sleep")
+    def test_param_strip_does_not_consume_transient_retry_budget(
+        self, mock_sleep, mock_jitter
+    ):
+        # Stripping sampling params refunds the attempt, so the whole transient
+        # budget is still available afterwards: DEFAULT_RETRIES + 1 calls.
+        bad_request = self._make_error(
+            litellm.BadRequestError, "400 temperature is not supported"
+        )
+        unavailable = self._make_error(
+            litellm.ServiceUnavailableError, "503 Service Unavailable"
+        )
+        mock_resp = self._mock_success_response("recovered after strip")
+
+        with patch(
+            "litellm.completion",
+            side_effect=[bad_request, unavailable, unavailable, mock_resp],
+        ) as mock_call:
+            text, _, _, _ = m.completion(
+                model="gemini/gemini-2.5-flash",
+                messages=[{"role": "user", "content": "hello"}],
+            )
+
+        self.assertEqual(text, "recovered after strip")
+        self.assertEqual(mock_call.call_count, m.DEFAULT_RETRIES + 1)
+        self.assertEqual(mock_sleep.call_args_list, [call(1.1), call(2.1)])
+
+        # The refund is only correct if the strip really happened: the first
+        # call still carries temperature, the ones after it do not.
+        self.assertEqual(mock_call.call_args_list[0].kwargs.get("temperature"), 0)
+        for subsequent in mock_call.call_args_list[1:]:
+            self.assertNotIn("temperature", subsequent.kwargs)
+
+    @patch("time.sleep")
+    def test_bad_request_after_param_strip_raises(self, mock_sleep):
+        # The second 400 has nothing left to drop, so it propagates instead of
+        # refunding another attempt.
+        exc = self._make_error(litellm.BadRequestError, "400 invalid request")
+
+        with patch("litellm.completion", side_effect=exc) as mock_call:
+            with self.assertRaises(litellm.BadRequestError):
+                m.completion(
+                    model="gemini/gemini-2.5-flash",
+                    messages=[{"role": "user", "content": "hello"}],
+                )
+            self.assertEqual(mock_call.call_count, 2)
+            mock_sleep.assert_not_called()
+
+    @patch("time.sleep")
+    def test_bad_request_with_nothing_to_strip_raises_immediately(self, mock_sleep):
+        # This o1-preview request carries no sampling params, so there is
+        # nothing to drop and no attempt to refund.
+        exc = self._make_error(litellm.BadRequestError, "400 unsupported parameter")
+
+        with patch("litellm.completion", side_effect=exc) as mock_call:
+            with self.assertRaises(litellm.BadRequestError):
+                m.completion(
+                    model="o1-preview",
+                    messages=[{"role": "user", "content": "hello"}],
+                )
+            self.assertEqual(mock_call.call_count, 1)
+            mock_sleep.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
