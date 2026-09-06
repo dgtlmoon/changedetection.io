@@ -370,6 +370,23 @@ class TestHistoryPathTraversal(unittest.TestCase):
         history = watch.history
         self.assertEqual(history, {}, "Path traversal entry must be rejected")
 
+    def test_parent_dir_entry_is_rejected_by_the_containment_check(self):
+        """A bare '..' is the shortest entry that reaches and fails the containment check.
+
+        os.path.basename() reduces '/etc/passwd' and '../../etc/passwd' to
+        'passwd', so those two stop at the os.path.exists() check below the
+        guard rather than at the guard itself. '..' survives basename() intact
+        and resolves to the parent of data_dir, which does exist, so the
+        containment check is what rejects it. Not the only such input —
+        '../..' and 'foo/..' collapse to the same thing — and not the only
+        reason the check exists: it also blocks a filename inside data_dir
+        that is itself a symlink pointing outside.
+        """
+        watch = self._make_watch()
+        self._write_history_txt(watch, ['1000000000,..\n'])
+        history = watch.history
+        self.assertEqual(history, {}, "Parent-directory entry must be rejected")
+
     def test_normal_snapshot_entry_is_accepted(self):
         """A bare filename written by save_history_blob must still load correctly."""
         import uuid as uuid_builder
