@@ -71,15 +71,37 @@ class TestHandlerLlmTokenPopulation:
         result = self._run_handler_llm_section(n)
         assert result['llm_intent'] == 'flag price drops'
 
+    def test_llm_tokens_pass_the_notification_template_validator(self):
+        """A token the handler populates is useless if the form rejects it.
+
+        Mirrors forms.py ValidateJinja2Template: render, then check for
+        undeclared variables against the NotificationContextData defaults.
+        Catches a token added to handler.py but never registered.
+        """
+        from jinja2 import BaseLoader
+        from jinja2.meta import find_undeclared_variables
+        from changedetectionio.jinja2_custom.safe_jinja import create_jinja_env
+
+        env = create_jinja_env(loader=BaseLoader)
+        placeholders = NotificationContextData()
+        placeholders.set_random_for_validation()
+        env.globals.update(placeholders)
+
+        for token in ('llm_summary', 'llm_intent', 'llm_unavailable'):
+            tpl = '{{ %s }}' % token
+            env.from_string(tpl).render()
+            undeclared = find_undeclared_variables(env.parse(tpl))
+            assert not undeclared, f"{{{{ {token} }}}} is rejected by the notification validator"
+
     def test_llm_unavailable_populated_when_filter_could_not_run(self):
         n = _make_n_object(
             notification_body='{{ llm_unavailable }}Change detected',
             _llm_result={'important': True, 'summary': '',
-                         'unavailable': 'provider error (Timeout)'},
+                         'unavailable': 'evaluation error (Timeout)'},
             _llm_intent='flag price drops',
         )
         result = self._run_handler_llm_section(n)
-        assert result['llm_unavailable'] == 'provider error (Timeout)'
+        assert result['llm_unavailable'] == 'evaluation error (Timeout)'
 
     def test_llm_unavailable_empty_when_filter_ran(self):
         n = _make_n_object(

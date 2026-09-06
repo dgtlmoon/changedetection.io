@@ -389,9 +389,10 @@ def process_notification(n_object: NotificationContextData, datastore):
             or 'llm_unavailable' in scan_text):
         n_object['llm_summary'] = _llm_change_summary or (n_object.get('_llm_result') or {}).get('summary', '')
         n_object['llm_intent'] = n_object.get('_llm_intent', '')
-        # Empty when the AI intent filter ran. Set to a short reason when it did
-        # not, so a provider outage or an exhausted budget doesn't reach the user
-        # looking like a filter that deliberately let the change through.
+        # Holds a short reason for the fail-open outcomes in evaluate_change()
+        # (budget reached, or an error during the call/parse); empty otherwise —
+        # including when AI is off or no evaluation ran at all. Lets an outage
+        # stop looking like a filter that deliberately passed the change.
         n_object['llm_unavailable'] = (n_object.get('_llm_result') or {}).get('unavailable', '')
 
     # Escape diff/snapshot variables before Jinja renders them into an HTML notification.

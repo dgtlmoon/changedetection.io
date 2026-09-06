@@ -4130,6 +4130,12 @@ msgid "The AI Change Intent that was evaluated."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
+msgid ""
+"Empty in the normal case. When the AI Change Intent filter could not produce a decision (an evaluation error, or a "
+"token budget reached) the change is passed through and this holds a short reason."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr ""
 

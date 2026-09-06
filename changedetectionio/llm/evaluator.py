@@ -946,7 +946,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         logger.warning(f"LLM evaluation failed for {watch.get('uuid')}: {e}")
         # On failure: don't suppress the notification — pass through as important
         watch['llm_last_tokens_used'] = 0
-        return {'important': True, 'summary': '', 'unavailable': f'provider error ({type(e).__name__})'}
+        return {'important': True, 'summary': '', 'unavailable': f'evaluation error ({type(e).__name__})'}
 
     # Accumulate token usage: per-watch limit and global monthly budget
     _check_token_budget(watch, cfg, tokens)

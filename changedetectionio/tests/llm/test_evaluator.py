@@ -334,7 +334,7 @@ class TestEvaluateChange:
             result = evaluate_change(watch, ds, diff='- $500\n+ $400')
 
         assert result['important'] is True
-        assert result['unavailable'] == 'provider error (RuntimeError)'
+        assert result['unavailable'] == 'evaluation error (RuntimeError)'
 
     def test_budget_exhausted_marks_result_unavailable(self):
         from changedetectionio.llm.evaluator import evaluate_change

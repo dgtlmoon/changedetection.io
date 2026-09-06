@@ -4149,6 +4149,12 @@ msgstr ""
 msgid "The AI Change Intent that was evaluated."
 msgstr ""
 
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"Empty in the normal case. When the AI Change Intent filter could not produce a decision (an evaluation error, or a "
+"token budget reached) the change is passed through and this holds a short reason."
+msgstr ""
+
 # 訳注: "Warning: Contents of [token1] and [token2] depend on how the difference algorithm perceives the change."
 # → 「警告： [token1] および [token2] の内容は、差分アルゴリズムが変更をどのように認識するかによって異なります。」
 # 主語の訳を後半にまとめた
