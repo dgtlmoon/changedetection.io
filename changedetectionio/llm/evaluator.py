@@ -901,13 +901,15 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             f"LLM evaluate_change skipped for {watch.get('uuid')}: monthly budget {budget:,} reached "
             f"({used:,} used this month) — passing change through as important"
         )
-        # Fail open: don't suppress notifications when budget is exhausted
-        return {'important': True, 'summary': ''}
+        # Fail open: don't suppress notifications when budget is exhausted.
+        # 'unavailable' marks that no AI decision was made, so the notification
+        # can say so instead of looking like a filter that passed the change.
+        return {'important': True, 'summary': '', 'unavailable': 'monthly token budget reached'}
 
     # Check per-watch cumulative budget before making the call
     if not _check_token_budget(watch, cfg):
         # Already over budget — fail open (don't suppress notification)
-        return {'important': True, 'summary': ''}
+        return {'important': True, 'summary': '', 'unavailable': 'per-watch token budget reached'}
 
     url = watch.get('url', '')
     title = watch.get('page_title') or watch.get('title') or ''
@@ -944,7 +946,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         logger.warning(f"LLM evaluation failed for {watch.get('uuid')}: {e}")
         # On failure: don't suppress the notification — pass through as important
         watch['llm_last_tokens_used'] = 0
-        return {'important': True, 'summary': ''}
+        return {'important': True, 'summary': '', 'unavailable': f'provider error ({type(e).__name__})'}
 
     # Accumulate token usage: per-watch limit and global monthly budget
     _check_token_budget(watch, cfg, tokens)

@@ -125,6 +125,10 @@
                 <td><code>{{ '{{llm_intent}}' }}</code></td>
                 <td>{{ _('The AI Change Intent that was evaluated.') }}</td>
             </tr>
+            <tr>
+                <td><code>{{ '{{llm_unavailable}}' }}</code></td>
+                <td>{{ _('Empty when the AI Change Intent filter ran. When it could not run (provider error, or token budget reached) the change is passed through and this holds a short reason.') }}</td>
+            </tr>
             {% endif %}
                 {% if extra_notification_token_placeholder_info %}
                     {% for token in extra_notification_token_placeholder_info %}

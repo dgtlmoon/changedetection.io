@@ -385,9 +385,14 @@ def process_notification(n_object: NotificationContextData, datastore):
 
     # Lazily populate llm_summary / llm_intent if used in notification template
     scan_text = n_object.get('notification_body', '') + n_object.get('notification_title', '')
-    if 'llm_summary' in scan_text or 'llm_intent' in scan_text or 'raw_diff' in scan_text:
+    if ('llm_summary' in scan_text or 'llm_intent' in scan_text or 'raw_diff' in scan_text
+            or 'llm_unavailable' in scan_text):
         n_object['llm_summary'] = _llm_change_summary or (n_object.get('_llm_result') or {}).get('summary', '')
         n_object['llm_intent'] = n_object.get('_llm_intent', '')
+        # Empty when the AI intent filter ran. Set to a short reason when it did
+        # not, so a provider outage or an exhausted budget doesn't reach the user
+        # looking like a filter that deliberately let the change through.
+        n_object['llm_unavailable'] = (n_object.get('_llm_result') or {}).get('unavailable', '')
 
     # Escape diff/snapshot variables before Jinja renders them into an HTML notification.
     # GHSA-q8xq-qg4x-wphg: inscriptis decodes HTML entities when converting text/html

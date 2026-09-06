@@ -322,6 +322,48 @@ class TestEvaluateChange:
         assert result['important'] is True
         assert 'Price dropped' in result['summary']
 
+    def test_provider_error_marks_result_unavailable(self):
+        """Fail-open still passes the change through, but says the filter didn't run."""
+        from changedetectionio.llm.evaluator import evaluate_change
+
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'api_key': 'sk-test'})
+        watch = _make_watch(llm_intent='flag price drops')
+
+        with patch('changedetectionio.llm.client.completion',
+                   side_effect=RuntimeError('provider exploded')):
+            result = evaluate_change(watch, ds, diff='- $500\n+ $400')
+
+        assert result['important'] is True
+        assert result['unavailable'] == 'provider error (RuntimeError)'
+
+    def test_budget_exhausted_marks_result_unavailable(self):
+        from changedetectionio.llm.evaluator import evaluate_change
+
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'api_key': 'sk-test'})
+        watch = _make_watch(llm_intent='flag price drops')
+
+        with patch('changedetectionio.llm.evaluator.is_global_token_budget_exceeded',
+                   return_value=True), \
+             patch('changedetectionio.llm.evaluator.get_global_token_budget_month',
+                   return_value=1000):
+            result = evaluate_change(watch, ds, diff='- $500\n+ $400')
+
+        assert result['important'] is True
+        assert result['unavailable'] == 'monthly token budget reached'
+
+    def test_successful_evaluation_is_not_marked_unavailable(self):
+        from changedetectionio.llm.evaluator import evaluate_change
+
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'api_key': 'sk-test'})
+        watch = _make_watch(llm_intent='flag price drops')
+
+        llm_response = '{"important": true, "summary": "Price dropped"}'
+        with patch('changedetectionio.llm.client.completion', return_value=(llm_response, 150)):
+            result = evaluate_change(watch, ds, diff='- $500\n+ $400')
+
+        assert result['important'] is True
+        assert 'unavailable' not in result
+
     def test_cache_hit_skips_llm_call(self):
         from changedetectionio.llm.evaluator import evaluate_change
         import hashlib
@@ -496,8 +538,11 @@ class TestTokenBudget:
             result = evaluate_change(watch, ds, diff='- $500\n+ $400')
             mock_llm.assert_not_called()
 
-        # Fail open: important=True so the notification is NOT suppressed
-        assert result == {'important': True, 'summary': ''}
+        # Fail open: important=True so the notification is NOT suppressed,
+        # and marked so the notification can say the filter didn't run.
+        assert result['important'] is True
+        assert result['summary'] == ''
+        assert result['unavailable'] == 'per-watch token budget reached'
 
 
 # ---------------------------------------------------------------------------

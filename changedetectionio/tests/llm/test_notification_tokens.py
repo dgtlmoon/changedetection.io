@@ -45,10 +45,12 @@ class TestHandlerLlmTokenPopulation:
         This is tested directly to validate the handler's token population.
         """
         scan_text = n_object.get('notification_body', '') + n_object.get('notification_title', '')
-        if 'llm_summary' in scan_text or 'llm_intent' in scan_text:
+        if ('llm_summary' in scan_text or 'llm_intent' in scan_text or 'raw_diff' in scan_text
+                or 'llm_unavailable' in scan_text):
             llm_result = n_object.get('_llm_result') or {}
             n_object['llm_summary'] = llm_result.get('summary', '')
             n_object['llm_intent'] = n_object.get('_llm_intent', '')
+            n_object['llm_unavailable'] = llm_result.get('unavailable', '')
         return n_object
 
     def test_llm_summary_populated_when_token_in_body(self):
@@ -68,6 +70,25 @@ class TestHandlerLlmTokenPopulation:
         )
         result = self._run_handler_llm_section(n)
         assert result['llm_intent'] == 'flag price drops'
+
+    def test_llm_unavailable_populated_when_filter_could_not_run(self):
+        n = _make_n_object(
+            notification_body='{{ llm_unavailable }}Change detected',
+            _llm_result={'important': True, 'summary': '',
+                         'unavailable': 'provider error (Timeout)'},
+            _llm_intent='flag price drops',
+        )
+        result = self._run_handler_llm_section(n)
+        assert result['llm_unavailable'] == 'provider error (Timeout)'
+
+    def test_llm_unavailable_empty_when_filter_ran(self):
+        n = _make_n_object(
+            notification_body='{{ llm_unavailable }}Change detected',
+            _llm_result={'important': True, 'summary': 'Price dropped'},
+            _llm_intent='flag price drops',
+        )
+        result = self._run_handler_llm_section(n)
+        assert result['llm_unavailable'] == ''
 
     def test_llm_summary_in_title(self):
         n = _make_n_object(
