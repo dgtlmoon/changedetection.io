@@ -4,8 +4,11 @@ Keeps litellm import isolated so the rest of the codebase doesn't depend on it d
 and makes the call easy to mock in tests.
 """
 
+import datetime
+import email.utils
 import logging
 import os
+import random
 import time
 
 from loguru import logger
@@ -30,6 +33,7 @@ DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
 _NO_TEMPERATURE_MODEL_KEYWORDS = ('flash-lite', 'thinking-exp', 'o1', 'o3', 'o4')
 
 DEFAULT_RETRIES = 3
+DEFAULT_MAX_RETRY_DELAY = 15.0
 
 
 class _LoguruInterceptHandler(logging.Handler):
@@ -66,6 +70,85 @@ def _install_litellm_debug():
 
     _debug_installed = True
     logger.info("LLM client: litellm debug logging routed through loguru")
+
+
+def _parse_retry_after(retry_val) -> float | None:
+    """Parse a Retry-After header value per RFC 9110 into seconds (float).
+
+    Can be either:
+      - delta-seconds (e.g. 5, "5", "12.5")
+      - HTTP-date (e.g. "Wed, 21 Oct 2026 07:28:00 GMT")
+    Returns delay in seconds if positive and valid, else None.
+    """
+    if retry_val is None:
+        return None
+    if isinstance(retry_val, (int, float)):
+        return float(retry_val) if retry_val > 0 else None
+    if isinstance(retry_val, str):
+        val = retry_val.strip()
+        if not val:
+            return None
+        try:
+            sec = float(val)
+            return sec if sec > 0 else None
+        except ValueError:
+            pass
+        try:
+            dt = email.utils.parsedate_to_datetime(val)
+            if dt is not None:
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=datetime.timezone.utc)
+                now = datetime.datetime.now(datetime.timezone.utc)
+                delta = (dt - now).total_seconds()
+                return delta if delta > 0 else None
+        except Exception:
+            pass
+    return None
+
+
+def _extract_retry_after_from_exception(exc) -> float | None:
+    """Extract retry delay (seconds) from exception if present."""
+    # 1. Direct attribute on exception (e.g. exc.retry_after)
+    direct = getattr(exc, 'retry_after', None)
+    parsed = _parse_retry_after(direct)
+    if parsed is not None:
+        return parsed
+
+    # 2. Response headers (exc.response.headers)
+    resp = getattr(exc, 'response', None)
+    if resp is not None:
+        headers = getattr(resp, 'headers', None)
+        if headers and hasattr(headers, 'get'):
+            parsed = _parse_retry_after(headers.get('retry-after') or headers.get('Retry-After'))
+            if parsed is not None:
+                return parsed
+
+    # 3. Direct headers dict on exception (exc.headers)
+    headers = getattr(exc, 'headers', None)
+    if headers and hasattr(headers, 'get'):
+        parsed = _parse_retry_after(headers.get('retry-after') or headers.get('Retry-After'))
+        if parsed is not None:
+            return parsed
+
+    return None
+
+
+def _calculate_backoff(
+    exc, attempt: int, max_delay: float = DEFAULT_MAX_RETRY_DELAY
+) -> tuple[float, bool]:
+    """Calculate backoff delay in seconds with jitter, capped at max_delay.
+
+    Returns (delay_seconds, is_from_retry_after).
+    """
+    ra = _extract_retry_after_from_exception(exc)
+    jitter = random.uniform(0.1, 0.5)
+    if ra is not None:
+        delay = min(ra + jitter, max_delay)
+        return round(delay, 2), True
+
+    base = min(2 ** (attempt - 1), 8)
+    delay = min(base + jitter, max_delay)
+    return round(delay, 2), False
 
 
 def completion(  # noqa: C901
@@ -195,10 +278,11 @@ def completion(  # noqa: C901
             except Exception:
                 pass
             if attempt < DEFAULT_RETRIES:
-                _backoff = min(2 ** (attempt - 1), 8)
+                _backoff, _is_ra = _calculate_backoff(e, attempt)
+                _source_msg = "honoring Retry-After" if _is_ra else "exponential backoff"
                 logger.warning(
                     f"LLM call transient error ({type(e).__name__}, attempt {attempt}/{DEFAULT_RETRIES}), "
-                    f"retrying in {_backoff}s — model={model!r} timeout={_timeout}s error={e}"
+                    f"retrying in {_backoff}s ({_source_msg}) — model={model!r} timeout={_timeout}s error={e}"
                 )
                 time.sleep(_backoff)
                 continue
