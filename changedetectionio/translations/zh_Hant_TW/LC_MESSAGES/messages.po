@@ -3904,6 +3904,10 @@ msgstr "追蹤價格變化"
 msgid "Restock & Price Detection"
 msgstr "補貨與價格檢測"
 
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Note! A Group tag overrides the restock and price detection here."
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Re-stock & Price detection for pages with a SINGLE product"
 msgstr "針對單一產品頁面的補貨與價格檢測"
@@ -4714,6 +4718,29 @@ msgstr ""
 
 #: changedetectionio/templates/edit/include_subtract.html
 msgid "here for more CSS selector help"
+msgstr ""
+
+#: changedetectionio/templates/edit/restock_diff_options.html
+msgid "Changes in price should trigger a notification"
+msgstr ""
+
+#: changedetectionio/templates/edit/restock_diff_options.html
+msgid "Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value."
+msgstr ""
+
+#: changedetectionio/templates/edit/restock_diff_options.html
+msgid "Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value."
+msgstr ""
+
+#: changedetectionio/templates/edit/restock_diff_options.html
+#, python-format
+msgid "Price must change more than this % since the previous check to trigger a change."
+msgstr ""
+
+#: changedetectionio/templates/edit/restock_diff_options.html
+msgid ""
+"For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change "
+"more than $20 since then."
 msgstr ""
 
 #: changedetectionio/templates/edit/text-options.html
