@@ -57,6 +57,11 @@
   <div class="stab-overview-cta">
     {% if llm_config and llm_config.get('model') %}
     <span class="stab-configured-badge">&#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}</span>
+    {% if not llm_env_configured %}
+    <button type="button" class="pure-button" data-stab-goto="provider">
+      <i data-feather="settings"></i> {{ _('Edit provider') }} &rarr;
+    </button>
+    {% endif %}
     {% else %}
     <button type="button" class="pure-button pure-button-primary" data-stab-goto="provider">
       <i data-feather="settings"></i> {{ _('Configure AI Provider') }} &rarr;
@@ -164,7 +169,11 @@
 
   <div class="pure-control-group">
     {{ render_field(form.llm.form.model,
-                    placeholder=_("Enter API key and click 'Load available models'")) }}
+                    placeholder=_("Type a model name or choose from available models"),
+                    aria_describedby="llm-model-help") }}
+    <span class="pure-form-message-inline" id="llm-model-help">
+      {{ _('You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API key blank to keep your saved key.') }}
+    </span>
   </div>
 
   {% if llm_config and llm_config.get('model') %}
@@ -173,6 +182,11 @@
     <span style="color:#4a7c59;font-weight:bold;">
       &#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}
     </span>
+    &nbsp;
+    <button type="button" class="pure-button button-xsmall"
+            onclick="const field = document.getElementById('{{ form.llm.form.model.id }}'); field.focus(); field.select();">
+      {{ _('Change model') }}
+    </button>
     &nbsp;
     {# data-method="POST" tells modal.js to POST with the CSRF token instead of
        navigating — GET previously allowed <img>-based CSRF wipe (GHSA-g36r-fm2p-87xm).
