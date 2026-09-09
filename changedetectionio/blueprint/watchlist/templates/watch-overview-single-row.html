@@ -11,6 +11,9 @@
                 {%- set checking_now = is_checking_now(watch) -%}
                 {%- set history_n = watch.history_n -%}
                 {%- set favicon = watch.get_favicon_filename() -%}
+                {#  Resolved once per row: each read re-validates the URL and, for a Jinja2 templated
+                    URL, builds a fresh sandboxed environment - see validate_url.py #}
+                {%- set open_link = watch.open_link -%}
                 {%- set error_texts = watch.compile_error_texts(has_proxies=has_proxies) -%}
                 {%- set system_use_url_watchlist = datastore.data['settings']['application']['ui'].get('use_page_title_in_list')  -%}
                 {#  Class settings mirrored in changedetectionio/static/js/realtime.js for the frontend #}
@@ -48,7 +51,7 @@
                     <div class="grid-wrapper">
                     {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
                         <div class="favicon">
-                            <a target="_blank" rel="noopener" href="{{ watch.open_link }}">
+                            <a target="_blank" rel="noopener" href="{{ open_link }}">
                                 {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
                                 <img alt="Favicon thumbnail"
                                      class="favicon lazy-favicon"
@@ -74,7 +77,7 @@
                                 {% else %}
                                     {{ watch.get('title') or watch.link }}
                                 {% endif %}
-                                <a class="external" target="_blank" rel="noopener" href="{{ watch.open_link }}" title="{{ watch.open_link }}">&nbsp;</a>
+                                <a class="external" target="_blank" rel="noopener" href="{{ open_link }}" title="{{ open_link }}">&nbsp;</a>
                             </span>
 
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
