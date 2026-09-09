@@ -4,6 +4,7 @@ from loguru import logger
 from wtforms.widgets.core import TimeInput
 from flask_babel import lazy_gettext as _l, gettext
 
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
 from changedetectionio.llm.evaluator import (
@@ -1164,9 +1165,8 @@ class globalSettingsApplicationUIForm(Form):
                                  choices=[('long', _l('Long (1 minute ago)')), ('short', _l('Short (1m ago)'))],
                                  default='long', validators=[validators.Optional()])
     sidebar_mode = SelectField(_l('Navigation sidebar'),
-                               choices=[('collapsed', _l('Collapsed icon rail (expands on hover)')),
-                                        ('pinned', _l('Always expanded'))],
-                               default='collapsed', validators=[validators.Optional()])
+                               choices=MENU_SIDEBAR_ACTIONMODES,
+                               default=MENU_SIDEBAR_ACTIONMODES_DEFAULT, validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
