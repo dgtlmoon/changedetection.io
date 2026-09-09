@@ -42,7 +42,8 @@
 @use "parts/sub_tabs";
 
 // Smooth transitions for theme switching
-body,
+// Disabled - people complained
+/*body,
 .pure-table,
 .pure-table thead,
 .pure-table td,
@@ -65,7 +66,7 @@ code,
 a,
 .watch-controls img {
   transition: color 0.4s ease, background-color 0.4s ease, background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
-}
+}*/
 
 body {
   color: var(--color-text);
@@ -305,7 +306,7 @@ code {
 
 body:after {
   content: "";
-  background: linear-gradient(130deg, var(--color-background-gradient-first), var(--color-background-gradient-second) 41.07%, var(--color-background-gradient-third) 84.05%);
+  background: var(--page-background-gradient);
 }
 
 body:after,
@@ -697,12 +698,12 @@ footer {
   }
 }
 
-
 @media only screen and (max-width: 760px),
 (min-device-width: 768px) and (max-device-width: $desktop-wide-breakpoint) {
   .edit-form {
     padding: 0.5em;
     margin: 0;
+    width: 100%;
   }
 
   #nav-menu {

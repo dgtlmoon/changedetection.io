@@ -7,12 +7,12 @@
     <li class="action-sidebar-li" id="action-sidebar-logo">
 
         {%- if has_password and not current_user.is_authenticated -%}
-          <a id="cdio-logo" href="https://changedetection.io" rel="noopener">
+          <a id="cdio-logo" href="https://changedetection.io" rel="noopener" title="ChangeDetection.io intelligent web page change detection.">
               <span id="logo-expanded"><strong>Change</strong>Detection.io</span>
               <span id="logo-short"><strong>CD</strong>IO</span>
           </a>
         {%- else -%}
-          <a id="cdio-logo" href="{{url_for('watchlist.index')}}">
+          <a id="cdio-logo" href="{{url_for('watchlist.index')}}" title="ChangeDetection.io intelligent web page change detection.">
               <span id="logo-expanded"><strong>Change</strong>Detection.io</span>
               <span id="logo-short"><strong>CD</strong>IO</span>
           </a>
