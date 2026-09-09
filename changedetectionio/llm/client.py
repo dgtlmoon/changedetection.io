@@ -4,8 +4,6 @@ Keeps litellm import isolated so the rest of the codebase doesn't depend on it d
 and makes the call easy to mock in tests.
 """
 
-import datetime
-import email.utils
 import logging
 import os
 import random
@@ -72,83 +70,24 @@ def _install_litellm_debug():
     logger.info("LLM client: litellm debug logging routed through loguru")
 
 
-def _parse_retry_after(retry_val) -> float | None:
-    """Parse a Retry-After header value per RFC 9110 into seconds (float).
+def _get_retry_delay(exc, attempt: int, max_delay: float = DEFAULT_MAX_RETRY_DELAY) -> float | None:
+    """Return backoff delay in seconds with jitter, or None if Retry-After exceeds max_delay (abort)."""
+    ra = getattr(exc, 'retry_after', None)
+    if ra is None:
+        headers = getattr(getattr(exc, 'response', None), 'headers', None) or getattr(exc, 'headers', None) or {}
+        ra = headers.get('retry-after') or headers.get('Retry-After') if hasattr(headers, 'get') else None
 
-    Can be either:
-      - delta-seconds (e.g. 5, "5", "12.5")
-      - HTTP-date (e.g. "Wed, 21 Oct 2026 07:28:00 GMT")
-    Returns delay in seconds if positive and valid, else None.
-    """
-    if retry_val is None:
-        return None
-    if isinstance(retry_val, (int, float)):
-        return float(retry_val) if retry_val > 0 else None
-    if isinstance(retry_val, str):
-        val = retry_val.strip()
-        if not val:
-            return None
-        try:
-            sec = float(val)
-            return sec if sec > 0 else None
-        except ValueError:
-            pass
-        try:
-            dt = email.utils.parsedate_to_datetime(val)
-            if dt is not None:
-                if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=datetime.timezone.utc)
-                now = datetime.datetime.now(datetime.timezone.utc)
-                delta = (dt - now).total_seconds()
-                return delta if delta > 0 else None
-        except Exception:
-            pass
-    return None
-
-
-def _extract_retry_after_from_exception(exc) -> float | None:
-    """Extract retry delay (seconds) from exception if present."""
-    # 1. Direct attribute on exception (e.g. exc.retry_after)
-    direct = getattr(exc, 'retry_after', None)
-    parsed = _parse_retry_after(direct)
-    if parsed is not None:
-        return parsed
-
-    # 2. Response headers (exc.response.headers)
-    resp = getattr(exc, 'response', None)
-    if resp is not None:
-        headers = getattr(resp, 'headers', None)
-        if headers and hasattr(headers, 'get'):
-            parsed = _parse_retry_after(headers.get('retry-after') or headers.get('Retry-After'))
-            if parsed is not None:
-                return parsed
-
-    # 3. Direct headers dict on exception (exc.headers)
-    headers = getattr(exc, 'headers', None)
-    if headers and hasattr(headers, 'get'):
-        parsed = _parse_retry_after(headers.get('retry-after') or headers.get('Retry-After'))
-        if parsed is not None:
-            return parsed
-
-    return None
-
-
-def _calculate_backoff(
-    exc, attempt: int, max_delay: float = DEFAULT_MAX_RETRY_DELAY
-) -> tuple[float, bool]:
-    """Calculate backoff delay in seconds with jitter, capped at max_delay.
-
-    Returns (delay_seconds, is_from_retry_after).
-    """
-    ra = _extract_retry_after_from_exception(exc)
-    jitter = random.uniform(0.1, 0.5)
     if ra is not None:
-        delay = min(ra + jitter, max_delay)
-        return round(delay, 2), True
+        try:
+            sec = float(ra)
+            if sec > max_delay:
+                return None  # Server asked for longer than ceiling; abort immediately
+            return round(min(sec + random.uniform(0.1, 0.5), max_delay), 2)
+        except (ValueError, TypeError):
+            pass
 
-    base = min(2 ** (attempt - 1), 8)
-    delay = min(base + jitter, max_delay)
-    return round(delay, 2), False
+    base = 2 ** (attempt - 1)
+    return round(min(base + random.uniform(0, base), max_delay), 2)
 
 
 def completion(  # noqa: C901
@@ -160,15 +99,17 @@ def completion(  # noqa: C901
     max_tokens: int = None,
     extra_body: dict = None,
     debug: bool = False,
+    retries: int = None,
 ) -> tuple[str, int, int, int]:
     """
     Call the LLM and return (response_text, total_tokens, input_tokens, output_tokens).
-    Retries up to DEFAULT_RETRIES times on timeout or connection errors.
+    Retries up to retries times on timeout, connection, or transient errors.
     Token counts are 0 if the provider doesn't return usage data.
     Raises on network/auth errors — callers handle gracefully.
 
     timeout: seconds for the request. Local endpoints get a longer value than cloud —
     see evaluator.resolve_llm_timeout().
+    retries: number of retry attempts. Use 0 for user-facing interactive paths.
     """
     try:
         import litellm
@@ -179,6 +120,7 @@ def completion(  # noqa: C901
         _install_litellm_debug()
 
     _timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
+    max_attempts = (retries + 1) if retries is not None else DEFAULT_RETRIES
 
     kwargs = {
         'model': model,
@@ -221,7 +163,7 @@ def completion(  # noqa: C901
     logger.trace(messages)
 
     attempt = 0
-    while attempt < DEFAULT_RETRIES:
+    while attempt < max_attempts:
         attempt += 1
         try:
             response = litellm.completion(**kwargs)
@@ -269,25 +211,31 @@ def completion(  # noqa: C901
             return text, total_tokens, input_tokens, output_tokens
 
         except _retryable as e:
-            # litellm formats its Timeout message with None when the provider doesn't
-            # propagate the timeout value — patch the exception args in-place so every
-            # caller that logs str(e) sees the real number.
-            _fix = f'after {_timeout} seconds'
-            try:
-                e.args = tuple(str(a).replace('after None seconds', _fix) for a in e.args)
-            except Exception:
-                pass
-            if attempt < DEFAULT_RETRIES:
-                _backoff, _is_ra = _calculate_backoff(e, attempt)
-                _source_msg = "honoring Retry-After" if _is_ra else "exponential backoff"
+            # litellm formats its Timeout message with 'after None seconds' when the
+            # provider doesn't propagate the timeout value — patch the exception args
+            # in-place so callers that log str(e) see the configured timeout.
+            if isinstance(e, litellm.Timeout):
+                _fix = f'after {_timeout} seconds'
+                try:
+                    e.args = tuple(str(a).replace('after None seconds', _fix) for a in e.args)
+                except Exception:
+                    pass
+            if attempt < max_attempts:
+                delay = _get_retry_delay(e, attempt)
+                if delay is None:
+                    logger.warning(
+                        f"LLM call {type(e).__name__} Retry-After exceeds ceiling ({DEFAULT_MAX_RETRY_DELAY}s), "
+                        f"aborting retry — model={model!r} error={e}"
+                    )
+                    raise
                 logger.warning(
-                    f"LLM call transient error ({type(e).__name__}, attempt {attempt}/{DEFAULT_RETRIES}), "
-                    f"retrying in {_backoff}s ({_source_msg}) — model={model!r} timeout={_timeout}s error={e}"
+                    f"LLM call transient error ({type(e).__name__}, attempt {attempt}/{max_attempts}), "
+                    f"retrying in {delay}s — model={model!r} timeout={_timeout}s error={e}"
                 )
-                time.sleep(_backoff)
+                time.sleep(delay)
                 continue
             logger.warning(
-                f"LLM call failed after {DEFAULT_RETRIES} attempts ({_timeout}s timeout) "
+                f"LLM call failed after {attempt} attempt(s) ({_timeout}s timeout) "
                 f"model={model!r} error={e}"
             )
             raise

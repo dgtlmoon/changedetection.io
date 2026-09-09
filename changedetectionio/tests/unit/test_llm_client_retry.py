@@ -1,4 +1,3 @@
-import datetime
 import unittest
 from unittest.mock import MagicMock, call, patch
 import litellm
@@ -37,64 +36,40 @@ class TestLLMClientRetryHandling(unittest.TestCase):
             err.retry_after = retry_after
         return err
 
-    def test_parse_retry_after_numeric(self):
-        self.assertEqual(m._parse_retry_after(5), 5.0)
-        self.assertEqual(m._parse_retry_after(3.5), 3.5)
-        self.assertEqual(m._parse_retry_after("7"), 7.0)
-        self.assertEqual(m._parse_retry_after(" 12.5 "), 12.5)
-        self.assertIsNone(m._parse_retry_after(0))
-        self.assertIsNone(m._parse_retry_after("-1"))
-        self.assertIsNone(m._parse_retry_after(""))
-        self.assertIsNone(m._parse_retry_after(None))
-        self.assertIsNone(m._parse_retry_after("invalid"))
-
-    def test_parse_retry_after_http_date(self):
-        now = datetime.datetime.now(datetime.timezone.utc)
-        future = (now + datetime.timedelta(seconds=15)).strftime("%a, %d %b %Y %H:%M:%S GMT")
-        past = (now - datetime.timedelta(seconds=10)).strftime("%a, %d %b %Y %H:%M:%S GMT")
-
-        parsed_future = m._parse_retry_after(future)
-        self.assertIsNotNone(parsed_future)
-        self.assertTrue(10.0 <= parsed_future <= 16.0)
-
-        parsed_past = m._parse_retry_after(past)
-        self.assertIsNone(parsed_past)
-
     @patch("random.uniform", return_value=0.25)
-    def test_calculate_backoff_from_exception_attribute(self, mock_jitter):
+    def test_get_retry_delay_from_exception_attribute(self, mock_jitter):
         exc = self._make_error(litellm.RateLimitError, retry_after=4)
-        delay, is_ra = m._calculate_backoff(exc, attempt=1)
-        self.assertTrue(is_ra)
+        delay = m._get_retry_delay(exc, attempt=1)
         self.assertEqual(delay, 4.25)
 
     @patch("random.uniform", return_value=0.2)
-    def test_calculate_backoff_from_response_headers(self, mock_jitter):
+    def test_get_retry_delay_from_response_headers(self, mock_jitter):
         exc = self._make_error(
             litellm.ServiceUnavailableError, headers={"retry-after": "6"}
         )
-        delay, is_ra = m._calculate_backoff(exc, attempt=1)
-        self.assertTrue(is_ra)
+        delay = m._get_retry_delay(exc, attempt=1)
         self.assertEqual(delay, 6.2)
 
-    @patch("random.uniform", return_value=0.3)
-    def test_calculate_backoff_capped_at_max_delay(self, mock_jitter):
+    def test_get_retry_delay_exceeding_max_delay_returns_none(self):
         exc = self._make_error(litellm.RateLimitError, retry_after=3600)
-        delay, is_ra = m._calculate_backoff(exc, attempt=1, max_delay=15.0)
-        self.assertTrue(is_ra)
-        self.assertEqual(delay, 15.0)
+        delay = m._get_retry_delay(exc, attempt=1, max_delay=15.0)
+        self.assertIsNone(delay)
+
+    @patch("random.uniform", return_value=0.3)
+    def test_get_retry_delay_within_max_delay(self, mock_jitter):
+        exc = self._make_error(litellm.RateLimitError, retry_after=10)
+        delay = m._get_retry_delay(exc, attempt=1, max_delay=15.0)
+        self.assertEqual(delay, 10.3)
 
     @patch("random.uniform", return_value=0.15)
-    def test_calculate_backoff_fallback_exponential(self, mock_jitter):
+    def test_get_retry_delay_fallback_exponential(self, mock_jitter):
         exc = self._make_error(litellm.InternalServerError)
-        delay1, is_ra1 = m._calculate_backoff(exc, attempt=1)
-        delay2, is_ra2 = m._calculate_backoff(exc, attempt=2)
-        delay3, is_ra3 = m._calculate_backoff(exc, attempt=3)
+        delay1 = m._get_retry_delay(exc, attempt=1)
+        delay2 = m._get_retry_delay(exc, attempt=2)
+        delay3 = m._get_retry_delay(exc, attempt=3)
 
-        self.assertFalse(is_ra1)
         self.assertEqual(delay1, 1.15)
-        self.assertFalse(is_ra2)
         self.assertEqual(delay2, 2.15)
-        self.assertFalse(is_ra3)
         self.assertEqual(delay3, 4.15)
 
     @patch("random.uniform", return_value=0.1)
@@ -170,6 +145,39 @@ class TestLLMClientRetryHandling(unittest.TestCase):
                 m.completion(
                     model="gemini/gemini-2.5-flash",
                     messages=[{"role": "user", "content": "hello"}],
+                )
+            self.assertEqual(mock_call.call_count, 1)
+            mock_sleep.assert_not_called()
+
+    @patch("time.sleep")
+    def test_retry_after_exceeding_max_delay_aborts_immediately(self, mock_sleep):
+        exc = self._make_error(
+            litellm.RateLimitError,
+            "429 Rate limit reached",
+            headers={"retry-after": "60"},
+        )
+        with patch("litellm.completion", side_effect=exc) as mock_call:
+            with self.assertRaises(litellm.RateLimitError):
+                m.completion(
+                    model="gemini/gemini-2.5-flash",
+                    messages=[{"role": "user", "content": "hello"}],
+                )
+            self.assertEqual(mock_call.call_count, 1)
+            mock_sleep.assert_not_called()
+
+    @patch("time.sleep")
+    def test_completion_with_zero_retries_fails_immediately(self, mock_sleep):
+        exc = self._make_error(
+            litellm.RateLimitError,
+            "429 Quota exhausted",
+            headers={"retry-after": "5"},
+        )
+        with patch("litellm.completion", side_effect=exc) as mock_call:
+            with self.assertRaises(litellm.RateLimitError):
+                m.completion(
+                    model="gemini/gemini-2.5-flash",
+                    messages=[{"role": "user", "content": "hello"}],
+                    retries=0,
                 )
             self.assertEqual(mock_call.call_count, 1)
             mock_sleep.assert_not_called()

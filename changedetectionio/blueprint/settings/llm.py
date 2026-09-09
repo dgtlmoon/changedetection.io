@@ -204,6 +204,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 timeout=resolve_llm_timeout(llm_cfg),
                 max_tokens=apply_local_token_multiplier(200, llm_cfg),
                 debug=get_llm_settings(datastore).debug,
+                retries=0,
             )
             reply = text.strip()
             if not reply:
