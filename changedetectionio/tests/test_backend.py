@@ -23,7 +23,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Do this a few times.. ensures we dont accidently set the status
     for n in range(3):
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
         # Give the thread time to pick it up
         wait_for_all_checks(client)
@@ -61,7 +61,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     set_modified_response(datastore_path=datastore_path)
 
     # Force recheck
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -108,7 +108,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
 
     # Do this a few times.. ensures we don't accidently set the status
     for n in range(2):
-        res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         # Give the thread time to pick it up
         wait_for_all_checks(client)
 
@@ -123,7 +123,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # Recheck it but only with a title change, content wasnt changed
     set_original_response(datastore_path=datastore_path, extra_title=" and more")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'head title and more' in res.data
@@ -132,14 +132,14 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     time.sleep(1)
 
     # hit the mark all viewed link
-    res = client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    res = client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
     assert b'class="has-unread-changes' not in res.data
     assert b'has-unread-changes' not in res.data
 
     # #2458 "clear history" should make the Watch object update its status correctly when the first snapshot lands again
-    client.get(url_for("ui.clear_watch_history", uuid=uuid))
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.clear_watch_history", uuid=uuid))
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'preview/' in res.data
@@ -152,7 +152,7 @@ def test_title_scraper(client, live_server, measure_memory_usage, datastore_path
 
     set_original_response(datastore_path=datastore_path)
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks()
 
     # It should report nothing found (no new 'has-unread-changes' class)
@@ -163,7 +163,7 @@ def test_title_scraper(client, live_server, measure_memory_usage, datastore_path
     # Recheck it but only with a title change, content wasnt changed
     set_original_response(datastore_path=datastore_path, extra_title=" and more")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'head title and more' in res.data
@@ -179,7 +179,7 @@ def test_title_scraper(client, live_server, measure_memory_usage, datastore_path
 
     set_original_response(datastore_path=datastore_path, extra_title=" SHOULD NOT APPEAR")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'SHOULD NOT APPEAR' not in res.data
@@ -194,7 +194,7 @@ def test_title_scraper_html_only(client, live_server, measure_memory_usage, data
     test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
 
     uuid = client.application.config.get('DATASTORE').add_watch(test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks()
 
     # It should report nothing found (no new 'has-unread-changes' class)
@@ -222,7 +222,7 @@ def test_requests_timeout(client, live_server, measure_memory_usage, datastore_p
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # requests takes >2 sec but we timeout at 1 second
@@ -238,7 +238,7 @@ def test_requests_timeout(client, live_server, measure_memory_usage, datastore_p
               'application-fetch_backend': "html_requests"},
         follow_redirects=True
     )
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -273,7 +273,7 @@ got it\r\n
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -333,7 +333,7 @@ got it\r\n
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -379,7 +379,7 @@ def test_plaintext_even_if_xml_content(client, live_server, measure_memory_usage
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -407,7 +407,7 @@ def test_plaintext_even_if_xml_content_and_can_apply_filters(client, live_server
 
     test_url=url_for('test_endpoint', content_type="text/plain", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": ['//string']})
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(
@@ -431,7 +431,7 @@ def test_last_error_cleared_on_same_checksum(client, live_server, datastore_path
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
 
     # First check - establishes baseline checksum
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Inject a stale last_error directly (simulates a prior failed check)
@@ -440,7 +440,7 @@ def test_last_error_cleared_on_same_checksum(client, live_server, datastore_path
     assert datastore.data['watching'][uuid].get('last_error') == 'Some previous error'
 
     # Second check - same content, so checksumFromPreviousCheckWasTheSame will fire
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # last_error must be cleared even though no change was detected

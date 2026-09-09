@@ -130,7 +130,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             logger.exception("LLM model list full traceback:")
             return jsonify({'models': [], 'error': str(e)}), 400
 
-    @llm_blueprint.route("/test", methods=['GET'])
+    @llm_blueprint.route("/test", methods=['POST'])
     @login_optionally_required
     def llm_test():
         from flask import request

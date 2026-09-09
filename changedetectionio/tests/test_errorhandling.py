@@ -21,7 +21,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text, data
                        _external=True)
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -64,7 +64,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage, datastore_path):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)

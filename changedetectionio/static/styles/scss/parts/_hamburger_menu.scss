@@ -122,7 +122,7 @@
     li {
       border-bottom: 1px solid var(--color-border-table-cell);
 
-      >* {
+      >*, >form>button {
         display: block;
         padding: 1rem 1.5rem;
         color: var(--color-text);
@@ -133,6 +133,14 @@
         &:hover {
           background: var(--color-background-menu-link-hover);
         }
+      }
+
+      // Buttons shrink-wrap and centre their label; anchors don't. No global
+      // border-box reset here, so this must not be folded into the rule above.
+      >form>button {
+        box-sizing: border-box;
+        width: 100%;
+        text-align: left;
       }
       &#menu-pause, &#menu-mute {
         display: none;

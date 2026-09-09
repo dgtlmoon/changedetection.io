@@ -144,7 +144,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
@@ -213,7 +213,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
 
     # This should insert the {current_snapshot}
     set_more_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
     # Verify what was sent as a notification, this file should exist
@@ -227,11 +227,11 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     os.unlink(os.path.join(datastore_path, "notification.txt"))
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     assert os.path.exists(os.path.join(datastore_path, "notification.txt")) == False
 
@@ -266,7 +266,7 @@ def test_check_notification(client, live_server, measure_memory_usage, datastore
     assert "fallback-body" in notification_submission
 
     # cleanup for the next
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -324,12 +324,12 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
     # Add a watch and trigger a HTTP POST
     test_url = url_for('test_endpoint', _external=True)
     watch_uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag="nice one")
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     set_modified_response(datastore_path=datastore_path)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
@@ -373,7 +373,7 @@ def test_notification_custom_endpoint_and_jinja2(client, live_server, measure_me
 
     os.unlink(os.path.join(datastore_path, "notification-url.txt"))
 
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -474,7 +474,7 @@ def test_global_send_test_notification(client, live_server, measure_memory_usage
         b"Connection error occurred" in res.data
     )
     
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -500,7 +500,7 @@ def test_single_send_test_notification_on_watch(client, live_server, measure_mem
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     test_notification_url = url_for('test_notification_endpoint', _external=True).replace('http://', 'post://')+"?xxx={{ watch_url }}&+custom-header=123"
@@ -545,7 +545,7 @@ def test_send_test_notification_with_system_default_format(client, live_server, 
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # New watches default to USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH.
@@ -564,7 +564,7 @@ def test_send_test_notification_with_system_default_format(client, live_server, 
     assert res.status_code != 400
     assert res.status_code != 500
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def _test_color_notifications(client, notification_body_token, datastore_path):
@@ -605,7 +605,7 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
     set_modified_response(datastore_path=datastore_path)
 
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -616,7 +616,7 @@ def _test_color_notifications(client, notification_body_token, datastore_path):
         s = f'<span style="{HTML_CHANGED_STYLE}" role="note" aria-label="Changed text" title="Changed text">Which is across multiple lines</span><br>'
         assert s in x
 
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -673,7 +673,7 @@ def _test_custom_html_in_notification_body_not_escaped(client, datastore_path, c
     wait_for_all_checks(client)
     set_modified_response(datastore_path=datastore_path)
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -686,7 +686,7 @@ def _test_custom_html_in_notification_body_not_escaped(client, datastore_path, c
     assert '<a href=' in x, f"Custom HTML <a> tag not found unescaped (content_type={content_type})"
     assert '<span' in x, f"Expected color <span> tags not found (content_type={content_type})"
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def test_plaintext_watch_custom_html_in_notification_body_not_escaped(client, live_server, measure_memory_usage, datastore_path):
@@ -762,7 +762,7 @@ def test_html_watch_diff_content_escaped_in_html_notification(client, live_serve
     )
     write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), attacker_html)
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -782,7 +782,7 @@ def test_html_watch_diff_content_escaped_in_html_notification(client, live_serve
     assert '<img src="https://attacker.example/track"' not in body, \
         f"Diff content from text/html page was NOT escaped — tracking pixel reached HTML notification: {body!r}"
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
 def test_source_url_diff_content_escaped_in_html_notification(client, live_server, measure_memory_usage, datastore_path):
@@ -838,7 +838,7 @@ def test_source_url_diff_content_escaped_in_html_notification(client, live_serve
     )
     write_test_file_and_sync(os.path.join(datastore_path, "endpoint-content.txt"), attacker_html)
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -856,4 +856,4 @@ def test_source_url_diff_content_escaped_in_html_notification(client, live_serve
     assert '<img src="https://attacker.example/track"' not in body, \
         f"source: URL raw HTML was NOT escaped — tracking pixel reached HTML notification: {body!r}"
 
-    client.get(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+    client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

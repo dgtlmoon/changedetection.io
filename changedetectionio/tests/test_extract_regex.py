@@ -78,7 +78,7 @@ def test_check_filter_multiline(client, live_server, measure_memory_usage, datas
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -129,7 +129,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -163,7 +163,7 @@ def test_check_filter_and_regex_extract(client, live_server, measure_memory_usag
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -240,7 +240,7 @@ def test_extract_lines_containing(client, live_server, measure_memory_usage, dat
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -287,7 +287,7 @@ def test_extract_lines_containing_case_insensitive(client, live_server, measure_
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -334,7 +334,7 @@ def test_extract_lines_containing_multiple_terms(client, live_server, measure_me
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -404,7 +404,7 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
 
     # First check — establishes filtered+ignored baseline. previous_md5 was False so
     # a change is always detected here; mark_all_viewed clears it before we assert.
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Sanity: preview should only show celsius lines
@@ -422,13 +422,13 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(changed_data)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data, "Changing an ignored line should not trigger a change notification"
 
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(1)
 
     # Change the non-ignored celsius line — SHOULD trigger
@@ -441,7 +441,7 @@ def test_extract_lines_containing_with_ignore_text(client, live_server, measure_
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(triggered_data)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
@@ -468,7 +468,7 @@ def test_extract_lines_containing_with_extract_text_regex(client, live_server, m
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -526,7 +526,7 @@ def test_extract_lines_containing_with_include_filters_css(client, live_server, 
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -593,7 +593,7 @@ def test_ignore_text_applied_before_extract_text_regex(client, live_server, meas
     )
     assert b"unpaused" in res.data
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Bump only the IGNORED lines — these should not move the checksum
@@ -606,14 +606,14 @@ def test_ignore_text_applied_before_extract_text_regex(client, live_server, meas
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(changed_data)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data, \
         "Changing only ignored lines should not trigger a change even when extract_text regex is set"
 
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(1)
 
     # Now bump the non-ignored line — this SHOULD trigger
@@ -626,7 +626,7 @@ def test_ignore_text_applied_before_extract_text_regex(client, live_server, meas
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(triggered_data)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))

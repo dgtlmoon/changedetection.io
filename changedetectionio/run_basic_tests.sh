@@ -91,6 +91,10 @@ export HIDE_REFERER=True
 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notification.py tests/test_access_control.py
 
 
+# Re #4309 - RSS pubDate/timestamps must be correct on containers that don't run UTC
+# (Europe/Athens is UTC+2/+3, so any naive local->UTC relabelling shows up as a shifted date)
+TZ=Europe/Athens pytest -vv -s --maxfail=1 tests/test_rss.py
+
 # Re-run a few tests that will trigger brotli based storage
 # And again with brotli+screenshot attachment
 SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py tests/test_notification.py  tests/test_access_control.py

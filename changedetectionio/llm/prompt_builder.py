@@ -9,39 +9,44 @@ from .bm25_trim import trim_to_relevant
 
 _AGO_RE = re.compile(r'^\d+\s+\w+\s+ago$', re.IGNORECASE)
 
-SNAPSHOT_CONTEXT_CHARS = 30_000   # current page state excerpt sent alongside the diff
+SNAPSHOT_CONTEXT_CHARS = 30_000  # current page state excerpt sent alongside the diff
 
 
 def _annotate_moved_lines(diff_text: str) -> str:
     """
     Pre-process a unified diff to mark lines that appear on both the + and - sides
-    as [MOVED] rather than genuinely added/removed. This prevents the LLM from
+    as [MOVED] (~ prefix) rather than genuinely added/removed. This prevents the LLM from
     incorrectly classifying repositioned content as new or deleted.
+    Also marks standalone relative timestamps (e.g. '3 hours ago') as ~ trivial.
 
     Lines are compared after stripping leading +/- and whitespace so that
     indentation changes don't prevent matching.
     """
     lines = diff_text.splitlines()
-    added_texts   = {l[1:].strip().lower() for l in lines if l.startswith('+') and l[1:].strip()}
-    removed_texts = {l[1:].strip().lower() for l in lines if l.startswith('-') and l[1:].strip()}
-    moved_texts   = added_texts & removed_texts
-
-    if not moved_texts:
-        return diff_text
+    added_texts = {
+        line[1:].strip().lower() for line in lines if line.startswith('+') and line[1:].strip()
+    }
+    removed_texts = {
+        line[1:].strip().lower() for line in lines if line.startswith('-') and line[1:].strip()
+    }
+    moved_texts = added_texts & removed_texts
 
     result = []
+    has_changes = False
     for line in lines:
         if line.startswith(('+', '-')):
             bare = line[1:].strip().lower()
             if bare in moved_texts or _AGO_RE.match(line[1:].strip()):
                 result.append(f'~{line[1:]}')  # ~ prefix = moved/reordered/trivial, skip
+                has_changes = True
                 continue
         result.append(line)
-    return '\n'.join(result)
+    return '\n'.join(result) if has_changes else diff_text
 
 
-def build_eval_prompt(intent: str, diff: str, current_snapshot: str = '',
-                      url: str = '', title: str = '') -> str:
+def build_eval_prompt(
+    intent: str, diff: str, current_snapshot: str = '', url: str = '', title: str = ''
+) -> str:
     """
     Build the user message for a diff evaluation call.
     The system prompt is kept separate (see build_eval_system_prompt).
@@ -131,8 +136,9 @@ def build_preview_system_prompt() -> str:
     )
 
 
-def build_change_summary_prompt(diff: str, custom_prompt: str,
-                                current_snapshot: str = '', url: str = '', title: str = '') -> str:
+def build_change_summary_prompt(
+    diff: str, custom_prompt: str, current_snapshot: str = '', url: str = '', title: str = ''
+) -> str:
     """
     Build the user message for an AI Change Summary call.
     The user supplies their own instructions (custom_prompt); this wraps them

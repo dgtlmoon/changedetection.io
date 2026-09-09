@@ -173,6 +173,44 @@ const ModalDialog = {
 window.ModalDialog = ModalDialog;
 
 /**
+ * Submit `url` as a POST carrying the CSRF token, via a throwaway body-level form.
+ *
+ * Body-level (rather than wrapping the link) because these links often live inside another
+ * <form> - the watch list and the edit page both do - and nested forms are invalid HTML that
+ * browsers silently drop. The token comes from the global `csrftoken` set in base.html.
+ *
+ * Used for state-changing actions that must not be reachable by GET, otherwise an
+ * <img src="...">  on any page the operator visits performs the action for them.
+ */
+function postWithCsrf(url) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = url;
+  form.style.display = 'none';
+  if (typeof csrftoken !== 'undefined' && csrftoken) {
+    const tok = document.createElement('input');
+    tok.type = 'hidden';
+    tok.name = 'csrf_token';
+    tok.value = csrftoken;
+    form.appendChild(tok);
+  }
+  document.body.appendChild(form);
+  form.submit();
+}
+window.postWithCsrf = postWithCsrf;
+
+/**
+ * Anchors marked data-method="POST" that do NOT also ask for confirmation.
+ * (The confirm variant is handled in the data-requires-confirm handler below.)
+ */
+$(document).ready(function() {
+  $(document).on('click', 'a[data-method="POST"]:not([data-requires-confirm])', function(e) {
+    e.preventDefault();
+    postWithCsrf($(this).attr('href'));
+  });
+});
+
+/**
  * Auto-attach modal confirmations to links with data-requires-confirm attribute
  * Usage in HTML:
  * <a href="/delete"
@@ -203,19 +241,7 @@ $(document).ready(function() {
         // on a bare GET, since <img src=...> CSRF relies on GET firing.
         const method = ($element.attr('data-method') || 'GET').toUpperCase();
         if (method === 'POST') {
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = url;
-          form.style.display = 'none';
-          if (typeof csrftoken !== 'undefined' && csrftoken) {
-            const tok = document.createElement('input');
-            tok.type = 'hidden';
-            tok.name = 'csrf_token';
-            tok.value = csrftoken;
-            form.appendChild(tok);
-          }
-          document.body.appendChild(form);
-          form.submit();
+          postWithCsrf(url);
           return;
         }
 

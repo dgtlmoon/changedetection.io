@@ -73,7 +73,7 @@ $(function () {
 
         // Request start, needs CSRF?
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: recheck_proxy_start_url,
         }).done(function (data) {
             $.each(data, function (proxy_key, state) {

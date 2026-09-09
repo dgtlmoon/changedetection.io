@@ -127,7 +127,7 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
 
     # Price drops 100.00 -> 82.00 => -18%, expect a green down arrow
     set_price_response(datastore_path=datastore_path, price="82.00")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'price-change down' in res.data, "Price drop should show a down arrow"
@@ -143,7 +143,7 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
 
     # Price rises 82.00 -> 90.00 => +9.8%, expect an up arrow
     set_price_response(datastore_path=datastore_path, price="90.00")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'price-change up' in res.data, "Price rise should show an up arrow"
@@ -159,7 +159,7 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
     # Re-check with NO price change - the page content is identical so the check short-circuits
     # (checksumFromPreviousCheckWasTheSame) and the processor never runs, so last_price is NOT
     # advanced and the arrow persists showing the last real move.
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'price-change up' in res.data, "Arrow should persist across an unchanged (short-circuited) check"
@@ -170,7 +170,7 @@ def test_restock_price_change_direction(client, live_server, measure_memory_usag
     # PRICE stays 90.00. last_price must NOT be clobbered to 90 - it should still hold 82 so the
     # arrow persists. (Previously last_price was re-stamped every check and collapsed to == price.)
     set_price_response(datastore_path=datastore_path, price="90.00", nonce="changed-body-same-price")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert float(get_restock(client).get('last_price')) == 82.0, "last_price must be preserved when the price is unchanged but the page content changed"
@@ -232,7 +232,7 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
 
     # Is it correctly shown as in stock
     set_back_in_stock_response(datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'not-in-stock' not in res.data
@@ -246,7 +246,7 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
     # Default behaviour is to only fire notification when it goes OUT OF STOCK -> IN STOCK
     # So here there should be no file, because we go IN STOCK -> OUT OF STOCK
     set_original_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(5)
     assert not os.path.isfile(notification_file), "No notification should have fired when it went OUT OF STOCK by default"

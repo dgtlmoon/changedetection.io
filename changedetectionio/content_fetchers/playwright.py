@@ -8,7 +8,7 @@ from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
-from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
+from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, \
     BrowserStepsStepException
 
@@ -284,7 +284,9 @@ class fetcher(Fetcher):
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = await browser.new_context(
                 accept_downloads=False,  # Should never be needed
-                bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+                # Enabled by default because sites such as GitHub need it for injected JavaScript.
+                # Some CDP implementations do not support Page.setBypassCSP, so allow operators to disable it.
+                bypass_csp=get_playwright_bypass_csp(),
                 extra_http_headers=request_headers,
                 ignore_https_errors=True,
                 proxy=self.proxy,
@@ -469,6 +471,5 @@ class PlaywrightFetcherPlugin:
 
 # Create module-level instance for plugin registration
 playwright_plugin = PlaywrightFetcherPlugin()
-
 
 

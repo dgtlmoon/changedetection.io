@@ -205,7 +205,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.queued {
-      a.recheck {
+      .recheck {
         display: none !important;
       }
 
@@ -216,7 +216,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.paused {
-      a.pause-toggle {
+      .pause-toggle {
         &.state-on {
           display: inline !important;
         }
@@ -228,7 +228,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.notification_muted {
-      a.mute-toggle {
+      .mute-toggle {
         &.state-on {
           display: inline !important;
         }
@@ -279,9 +279,11 @@ body.watch-selection-active #checkbox-operations {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        > * {
-          opacity: 0;
-          transition: opacity 0.12s ease;
+        @media (min-width: 767px) {
+          > * {
+            opacity: 0.2;
+            transition: opacity 0.12s ease;
+          }
         }
       }
     }
@@ -359,6 +361,7 @@ body.watch-selection-active #checkbox-operations {
     gap: 4px; /* Space between image and text */
     > * {
       vertical-align: middle;
+      height: 1.4rem;
     }
   }
 
@@ -387,8 +390,8 @@ body.watch-selection-active #checkbox-operations {
         transparent
       );
       outline-offset: 1px;
-      border-radius: 4px;
     }
+    border-radius: var(--common-round-border);
   }
 
   // Reserved for future use
@@ -425,6 +428,20 @@ body.watch-selection-active  {
   flex-wrap: wrap;
   gap: $common-gap;
   margin: 0;
+
+  /* Always in the DOM so realtime can reveal/hide it in any open tab (it used to be
+     {% if unread_count %}'d away, so another tab could never show it). Revealed by
+     body.has-any-unviewed - a body class rather than a selector tied to this toolbar,
+     so it keeps working if the button moves, and it follows the same convention as
+     body.has-queue / body.is-checking-now. Set server-side via extra_classes and kept
+     live by the general_stats_update socket event. */
+  #post-list-mark-views {
+    display: none;
+  }
+}
+
+body.has-any-unviewed #post-list-mark-views {
+  display: inline-flex !important;
 }
 
 #watch-table-wrapper {
@@ -452,9 +469,11 @@ body.watch-selection-active  {
     }
   }
 
+  /* #post-list-mark-views is no longer keyed off this class — see body.has-any-unviewed.
+     Two classes tracking one fact is how they drift, so prefer the body class for anything new. */
   &.has-unread-changes {
     #list-related-buttons {
-      #post-list-unread, #post-list-mark-views {
+      #post-list-unread {
         display: inline-flex !important;
       }
     }

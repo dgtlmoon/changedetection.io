@@ -49,7 +49,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -71,7 +71,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     set_original(excluding='Something irrelevant', datastore_path=datastore_path)
 
     # A line thats not the trigger should not trigger anything
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     time.sleep(0.5)
@@ -82,7 +82,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     set_original(excluding='The golden line', datastore_path=datastore_path)
 
     # Check in the processor here what's going on, its triggering empty-reply and no change.
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
@@ -90,12 +90,12 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
     time.sleep(1)
 
     # Now add it back, and we should not get a trigger
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(0.2)
 
     time.sleep(1)
     set_original(excluding=None, datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(1)
     res = client.get(url_for("watchlist.index"))
@@ -103,7 +103,7 @@ def test_check_removed_line_contains_trigger(client, live_server, measure_memory
 
     # Remove it again, and we should get a trigger
     set_original(excluding='The golden line', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
@@ -136,7 +136,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -158,7 +158,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
     set_original(excluding='Something irrelevant', datastore_path=datastore_path)
 
     # A line thats not the trigger should not trigger anything
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -167,7 +167,7 @@ def test_check_add_line_contains_trigger(client, live_server, measure_memory_usa
 
     # The trigger line is ADDED,  this should trigger
     set_original(add_line='<p>Oh yes please</p>', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
 

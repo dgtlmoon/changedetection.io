@@ -100,6 +100,23 @@
                         {{ render_field(form.title, class="m-d", placeholder=watch.label) }}
                         <span class="pure-form-message-inline">{{ _('Automatically uses the page title if found, you can also use your own title/description here') }}</span>
                     </div>
+                    <div class="pure-control-group">
+                        <details class="form-wrapper">
+                            <summary>{{ _('Extra Page Title and Link options') }}</summary>
+                            <br>
+                            <div class=" border-fieldset">
+                                <div class="pure-control-group">
+                                    {{ render_field(form.link_to_open, placeholder="https://...", class="m-d") }}
+                                    <span class="pure-form-message-inline">{{ _('Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked.') }}</span>
+                                </div>
+                                <div class="pure-control-group">
+                                    {{ render_ternary_field(form.use_page_title_in_list) }}
+                                </div>
+                            </div>
+                        </details>
+
+                    </div>
+
                     <div class="pure-control-group time-between-check border-fieldset">
 
                         {{ render_checkbox_field(form.time_between_check_use_default, class="use-default-timecheck") }}
@@ -119,13 +136,6 @@
                         </div>
 <br>
               </div>
-
-                    <div class="pure-control-group">
-                        {{ render_checkbox_field(form.filter_failure_notification_send) }}
-                        <span class="pure-form-message-inline">
-                         {{ _('Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.') }}
-                        </span>
-                    </div>
                     <div class="pure-control-group">
                         {{ render_field(form.history_snapshot_max_length, class="history_snapshot_max_length") }}
                         <span class="pure-form-message-inline">{{ _('Limit collection of history snapshots for each watch to this number of history items.') }}
@@ -133,9 +143,7 @@
                         {{ _('Set to empty to use system settings default') }}
                         </span>
                     </div>
-                    <div class="pure-control-group">
-                        {{ render_ternary_field(form.use_page_title_in_list) }}
-                    </div>
+
                 </fieldset>
             </div>
 
@@ -250,7 +258,7 @@ Math: {{ 1 + 1 }}") }}
                         <div class="flex-wrapper" >
 
                             <div id="browser-steps-ui" class="noselect">
-                                <div class="noselect"  id="browsersteps-selector-wrapper" style="width: 100%">
+                                <div class="noselect"  id="browsersteps-selector-wrapper">
                                     <span class="loader" >
                                         <span id="browsersteps-click-start">
                                             <h2 >{{ _('Click here to Start') }}</h2>
@@ -295,6 +303,12 @@ Math: {{ 1 + 1 }}") }}
                         </span>
                     </div>
                     {% endif %}
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.filter_failure_notification_send) }}
+                        <span class="pure-form-message-inline">
+                         {{ _('Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.') }}
+                        </span>
+                    </div>
                     <div class="field-group" id="notification-field-group">
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
@@ -507,6 +521,26 @@ Math: {{ 1 + 1 }}") }}
                             <td>{{ _('Server type reply') }}</td>
                             <td>{{ watch.get('remote_server_reply') }}</td>
                         </tr>
+                        <tr>
+                            <td><code>capabilities.supports_xpath_element_data</code></td>
+                            <td>{{ _('Yes') if capabilities.supports_xpath_element_data else _('No') }}</td>
+                        </tr>
+                        <tr>
+                            <td><code>capabilities.supports_screenshots</code></td>
+                            <td>{{ _('Yes') if capabilities.supports_screenshots else _('No') }}</td>
+                        </tr>
+                        <tr>
+                            <td><code>capabilities.supports_visual_selector</code></td>
+                            <td>{{ _('Yes') if capabilities.supports_visual_selector else _('No') }}</td>
+                        </tr>
+                        <tr>
+                            <td><code>supports_browser_steps</code></td>
+                            <td>{{ _('Yes') if capabilities.supports_browser_steps else _('No') }}</td>
+                        </tr>
+                        <tr>
+                            <td><code>visual_selector_data_ready</code></td>
+                            <td>{{ _('Yes') if visual_selector_data_ready else _('No') }}</td>
+                        </tr>
                         {% if not llm_features_disabled and settings_application.get('llm', {}).get('model') %}
                         <tr>
                             <td>{{ _('AI tokens (last check)') }}</td>
@@ -540,6 +574,7 @@ Math: {{ 1 + 1 }}") }}
                     {{ render_button(form.save_button) }}
                     <a href="{{url_for('ui.form_delete', uuid=uuid)}}"
                        class="pure-button button-error"
+                       data-method="POST"
                        data-requires-confirm
                        data-confirm-type="danger"
                        data-confirm-title="{{ _('Delete Watch?') }}"
@@ -547,12 +582,14 @@ Math: {{ 1 + 1 }}") }}
                        data-confirm-button="{{ _('Delete') }}">{{ _('Delete') }}</a>
                     {% if watch.history_n %}<a href="{{url_for('ui.clear_watch_history', uuid=uuid)}}"
                        class="pure-button button-error"
+                       data-method="POST"
                        data-requires-confirm
                        data-confirm-type="warning"
                        data-confirm-title="{{ _('Clear History?') }}"
                        data-confirm-message="<p>{{ _('Are you sure you want to clear all history for:') }}</p><p><strong>{{ watch.get('url', 'this watch') }}</strong></p><p>{{ _('This will remove all snapshots and previous versions. This action cannot be undone.') }}</p>"
                        data-confirm-button="{{ _('Clear History') }}">{{ _('Clear History') }}</a>{% endif %}
                     <a href="{{url_for('ui.form_clone', uuid=uuid)}}"
+                       data-method="POST"
                        class="pure-button">{{ _('Clone & Edit') }}</a>
                  <a href="{{ url_for('rss.rss_single_watch', uuid=uuid, token=app_rss_token)}}"><img alt="{{ _('RSS Feed for this watch') }}" style="padding: .5em 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>
                 </div>

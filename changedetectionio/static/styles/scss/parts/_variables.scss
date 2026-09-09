@@ -27,6 +27,12 @@
   --color-background-gradient-first: #5ad8f7;
   --color-background-gradient-second: #2f50af;
   --color-background-gradient-third: #9150bf;
+  // The page's atmosphere gradient, shared so anything that needs to sit ON the
+  // page background (e.g. the left rail rolling out over content) can repaint
+  // an identical copy instead of approximating it with a flat colour. The
+  // referenced gradient stops are re-declared per theme below, so this single
+  // definition follows light/dark automatically.
+  --page-background-gradient: linear-gradient(130deg, var(--color-background-gradient-first), var(--color-background-gradient-second) 41.07%, var(--color-background-gradient-third) 84.05%);
   --color-background: var(--color-white);
   --color-text: var(--color-grey-200);
   --color-link: #1b98f8;

@@ -1,0 +1,5146 @@
+# Indonesian translations for changedetection.io.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the changedetection.io
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: changedetection.io 0.60.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-09-09 17:07+0700\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: id\n"
+"Language-Team: id <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Adding a watch with a browser needs an interactive browser (screenshots + element data) - none is configured."
+msgstr ""
+"Menambahkan monitor dengan browser memerlukan browser interaktif (tangkapan layar + data elemen) - belum ada yang "
+"dikonfigurasi."
+
+#: changedetectionio/blueprint/add_watch_ui/browser_config.py
+#, python-format
+msgid "System settings default (%(browser)s)"
+msgstr "Default pengaturan sistem (%(browser)s)"
+
+#: changedetectionio/blueprint/add_watch_ui/browser_config.py
+#, python-format
+msgid "System settings default (%(browser)s - no live preview)"
+msgstr "Default pengaturan sistem (%(browser)s - tanpa pratinjau langsung)"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Add a new web page change detection watch"
+msgstr "Tambahkan monitor perubahan halaman web baru"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Go"
+msgstr "Mulai"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Enter a URL to get started!"
+msgstr "Masukkan URL untuk memulai!"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Enter a URL in the input box above to get started."
+msgstr "Masukkan URL pada kotak input di atas untuk memulai."
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Fetching screenshot and element information…"
+msgstr "Mengambil tangkapan layar dan informasi elemen…"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Currently:"
+msgstr "Saat ini:"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#, python-format
+msgid "%(browser)s cannot render a live preview, choose a browser below"
+msgstr "%(browser)s tidak dapat menampilkan pratinjau langsung, pilih browser di bawah"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Select by element"
+msgstr "Pilih berdasarkan elemen"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Hover & click the preview to watch just one part of the page."
+msgstr "Arahkan kursor & klik pratinjau untuk memantau hanya satu bagian halaman."
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear selection"
+msgstr "Hapus pilihan"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "What matters — when to notify me"
+msgstr "Yang penting — kapan saya perlu diberi notifikasi"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid ""
+"e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
+"appear. Skip review additions."
+msgstr ""
+"mis. Beri tahu saya saat produk tersedia/habis stok, waktu tunggu berubah lebih dari satu minggu, atau varian produk "
+"baru muncul. Abaikan penambahan ulasan."
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Watch group / tag"
+msgstr "Grup / tag monitor"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Watch this URL!"
+msgstr "Pantau URL ini!"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Edit first then Watch"
+msgstr "Edit dahulu lalu pantau"
+
+#: changedetectionio/blueprint/backups/__init__.py
+msgid "A backup is already running, check back in a few minutes"
+msgstr "Pencadangan sedang berjalan, periksa kembali beberapa menit lagi"
+
+#: changedetectionio/blueprint/backups/__init__.py
+msgid "Maximum number of backups reached, please remove some"
+msgstr "Jumlah maksimum cadangan tercapai, silakan hapus beberapa"
+
+#: changedetectionio/blueprint/backups/__init__.py
+msgid "Backup building in background, check back in a few minutes."
+msgstr "Cadangan sedang dibuat di latar belakang, periksa kembali beberapa menit lagi."
+
+#: changedetectionio/blueprint/backups/__init__.py
+msgid "Backups were deleted."
+msgstr "Cadangan telah dihapus."
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Backup zip file"
+msgstr "File ZIP cadangan"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Must be a .zip backup file!"
+msgstr "Harus berupa file cadangan .zip!"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Include groups"
+msgstr "Sertakan grup"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Replace existing groups of the same UUID"
+msgstr "Ganti grup yang ada dengan UUID yang sama"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Include watches"
+msgstr "Sertakan monitor"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Replace existing watches of the same UUID"
+msgstr "Ganti monitor yang ada dengan UUID yang sama"
+
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore backup"
+msgstr "Pulihkan cadangan"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "A restore is already running, check back in a few minutes"
+msgstr "Pemulihan sedang berjalan, periksa kembali beberapa menit lagi"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "No file uploaded"
+msgstr "Tidak ada file yang diunggah"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "File must be a .zip backup file"
+msgstr "File harus berupa file cadangan .zip"
+
+#: changedetectionio/blueprint/backups/restore.py
+#, python-format
+msgid "Backup file is too large (max %(mb)s MB)"
+msgstr "File cadangan terlalu besar (maks. %(mb)s MB)"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Invalid or corrupted zip file"
+msgstr "File ZIP tidak valid atau rusak"
+
+#: changedetectionio/blueprint/backups/restore.py
+msgid "Restore started in background, check back in a few minutes."
+msgstr "Pemulihan dimulai di latar belakang, periksa kembali beberapa menit lagi."
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Create"
+msgstr "Buat"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr "Pulihkan"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "A backup is running!"
+msgstr "Pencadangan sedang berjalan!"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "Here you can download and request a new backup, when a backup is completed you will see it listed below."
+msgstr "Di sini Anda dapat mengunduh dan meminta cadangan baru. Setelah pencadangan selesai, cadangan akan tercantum di bawah."
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "Mb"
+msgstr "MB"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "No backups found."
+msgstr "Tidak ada cadangan."
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "Create backup"
+msgstr "Buat cadangan"
+
+#: changedetectionio/blueprint/backups/templates/backup_create.html
+msgid "Remove backups"
+msgstr "Hapus cadangan"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "A restore is running!"
+msgstr "Pemulihan sedang berjalan!"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout)."
+msgstr "Pulihkan cadangan. Harus berupa file cadangan .zip yang dibuat pada/setelah v0.53.1 (tata letak basis data baru)."
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Note: This does not override the main application settings, only watches and groups."
+msgstr "Catatan: Ini tidak menimpa pengaturan utama aplikasi, hanya monitor dan grup."
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+#, python-format
+msgid "Max upload size: %(upload)s MB, Max decompressed size: %(decomp)s MB"
+msgstr "Ukuran unggahan maks.: %(upload)s MB, ukuran hasil dekompresi maks.: %(decomp)s MB"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Include all groups found in backup?"
+msgstr "Sertakan semua grup yang ditemukan dalam cadangan?"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Replace any existing groups of the same UUID?"
+msgstr "Ganti grup yang sudah ada dengan UUID yang sama?"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Include all watches found in backup?"
+msgstr "Sertakan semua monitor yang ditemukan dalam cadangan?"
+
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Replace any existing watches of the same UUID?"
+msgstr "Ganti monitor yang sudah ada dengan UUID yang sama?"
+
+#: changedetectionio/blueprint/imports/importer.py
+msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
+msgstr "Mengimpor 5.000 URL pertama dari daftar Anda, sisanya dapat diimpor kembali."
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "{count} Imported from list in {duration}s, {skipped_count} Skipped."
+msgstr "{count} diimpor dari daftar dalam {duration}dtk, {skipped_count} dilewati."
+
+#: changedetectionio/blueprint/imports/importer.py
+msgid "Unable to read JSON file, was it broken?"
+msgstr "Tidak dapat membaca file JSON, apakah file rusak?"
+
+#: changedetectionio/blueprint/imports/importer.py
+msgid "JSON structure looks invalid, was it broken?"
+msgstr "Struktur JSON tampak tidak valid, apakah file rusak?"
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "{count} Imported from Distill.io in {duration}s, {skipped_count} Skipped."
+msgstr "{count} diimpor dari Distill.io dalam {duration}dtk, {skipped_count} dilewati."
+
+#: changedetectionio/blueprint/imports/importer.py
+msgid "Unable to read export XLSX file, something wrong with the file?"
+msgstr "Tidak dapat membaca file ekspor XLSX, apakah ada masalah dengan file tersebut?"
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "Error processing row number {}, URL value was incorrect, row was skipped."
+msgstr "Kesalahan saat memproses baris nomor {}, nilai URL salah, baris dilewati."
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "Error processing row number {}, check all cell data types are correct, row was skipped."
+msgstr "Kesalahan saat memproses baris nomor {}, pastikan semua tipe data sel benar, baris dilewati."
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "{count} imported from Wachete .xlsx in {duration}s"
+msgstr "{count} diimpor dari Wachete .xlsx dalam {duration}dtk"
+
+#: changedetectionio/blueprint/imports/importer.py
+#, python-brace-format
+msgid "{count} imported from custom .xlsx in {duration}s"
+msgstr "{count} diimpor dari .xlsx kustom dalam {duration}dtk"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "URL List"
+msgstr "Daftar URL"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid ".XLSX & Wachete"
+msgstr ".XLSX & Wachete"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Backup Restore"
+msgstr "Pemulihan Cadangan"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Restoring changedetection.io backups is in the"
+msgstr "Pemulihan cadangan changedetection.io tersedia di"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "backups section"
+msgstr "bagian cadangan"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Enter one URL per line, and optionally add tags for each URL after a space, delineated by comma (,):"
+msgstr "Masukkan satu URL per baris, dan opsional tambahkan tag untuk setiap URL setelah spasi, dipisahkan dengan koma (,):"
+
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/edit/include_subtract.html
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example"
+msgstr "Contoh"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "URLs which do not pass validation will stay in the textarea."
+msgstr "URL yang tidak lolos validasi akan tetap berada di area teks."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Copy and Paste your Distill.io watch 'export' file, this should be a JSON file."
+msgstr "Salin dan tempel file 'export' monitor Distill.io Anda, file ini harus berupa JSON."
+
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid ""
+"This is <i>experimental</i>, supported fields are <code>name</code>, <code>uri</code>, <code>tags</code>, "
+"<code>config:selections</code>, the rest (including <code>schedule</code>) are ignored."
+msgstr ""
+"Ini bersifat <i>eksperimental</i>, bidang yang didukung adalah <code>name</code>, <code>uri</code>, "
+"<code>tags</code>, <code>config:selections</code>, sisanya (termasuk <code>schedule</code>) diabaikan."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "How to export?"
+msgstr "Bagaimana cara mengekspor?"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Be sure to set your default fetcher to Chrome if required."
+msgstr "Pastikan pengambil default Anda diatur ke Chrome jika diperlukan."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Table of custom column and data types mapping for the"
+msgstr "Tabel pemetaan kolom kustom dan tipe data untuk"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Custom mapping"
+msgstr "Pemetaan kustom"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "File mapping type."
+msgstr "Tipe pemetaan file."
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Column #"
+msgstr "Kolom #"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Type"
+msgstr "Tipe"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "none"
+msgstr "tidak ada"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "CSS/xPath filter"
+msgstr "Filter CSS/xPath"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Group / Tag name(s)"
+msgstr "Nama grup / tag"
+
+#: changedetectionio/blueprint/imports/templates/import.html
+msgid "Recheck time (minutes)"
+msgstr "Waktu periksa ulang (menit)"
+
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
+msgid "Import"
+msgstr "Impor"
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Expand on hover"
+msgstr ""
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Always expanded"
+msgstr "Selalu diperluas"
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Stays minimal"
+msgstr ""
+
+#: changedetectionio/blueprint/rss/single_watch.py
+#, python-format
+msgid "Watch with UUID %(uuid)s not found"
+msgstr "Monitor dengan UUID %(uuid)s tidak ditemukan"
+
+#: changedetectionio/blueprint/rss/single_watch.py
+#, python-format
+msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
+msgstr "Monitor %(uuid)s tidak memiliki cukup snapshot riwayat untuk menampilkan perubahan (perlu minimal 2)"
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Password protection removed."
+msgstr "Perlindungan kata sandi dihapus."
+
+#: changedetectionio/blueprint/settings/__init__.py
+#, python-brace-format
+msgid "Warning: Worker count ({worker_count}) is close to or exceeds available CPU cores ({cpu_count})"
+msgstr "Peringatan: Jumlah worker ({worker_count}) mendekati atau melebihi inti CPU yang tersedia ({cpu_count})"
+
+#: changedetectionio/blueprint/settings/__init__.py
+#, python-brace-format
+msgid "Worker count adjusted: {}"
+msgstr "Jumlah worker disesuaikan: {}"
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Dynamic worker adjustment not supported for sync workers"
+msgstr "Penyesuaian worker dinamis tidak didukung untuk worker sinkron"
+
+#: changedetectionio/blueprint/settings/__init__.py
+#, python-brace-format
+msgid "Error adjusting workers: {}"
+msgstr "Kesalahan saat menyesuaikan worker: {}"
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Password protection enabled."
+msgstr "Perlindungan kata sandi diaktifkan."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Settings updated."
+msgstr "Pengaturan diperbarui."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "Terjadi kesalahan, silakan lihat di bawah."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "API Key was regenerated."
+msgstr "Kunci API dibuat ulang."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Automatic scheduling paused - checks will not be queued."
+msgstr "Penjadwalan otomatis dijeda - pemeriksaan tidak akan dimasukkan ke antrean."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "Automatic scheduling resumed - checks will be queued normally."
+msgstr "Penjadwalan otomatis dilanjutkan - pemeriksaan akan dimasukkan ke antrean seperti biasa."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "All notifications muted."
+msgstr "Semua notifikasi dibisukan."
+
+#: changedetectionio/blueprint/settings/__init__.py
+msgid "All notifications unmuted."
+msgstr "Semua notifikasi diaktifkan kembali."
+
+#: changedetectionio/blueprint/settings/llm.py
+msgid ""
+"api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
+"different endpoint."
+msgstr ""
+"api_key diperlukan ketika api_base berbeda dari konfigurasi yang tersimpan. Menolak mengirim kunci API tersimpan ke "
+"endpoint yang berbeda."
+
+#: changedetectionio/blueprint/settings/llm.py
+msgid "AI / LLM configuration removed."
+msgstr "Konfigurasi AI / LLM dihapus."
+
+#: changedetectionio/blueprint/settings/llm.py
+#, python-brace-format
+msgid "AI summary cache cleared ({} file(s) removed)."
+msgstr "Cache ringkasan AI dibersihkan ({} file dihapus)."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Default Notifications"
+msgstr "Notifikasi Default"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
+msgstr ""
+"Notifikasi ini berlaku untuk semua monitor halaman web, atau Anda dapat mengonfigurasinya secara terpisah per grup "
+"atau per monitor."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Base URL used for the"
+msgstr "URL dasar yang digunakan untuk"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "token in notification links."
+msgstr "token dalam tautan notifikasi."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Default value is the system environment variable"
+msgstr "Nilai default adalah variabel lingkungan sistem"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+#: changedetectionio/templates/_common_fields.html
+msgid "read more here"
+msgstr "baca selengkapnya di sini"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Back to settings"
+msgstr "Kembali ke pengaturan"
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "Notification debug log"
+msgstr "Log debug notifikasi"
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "For security this log is emptied on restart."
+msgstr "Demi keamanan, log ini dikosongkan saat aplikasi dimulai ulang."
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "General"
+msgstr "Umum"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Fetching"
+msgstr "Pengambilan"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Global Filters"
+msgstr "Filter Global"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "UI Options"
+msgstr "Opsi UI"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Backups"
+msgstr "Cadangan"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Time & Date"
+msgstr "Waktu & Tanggal"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "CAPTCHA & Proxies"
+msgstr "CAPTCHA & Proksi"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr "AI / LLM"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Info"
+msgstr "Info"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Default recheck time for all watches, current system minimum is"
+msgstr "Waktu periksa ulang default untuk semua monitor, minimum sistem saat ini adalah"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "more info"
+msgstr "info selengkapnya"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "After this many consecutive times that the CSS/xPath filter is missing, send a notification"
+msgstr "Setelah filter CSS/xPath tidak ditemukan sebanyak ini secara berturut-turut, kirim notifikasi"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set to <strong>0</strong> to disable"
+msgstr "Atur ke <strong>0</strong> untuk menonaktifkan"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit collection of history snapshots for each watch to this number of history items."
+msgstr "Batasi kumpulan snapshot riwayat setiap monitor hingga jumlah item riwayat ini."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set to empty to disable / no limit"
+msgstr "Kosongkan untuk menonaktifkan / tanpa batas"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Password protection for your changedetection.io application."
+msgstr "Perlindungan kata sandi untuk aplikasi changedetection.io Anda."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Password is locked."
+msgstr "Kata sandi dikunci."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Clear Snapshot History"
+msgstr "Hapus Riwayat Snapshot"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
+msgstr ""
+"Izinkan akses ke halaman riwayat perubahan monitor saat kata sandi diaktifkan (berguna untuk membagikan halaman "
+"perbedaan)"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
+msgstr ""
+"Jika permintaan tidak mengembalikan konten, atau HTML tidak berisi teks apa pun, apakah ini dianggap sebagai "
+"perubahan?"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Choose a default proxy for all watches"
+msgstr "Pilih proksi default untuk semua monitor"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
+msgstr "Gunakan metode <strong>Basic</strong> (default) jika situs yang dipantau tidak memerlukan Javascript untuk dirender."
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
+msgstr ""
+"Metode <strong>Chrome/Javascript</strong> memerlukan koneksi jaringan ke server WebDriver+Chrome yang sedang "
+"berjalan, diatur melalui variabel ENV 'WEBDRIVER_URL'."
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"If you're having trouble waiting for the page to be fully rendered (text missing etc), try increasing the 'wait' time"
+" here."
+msgstr ""
+"Jika Anda kesulitan menunggu halaman selesai dirender sepenuhnya (teks hilang, dll.), coba tingkatkan waktu 'wait' di"
+" sini."
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "This will wait <i>n</i> seconds before extracting the text."
+msgstr "Ini akan menunggu <i>n</i> detik sebelum mengekstrak teks."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
+msgstr ""
+"Jumlah worker bersamaan untuk memproses monitor. Lebih banyak worker = pemrosesan lebih cepat tetapi penggunaan "
+"memori lebih tinggi."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Currently running:"
+msgstr "Sedang berjalan:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "operational"
+msgstr "operasional"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "workers"
+msgstr "worker"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "actively processing"
+msgstr "sedang aktif memproses"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later"
+msgstr "Contoh - jitter acak 3 detik dapat memicu hingga 3 detik lebih awal atau hingga 3 detik lebih lambat"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
+msgstr "Untuk permintaan biasa (bukan berbasis Chrome), jumlah detik maksimum hingga timeout, 1-999."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Applied to all requests."
+msgstr "Diterapkan ke semua permintaan."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
+msgstr "Catatan: Mengubah User-Agent saja sering kali tidak dapat melewati teknologi antirobot, penting untuk mempertimbangkan"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "all of the ways that the browser is detected"
+msgstr "semua cara browser terdeteksi"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Connect using Bright Data proxies, find out more here."
+msgstr "Hubungkan menggunakan proksi Bright Data, cari tahu selengkapnya di sini."
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+msgid "Tip:"
+msgstr "Kiat:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Ignore whitespace, tabs and new-lines/line-feeds when considering if a change was detected."
+msgstr "Abaikan spasi, tab, dan baris baru/line-feed saat menentukan apakah perubahan terdeteksi."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Note:"
+msgstr "Catatan:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Changing this will change the status of your existing watches, possibly trigger alerts etc."
+msgstr "Mengubah ini akan mengubah status monitor Anda yang sudah ada, dan mungkin memicu peringatan, dll."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Render anchor tag content, default disabled, when enabled renders links as"
+msgstr "Render konten tag anchor, default dinonaktifkan, saat diaktifkan tautan dirender sebagai"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Changing this could affect the content of your existing watches, possibly trigger alerts etc."
+msgstr "Mengubah ini dapat memengaruhi konten monitor Anda yang sudah ada, dan mungkin memicu peringatan, dll."
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/include_subtract.html
+msgid "Remove HTML element(s) by CSS and XPath selectors before text conversion."
+msgstr "Hapus elemen HTML berdasarkan selektor CSS dan XPath sebelum konversi teks."
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/include_subtract.html
+msgid "Don't paste HTML here, use only CSS and XPath selectors"
+msgstr "Jangan tempel HTML di sini, gunakan hanya selektor CSS dan XPath"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/include_subtract.html
+msgid "Add multiple elements, CSS or XPath selectors per line to ignore multiple parts of the HTML."
+msgstr "Tambahkan beberapa elemen, selektor CSS atau XPath per baris untuk mengabaikan beberapa bagian HTML."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Note: This is applied globally in addition to the per-watch rules."
+msgstr "Catatan: Ini diterapkan secara global selain aturan per monitor."
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Matching text will be ignored in the text snapshot (you can still see it but it wont trigger a change)"
+msgstr "Teks yang cocok akan diabaikan dalam snapshot teks (Anda tetap dapat melihatnya tetapi tidak akan memicu perubahan)"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Each line processed separately, any line matching will be ignored (removed before creating the checksum)"
+msgstr "Setiap baris diproses secara terpisah, setiap baris yang cocok akan diabaikan (dihapus sebelum membuat checksum)"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Regular Expression support, wrap the entire line in forward slash"
+msgstr "Dukungan Regular Expression, bungkus seluruh baris dengan garis miring"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/edit/text-options.html
+msgid "Changing this will affect the comparison checksum which may trigger an alert"
+msgstr "Mengubah ini akan memengaruhi checksum perbandingan yang mungkin memicu peringatan"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Remove any text that appears in the \"Ignore text\" from the output (otherwise its just ignored for change-detection)"
+msgstr ""
+"Hapus teks apa pun yang muncul dalam \"Abaikan teks\" dari output (jika tidak, teks hanya diabaikan untuk deteksi "
+"perubahan)"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "API Access"
+msgstr "Akses API"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Drive your changedetection.io via API, More about"
+msgstr "Kendalikan changedetection.io Anda melalui API, selengkapnya tentang"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "API access and examples here"
+msgstr "akses API dan contohnya di sini"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Restrict API access limit by using"
+msgstr "Batasi akses API menggunakan"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "header - required for the Chrome Extension to work"
+msgstr "header - diperlukan agar Chrome Extension dapat berfungsi"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copy"
+msgstr "salin"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Regenerate API key"
+msgstr "Buat ulang kunci API"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Chrome Extension"
+msgstr "Chrome Extension"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Easily add any web-page to your changedetection.io installation from within Chrome."
+msgstr "Tambahkan halaman web apa pun dengan mudah ke instalasi changedetection.io Anda langsung dari Chrome."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Step 1"
+msgstr "Langkah 1"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install the extension,"
+msgstr "Instal ekstensi,"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Step 2"
+msgstr "Langkah 2"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Navigate to this page,"
+msgstr "Buka halaman ini,"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Step 3"
+msgstr "Langkah 3"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Open the extension from the toolbar and click"
+msgstr "Buka ekstensi dari toolbar dan klik"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Sync API Access"
+msgstr "Sinkronkan Akses API"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Try our new Chrome Extension!"
+msgstr "Coba Chrome Extension baru kami!"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Chrome store icon"
+msgstr "Ikon Chrome Store"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Chrome Webstore"
+msgstr "Chrome Webstore"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Maximum number of history snapshots to include in the watch specific RSS feed."
+msgstr "Jumlah maksimum snapshot riwayat yang disertakan dalam feed RSS khusus monitor."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "For watching other RSS feeds - When watching RSS/Atom feeds, convert them into clean text for better change detection."
+msgstr ""
+"Untuk memantau feed RSS lain - Saat memantau feed RSS/Atom, konversikan menjadi teks bersih untuk deteksi perubahan "
+"yang lebih baik."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Does your reader support HTML? Set it here"
+msgstr "Apakah pembaca Anda mendukung HTML? Atur di sini"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "'System default' for the same template for all items, or re-use your \"Notification Body\" as the template."
+msgstr ""
+"Gunakan 'Default sistem' untuk template yang sama bagi semua item, atau gunakan kembali \"Isi Notifikasi\" Anda "
+"sebagai template."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Ensure the settings below are correct, they are used to manage the time schedule for checking your web page watches."
+msgstr ""
+"Pastikan pengaturan di bawah ini benar, karena digunakan untuk mengelola jadwal waktu pemeriksaan monitor halaman web"
+" Anda."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "UTC Time & Date from Server:"
+msgstr "Waktu & Tanggal UTC dari Server:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Local Time & Date in Browser:"
+msgstr "Waktu & Tanggal Lokal di Browser:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Enable this setting to open the diff page in a new tab. If disabled, the diff page will open in the current tab."
+msgstr ""
+"Aktifkan pengaturan ini untuk membuka halaman perbedaan di tab baru. Jika dinonaktifkan, halaman perbedaan akan "
+"dibuka di tab saat ini."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
+msgstr "Pembaruan UI Realtime Diaktifkan - (Perlu mulai ulang jika diubah)"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Enable or Disable Favicons next to the watch list"
+msgstr "Aktifkan atau Nonaktifkan Favicon di samping daftar monitor"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Number of items per page in the watch overview list, 0 to disable."
+msgstr "Jumlah item per halaman dalam daftar ringkasan monitor, 0 untuk menonaktifkan."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "How \"Checked\" and \"Changed\" times are shown in the watch overview list."
+msgstr "Cara waktu \"Diperiksa\" dan \"Berubah\" ditampilkan dalam daftar ringkasan monitor."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"\"Collapsed icon rail\" keeps the left navigation slim and reveals labels on mouse-over; \"Always expanded\" keeps "
+"labels visible."
+msgstr ""
+"\"Rel ikon ringkas\" menjaga navigasi kiri tetap ramping dan menampilkan label saat mouse diarahkan; \"Selalu "
+"diperluas\" membuat label tetap terlihat."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Tip"
+msgstr "Kiat"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr ""
+"Tipe proksi \"Residential\" dan \"Mobile\" dapat lebih berhasil daripada \"Data Center\" untuk situs web yang "
+"diblokir."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr "\"Nama\" akan digunakan untuk memilih proksi dalam pengaturan Edit Monitor"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr ""
+"Proksi SOCKS5 dengan autentikasi hanya didukung dengan pengambil 'plain requests'; untuk pengambil lain, sebaiknya "
+"masukkan akses IP ke daftar putih"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Uptime:"
+msgstr "Uptime:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Python version:"
+msgstr "Versi Python:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Maximum number of page watches:"
+msgstr "Jumlah maksimum monitor halaman:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Plugins active:"
+msgstr "Plugin aktif:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "No plugins active"
+msgstr "Tidak ada plugin aktif"
+
+#. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgctxt "AI usage stats"
+msgid "Usage"
+msgstr "Penggunaan"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Overview"
+msgstr "Ringkasan"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Provider"
+msgstr "Penyedia"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Prompts"
+msgstr "Prompt"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Behaviour"
+msgstr "Perilaku"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI-powered change monitoring"
+msgstr "Pemantauan perubahan bertenaga AI"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Connect an LLM to move from \"something changed\" to \"only the thing you care about changed\"."
+msgstr "Hubungkan LLM untuk beralih dari \"ada sesuatu yang berubah\" menjadi \"hanya hal yang Anda pedulikan yang berubah\"."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Intent filtering"
+msgstr "Pemfilteran intent"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
+"diff against it and suppresses irrelevant noise."
+msgstr ""
+"Setiap monitor atau tag dapat memiliki intent teks biasa — %(ex1)s atau %(ex2)s. Pada setiap perubahan yang "
+"terdeteksi, AI mengevaluasi perbedaannya terhadap intent tersebut dan menyaring gangguan yang tidak relevan."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
+"small models (≤3B) may misjudge numeric comparisons."
+msgstr ""
+"Kiat: evaluasi intent akan lebih baik dengan model yang mumpuni — direkomendasikan %(local)s untuk lokal, atau "
+"%(gpt)s / %(gemini)s. Model yang sangat kecil (≤3B) dapat salah menilai perbandingan numerik."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
+"prompt here, or override per watch or tag."
+msgstr ""
+"Alih-alih perbedaan mentah, terima ringkasan bahasa biasa dalam notifikasi — %(ex1)s atau %(ex2)s. Atur prompt "
+"default global di sini, atau timpa per monitor atau tag."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Minimal cost"
+msgstr "Biaya minimal"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
+"handle this well, typically fractions of a cent per check."
+msgstr ""
+"AI hanya melihat unified diff dari apa yang berubah — bukan HTML halaman penuh. Model berbiaya rendah seperti %(gpt)s"
+" atau %(gemini)s mampu menanganinya dengan baik, biasanya hanya sebagian kecil sen per pemeriksaan."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI / LLM configured:"
+msgstr "AI / LLM dikonfigurasi:"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Configure AI Provider"
+msgstr "Konfigurasikan Penyedia AI"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "AI Provider"
+msgstr "Penyedia AI"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
+msgstr "Sakelar utama — saat nonaktif, semua pencarian AI dilewati meskipun penyedia dikonfigurasi di bawah."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Third-party data transfer — please read"
+msgstr "Transfer data pihak ketiga — harap dibaca"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
+" sent to an external AI provider of your choice."
+msgstr ""
+"Saat fitur AI aktif, data perubahan dari situs web yang Anda pantau — termasuk diff halaman dan teks yang diekstrak —"
+" dikirim ke penyedia AI eksternal pilihan Anda."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
+msgstr ""
+"Anda sepenuhnya bertanggung jawab untuk memastikan hal ini mematuhi ketentuan layanan setiap situs web yang Anda "
+"pantau."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
+"data that may appear in monitored content."
+msgstr ""
+"Anda sepenuhnya bertanggung jawab atas kepatuhan terhadap hukum perlindungan data yang berlaku (mis. GDPR) terkait "
+"data pribadi apa pun yang mungkin muncul dalam konten yang dipantau."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
+"control over those charges."
+msgstr ""
+"Biaya API yang dikenakan oleh penyedia pilihan Anda menjadi tanggung jawab Anda sendiri; perangkat lunak ini tidak "
+"dapat melihat atau mengendalikan biaya tersebut."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
+"fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
+"AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any "
+"kind."
+msgstr ""
+"Model AI / LLM diketahui dapat berhalusinasi — menghasilkan keluaran yang terdengar masuk akal tetapi secara faktual "
+"salah atau sepenuhnya dibuat-buat dengan keyakinan seolah benar — dan secara desain dapat menghilangkan atau memotong"
+" data relevan saat membuat ringkasan. Keluaran AI tidak boleh dianggap lengkap atau akurat. Perangkat lunak ini "
+"disediakan apa adanya tanpa jaminan apa pun."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
+" from any claims, damages, or liability arising from this data transfer or your use of AI features."
+msgstr ""
+"Dengan mengaktifkan fitur AI, Anda secara pribadi membebaskan dan melindungi pembuat serta kontributor perangkat "
+"lunak ini dari klaim, kerusakan, atau tanggung jawab apa pun yang timbul dari transfer data ini atau penggunaan fitur"
+" AI oleh Anda."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
+msgstr ""
+"Saya telah membaca dan memahami hal di atas. Saya menerima tanggung jawab penuh dan membebaskan pembuat perangkat "
+"lunak ini dari tuntutan."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/templates/_common_fields.html
+msgid "Note"
+msgstr "Catatan"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
+"<code>LLM_MODEL</code> environment variable to configure via this form instead."
+msgstr ""
+"AI / LLM dikonfigurasi melalui variabel lingkungan (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Hapus variabel "
+"lingkungan <code>LLM_MODEL</code> untuk mengonfigurasi melalui formulir ini."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "select a provider"
+msgstr "pilih penyedia"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
+msgstr "Kompatibel dengan OpenAI (vLLM, LM Studio, llama.cpp)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
+msgstr "Hanya diperlukan untuk Ollama atau endpoint kustom/self-hosted. Biarkan kosong untuk penyedia cloud."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
+"scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it"
+" if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
+"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
+"original tight caps."
+msgstr ""
+"Model reasoning (Qwen3, DeepSeek-R1, Gemma 3, dll.) menghasilkan chain-of-thought sebelum jawaban akhir. Pengali ini "
+"menskalakan setiap batas <code>max_tokens</code> untuk endpoint ini agar tersedia ruang reasoning. Default "
+"%(default)s; tingkatkan jika respons terpotong atau kosong, turunkan (hingga 1x) jika Anda menginginkan batas lebih "
+"ketat pada endpoint berbayar. Berlaku untuk endpoint Ollama dan yang kompatibel dengan OpenAI — penyedia cloud lain "
+"(OpenAI, Anthropic, Gemini) tetap menggunakan batas ketat aslinya."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Load available models"
+msgstr "Muat model yang tersedia"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Available models"
+msgstr "Model yang tersedia"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "choose a model"
+msgstr "pilih model"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Enter API key and click 'Load available models'"
+msgstr "Masukkan kunci API lalu klik 'Muat model yang tersedia'"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove AI / LLM configuration?"
+msgstr "Hapus konfigurasi AI / LLM?"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This will remove your saved AI provider, model, and API key."
+msgstr "Ini akan menghapus penyedia AI, model, dan kunci API yang tersimpan."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove"
+msgstr "Hapus"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "Batal"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Test connection"
+msgstr "Uji koneksi"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
+"extracted text are sent to the LLM — no full page HTML."
+msgstr ""
+"Kunci API Anda disimpan secara lokal dan hanya dikirim ke penyedia yang Anda pilih. Pada setiap perubahan yang "
+"terdeteksi, diff monitor dan teks yang diekstrak dikirim ke LLM — bukan HTML halaman penuh."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Cache"
+msgstr "Cache"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear all summary cache?"
+msgstr "Hapus seluruh cache ringkasan?"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This will remove all cached AI change summaries across all watches."
+msgstr "Ini akan menghapus semua ringkasan perubahan AI yang tersimpan di cache dari seluruh monitor."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "They will be regenerated on the next check."
+msgstr "Ringkasan akan dibuat ulang pada pemeriksaan berikutnya."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear cache"
+msgstr "Hapus cache"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Clear all summary cache"
+msgstr "Hapus seluruh cache ringkasan"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
+msgstr ""
+"Menghapus semua ringkasan perubahan AI yang tersimpan di cache dari seluruh monitor. Ringkasan akan dibuat ulang pada"
+" pemeriksaan berikutnya."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
+"Leave off in production — generates a lot of log volume."
+msgstr ""
+"Mengaktifkan output verbose litellm (dialirkan melalui loguru). Berguna saat mendiagnosis kesalahan penyedia atau "
+"respons kosong. Biarkan nonaktif di produksi — menghasilkan volume log yang besar."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Default AI Change Summary"
+msgstr "Ringkasan Perubahan AI Default"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Used for all watches unless overridden by the watch or its tag/group."
+msgstr "Digunakan untuk semua monitor kecuali ditimpa oleh monitor atau tag/grupnya."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Modify default prompt"
+msgstr "Ubah prompt default"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid ""
+"When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use "
+"<code>%(raw_diff)s</code> to always get the original."
+msgstr ""
+"Saat diaktifkan, token notifikasi <code>%(diff)s</code> menampilkan ringkasan AI alih-alih diff mentah. Gunakan "
+"<code>%(raw_diff)s</code> untuk selalu mendapatkan versi asli."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
+"structured metadata (JSON-LD, microdata, OpenGraph) is found."
+msgstr ""
+"Saat diaktifkan, AI akan digunakan sebagai upaya terakhir untuk mengekstrak harga dan status stok dari halaman produk"
+" ketika tidak ditemukan metadata terstruktur (JSON-LD, microdata, OpenGraph)."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
+"Off if summaries are being cut short."
+msgstr ""
+"Khusus model Gemini 2.5+. Token thinking meningkatkan kualitas reasoning tetapi mengurangi anggaran output. Atur ke "
+"Nonaktif jika ringkasan terpotong."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
+"more."
+msgstr ""
+"Batas maksimum token yang dapat digunakan AI saat menulis ringkasan perubahan. Nilai lebih tinggi memungkinkan "
+"ringkasan lebih panjang tetapi biayanya lebih besar."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
+msgstr "Baseline yang digunakan tautan “Ringkasan” pada daftar monitor untuk membandingkan versi terbaru secara default."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Configure a provider first to unlock behaviour settings."
+msgstr "Konfigurasikan penyedia terlebih dahulu untuk membuka pengaturan perilaku."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token & Cost Tracking"
+msgstr "Pelacakan Token & Biaya"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "This month"
+msgstr "Bulan ini"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens"
+msgstr "token"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid "%(percent)s%% of %(budget)s"
+msgstr "%(percent)s%% dari %(budget)s"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "All-time total"
+msgstr "Total sepanjang waktu"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Monthly token budget reached. AI summarisation is paused until next month."
+msgstr "Anggaran token AI bulanan tercapai. Ringkasan AI dijeda hingga bulan berikutnya."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token budget this period"
+msgstr "Anggaran token periode ini"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+msgstr "(diatur melalui <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "0 = unlimited"
+msgstr "0 = tanpa batas"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens (0 = unlimited)"
+msgstr "token (0 = tanpa batas)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Current billing period"
+msgstr "Periode penagihan saat ini"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
+msgstr "(diatur melalui <code>LLM_MAX_INPUT_CHARS</code>)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+#, python-format
+msgid "characters — currently enforcing: %(limit)s"
+msgstr "karakter — batas yang diterapkan saat ini: %(limit)s"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
+"unlimited)"
+msgstr ""
+"token — melewati evaluasi AI pada monitor setelah penggunaan dalam periode saat ini (bulanan) mencapai batas ini (0 ="
+" tanpa batas)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No AI usage recorded yet."
+msgstr "Belum ada penggunaan AI yang tercatat."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Token budget"
+msgstr "Anggaran token"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "tokens per month (0 = unlimited)"
+msgstr "token per bulan (0 = tanpa batas)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.openai.com → API keys"
+msgstr "platform.openai.com → Kunci API"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.anthropic.com → API keys"
+msgstr "console.anthropic.com → Kunci API"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "aistudio.google.com → Get API key"
+msgstr "aistudio.google.com → Dapatkan kunci API"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No API key needed for local Ollama"
+msgstr "Tidak perlu kunci API untuk Ollama lokal"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
+msgstr "Bearer token untuk server self-hosted Anda (vLLM, LM Studio, dll.)"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "openrouter.ai → Keys"
+msgstr "openrouter.ai → Kunci"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Select a provider first."
+msgstr "Pilih penyedia terlebih dahulu."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Loading…"
+msgstr "Memuat…"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "No models returned by the provider."
+msgstr "Penyedia tidak mengembalikan model."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "— choose a model —"
+msgstr "— pilih model —"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "models available with your key"
+msgstr "model tersedia dengan kunci Anda"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Request failed"
+msgstr "Permintaan gagal"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Testing…"
+msgstr "Menguji…"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Connected"
+msgstr "Terhubung"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Failed"
+msgstr "Gagal"
+
+#: changedetectionio/blueprint/tags/__init__.py
+#, python-brace-format
+msgid "The tag \"{}\" already exists"
+msgstr "Tag \"{}\" sudah ada"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Tag added"
+msgstr "Tag ditambahkan"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Tag deleted, removing from watches in background"
+msgstr "Tag dihapus, sedang dihapus dari monitor di latar belakang"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Unlinking tag from watches in background"
+msgstr "Melepas tautan tag dari monitor di latar belakang"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "All tags deleted, clearing from watches in background"
+msgstr "Semua tag dihapus, sedang dibersihkan dari monitor di latar belakang"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Tag not found"
+msgstr "Tag tidak ditemukan"
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "Updated"
+msgstr "Diperbarui"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Activate for individual watches in this tag/group?"
+msgstr "Aktifkan untuk masing-masing monitor dalam tag/grup ini?"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Auto-apply to watches with URLs matching"
+msgstr "Terapkan otomatis ke monitor dengan URL yang cocok"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "e.g. *://example.com/* or github.com/myorg"
+msgstr "mis. *://example.com/* atau github.com/myorg"
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Tag colour"
+msgstr "Warna tag"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Must be a hex colour, for example #4f8ef7"
+msgstr "Harus berupa warna hex, misalnya #4f8ef7"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "AI for watches in this group"
+msgstr "AI untuk monitor dalam grup ini"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "On, use the settings below"
+msgstr "Aktif, gunakan pengaturan di bawah"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Off for every watch"
+msgstr "Nonaktif untuk setiap monitor"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Leave it to each watch"
+msgstr "Biarkan ditentukan oleh masing-masing monitor"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Tag name"
+msgstr "Nama tag"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Filters & Triggers"
+msgstr "Filter & Pemicu"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"Automatically applies this tag to any watch whose URL matches. Supports wildcards: <code>*example.com*</code> or "
+"plain substring: <code>github.com/myorg</code>"
+msgstr ""
+"Secara otomatis menerapkan tag ini ke setiap monitor yang URL-nya cocok. Mendukung wildcard: "
+"<code>*example.com*</code> atau substring biasa: <code>github.com/myorg</code>"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Currently matching watches"
+msgstr "Monitor yang cocok saat ini"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Custom colour"
+msgstr "Warna kustom"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave unchecked to use the auto-generated colour based on the tag name."
+msgstr "Biarkan tidak dicentang untuk menggunakan warna yang dibuat otomatis berdasarkan nama tag."
+
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "These settings are <strong><i>added</i></strong> to any existing watch configurations."
+msgstr "Pengaturan ini <strong><i>ditambahkan</i></strong> ke konfigurasi monitor yang sudah ada."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Text filtering"
+msgstr "Pemfilteran teks"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use with caution!"
+msgstr "Gunakan dengan hati-hati!"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "This will easily fill up your email storage quota or flood other storages."
+msgstr "Ini dapat dengan mudah memenuhi kuota penyimpanan email Anda atau membanjiri penyimpanan lainnya."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Look out!"
+msgstr "Perhatian!"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Lookout!"
+msgstr "Perhatian!"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid ""
+"There are <a href=\"%(url)s\">system-wide notification URLs enabled</a>, this form will override notification "
+"settings for this watch only &dash; an empty Notification URL list here will still send notifications."
+msgstr ""
+"Ada <a href=\"%(url)s\">URL notifikasi tingkat sistem yang aktif</a>, formulir ini akan menimpa pengaturan notifikasi"
+" hanya untuk monitor ini &dash; daftar URL Notifikasi yang kosong di sini tetap akan mengirim notifikasi."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use system defaults"
+msgstr "Gunakan default sistem"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Add a new organisational tag"
+msgstr "Tambahkan tag organisasi baru"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
+msgstr "Grup memungkinkan Anda mengelola filter dan notifikasi untuk beberapa monitor di bawah satu tag organisasi."
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "# Watches"
+msgstr "# Monitor"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Tag / Label name"
+msgstr "Nama tag / label"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "No website organisational tags/groups configured"
+msgstr "Tidak ada tag/grup organisasi situs web yang dikonfigurasi"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/templates/menu.html
+msgid "Mute notifications"
+msgstr "Bisukan notifikasi"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Recheck"
+msgstr "Periksa ulang"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Edit"
+msgstr "Edit"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Delete Group?"
+msgstr "Hapus Grup?"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#, python-format
+msgid "<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
+msgstr "<p>Anda yakin ingin menghapus grup <strong>%(title)s</strong>?</p><p>Tindakan ini tidak dapat dibatalkan.</p>"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Delete"
+msgstr "Hapus"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Deletes and removes tag"
+msgstr "Menghapus tag"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Unlink Group?"
+msgstr "Lepas Tautan Grup?"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#, python-format
+msgid ""
+"<p>Are you sure you want to unlink all watches from group <strong>%(title)s</strong>?</p><p>The tag will be kept but "
+"watches will be removed from it.</p>"
+msgstr ""
+"<p>Anda yakin ingin melepas semua monitor dari grup <strong>%(title)s</strong>?</p><p>Tag akan dipertahankan tetapi "
+"monitor akan dihapus dari tag tersebut.</p>"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/templates/base.html
+msgid "Unlink"
+msgstr "Lepas tautan"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Keep the tag but unlink any watches"
+msgstr "Pertahankan tag tetapi lepas semua monitor"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "RSS Feed for this watch"
+msgstr "Feed RSS untuk monitor ini"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches deleted"
+msgstr "{} monitor dihapus"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches paused"
+msgstr "{} monitor dijeda"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches unpaused"
+msgstr "{} monitor dilanjutkan"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches updated"
+msgstr "{} monitor diperbarui"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches muted"
+msgstr "{} monitor dibisukan"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches un-muted"
+msgstr "{} monitor diaktifkan kembali notifikasinya"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches queued for rechecking"
+msgstr "{} monitor dimasukkan ke antrean untuk diperiksa ulang"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches errors cleared"
+msgstr "Kesalahan pada {} monitor dibersihkan"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches cleared/reset."
+msgstr "{} monitor dibersihkan/direset."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches set to use default notification settings"
+msgstr "{} monitor diatur untuk menggunakan pengaturan notifikasi default"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Browser / fetch method updated on {} watches"
+msgstr "Metode browser / pengambilan diperbarui pada {} monitor"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Invalid browser / fetch method selected"
+msgstr "Metode browser / pengambilan yang dipilih tidak valid"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Proxy updated on {} watches"
+msgstr "Proksi diperbarui pada {} monitor"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Invalid proxy selected"
+msgstr "Proksi yang dipilih tidak valid"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "{} watches were tagged"
+msgstr "{} monitor diberi tag"
+
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
+msgid "Watch not found"
+msgstr "Monitor tidak ditemukan"
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Cleared snapshot history for watch {}"
+msgstr "Riwayat snapshot untuk monitor {} dibersihkan"
+
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "clear"
+msgstr "bersihkan"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "History clearing started in background"
+msgstr "Pembersihan riwayat dimulai di latar belakang"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Incorrect confirmation text."
+msgstr "Teks konfirmasi salah."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "The watch by UUID {} does not exist."
+msgstr "Monitor dengan UUID {} tidak ada."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Deleted."
+msgstr "Dihapus."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Cloned, you are editing the new watch."
+msgstr "Dikloning, Anda sedang mengedit monitor baru."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Watch is already queued or being checked."
+msgstr "Monitor sudah berada dalam antrean atau sedang diperiksa."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Queued 1 watch for rechecking."
+msgstr "1 monitor dimasukkan ke antrean untuk diperiksa ulang."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
+msgstr ""
+"{count} monitor dimasukkan ke antrean untuk diperiksa ulang ({skipped_count} sudah dalam antrean atau sedang "
+"berjalan)."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Queued {} watches for rechecking."
+msgstr "{} monitor dimasukkan ke antrean untuk diperiksa ulang."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Queueing watches for rechecking in background..."
+msgstr "Memasukkan monitor ke antrean pemeriksaan ulang di latar belakang..."
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Could not share, something went wrong while communicating with the share server - {}"
+msgstr "Tidak dapat membagikan, terjadi kesalahan saat berkomunikasi dengan server berbagi - {}"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Language set to auto-detect from browser"
+msgstr "Bahasa diatur agar terdeteksi otomatis dari browser"
+
+#: changedetectionio/blueprint/ui/diff.py changedetectionio/blueprint/ui/preview.py
+msgid "No history found for the specified link, bad link?"
+msgstr "Tidak ada riwayat untuk tautan yang ditentukan, tautan salah?"
+
+#: changedetectionio/blueprint/ui/diff.py
+msgid "Not enough history (2 snapshots required) to show difference page for this watch."
+msgstr "Riwayat tidak cukup (diperlukan 2 snapshot) untuk menampilkan halaman perbedaan monitor ini."
+
+#: changedetectionio/blueprint/ui/diff.py
+#, python-format
+msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
+msgstr "Anggaran token AI bulanan sebesar %(budget)s token tercapai (%(used)s digunakan). Direset bulan depan."
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "No watches to edit"
+msgstr "Tidak ada monitor untuk diedit"
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "No watch with the UUID {} found."
+msgstr "Tidak ditemukan monitor dengan UUID {}."
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Switched to mode - {}."
+msgstr "Beralih ke mode - {}."
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not load '{}' processor, processor plugin might be missing. Please select a different processor."
+msgstr "Tidak dapat memuat prosesor '{}', plugin prosesor mungkin tidak tersedia. Silakan pilih prosesor lain."
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not load '{}' processor, processor plugin might be missing."
+msgstr "Tidak dapat memuat prosesor '{}', plugin prosesor mungkin tidak tersedia."
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "System settings default"
+msgstr "Default pengaturan sistem"
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Default"
+msgstr "Default"
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "Updated watch - unpaused!"
+msgstr "Monitor diperbarui - jeda dinonaktifkan!"
+
+#: changedetectionio/blueprint/ui/edit.py
+msgid "Updated watch."
+msgstr "Monitor diperbarui."
+
+#: changedetectionio/blueprint/ui/preview.py
+msgid "Preview unavailable - No fetch/check completed or triggers not reached"
+msgstr "Pratinjau tidak tersedia - Belum ada pengambilan/pemeriksaan selesai atau pemicu belum tercapai"
+
+#: changedetectionio/blueprint/ui/preview.py
+msgid "Diff"
+msgstr "Perbedaan"
+
+#: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
+#, python-brace-format
+msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
+msgstr "menampilkan <b>{start} - {end}</b> {record_name} dari total <b>{total}</b>"
+
+#: changedetectionio/blueprint/ui/queue.py
+msgid "queued items"
+msgstr "item dalam antrean"
+
+#: changedetectionio/blueprint/ui/queue.py
+#, python-brace-format
+msgid "Queue cleared ({} items removed)."
+msgstr "Antrean dibersihkan ({} item dihapus)."
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
+msgstr "Ini akan menghapus riwayat versi (snapshot) untuk SEMUA monitor, tetapi tetap mempertahankan daftar URL Anda!"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "You may like to use the"
+msgstr "Anda mungkin ingin menggunakan"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "BACKUP"
+msgstr "CADANGAN"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "link first."
+msgstr "terlebih dahulu."
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Confirmation text"
+msgstr "Teks konfirmasi"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Type in the word"
+msgstr "Ketik kata"
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "to confirm that you understand."
+msgstr "untuk mengonfirmasi bahwa Anda mengerti."
+
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html
+msgid "Clear History!"
+msgstr "Hapus Riwayat!"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Share diff as image"
+msgstr "Bagikan perbedaan sebagai gambar"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Share as Image"
+msgstr "Bagikan sebagai Gambar"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Ignore any lines matching"
+msgstr "Abaikan baris apa pun yang cocok dengan"
+
+#: changedetectionio/blueprint/ui/templates/diff-offscreen-options.html
+msgid "Ignore any lines matching excluding digits"
+msgstr "Abaikan baris apa pun yang cocok, kecuali digit"
+
+#. 'From' labels the older snapshot version selector on the diff page
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
+msgid "From"
+msgstr "Dari"
+
+#. 'To' labels the newer snapshot version selector on the diff page
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff version"
+msgid "To"
+msgstr "Ke"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Words"
+msgstr "Kata"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Lines"
+msgstr "Baris"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Ignore Whitespace"
+msgstr "Abaikan Spasi"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Same/non-changed"
+msgstr "Sama/tidak berubah"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Removed"
+msgstr "Dihapus"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Added"
+msgstr "Ditambahkan"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Replaced"
+msgstr "Diganti"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Include all intermediate snapshots between the selected versions in the AI summary"
+msgstr "Sertakan semua snapshot perantara di antara versi yang dipilih dalam ringkasan AI"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "AI: every change between versions"
+msgstr "AI: setiap perubahan antarversi"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Keyboard:"
+msgstr "Keyboard:"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Previous"
+msgstr "Sebelumnya"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "Next"
+msgstr "Berikutnya"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Jump to next difference"
+msgstr "Lompat ke perbedaan berikutnya"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Jump"
+msgstr "Lompat"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/templates/extract.html
+msgid "Error Text"
+msgstr "Teks Kesalahan"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/templates/extract.html
+msgid "Error Screenshot"
+msgstr "Tangkapan Layar Kesalahan"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/templates/extract.html
+msgid "Text"
+msgstr "Teks"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Current screenshot"
+msgstr "Tangkapan layar saat ini"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
+#: changedetectionio/processors/templates/extract.html
+msgid "Extract Data"
+msgstr "Ekstrak Data"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "seconds ago."
+msgstr "detik yang lalu."
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "seconds ago"
+msgstr "detik yang lalu"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Current error-ing screenshot from most recent request"
+msgstr "Tangkapan layar kesalahan saat ini dari permintaan terbaru"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
+msgstr "Kiat pro: Anda dapat mengaktifkan <strong>\"bagikan akses saat kata sandi diaktifkan\"</strong> dari pengaturan."
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Generating change summary…"
+msgstr "Membuat ringkasan perubahan…"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Goto single snapshot"
+msgstr "Buka snapshot tunggal"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Highlight text to share or add to ignore lists."
+msgstr "Sorot teks untuk dibagikan atau ditambahkan ke daftar abaikan."
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Download difference patch"
+msgstr "Unduh patch perbedaan"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+msgid "For now, Differences are performed on text, not graphically, only the latest screenshot is available."
+msgstr "Untuk saat ini, perbedaan dilakukan pada teks, bukan secara grafis; hanya tangkapan layar terbaru yang tersedia."
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Current screenshot from most recent request"
+msgstr "Tangkapan layar saat ini dari permintaan terbaru"
+
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "No screenshot available just yet! Try rechecking the page."
+msgstr "Belum ada tangkapan layar! Coba periksa ulang halaman."
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Screenshot requires Playwright/WebDriver enabled"
+msgstr "Tangkapan layar memerlukan Playwright/WebDriver yang diaktifkan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "Permintaan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Browser Steps"
+msgstr "Langkah Browser"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Visual Filter Selector"
+msgstr "Selektor Filter Visual"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Conditions"
+msgstr "Kondisi"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Stats"
+msgstr "Statistik"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Some sites use JavaScript to create the content, for this you should"
+msgstr "Beberapa situs menggunakan JavaScript untuk membuat konten, untuk ini Anda sebaiknya"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "use the Chrome/WebDriver Fetcher"
+msgstr "menggunakan Pengambil Chrome/WebDriver"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the URL"
+msgstr "Variabel didukung dalam URL"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "help and examples here"
+msgstr "bantuan dan contoh di sini"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Organisational tag/group name used in the main listing page"
+msgstr "Nama tag/grup organisasi yang digunakan pada halaman daftar utama"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Also automatically applied by URL pattern:"
+msgstr "Juga diterapkan otomatis berdasarkan pola URL:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Automatically uses the page title if found, you can also use your own title/description here"
+msgstr "Secara otomatis menggunakan judul halaman jika ditemukan, Anda juga dapat menggunakan judul/deskripsi sendiri di sini"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Extra Page Title and Link options"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "Interval/jangka waktu antara setiap pemeriksaan."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set to empty to use system settings default"
+msgstr "Kosongkan untuk menggunakan default pengaturan sistem"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
+msgstr "Hubungkan menggunakan Proksi Bright Data dan Oxylabs, cari tahu selengkapnya di sini."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Check/Scan all"
+msgstr "Periksa/Pindai semua"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Choose a proxy for this watch"
+msgstr "Pilih proksi untuk monitor ini"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Using the current global default settings"
+msgstr "Menggunakan pengaturan default global saat ini"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Show advanced options"
+msgstr "Tampilkan opsi lanjutan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Run this code before performing change detection, handy for filling in fields and other actions"
+msgstr "Jalankan kode ini sebelum melakukan deteksi perubahan, berguna untuk mengisi bidang dan tindakan lainnya"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "More help and examples here"
+msgstr "Bantuan dan contoh lainnya di sini"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the request body"
+msgstr "Variabel didukung dalam isi permintaan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Variables are supported in the request header values"
+msgstr "Variabel didukung dalam nilai header permintaan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Alert! Extra headers file found and will be added to this watch!"
+msgstr "Peringatan! File header tambahan ditemukan dan akan ditambahkan ke monitor ini!"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Headers can be also read from a file in your data-directory"
+msgstr "Header juga dapat dibaca dari file di direktori data Anda"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Read more here"
+msgstr "Baca selengkapnya di sini"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Not supported by Selenium browser"
+msgstr "Tidak didukung oleh browser Selenium"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Turn on text finder"
+msgstr "Aktifkan pencari teks"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Please wait, first browser step can take a little time to load.."
+msgstr "Harap tunggu, langkah browser pertama mungkin perlu sedikit waktu untuk dimuat.."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Click here to Start"
+msgstr "Klik di sini untuk Mulai"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Please allow 10-15 seconds for the browser to connect."
+msgstr "Harap tunggu 10-15 detik agar browser terhubung."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Press \"Play\" to start."
+msgstr "Tekan \"Play\" untuk memulai."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Visual Selector data is not ready, watch needs to be checked atleast once."
+msgstr "Data Selektor Visual belum siap, monitor harus diperiksa setidaknya sekali."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sorry, this functionality only works with fetchers that support interactive Javascript (so far only Playwright based "
+"fetchers)"
+msgstr ""
+"Maaf, fungsi ini hanya bekerja dengan pengambil yang mendukung Javascript interaktif (sejauh ini hanya pengambil "
+"berbasis Playwright)"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to one that supports interactive Javascript."
+msgstr "ke pengambil yang mendukung Javascript interaktif."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "You need to"
+msgstr "Anda perlu"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Set the fetch method"
+msgstr "Atur metode pengambilan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
+"your filter will not work anymore."
+msgstr ""
+"Mengirim notifikasi saat filter tidak lagi terlihat di halaman, berguna untuk mengetahui saat halaman berubah dan "
+"filter Anda tidak dapat digunakan lagi."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
+msgstr "Gunakan tombol verifikasi (✓) untuk menguji apakah suatu kondisi terpenuhi terhadap snapshot saat ini."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Read a quick tutorial about"
+msgstr "Baca tutorial singkat tentang"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "using conditional web page changes here"
+msgstr "menggunakan perubahan halaman web bersyarat di sini"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Activate preview"
+msgstr "Aktifkan pratinjau"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Pro-tips:"
+msgstr "Kiat pro:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the preview page to see your filters and triggers highlighted."
+msgstr "Gunakan halaman pratinjau untuk melihat filter dan pemicu Anda disorot."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Limit trigger/ignore/block/extract to;"
+msgstr "Batasi pemicu/abaikan/blokir/ekstrak ke;"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Note: Depending on the length and similarity of the text on each line, the algorithm may consider an "
+"<strong>addition</strong> instead of <strong>replacement</strong> for example."
+msgstr ""
+"Catatan: Bergantung pada panjang dan kemiripan teks pada setiap baris, algoritme mungkin menganggapnya sebagai "
+"<strong>penambahan</strong> alih-alih <strong>penggantian</strong>, misalnya."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "So it's always better to select"
+msgstr "Jadi selalu lebih baik memilih"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "when you're interested in new content."
+msgstr "saat Anda tertarik pada konten baru."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "When content is merely moved in a list, it will also trigger an"
+msgstr "Saat konten hanya dipindahkan dalam daftar, hal itu juga akan memicu"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "addition"
+msgstr "penambahan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "consider enabling"
+msgstr "pertimbangkan untuk mengaktifkan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Only trigger when unique lines appear"
+msgstr "Hanya picu saat baris unik muncul"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Good for websites that just move the content around, and you want to know when NEW content is added, compares new "
+"lines against all history for this watch."
+msgstr ""
+"Cocok untuk situs web yang hanya memindahkan konten, dan Anda ingin tahu saat konten BARU ditambahkan; membandingkan "
+"baris baru dengan seluruh riwayat monitor ini."
+
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Helps reduce changes detected caused by sites shuffling lines around, combine with <i>check unique lines</i> below."
+msgstr ""
+"Membantu mengurangi perubahan terdeteksi yang disebabkan situs mengacak urutan baris, kombinasikan dengan <i>periksa "
+"baris unik</i> di bawah."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Remove any whitespace before and after each line of text"
+msgstr "Hapus spasi apa pun sebelum dan sesudah setiap baris teks"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI Intent preview"
+msgstr "Pratinjau Intent AI"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Loading..."
+msgstr "Memuat..."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The Visual Selector tool lets you select the"
+msgstr "Alat Selektor Visual memungkinkan Anda memilih"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "text"
+msgstr "teks"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"elements that will be used for the change detection. It automatically fills-in the filters in the "
+"\"CSS/JSONPath/JQ/XPath Filters\" box of the"
+msgstr ""
+"elemen yang akan digunakan untuk deteksi perubahan. Alat ini otomatis mengisi filter pada kotak \"Filter "
+"CSS/JSONPath/JQ/XPath\" di"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "tab. Use"
+msgstr "tab. Gunakan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Shift+Click"
+msgstr "Shift+Klik"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to select multiple items."
+msgstr "untuk memilih beberapa item."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Selection Mode:"
+msgstr "Mode Pemilihan:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Draw area"
+msgstr "Gambar area"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "One moment, fetching screenshot and element information.."
+msgstr "Tunggu sebentar, sedang mengambil tangkapan layar dan informasi elemen.."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc)."
+msgstr ""
+"Maaf, fungsi ini hanya bekerja dengan pengambil yang mendukung Javascript dan tangkapan layar (seperti Playwright, "
+"dll.)."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "to one that supports Javascript and screenshots."
+msgstr "ke pengambil yang mendukung Javascript dan tangkapan layar."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Check count"
+msgstr "Jumlah pemeriksaan"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Consecutive filter failures"
+msgstr "Kegagalan filter berturut-turut"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "History length"
+msgstr "Panjang riwayat"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Last fetch duration"
+msgstr "Durasi pengambilan terakhir"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Notification alert count"
+msgstr "Jumlah peringatan notifikasi"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Server type reply"
+msgstr "Balasan tipe server"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "Ya"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "Tidak"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI tokens (last check)"
+msgstr "Token AI (pemeriksaan terakhir)"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI tokens (total)"
+msgstr "Token AI (total)"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Download latest HTML snapshot"
+msgstr "Unduh snapshot HTML terbaru"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Download watch data package"
+msgstr "Unduh paket data monitor"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Delete Watch?"
+msgstr "Hapus Monitor?"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Are you sure you want to delete the watch for:"
+msgstr "Anda yakin ingin menghapus monitor untuk:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "This action cannot be undone."
+msgstr "Tindakan ini tidak dapat dibatalkan."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear History?"
+msgstr "Hapus Riwayat?"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Are you sure you want to clear all history for:"
+msgstr "Anda yakin ingin menghapus seluruh riwayat untuk:"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "This will remove all snapshots and previous versions. This action cannot be undone."
+msgstr "Ini akan menghapus semua snapshot dan versi sebelumnya. Tindakan ini tidak dapat dibatalkan."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clear History"
+msgstr "Hapus Riwayat"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Clone & Edit"
+msgstr "Kloning & Edit"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Select timestamp"
+msgstr "Pilih stempel waktu"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Current erroring screenshot from most recent request"
+msgstr "Tangkapan layar kesalahan saat ini dari permintaan terbaru"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) that supports screenshots."
+msgstr "Tangkapan layar memerlukan Pengambil Konten (Sockpuppetbrowser, selenium, dll.) yang mendukung tangkapan layar."
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+#, python-format
+msgid "Worker %(num)s"
+msgstr "Worker %(num)s"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "— idle"
+msgstr "— menganggur"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "running"
+msgstr "berjalan"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "idle"
+msgstr "menganggur"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "done"
+msgstr "selesai"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "cancel"
+msgstr "batal"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "No workers configured and queue is empty"
+msgstr "Tidak ada worker yang dikonfigurasi dan antrean kosong"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Watch no longer exists"
+msgstr "Monitor sudah tidak ada"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Nothing running"
+msgstr "Tidak ada yang berjalan"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Check queue"
+msgstr "Antrean pemeriksaan"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Live view of what the workers are doing right now and what is waiting in line."
+msgstr "Tampilan langsung tentang apa yang sedang dilakukan worker dan apa yang menunggu dalam antrean."
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Workers"
+msgstr "Worker"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Running now"
+msgstr "Sedang berjalan"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Queued"
+msgstr "Dalam antrean"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Clear Queue?"
+msgstr "Bersihkan Antrean?"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "<p>This will remove every pending check from the queue.</p><p>Running checks will continue.</p>"
+msgstr ""
+"<p>Ini akan menghapus setiap pemeriksaan tertunda dari antrean.</p><p>Pemeriksaan yang sedang berjalan akan tetap "
+"dilanjutkan.</p>"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Clear"
+msgstr "Bersihkan"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Clear Queue"
+msgstr "Bersihkan Antrean"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Workers & queue"
+msgstr "Worker & antrean"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Elapsed"
+msgstr "Waktu berlalu"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Status"
+msgstr "Status"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "No workers configured (FETCH_WORKERS=0) and queue is empty"
+msgstr "Tidak ada worker yang dikonfigurasi (FETCH_WORKERS=0) dan antrean kosong"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Waiting for new pages to check…"
+msgstr "Menunggu halaman baru untuk diperiksa…"
+
+#: changedetectionio/blueprint/ui/views.py
+#, python-brace-format
+msgid "Warning, URL {} already exists"
+msgstr "Peringatan, URL {} sudah ada"
+
+#: changedetectionio/blueprint/ui/views.py
+msgid "Watch added in Paused state, saving will unpause."
+msgstr "Monitor ditambahkan dalam keadaan Dijeda, menyimpan akan melanjutkannya."
+
+#: changedetectionio/blueprint/ui/views.py
+msgid "Watch added."
+msgstr "Monitor ditambahkan."
+
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "records"
+msgstr "rekaman"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Pause checks"
+msgstr "Jeda pemeriksaan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnPause checks"
+msgstr "Lanjutkan pemeriksaan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Mute notification"
+msgstr "Bisukan notifikasi"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnMute notification"
+msgstr "Aktifkan kembali notifikasi"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Goto web page"
+msgstr "Buka halaman web"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Create a link to share watch config with others"
+msgstr "Buat tautan untuk membagikan konfigurasi monitor dengan orang lain"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Detecting restock and price"
+msgstr "Mendeteksi ketersediaan stok dan harga"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Not in stock"
+msgstr "Stok habis"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "In stock"
+msgstr "Tersedia"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price"
+msgstr "Harga"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr "Perubahan harga sejak harga sebelumnya (%(prev)s)"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "No information"
+msgstr "Tidak ada informasi"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Checked"
+msgstr "Diperiksa"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Checking now"
+msgstr "Sedang diperiksa"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changed"
+msgstr "Berubah"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Summary"
+msgstr "Ringkasan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "Riwayat"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Preview"
+msgstr "Pratinjau"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
+msgstr "Changedetection.io dapat memantau lebih dari sekadar halaman web! Lihat plugin kami!"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "More info"
+msgstr "Info selengkapnya"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "You can also add 'shared' watches."
+msgstr "Anda juga dapat menambahkan monitor 'bersama'."
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Goto full history"
+msgstr "Buka riwayat lengkap"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Loading price history…"
+msgstr "Memuat riwayat harga…"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Out of stock"
+msgstr "Stok habis"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "No price data available to graph yet."
+msgstr "Belum ada data harga yang tersedia untuk dibuat grafik."
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Could not load price history."
+msgstr "Tidak dapat memuat riwayat harga."
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Changes"
+msgstr "Perubahan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Average price"
+msgstr "Harga rata-rata"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Currently low"
+msgstr "Saat ini rendah"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Currently typical"
+msgstr "Saat ini normal"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Currently high"
+msgstr "Saat ini tinggi"
+
+#. {pct} is a percentage including the % sign, e.g. "80%"
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+#, python-brace-format
+msgid "cheaper than {pct} of tracked prices"
+msgstr ""
+
+#. {pct} is a percentage including the % sign, e.g. "80%"
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+#, python-brace-format
+msgid "more expensive than {pct} of tracked prices"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "around the usual price"
+msgstr "sekitar harga biasanya"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "avg"
+msgstr "rata-rata"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Web page URL"
+msgstr "URL halaman web"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "All %(page)s on this page are selected."
+msgstr "Semua %(page)s pada halaman ini dipilih."
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "Select all %(total)s matching"
+msgstr "Pilih semua %(total)s yang cocok"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "All %(total)s matching are selected."
+msgstr "Semua %(total)s yang cocok dipilih."
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "%(count)s records selected"
+msgstr "%(count)s rekaman dipilih"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Searching"
+msgstr "Mencari"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All"
+msgstr "Semua"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter watches"
+msgstr "Filter monitor"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Unread"
+msgstr "Belum dibaca"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Deals"
+msgstr "Promo"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "With errors"
+msgstr "Dengan kesalahan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter by type"
+msgstr "Filter berdasarkan tipe"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All types"
+msgstr "Semua tipe"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark all viewed"
+msgstr "Tandai semua telah dilihat"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Recheck all"
+msgstr "Periksa ulang semua"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "in '%(title)s'"
+msgstr "di '%(title)s'"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "RSS Feed"
+msgstr "Feed RSS"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Invert"
+msgstr "Balik pilihan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Pause"
+msgstr "Jeda"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnPause"
+msgstr "Lanjutkan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mute"
+msgstr "Bisukan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "UnMute"
+msgstr "Aktifkan kembali"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Tag"
+msgstr "Tag"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
+msgstr "Atur metode browser / pengambilan untuk yang dipilih"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Apply"
+msgstr "Terapkan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set proxy for selected"
+msgstr "Atur proksi untuk yang dipilih"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark viewed"
+msgstr "Tandai telah dilihat"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Use default notification"
+msgstr "Gunakan notifikasi default"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear errors"
+msgstr "Bersihkan kesalahan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear Histories"
+msgstr "Hapus Riwayat"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
+msgstr "<p>Anda yakin ingin menghapus riwayat untuk item yang dipilih?</p><p>Tindakan ini tidak dapat dibatalkan.</p>"
+
+#. Universally recognized; typically left as-is. dennis-ignore: W302
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "OK"
+msgstr "OK"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear/reset history"
+msgstr "Hapus/reset riwayat"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Delete Watches?"
+msgstr "Hapus Monitor?"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
+msgstr "<p><strong>Anda yakin ingin menghapus monitor yang dipilih?</strong></p><p>Tindakan ini tidak dapat dibatalkan.</p>"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr "Tutup"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Web page"
+msgstr "Halaman web"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Restock & Price"
+msgstr "Stok Kembali & Harga"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "No web page change detection watches configured, please add a URL in the box above, or"
+msgstr "Belum ada monitor deteksi perubahan halaman web yang dikonfigurasi, silakan tambahkan URL pada kotak di atas, atau"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "import a list"
+msgstr "impor daftar"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Choose one - Operator"
+msgstr "Pilih satu - Operator"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Greater Than"
+msgstr "Lebih Besar Dari"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Less Than"
+msgstr "Lebih Kecil Dari"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Greater Than or Equal To"
+msgstr "Lebih Besar Dari atau Sama Dengan"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Less Than or Equal To"
+msgstr "Lebih Kecil Dari atau Sama Dengan"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Equals"
+msgstr "Sama Dengan"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Not Equals"
+msgstr "Tidak Sama Dengan"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Contains"
+msgstr "Mengandung"
+
+#: changedetectionio/conditions/__init__.py
+msgid "Choose one - Field"
+msgstr "Pilih satu - Bidang"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Does NOT Contain"
+msgstr "TIDAK Mengandung"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Text Starts With"
+msgstr "Teks Dimulai Dengan"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Text Ends With"
+msgstr "Teks Diakhiri Dengan"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Length minimum"
+msgstr "Panjang minimum"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Length maximum"
+msgstr "Panjang maksimum"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Text Matches Regex"
+msgstr "Teks Cocok dengan Regex"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Text Does NOT Match Regex"
+msgstr "Teks TIDAK Cocok dengan Regex"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Extracted number after 'Filters & Triggers'"
+msgstr "Angka yang diekstrak setelah 'Filter & Pemicu'"
+
+#: changedetectionio/conditions/default_plugin.py
+msgid "Page text after 'Filters & Triggers'"
+msgstr "Teks halaman setelah 'Filter & Pemicu'"
+
+#: changedetectionio/conditions/form.py
+msgid "Field"
+msgstr "Bidang"
+
+#: changedetectionio/conditions/form.py
+msgid "Operator"
+msgstr "Operator"
+
+#: changedetectionio/conditions/form.py
+msgid "A value"
+msgstr "Nilai"
+
+#: changedetectionio/conditions/form.py
+msgid "Operator is required."
+msgstr "Operator wajib diisi."
+
+#: changedetectionio/conditions/form.py
+msgid "Field is required."
+msgstr "Bidang wajib diisi."
+
+#: changedetectionio/conditions/form.py
+msgid "Value is required."
+msgstr "Nilai wajib diisi."
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein - Text similarity ratio"
+msgstr "Levenshtein - Rasio kemiripan teks"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein - Text change distance"
+msgstr "Levenshtein - Jarak perubahan teks"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Not enough history to calculate Levenshtein metrics"
+msgstr "Riwayat tidak cukup untuk menghitung metrik Levenshtein"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Snapshot too large for edit statistics, skipping."
+msgstr "Snapshot terlalu besar untuk statistik edit, dilewati."
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Unable to calculate Levenshtein metrics"
+msgstr "Tidak dapat menghitung metrik Levenshtein"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Levenshtein Text Similarity Details"
+msgstr "Detail Kemiripan Teks Levenshtein"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Raw distance (edits needed)"
+msgstr "Jarak mentah (jumlah edit yang diperlukan)"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Similarity ratio"
+msgstr "Rasio kemiripan"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Percent similar"
+msgstr "Persen kemiripan"
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid ""
+"Levenshtein metrics compare the last two snapshots, measuring how many character edits are needed to transform one "
+"into the other."
+msgstr ""
+"Metrik Levenshtein membandingkan dua snapshot terakhir, mengukur berapa banyak edit karakter yang diperlukan untuk "
+"mengubah satu menjadi yang lain."
+
+#: changedetectionio/conditions/plugins/levenshtein_plugin.py
+msgid "Error calculating Levenshtein metrics"
+msgstr "Kesalahan saat menghitung metrik Levenshtein"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count of content"
+msgstr "Jumlah kata konten"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Content Analysis"
+msgstr "Analisis Konten"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count (latest snapshot)"
+msgstr "Jumlah kata (snapshot terbaru)"
+
+#: changedetectionio/conditions/plugins/wordcount_plugin.py
+msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
+msgstr "Jumlah kata adalah ukuran sederhana panjang konten, dihitung dengan memisahkan teks berdasarkan spasi."
+
+#: changedetectionio/content_fetchers/requests.py
+msgid "Basic fast Plaintext/HTTP Client"
+msgstr "Klien Plaintext/HTTP Dasar yang cepat"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
+#: changedetectionio/realtime/socket_server.py
+msgid "Not yet"
+msgstr "Belum"
+
+#: changedetectionio/flask_app.py
+msgid "0 seconds"
+msgstr "0 detik"
+
+#: changedetectionio/flask_app.py
+msgid "year"
+msgstr "tahun"
+
+#: changedetectionio/flask_app.py
+msgid "years"
+msgstr "tahun"
+
+#: changedetectionio/flask_app.py
+msgid "month"
+msgstr "bulan"
+
+#: changedetectionio/flask_app.py
+msgid "months"
+msgstr "bulan"
+
+#: changedetectionio/flask_app.py
+msgid "week"
+msgstr "minggu"
+
+#: changedetectionio/flask_app.py
+msgid "weeks"
+msgstr "minggu"
+
+#: changedetectionio/flask_app.py
+msgid "day"
+msgstr "hari"
+
+#: changedetectionio/flask_app.py
+msgid "days"
+msgstr "hari"
+
+#: changedetectionio/flask_app.py
+msgid "hour"
+msgstr "jam"
+
+#: changedetectionio/flask_app.py
+msgid "hours"
+msgstr "jam"
+
+#: changedetectionio/flask_app.py
+msgid "minute"
+msgstr "menit"
+
+#: changedetectionio/flask_app.py
+msgid "minutes"
+msgstr "menit"
+
+#: changedetectionio/flask_app.py
+msgid "second"
+msgstr "detik"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
+msgid "seconds"
+msgstr "detik"
+
+#: changedetectionio/flask_app.py
+msgid "Already logged in"
+msgstr "Sudah masuk"
+
+#: changedetectionio/flask_app.py
+msgid "You must be logged in, please log in."
+msgstr "Anda harus masuk, silakan masuk."
+
+#: changedetectionio/flask_app.py
+msgid "Incorrect password"
+msgstr "Kata sandi salah"
+
+#: changedetectionio/forms.py
+msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified."
+msgstr "Setidaknya satu interval waktu (minggu, hari, jam, menit, atau detik) harus ditentukan."
+
+#: changedetectionio/forms.py
+msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+msgstr ""
+"Setidaknya satu interval waktu (minggu, hari, jam, menit, atau detik) harus ditentukan saat tidak menggunakan "
+"pengaturan global."
+
+#: changedetectionio/forms.py
+msgid "Invalid time format. Use HH:MM."
+msgstr "Format waktu tidak valid. Gunakan JJ:MM."
+
+#: changedetectionio/forms.py
+msgid "Not a valid timezone name"
+msgstr "Nama zona waktu tidak valid"
+
+#: changedetectionio/forms.py
+msgid "not set"
+msgstr "belum diatur"
+
+#: changedetectionio/forms.py
+msgid "Start At"
+msgstr "Mulai Pada"
+
+#: changedetectionio/forms.py
+msgid "Run duration"
+msgstr "Durasi berjalan"
+
+#: changedetectionio/forms.py
+msgid "Use time scheduler"
+msgstr "Gunakan penjadwal waktu"
+
+#: changedetectionio/forms.py
+msgid "Optional timezone to run in"
+msgstr "Zona waktu opsional untuk menjalankan"
+
+#: changedetectionio/forms.py
+msgid "Monday"
+msgstr "Senin"
+
+#: changedetectionio/forms.py
+msgid "Tuesday"
+msgstr "Selasa"
+
+#: changedetectionio/forms.py
+msgid "Wednesday"
+msgstr "Rabu"
+
+#: changedetectionio/forms.py
+msgid "Thursday"
+msgstr "Kamis"
+
+#: changedetectionio/forms.py
+msgid "Friday"
+msgstr "Jumat"
+
+#: changedetectionio/forms.py
+msgid "Saturday"
+msgstr "Sabtu"
+
+#: changedetectionio/forms.py
+msgid "Sunday"
+msgstr "Minggu"
+
+#: changedetectionio/forms.py
+msgid "Weeks"
+msgstr "Minggu"
+
+#: changedetectionio/forms.py
+msgid "Should contain zero or more seconds"
+msgstr "Harus berisi nol detik atau lebih"
+
+#: changedetectionio/forms.py
+msgid "Days"
+msgstr "Hari"
+
+#: changedetectionio/forms.py
+msgid "Hours"
+msgstr "Jam"
+
+#: changedetectionio/forms.py
+msgid "Minutes"
+msgstr "Menit"
+
+#: changedetectionio/forms.py
+msgid "Seconds"
+msgstr "Detik"
+
+#: changedetectionio/forms.py
+msgid "Unknown fetch method."
+msgstr "Metode pengambilan tidak dikenal."
+
+#: changedetectionio/forms.py
+msgid "Notification Body and Title is required when a Notification URL is used"
+msgstr "Isi dan Judul Notifikasi wajib diisi saat URL Notifikasi digunakan"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%s' is not a valid AppRise URL."
+msgstr "'%s' bukan URL AppRise yang valid."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "RegEx '%s' is not a valid regular expression."
+msgstr "RegEx '%s' bukan regular expression yang valid."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%(expression)s' is not a valid XPath expression. (%(error)s)"
+msgstr "'%(expression)s' bukan ekspresi XPath yang valid. (%(error)s)"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%(expression)s' is not a valid JSONPath expression. (%(error)s)"
+msgstr "'%(expression)s' bukan ekspresi JSONPath yang valid. (%(error)s)"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "'%(expression)s' is not a valid jq expression. (%(error)s)"
+msgstr "'%(expression)s' bukan ekspresi jq yang valid. (%(error)s)"
+
+#: changedetectionio/forms.py
+msgid "Empty value not allowed."
+msgstr "Nilai kosong tidak diizinkan."
+
+#: changedetectionio/forms.py
+msgid "Invalid value."
+msgstr "Nilai tidak valid."
+
+#: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Tag grup"
+
+#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/forms.py
+msgid "Watch"
+msgstr "Monitor"
+
+#: changedetectionio/forms.py
+msgid "Processor"
+msgstr "Prosesor"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
+msgid "Browser"
+msgstr "Browser"
+
+#: changedetectionio/forms.py
+msgid "Edit > Watch"
+msgstr "Edit > Monitor"
+
+#: changedetectionio/forms.py
+msgid "Fetch Method"
+msgstr "Metode Pengambilan"
+
+#: changedetectionio/forms.py
+msgid "Notification Body"
+msgstr "Isi Notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Notification format"
+msgstr "Format notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Judul Notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Notification URL List"
+msgstr "Daftar URL Notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Processor - What do you want to achieve?"
+msgstr "Prosesor - Apa yang ingin Anda capai?"
+
+#: changedetectionio/forms.py
+msgid "Default timezone for watch check scheduler"
+msgstr "Zona waktu default untuk penjadwal pemeriksaan monitor"
+
+#: changedetectionio/forms.py
+msgid "Wait seconds before extracting text"
+msgstr "Tunggu beberapa detik sebelum mengekstrak teks"
+
+#: changedetectionio/forms.py
+msgid "Should contain one or more seconds"
+msgstr "Harus berisi satu detik atau lebih"
+
+#: changedetectionio/forms.py
+msgid "Notification base URL override"
+msgstr "Timpa URL dasar notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Not set"
+msgstr "Belum diatur"
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/forms.py
+msgid "Save"
+msgstr "Simpan"
+
+#: changedetectionio/forms.py
+msgid "URLs"
+msgstr "URL"
+
+#: changedetectionio/forms.py
+msgid "Upload .xlsx file"
+msgstr "Unggah file .xlsx"
+
+#: changedetectionio/forms.py
+msgid "Must be .xlsx file!"
+msgstr "Harus berupa file .xlsx!"
+
+#: changedetectionio/forms.py
+msgid "File mapping"
+msgstr "Pemetaan file"
+
+#: changedetectionio/forms.py
+msgid "Operation"
+msgstr "Operasi"
+
+#: changedetectionio/forms.py
+msgid "Selector"
+msgstr "Selektor"
+
+#: changedetectionio/forms.py
+msgid "CSS or xPath selector"
+msgstr "Selektor CSS atau xPath"
+
+#: changedetectionio/forms.py
+msgid "value"
+msgstr "nilai"
+
+#: changedetectionio/conditions/form.py changedetectionio/forms.py
+msgid "Value"
+msgstr "Nilai"
+
+#: changedetectionio/forms.py
+msgid "Web Page URL"
+msgstr "URL Halaman Web"
+
+#: changedetectionio/forms.py
+msgid "Open Link Override"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Group Tag"
+msgstr "Tag Grup"
+
+#: changedetectionio/forms.py
+msgid "Time Between Check"
+msgstr "Waktu Antar Pemeriksaan"
+
+#: changedetectionio/forms.py
+msgid "Use global settings for time between check and scheduler."
+msgstr "Gunakan pengaturan global untuk waktu antar pemeriksaan dan penjadwal."
+
+#: changedetectionio/forms.py
+msgid "AI Change Intent - Notify me when.."
+msgstr "Intent Perubahan AI - Beri tahu saya saat.."
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/forms.py
+msgid "AI Change Summary"
+msgstr "Ringkasan Perubahan AI"
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Change Summary prompt - Append or Replace the default?"
+msgstr "Prompt Ringkasan Perubahan - Tambahkan atau Ganti default?"
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Replace the inherited prompt"
+msgstr "Ganti prompt yang diwarisi"
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Append to the inherited prompt"
+msgstr "Tambahkan ke prompt yang diwarisi"
+
+#: changedetectionio/forms.py
+msgid "AI enabled for this watch?"
+msgstr "Aktifkan AI untuk monitor ini?"
+
+#: changedetectionio/forms.py
+msgid "CSS/JSONPath/JQ/XPath Filters"
+msgstr "Filter CSS/JSONPath/JQ/XPath"
+
+#: changedetectionio/forms.py
+msgid "Remove elements"
+msgstr "Hapus elemen"
+
+#: changedetectionio/forms.py
+msgid "Extract lines containing"
+msgstr "Ekstrak baris yang mengandung"
+
+#: changedetectionio/forms.py
+msgid "Extract text"
+msgstr "Ekstrak teks"
+
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/forms.py
+msgid "Title"
+msgstr "Judul"
+
+#: changedetectionio/forms.py
+msgid "Ignore lines containing"
+msgstr "Abaikan baris yang mengandung"
+
+#: changedetectionio/forms.py
+msgid "Request body"
+msgstr "Isi permintaan"
+
+#: changedetectionio/forms.py
+msgid "Request method"
+msgstr "Metode permintaan"
+
+#: changedetectionio/forms.py
+msgid "Ignore status codes (process non-2xx status codes as normal)"
+msgstr "Abaikan kode status (proses kode status non-2xx seperti biasa)"
+
+#: changedetectionio/forms.py
+msgid "Only trigger when unique lines appear in all history"
+msgstr "Hanya picu saat baris unik muncul dalam seluruh riwayat"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+msgid "Remove duplicate lines of text"
+msgstr "Hapus baris teks duplikat"
+
+#: changedetectionio/forms.py
+msgid "Sort text alphabetically"
+msgstr "Urutkan teks secara alfabetis"
+
+#: changedetectionio/forms.py
+msgid "Strip ignored lines"
+msgstr "Hapus baris yang diabaikan"
+
+#: changedetectionio/forms.py
+msgid "Trim whitespace before and after text"
+msgstr "Pangkas spasi sebelum dan sesudah teks"
+
+#: changedetectionio/forms.py
+msgid "Added lines"
+msgstr "Baris yang ditambahkan"
+
+#: changedetectionio/forms.py
+msgid "Replaced/changed lines"
+msgstr "Baris yang diganti/diubah"
+
+#: changedetectionio/forms.py
+msgid "Removed lines"
+msgstr "Baris yang dihapus"
+
+#: changedetectionio/forms.py
+msgid "Keyword triggers - Trigger/wait for text"
+msgstr "Pemicu kata kunci - Picu/tunggu teks"
+
+#: changedetectionio/forms.py
+msgid "Block change-detection while text matches"
+msgstr "Blokir deteksi perubahan selama teks cocok"
+
+#: changedetectionio/forms.py
+msgid "Execute JavaScript before change detection"
+msgstr "Jalankan JavaScript sebelum deteksi perubahan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
+msgid "Proxy"
+msgstr "Proksi"
+
+#: changedetectionio/forms.py
+msgid "Send a notification when the filter can no longer be found on the page"
+msgstr "Kirim notifikasi saat filter tidak lagi ditemukan di halaman"
+
+#: changedetectionio/forms.py
+msgid "On"
+msgstr "Aktif"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
+msgid "Notifications"
+msgstr "Notifikasi"
+
+#: changedetectionio/forms.py changedetectionio/templates/menu.html
+msgid "Muted"
+msgstr "Dibisukan"
+
+#: changedetectionio/forms.py
+msgid "Attach screenshot to notification (where possible)"
+msgstr "Lampirkan tangkapan layar ke notifikasi (jika memungkinkan)"
+
+#: changedetectionio/forms.py
+msgid "Match"
+msgstr "Pencocokan"
+
+#: changedetectionio/forms.py
+msgid "Match all of the following"
+msgstr "Cocok dengan semua berikut"
+
+#: changedetectionio/forms.py
+msgid "Match any of the following"
+msgstr "Cocok dengan salah satu berikut"
+
+#: changedetectionio/forms.py
+msgid "Use page <title> in list"
+msgstr "Gunakan <title> halaman dalam daftar"
+
+#: changedetectionio/forms.py
+msgid "Number of history items per watch to keep"
+msgstr "Jumlah item riwayat per monitor yang disimpan"
+
+#: changedetectionio/forms.py
+msgid "Body must be empty when Request Method is set to GET"
+msgstr "Isi harus kosong saat Metode Permintaan diatur ke GET"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Konfigurasi sintaks template tidak valid: %(error)s"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Sintaks template tidak valid: %(error)s"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Sintaks template tidak valid pada header \"%(header)s\": %(error)s"
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Name"
+msgstr "Nama"
+
+#: changedetectionio/forms.py
+msgid "Proxy URL"
+msgstr "URL Proksi"
+
+#: changedetectionio/forms.py
+msgid "Proxy URLs must start with http://, https:// or socks5://"
+msgstr "URL Proksi harus diawali dengan http://, https:// atau socks5://"
+
+#: changedetectionio/forms.py
+msgid "Browser connection URL"
+msgstr "URL koneksi browser"
+
+#: changedetectionio/forms.py
+msgid "Browser URLs must start with wss:// or ws://"
+msgstr "URL browser harus diawali dengan wss:// atau ws://"
+
+#: changedetectionio/forms.py
+msgid "Plaintext requests"
+msgstr "Permintaan plaintext"
+
+#: changedetectionio/forms.py
+msgid "Chrome requests"
+msgstr "Permintaan Chrome"
+
+#: changedetectionio/forms.py
+msgid "Default proxy"
+msgstr "Proksi default"
+
+#: changedetectionio/forms.py
+msgid "Random jitter seconds ± check"
+msgstr "Detik jitter acak ± pemeriksaan"
+
+#: changedetectionio/forms.py
+msgid "Number of fetch workers"
+msgstr "Jumlah worker pengambilan"
+
+#: changedetectionio/forms.py
+msgid "Should be between 1 and 50"
+msgstr "Harus antara 1 dan 50"
+
+#: changedetectionio/forms.py
+msgid "Requests timeout in seconds"
+msgstr "Timeout permintaan dalam detik"
+
+#: changedetectionio/forms.py
+msgid "Should be between 1 and 999"
+msgstr "Harus antara 1 dan 999"
+
+#: changedetectionio/forms.py
+msgid "Default User-Agent overrides"
+msgstr "Penimpaan User-Agent default"
+
+#: changedetectionio/forms.py
+msgid "Both a name, and a Proxy URL is required."
+msgstr "Nama dan URL Proksi wajib diisi."
+
+#: changedetectionio/forms.py
+msgid "Open 'History' page in a new tab"
+msgstr "Buka halaman 'Riwayat' di tab baru"
+
+#: changedetectionio/forms.py
+msgid "Realtime UI Updates Enabled"
+msgstr "Pembaruan UI Realtime Diaktifkan"
+
+#: changedetectionio/forms.py
+msgid "Favicons Enabled"
+msgstr "Favicon Diaktifkan"
+
+#: changedetectionio/forms.py
+msgid "Use page <title> in watch overview list"
+msgstr "Gunakan <title> halaman dalam daftar ringkasan monitor"
+
+#: changedetectionio/forms.py
+msgid "Relative time format"
+msgstr "Format waktu relatif"
+
+#: changedetectionio/forms.py
+msgid "Long (1 minute ago)"
+msgstr "Panjang (1 menit yang lalu)"
+
+#: changedetectionio/forms.py
+msgid "Short (1m ago)"
+msgstr "Pendek (1m lalu)"
+
+#: changedetectionio/forms.py
+msgid "Navigation sidebar"
+msgstr "Sidebar navigasi"
+
+#: changedetectionio/forms.py
+msgid "API access token security check enabled"
+msgstr "Pemeriksaan keamanan token akses API diaktifkan"
+
+#: changedetectionio/forms.py
+msgid "Treat empty pages as a change?"
+msgstr "Anggap halaman kosong sebagai perubahan?"
+
+#: changedetectionio/forms.py
+msgid "Ignore Text"
+msgstr "Abaikan Teks"
+
+#: changedetectionio/forms.py
+msgid "Ignore whitespace"
+msgstr "Abaikan spasi"
+
+#: changedetectionio/forms.py
+msgid "Screenshot: Minimum Change Percentage"
+msgstr "Tangkapan layar: Persentase Perubahan Minimum"
+
+#: changedetectionio/forms.py changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Must be between 0 and 100"
+msgstr "Harus antara 0 dan 100"
+
+#: changedetectionio/forms.py changedetectionio/templates/login.html
+msgid "Password"
+msgstr "Kata sandi"
+
+#: changedetectionio/forms.py
+msgid "Pager size"
+msgstr "Ukuran halaman"
+
+#: changedetectionio/forms.py
+msgid "Should be atleast zero (disabled)"
+msgstr "Harus setidaknya nol (dinonaktifkan)"
+
+#: changedetectionio/forms.py
+msgid "RSS Content format"
+msgstr "Format Konten RSS"
+
+#: changedetectionio/forms.py
+msgid "RSS <description> body built from"
+msgstr "Isi <description> RSS dibuat dari"
+
+#: changedetectionio/forms.py
+msgid "RSS \"System default\" template override"
+msgstr "Penimpaan template \"Default sistem\" RSS"
+
+#: changedetectionio/forms.py
+msgid "Remove password"
+msgstr "Hapus kata sandi"
+
+#: changedetectionio/forms.py
+msgid "Render anchor tag content"
+msgstr "Render konten tag anchor"
+
+#: changedetectionio/forms.py
+msgid "Allow anonymous access to watch history page when password is enabled"
+msgstr "Izinkan akses anonim ke halaman riwayat monitor saat kata sandi diaktifkan"
+
+#: changedetectionio/forms.py
+msgid "Hide muted watches from RSS feed"
+msgstr "Sembunyikan monitor yang dibisukan dari feed RSS"
+
+#: changedetectionio/forms.py
+msgid "Enable RSS reader mode "
+msgstr "Aktifkan mode pembaca RSS "
+
+#: changedetectionio/forms.py
+msgid "Number of changes to show in watch RSS feed"
+msgstr "Jumlah perubahan yang ditampilkan dalam feed RSS monitor"
+
+#: changedetectionio/forms.py
+msgid "Should contain zero or more attempts"
+msgstr "Harus berisi nol percobaan atau lebih"
+
+#: changedetectionio/forms.py
+msgid "Number of times the filter can be missing before sending a notification"
+msgstr "Jumlah kegagalan menemukan filter sebelum mengirim notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Model"
+msgstr "Model"
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/forms.py
+msgid "API Key"
+msgstr "Kunci API"
+
+#: changedetectionio/forms.py
+msgid "API Base URL"
+msgstr "URL Dasar API"
+
+#: changedetectionio/forms.py
+msgid "Token multiplier for local reasoning models"
+msgstr "Pengali token untuk model reasoning lokal"
+
+#: changedetectionio/forms.py
+msgid "Default AI Change Summary prompt"
+msgstr "Prompt Ringkasan Perubahan AI default"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+msgid "Max tokens per watch per period"
+msgstr "Token maks. per monitor per periode"
+
+#: changedetectionio/forms.py
+msgid "Monthly token budget"
+msgstr "Anggaran token bulanan"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+msgid "Max input characters"
+msgstr "Karakter input maks."
+
+#: changedetectionio/forms.py
+msgid "Enable AI / LLM features"
+msgstr "Aktifkan fitur AI / LLM"
+
+#: changedetectionio/forms.py
+msgid "Replace {{diff}} notification token with AI summary"
+msgstr "Ganti token notifikasi {{diff}} dengan ringkasan AI"
+
+#: changedetectionio/forms.py
+msgid "Use LLM as a fallback for extracting price and restock info"
+msgstr "Gunakan LLM sebagai fallback untuk mengekstrak info harga dan stok kembali"
+
+#: changedetectionio/forms.py
+msgid "Enable LLM debug logging"
+msgstr "Aktifkan logging debug LLM"
+
+#: changedetectionio/forms.py
+msgid "AI thinking budget (tokens)"
+msgstr "Anggaran thinking AI (token)"
+
+#: changedetectionio/forms.py
+msgid "Off (no thinking)"
+msgstr "Nonaktif (tanpa thinking)"
+
+#: changedetectionio/forms.py
+msgid "Max AI summary length (tokens)"
+msgstr "Panjang ringkasan AI maks. (token)"
+
+#: changedetectionio/forms.py
+msgid "When monthly token budget is reached"
+msgstr "Saat anggaran token bulanan tercapai"
+
+#: changedetectionio/forms.py
+msgid "Skip AI summarisation only (watch still checks)"
+msgstr "Lewati hanya ringkasan AI (monitor tetap diperiksa)"
+
+#: changedetectionio/forms.py
+msgid "Skip the watch check entirely"
+msgstr "Lewati seluruh pemeriksaan monitor"
+
+#: changedetectionio/forms.py
+msgid "Watchlist \"Summary\" link compares"
+msgstr "Tautan \"Ringkasan\" daftar monitor membandingkan"
+
+#: changedetectionio/forms.py
+msgid "Previous version (second-last vs latest)"
+msgstr "Versi sebelumnya (kedua terakhir vs terbaru)"
+
+#: changedetectionio/forms.py
+msgid "Changes since you last viewed the watch"
+msgstr "Perubahan sejak terakhir Anda melihat monitor"
+
+#: changedetectionio/forms.py
+msgid "RegEx to extract"
+msgstr "RegEx untuk diekstrak"
+
+#: changedetectionio/forms.py
+msgid "Extract as CSV"
+msgstr "Ekstrak sebagai CSV"
+
+#: changedetectionio/languages.py
+msgid "just now"
+msgstr "baru saja"
+
+#: changedetectionio/languages.py
+msgid "right now"
+msgstr "sekarang juga"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%ss ago"
+msgstr "%sdtk lalu"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %ss"
+msgstr "dalam %sdtk"
+
+#: changedetectionio/languages.py
+msgid "1m ago"
+msgstr "1m lalu"
+
+#: changedetectionio/languages.py
+msgid "in 1m"
+msgstr "dalam 1m"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sm ago"
+msgstr "%sm lalu"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sm"
+msgstr "dalam %sm"
+
+#: changedetectionio/languages.py
+msgid "1h ago"
+msgstr "1j lalu"
+
+#: changedetectionio/languages.py
+msgid "in 1h"
+msgstr "dalam 1j"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sh ago"
+msgstr "%sj lalu"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sh"
+msgstr "dalam %sj"
+
+#: changedetectionio/languages.py
+msgid "1d ago"
+msgstr "1h lalu"
+
+#: changedetectionio/languages.py
+msgid "in 1d"
+msgstr "dalam 1h"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sd ago"
+msgstr "%sh lalu"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sd"
+msgstr "dalam %sh"
+
+#: changedetectionio/languages.py
+msgid "1w ago"
+msgstr "1mgg lalu"
+
+#: changedetectionio/languages.py
+msgid "in 1w"
+msgstr "dalam 1mgg"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sw ago"
+msgstr "%smgg lalu"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sw"
+msgstr "dalam %smgg"
+
+#: changedetectionio/languages.py
+msgid "1mo ago"
+msgstr "1bln lalu"
+
+#: changedetectionio/languages.py
+msgid "in 1mo"
+msgstr "dalam 1bln"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%smo ago"
+msgstr "%sbln lalu"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %smo"
+msgstr "dalam %sbln"
+
+#: changedetectionio/languages.py
+msgid "1yr ago"
+msgstr "1th lalu"
+
+#: changedetectionio/languages.py
+msgid "in 1yr"
+msgstr "dalam 1th"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%syr ago"
+msgstr "%sth lalu"
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %syr"
+msgstr "dalam %sth"
+
+#: changedetectionio/processors/extract.py
+msgid "No matches found while scanning all of the watch history for that RegEx."
+msgstr "Tidak ditemukan kecocokan saat memindai seluruh riwayat monitor untuk RegEx tersebut."
+
+#: changedetectionio/processors/image_ssim_diff/difference.py
+msgid "Not enough history to compare. Need at least 2 snapshots."
+msgstr "Riwayat tidak cukup untuk dibandingkan. Diperlukan minimal 2 snapshot."
+
+#: changedetectionio/processors/image_ssim_diff/difference.py
+#, python-brace-format
+msgid "Failed to load screenshots: {}"
+msgstr "Gagal memuat tangkapan layar: {}"
+
+#: changedetectionio/processors/image_ssim_diff/difference.py
+#, python-brace-format
+msgid "Failed to calculate diff: {}"
+msgstr "Gagal menghitung perbedaan: {}"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding box value is too long"
+msgstr "Nilai bounding box terlalu panjang"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding box must be in format: x,y,width,height (integers only)"
+msgstr "Bounding box harus dalam format: x,y,width,height (hanya bilangan bulat)"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding box values must be non-negative"
+msgstr "Nilai bounding box tidak boleh negatif"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding box values are too large"
+msgstr "Nilai bounding box terlalu besar"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Selection mode must be either \"element\" or \"draw\""
+msgstr "Mode pemilihan harus \"element\" atau \"draw\""
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Minimum Change Percentage"
+msgstr "Persentase Perubahan Minimum"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Pixel Difference Sensitivity"
+msgstr "Sensitivitas Perbedaan Piksel"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Use global default"
+msgstr "Gunakan default global"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Bounding Box"
+msgstr "Bounding Box"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Selection Mode"
+msgstr "Mode Pemilihan"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Selection mode value is too long"
+msgstr "Nilai mode pemilihan terlalu panjang"
+
+#: changedetectionio/processors/image_ssim_diff/forms.py
+msgid "Screenshot Comparison"
+msgstr "Perbandingan Tangkapan Layar"
+
+#: changedetectionio/processors/image_ssim_diff/preview.py
+msgid "Preview unavailable - No snapshots captured yet"
+msgstr "Pratinjau tidak tersedia - Belum ada snapshot yang diambil"
+
+#: changedetectionio/processors/image_ssim_diff/processor.py
+msgid "Visual / Image screenshot change detection"
+msgstr "Deteksi perubahan visual / tangkapan layar gambar"
+
+#: changedetectionio/processors/image_ssim_diff/processor.py
+msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
+msgstr "Membandingkan tangkapan layar menggunakan algoritme OpenCV cepat, 10-100x lebih cepat daripada SSIM"
+
+#: changedetectionio/processors/restock_diff/difference.py
+msgid "Date"
+msgstr "Tanggal"
+
+#: changedetectionio/processors/restock_diff/difference.py
+msgid "Stock status"
+msgstr "Status stok"
+
+#: changedetectionio/processors/restock_diff/difference.py
+msgid "Currency"
+msgstr "Mata uang"
+
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price history"
+msgstr "Riwayat harga"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Re-stock detection"
+msgstr "Deteksi stok kembali"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "In Stock only (Out Of Stock -> In Stock only)"
+msgstr "Hanya Tersedia (Stok Habis -> Tersedia saja)"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Any availability changes"
+msgstr "Setiap perubahan ketersediaan"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Off, don't follow availability/restock"
+msgstr "Nonaktif, jangan ikuti ketersediaan/stok kembali"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Below price to trigger notification"
+msgstr "Harga di bawah nilai ini untuk memicu notifikasi"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "No limit"
+msgstr "Tanpa batas"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Above price to trigger notification"
+msgstr "Harga di atas nilai ini untuk memicu notifikasi"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Threshold (%) for price changes since the previous check"
+msgstr "Ambang batas (%) perubahan harga sejak pemeriksaan sebelumnya"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Should be between 0 and 100"
+msgstr "Harus antara 0 dan 100"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Follow price changes"
+msgstr "Ikuti perubahan harga"
+
+#: changedetectionio/processors/restock_diff/forms.py
+msgid "Restock & Price Detection"
+msgstr "Deteksi Stok Kembali & Harga"
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "Re-stock & Price detection for pages with a SINGLE product"
+msgstr "Deteksi Stok Kembali & Harga untuk halaman dengan SATU produk"
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "Detects if the product goes back to in-stock"
+msgstr "Mendeteksi jika produk kembali tersedia"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price & stock history"
+msgstr "Riwayat harga & stok"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Download as XLSX"
+msgstr "Unduh sebagai XLSX"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "When"
+msgstr "Waktu"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Stock"
+msgstr "Stok"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here."
+msgstr "Belum cukup titik data harga untuk membuat grafik - terus pantau dan riwayat harga akan muncul di sini."
+
+#: changedetectionio/processors/templates/extract.html
+msgid "Screenshot"
+msgstr "Tangkapan layar"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "This tool will extract text data from all of the watch history."
+msgstr "Alat ini akan mengekstrak data teks dari seluruh riwayat monitor."
+
+#: changedetectionio/processors/templates/extract.html
+msgid "A <strong>RegEx</strong> is a pattern that identifies exactly which part inside of the text that you want to extract."
+msgstr "<strong>RegEx</strong> adalah pola yang mengidentifikasi secara tepat bagian dalam teks yang ingin Anda ekstrak."
+
+#: changedetectionio/processors/templates/extract.html
+msgid "For example, to extract only the numbers from text"
+msgstr "Misalnya, untuk mengekstrak hanya angka dari teks"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "Raw text"
+msgstr "Teks mentah"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "RegEx to extract:"
+msgstr "RegEx untuk diekstrak:"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "Be sure to test your RegEx here."
+msgstr "Pastikan untuk menguji RegEx Anda di sini."
+
+#: changedetectionio/processors/templates/extract.html
+msgid "Each RegEx group bracket"
+msgstr "Setiap tanda kurung grup RegEx"
+
+#: changedetectionio/processors/templates/extract.html
+msgid "will be in its own column, the first column value is always the date."
+msgstr "akan berada di kolomnya sendiri, nilai kolom pertama selalu tanggal."
+
+#: changedetectionio/processors/text_json_diff/processor.py
+msgid "Webpage Text/HTML, JSON and PDF changes"
+msgstr "Perubahan Teks/HTML Halaman Web, JSON, dan PDF"
+
+#: changedetectionio/processors/text_json_diff/processor.py
+msgid "Detects all text changes where possible"
+msgstr "Mendeteksi semua perubahan teks jika memungkinkan"
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
+msgstr "Batas monitor tercapai ({current}/{limit} monitor). Tidak dapat menambahkan monitor lagi."
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
+msgid "Error fetching metadata for {}"
+msgstr "Kesalahan saat mengambil metadata untuk {}"
+
+#: changedetectionio/store/__init__.py
+msgid "Watch protocol is not permitted or invalid URL format"
+msgstr "Protokol monitor tidak diizinkan atau format URL tidak valid"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Body for all notifications — You can use"
+msgstr "Isi untuk semua notifikasi — Anda dapat menggunakan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "templating in the notification title, body and URL, and tokens from below."
+msgstr "templating pada judul, isi, dan URL notifikasi, serta token dari bawah."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Show token/placeholders"
+msgstr "Tampilkan token/placeholder"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Token"
+msgstr "Token"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Description"
+msgstr "Deskripsi"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The URL of the changedetection.io instance you are running."
+msgstr "URL instance changedetection.io yang Anda jalankan."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The URL being watched."
+msgstr "URL yang dipantau."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"The Open Link Override set on the watch, otherwise the same as watch_url. Use this when the watched URL is an API "
+"endpoint or RSS feed but you want to link to the real page."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The UUID of the watch."
+msgstr "UUID monitor."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The page title of the watch, uses <title> if not set, falls back to URL"
+msgstr "Judul halaman monitor, menggunakan <title> jika tidak diatur, fallback ke URL"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The watch group / tag"
+msgstr "Grup / tag monitor"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The URL of the preview page generated by changedetection.io."
+msgstr "URL halaman pratinjau yang dibuat oleh changedetection.io."
+
+#: changedetectionio/templates/_common_fields.html
+#, python-format
+msgid "Date/time of the change, accepts format=, %(call)s, default is '%(default)s'"
+msgstr "Tanggal/waktu perubahan, menerima format=, %(call)s, default adalah '%(default)s'"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The URL of the diff output for the watch."
+msgstr "URL keluaran diff untuk monitor."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes, additions, and removals"
+msgstr "Keluaran diff - hanya perubahan, penambahan, dan penghapusan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "All diff variants accept"
+msgstr "Semua varian diff menerima"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "args, e.g."
+msgstr "argumen, mis."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes, additions, and removals —"
+msgstr "Keluaran diff - hanya perubahan, penambahan, dan penghapusan —"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Without (added) prefix or colors"
+msgstr "Tanpa awalan (ditambahkan) atau warna"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes and additions"
+msgstr "Keluaran diff - hanya perubahan dan penambahan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes and additions —"
+msgstr "Keluaran diff - hanya perubahan dan penambahan —"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes and removals"
+msgstr "Keluaran diff - hanya perubahan dan penghapusan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - only changes and removals —"
+msgstr "Keluaran diff - hanya perubahan dan penghapusan —"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - full difference output"
+msgstr "Keluaran diff - keluaran perbedaan lengkap"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - full difference output —"
+msgstr "Keluaran diff - keluaran perbedaan lengkap —"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The diff output - patch in unified format"
+msgstr "Keluaran diff - patch dalam format unified"
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"Only the changed words/values from the previous version — e.g. the old price. Best when a single value changes per "
+"line; multiple changed fragments are joined by newline."
+msgstr ""
+"Hanya kata/nilai yang berubah dari versi sebelumnya — mis. harga lama. Paling baik saat satu nilai berubah per baris;"
+" beberapa fragmen yang berubah digabungkan dengan baris baru."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"Only the changed words/values from the new version — e.g. the new price. Best when a single value changes per line; "
+"multiple changed fragments are joined by newline."
+msgstr ""
+"Hanya kata/nilai yang berubah dari versi baru — mis. harga baru. Paling baik saat satu nilai berubah per baris; "
+"beberapa fragmen yang berubah digabungkan dengan baris baru."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The current snapshot text contents value, useful when combined with JSON or CSS filters"
+msgstr "Nilai isi teks snapshot saat ini, berguna saat digabungkan dengan filter JSON atau CSS"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Text that tripped the trigger from filters"
+msgstr "Teks yang memicu pemicu dari filter"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "(upgraded)"
+msgstr "(ditingkatkan)"
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"When AI Change Summary is configured, contains the AI-generated description instead of the raw diff. Falls back to "
+"raw diff when not configured."
+msgstr ""
+"Saat Ringkasan Perubahan AI dikonfigurasi, berisi deskripsi yang dibuat AI alih-alih diff mentah. Kembali ke diff "
+"mentah saat tidak dikonfigurasi."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Always the raw +/- diff, regardless of AI Change Summary setting."
+msgstr "Selalu diff +/- mentah, terlepas dari pengaturan Ringkasan Perubahan AI."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The AI Change Summary text (same as the upgraded {{diff}} — explicit reference)."
+msgstr "Teks Ringkasan Perubahan AI (sama dengan {{diff}} yang ditingkatkan — referensi eksplisit)."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "The AI Change Intent that was evaluated."
+msgstr "Intent Perubahan AI yang dievaluasi."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Warning: Contents of"
+msgstr "Peringatan: Isi dari"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "and"
+msgstr "dan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "depend on how the difference algorithm perceives the change."
+msgstr "bergantung pada cara algoritme perbedaan memahami perubahan."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "For example, an addition or removal could be perceived as a change in some cases."
+msgstr "Misalnya, penambahan atau penghapusan dalam beberapa kasus dapat dianggap sebagai perubahan."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "More Here"
+msgstr "Selengkapnya Di Sini"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add email notification:"
+msgstr "Tambahkan notifikasi email:"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "Tambahkan ke daftar"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add an email address"
+msgstr "Tambahkan alamat email"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "Kirim notifikasi uji"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Notification debug logs"
+msgstr "Log debug notifikasi"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "Memproses.."
+
+#: changedetectionio/templates/_common_fields.html
+#, python-format
+msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
+msgstr "Gunakan <a target=\"newwindow\" href=\"%(url)s\">URL Notifikasi AppRise</a> untuk notifikasi ke hampir semua layanan!"
+
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
+#: changedetectionio/templates/_common_fields.html
+msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
+msgstr "<i>Harap baca wiki layanan notifikasi di sini untuk catatan konfigurasi penting</i>"
+
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "Tampilkan bantuan dan kiat lanjutan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "(or"
+msgstr "(atau"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "only supports a maximum"
+msgstr "hanya mendukung maksimum"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "2,000 characters"
+msgstr "2.000 karakter"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "of notification text, including the title."
+msgstr "teks notifikasi, termasuk judul."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
+msgstr "bot tidak dapat mengirim pesan ke bot lain, jadi Anda harus menentukan chat ID pengguna non-bot."
+
+#: changedetectionio/templates/_common_fields.html
+msgid "only supports very limited HTML and can fail when extra tags are sent,"
+msgstr "hanya mendukung HTML yang sangat terbatas dan dapat gagal saat tag tambahan dikirim,"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "(or use plaintext/markdown format)"
+msgstr "(atau gunakan format plaintext/markdown)"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "for direct API calls (or omit the"
+msgstr "untuk panggilan API langsung (atau hilangkan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "for non-SSL ie"
+msgstr "untuk non-SSL yaitu"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "more help here"
+msgstr "bantuan selengkapnya di sini"
+
+#: changedetectionio/templates/_common_fields.html
+#, python-format
+msgid "Accepts the <code>%(token)s</code> placeholders listed below"
+msgstr "Menerima placeholder <code>%(token)s</code> yang tercantum di bawah"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Customise notifications"
+msgstr "Sesuaikan notifikasi"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Title for all notifications"
+msgstr "Judul untuk semua notifikasi"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "For JSON payloads, use"
+msgstr "Untuk payload JSON, gunakan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "without quotes for automatic escaping, for example -"
+msgstr "tanpa tanda kutip untuk escaping otomatis, misalnya -"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "URL encoding, use"
+msgstr "Encoding URL, gunakan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "for example -"
+msgstr "misalnya -"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Regular-expression replace, use"
+msgstr "Penggantian regular-expression, gunakan"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "For a complete reference of all Jinja2 built-in filters, users can refer to the"
+msgstr "Untuk referensi lengkap semua filter bawaan Jinja2, pengguna dapat melihat"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Format for all notifications"
+msgstr "Format untuk semua notifikasi"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Discord does not render HTML — switch to"
+msgstr "Discord tidak merender HTML — beralih ke"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Plain Text"
+msgstr "Teks Biasa"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "format to avoid"
+msgstr "format untuk menghindari"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "and other HTML entities appearing literally in your notifications."
+msgstr "dan entitas HTML lainnya muncul secara literal dalam notifikasi Anda."
+
+#: changedetectionio/templates/_helpers.html
+msgid "Entry"
+msgstr "Entri"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Actions"
+msgstr "Tindakan"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Add a row/rule after"
+msgstr "Tambahkan baris/aturan setelah"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Remove this row/rule"
+msgstr "Hapus baris/aturan ini"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Verify this rule against current snapshot"
+msgstr "Verifikasi aturan ini terhadap snapshot saat ini"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Set a hourly/week day schedule"
+msgstr "Atur jadwal jam/hari dalam seminggu"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
+msgstr "Batas waktu jadwal"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Business hours"
+msgstr "Jam kerja"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Weekends"
+msgstr "Akhir pekan"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Reset"
+msgstr "Reset"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Warning, one or more of your 'days' has a duration that would extend into the next day."
+msgstr "Peringatan, satu atau beberapa 'hari' Anda memiliki durasi yang akan berlanjut ke hari berikutnya."
+
+#: changedetectionio/templates/_helpers.html
+msgid "This could have unintended consequences."
+msgstr "Hal ini dapat menimbulkan konsekuensi yang tidak diinginkan."
+
+#: changedetectionio/templates/_helpers.html
+msgid "More help and examples about using the scheduler"
+msgstr "Bantuan dan contoh lainnya tentang penggunaan penjadwal"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Want to use a time schedule?"
+msgstr "Ingin menggunakan jadwal waktu?"
+
+#: changedetectionio/templates/_helpers.html
+msgid "First confirm/save your Time Zone Settings"
+msgstr "Konfirmasi/simpan Pengaturan Zona Waktu Anda terlebih dahulu"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Triggered text"
+msgstr "Teks pemicu"
+
+#: changedetectionio/templates/_helpers.html changedetectionio/templates/base.html
+msgid "Triggers a change if this text appears, AND something changed in the document."
+msgstr "Memicu perubahan jika teks ini muncul, DAN ada sesuatu yang berubah dalam dokumen."
+
+#: changedetectionio/templates/_helpers.html
+msgid "Ignored text"
+msgstr "Teks yang diabaikan"
+
+#: changedetectionio/templates/_helpers.html changedetectionio/templates/base.html
+msgid "Ignored for calculating changes, but still shown."
+msgstr "Diabaikan saat menghitung perubahan, tetapi tetap ditampilkan."
+
+#: changedetectionio/templates/_helpers.html
+msgid "Blocked text"
+msgstr "Teks yang diblokir"
+
+#: changedetectionio/templates/_helpers.html changedetectionio/templates/base.html
+msgid "No change-detection will occur because this text exists."
+msgstr "Deteksi perubahan tidak akan dilakukan karena teks ini ada."
+
+#: changedetectionio/templates/_stab.html
+msgid "Settings sections"
+msgstr "Bagian pengaturan"
+
+#: changedetectionio/templates/base.html
+msgid "Confirm Action"
+msgstr "Konfirmasi Tindakan"
+
+#: changedetectionio/templates/base.html
+msgid "Are you sure?"
+msgstr "Anda yakin?"
+
+#: changedetectionio/templates/base.html
+msgid "<p>Are you sure you want to proceed?</p>"
+msgstr "<p>Anda yakin ingin melanjutkan?</p>"
+
+#: changedetectionio/templates/base.html
+msgid "Confirm"
+msgstr "Konfirmasi"
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Delete %(name)s?"
+msgstr "Hapus %(name)s?"
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "<p>Are you sure you want to delete <strong>%(name)s</strong>?</p><p>This action cannot be undone.</p>"
+msgstr "<p>Anda yakin ingin menghapus <strong>%(name)s</strong>?</p><p>Tindakan ini tidak dapat dibatalkan.</p>"
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Unlink %(name)s?"
+msgstr "Lepas tautan %(name)s?"
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid ""
+"<p>Are you sure you want to unlink all watches from <strong>%(name)s</strong>?</p><p>The tag will be kept but watches"
+" will be removed from it.</p>"
+msgstr ""
+"<p>Anda yakin ingin melepas semua monitor dari <strong>%(name)s</strong>?</p><p>Tag akan dipertahankan tetapi monitor"
+" akan dihapus dari tag tersebut.</p>"
+
+#: changedetectionio/templates/base.html
+msgid "There was an error communicating with the server."
+msgstr "Terjadi kesalahan saat berkomunikasi dengan server."
+
+#: changedetectionio/templates/base.html
+msgid "There was a problem processing the request, please reload the page."
+msgstr "Terjadi masalah saat memproses permintaan, silakan muat ulang halaman."
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "There was a problem processing the request: %(error)s"
+msgstr "Terjadi masalah saat memproses permintaan: %(error)s"
+
+#: changedetectionio/templates/base.html
+msgid "Existing filters under the 'Filters & Triggers' tab were cleared."
+msgstr "Filter yang ada pada tab 'Filter & Pemicu' telah dibersihkan."
+
+#: changedetectionio/templates/base.html
+msgid "Fetching element data.."
+msgstr "Mengambil data elemen.."
+
+#: changedetectionio/templates/base.html
+msgid "Rendering.."
+msgstr "Merender.."
+
+#: changedetectionio/templates/base.html
+msgid "Draw mode - click and drag to select an area"
+msgstr "Mode gambar - klik dan seret untuk memilih area"
+
+#: changedetectionio/templates/base.html
+msgid "Hover over elements to select"
+msgstr "Arahkan kursor ke elemen untuk memilih"
+
+#: changedetectionio/templates/base.html
+msgid "Image copied to clipboard!"
+msgstr "Gambar disalin ke clipboard!"
+
+#: changedetectionio/templates/base.html
+msgid "Failed to copy image. Your browser may not support this feature."
+msgstr "Gagal menyalin gambar. Browser Anda mungkin tidak mendukung fitur ini."
+
+#: changedetectionio/templates/base.html
+msgid "Please select the text/lines you want to capture first by highlighting with your mouse."
+msgstr "Silakan pilih dahulu teks/baris yang ingin Anda tangkap dengan menyorotnya menggunakan mouse."
+
+#: changedetectionio/templates/base.html
+msgid "Please select text within the diff content."
+msgstr "Silakan pilih teks di dalam konten diff."
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Failed to generate image: %(error)s"
+msgstr "Gagal membuat gambar: %(error)s"
+
+#: changedetectionio/templates/base.html
+msgid "Change Detection Diff"
+msgstr "Diff Deteksi Perubahan"
+
+#: changedetectionio/templates/base.html
+msgid "Check out this change detected via changedetection.io"
+msgstr "Lihat perubahan ini yang terdeteksi melalui changedetection.io"
+
+#: changedetectionio/templates/base.html
+msgid "Please fill in all fields (Field, Operator, and Value) before verifying."
+msgstr "Silakan isi semua bidang (Bidang, Operator, dan Nilai) sebelum memverifikasi."
+
+#: changedetectionio/templates/base.html
+msgid "Error verifying condition."
+msgstr "Kesalahan saat memverifikasi kondisi."
+
+#: changedetectionio/templates/base.html
+msgid "Destination email"
+msgstr "Email tujuan"
+
+#: changedetectionio/templates/base.html
+msgid "Content after filters"
+msgstr "Konten setelah filter"
+
+#: changedetectionio/templates/base.html
+msgid "Content raw/before filters"
+msgstr "Konten mentah/sebelum filter"
+
+#: changedetectionio/templates/base.html
+msgid "Main navigation"
+msgstr "Navigasi utama"
+
+#: changedetectionio/templates/base.html
+msgid "Share this link:"
+msgstr "Bagikan tautan ini:"
+
+#: changedetectionio/templates/base.html
+msgid "Real-time updates offline"
+msgstr "Pembaruan realtime offline"
+
+#: changedetectionio/templates/base.html
+msgid "Select Language"
+msgstr "Pilih Bahasa"
+
+#: changedetectionio/templates/base.html
+msgid "Auto-detect from browser"
+msgstr "Deteksi otomatis dari browser"
+
+#: changedetectionio/templates/base.html
+msgid "Language support is in beta, please help us improve by opening a PR on GitHub with any updates."
+msgstr "Dukungan bahasa masih beta, bantu kami meningkatkannya dengan membuka PR di GitHub untuk setiap pembaruan."
+
+#: changedetectionio/templates/base.html
+msgid "AI / LLM not configured"
+msgstr "AI / LLM belum dikonfigurasi"
+
+#: changedetectionio/templates/base.html
+msgid "LLM-powered summaries are not yet enabled. Configure an AI provider in Settings to get started."
+msgstr "Ringkasan bertenaga LLM belum diaktifkan. Konfigurasikan penyedia AI di Pengaturan untuk memulai."
+
+#: changedetectionio/templates/base.html
+msgid "Go to AI / LLM Settings"
+msgstr "Buka Pengaturan AI / LLM"
+
+#: changedetectionio/templates/base.html changedetectionio/templates/sidebar-nav.html
+msgid "Search"
+msgstr "Cari"
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "URL or Title in '%(title)s'"
+msgstr "URL atau Judul di '%(title)s'"
+
+#: changedetectionio/templates/base.html
+msgid "URL or Title"
+msgstr "URL atau Judul"
+
+#: changedetectionio/templates/base.html
+msgid "Enter search term..."
+msgstr "Masukkan istilah pencarian..."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"<strong>On</strong> &ndash; every watch in this group uses the AI settings below, unless it fills in its own. "
+"<strong>Off</strong> &ndash; no AI for any watch in this group. <strong>Leave it to each watch</strong> &ndash; this "
+"group has no say; each watch uses its own AI settings."
+msgstr ""
+"<strong>Aktif</strong> &ndash; setiap monitor dalam grup ini menggunakan pengaturan AI di bawah, kecuali memiliki "
+"pengaturannya sendiri. <strong>Nonaktif</strong> &ndash; tidak ada AI untuk monitor mana pun dalam grup ini. "
+"<strong>Biarkan ditentukan oleh masing-masing monitor</strong> &ndash; grup ini tidak menentukan; setiap monitor "
+"menggunakan pengaturan AI-nya sendiri."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "Group %(name)s decides this: AI is ON for every watch in that group."
+msgstr "Grup %(name)s menentukan ini: AI AKTIF untuk setiap monitor dalam grup tersebut."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "Group %(name)s decides this: AI is OFF for every watch in that group."
+msgstr "Grup %(name)s menentukan ini: AI NONAKTIF untuk setiap monitor dalam grup tersebut."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Describe what you care about. The AI evaluates every detected change against this and only notifies you when it "
+"matches."
+msgstr ""
+"Jelaskan hal yang Anda pedulikan. AI mengevaluasi setiap perubahan terdeteksi terhadap ini dan hanya memberi "
+"notifikasi saat cocok."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Set a change intent for all watches in this tag/group. Each watch can override with its own."
+msgstr "Atur intent perubahan untuk semua monitor dalam tag/grup ini. Setiap monitor dapat menimpanya dengan intent sendiri."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "From group '%(name)s': %(value)s"
+msgstr "Dari grup '%(name)s': %(value)s"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes."
+msgstr ""
+"mis. Beri tahu saya saat harga turun di bawah $300, atau produk baru diluncurkan. Abaikan perubahan footer dan "
+"navigasi."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "e.g. Flag price changes or new product launches across all watches in this group"
+msgstr "mis. Tandai perubahan harga atau peluncuran produk baru di seluruh monitor dalam grup ini"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Examples:"
+msgstr "Contoh:"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Only notify if the price drops below $200, or a limited-time deal is added"
+msgstr "Beri notifikasi hanya jika harga turun di bawah $200, atau promo waktu terbatas ditambahkan"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Alert when a new recall, safety notice, or product withdrawal is published"
+msgstr "Beri peringatan saat penarikan produk, pemberitahuan keselamatan, atau penghentian produk baru dipublikasikan"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Notify when a new grant round opens or an application deadline is announced"
+msgstr "Beri notifikasi saat putaran hibah baru dibuka atau tenggat pengajuan diumumkan"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Only important if package versions change or a CVE is mentioned"
+msgstr "Hanya penting jika versi paket berubah atau CVE disebutkan"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "AI pre-filter active: <code>%(filter)s</code> — narrows content scope before evaluation"
+msgstr "Pra-filter AI aktif: <code>%(filter)s</code> — mempersempit cakupan konten sebelum evaluasi"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid ""
+"When a change is detected, the AI describes it according to your instructions and replaces <code>%(diff)s</code> in "
+"your notification. Use <code>%(raw_diff)s</code> if you still want the original diff."
+msgstr ""
+"Saat perubahan terdeteksi, AI menjelaskannya sesuai instruksi Anda dan mengganti <code>%(diff)s</code> dalam "
+"notifikasi. Gunakan <code>%(raw_diff)s</code> jika Anda tetap menginginkan diff asli."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Describe how changes should be summarised in notifications for all watches in this group."
+msgstr "Jelaskan bagaimana perubahan harus diringkas dalam notifikasi untuk semua monitor dalam grup ini."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Appending keeps the prompt inherited from the group or from global settings and adds your text after it, so later "
+"edits to that prompt still reach this watch."
+msgstr ""
+"Menambahkan mempertahankan prompt yang diwarisi dari grup atau pengaturan global lalu menambahkan teks Anda "
+"setelahnya, sehingga perubahan berikutnya pada prompt tersebut tetap diterapkan ke monitor ini."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Appending keeps the prompt inherited from global settings and adds your text after it, so later edits to that prompt "
+"still reach this group."
+msgstr ""
+"Menambahkan mempertahankan prompt yang diwarisi dari pengaturan global lalu menambahkan teks Anda setelahnya, "
+"sehingga perubahan berikutnya pada prompt tersebut tetap diterapkan ke grup ini."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "List each new item added with its name and price. Translate to English."
+msgstr "Cantumkan setiap item baru yang ditambahkan beserta nama dan harganya. Terjemahkan ke bahasa Inggris."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Summarise what events were added or cancelled. Two sentences maximum."
+msgstr "Ringkas acara apa yang ditambahkan atau dibatalkan. Maksimal dua kalimat."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Describe the price change: old price, new price, percentage difference."
+msgstr "Jelaskan perubahan harga: harga lama, harga baru, perbedaan persentase."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI"
+msgstr "AI"
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid ""
+"Configure an AI / LLM provider in <a href=\"%(url)s\">Settings → AI / LLM</a> to enable AI Change Intent and AI "
+"Change Summary."
+msgstr ""
+"Konfigurasikan penyedia AI / LLM di <a href=\"%(url)s\">Pengaturan → AI / LLM</a> untuk mengaktifkan Intent Perubahan"
+" AI dan Ringkasan Perubahan AI."
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "Configure an AI / LLM provider in <a href=\"%(url)s\">Settings → AI / LLM</a> to enable AI features for this group."
+msgstr ""
+"Konfigurasikan penyedia AI / LLM di <a href=\"%(url)s\">Pengaturan → AI / LLM</a> untuk mengaktifkan fitur AI bagi "
+"grup ini."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Note!: //text() function does not work where the <element> contains <![CDATA[]]>"
+msgstr "Catatan!: fungsi //text() tidak berfungsi jika <element> berisi <![CDATA[]]>"
+
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "One CSS, xPath 1 & 2, JSON Path/JQ selector per line, <i>any</i> rules that matches will be used."
+msgstr "Satu selektor CSS, xPath 1 & 2, JSON Path/JQ per baris, <i>aturan apa pun</i> yang cocok akan digunakan."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Limit text to this CSS rule, only text matching this CSS rule is included."
+msgstr "Batasi teks dengan aturan CSS ini, hanya teks yang cocok dengan aturan CSS ini yang disertakan."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Prefix with <code>json:</code>, use <code>json:$</code> to force re-formatting if required,"
+msgstr "Awali dengan <code>json:</code>, gunakan <code>json:$</code> untuk memaksa pemformatan ulang jika diperlukan,"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your JSONPath here"
+msgstr "uji JSONPath Anda di sini"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Prefix <code>jqraw:</code> outputs the results as text instead of a JSON list."
+msgstr "Awalan <code>jqraw:</code> menghasilkan hasil sebagai teks alih-alih daftar JSON."
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "jq support not installed"
+msgstr "dukungan jq tidak terinstal"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid ""
+"Limit text to this XPath rule, simply start with a forward-slash. To specify XPath to be used explicitly or the XPath"
+" rule starts with an XPath function: Prefix with <code>xpath:</code>"
+msgstr ""
+"Batasi teks dengan aturan XPath ini, cukup mulai dengan garis miring. Untuk menentukan XPath secara eksplisit atau "
+"jika aturan XPath dimulai dengan fungsi XPath: awali dengan <code>xpath:</code>"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "test your XPath here"
+msgstr "uji XPath Anda di sini"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "Get all titles from an RSS feed <code>//title/text()</code>"
+msgstr "Dapatkan semua judul dari feed RSS <code>//title/text()</code>"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "To use XPath1.0: Prefix with <code>xpath1:</code>"
+msgstr "Untuk menggunakan XPath1.0: awali dengan <code>xpath1:</code>"
+
+#: changedetectionio/templates/edit/include_subtract.html
+msgid "here for more CSS selector help"
+msgstr "di sini untuk bantuan selektor CSS lainnya"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Text to wait for before triggering a change/notification, all text and regex are tested case-insensitive."
+msgstr "Teks yang ditunggu sebelum memicu perubahan/notifikasi, semua teks dan regex diuji tanpa membedakan huruf besar-kecil."
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Trigger text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
+msgstr "Teks pemicu diproses dari teks hasil yang keluar dari Filter CSS/JSON apa pun untuk monitor ini"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Each line is processed separately (think of each line as \"OR\")"
+msgstr "Setiap baris diproses secara terpisah (anggap setiap baris sebagai \"OR\")"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Note: Wrap in forward slash / to use regex example:"
+msgstr "Catatan: Bungkus dengan garis miring / untuk menggunakan regex, contoh:"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "You can also use"
+msgstr "Anda juga dapat menggunakan"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "conditions"
+msgstr "kondisi"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "\"Page text\" - with Contains, Starts With, Not Contains and many more"
+msgstr "\"Teks halaman\" - dengan Mengandung, Dimulai Dengan, Tidak Mengandung, dan banyak lainnya"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"For example: Out of stock\n"
+"Sold out\n"
+"Not in stock\n"
+"Unavailable"
+msgstr ""
+"Contoh: Stok habis\n"
+"Terjual habis\n"
+"Tidak ada stok\n"
+"Tidak tersedia"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"Block change-detection while this text is on the page, all text and regex are tested case-insensitive, good for "
+"waiting for when a product is available again"
+msgstr ""
+"Blokir deteksi perubahan selama teks ini ada di halaman, semua teks dan regex diuji tanpa membedakan huruf besar-"
+"kecil, berguna untuk menunggu hingga produk tersedia kembali"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Block text is processed from the result-text that comes out of any CSS/JSON Filters for this monitor"
+msgstr "Teks blokir diproses dari teks hasil yang keluar dari Filter CSS/JSON apa pun untuk monitor ini"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "All lines here must not exist (think of each line as \"OR\")"
+msgstr "Semua baris di sini tidak boleh ada (anggap setiap baris sebagai \"OR\")"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid ""
+"celsius\n"
+"temperature\n"
+"price"
+msgstr ""
+"celsius\n"
+"suhu\n"
+"harga"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Keep only lines that contain any of these words or phrases (plain text, case-insensitive)"
+msgstr ""
+"Pertahankan hanya baris yang mengandung salah satu kata atau frasa ini (teks biasa, tanpa membedakan huruf besar-"
+"kecil)"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "One entry per line — any line in the page text that contains a match is kept"
+msgstr "Satu entri per baris — setiap baris pada teks halaman yang mengandung kecocokan akan dipertahankan"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Simpler alternative to regex — use this when you just want lines about a specific topic"
+msgstr "Alternatif yang lebih sederhana daripada regex — gunakan ini jika Anda hanya menginginkan baris tentang topik tertentu"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "enter <code>celsius</code> to keep only lines mentioning temperature readings"
+msgstr "masukkan <code>celsius</code> untuk mempertahankan hanya baris yang menyebutkan pembacaan suhu"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Extracts text in the final output (line by line) after other filters using regular expressions or string match:"
+msgstr ""
+"Mengekstrak teks dalam output akhir (baris demi baris) setelah filter lain menggunakan regular expression atau "
+"pencocokan string:"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Regular expression - example"
+msgstr "Regular expression - contoh"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Don't forget to consider the white-space at the start of a line"
+msgstr "Jangan lupa mempertimbangkan spasi di awal baris"
+
+#: changedetectionio/templates/edit/text-options.html
+#, python-format
+msgid "Use <code>//(?aiLmsux))</code> type flags (more <a href=\"%(url)s\">information here</a>)"
+msgstr "Gunakan flag tipe <code>//(?aiLmsux))</code> (lebih banyak <a href=\"%(url)s\">informasi di sini</a>)"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Keyword example - example: <code>Out of stock</code>"
+msgstr "Contoh kata kunci - contoh: <code>Stok habis</code>"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Use groups to extract just that text - example"
+msgstr "Gunakan grup untuk mengekstrak hanya teks tersebut - contoh"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "returns a list of years only"
+msgstr "mengembalikan daftar tahun saja"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "Example - match lines containing a keyword"
+msgstr "Contoh - cocokkan baris yang mengandung kata kunci"
+
+#: changedetectionio/templates/edit/text-options.html
+msgid "One line per regular-expression/string match"
+msgstr "Satu baris per regular-expression/pencocokan string"
+
+#: changedetectionio/templates/login.html
+msgid "Login"
+msgstr "Masuk"
+
+#: changedetectionio/templates/menu.html
+msgid "Resume automatic scheduling"
+msgstr "Lanjutkan penjadwalan otomatis"
+
+#: changedetectionio/templates/menu.html
+msgid "Pause auto-queue scheduling of watches"
+msgstr "Jeda penjadwalan antrean otomatis monitor"
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling paused — click to resume"
+msgstr "Penjadwalan dijeda — klik untuk melanjutkan"
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling active — click to pause all"
+msgstr "Penjadwalan aktif — klik untuk menjeda semua"
+
+#: changedetectionio/templates/menu.html
+msgid "Paused"
+msgstr "Dijeda"
+
+#: changedetectionio/templates/menu.html
+msgid "Running"
+msgstr "Berjalan"
+
+#: changedetectionio/templates/menu.html
+msgid "Unmute notifications"
+msgstr "Aktifkan kembali notifikasi"
+
+#: changedetectionio/templates/menu.html
+msgid "Notifications are muted - click to unmute"
+msgstr "Notifikasi dibisukan - klik untuk mengaktifkan kembali"
+
+#: changedetectionio/templates/menu.html
+msgid "Alerts on"
+msgstr "Peringatan aktif"
+
+#: changedetectionio/templates/menu.html
+msgid "Log out"
+msgstr "Keluar"
+
+#: changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "Pengaturan"
+
+#: changedetectionio/templates/menu.html
+msgid "EDIT"
+msgstr "EDIT"
+
+#: changedetectionio/templates/menu.html
+msgid "Website Change Detection and Notification."
+msgstr "Deteksi Perubahan dan Notifikasi Situs Web."
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle AI Mode"
+msgstr "Alihkan Mode AI"
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle AI mode"
+msgstr "Alihkan mode AI"
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle Light/Dark Mode"
+msgstr "Alihkan Mode Terang/Gelap"
+
+#: changedetectionio/templates/menu.html
+msgid "Toggle light/dark mode"
+msgstr "Alihkan mode terang/gelap"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Add a page watch"
+msgstr "Tambahkan monitor halaman"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Page Watches"
+msgstr "Monitor Halaman"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Unread changes"
+msgstr "Perubahan belum dibaca"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Watch Groups"
+msgstr "Grup Monitor"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import lists of web pages"
+msgstr "Impor daftar halaman web"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers (coming soon)"
+msgstr "Browser (segera hadir)"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers"
+msgstr "Browser"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "soon"
+msgstr "segera"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Search, or Use Alt+S Key"
+msgstr "Cari, atau Gunakan Tombol Alt+S"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Queue"
+msgstr "Antrean"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Live activity"
+msgstr "Aktivitas langsung"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "A new version is available"
+msgstr "Versi baru tersedia"
+
+#: changedetectionio/validate_url.py
+msgid "API Base URL is not a valid http(s) URL."
+msgstr "URL Dasar API bukan URL http(s) yang valid."
+
+#: changedetectionio/validate_url.py
+msgid ""
+"API Base URL resolves to a private, loopback, link-local or reserved IP address and was blocked to prevent SSRF. To "
+"allow LLM endpoints on private networks (e.g. a local Ollama server) set the environment variable "
+"ALLOW_IANA_RESTRICTED_ADDRESSES=true and restart."
+msgstr ""
+"URL Dasar API mengarah ke alamat IP privat, loopback, link-local, atau reserved dan diblokir untuk mencegah SSRF. "
+"Untuk mengizinkan endpoint LLM pada jaringan privat (mis. server Ollama lokal), atur variabel lingkungan "
+"ALLOW_IANA_RESTRICTED_ADDRESSES=true lalu mulai ulang."
+
+#: changedetectionio/widgets/ternary_boolean.py
+msgid "Main settings"
+msgstr "Pengaturan utama"
+

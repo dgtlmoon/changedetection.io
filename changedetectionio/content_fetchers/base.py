@@ -4,6 +4,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from changedetectionio.content_fetchers import BrowserStepsStepException
+from changedetectionio.strtobool import strtobool
 
 
 class FetcherCapabilities(BaseModel):
@@ -25,6 +26,16 @@ class FetcherCapabilities(BaseModel):
             name: getattr(fetcher_class, name, False)
             for name in cls.model_fields
         })
+
+
+def get_playwright_bypass_csp():
+    """Return whether Playwright-compatible browser contexts should bypass CSP.
+
+    Bypassing CSP remains enabled by default for backward compatibility. Some
+    remote CDP implementations do not support ``Page.setBypassCSP``; operators
+    can disable the option by setting ``PLAYWRIGHT_BYPASS_CSP=false``.
+    """
+    return strtobool(os.getenv('PLAYWRIGHT_BYPASS_CSP', 'true'))
 
 
 def manage_user_agent(headers, current_ua=''):
@@ -219,7 +230,11 @@ class Fetcher():
                                                       optional_value=optional_value)
                     await self.screenshot_step(step_n)
                     await self.save_step_html(step_n)
-                except (Error, TimeoutError) as e:
+                except (Error, TimeoutError, ValueError) as e:
+                    # ValueError is what validate_fetch_url_async() raises when a step's URL is
+                    # refused (file://, private IP, bad scheme) - report it against the offending
+                    # step number like any other step failure, rather than failing the whole watch
+                    # with an opaque error.
                     logger.debug(str(e))
                     # Stop processing here
                     raise BrowserStepsStepException(step_n=step_n, original_e=e)

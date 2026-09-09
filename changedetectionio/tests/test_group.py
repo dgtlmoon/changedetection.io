@@ -119,7 +119,7 @@ def test_setup_group_tag(client, live_server, measure_memory_usage, datastore_pa
     assert b"1 Imported" in res.data
     wait_for_all_checks(client)
     set_modified_response(datastore_path=datastore_path)
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     rss_token = extract_rss_token_from_UI(client)
     res = client.get(
@@ -162,7 +162,7 @@ def test_tag_add_in_ui(client, live_server, measure_memory_usage, datastore_path
     assert b"Tag added" in res.data
     assert b"new-test-tag" in res.data
 
-    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    res = client.post(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
     delete_all_watches(client)
@@ -212,7 +212,7 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
     wait_for_all_checks(client)
 
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)
@@ -252,9 +252,9 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path)
 
     res = client.get(url_for("watchlist.index"))
     assert b'test-tag' in res.data
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Should be both unviewed
@@ -263,7 +263,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path)
 
 
     # Now we recheck only the tag
-    client.get(url_for('ui.mark_all_viewed', tag=tag_uuid), follow_redirects=True)
+    client.post(url_for('ui.mark_all_viewed', tag=tag_uuid), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Should be only 1 unviewed
@@ -272,7 +272,7 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path)
 
 
     delete_all_watches(client)
-    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    res = client.post(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
 def test_clone_tag_on_import(client, live_server, measure_memory_usage, datastore_path):
@@ -291,7 +291,7 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage, datastor
     assert b'another-tag' in res.data
 
     watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    res = client.get(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
+    res = client.post(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
 
     assert b'Cloned' in res.data
     res = client.get(url_for("watchlist.index"))
@@ -318,7 +318,7 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     assert b'another-tag' in res.data
 
     watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
-    res = client.get(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
+    res = client.post(url_for("ui.form_clone", uuid=watch_uuid), follow_redirects=True)
     assert b'Cloned' in res.data
 
     res = client.get(url_for("watchlist.index"))
@@ -327,7 +327,7 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     assert res.data.count(b'another-tag') == 3
     delete_all_watches(client)
 
-    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    res = client.post(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
 def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measure_memory_usage, datastore_path):
@@ -389,7 +389,7 @@ def test_order_of_filters_tag_filter_and_watch_filter(client, live_server, measu
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     filters = [
@@ -551,7 +551,7 @@ def test_tag_json_persistence(client, live_server, measure_memory_usage, datasto
     assert '#test-filter' in loaded_tag.get('include_filters', [])
 
     # 8. Delete the tag via API
-    res = client.get(url_for("tags.delete", uuid=tag_uuid), follow_redirects=True)
+    res = client.post(url_for("tags.delete", uuid=tag_uuid), follow_redirects=True)
     assert b"Tag deleted" in res.data
 
     # 9. Verify tag.json file was deleted
@@ -607,7 +607,7 @@ def test_tag_json_migration_update_27(client, live_server, measure_memory_usage,
         assert loaded_tag['title'] == tag_names[idx]
 
     # Cleanup
-    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    res = client.post(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
     # Verify all tag.json files were deleted

@@ -393,12 +393,12 @@ def test_llm_models_endpoint_blocks_private_api_base(
 
 def test_llm_test_endpoint_blocks_private_api_base(
         client, live_server, measure_memory_usage, datastore_path, monkeypatch):
-    """GET /settings/llm/test must refuse api_base pointing at private/loopback
+    """POST /settings/llm/test must refuse api_base pointing at private/loopback
     hosts and must never reach litellm.completion()."""
     monkeypatch.delenv('ALLOW_IANA_RESTRICTED_ADDRESSES', raising=False)
 
     for bad in _SSRF_PRIVATE_HOSTS:
-        res = client.get(
+        res = client.post(
             url_for('settings.llm.llm_test'),
             query_string={'model': 'openai/gpt-4', 'api_base': bad},
         )
@@ -530,7 +530,7 @@ def test_llm_test_refuses_to_leak_stored_key_to_different_api_base(
     monkeypatch.setattr(llm_client, 'completion',
                         lambda **kw: calls.append(kw) or ('', 0, 0, 0))
 
-    res = client.get(
+    res = client.post(
         url_for('settings.llm.llm_test'),
         query_string={
             'model': 'gpt-4o-mini',

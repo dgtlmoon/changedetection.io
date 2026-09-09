@@ -261,6 +261,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
+                                # None unless PAGE_WATCH_LIMIT is set, which hides the row entirely
+                                watch_limit=datastore.watch_limit,
                                 available_timezones=sorted(available_timezones()),
                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
@@ -276,7 +278,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return output
 
-    @settings_blueprint.route("/reset-api-key", methods=['GET'])
+    @settings_blueprint.route("/reset-api-key", methods=['POST'])
     @login_optionally_required
     def settings_reset_api_key():
         secret = secrets.token_hex(16)
@@ -293,7 +295,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
 
-    @settings_blueprint.route("/toggle-all-paused", methods=['GET'])
+    @settings_blueprint.route("/toggle-all-paused", methods=['POST'])
     @login_optionally_required
     def toggle_all_paused():
         current_state = datastore.data['settings']['application'].get('all_paused', False)
@@ -307,7 +309,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return redirect(url_for('watchlist.index'))
 
-    @settings_blueprint.route("/toggle-all-muted", methods=['GET'])
+    @settings_blueprint.route("/toggle-all-muted", methods=['POST'])
     @login_optionally_required
     def toggle_all_muted():
         current_state = datastore.data['settings']['application'].get('all_muted', False)

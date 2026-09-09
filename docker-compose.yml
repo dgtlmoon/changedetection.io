@@ -26,6 +26,8 @@ services:
   #
   #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
   #      - PLAYWRIGHT_DRIVER_URL=ws://browser-sockpuppet-chrome:3000
+  #      # Disable when the remote CDP implementation does not support `Page.setBypassCSP` - like with Obscura browser.
+  #      - PLAYWRIGHT_BYPASS_CSP=false
   #
   #
   #       Alternative WebDriver/selenium URL, do not use "'s or 's! (old, deprecated, does not support screenshots very well, Can't handle custom headers etc)
@@ -64,8 +66,15 @@ services:
   #        Absolute minimum seconds to recheck, overrides any watch minimum, change to 0 to disable
   #      - MINIMUM_SECONDS_RECHECK_TIME=3
   #
+  #        Cap the total number of watches this instance will hold - adding more (UI, API, import)
+  #        is refused until one is deleted. Unset means unlimited.
+  #      - PAGE_WATCH_LIMIT=100
+  #
   #        If you want to watch local files file:///path/to/file.txt (careful! security implications!)
   #      - ALLOW_FILE_URI=False
+  #
+  #        Off by default - Private lan, local-only, testing/documentation, multicast, protocol infrastructure, and ranges intentionally not usable as normal public unicast IPs
+  #      - ALLOW_IANA_RESTRICTED_ADDRESSES=true
   #
   #        For complete privacy if you don't want to use the 'check version' / telemetry service
   #      - DISABLE_VERSION_CHECK=true
@@ -155,4 +164,3 @@ services:
 
 volumes:
   changedetection-data:
-

@@ -58,7 +58,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # this should not trigger a change, because no good text could be converted from the HTML
     set_nonrenderable_response(datastore_path)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -88,7 +88,7 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     set_modified_response(datastore_path=datastore_path)
 
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -96,13 +96,13 @@ def test_check_basic_change_detection_functionality(client, live_server, measure
     # It should report nothing found (no new 'has-unread-changes' class)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(0.2)
 
 
     # A totally zero byte (#2528) response should also not trigger an error
     set_zero_byte_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     # 2877
     assert watch.last_changed == watch['last_checked']

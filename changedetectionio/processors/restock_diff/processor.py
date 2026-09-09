@@ -364,12 +364,8 @@ def get_itemprop_availability(html_content) -> Restock:
         if availability_result:
             value['availability'] = availability_result[0].value
 
-        if value.get('availability'):
-            value['availability'] = re.sub(r'(?i)^(https|http)://schema.org/', '',
-                                           value.get('availability').strip(' "\'').lower()) if value.get('availability') else None
-
         # Second, go dig OpenGraph which is something that jsonpath_ng cant do because of the tuples and double-dots (:)
-        if not value.get('price') or value.get('availability'):
+        if not value.get('price') or not value.get('availability') or not value.get('currency'):
             logger.debug("Alternatively digging through OpenGraph properties for restock/price info..")
             jsonpath_expr = parse('$..properties')
 
@@ -380,6 +376,14 @@ def get_itemprop_availability(html_content) -> Restock:
                     value['availability'] = _search_prop_by_value([match.value], "product:availability")
                 if not value.get('currency'):
                     value['currency'] = _search_prop_by_value([match.value], "price:currency")
+
+        # Normalise after both sources have been tried, otherwise an availability that came from
+        # OpenGraph stays raw. The OpenGraph vocabulary spells it "in stock" while the in-stock
+        # matcher looks for "instock", so the spaces have to go too.
+        if value.get('availability'):
+            value['availability'] = re.sub(r'(?i)^(https|http)://schema.org/', '',
+                                           value.get('availability').strip(' "\'').lower())
+            value['availability'] = re.sub(r'\s+', '', value['availability'])
     logger.trace(f"Processed with Extruct in {time.time()-now:.3f}s")
 
     return value
@@ -502,8 +506,11 @@ class perform_site_check(difference_detection_processor):
             # Try plugin override - plugins can decide if they support this fetcher
             if fetcher_name:
                 logger.debug(f"Calling extra plugins for getting item price/availability (fetcher: {fetcher_name})")
-                from changedetectionio.llm.evaluator import resolve_intent
-                _llm_intent, _ = resolve_intent(watch, self.datastore)
+                from changedetectionio.llm.evaluator import llm_enabled_for_watch, resolve_intent
+                # AI off for this watch (or for its group) means no intent is handed to the
+                # LLM restock plugin, so it doesn't spend tokens here either — #4204.
+                _llm_on, _ = llm_enabled_for_watch(watch, self.datastore)
+                _llm_intent, _ = resolve_intent(watch, self.datastore) if _llm_on else ('', '')
                 plugin_availability = get_itemprop_availability_from_plugin(self.fetcher.content, fetcher_name, self.fetcher, watch.link, llm_intent=_llm_intent or None)
 
                 if plugin_availability:

@@ -1,9 +1,12 @@
-from flask import Blueprint, render_template, request, jsonify, make_response
+from flask import Blueprint, render_template, request, jsonify, make_response, flash, redirect, url_for
+from flask_babel import gettext
 from loguru import logger
 
 from changedetectionio import forms
 from changedetectionio.auth_decorator import login_optionally_required
+from . import browser_config
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.validate_url import is_fetch_url_allowed
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -15,17 +18,31 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
         from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
 
+        # Same gate that hides the sidebar link (sidebar-nav.html): with no browser that can
+        # render a preview there is nothing for the visual selector to work on, so bounce
+        # direct navigation rather than serving a page whose only outcome is an error.
+        if not browser_config.has_visual_browser(datastore):
+            flash(gettext("Adding a watch with a browser needs an interactive browser "
+                          "(screenshots + element data) - none is configured."), 'error')
+            return redirect(url_for('watchlist.index'))
+
         form = forms.quickWatchForm(None)
         llm_configured = bool(_get_llm_config(datastore))
+
+        # Start on the browser the live preview would actually use
+        form.fetch_backend.data = browser_config.default_visual_browser(datastore)
 
         return render_template(
             "add-watch-ui.html",
             form=form,
             llm_configured=llm_configured,
             llm_intent_watch_placeholder=LLM_INTENT_WATCH_PLACEHOLDER,
+            # Listed but not selectable (the system default when it can't render a preview)
+            unusable_browsers=browser_config.unusable_values(datastore),
+            system_default_browser=browser_config.system_default_description(datastore),
         )
 
-    @add_watch_ui_blueprint.route("/snapshot", methods=['GET'])
+    @add_watch_ui_blueprint.route("/snapshot", methods=['POST'])
     @login_optionally_required
     def add_watch_ui_snapshot():
         """One-shot live fetch of an arbitrary URL for the Add Watch visual selector.
@@ -35,6 +52,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         connect, "Goto site", grab the screenshot + xpath element data, then tear
         the browser down again. Element selection then happens client-side on the
         returned data, exactly like the watch Edit page's visual selector.
+
+        POST-only and CSRF protected on purpose: this drives a real browser fetch and
+        writes a temporary watch dir, so as a GET it could be triggered cross-origin
+        (or by any tag/link that issues a GET) without the operator's consent.
         """
         import base64
         from changedetectionio.blueprint.browser_steps import (
@@ -47,19 +68,40 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Opportunistically sweep snapshots that were fetched but never saved.
         datastore.cleanup_temporary_watches()
 
-        url = (request.args.get('url') or '').strip()
-        if not url or not url.lower().startswith(('http://', 'https://')):
-            return make_response('Please enter a valid http(s):// URL', 400)
+        # This endpoint makes the server-side browser fetch an arbitrary URL and returns the
+        # rendered result (screenshot + xpath element data) straight back in the HTTP response, so
+        # it is a direct SSRF-with-exfiltration primitive if left unvalidated. It used to only
+        # check startswith('http://', 'https://'), which skipped the private-IP gate AND the
+        # backslash/parser-differential rejection of GHSA-rph4-96w6-q594 (GHSA-56fq-63vj-9992).
+        # Note this fetch never reaches difference_detection_processor.call_browser(), so it gets
+        # no gating from there - it has to validate for itself.
+        url = (request.form.get('url') or '').strip()
+        ok, reason = is_fetch_url_allowed(url)
+        if not ok:
+            logger.warning(f"Add-watch snapshot: refused '{url}' - {reason}")
+            return make_response(reason, 400)
 
-        # Use whatever fetcher the application is configured to use by default
-        # (e.g. CloakBrowser, Playwright/sockpuppet) so the preview matches real checks.
-        fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
-        logger.debug(f"Add-watch snapshot: fetching '{url}' using system default fetcher '{fetcher_name}'")
+        # Which browser to preview with. The page posts the one picked in its browser list;
+        # with nothing asked for we fall back to whatever it would have preselected.
+        # Either way it has to be able to render a preview - the plain HTTP client
+        # produces no screenshot and no element data, so previewing with it is pointless
+        # (and it used to be the silent default here, see the system-default bug).
+        fetcher_name = (request.form.get('fetch_backend') or '').strip() or browser_config.default_visual_browser(datastore)
+        if not fetcher_name or not browser_config.is_visual_capable(fetcher_name, datastore):
+            logger.warning(f"Add-watch snapshot: refused browser '{fetcher_name}' for '{url}'")
+            return make_response('No interactive browser available that can render a live preview '
+                                 '(needs screenshots + element data)', 400)
+
+        # acquire_browser_for_fetcher() looks the name up as a fetcher class, so 'system'
+        # has to be collapsed to the real backend first or a fetcher that launches its own
+        # browser would be skipped in favour of the CDP endpoint.
+        resolved_fetcher = browser_config.resolve_backend(fetcher_name, datastore)
+        logger.debug(f"Add-watch snapshot: fetching '{url}' using '{fetcher_name}' (resolved: '{resolved_fetcher}')")
 
         async def _fetch_snapshot():
             keepalive_ms = 30 * 1000
             browser, playwright_context = await acquire_browser_for_fetcher(
-                fetcher_name, proxy=None, keepalive_ms=keepalive_ms
+                resolved_fetcher, proxy=None, keepalive_ms=keepalive_ms
             )
 
             stepper = browsersteps_live_ui(playwright_browser=browser, proxy=None, start_url=url)
@@ -109,6 +151,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 with open(os.path.join(temp_dir, "preload-fetch.json"), 'w', encoding='utf-8') as f:
                     json.dump({"content": html, "status_code": 200,
                                "headers": {"content-type": "text/html"}}, f)
+            # This directory becomes the new watch's data_dir on submit, so the watch's own
+            # settings file is where the previewing browser belongs: record it here and the
+            # saved watch checks with the browser that actually rendered this snapshot,
+            # instead of falling back to a system default that may not even do screenshots.
+            # Read back by make_temporary_watch_active_watch(); commit() then rewrites it in full.
+            with open(os.path.join(temp_dir, "watch.json"), 'w', encoding='utf-8') as f:
+                json.dump({"fetch_backend": fetcher_name}, f)
         except Exception as e:
             logger.error(f"Add-watch snapshot: could not park temporary data for {url}: {e}")
             temp_uuid = None

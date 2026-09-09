@@ -45,7 +45,7 @@ BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRE
 
 # Module-level favicon filename cache: data_dir → basename (or None)
 # Keyed by data_dir so it survives Watch object recreation, deepcopy, and concurrent requests.
-# Invalidated explicitly in bump_favicon() when a new favicon is saved.
+# Invalidated explicitly when the favicon is saved or the watch history is cleared.
 _FAVICON_FILENAME_CACHE: dict = {}
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
@@ -272,10 +272,12 @@ class model(EntityPersistenceMixin, watch_base):
     def has_unviewed(self):
         return int(self.newest_history_key) > int(self['last_viewed']) and self.__history_n >= 2
 
-    @property
-    def link(self):
+    def _resolve_link(self, url, flash_on_template_error=True):
+        """Validate, Jinja2-render and de-'source:' a URL so it is safe to put in an href.
 
-        url = self.get('url', '')
+        Returns 'DISABLED' when the URL is missing/unsafe, or '' when its Jinja2 template
+        could not be rendered.
+        """
         if not is_safe_valid_url(url):
             return 'DISABLED'
 
@@ -286,11 +288,15 @@ class model(EntityPersistenceMixin, watch_base):
                 ready_url = jinja_render(template_str=url)
             except Exception as e:
                 logger.critical(f"Invalid URL template for: '{url}' - {str(e)}")
-                from flask import flash, url_for
-                from markupsafe import Markup
-                message = Markup('<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
-                    url_for('ui.ui_edit.edit_page', uuid=self.get('uuid')), self.get('url', '')))
-                flash(message, 'error')
+                # has_request_context() guard: this is also reached from worker threads and the
+                # notification path, where flash() would raise "Working outside of request context".
+                from flask import has_request_context
+                if flash_on_template_error and has_request_context():
+                    from flask import flash, url_for
+                    from markupsafe import Markup
+                    message = Markup('<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
+                        url_for('ui.ui_edit.edit_page', uuid=self.get('uuid')), url))
+                    flash(message, 'error')
                 return ''
 
         if ready_url.startswith('source:'):
@@ -300,6 +306,34 @@ class model(EntityPersistenceMixin, watch_base):
         if not is_safe_valid_url(ready_url):
             return 'DISABLED'
         return ready_url
+
+    @property
+    def link(self):
+        """The URL that actually gets fetched/checked."""
+        return self._resolve_link(self.get('url', ''))
+
+    @property
+    def open_link_override(self):
+        """The resolved optional 'Link to Open', or '' when unset/unusable."""
+        override = str(self.get('link_to_open') or '').strip()
+        if not override:
+            return ''
+
+        # Don't flash on a broken template here - `link` already surfaces that for the watched URL,
+        # and a bad "Link to Open" should never stop the page rendering.
+        ready = self._resolve_link(override, flash_on_template_error=False)
+        if not ready or ready == 'DISABLED':
+            return ''
+        return ready
+
+    @property
+    def open_link(self):
+        """The URL a human should be sent to when they click through to "the site".
+
+        Some watches point at an API endpoint or RSS feed that is useless in a browser -
+        'Link to Open' lets the user store the real page for those. Falls back to `link`.
+        """
+        return self.open_link_override or self.link
 
     @property
     def domain_only_from_link(self):
@@ -333,6 +367,8 @@ class model(EntityPersistenceMixin, watch_base):
             if item.name in processor_config_files:
                 continue
             os.unlink(item)
+
+        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
 
         # Force the attr to recalculate
         bump = self.history
@@ -896,7 +932,7 @@ class model(EntityPersistenceMixin, watch_base):
 
         Uses a module-level cache keyed by data_dir to survive Watch object recreation,
         deepcopy (which drops instance attrs), and concurrent request races.
-        Invalidated by bump_favicon() when a new favicon is saved.
+        Invalidated when a favicon is saved or the watch history is cleared.
 
         Returns:
             str: Basename of the favicon file, or None if not found.

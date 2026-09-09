@@ -27,7 +27,7 @@ def test_content_filter_live_preview(client, live_server, measure_memory_usage, 
 
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(0.5)
     wait_for_all_checks(client)
 
@@ -95,7 +95,7 @@ def _setup_version_list_preview(datastore_path, client):
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(0.5)
     wait_for_all_checks(client)
     return test_url, uuid

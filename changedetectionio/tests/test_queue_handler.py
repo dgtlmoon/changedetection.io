@@ -29,7 +29,7 @@ def test_queue_system(client, live_server, measure_memory_usage, datastore_path)
     client.application.set_workers(items)
 
     start = time.time()
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(delay/2)
 
     # Verify all workers are idle (no UUIDs being processed)
