@@ -351,7 +351,7 @@ def set_basic_notification_vars(current_snapshot, prev_snapshot, watch, triggere
         'triggered_text': triggered_text,
         'uuid': watch.get('uuid') if watch else None,
         'watch_url': watch.get('url') if watch else None,
-        'watch_open_url': watch.open_link if watch else None,
+        'watch_open_url': (watch.open_link_override or watch.get('url')) if watch else None,
         'watch_uuid': watch.get('uuid') if watch else None,
         'watch_mime_type': watch.get('content-type')
     }
@@ -513,7 +513,7 @@ Thanks - Your omniscient changedetection.io installation.
         if 'notification_urls' in n_object:
             n_object.update({
                 'watch_url': watch['url'],
-                'watch_open_url': watch.open_link,
+                'watch_open_url': watch.open_link_override or watch['url'],
                 'uuid': watch_uuid,
                 'screenshot': None
             })
@@ -563,7 +563,7 @@ Thanks - Your omniscient changedetection.io installation.
         if 'notification_urls' in n_object:
             n_object.update({
                 'watch_url': watch['url'],
-                'watch_open_url': watch.open_link,
+                'watch_open_url': watch.open_link_override or watch['url'],
                 'uuid': watch_uuid
             })
             self.notification_q.put(n_object)
