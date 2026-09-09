@@ -293,6 +293,20 @@ class WatchHistory(Resource):
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
         return watch.history, 200
 
+    # Delete all history/snapshots for a watch, but keep the watch itself
+    # curl -X DELETE http://localhost:5000/api/v1/watch/<uuid_str:uuid>/history
+    @auth.check_token
+    @validate_openapi_request('deleteWatchHistory')
+    def delete(self, uuid):
+        """Clear all snapshot history for a watch (the watch itself is kept)."""
+        if not self.datastore.data['watching'].get(uuid):
+            abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+
+        # Same call as the UI "Clear history" button - wipes snapshots/screenshots and
+        # resets last_checked etc, while preserving the watch and its processor config
+        self.datastore.clear_watch_history(uuid)
+        return 'OK', 204
+
 
 class WatchSingleHistory(Resource):
     def __init__(self, **kwargs):
