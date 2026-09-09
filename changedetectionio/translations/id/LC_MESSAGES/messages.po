@@ -381,6 +381,18 @@ msgstr "Waktu periksa ulang (menit)"
 msgid "Import"
 msgstr "Impor"
 
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Expand on hover"
+msgstr ""
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Always expanded"
+msgstr "Selalu diperluas"
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Stays minimal"
+msgstr ""
+
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
 msgid "Watch with UUID %(uuid)s not found"
@@ -3567,14 +3579,6 @@ msgid "Navigation sidebar"
 msgstr "Sidebar navigasi"
 
 #: changedetectionio/forms.py
-msgid "Collapsed icon rail (expands on hover)"
-msgstr "Rel ikon ringkas (meluas saat diarahkan)"
-
-#: changedetectionio/forms.py
-msgid "Always expanded"
-msgstr "Selalu diperluas"
-
-#: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "Pemeriksaan keamanan token akses API diaktifkan"
 
@@ -5119,3 +5123,4 @@ msgstr "Tidak"
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "Pengaturan utama"
+
