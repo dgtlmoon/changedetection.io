@@ -523,23 +523,23 @@ Math: {{ 1 + 1 }}") }}
                         </tr>
                         <tr>
                             <td><code>capabilities.supports_xpath_element_data</code></td>
-                            <td>{{ _('True') if capabilities.supports_xpath_element_data else _('False') }}</td>
+                            <td>{{ _('Yes') if capabilities.supports_xpath_element_data else _('No') }}</td>
                         </tr>
                         <tr>
                             <td><code>capabilities.supports_screenshots</code></td>
-                            <td>{{ _('True') if capabilities.supports_screenshots else _('False') }}</td>
+                            <td>{{ _('Yes') if capabilities.supports_screenshots else _('No') }}</td>
                         </tr>
                         <tr>
                             <td><code>capabilities.supports_visual_selector</code></td>
-                            <td>{{ _('True') if capabilities.supports_visual_selector else _('False') }}</td>
+                            <td>{{ _('Yes') if capabilities.supports_visual_selector else _('No') }}</td>
                         </tr>
                         <tr>
                             <td><code>supports_browser_steps</code></td>
-                            <td>{{ _('True') if capabilities.supports_browser_steps else _('False') }}</td>
+                            <td>{{ _('Yes') if capabilities.supports_browser_steps else _('No') }}</td>
                         </tr>
                         <tr>
                             <td><code>visual_selector_data_ready</code></td>
-                            <td>{{ _('True') if visual_selector_data_ready else _('False') }}</td>
+                            <td>{{ _('Yes') if visual_selector_data_ready else _('No') }}</td>
                         </tr>
                         {% if not llm_features_disabled and settings_application.get('llm', {}).get('model') %}
                         <tr>

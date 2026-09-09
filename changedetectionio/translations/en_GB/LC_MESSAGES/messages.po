@@ -2219,6 +2219,14 @@ msgstr ""
 msgid "Server type reply"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI tokens (last check)"
 msgstr ""
@@ -4971,14 +4979,6 @@ msgid ""
 "API Base URL resolves to a private, loopback, link-local or reserved IP address and was blocked to prevent SSRF. To "
 "allow LLM endpoints on private networks (e.g. a local Ollama server) set the environment variable "
 "ALLOW_IANA_RESTRICTED_ADDRESSES=true and restart."
-msgstr ""
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "Yes"
-msgstr ""
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "No"
 msgstr ""
 
 #: changedetectionio/widgets/ternary_boolean.py

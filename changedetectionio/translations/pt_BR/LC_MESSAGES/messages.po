@@ -2267,6 +2267,14 @@ msgstr "Contagem de alertas de notificação"
 msgid "Server type reply"
 msgstr "Resposta do tipo de servidor"
 
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "Sim"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "Não"
+
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI tokens (last check)"
 msgstr ""
@@ -5030,14 +5038,6 @@ msgid ""
 "allow LLM endpoints on private networks (e.g. a local Ollama server) set the environment variable "
 "ALLOW_IANA_RESTRICTED_ADDRESSES=true and restart."
 msgstr ""
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "Yes"
-msgstr "Sim"
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "No"
-msgstr "Não"
 
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"

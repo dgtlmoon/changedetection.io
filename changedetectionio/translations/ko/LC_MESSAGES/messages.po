@@ -2229,6 +2229,14 @@ msgstr "알림 경고 수"
 msgid "Server type reply"
 msgstr "서버 유형 응답"
 
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "예"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "아니오"
+
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI tokens (last check)"
 msgstr "AI 토큰 (최근 확인)"
@@ -4992,14 +5000,6 @@ msgid ""
 "allow LLM endpoints on private networks (e.g. a local Ollama server) set the environment variable "
 "ALLOW_IANA_RESTRICTED_ADDRESSES=true and restart."
 msgstr ""
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "Yes"
-msgstr "예"
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "No"
-msgstr "아니오"
 
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"

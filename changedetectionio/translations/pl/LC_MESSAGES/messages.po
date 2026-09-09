@@ -2372,6 +2372,14 @@ msgstr "Liczba powiadomień"
 msgid "Server type reply"
 msgstr "Odpowiedź dotycząca typu serwera"
 
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "Tak"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "Nie"
+
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI tokens (last check)"
 msgstr "Tokeny AI (ostatnia weryfikacja)"
@@ -5200,14 +5208,6 @@ msgstr ""
 "Adres bazowy API prowadzi do prywatnego, pętlowego, lokalnego lub zarezerwowanego adresu IP i został zablokowany w "
 "celu zapobieżenia atakom SSRF. Aby zezwolić na punkty końcowe LLM w sieciach prywatnych (np. lokalny serwer Ollama), "
 "należy ustawić zmienną środowiskową ALLOW_IANA_RESTRICTED_ADDRESSES=true i ponownie uruchomić system."
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "Yes"
-msgstr "Tak"
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "No"
-msgstr "Nie"
 
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"

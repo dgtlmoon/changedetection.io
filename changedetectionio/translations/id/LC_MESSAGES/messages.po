@@ -2326,6 +2326,14 @@ msgstr "Jumlah peringatan notifikasi"
 msgid "Server type reply"
 msgstr "Balasan tipe server"
 
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "Ya"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "Tidak"
+
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI tokens (last check)"
 msgstr "Token AI (pemeriksaan terakhir)"
@@ -5129,14 +5137,6 @@ msgstr ""
 "URL Dasar API mengarah ke alamat IP privat, loopback, link-local, atau reserved dan diblokir untuk mencegah SSRF. "
 "Untuk mengizinkan endpoint LLM pada jaringan privat (mis. server Ollama lokal), atur variabel lingkungan "
 "ALLOW_IANA_RESTRICTED_ADDRESSES=true lalu mulai ulang."
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "Yes"
-msgstr "Ya"
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "No"
-msgstr "Tidak"
 
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"

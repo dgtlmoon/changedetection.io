@@ -2331,6 +2331,14 @@ msgstr "Количество оповещений об уведомлениях"
 msgid "Server type reply"
 msgstr "Тип ответа сервера"
 
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "Да"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "Нет"
+
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI tokens (last check)"
 msgstr "Токены AI (последняя проверка)"
@@ -5136,14 +5144,6 @@ msgstr ""
 "Базовый URL-адрес API преобразуется в частный IP-адрес, адрес обратной связи, локальный или зарезервированный "
 "IP-адрес и был заблокирован для предотвращения SSRF. Чтобы разрешить конечным точкам LLM в частных сетях (например, "
 "на локальном сервере Ollama), установите переменную среды ALLOW_IANA_RESTRICTED_ADDRESSES=true и перезапустите."
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "Yes"
-msgstr "Да"
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "No"
-msgstr "Нет"
 
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
