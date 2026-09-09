@@ -112,6 +112,10 @@ body.watch-selection-active #checkbox-operations {
 }
 
 
+.pure-table.watch-table td {
+  /* override of pure-css */
+    padding: .7em 0.7em;
+}
 
 // Watch-list-specific styling layered on top of the shared .cdio-table base.
 .watch-table {
