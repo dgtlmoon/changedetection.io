@@ -70,6 +70,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # use the same as when it is triggered, but then override it with the form test values
             n_object = NotificationContextData({
                 'watch_url': request.form.get('window_url', "https://changedetection.io"),
+                # Falls back to watch_url when the watch has no 'Link to Open' set
+                'watch_open_url': watch.open_link_override or request.form.get('window_url', "https://changedetection.io"),
                 'notification_urls': notification_urls
             })
 
