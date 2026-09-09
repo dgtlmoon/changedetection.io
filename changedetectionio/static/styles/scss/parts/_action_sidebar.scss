@@ -45,19 +45,14 @@ $action-sidebar-content-slot: 1100px;
   }
 }
 
-body.actionside-bar-on {
-  .action-sidebar {
-/*      width: $action-sidebar-width-expanded; // reserve enough to host the expanded inner block*/
-  }
-}
-
 // The actual interactive item block — wraps only the items, not the whole height.
 //
-// Two body-level modes drive the rail's display state:
-//   body.actionside-bar-on     → always expanded (icons + labels visible all the time)
-//   body.actionsidebar-minimal → icon-only collapsed rail; expands on hover/focus
-// `actionside-bar-on` is the default applied in templates/base.html. Both the
-// hover-to-expand width animation and the label fade-in are gated on the
+// Body-level classes drive the rail's display state (emitted by
+// flask_app.get_sidebar_mode_class() from the `sidebar_mode` setting):
+//   body.actionside-bar-on       → always expanded (icons + labels visible all the time)
+//   body.actionsidebar-minimal   → icon-only collapsed rail; expands on hover/focus
+//   body.actionsidebar-no-expand → alongside the above: stays collapsed, no hover-out
+// Both the hover-to-expand width animation and the label fade-in are gated on the
 // minimal class so that the always-expanded mode (or no mode) doesn't trigger
 // a needless layout jump when the user mouses across the rail.
 .action-sidebar-inner {
@@ -101,9 +96,9 @@ body.actionside-bar-on {
     background-attachment: fixed, fixed;
   }
 
-  // Hover-to-expand only fires in minimal mode.
-  body.actionsidebar-minimal &:hover,
-  body.actionsidebar-minimal &:focus-within {
+  // Hover-to-expand only fires in minimal mode, and not for 'minimal' (no-expand).
+  body.actionsidebar-minimal:not(.actionsidebar-no-expand) &:hover,
+  body.actionsidebar-minimal:not(.actionsidebar-no-expand) &:focus-within {
     width: $action-sidebar-width-expanded;
     // Enter is smoother.
     transition: width 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -289,8 +284,8 @@ ul.action-sidebar-list {
 // When the inner block expands in MINIMAL mode, reveal every label/badge
 // together with a smooth enter. Always-expanded mode handles labels via the
 // `body.actionside-bar-on` block below — no hover gate needed there.
-body.actionsidebar-minimal .action-sidebar-inner:hover,
-body.actionsidebar-minimal .action-sidebar-inner:focus-within {
+body.actionsidebar-minimal:not(.actionsidebar-no-expand) .action-sidebar-inner:hover,
+body.actionsidebar-minimal:not(.actionsidebar-no-expand) .action-sidebar-inner:focus-within {
   .action-sidebar-item {
     .action-label {
       opacity: 1;

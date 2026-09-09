@@ -384,6 +384,18 @@ msgstr "Czas ponownej kontroli (w minutach)"
 msgid "Import"
 msgstr "Importuj"
 
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Expand on hover"
+msgstr ""
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Always expanded"
+msgstr "Zawsze rozwinięte"
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Stays minimal"
+msgstr ""
+
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
 msgid "Watch with UUID %(uuid)s not found"
@@ -3611,14 +3623,6 @@ msgstr "Krótki (1 minuta temu)"
 #: changedetectionio/forms.py
 msgid "Navigation sidebar"
 msgstr "Pasek nawigacyjny"
-
-#: changedetectionio/forms.py
-msgid "Collapsed icon rail (expands on hover)"
-msgstr "Zwiń pasek ikon (rozwija się po najechaniu kursorem)"
-
-#: changedetectionio/forms.py
-msgid "Always expanded"
-msgstr "Zawsze rozwinięte"
 
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
