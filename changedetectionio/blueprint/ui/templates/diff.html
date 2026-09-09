@@ -20,6 +20,8 @@
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 
+<div id="diff-header">
+    <h1 id="diff-watch-title">{{ watch_a.label }}</h1>
 <div id="settings">
     <form class="pure-form " action="{{ url_for("ui.ui_diff.diff_history_page", uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
@@ -109,6 +111,8 @@
         <li class="tab" id="extract-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid)}}">{{ _('Extract Data') }}</a></li>
     </ul>
 </div>
+
+</div>{# /diff-header #}
 
 <div id="diff-ui">
     <div class="tab-pane-inner" id="error-text">

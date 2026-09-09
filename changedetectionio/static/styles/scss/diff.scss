@@ -1,3 +1,16 @@
+// Paint the page's own background (page colour + the fixed 130deg gradient at
+// 0.91, pre-composited with color-mix) so a sticky bar stays opaque to content
+// scrolling under it while looking identical to the page behind it.
+// background-attachment: fixed keeps it aligned with body::after's fixed layer.
+@mixin page-surface-gradient {
+  background: var(--color-background-gradient-second); // fallback, no color-mix
+  background: linear-gradient(130deg,
+    color-mix(in srgb, var(--color-background-gradient-first) 91%, var(--color-background-page)),
+    color-mix(in srgb, var(--color-background-gradient-second) 91%, var(--color-background-page)) 41.07%,
+    color-mix(in srgb, var(--color-background-gradient-third) 91%, var(--color-background-page)) 84.05%);
+  background-attachment: fixed;
+}
+
 #diff-form {
 
   background: rgba(0, 0, 0, .05);
@@ -40,8 +53,121 @@
 }
 
 body.difference-page {
-  section.content {
-    padding-top: 40px;
+  // Keep the top menu (watch URL, EDIT, theme/GitHub icons) on screen while the
+  // diff scrolls, stacked above #diff-header. Scoped to the diff page on
+  // purpose - upstream's @todo in parts/_top_menu.scss wants this globally, but
+  // that is a separate change.
+  //
+  // Sticky makes .header a stacking context, so its mobile drawer / overlay
+  // (z-index 10000 / 9999) are now capped by this value. 30 clears #diff-header
+  // below and still leaves toasts (10000, fixed) painting over the bar.
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    @include page-surface-gradient;
+  }
+
+  // .app-main's 0.55rem gap sits between the two sticky bars, so #diff-header
+  // starts 8.8px below the top menu and then slides up to meet it over the
+  // first 8.8px of scroll - a visible twitch right as scrolling begins. The gap
+  // can't be preserved once stuck (it is outside both bars, so the diff would
+  // scroll through it), so close it here and let them sit flush at every scroll
+  // position. Only the .header/section.content pair is affected; .app-main has
+  // no other children.
+  .app-main {
+    gap: 0;
+  }
+
+  .tab-pane-inner {
+    scroll-margin-top: calc(var(--app-header-height, 0px) + var(--diff-header-height, 0px) + 1rem);
+  }
+
+  // The 2px activity strip is fixed on body, so it lives in the root stacking
+  // context and would paint over the mobile drawer now that the drawer is capped
+  // inside .header's context above. Drop it below .header rather than raising
+  // .header past the action rail (60), which would hide the rail's hover flyout.
+  // Still above #diff-header (20) and the minimap (10); on this page it now also
+  // passes under the rail's flyout, which is 2px of imperceptible overlap.
+  #pure-menu-horizontal-spinner {
+    z-index: 29;
+  }
+}
+
+#diff-header {
+  position: sticky;
+  // Sits directly under the now-sticky top menu. The 0 fallback (JS off) just
+  // slides this under the bar - the same degradation the minimap already takes.
+  top: var(--app-header-height, 0px);
+  z-index: 20;
+  width: 100%;
+  box-sizing: border-box;
+  // Center children at their intrinsic width, the same way section.content does
+  // for the non-sticky siblings it still lays out (align-items: center).
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  // Keep the diff readable even with wrapped controls, zoom, or a short viewport.
+  // The budget is for the whole sticky stack, so the top menu above comes out of
+  // it - otherwise the two bars together take 64% of a 390px-tall landscape phone.
+  max-height: calc(50vh - var(--app-header-height, 0px));
+  max-height: calc(50dvh - var(--app-header-height, 0px));
+  overflow: auto;
+
+  @include page-surface-gradient;
+
+  > * {
+    // A centered flex item is sized to fit-content, which has a min-content
+    // floor (the version <select> is as wide as its longest option). Without
+    // this cap a narrow viewport would centre an over-wide child and spill it
+    // out of both sides of the header.
+    max-width: 100%;
+  }
+
+  #diff-watch-title {
+    margin: 0;
+    padding: 0.25rem 1rem;
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+    text-align: center;
+    color: #fff; // match #diff-form's white-on-gradient text
+  }
+
+  #diff-form {
+    margin-bottom: 0.5rem;
+  }
+
+  .diff-fieldset {
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    > span {
+      max-width: 100%;
+      min-width: 0;
+      // Size to content so From/To stay side-by-side on desktop (as they were
+      // before the header existed); shrink and wrap only when the row can't fit.
+      flex: 0 1 auto;
+      display: flex;
+      align-items: center;
+      // A <select> keeps the intrinsic min-content width of its longest option
+      // (min-width: 0 does not lower it), so label + select cannot fit a phone
+      // viewport side by side. Let the label drop above it instead of forcing
+      // the whole header wider than the screen.
+      flex-wrap: wrap;
+    }
+
+    select {
+      min-width: 0;
+      max-width: 100%;
+      flex: 1;
+    }
+
+    label {
+      flex-shrink: 0;
+    }
   }
 }
 
@@ -170,7 +296,7 @@ body.difference-page {
     border-radius: 3px;
     overflow-x: hidden;
     position: sticky;
-    top: 0;
+    top: calc(var(--app-header-height, 0px) + var(--diff-header-height, 0px));
     z-index: 10;
     padding-top: 1rem;
     padding-bottom: 1rem;
