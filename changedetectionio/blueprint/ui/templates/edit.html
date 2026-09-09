@@ -107,7 +107,7 @@
                             <div class=" border-fieldset">
                                 <div class="pure-control-group">
                                     {{ render_field(form.link_to_open, placeholder="https://...", class="m-d") }}
-                                    <span class="pure-form-message-inline">{{ _('Automatically uses the Web Page URL, you can override here if you want to open a different URL') }}</span>
+                                    <span class="pure-form-message-inline">{{ _('Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked.') }}</span>
                                 </div>
                                 <div class="pure-control-group">
                                     {{ render_ternary_field(form.use_page_title_in_list) }}

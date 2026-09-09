@@ -940,7 +940,7 @@ class SingleBrowserStep(Form):
 class processor_text_json_diff_form(commonSettingsForm):
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
-    link_to_open = StringField(_l('Link to Open'), validators=[validators.Optional(), validateURL()], default='')
+    link_to_open = StringField(_l('Open Link Override'), validators=[validators.Optional(), validateURL()], default='')
     tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
