@@ -140,8 +140,10 @@ window.watchOverviewI18n = {
     priceLow:          {{ _('Currently low')|tojson }},
     priceTypical:      {{ _('Currently typical')|tojson }},
     priceHigh:         {{ _('Currently high')|tojson }},
-    cheaperThan:       {{ _('cheaper than %s% of tracked prices')|tojson }},
-    pricierThan:       {{ _('more expensive than %s% of tracked prices')|tojson }},
+    {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
+    cheaperThan:       {{ _('cheaper than {pct} of tracked prices')|tojson }},
+    {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
+    pricierThan:       {{ _('more expensive than {pct} of tracked prices')|tojson }},
     typicalNote:       {{ _('around the usual price')|tojson }},
     avgLabel:          {{ _('avg')|tojson }}
 };
