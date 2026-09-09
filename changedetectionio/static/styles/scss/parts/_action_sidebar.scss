@@ -32,6 +32,17 @@ $action-sidebar-content-slot: 1100px;
     // Hidden on mobile: the mobile drawer (hamburger) carries these items
     display: none;
   }
+
+  // MINIMAL MODE: the rail's footprint in the flex row is frozen at the
+  // collapsed width (+ the inner block's horizontal padding, which is
+  // content-box). The inner block is taken out of flow (absolute, below) so
+  // its hover expansion rolls out ON TOP of the page content instead of
+  // widening this flex item and reflowing `.app-main`.
+  body.actionsidebar-minimal & {
+    flex: 0 0 auto;
+    width: calc(#{$action-sidebar-width-collapsed} + #{$common-gap * 2});
+    overflow: visible;   // let the expanded inner block escape the frame
+  }
 }
 
 body.actionside-bar-on {
@@ -64,12 +75,40 @@ body.actionside-bar-on {
   padding-left: $common-gap;
   padding-right: $common-gap;
 
+  // MINIMAL MODE: lift the block out of the flex flow so growing it can't
+  // resize the rail (and therefore can't shift the content column). The rail
+  // is `position: sticky`, i.e. a positioned element, so top/left/bottom here
+  // anchor to it; top+bottom keep the column full-height, which the footer
+  // list's `margin-top: auto` still needs.
+  //
+  // Once it floats above the page it needs its own backdrop, or the content
+  // it rolls over would read straight through the rail's translucent 5% white.
+  // It can't just be a flat colour: the page background is a fixed, viewport-
+  // sized gradient (`body:after`), so the rail repaints that same gradient with
+  // `background-attachment: fixed` — which makes the viewport the positioning
+  // area — and lays the rail's own 5% white on top. Result: opaque, but
+  // pixel-identical to the translucent rail it replaces, at rest and rolled out.
+  body.actionsidebar-minimal & {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1;
+    background-color: var(--color-background-page);   // fallback under the gradient
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)),
+      var(--page-background-gradient);
+    background-attachment: fixed, fixed;
+  }
+
   // Hover-to-expand only fires in minimal mode.
   body.actionsidebar-minimal &:hover,
   body.actionsidebar-minimal &:focus-within {
     width: $action-sidebar-width-expanded;
     // Enter is smoother.
     transition: width 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+    // Lift it off the page while it's rolled out over the content.
+    box-shadow: var(--color-sidebar-shadow);
   }
 
   // Always-expanded mode: no hover gate; the rail just sits open.
