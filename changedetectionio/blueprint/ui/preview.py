@@ -104,7 +104,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         output = render_template("preview.html",
                                  capabilities=capabilities,
                                  content=content,
-                                 current_diff_url=watch['url'],
+                                 current_diff_url=watch.link,
                                  current_version=timestamp,
                                  extra_stylesheets=extra_stylesheets,
                                  extra_title=f" - {gettext('Diff')} - {watch.label} @ {timestamp}",
