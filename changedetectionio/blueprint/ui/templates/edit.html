@@ -82,10 +82,6 @@
                         <div class="pure-form-message">{{ _('Variables are supported in the URL') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Handling-variables-in-the-watched-URL">{{ _('help and examples here') }}</a>).</div>
                     </div>
                     <div class="pure-control-group">
-                        {{ render_field(form.link_to_open, placeholder="https://...", class="m-d") }}
-                        <span class="pure-form-message-inline">{{ _('Automatically uses the Web Page URL, you can override here if you want to open a different URL') }}</span>
-                    </div>
-                    <div class="pure-control-group">
                         {{ render_field(form.tags) }}
                         <span class="pure-form-message-inline">{{ _('Organisational tag/group name used in the main listing page') }}</span>
                         {% if auto_applied_tags %}
@@ -104,6 +100,23 @@
                         {{ render_field(form.title, class="m-d", placeholder=watch.label) }}
                         <span class="pure-form-message-inline">{{ _('Automatically uses the page title if found, you can also use your own title/description here') }}</span>
                     </div>
+                    <div class="pure-control-group">
+                        <details class="form-wrapper">
+                            <summary>{{ _('Extra Page Title and Link options') }}</summary>
+                            <br>
+                            <div class=" border-fieldset">
+                                <div class="pure-control-group">
+                                    {{ render_field(form.link_to_open, placeholder="https://...", class="m-d") }}
+                                    <span class="pure-form-message-inline">{{ _('Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked.') }}</span>
+                                </div>
+                                <div class="pure-control-group">
+                                    {{ render_ternary_field(form.use_page_title_in_list) }}
+                                </div>
+                            </div>
+                        </details>
+
+                    </div>
+
                     <div class="pure-control-group time-between-check border-fieldset">
 
                         {{ render_checkbox_field(form.time_between_check_use_default, class="use-default-timecheck") }}
@@ -123,13 +136,6 @@
                         </div>
 <br>
               </div>
-
-                    <div class="pure-control-group">
-                        {{ render_checkbox_field(form.filter_failure_notification_send) }}
-                        <span class="pure-form-message-inline">
-                         {{ _('Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.') }}
-                        </span>
-                    </div>
                     <div class="pure-control-group">
                         {{ render_field(form.history_snapshot_max_length, class="history_snapshot_max_length") }}
                         <span class="pure-form-message-inline">{{ _('Limit collection of history snapshots for each watch to this number of history items.') }}
@@ -137,9 +143,7 @@
                         {{ _('Set to empty to use system settings default') }}
                         </span>
                     </div>
-                    <div class="pure-control-group">
-                        {{ render_ternary_field(form.use_page_title_in_list) }}
-                    </div>
+
                 </fieldset>
             </div>
 
@@ -299,6 +303,12 @@ Math: {{ 1 + 1 }}") }}
                         </span>
                     </div>
                     {% endif %}
+                    <div class="pure-control-group">
+                        {{ render_checkbox_field(form.filter_failure_notification_send) }}
+                        <span class="pure-form-message-inline">
+                         {{ _('Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and your filter will not work anymore.') }}
+                        </span>
+                    </div>
                     <div class="field-group" id="notification-field-group">
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">

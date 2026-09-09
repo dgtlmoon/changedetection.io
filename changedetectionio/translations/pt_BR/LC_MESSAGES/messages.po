@@ -1977,10 +1977,6 @@ msgid "help and examples here"
 msgstr "ajuda e exemplos aqui"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Automatically uses the Web Page URL, you can override here if you want to open a different URL"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Organisational tag/group name used in the main listing page"
 msgstr "Nome da tag/grupo organizacional usado na página principal de listagem"
 
@@ -1993,16 +1989,16 @@ msgid "Automatically uses the page title if found, you can also use your own tit
 msgstr "Usa automaticamente o título da página se encontrado. Você também pode usar seu próprio título/descrição aqui"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "O intervalo/quantidade de tempo entre cada verificação."
+msgid "Extra Page Title and Link options"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
-"your filter will not work anymore."
+msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
 msgstr ""
-"Envia uma notificação quando o filtro não pode mais ser visto na página, útil para saber quando a página mudou e seu "
-"filtro não funcionará mais."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "O intervalo/quantidade de tempo entre cada verificação."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -2103,6 +2099,14 @@ msgstr "Você precisa"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set the fetch method"
 msgstr "Definir o método de busca"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
+"your filter will not work anymore."
+msgstr ""
+"Envia uma notificação quando o filtro não pode mais ser visto na página, útil para saber quando a página mudou e seu "
+"filtro não funcionará mais."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
@@ -3247,7 +3251,7 @@ msgid "Web Page URL"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Link to Open"
+msgid "Open Link Override"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -4076,8 +4080,8 @@ msgstr "A URL que está sendo monitorada."
 
 #: changedetectionio/templates/_common_fields.html
 msgid ""
-"The Link to Open set on the watch, otherwise the same as watch_url. Use this when the watched URL is an API endpoint "
-"or RSS feed but you want to link to the real page."
+"The Open Link Override set on the watch, otherwise the same as watch_url. Use this when the watched URL is an API "
+"endpoint or RSS feed but you want to link to the real page."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
