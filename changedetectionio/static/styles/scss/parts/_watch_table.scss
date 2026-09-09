@@ -279,9 +279,11 @@ body.watch-selection-active #checkbox-operations {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        > * {
-          opacity: 0;
-          transition: opacity 0.12s ease;
+        @media (min-width: 767px) {
+          > * {
+            opacity: 0.2;
+            transition: opacity 0.12s ease;
+          }
         }
       }
     }
