@@ -1783,6 +1783,10 @@ msgid "To"
 msgstr "到"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Characters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "字"
 

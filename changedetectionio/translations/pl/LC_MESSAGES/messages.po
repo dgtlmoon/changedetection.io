@@ -1908,6 +1908,10 @@ msgid "To"
 msgstr "Do"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Characters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "Słowa"
 
