@@ -193,12 +193,17 @@ function setupDiffFilters() {
             place();
         }
     });
-    // The bar is its own scroll container though - overflow: auto is what
-    // enforces the 50svh cap - so on a short viewport it can scroll under a
-    // panel that, being fixed, stays where it was put: measured 16px of drift
-    // at 390x390 and 30px at 320x480, enough to leave the popover pointing at
-    // the wrong control. Follow the button, and close once it has scrolled out
-    // of the bar entirely rather than park the panel over the title.
+    // The bar contains a scroll container though - overflow enforces the 50svh
+    // cap - so on a short viewport the button can scroll under a panel that,
+    // being fixed, stays where it was put: measured 16px of drift at 390x390 and
+    // 30px at 320x480, enough to leave the popover pointing at the wrong
+    // control. Follow the button, and close once it has scrolled out of the bar
+    // entirely rather than park the panel over the title.
+    //
+    // Capture, not bubble: scroll events do not bubble, and the container that
+    // actually scrolls is #settings (diff.scss keeps the tab row out of the
+    // budget by shrinking that one child), which is a descendant. Capturing on
+    // the bar catches it and #diff-header's own last-resort scroll alike.
     header.addEventListener('scroll', function () {
         if (!isOpen()) {
             return;
@@ -210,7 +215,7 @@ function setupDiffFilters() {
         } else {
             place();
         }
-    }, {passive: true});
+    }, {passive: true, capture: true});
     // place() budgets against the *visual* viewport when it is the smaller of
     // the two, and on iOS that one can shrink on its own - a toolbar expanding
     // or the on-screen keyboard coming up moves it without resizing the layout
