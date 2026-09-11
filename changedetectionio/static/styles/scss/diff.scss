@@ -1,3 +1,5 @@
+@use "settings" as *;
+
 // Paint the page's own background (page colour + the fixed 130deg gradient at
 // 0.91, pre-composited with color-mix) so a sticky bar stays opaque to content
 // scrolling under it while looking identical to the page behind it.
@@ -107,7 +109,26 @@ body.difference-page {
   // slides this under the bar - the same degradation the minimap already takes.
   top: var(--app-header-height, 0px);
   z-index: 20;
-  width: 100%;
+  // section.content insets its children by $common-gap so they clear the left
+  // rail, while the top menu above stays flush against it. A bar that paints
+  // the page's own backdrop therefore leaves an 8.8px strip of real page
+  // background down each side, and that strip is invisible only while the bar's
+  // gradient stays aligned with the page's - which is what
+  // background-attachment: fixed buys, and what iOS Safari does not honour. On
+  // that engine each box samples its own origin instead of the viewport, so the
+  // bar paints the start of the ramp while the strips beside it paint whatever
+  // the document is showing at that scroll offset, and they read as mismatched
+  // borders. Cancel the inset rather than blend across it: with no gutter there
+  // is nothing left to keep aligned, on any engine. The controls do not move -
+  // the bar grows outwards by exactly the margin it takes back.
+  //
+  // The width has to come from align-self, not width: 100%. .content-main
+  // centres its children, so an item is fit-content unless it stretches, and a
+  // percentage width resolves against the parent without the negative margins -
+  // it would leave the bar short by 17.6px.
+  align-self: stretch;
+  margin-left: -$common-gap;
+  margin-right: -$common-gap;
   box-sizing: border-box;
   // Center children at their intrinsic width, the same way section.content does
   // for the non-sticky siblings it still lays out (align-items: center).
@@ -120,8 +141,18 @@ body.difference-page {
   // Keep the diff readable even with wrapped controls, zoom, or a short viewport.
   // The budget is for the whole sticky stack, so the top menu above comes out of
   // it - otherwise the two bars together take 64% of a 390px-tall landscape phone.
+  //
+  // svh, not dvh. dvh tracks the dynamic viewport, which on iOS Safari grows and
+  // shrinks as the browser's own toolbar collapses and expands while you scroll:
+  // the cap would then breathe mid-scroll, changing the header's height and
+  // shifting everything below it, and each transition also fires resize and
+  // re-runs the sticky measurement behind it. svh is defined as the
+  // toolbar-expanded minimum and holds still for the life of the page, so the
+  // budget is a constant. It is the smaller of the two, which is the safe side to
+  // be wrong on for a cap. The plain vh line stays as the fallback for engines
+  // without the new units.
   max-height: calc(50vh - var(--app-header-height, 0px));
-  max-height: calc(50dvh - var(--app-header-height, 0px));
+  max-height: calc(50svh - var(--app-header-height, 0px));
   overflow: auto;
 
   @include page-surface-gradient;
@@ -228,7 +259,7 @@ body.difference-page {
   &.diff-filters-js.diff-filters-open {
     #diff-style {
       // fixed, not absolute: #diff-header carries overflow: auto to enforce the
-      // 50dvh cap above, which clips an absolutely positioned descendant at the
+      // 50svh cap above, which clips an absolutely positioned descendant at the
       // bar's bottom edge. The bar is sticky with no transform/filter/contain,
       // so it is not a containing block for fixed and the panel escapes the
       // clip. diff-overview.js parks it under the toggle.
