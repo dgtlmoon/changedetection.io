@@ -315,6 +315,12 @@ body.difference-page {
       position: fixed;
       z-index: 25;
       min-width: 14rem;
+      // diff-overview.js caps max-height to the room below the button that the
+      // viewport actually has - on a landscape phone that is less than the
+      // seven rows need. The rows past the cap have to stay reachable, and the
+      // scroll must not chain out to the diff behind once they run out.
+      overflow-y: auto;
+      overscroll-behavior: contain;
       padding: 0.5rem 0.75rem;
       border-radius: 8px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, .28);

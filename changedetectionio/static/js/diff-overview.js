@@ -89,14 +89,50 @@ function setupDiffFilters() {
         return header.classList.contains('diff-filters-open');
     }
 
+    var EDGE_GAP = 8;   // keep the panel clear of the viewport edges
+    var BUTTON_GAP = 4; // between the toggle and the panel
+
     // The panel is position: fixed - #diff-header's overflow: auto would clip an
     // absolutely positioned one - so it has to be parked under the button by
-    // hand, and kept inside the viewport on a narrow screen.
+    // hand, and kept inside the viewport on a small screen. Fixed also means the
+    // page scrolling underneath will never bring a row that hangs off the bottom
+    // back into reach, so the height has to fit at placement time or not at all:
+    // below the button there is always at least half the viewport, because the
+    // bar's own cap keeps its bottom edge inside 50svh - what there is not
+    // always enough of is room for the whole seven-row panel. Cap it to the
+    // space there is and let it scroll (see diff.scss). Parking it at full
+    // height put the last three filters off-screen and unclickable in a
+    // landscape phone viewport.
     function place() {
         var button = toggle.getBoundingClientRect();
-        var available = document.documentElement.clientWidth - panel.offsetWidth - 8;
-        panel.style.top = (button.bottom + 4) + 'px';
-        panel.style.left = Math.max(8, Math.min(button.left, available)) + 'px';
+        // A fixed element is positioned against the layout viewport, but iOS
+        // shrinks the *visual* one behind its toolbars, so budget with
+        // whichever is smaller.
+        var viewportHeight = document.documentElement.clientHeight;
+        if (window.visualViewport) {
+            viewportHeight = Math.min(viewportHeight, window.visualViewport.height);
+        }
+
+        // Measure unconstrained: a cap left over from the previous placement
+        // would otherwise read back as the panel's natural height.
+        panel.style.maxHeight = '';
+        var room = viewportHeight - button.bottom - BUTTON_GAP - EDGE_GAP;
+
+        if (panel.offsetHeight > room) {
+            // max-height caps the content box, and the panel is content-box
+            // (leave it that way: border-box would fold the padding into the
+            // min-width too and narrow the panel by 24px). Hand it the room
+            // less its own padding and borders so offsetHeight lands on room.
+            var style = window.getComputedStyle(panel);
+            var trim = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) +
+                       parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+            panel.style.maxHeight = Math.max(room - trim, 0) + 'px';
+        }
+
+        panel.style.top = (button.bottom + BUTTON_GAP) + 'px';
+
+        var available = document.documentElement.clientWidth - panel.offsetWidth - EDGE_GAP;
+        panel.style.left = Math.max(EDGE_GAP, Math.min(button.left, available)) + 'px';
     }
 
     function open() {
@@ -138,14 +174,32 @@ function setupDiffFilters() {
     });
 
     // The bar is sticky directly under the top menu, so the button keeps its
-    // viewport position as the page scrolls and only a resize can move it out
-    // from under the panel. A tab switch hides #settings, and the panel with it,
-    // so drop the open state rather than leave aria-expanded lying.
+    // viewport position as the *page* scrolls. A tab switch hides #settings, and
+    // the panel with it, so drop the open state rather than leave aria-expanded
+    // lying.
     window.addEventListener('resize', function () {
         if (isOpen()) {
             place();
         }
     });
+    // The bar is its own scroll container though - overflow: auto is what
+    // enforces the 50svh cap - so on a short viewport it can scroll under a
+    // panel that, being fixed, stays where it was put: measured 16px of drift
+    // at 390x390 and 30px at 320x480, enough to leave the popover pointing at
+    // the wrong control. Follow the button, and close once it has scrolled out
+    // of the bar entirely rather than park the panel over the title.
+    header.addEventListener('scroll', function () {
+        if (!isOpen()) {
+            return;
+        }
+        var bar = header.getBoundingClientRect();
+        var button = toggle.getBoundingClientRect();
+        if (button.bottom <= bar.top || button.top >= bar.bottom) {
+            close(false);
+        } else {
+            place();
+        }
+    }, {passive: true});
     window.addEventListener('hashchange', function () {
         close(false);
     });
