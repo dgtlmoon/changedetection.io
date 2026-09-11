@@ -131,6 +131,50 @@ body.difference-page {
   .tabs ul li a {
     padding: 0.35em 0.7em;
   }
+
+  // The thin blue line under the active tab. Nothing at that boundary has a
+  // border - the active tab and #diff-ui are both var(--color-background) - so
+  // it can only be the page gradient showing through a device-pixel row where
+  // neither white paints. Whether such a row exists comes down to one number,
+  // the bar's bottom edge minus the card's top edge, and measured across 14
+  // viewports at three device pixel ratios that number is 0.813, 0.203 or
+  // exactly 0.000 and never a whole pixel. At 0.000 the outcome belongs
+  // entirely to the engine's sub-pixel rounding - which is why a DPR 3 phone
+  // can show a line a DPR 1 desktop does not, and why 390x844 on the Screenshot
+  // tab, the exact case reported, measures 0.000.
+  //
+  // So take the margin out of the engine's hands instead of hoping two white
+  // edges land on the same device row. A pixel of overlap covers the gradient
+  // on any grid; measured the same way afterwards, the worst case over those 42
+  // readings becomes exactly 1.000px.
+  //
+  // The other candidate was a white skirt under the active tab
+  // (box-shadow: 0 1px 0) which would have touched nothing else, and it does not
+  // work: the shadow hangs below the bar's last child and #diff-header's
+  // overflow: auto - the thing enforcing its height cap - clips it. Measured
+  // with the card held 3px away so the skirt and the card are separable, it
+  // painted 0 device rows of the 3 it needs at 844x390 and 926x428, and 0 to 2
+  // in the sticky modes. Recorded here so it is not proposed again.
+  //
+  // What the overlap costs, stated rather than discovered later: where the bar
+  // is sticky it is invisible, and a device-pixel diff of the seam band at
+  // 390x844 and DPR 3 says so exactly - zero differing pixels, because the bar
+  // is opaque and paints over the card. Below the short-viewport breakpoint the
+  // bar has no background of its own, so the card's white also reaches the
+  // bottom pixel of the *inactive* tabs and the 5px gaps between them: 4374
+  // device pixels at 844x390, gradient turning white. The tab row ends up
+  // sitting flush on the card rather than floating a pixel above it, which is
+  // how tabs normally meet their panel and is the same continuity the active
+  // tab was asked for.
+  //
+  // Scoped to the diff page deliberately. diff.css is NOT diff-page-only - it
+  // is also served to the preview page (blueprint/ui/preview.py) and the
+  // extract page (processors/extract.py), and both have a #diff-ui of their own
+  // with no bar above it to absorb the pixel. Only difference.py sets the
+  // difference-page class.
+  #diff-ui {
+    margin-top: -1px;
+  }
 }
 
 #diff-header {
