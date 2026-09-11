@@ -1870,6 +1870,10 @@ msgid "To"
 msgstr "К"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Filters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "Слова"
 
@@ -1909,9 +1913,17 @@ msgstr "AI: каждое изменение между версиями"
 msgid "Keyboard:"
 msgstr "Клавиатура:"
 
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Previous version"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
 msgstr "Предыдущий"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Next version"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Next"

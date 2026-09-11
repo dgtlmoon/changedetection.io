@@ -1867,6 +1867,10 @@ msgid "To"
 msgstr "Ke"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Filters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "Kata"
 
@@ -1906,9 +1910,17 @@ msgstr "AI: setiap perubahan antarversi"
 msgid "Keyboard:"
 msgstr "Keyboard:"
 
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Previous version"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
 msgstr "Sebelumnya"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Next version"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Next"
