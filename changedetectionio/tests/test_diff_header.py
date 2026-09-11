@@ -27,6 +27,54 @@ def test_diff_header_watch_label(client, title, page_title, expected):
     assert page.select_one('#diff-header .tabs') is not None
     assert page.select_one('#diff-header #difference') is None
     assert 'Second release' in page.select_one('#difference').get_text()
+    # The title is one line and ellipsizes when it outgrows the bar, so the
+    # untruncated text has to stay reachable on hover.
+    assert heading.get('title') == expected
+
+
+def _seeded_diff_page(client, **extras):
+    datastore = client.application.config['DATASTORE']
+    extras.setdefault('paused', True)
+    uuid = datastore.add_watch(url='https://example.com/releases', extras=extras)
+    watch = datastore.data['watching'][uuid]
+    watch.save_history_blob('First release', 1700000000, 'first')
+    watch.save_history_blob('Second release', 1700000060, 'second')
+    response = client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid))
+    assert response.status_code == 200
+    return BeautifulSoup(response.data, 'html.parser')
+
+
+def test_diff_filters_toggle_degrades_without_javascript(client):
+    """The diff options collapse into a popover, but only once diff-overview.js
+    has taken them over: the toggle ships hidden and the fieldset ships inline
+    and inside the form, so with scripting off the options are still reachable
+    and still submit."""
+    page = _seeded_diff_page(client)
+
+    toggle = page.select_one('#diff-form #diff-filters-toggle')
+    assert toggle is not None
+    # Inside a form, anything but type=button submits it.
+    assert toggle.get('type') == 'button'
+    assert toggle.get('aria-expanded') == 'false'
+    assert toggle.get('aria-controls') == 'diff-style'
+
+    options = page.select_one('#diff-form #diff-style')
+    assert options is not None
+    assert options.get('hidden') is None
+    assert page.select_one('#diff-form #diff-style #ignoreWhitespace') is not None
+
+
+def test_diff_version_arrows_are_named(client):
+    """Only the arrow glyphs are visible in the compact bar, so each link has to
+    carry the wording itself rather than lean on text the CSS hides."""
+    page = _seeded_diff_page(client)
+
+    for element_id in ('btn-previous', 'btn-next'):
+        link = page.select_one(f'#keyboard-nav #{element_id}')
+        assert link is not None
+        assert link.get('aria-label')
+        assert link.get('title') == link.get('aria-label')
+        assert link.select_one('.keyboard-nav-label') is not None
 
 
 def test_difference_page_class_scopes_sticky_header(client):
