@@ -257,7 +257,39 @@ $(document).ready(function () {
     // Load it when the #screenshot tab is in use, so we dont give a slow experience when waiting for the text diff to load
     window.addEventListener('hashchange', function (e) {
         toggle(location.hash);
+        realignPane();
     }, false);
+
+    // The browser runs the fragment jump first; only afterwards does toggle()
+    // hide #settings and the outgoing pane stop being :target, which collapses
+    // the text diff's ~8000px document to a fraction of a screen. The engine is
+    // then holding a scroll offset for a page that no longer exists and clamps
+    // it to the new maximum instead of re-running the jump. On iOS that maximum
+    // is never 0 - styles.scss floors the shell at min-height: 100vh and 100vh
+    // there is the toolbar-collapsed viewport - so you arrive on the Screenshot
+    // tab with its first line behind the bar. Measured off a device recording:
+    // about one line, held for roughly a second before Safari re-settled it.
+    //
+    // So re-run the jump once the layout has stopped moving. scrollIntoView, not
+    // scrollTo(0, 0): .tab-pane-inner already declares the offset the sticky
+    // stack needs as scroll-margin-top, and this is the same alignment the
+    // browser was asked for, just applied to the layout that actually resulted.
+    //
+    // setTimeout(0) rather than requestAnimationFrame: that scroll-margin-top is
+    // written in terms of --diff-header-height, which diff-render.js's
+    // ResizeObserver updates during the rendering update - after animation frame
+    // callbacks have already run, and hiding #settings is exactly what changes
+    // it.
+    function realignPane() {
+        var pane = location.hash.length > 1 &&
+            document.getElementById(location.hash.slice(1));
+        if (!pane || !pane.classList.contains('tab-pane-inner')) {
+            return;
+        }
+        setTimeout(function () {
+            pane.scrollIntoView({block: 'start', inline: 'nearest'});
+        }, 0);
+    }
 
     toggle(location.hash);
 
