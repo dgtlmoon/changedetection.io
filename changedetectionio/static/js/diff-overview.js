@@ -129,10 +129,21 @@ function setupDiffFilters() {
             panel.style.maxHeight = Math.max(room - trim, 0) + 'px';
         }
 
-        panel.style.top = (button.bottom + BUTTON_GAP) + 'px';
+        var top = button.bottom + BUTTON_GAP;
+        panel.style.top = top + 'px';
 
         var available = document.documentElement.clientWidth - panel.offsetWidth - EDGE_GAP;
-        panel.style.left = Math.max(EDGE_GAP, Math.min(button.left, available)) + 'px';
+        var left = Math.max(EDGE_GAP, Math.min(button.left, available));
+        panel.style.left = left + 'px';
+
+        // The panel paints the page's own backdrop (see diff.scss), and that
+        // copy is aligned by geometry rather than by background-attachment:
+        // fixed, which iOS Safari ignores. The two sticky bars can state their
+        // viewport offset in CSS because it never changes; this one cannot -
+        // it is wherever the button just was - so hand it the offset here. Both
+        // values are negative: the copy's top-left corner belongs at the
+        // viewport's, which is up and to the left of the panel.
+        panel.style.backgroundPosition = (-left) + 'px ' + (-top) + 'px';
     }
 
     function open() {

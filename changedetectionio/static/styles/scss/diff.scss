@@ -3,14 +3,44 @@
 // Paint the page's own background (page colour + the fixed 130deg gradient at
 // 0.91, pre-composited with color-mix) so a sticky bar stays opaque to content
 // scrolling under it while looking identical to the page behind it.
-// background-attachment: fixed keeps it aligned with body::after's fixed layer.
-@mixin page-surface-gradient {
+//
+// styles.scss paints that backdrop as a real fixed layer: body::after is a
+// `position: fixed` box at the viewport's top-left corner, viewport-wide and
+// `height: 100vh` tall. Anything that has to disappear into it must show the
+// slice of that box it covers. background-attachment: fixed asks the engine for
+// exactly that, and iOS Safari does not honour it - it anchors the layer to the
+// document instead, so the bar sweeps the whole ramp (cyan to purple over a
+// long page) while the gutters beside it hold still. Chromium does honour it,
+// which is why only a device caught this.
+//
+// So derive the alignment from geometry and ask for no feature at all. Each bar
+// keeps a constant viewport offset - .header at the top, #diff-header directly
+// below it - and both are flush with the viewport's right edge at every width:
+// the action rail insets them from the *left* on a wide screen and widens again
+// on hover, but nothing moves their right edge. Anchor a viewport-sized copy of
+// the gradient to that edge and push it up by the bar's own offset, and the bar
+// paints body::after's slice by construction, on any engine.
+//
+// $y-offset: the bar's distance from the top of the viewport.
+@mixin page-surface-gradient($y-offset: 0px) {
   background: var(--color-background-gradient-second); // fallback, no color-mix
-  background: linear-gradient(130deg,
+  // Longhands from here down, and no second `background:` shorthand after them -
+  // one would silently reset size/position/origin back to their initial values.
+  background-image: linear-gradient(130deg,
     color-mix(in srgb, var(--color-background-gradient-first) 91%, var(--color-background-page)),
     color-mix(in srgb, var(--color-background-gradient-second) 91%, var(--color-background-page)) 41.07%,
     color-mix(in srgb, var(--color-background-gradient-third) 91%, var(--color-background-page)) 84.05%);
-  background-attachment: fixed;
+  // 100vh to match body::after's own height: 100vh - same unit, so the two
+  // resolve to the same number on iOS, where it means the large (toolbar
+  // collapsed) viewport and therefore holds still as the toolbar moves.
+  // 100vw for the width: the bars are as wide as the viewport only on a narrow
+  // screen, so 100% would compress the ramp into the rail's leftovers on a
+  // desktop one.
+  background-size: 100vw 100vh;
+  background-repeat: no-repeat;
+  // border-box, or the bar's own padding would offset the copy by that much.
+  background-origin: border-box;
+  background-position: right 0 top calc(-1 * #{$y-offset});
 }
 
 #diff-form {
@@ -67,7 +97,7 @@ body.difference-page {
     position: sticky;
     top: 0;
     z-index: 30;
-    @include page-surface-gradient;
+    @include page-surface-gradient(0px);
   }
 
   // .app-main's 0.55rem gap sits between the two sticky bars, so #diff-header
@@ -112,15 +142,12 @@ body.difference-page {
   // section.content insets its children by $common-gap so they clear the left
   // rail, while the top menu above stays flush against it. A bar that paints
   // the page's own backdrop therefore leaves an 8.8px strip of real page
-  // background down each side, and that strip is invisible only while the bar's
-  // gradient stays aligned with the page's - which is what
-  // background-attachment: fixed buys, and what iOS Safari does not honour. On
-  // that engine each box samples its own origin instead of the viewport, so the
-  // bar paints the start of the ramp while the strips beside it paint whatever
-  // the document is showing at that scroll offset, and they read as mismatched
-  // borders. Cancel the inset rather than blend across it: with no gutter there
-  // is nothing left to keep aligned, on any engine. The controls do not move -
-  // the bar grows outwards by exactly the margin it takes back.
+  // background down each side, and on a device those strips read as mismatched
+  // borders. Cancel the inset rather than try to blend across it: with no
+  // gutter there is nothing left to keep aligned, and the flush right edge is
+  // what page-surface-gradient anchors its copy of the page gradient to. The
+  // controls do not move - the bar grows outwards by exactly the margin it
+  // takes back.
   //
   // The width has to come from align-self, not width: 100%. .content-main
   // centres its children, so an item is fit-content unless it stretches, and a
@@ -155,7 +182,10 @@ body.difference-page {
   max-height: calc(50svh - var(--app-header-height, 0px));
   overflow: auto;
 
-  @include page-surface-gradient;
+  // Same offset as `top` above: the bar's constant distance from the top of the
+  // viewport. With JS off the var is absent and the copy is misaligned by the
+  // top menu's height - the same tier of degradation `top` itself already takes.
+  @include page-surface-gradient(var(--app-header-height, 0px));
 
   > * {
     // A centered flex item is sized to fit-content, which has a min-content
@@ -327,7 +357,10 @@ body.difference-page {
       text-align: left;
 
       // The bar repaints the page's own backdrop; so must anything that has to
-      // be opaque over the scrolling diff.
+      // be opaque over the scrolling diff. This one is not pinned to an edge of
+      // the viewport - diff-overview.js decides where it goes - so the same
+      // file overwrites background-position from the coordinates it just set.
+      // The declaration here is what a placement-less first paint falls back to.
       @include page-surface-gradient;
     }
 
