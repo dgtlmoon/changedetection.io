@@ -146,9 +146,11 @@ ul#top-right-menu {
 
   // Paused = steady amber dot (no pulse).
   &.paused .live-dot {
-    background: #e8a33d;
-    box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.3);
+    background: #e83d3d;
+    box-shadow: 0 0 0 3px rgb(232 61 61 / 0.3);
     animation: none;
+    width: 12px;
+    height: 12px;
   }
 
   // Icon-led pills (e.g. the mute toggle) keep the feather icon compact.
