@@ -36,6 +36,9 @@
     <script>
         const csrftoken="{{ csrf_token() }}";
         const socketio_url="{{ get_socketio_path() }}/socket.io";
+        // Sub-path prefix when deployed behind a reverse proxy (USE_X_SETTINGS /
+        // X-Forwarded-Prefix sets SCRIPT_NAME), empty string otherwise.
+        const base_path = {{ request.script_root.rstrip('/')|tojson }};
         const is_authenticated = {% if current_user.is_authenticated or not has_password %}true{% else %}false{% endif %};
         // Translatable strings for modal.js (ModalDialog). Defined here in a Jinja
         // template so Babel extract_messages picks them up; modal.js reads this

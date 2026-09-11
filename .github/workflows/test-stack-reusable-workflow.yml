@@ -396,6 +396,15 @@ jobs:
             exit 1
           fi
 
+          # base_path drives client-side navigation (search modal), it must carry the prefix
+          if grep -q 'const base_path = "/changedet-sub"' /tmp/nginx-test-subpath.html; then
+            echo "✓ base_path reflects X-Forwarded-Prefix"
+          else
+            echo "ERROR: base_path does not reflect X-Forwarded-Prefix"
+            grep -o 'const base_path = .*' /tmp/nginx-test-subpath.html || true
+            exit 1
+          fi
+
           echo "✓ Subpath reverse proxy working correctly"
 
       - name: Test API through reverse proxy subpath
