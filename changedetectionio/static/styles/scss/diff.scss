@@ -216,6 +216,8 @@ body.difference-page {
   // this PR does not have the standing to do that.
   .tabs {
     align-self: stretch;
+    // Never give up height to keep the controls whole - see #settings below.
+    flex: none;
 
     // .tabs no longer shrink-wraps, so the grid would sit left-aligned in it.
     ul {
@@ -250,6 +252,8 @@ body.difference-page {
   // template carries the untruncated text in the title attribute for hover.
   #diff-watch-title {
     width: 100%;
+    // One line, and not a line the height budget may take back - see #settings.
+    flex: none;
     margin: 0;
     padding: 0;
     font-size: 0.9rem;
@@ -261,10 +265,31 @@ body.difference-page {
     color: #fff; // match #diff-form's white-on-gradient text
   }
 
+  // The bar's height budget (max-height above) is smaller than its contents on a
+  // landscape phone: iOS gives the two datetime <select>s enough intrinsic width
+  // that From and To each take their own row, and title + From + To + Filters +
+  // tabs is then taller than 50svh minus the top menu. With overflow: auto on
+  // the bar itself the row that leaves the visible box is the last one - the
+  // tabs, which are the page's navigation and have no scrollbar to advertise
+  // themselves. Measured in Chromium with no iOS emulation at 736x414, 667x375,
+  // 780x360 and 844x330: the tab row sits outside #diff-header's own rect.
+  //
+  // So spend the budget on the row that can afford it. #settings is the only
+  // child allowed to shrink, and it is what scrolls; the title and the tabs are
+  // flex: none and therefore always inside the bar at any viewport height. The
+  // shrink needs min-height: 0 - a flex item's automatic minimum size is its
+  // content, which is what would otherwise push the tabs back out.
   #settings {
     min-width: 0;
     display: flex;
     justify-content: center;
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    // Same reason the Filters popover carries it: a nested scroller inside a
+    // sticky bar that chains its overscroll to the diff behind is worse than no
+    // scroller at all on a touch screen.
+    overscroll-behavior: contain;
   }
 
   // One toolbar row: From/To chips and their selects, the version arrows, and
