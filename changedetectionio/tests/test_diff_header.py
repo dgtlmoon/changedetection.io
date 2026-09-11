@@ -74,7 +74,12 @@ def test_diff_version_arrows_are_named(client):
         assert link is not None
         assert link.get('aria-label')
         assert link.get('title') == link.get('aria-label')
-        assert link.select_one('.keyboard-nav-label') is not None
+        label = link.select_one('.keyboard-nav-label')
+        assert label is not None
+        # The accessible name has to be the same word the hidden label shows, so
+        # that it comes from a msgid the catalogs already translate rather than a
+        # longer phrase invented for this bar that only screen readers ever hear.
+        assert link.get('aria-label') == label.get_text(strip=True)
 
 
 def test_difference_page_class_scopes_sticky_header(client):
