@@ -165,6 +165,54 @@ body.difference-page {
     max-width: 100%;
   }
 
+  // base.html's wrap detector decides body.wrapped-tabs by flipping the tab <ul>
+  // to flex-wrap and seeing whether any tab lands on a second row - so what it
+  // measures against is the width of .tabs. _tabs.scss says in upstream's own
+  // words that .tabs has to take the full width of the centred column "so the
+  // wrap-detector JS has the real available space to measure against", and the
+  // two properties that would do it are commented out directly underneath. As
+  // shipped, .tabs is fit-content inside any centred column, so the detector
+  // measures a container that moves with the layout state it is judging: the
+  // active tab's label is bold, and selecting the widest one ("Current
+  // screenshot") grows .tabs by ~9px. In the band where that crosses the
+  // available width the verdict flips per tab - measured here at 350, 355 and
+  // 358px, where Text and Extract Data report one row and Current screenshot
+  // reports three. iOS puts the same band at 390px because its fonts are wider,
+  // which is how a phone showed one row in a screenshot and a vertical stack in
+  // a video of the same page.
+  //
+  // Give the detector a fixed target on this page only. Un-commenting the lines
+  // in _tabs.scss would fix it everywhere and change every page upstream owns;
+  // this PR does not have the standing to do that.
+  .tabs {
+    align-self: stretch;
+
+    // .tabs no longer shrink-wraps, so the grid would sit left-aligned in it.
+    ul {
+      justify-content: center;
+
+      // Stretching the container fixes one side of the detector's comparison;
+      // this fixes the other. `.active a { font-weight: bold }` in _tabs.scss
+      // makes the row's width depend on which label is currently bold: at 355px
+      // the Text and Extract states measure 332.9 and 330.5 against a 339.0
+      // container and stay on one row, while Current screenshot - the widest
+      // label - measures over it and wraps to three. Neutralising just that rule
+      // collapses all three states to 330.5 and the flipping stops, which is what
+      // identifies the weight as the variable rather than the container.
+      //
+      // So drop the bold here rather than reserve room for it. Reserving the bold
+      // width on every tab (a hidden bold copy behind each label) also stabilises
+      // it, but it makes the row ~14px wider in every state and that pushes 360px
+      // - a common Android width that fits on one row today - into the stacked
+      // layout. The active tab does not need the third signal: _tabs.scss already
+      // gives it its own background-color and its own text colour.
+      li.active a,
+      li :target a {
+        font-weight: inherit;
+      }
+    }
+  }
+
   // The title owns the full width of the bar on its own row above the controls,
   // so it truncates only when it is wider than the whole viewport - the common
   // long title fits in full. One line rather than a two-line clamp, matching the
