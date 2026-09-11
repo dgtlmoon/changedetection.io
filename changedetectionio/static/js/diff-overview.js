@@ -116,7 +116,18 @@ function setupDiffFilters() {
         // Measure unconstrained: a cap left over from the previous placement
         // would otherwise read back as the panel's natural height.
         panel.style.maxHeight = '';
-        var room = viewportHeight - button.bottom - BUTTON_GAP - EDGE_GAP;
+
+        // Below the button used to be the roomier side by construction - the
+        // bar's own 50svh cap kept its bottom edge inside the top half of the
+        // viewport - and this function had no flip-above branch for that
+        // reason. diff.scss's short-viewport breakpoint takes the cap away and
+        // lets the bar scroll with the page, so the premise is gone: at 280x300
+        // the button sits with 147.6px above it and 104.2px below. Pick the
+        // roomier side rather than assume one.
+        var roomBelow = viewportHeight - button.bottom - BUTTON_GAP - EDGE_GAP;
+        var roomAbove = button.top - BUTTON_GAP - EDGE_GAP;
+        var above = roomAbove > roomBelow;
+        var room = above ? roomAbove : roomBelow;
 
         if (panel.offsetHeight > room) {
             // max-height caps the content box, and the panel is content-box
@@ -129,7 +140,10 @@ function setupDiffFilters() {
             panel.style.maxHeight = Math.max(room - trim, 0) + 'px';
         }
 
-        var top = button.bottom + BUTTON_GAP;
+        // offsetHeight after the cap, not before: parking above the button
+        // measures from the panel's own bottom edge.
+        var top = above ? button.top - BUTTON_GAP - panel.offsetHeight
+                        : button.bottom + BUTTON_GAP;
         panel.style.top = top + 'px';
 
         var available = document.documentElement.clientWidth - panel.offsetWidth - EDGE_GAP;
@@ -200,22 +214,38 @@ function setupDiffFilters() {
     // control. Follow the button, and close once it has scrolled out of the bar
     // entirely rather than park the panel over the title.
     //
-    // Capture, not bubble: scroll events do not bubble, and the container that
-    // actually scrolls is #settings (diff.scss keeps the tab row out of the
-    // budget by shrinking that one child), which is a descendant. Capturing on
-    // the bar catches it and #diff-header's own last-resort scroll alike.
-    header.addEventListener('scroll', function () {
+    // Below diff.scss's max-height: 500px breakpoint the bar is not sticky, so
+    // the button does not keep its viewport position either: the whole bar
+    // scrolls away with the document while the fixed panel stays where place()
+    // left it. The two modes drift for opposite reasons - in the sticky one the
+    // bar holds still and #settings moves inside it, in the static one nothing
+    // moves inside the bar and the bar itself moves - so the same follow/close
+    // rule covers both, and it needs both closing tests. Each is inert in the
+    // mode it was not written for: the button cannot leave a sticky bar's box
+    // by scrolling the page, and it cannot leave a static bar's box at all.
+    function followButton() {
         if (!isOpen()) {
             return;
         }
         var bar = header.getBoundingClientRect();
         var button = toggle.getBoundingClientRect();
-        if (button.bottom <= bar.top || button.top >= bar.bottom) {
+        var viewportHeight = document.documentElement.clientHeight;
+        if (button.bottom <= bar.top || button.top >= bar.bottom ||
+            button.bottom <= 0 || button.top >= viewportHeight) {
             close(false);
         } else {
             place();
         }
-    }, {passive: true, capture: true});
+    }
+
+    // Capture, not bubble: scroll events do not bubble, and the container that
+    // actually scrolls is #settings (diff.scss keeps the tab row out of the
+    // budget by shrinking that one child), which is a descendant. Capturing on
+    // the bar catches it and #diff-header's own last-resort scroll alike. It
+    // does not catch the document's own scroll, which is the static mode's
+    // only source of drift - hence the second registration.
+    header.addEventListener('scroll', followButton, {passive: true, capture: true});
+    window.addEventListener('scroll', followButton, {passive: true});
     // place() budgets against the *visual* viewport when it is the smaller of
     // the two, and on iOS that one can shrink on its own - a toolbar expanding
     // or the on-screen keyboard coming up moves it without resizing the layout
@@ -280,15 +310,72 @@ $(document).ready(function () {
     // ResizeObserver updates during the rendering update - after animation frame
     // callbacks have already run, and hiding #settings is exactly what changes
     // it.
-    function realignPane() {
+
+    // Where the last alignment we performed left the page, so a later one can
+    // tell "still where we put them" from "the reader has moved since".
+    var alignedY = null;
+    // The scroll-margin-top that alignment was computed against.
+    var alignedMargin = null;
+
+    function targetPane() {
         var pane = location.hash.length > 1 &&
             document.getElementById(location.hash.slice(1));
-        if (!pane || !pane.classList.contains('tab-pane-inner')) {
+        return pane && pane.classList.contains('tab-pane-inner') ? pane : null;
+    }
+
+    function realignPane() {
+        var pane = targetPane();
+        if (!pane) {
             return;
         }
         setTimeout(function () {
+            alignedMargin = parseFloat(getComputedStyle(pane).scrollMarginTop);
             pane.scrollIntoView({block: 'start', inline: 'nearest'});
+            alignedY = window.scrollY;
         }, 0);
+    }
+
+    // The load path has the same stale offset for a nearer reason, and needs a
+    // different trigger. tabs.js rewrites an empty hash to the first tab's
+    // (tabs.js:15) and the browser performs that jump the moment the diff is
+    // built - which is before diff-render.js has measured the bar, so
+    // scroll-margin-top is still resolving against its --diff-header-height: 0
+    // fallback. Traced at 844x390: the jump lands at scrollY 231 against a 16px
+    // margin at t=132ms, and the margin becomes the real 202px at t=167ms with
+    // the offset left exactly where it was. Under a sticky bar none of that
+    // shows, because the chrome is pinned whatever the offset is. Below
+    // diff.scss's short-viewport breakpoint the bar is in flow, and those same
+    // 231px put every control above the top of the page: a landscape phone
+    // opens on a bare diff with no title, no From/To, no tabs.
+    //
+    // So re-run the alignment when the quantity it was wrong about settles.
+    // The margin is written in terms of the bar's height, so the bar's own
+    // resize is the signal - and comparing the margin rather than counting
+    // callbacks means this fires when something actually changed.
+    //
+    // Guarded on the reader still being where the last alignment left them.
+    // That matters beyond load: rotating the phone across the breakpoint
+    // resizes the bar too, and someone who has scrolled into the diff must not
+    // be thrown back to the top of the pane for it. The first alignment is the
+    // unguarded one, because the jump it is correcting was the browser's rather
+    // than ours - a 35ms window in which a reader could in principle have
+    // scrolled first.
+    var bar = document.getElementById('diff-header');
+    if (bar && typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(function () {
+            var pane = targetPane();
+            if (!pane) {
+                return;
+            }
+            if (alignedY !== null && Math.abs(window.scrollY - alignedY) > 2) {
+                return;
+            }
+            var margin = parseFloat(getComputedStyle(pane).scrollMarginTop);
+            if (alignedMargin !== null && Math.abs(margin - alignedMargin) < 0.5) {
+                return;
+            }
+            realignPane();
+        }).observe(bar);
     }
 
     toggle(location.hash);
