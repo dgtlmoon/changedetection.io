@@ -116,7 +116,7 @@
         {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">{{ _('Error Text') }}</a></li> {% endif %}
         {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">{{ _('Error Screenshot') }}</a></li> {% endif %}
         <li class="tab" id="text-tab"><a href="#text">{{ _('Text') }}</a></li>
-        <li class="tab" id="screenshot-tab"><a href="#screenshot">{{ _('Current screenshot') }}</a></li>
+        <li class="tab" id="screenshot-tab"><a href="#screenshot">{{ _('Screenshot') }}</a></li>
         <li class="tab" id="extract-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid)}}">{{ _('Extract Data') }}</a></li>
     </ul>
 </div>
