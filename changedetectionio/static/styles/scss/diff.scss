@@ -690,3 +690,82 @@ body.difference-page {
     }
   }
 }
+
+// Placed last on purpose. Several of these rules out-specify nothing - they
+// tie with the rule they are overriding, and a tie is decided by source
+// order. The minimap's sticky offset is written further down this file as
+// `#diff-ui #cell-diff-jump-visualiser`, so a block that sits above it loses
+// silently. Keep this one at the bottom.
+//
+// A phone held sideways is the one place the sticky design cannot pay for
+// itself. 50svh of a 390px-tall viewport is 195px, the top menu takes 55 of it,
+// and what is left has to hold From, To, Filters and the tab row - three of
+// those on their own lines, because iOS gives the two datetime selects enough
+// width that From and To cannot share one. #settings shrinking and scrolling
+// (see above) keeps the tabs inside the bar, but a bar you have to scroll
+// *inside* to reach half its controls is still a bar in the way, and no amount
+// of trimming decoration finds 195px.
+//
+// So stop compensating for the budget here and give up the budget instead.
+// Below 500px of viewport height both bars are ordinary static blocks: no
+// height cap, no inner scroller, title and every control present at once, and
+// the page scrolls as one document. The trade is the sticky guarantee itself -
+// the controls and the tab row scroll away with the diff, so switching tabs
+// means scrolling back up - which is the right side to be wrong on when the
+// alternative is controls you cannot see. Portrait is untouched.
+//
+// Keyed on viewport height rather than orientation: a short desktop window has
+// the identical problem for the identical reason.
+@media (max-height: 500px) {
+  body.difference-page .header {
+    // Not a new state: parts/_top_menu.scss ships .header with its sticky
+    // commented out, so this is the position every other page's top menu is
+    // already in. z-index goes inert along with it, which hands the mobile
+    // drawer's 10000 back to the root stacking context.
+    position: static;
+    // Nothing scrolls underneath a static bar, so it neither needs its
+    // pre-composited copy of the page gradient nor may keep it: the copy is
+    // aligned by pushing it up by the bar's own *constant* viewport offset, and
+    // a bar that scrolls has no constant offset. It would slide out of phase
+    // with body::after's fixed layer and read as a moving seam. The shorthand,
+    // not background-image - it resets size, origin and position too.
+    background: none;
+  }
+
+  #diff-header {
+    position: static;
+    // The cap and the scroller are what the sticky design pays for its
+    // guarantee that the diff keeps half the viewport. There is no longer a
+    // guarantee to pay for.
+    max-height: none;
+    overflow: visible;
+    background: none;
+
+    #settings {
+      // Same: it only shrank and scrolled to keep the tab row inside the cap.
+      min-height: auto;
+      overflow-y: visible;
+    }
+  }
+
+  // .tab-pane-inner's scroll-margin-top is deliberately NOT overridden here,
+  // and dropping it to a bare 1rem is a trap worth naming. It reads as an
+  // allowance for pinned chrome, so with nothing pinned it looks like dead
+  // weight - but upstream's tabs.js rewrites an empty hash to the first tab's
+  // (tabs.js:15) and the browser then jumps to that pane on load, before any
+  // of this is a choice. At 1rem that jump lands with the whole static bar
+  // already scrolled off the top: measured -175.8px at 844x390, a landscape
+  // page that opens with no controls on it at all. The existing formula is the
+  // right number in both modes for two different reasons - in the sticky one it
+  // clears chrome that is pinned over the pane, in the static one it keeps
+  // chrome that sits above the pane on screen. Leave it alone.
+
+  // The minimap is sticky inside the diff card, offset to sit directly below
+  // the sticky stack. With that stack gone its offset would pin it a top menu
+  // plus a whole toolbar down the viewport - past halfway on a 390px-tall one,
+  // a strip floating in mid-screen beneath nothing. It is still worth pinning;
+  // pin it to the viewport, which is now free.
+  #diff-ui #cell-diff-jump-visualiser {
+    top: 0;
+  }
+}
