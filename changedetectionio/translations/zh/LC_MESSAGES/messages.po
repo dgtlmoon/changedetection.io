@@ -1822,17 +1822,9 @@ msgstr ""
 msgid "Keyboard:"
 msgstr "快捷键："
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Previous version"
-msgstr ""
-
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
 msgstr "上一项"
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Next version"
-msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Next"

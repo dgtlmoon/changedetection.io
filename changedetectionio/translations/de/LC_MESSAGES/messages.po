@@ -1846,17 +1846,9 @@ msgstr ""
 msgid "Keyboard:"
 msgstr "Tastatur:"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Previous version"
-msgstr ""
-
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
 msgstr "Zurück"
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Next version"
-msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Next"

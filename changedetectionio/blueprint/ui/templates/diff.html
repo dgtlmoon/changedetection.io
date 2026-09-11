@@ -96,11 +96,12 @@
         {%- if versions|length >= 2 -%}
             <div id="keyboard-nav">
                 {# In the sticky bar the prompt and the two words are hidden and
-                   only the arrows show, so each link carries the full wording as
-                   its accessible name and its tooltip. #}
+                   only the arrows show, so each link repeats its label as the
+                   accessible name and the tooltip - without them a screen reader
+                   is left reading the arrow glyph itself. #}
                 <strong>{{ _('Keyboard:') }} </strong>
-                <a href="" class="pure-button pure-button-primary" id="btn-previous" title="{{ _('Previous version') }}" aria-label="{{ _('Previous version') }}"> &larr; <span class="keyboard-nav-label">{{ _('Previous') }}</span></a>
-                <a class="pure-button pure-button-primary" id="btn-next" href="" title="{{ _('Next version') }}" aria-label="{{ _('Next version') }}"> &rarr; <span class="keyboard-nav-label">{{ _('Next') }}</span></a>
+                <a href="" class="pure-button pure-button-primary" id="btn-previous" title="{{ _('Previous') }}" aria-label="{{ _('Previous') }}"> &larr; <span class="keyboard-nav-label">{{ _('Previous') }}</span></a>
+                <a class="pure-button pure-button-primary" id="btn-next" href="" title="{{ _('Next') }}" aria-label="{{ _('Next') }}"> &rarr; <span class="keyboard-nav-label">{{ _('Next') }}</span></a>
             </div>
         {%- endif -%}
     </form>

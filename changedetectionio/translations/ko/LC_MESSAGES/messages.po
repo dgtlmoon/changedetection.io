@@ -1827,17 +1827,9 @@ msgstr "AI: 버전 사이 모든 변경 사항"
 msgid "Keyboard:"
 msgstr "키보드:"
 
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Previous version"
-msgstr ""
-
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
 msgstr "이전"
-
-#: changedetectionio/blueprint/ui/templates/diff.html
-msgid "Next version"
-msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Next"
