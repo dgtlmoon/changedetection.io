@@ -164,7 +164,12 @@ body.difference-page {
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.25rem 1rem;
+  // No bottom padding: the tab row is the bar's last child, and the active tab
+  // and #diff-ui below it are both var(--color-background). 4px of gradient
+  // between them reads as a seam across an otherwise continuous white surface -
+  // the same tabs on the extract page, which are not in a bar, measure 0. The
+  // top padding stays; nothing sits above the title.
+  padding: 0.25rem 1rem 0;
   // Keep the diff readable even with wrapped controls, zoom, or a short viewport.
   // The budget is for the whole sticky stack, so the top menu above comes out of
   // it - otherwise the two bars together take 64% of a 390px-tall landscape phone.
