@@ -200,6 +200,21 @@ function setupDiffFilters() {
             place();
         }
     }, {passive: true});
+    // place() budgets against the *visual* viewport when it is the smaller of
+    // the two, and on iOS that one can shrink on its own - a toolbar expanding
+    // or the on-screen keyboard coming up moves it without resizing the layout
+    // viewport, so no window resize fires. Without this the cap stays at the
+    // height it was placed with and the bottom rows sit behind the chrome
+    // again. Measured in Chromium via CDP pinch-zoom, which splits the two
+    // viewports the same way: the panel kept a 195px cap against a viewport
+    // that had become 260px tall and overhung it by 122px.
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function () {
+            if (isOpen()) {
+                place();
+            }
+        });
+    }
     window.addEventListener('hashchange', function () {
         close(false);
     });
