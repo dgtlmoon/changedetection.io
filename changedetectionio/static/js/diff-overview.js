@@ -71,6 +71,86 @@ function setupDiffNavigation() {
     }, false);
 }
 
+// The seven diff options collapse behind the 'Filters' button so the sticky bar
+// stays one toolbar row. Wired up here rather than purely in CSS: until this
+// runs the fieldset is inline and the toggle hidden, so with scripting off the
+// options are still reachable and still submit with the form.
+function setupDiffFilters() {
+    var header = document.getElementById('diff-header');
+    var toggle = document.getElementById('diff-filters-toggle');
+    var panel = document.getElementById('diff-style');
+    if (!header || !toggle || !panel) {
+        return;
+    }
+
+    header.classList.add('diff-filters-js');
+
+    function isOpen() {
+        return header.classList.contains('diff-filters-open');
+    }
+
+    // The panel is position: fixed - #diff-header's overflow: auto would clip an
+    // absolutely positioned one - so it has to be parked under the button by
+    // hand, and kept inside the viewport on a narrow screen.
+    function place() {
+        var button = toggle.getBoundingClientRect();
+        var available = document.documentElement.clientWidth - panel.offsetWidth - 8;
+        panel.style.top = (button.bottom + 4) + 'px';
+        panel.style.left = Math.max(8, Math.min(button.left, available)) + 'px';
+    }
+
+    function open() {
+        header.classList.add('diff-filters-open');
+        toggle.setAttribute('aria-expanded', 'true');
+        place();
+    }
+
+    function close(restoreFocus) {
+        if (!isOpen()) {
+            return;
+        }
+        header.classList.remove('diff-filters-open');
+        toggle.setAttribute('aria-expanded', 'false');
+        if (restoreFocus) {
+            toggle.focus();
+        }
+    }
+
+    toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        if (isOpen()) {
+            close(false);
+        } else {
+            open();
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        if (isOpen() && !panel.contains(event.target) && !toggle.contains(event.target)) {
+            close(false);
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            close(true);
+        }
+    });
+
+    // The bar is sticky directly under the top menu, so the button keeps its
+    // viewport position as the page scrolls and only a resize can move it out
+    // from under the panel. A tab switch hides #settings, and the panel with it,
+    // so drop the open state rather than leave aria-expanded lying.
+    window.addEventListener('resize', function () {
+        if (isOpen()) {
+            place();
+        }
+    });
+    window.addEventListener('hashchange', function () {
+        close(false);
+    });
+}
+
 $(document).ready(function () {
     $('.needs-localtime').each(function () {
         for (var option of this.options) {
@@ -86,6 +166,8 @@ $(document).ready(function () {
     if ($('#diff-from-version').length && $('#diff-to-version').length) {
         setupDiffNavigation();
     }
+
+    setupDiffFilters();
 
     // Load it when the #screenshot tab is in use, so we dont give a slow experience when waiting for the text diff to load
     window.addEventListener('hashchange', function (e) {

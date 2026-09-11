@@ -21,7 +21,9 @@
 
 
 <div id="diff-header">
-    <h1 id="diff-watch-title">{{ watch_a.label }}</h1>
+    {# The title is one centred line and ellipsizes only when it is wider than the
+       whole bar, so keep the full text reachable on hover. #}
+    <h1 id="diff-watch-title" title="{{ watch_a.label }}">{{ watch_a.label }}</h1>
 <div id="settings">
     <form class="pure-form " action="{{ url_for("ui.ui_diff.diff_history_page", uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
@@ -51,6 +53,10 @@
                 {#<button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>#}
             {% endif %}
         </fieldset>
+        {# Collapses the diff options below into a popover. Hidden until
+           diff-overview.js takes over the fieldset, so with scripting off the
+           options stay inline and reachable. #}
+        <button type="button" id="diff-filters-toggle" class="pure-button" aria-expanded="false" aria-controls="diff-style">{{ _('Filters') }} &#x25be;</button>
         <fieldset id="diff-style">
             <span>
                 <label for="diffWords" class="pure-checkbox">
@@ -89,9 +95,12 @@
         </fieldset>
         {%- if versions|length >= 2 -%}
             <div id="keyboard-nav">
+                {# In the sticky bar the prompt and the two words are hidden and
+                   only the arrows show, so each link carries the full wording as
+                   its accessible name and its tooltip. #}
                 <strong>{{ _('Keyboard:') }} </strong>
-                <a href="" class="pure-button pure-button-primary" id="btn-previous"> &larr; {{ _('Previous') }}</a>
-                &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href=""> &rarr; {{ _('Next') }}</a>
+                <a href="" class="pure-button pure-button-primary" id="btn-previous" title="{{ _('Previous version') }}" aria-label="{{ _('Previous version') }}"> &larr; <span class="keyboard-nav-label">{{ _('Previous') }}</span></a>
+                <a class="pure-button pure-button-primary" id="btn-next" href="" title="{{ _('Next version') }}" aria-label="{{ _('Next version') }}"> &rarr; <span class="keyboard-nav-label">{{ _('Next') }}</span></a>
             </div>
         {%- endif -%}
     </form>

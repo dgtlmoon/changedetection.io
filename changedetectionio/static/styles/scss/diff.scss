@@ -92,6 +92,13 @@ body.difference-page {
   #pure-menu-horizontal-spinner {
     z-index: 29;
   }
+
+  // The bar is the page's whole chrome now, so trim the tabs' vertical padding
+  // (0.7em on all four sides) to half. Saves ~11px of every scroll position and
+  // leaves the horizontal padding, and so the tab widths, as they are.
+  .tabs ul li a {
+    padding: 0.35em 0.7em;
+  }
 }
 
 #diff-header {
@@ -104,9 +111,12 @@ body.difference-page {
   box-sizing: border-box;
   // Center children at their intrinsic width, the same way section.content does
   // for the non-sticky siblings it still lays out (align-items: center).
+  // Three rows: title, the toolbar, the tabs.
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 1rem;
   // Keep the diff readable even with wrapped controls, zoom, or a short viewport.
   // The budget is for the whole sticky stack, so the top menu above comes out of
   // it - otherwise the two bars together take 64% of a 390px-tall landscape phone.
@@ -124,17 +134,123 @@ body.difference-page {
     max-width: 100%;
   }
 
+  // The title owns the full width of the bar on its own row above the controls,
+  // so it truncates only when it is wider than the whole viewport - the common
+  // long title fits in full. One line rather than a two-line clamp, matching the
+  // watch URL's existing truncation and keeping the bar's height constant. The
+  // template carries the untruncated text in the title attribute for hover.
   #diff-watch-title {
+    width: 100%;
     margin: 0;
-    padding: 0.25rem 1rem;
-    font-size: 1.25rem;
-    overflow-wrap: anywhere;
+    padding: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     text-align: center;
     color: #fff; // match #diff-form's white-on-gradient text
   }
 
+  #settings {
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  // One toolbar row: From/To chips and their selects, the version arrows, and
+  // the Filters toggle.
   #diff-form {
-    margin-bottom: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem 0.9rem;
+    padding: 0.2rem 0.7rem;
+    margin-bottom: 0;
+
+    fieldset {
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    // The From/To labels shrink to chips rather than hiding: display:none takes
+    // the <label> out of the accessibility tree and the selects lose their
+    // accessible name entirely, and two identically formatted datetime selects
+    // side by side need the red/green cue sighted users already know. The
+    // shipped width: 4rem is what makes them full-size plates. "From" is wider
+    // than "To", which left-ragged the selects once they stack, so the floor is
+    // wide enough for the longer word - it costs width only, never height.
+    .from-to-label {
+      width: auto;
+      min-width: 2.4rem;
+      text-align: center;
+      font-size: 0.75rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      line-height: 1.5;
+    }
+  }
+
+  #keyboard-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    // The arrows speak for themselves at this size; the links keep the full
+    // wording as aria-label and title (see diff.html).
+    strong,
+    .keyboard-nav-label {
+      display: none;
+    }
+  }
+
+  // Seven set-once options are a popover, not a permanent row of the bar. The
+  // swap happens only once diff-overview.js has wired the toggle up, so with
+  // scripting off the fieldset stays inline and submits as it does today.
+  #diff-filters-toggle {
+    display: none;
+    font-size: 0.85rem;
+    padding: 0.3em 0.8em;
+  }
+
+  &.diff-filters-js {
+    #diff-filters-toggle {
+      display: inline-block;
+    }
+
+    #diff-style {
+      display: none;
+    }
+  }
+
+  &.diff-filters-js.diff-filters-open {
+    #diff-style {
+      // fixed, not absolute: #diff-header carries overflow: auto to enforce the
+      // 50dvh cap above, which clips an absolutely positioned descendant at the
+      // bar's bottom edge. The bar is sticky with no transform/filter/contain,
+      // so it is not a containing block for fixed and the panel escapes the
+      // clip. diff-overview.js parks it under the toggle.
+      display: block;
+      position: fixed;
+      z-index: 25;
+      min-width: 14rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .28);
+      text-align: left;
+
+      // The bar repaints the page's own backdrop; so must anything that has to
+      // be opaque over the scrolling diff.
+      @include page-surface-gradient;
+    }
+
+    // Out-specifies #diff-form #diff-style > span's inline-block above.
+    #diff-form #diff-style > span {
+      display: block;
+      padding: 0.2em 0;
+    }
   }
 
   .diff-fieldset {
@@ -147,6 +263,7 @@ body.difference-page {
     > span {
       max-width: 100%;
       min-width: 0;
+      gap: 0.25rem;
       // Size to content so From/To stay side-by-side on desktop (as they were
       // before the header existed); shrink and wrap only when the row can't fit.
       flex: 0 1 auto;
@@ -168,6 +285,59 @@ body.difference-page {
     label {
       flex-shrink: 0;
     }
+  }
+}
+
+// The one narrow-viewport breakpoint for the whole bar - title, fit and
+// gutters all hang off it rather than letting magic numbers multiply.
+//
+// Every selector below carries an ID on purpose. The rules it has to beat are
+// written above as `#diff-header .diff-fieldset > span` and friends, and a
+// single ID outranks any number of classes, so a class-only override loses
+// silently and the chain goes on shrink-wrapping. Please don't tidy the IDs
+// away.
+@media (max-width: 700px) {
+  // Once the From/To chip takes inline width the <select> clips its own
+  // displayed value, and two snapshots from the same day differ only by the
+  // meridiem - so they read identically while closed. Shrinking the font alone
+  // cannot fix that: #settings, #diff-form, .diff-fieldset and the span are all
+  // sized to max-content, which *is* the select's text, so the container
+  // shrinks by exactly as much as the text does and the headroom stays pinned
+  // at zero at every font size. Pin the chain to the row first; only then does
+  // the smaller font buy anything.
+  #diff-header > #settings {
+    width: 100%;
+  }
+
+  #diff-header #diff-form {
+    width: 100%;
+    box-sizing: border-box;
+    // 16px of bar gutter plus 11.2px of form gutter a side is 54px of a 390px
+    // row spent on nothing.
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+  }
+
+  #diff-header {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  #diff-header #diff-form > .diff-fieldset {
+    flex: 1 1 100%;
+  }
+
+  #diff-header .diff-fieldset > span {
+    flex: 1 1 100%;
+  }
+
+  // With the chain pinned the select holds its width, so this is what actually
+  // buys the room. The worst realistic English value - a two-digit day, the
+  // longest month and a two-digit hour - still clips at 0.8rem.
+  #diff-header .diff-fieldset select {
+    font-size: 0.75rem;
+    padding-left: 0.3em;
+    padding-right: 0.3em;
   }
 }
 
