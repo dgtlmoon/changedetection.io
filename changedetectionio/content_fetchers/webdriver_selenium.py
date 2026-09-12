@@ -30,6 +30,8 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
+        self.flaresolverr_cookies = kwargs.get('flaresolverr_cookies')
+        self.flaresolverr_user_agent = kwargs.get('flaresolverr_user_agent')
         from urllib.parse import urlparse
         from selenium.webdriver.common.proxy import Proxy
 
@@ -127,6 +129,12 @@ class fetcher(Fetcher):
                 raise e
 
             try:
+                if self.flaresolverr_cookies:
+                    from changedetectionio.flaresolverr_pool import inject_cookies_selenium
+
+                    # Need to be on domain before adding cookies
+                    driver.get(url)
+                    inject_cookies_selenium(driver, self.flaresolverr_cookies, url, label="Selenium")
                 driver.get(url)
 
                 if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):
@@ -184,7 +192,7 @@ class fetcher(Fetcher):
             driver.quit()
 
         # Run the selenium operations in a thread pool to avoid blocking the event loop
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, _run_sync)
 
 

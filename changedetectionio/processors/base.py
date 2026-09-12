@@ -197,16 +197,44 @@ class difference_detection_processor():
 
         logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
 
-        # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
-        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
-        self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   custom_browser_connection_url=custom_browser_connection_url,
-                                   screenshot_format=self.screenshot_format
-                                   )
+        # FlareSolverr overlay — shared helper handles effective check, body render, executor, logging
+        flaresolverr_solution = None
+        try:
+            from changedetectionio.flaresolverr_pool import get_flaresolverr_solution_for_watch
 
-        # Stamp the resolved backend name so downstream consumers (processors, plugins)
-        # can read it directly instead of re-deriving it from the fetcher class name.
-        self.fetcher.backend_name = prefer_fetch_backend
+            flaresolverr_solution = await get_flaresolverr_solution_for_watch(self.watch, self.datastore, proxy_url=proxy_url)
+        except Exception as e:
+            logger.error(f"FlareSolverr solve failed for {url}: {e}")
+            raise Exception(f"FlareSolverr: {e}") from e
+        is_bare = flaresolverr_solution is not None and prefer_fetch_backend == 'html_requests' and not self.watch.has_browser_steps
+        if is_bare:
+            self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format)
+            self.fetcher.backend_name = prefer_fetch_backend + "+flaresolverr"
+            _resp = flaresolverr_solution.get('response') or ''
+            _status = flaresolverr_solution.get('status') or 200
+            _headers = flaresolverr_solution.get('headers') or {}
+            self.fetcher.content = _resp
+            self.fetcher.raw_content = _resp.encode('utf-8') if isinstance(_resp, str) else _resp
+            self.fetcher.status_code = _status
+            self.fetcher.headers = _headers
+            from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
+            _empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
+            _ignore_status_codes = self.watch.get('ignore_status_codes', False)
+            if not _resp or not len(_resp.strip()):
+                if not _empty_pages_are_a_change:
+                    raise EmptyReply(url=url, status_code=_status)
+            if _status != 200 and not _ignore_status_codes:
+                raise Non200ErrorCodeReceived(url=url, status_code=_status, page_html=_resp)
+            await self.fetcher.quit(watch=self.watch)
+            if self.fetcher.content and isinstance(self.fetcher.content, str):
+                self.fetcher.content = self.fetcher.content.encode('utf-8', errors='replace').decode('utf-8')
+            return
+        if flaresolverr_solution is not None:
+            self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format, flaresolverr_cookies=flaresolverr_solution.get('cookies'), flaresolverr_user_agent=flaresolverr_solution.get('userAgent'))
+            logger.info(f"FlareSolverr hybrid inject {len(flaresolverr_solution.get('cookies') or [])} cookies UA={flaresolverr_solution.get('userAgent')}")
+        else:
+            self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format)
+        self.fetcher.backend_name = prefer_fetch_backend + ("+flaresolverr" if flaresolverr_solution else "")
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

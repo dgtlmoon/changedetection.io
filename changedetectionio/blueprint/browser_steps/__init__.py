@@ -100,7 +100,8 @@ def run_async_in_browser_loop(coro):
     if _browser_steps_loop and not _browser_steps_loop.is_closed():
         logger.debug("Browser steps using dedicated event loop")
         future = asyncio.run_coroutine_threadsafe(coro, _browser_steps_loop)
-        return future.result()
+        # FlareSolverr solve can take up to 60s + overhead, so allow 70s for start; normal steps 30s
+        return future.result(timeout=70)
     else:
         raise RuntimeError("Browser steps event loop is not available")
 
@@ -275,6 +276,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # time but happily previewed (and exfiltrated) here.
         await validate_fetch_url_async(watch.link)
 
+        # FlareSolverr overlay for live UI — shared helper (effective check, body render, executor)
+        flaresolverr_cookies = None
+        flaresolverr_user_agent = None
+        try:
+            from changedetectionio.flaresolverr_pool import get_flaresolverr_solution_for_watch
+
+            _proxy_url = proxy.get('server') if proxy else None
+            flaresolverr_solution = await get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=_proxy_url)
+            if flaresolverr_solution:
+                flaresolverr_cookies = flaresolverr_solution.get('cookies')
+                flaresolverr_user_agent = flaresolverr_solution.get('userAgent')
+        except Exception as e:
+            logger.warning(f"FlareSolverr live UI solve failed for {watch.link}: {e}")
+
         fetcher_name = watch.get_fetch_backend or 'system'
         if fetcher_name == 'system':
             fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
@@ -288,7 +303,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             playwright_browser=browser,
             proxy=proxy,
             start_url=watch.link,
-            headers=watch.get('headers')
+            headers=watch.get('headers'),
+            flaresolverr_cookies=flaresolverr_cookies,
+            flaresolverr_user_agent=flaresolverr_user_agent,
         )
         await browserstepper.connect(proxy=proxy)
         browsersteps_start_session['browserstepper'] = browserstepper

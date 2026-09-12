@@ -190,6 +190,7 @@ class watch_base(dict):
             'extract_lines_containing': [],  # Keep only lines containing these substrings (plain text, case-insensitive)
             'extract_text': [],  # Extract text by regex after filters
             'fetch_backend': 'system',  # plaintext, playwright etc
+            'flaresolverr': 'system',  # system|enabled|disabled
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
             'filter_text_added': True,
