@@ -9,6 +9,12 @@
 # exit when any command fails
 set -e
 
+# Failing fast is deliberate here (the first failure is usually the real problem, and it keeps
+# the run short) - but this script runs 8 independent pytest groups, so make it obvious that the
+# groups after the failure were SKIPPED rather than passed. Otherwise one failing test reads as
+# "the whole basic suite is broken".
+trap 'rc=$?; echo "::error::run_basic_tests.sh aborted at line $LINENO (exit $rc) - the test groups after this point were SKIPPED, not run"' ERR
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 rm tests/logs/* -f
 
