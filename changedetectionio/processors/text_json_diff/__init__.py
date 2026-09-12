@@ -187,7 +187,7 @@ def prepare_filter_prevew(datastore, watch_uuid, form_data):
     try:
         from changedetectionio.llm.evaluator import preview_extract
         if text_after_filter and text_after_filter.strip() not in ('', 'Empty content'):
-            llm_evaluation = preview_extract(tmp_watch, datastore, content=text_after_filter)
+            llm_evaluation = preview_extract(tmp_watch, datastore, content=text_after_filter, retries=0)
     except Exception as e:
         logger.warning(f"LLM preview evaluation failed for {watch_uuid}: {e}")
 
