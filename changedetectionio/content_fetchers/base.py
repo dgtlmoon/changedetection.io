@@ -90,6 +90,7 @@ class Fetcher():
     screenshot_format = None
     status_code = None
     webdriver_js_execute_code = None
+    worker_id = None
     xpath_data = None
     xpath_element_js = ""
 
@@ -119,6 +120,11 @@ class Fetcher():
         # Allow lock_viewport_elements to be set via kwargs
         if kwargs and 'lock_viewport_elements' in kwargs:
             self.lock_viewport_elements = kwargs.get('lock_viewport_elements')
+
+        # Which async worker is driving this fetch, subclasses use it to keep per-worker browser
+        # state (profile dirs etc) apart, stays None when we're not called from a worker
+        if kwargs and 'worker_id' in kwargs:
+            self.worker_id = kwargs.get('worker_id')
 
 
     @classmethod

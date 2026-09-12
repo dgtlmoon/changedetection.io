@@ -7,7 +7,6 @@
     // The Search button is rendered in the left rail and the mobile drawer.
     const openSearchButtons = document.querySelectorAll('.js-open-search-modal');
     const closeSearchButton = document.getElementById('close-search-modal');
-    const searchForm = document.getElementById('search-form');
     const searchInput = document.getElementById('search-modal-input');
 
     if (!searchModal || openSearchButtons.length === 0) {
@@ -93,43 +92,8 @@
       }
     });
 
-    // Handle Enter key in search input
-    if (searchInput) {
-      searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (searchForm) {
-            // Trigger form submission programmatically
-            searchForm.dispatchEvent(new Event('submit'));
-          }
-        }
-      });
-    }
-
-    // Handle form submission
-    if (searchForm) {
-      searchForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        // Get form data
-        const formData = new FormData(searchForm);
-        const searchQuery = formData.get('q');
-        const tag = formData.get('tag');
-
-        // Build URL
-        const params = new URLSearchParams();
-        if (searchQuery) {
-          params.append('q', searchQuery);
-        }
-        if (tag) {
-          params.append('tag', tag);
-        }
-
-        // Navigate to search results (always redirect to watchlist home)
-        // Use base_path if available (for sub-path deployments like /enlighten-richerx)
-        const basePath = typeof base_path !== 'undefined' ? base_path : '';
-        window.location.href = basePath + '/?' + params.toString();
-      });
-    }
+    // Submission is left to the browser: the form carries a server-rendered action
+    // (correct under a reverse-proxy sub-path) and Enter in the input triggers implicit
+    // submission via the footer's submit button, which also runs `required` validation.
   });
 })();

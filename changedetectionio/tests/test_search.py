@@ -74,6 +74,16 @@ def test_search_in_tag_limit(client, live_server, measure_memory_usage, datastor
 
 
 
+def test_search_modal_form_action(client, live_server, measure_memory_usage, datastore_path):
+    # The search modal submits as a plain GET form, so its action has to carry the
+    # reverse-proxy sub-path (SCRIPT_NAME), otherwise search jumps to the host root.
+    res = client.get(url_for("watchlist.index"))
+    assert b'<form id="search-form" method="GET" action="/">' in res.data
+
+    res = client.get("/", base_url="http://localhost/sub-path")
+    assert b'<form id="search-form" method="GET" action="/sub-path/">' in res.data
+
+
 def test_search_modal_tag_field_is_filterable(client, live_server, measure_memory_usage, datastore_path):
     # The modal carries the active tag as a hidden field so a search stays scoped to the
     # tag you were viewing. The field name has to be the one the watchlist filters on.
@@ -93,6 +103,10 @@ def test_search_modal_tag_field_is_filterable(client, live_server, measure_memor
     field = re.search(rb'<input name="([^"]+)" type="hidden" value="([^"]+)"', form.group(0))
     assert field, f"no populated hidden tag field in {form.group(0)}"
     name, value = field.group(1).decode(), field.group(2).decode()
+
+    # The scoping is spelled out in the modal, so narrowed results aren't a surprise
+    assert b'Searching in current group' in form.group(0)
+    assert b'tag-one' in form.group(0)
 
     # 'localhost' matches both watches, so only the tag field can narrow it down
     res = client.get(url_for("watchlist.index") + f"?q=localhost&{name}={value}")

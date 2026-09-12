@@ -4693,17 +4693,17 @@ msgid "Search"
 msgstr "Поиск"
 
 #: changedetectionio/templates/base.html
-#, python-format
-msgid "URL or Title in '%(title)s'"
-msgstr "URL-адрес или заголовок в формате «%(title)s»"
-
-#: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URL или заголовок"
+msgid "URL, title or error text"
+msgstr "URL, заголовок или текст ошибки"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "Введите поисковый запрос..."
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Searching in current group '%(title)s' only"
+msgstr "Поиск только в группе '%(title)s'"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""

@@ -4625,17 +4625,17 @@ msgid "Search"
 msgstr "Suchen"
 
 #: changedetectionio/templates/base.html
-#, python-format
-msgid "URL or Title in '%(title)s'"
-msgstr "URL oder Titel in '%(title)s'"
-
-#: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URL oder Titel"
+msgid "URL, title or error text"
+msgstr "URL, Titel oder Fehlertext"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "Suchbegriff eingeben..."
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Searching in current group '%(title)s' only"
+msgstr "Suche nur in Gruppe '%(title)s'"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""

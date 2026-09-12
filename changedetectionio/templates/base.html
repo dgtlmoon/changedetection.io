@@ -317,12 +317,18 @@
         <h2 class="modal-title" id="search-modal-title">{{ _('Search') }}</h2>
       </div>
       <div class="modal-body">
-        <form id="search-form" method="GET">
+        {# Plain GET submit to the watchlist - url_for() carries the reverse-proxy sub-path
+           (SCRIPT_NAME), so no client-side URL building is needed. #}
+        <form id="search-form" method="GET" action="{{ url_for('watchlist.index') }}">
           <div class="pure-control-group">
-            <label for="search-modal-input">{% if active_tag_uuid %}{{ _("URL or Title in '%(title)s'", title=active_tag.title) }}{% else %}{{ _('URL or Title') }}{% endif %}</label>
+            {# Matches watch_passes_search() in blueprint/watchlist/filters.py - title, URL and last error text #}
+            <label for="search-modal-input">{{ _('URL, title or error text') }}</label>
             <input id="search-modal-input" class="m-d" name="q" placeholder="{{ _('Enter search term...') }}" required type="text" value="" autofocus>
             {# 'tag' (not 'tags') - that's the arg the watchlist filters on #}
-            <input name="tag" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
+            {% if active_tag_uuid %}
+            <input name="tag" type="hidden" value="{{ active_tag_uuid }}">
+            <span class="pure-form-message-inline">{{ _("Searching in current group '%(title)s' only", title=active_tag.title) }}</span>
+            {% endif %}
           </div>
         </form>
       </div>
