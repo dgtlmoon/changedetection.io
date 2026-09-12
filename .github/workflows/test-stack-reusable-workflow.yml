@@ -205,7 +205,7 @@ jobs:
           # keeps the run short. Each file is wrapped in its own log group and the failing one is
           # named explicitly, because everything after it is SKIPPED rather than run, and that is
           # otherwise easy to misread as "the whole browser suite broke".
-          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py; do
+          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py; do
             echo "::group::pytest $t"
             if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
@@ -253,7 +253,7 @@ jobs:
       - name: Pyppeteer - Specific tests in built container
         run: |
           # Fail fast, but name the file that failed - see the note in the playwright job above
-          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py; do
+          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py; do
             echo "::group::pytest $t"
             if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
