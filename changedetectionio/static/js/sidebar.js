@@ -1,5 +1,5 @@
 // Left-rail expand/collapse state.
-// Adds `action-side-bar-expanded` to <body> whenever the rail is showing its
+// Adds `actionsidebar-expanded` to <body> whenever the rail is showing its
 // labels. In 'pinned-expanded' mode (body.actionside-bar-on) the class is already
 // present from page load; in 'expandable' mode (body.actionsidebar-minimal) the rail
 // only expands on hover/focus, so we toggle the class to match. 'minimal' mode is
@@ -18,8 +18,8 @@
       return;
     }
 
-    const expand = () => document.body.classList.add('action-side-bar-expanded');
-    const collapse = () => document.body.classList.remove('action-side-bar-expanded');
+    const expand = () => document.body.classList.add('actionsidebar-expanded');
+    const collapse = () => document.body.classList.remove('actionsidebar-expanded');
 
     inner.addEventListener('mouseenter', expand);
     inner.addEventListener('mouseleave', collapse);

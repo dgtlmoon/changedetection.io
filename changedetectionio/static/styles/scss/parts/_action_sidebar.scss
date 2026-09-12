@@ -262,7 +262,7 @@ ul.action-sidebar-list {
     letter-spacing: 0.06em;
     font-weight: 700;
     pointer-events: none;
-    opacity: 0;
+    opacity: 0.9;
     transition: opacity 0.05s ease-out;
 
     // Unread-count variant: a small accent bubble pinned to the right of the row
@@ -481,7 +481,7 @@ body.actionside-bar-on {
     }
   }
 
-  &.action-side-bar-expanded {
+  &.actionsidebar-expanded {
     #checking-now-stats-sidebar{
       display: block;
     }
@@ -489,15 +489,29 @@ body.actionside-bar-on {
       #logo-expanded {
         display: inline-block;
       }
+      #logo-short {
+        display: none;
+      }
     }
+
   }
-
-}
-
-.action-side-bar-expanded {
-  #cdio-logo {
-    #logo-short {
+  &:not(.actionsidebar-expanded) {
+    .action-label {
       display: none;
     }
+    .action-badge--count {
+      position: relative;
+      left: -8px;
+      top: -8px;
+    }
+    .action-sidebar-item.is-disabled {
+      .action-badge {
+        display: none;
+      }
+    }
+
   }
+
 }
+
+

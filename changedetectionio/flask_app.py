@@ -301,10 +301,10 @@ def get_sidebar_mode_class():
     # 'actionsidebar-minimal'   - collapsed icon rail (hover-to-expand lives in CSS + static/js/sidebar.js)
     # 'actionsidebar-no-expand' - opts that rail out of hover-to-expand
     # 'actionside-bar-on'       - always-open rail
-    # 'action-side-bar-expanded'- expanded logo/stats block
+    # 'actionsidebar-expanded'- expanded logo/stats block
     body_classes = {
         'expandable': 'actionsidebar-minimal',
-        'pinned-expanded': 'actionside-bar-on action-side-bar-expanded',
+        'pinned-expanded': 'actionside-bar-on actionsidebar-expanded',
         'minimal': 'actionsidebar-minimal actionsidebar-no-expand',
     }
 
