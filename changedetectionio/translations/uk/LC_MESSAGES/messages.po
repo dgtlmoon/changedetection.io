@@ -4597,17 +4597,17 @@ msgid "Search"
 msgstr "Пошук"
 
 #: changedetectionio/templates/base.html
-#, python-format
-msgid "URL or Title in '%(title)s'"
-msgstr "URL або Назва у '%(title)s'"
-
-#: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URL або Назва"
+msgid "URL, title or error text"
+msgstr "URL, заголовок або текст помилки"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "Введіть пошуковий запит..."
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Searching in current group '%(title)s' only"
+msgstr "Пошук лише в групі '%(title)s'"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""

@@ -4574,17 +4574,17 @@ msgid "Search"
 msgstr "搜尋"
 
 #: changedetectionio/templates/base.html
-#, python-format
-msgid "URL or Title in '%(title)s'"
-msgstr "URL 或標題 在 '%(title)s'"
-
-#: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URL 或標題"
+msgid "URL, title or error text"
+msgstr "URL、標題或錯誤文字"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "輸入搜尋關鍵字 ..."
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Searching in current group '%(title)s' only"
+msgstr "僅在群組「%(title)s」中搜尋"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""

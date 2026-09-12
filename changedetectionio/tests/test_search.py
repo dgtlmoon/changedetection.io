@@ -1,5 +1,6 @@
 from flask import url_for
 from .util import set_original_response, set_modified_response, live_server_setup
+import re
 import time
 
 
@@ -72,6 +73,7 @@ def test_search_in_tag_limit(client, live_server, measure_memory_usage, datastor
     assert urls[1].split(' ')[0].encode('utf-8') not in res.data, urls[0].encode('utf-8')
 
 
+
 def test_search_modal_form_action(client, live_server, measure_memory_usage, datastore_path):
     # The search modal submits as a plain GET form, so its action has to carry the
     # reverse-proxy sub-path (SCRIPT_NAME), otherwise search jumps to the host root.
@@ -80,3 +82,33 @@ def test_search_modal_form_action(client, live_server, measure_memory_usage, dat
 
     res = client.get("/", base_url="http://localhost/sub-path")
     assert b'<form id="search-form" method="GET" action="/sub-path/">' in res.data
+
+
+def test_search_modal_tag_field_is_filterable(client, live_server, measure_memory_usage, datastore_path):
+    # The modal carries the active tag as a hidden field so a search stays scoped to the
+    # tag you were viewing. The field name has to be the one the watchlist filters on.
+    urls = ['https://localhost:12300?first-result=1 tag-one',
+            'https://localhost:5000?second-result=1 tag-two'
+            ]
+    res = client.post(
+        url_for("imports.import_page"),
+        data={"urls": "\r\n".join(urls)},
+        follow_redirects=True
+    )
+    assert b"2 Imported" in res.data
+
+    res = client.get(url_for("watchlist.index") + "?tag=tag-one")
+    form = re.search(rb'<form id="search-form".*?</form>', res.data, re.DOTALL)
+    assert form, "search modal form not rendered"
+    field = re.search(rb'<input name="([^"]+)" type="hidden" value="([^"]+)"', form.group(0))
+    assert field, f"no populated hidden tag field in {form.group(0)}"
+    name, value = field.group(1).decode(), field.group(2).decode()
+
+    # The scoping is spelled out in the modal, so narrowed results aren't a surprise
+    assert b'Searching in current group' in form.group(0)
+    assert b'tag-one' in form.group(0)
+
+    # 'localhost' matches both watches, so only the tag field can narrow it down
+    res = client.get(url_for("watchlist.index") + f"?q=localhost&{name}={value}")
+    assert urls[0].split(' ')[0].encode('utf-8') in res.data
+    assert urls[1].split(' ')[0].encode('utf-8') not in res.data, f"'{name}' is not filtered on by the watchlist"

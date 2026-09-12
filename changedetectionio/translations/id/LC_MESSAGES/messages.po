@@ -4684,17 +4684,17 @@ msgid "Search"
 msgstr "Cari"
 
 #: changedetectionio/templates/base.html
-#, python-format
-msgid "URL or Title in '%(title)s'"
-msgstr "URL atau Judul di '%(title)s'"
-
-#: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URL atau Judul"
+msgid "URL, title or error text"
+msgstr "URL, judul atau teks kesalahan"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "Masukkan istilah pencarian..."
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Searching in current group '%(title)s' only"
+msgstr "Mencari hanya dalam grup '%(title)s'"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
