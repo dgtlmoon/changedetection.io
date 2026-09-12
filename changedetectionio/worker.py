@@ -177,7 +177,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         raise ModuleNotFoundError(error_msg)
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,
-                                                                         watch_uuid=uuid)
+                                                                         watch_uuid=uuid,
+                                                                         worker_id=worker_id)
 
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
