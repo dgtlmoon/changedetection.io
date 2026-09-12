@@ -145,8 +145,32 @@ class steppable_browser_interface():
         # and private-IP SSRF possible via a browser step (GHSA-hm22-wg2m-35v4).
         await validate_fetch_url_async(value)
 
+        # Chrome 153+ refuses to commit a navigation when an error status arrives with a
+        # zero-length body, so page.goto() raises net::ERR_HTTP_RESPONSE_CODE_FAILURE instead of
+        # handing back the response. The response was received fine, we just never get it as a
+        # return value, so keep the main-frame response from the 'response' event and hand that
+        # back - callers then report a real "Error - 404" instead of a raw net:: string.
+        # Kept as the latest matching response so a redirect chain reports its final hop.
+        navigation_response = {}
+
+        def _keep_navigation_response(response):
+            if response.frame == self.page.main_frame and response.request.is_navigation_request():
+                navigation_response['response'] = response
+
+        self.page.on("response", _keep_navigation_response)
+
         now = time.time()
-        response = await self.page.goto(value, timeout=0, wait_until='load')
+        try:
+            response = await self.page.goto(value, timeout=0, wait_until='load')
+        except Exception as e:
+            if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
+                raise
+            response = navigation_response['response']
+            logger.debug(f"Navigation was aborted by the browser (empty body on an error status), "
+                         f"recovered status {response.status} from the response event")
+        finally:
+            self.page.remove_listener("response", _keep_navigation_response)
+
         logger.debug(f"Time to goto URL {time.time()-now:.2f}s")
         return response
 

@@ -430,25 +430,50 @@ class fetcher(Fetcher):
         # Listen for first response to trigger frame handler setup
         self.page._client.on('Network.responseReceived', setup_frame_handlers_on_first_response)
 
+        # Chrome 153+ refuses to commit a navigation when an error status arrives with a
+        # zero-length body, so goto() raises net::ERR_HTTP_RESPONSE_CODE_FAILURE instead of handing
+        # back the response. The response was received fine, we just never get it as a return value,
+        # so keep the main-frame response from the 'response' event and use that instead - the
+        # status check below then reports a real "Error - 404" instead of a raw net:: string.
+        # Kept as the latest matching response so a redirect chain reports its final hop.
+        navigation_response = {}
+
+        def _keep_navigation_response(response):
+            # Note pyppeteer exposes these as properties, unlike playwright where they are methods
+            if response.frame == self.page.mainFrame and response.request.isNavigationRequest:
+                navigation_response['response'] = response
+
+        self.page.on('response', _keep_navigation_response)
+
         response = None
         attempt=0
-        while not response:
-            logger.debug(f"Attempting page fetch {url} attempt {attempt}")
-            asyncio.create_task(handle_frame_navigation())
-            response = await self.page.goto(url, timeout=0)
-            await asyncio.sleep(1 + extra_wait)
-            # Check if page still exists before sending command
-            if self.page and hasattr(self.page, '_client'):
-                await self.page._client.send('Page.stopLoading')
+        try:
+            while not response:
+                logger.debug(f"Attempting page fetch {url} attempt {attempt}")
+                asyncio.create_task(handle_frame_navigation())
+                try:
+                    response = await self.page.goto(url, timeout=0)
+                except Exception as e:
+                    if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
+                        raise
+                    response = navigation_response['response']
+                    logger.debug(f"Navigation was aborted by the browser (empty body on an error status), "
+                                 f"recovered status {response.status} from the response event")
+                await asyncio.sleep(1 + extra_wait)
+                # Check if page still exists before sending command
+                if self.page and hasattr(self.page, '_client'):
+                    await self.page._client.send('Page.stopLoading')
 
-            if response:
-                break
-            if not response:
-                logger.warning("Page did not fetch! trying again!")
-            if response is None and attempt>=2:
-                logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attempt {attempt}")
-                raise EmptyReply(url=url, status_code=None)
-            attempt+=1
+                if response:
+                    break
+                if not response:
+                    logger.warning("Page did not fetch! trying again!")
+                if response is None and attempt>=2:
+                    logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attempt {attempt}")
+                    raise EmptyReply(url=url, status_code=None)
+                attempt+=1
+        finally:
+            self.page.remove_listener('response', _keep_navigation_response)
 
         self.headers = response.headers
 
