@@ -321,7 +321,8 @@
           <div class="pure-control-group">
             <label for="search-modal-input">{% if active_tag_uuid %}{{ _("URL or Title in '%(title)s'", title=active_tag.title) }}{% else %}{{ _('URL or Title') }}{% endif %}</label>
             <input id="search-modal-input" class="m-d" name="q" placeholder="{{ _('Enter search term...') }}" required type="text" value="" autofocus>
-            <input name="tags" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
+            {# 'tag' (not 'tags') - that's the arg the watchlist filters on #}
+            <input name="tag" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
           </div>
         </form>
       </div>

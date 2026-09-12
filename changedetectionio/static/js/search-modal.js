@@ -114,15 +114,15 @@
         // Get form data
         const formData = new FormData(searchForm);
         const searchQuery = formData.get('q');
-        const tags = formData.get('tags');
+        const tag = formData.get('tag');
 
         // Build URL
         const params = new URLSearchParams();
         if (searchQuery) {
           params.append('q', searchQuery);
         }
-        if (tags) {
-          params.append('tags', tags);
+        if (tag) {
+          params.append('tag', tag);
         }
 
         // Navigate to search results (always redirect to watchlist home)
