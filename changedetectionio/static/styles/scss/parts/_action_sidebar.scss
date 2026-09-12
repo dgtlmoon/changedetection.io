@@ -281,6 +281,12 @@ ul.action-sidebar-list {
   }
 }
 
+// Count badges (unread, queue) are always visible in minimal mode so users
+// can see at a glance how many items need attention without expanding the rail.
+body.actionsidebar-minimal .action-badge--count {
+  opacity: 1;
+}
+
 // When the inner block expands in MINIMAL mode, reveal every label/badge
 // together with a smooth enter. Always-expanded mode handles labels via the
 // `body.actionside-bar-on` block below — no hover gate needed there.
