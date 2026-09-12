@@ -36,9 +36,6 @@
     <script>
         const csrftoken="{{ csrf_token() }}";
         const socketio_url="{{ get_socketio_path() }}/socket.io";
-        // Sub-path prefix when deployed behind a reverse proxy (USE_X_SETTINGS /
-        // X-Forwarded-Prefix sets SCRIPT_NAME), empty string otherwise.
-        const base_path = {{ request.script_root.rstrip('/')|tojson }};
         const is_authenticated = {% if current_user.is_authenticated or not has_password %}true{% else %}false{% endif %};
         // Translatable strings for modal.js (ModalDialog). Defined here in a Jinja
         // template so Babel extract_messages picks them up; modal.js reads this
@@ -320,11 +317,13 @@
         <h2 class="modal-title" id="search-modal-title">{{ _('Search') }}</h2>
       </div>
       <div class="modal-body">
-        <form id="search-form" method="GET">
+        {# Plain GET submit to the watchlist - url_for() carries the reverse-proxy sub-path
+           (SCRIPT_NAME), so no client-side URL building is needed. #}
+        <form id="search-form" method="GET" action="{{ url_for('watchlist.index') }}">
           <div class="pure-control-group">
             <label for="search-modal-input">{% if active_tag_uuid %}{{ _("URL or Title in '%(title)s'", title=active_tag.title) }}{% else %}{{ _('URL or Title') }}{% endif %}</label>
             <input id="search-modal-input" class="m-d" name="q" placeholder="{{ _('Enter search term...') }}" required type="text" value="" autofocus>
-            <input name="tags" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
+            {% if active_tag_uuid %}<input name="tags" type="hidden" value="{{ active_tag_uuid }}">{% endif %}
           </div>
         </form>
       </div>
