@@ -22,10 +22,15 @@ class difference_detection_processor():
     preferred_proxy = None
     screenshot_format = SCREENSHOT_FORMAT_JPEG
     last_raw_content_checksum = None
+    worker_id = None
 
-    def __init__(self, datastore, watch_uuid):
+    def __init__(self, datastore, watch_uuid, worker_id=None):
         self.datastore = datastore
         self.watch_uuid = watch_uuid
+
+        # Which async worker is driving this check, passed down to the fetcher in call_browser()
+        # so it can keep per-worker browser state apart, None when we're not called from a worker
+        self.worker_id = worker_id
 
         # Create a stable snapshot of the watch for processing
         # Why deepcopy?
@@ -201,7 +206,8 @@ class difference_detection_processor():
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
         self.fetcher = fetcher_obj(proxy_override=proxy_url,
                                    custom_browser_connection_url=custom_browser_connection_url,
-                                   screenshot_format=self.screenshot_format
+                                   screenshot_format=self.screenshot_format,
+                                   worker_id=self.worker_id
                                    )
 
         # Stamp the resolved backend name so downstream consumers (processors, plugins)
