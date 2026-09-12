@@ -881,7 +881,7 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         return None
 
     if not diff or not diff.strip():
-        return {'important': False, 'summary': ''}
+        return None
 
     _check_input_size(diff, _get_max_input_chars(datastore))
 
