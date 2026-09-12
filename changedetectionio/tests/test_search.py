@@ -71,3 +71,12 @@ def test_search_in_tag_limit(client, live_server, measure_memory_usage, datastor
     assert urls[0].split(' ')[0].encode('utf-8') in res.data, urls[0].encode('utf-8')
     assert urls[1].split(' ')[0].encode('utf-8') not in res.data, urls[0].encode('utf-8')
 
+
+def test_search_modal_form_action(client, live_server, measure_memory_usage, datastore_path):
+    # The search modal submits as a plain GET form, so its action has to carry the
+    # reverse-proxy sub-path (SCRIPT_NAME), otherwise search jumps to the host root.
+    res = client.get(url_for("watchlist.index"))
+    assert b'<form id="search-form" method="GET" action="/">' in res.data
+
+    res = client.get("/", base_url="http://localhost/sub-path")
+    assert b'<form id="search-form" method="GET" action="/sub-path/">' in res.data
