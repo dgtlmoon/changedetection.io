@@ -30,6 +30,7 @@ from changedetectionio.validate_url import is_safe_valid_url
 
 from changedetectionio.strtobool import strtobool
 from changedetectionio.jinja2_custom import render as jinja_render
+from changedetectionio import gc_debounce
 from . import watch_base
 from .persistence import EntityPersistenceMixin
 import os
@@ -107,9 +108,21 @@ def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
 
         logger.debug(f"Finished brotli compression - From {original_size} to {total_compressed_size} bytes.")
 
-        # Cleanup: Delete compressor, force Python GC, then force C-level memory release
+        # Cleanup: drop the compressor, then force C-level memory back to the OS.
+        #
+        # There is deliberately no gc.collect() here. brotli.Compressor is not gc-tracked,
+        # so the collector can never reclaim it - `del` frees it immediately by refcount.
+        # Measured over 60 x 2.2MB compressions, RSS growth was:
+        #
+        #   neither              +0.9MB
+        #   gc.collect() only    +0.2MB
+        #   malloc_trim() only   +0.0MB   <- does all of the work
+        #   both (previous)      +0.0MB   <- the collect contributed nothing
+        #
+        # malloc_trim below is the load-bearing line: brotli's retention is glibc holding
+        # freed arenas, which only a trim returns. The collect cost ~31ms of stop-the-world
+        # per snapshot save for no reclamation.
         del compressor
-        gc.collect()
 
         # Force release of C-level memory back to OS (since brotli is a C library)
         try:
@@ -689,7 +702,7 @@ class model(EntityPersistenceMixin, watch_base):
 
         # reimport
         bump = self.history
-        gc.collect()
+        gc_debounce.collect('watch.history_bump')
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()

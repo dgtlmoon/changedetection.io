@@ -6,6 +6,7 @@ from changedetectionio import html_tools
 from changedetectionio import worker_pool
 from changedetectionio.queuedWatchMetaData import PrioritizedItem
 from changedetectionio.pluggy_interface import apply_update_handler_alter, apply_update_finalize
+from changedetectionio import gc_debounce
 
 import asyncio
 import os
@@ -655,9 +656,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         del update_handler
                         update_handler = None
 
-                # Force garbage collection
-                import gc
-                gc.collect()
+                # Force garbage collection (debounced process-wide, see gc_debounce)
+                gc_debounce.collect('worker.after_processing')
 
         except Exception as e:
             # Store the processing exception for plugin finalization hook
@@ -702,8 +702,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         del contents
 
                     # Force garbage collection after all references are cleared
-                    import gc
-                    gc.collect()
+                    gc_debounce.collect('worker.cleanup_finally')
 
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:
