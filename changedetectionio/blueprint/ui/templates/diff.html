@@ -20,6 +20,10 @@
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
 
 
+<div id="diff-header">
+    {# The title is one centred line and ellipsizes only when it is wider than the
+       whole bar, so keep the full text reachable on hover. #}
+    <h1 id="diff-watch-title" title="{{ watch_a.label }}">{{ watch_a.label }}</h1>
 <div id="settings">
     <form class="pure-form " action="{{ url_for("ui.ui_diff.diff_history_page", uuid=uuid) }}" method="GET" id="diff-form">
         <fieldset class="diff-fieldset">
@@ -49,6 +53,10 @@
                 {#<button type="submit" class="pure-button pure-button-primary reset-margin">Go</button>#}
             {% endif %}
         </fieldset>
+        {# Collapses the diff options below into a popover. Hidden until
+           diff-overview.js takes over the fieldset, so with scripting off the
+           options stay inline and reachable. #}
+        <button type="button" id="diff-filters-toggle" class="pure-button" aria-expanded="false" aria-controls="diff-style">{{ _('Filters') }} &#x25be;</button>
         <fieldset id="diff-style">
             <span>
                 <label for="diffWords" class="pure-checkbox">
@@ -87,9 +95,13 @@
         </fieldset>
         {%- if versions|length >= 2 -%}
             <div id="keyboard-nav">
+                {# In the sticky bar the prompt and the two words are hidden and
+                   only the arrows show, so each link repeats its label as the
+                   accessible name and the tooltip - without them a screen reader
+                   is left reading the arrow glyph itself. #}
                 <strong>{{ _('Keyboard:') }} </strong>
-                <a href="" class="pure-button pure-button-primary" id="btn-previous"> &larr; {{ _('Previous') }}</a>
-                &nbsp; <a class="pure-button pure-button-primary" id="btn-next" href=""> &rarr; {{ _('Next') }}</a>
+                <a href="" class="pure-button pure-button-primary" id="btn-previous" title="{{ _('Previous') }}" aria-label="{{ _('Previous') }}"> &larr; <span class="keyboard-nav-label">{{ _('Previous') }}</span></a>
+                <a class="pure-button pure-button-primary" id="btn-next" href="" title="{{ _('Next') }}" aria-label="{{ _('Next') }}"> &rarr; <span class="keyboard-nav-label">{{ _('Next') }}</span></a>
             </div>
         {%- endif -%}
     </form>
@@ -105,10 +117,12 @@
         {% if last_error_text %}<li class="tab" id="error-text-tab"><a href="#error-text">{{ _('Error Text') }}</a></li> {% endif %}
         {% if last_error_screenshot %}<li class="tab" id="error-screenshot-tab"><a href="#error-screenshot">{{ _('Error Screenshot') }}</a></li> {% endif %}
         <li class="tab" id="text-tab"><a href="#text">{{ _('Text') }}</a></li>
-        <li class="tab" id="screenshot-tab"><a href="#screenshot">{{ _('Current screenshot') }}</a></li>
+        <li class="tab" id="screenshot-tab"><a href="#screenshot">{{ _('Screenshot') }}</a></li>
         <li class="tab" id="extract-tab"><a href="{{ url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid)}}">{{ _('Extract Data') }}</a></li>
     </ul>
 </div>
+
+</div>{# /diff-header #}
 
 <div id="diff-ui">
     <div class="tab-pane-inner" id="error-text">

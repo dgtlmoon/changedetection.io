@@ -1908,6 +1908,10 @@ msgid "To"
 msgstr "Do"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Filters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "Słowa"
 
@@ -1978,10 +1982,9 @@ msgstr "Zrzut ekranu z błędem"
 msgid "Text"
 msgstr "Tekst"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Current screenshot"
-msgstr "Aktualny zrzut ekranu"
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
+msgid "Screenshot"
+msgstr "Zrzut ekranu"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html
@@ -2431,6 +2434,11 @@ msgstr "Klonuj i edytuj"
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Select timestamp"
 msgstr "Wybierz znacznik czasu"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Current screenshot"
+msgstr "Aktualny zrzut ekranu"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current erroring screenshot from most recent request"
@@ -4112,10 +4120,6 @@ msgid "Not enough price data points yet to draw a graph - keep monitoring and th
 msgstr ""
 "Nie ma jeszcze wystarczającej liczby danych dotyczących cen, aby wygenerować wykres — proszę śledzić zmiany, a "
 "historia cen pojawi się w tym miejscu."
-
-#: changedetectionio/processors/templates/extract.html
-msgid "Screenshot"
-msgstr "Zrzut ekranu"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "This tool will extract text data from all of the watch history."

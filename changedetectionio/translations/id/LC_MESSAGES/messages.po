@@ -1867,6 +1867,10 @@ msgid "To"
 msgstr "Ke"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Filters"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "Kata"
 
@@ -1937,10 +1941,9 @@ msgstr "Tangkapan Layar Kesalahan"
 msgid "Text"
 msgstr "Teks"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Current screenshot"
-msgstr "Tangkapan layar saat ini"
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
+msgid "Screenshot"
+msgstr "Tangkapan layar"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html
@@ -2385,6 +2388,11 @@ msgstr "Kloning & Edit"
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Select timestamp"
 msgstr "Pilih stempel waktu"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Current screenshot"
+msgstr "Tangkapan layar saat ini"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current erroring screenshot from most recent request"
@@ -4064,10 +4072,6 @@ msgstr "Stok"
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here."
 msgstr "Belum cukup titik data harga untuk membuat grafik - terus pantau dan riwayat harga akan muncul di sini."
-
-#: changedetectionio/processors/templates/extract.html
-msgid "Screenshot"
-msgstr "Tangkapan layar"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "This tool will extract text data from all of the watch history."

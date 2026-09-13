@@ -1,3 +1,48 @@
+@use "settings" as *;
+
+// Paint the page's own background (page colour + the fixed 130deg gradient at
+// 0.91, pre-composited with color-mix) so a sticky bar stays opaque to content
+// scrolling under it while looking identical to the page behind it.
+//
+// styles.scss paints that backdrop as a real fixed layer: body::after is a
+// `position: fixed` box at the viewport's top-left corner, viewport-wide and
+// `height: 100vh` tall. Anything that has to disappear into it must show the
+// slice of that box it covers. background-attachment: fixed asks the engine for
+// exactly that, and iOS Safari does not honour it - it anchors the layer to the
+// document instead, so the bar sweeps the whole ramp (cyan to purple over a
+// long page) while the gutters beside it hold still. Chromium does honour it,
+// which is why only a device caught this.
+//
+// So derive the alignment from geometry and ask for no feature at all. Each bar
+// keeps a constant viewport offset - .header at the top, #diff-header directly
+// below it - and both are flush with the viewport's right edge at every width:
+// the action rail insets them from the *left* on a wide screen and widens again
+// on hover, but nothing moves their right edge. Anchor a viewport-sized copy of
+// the gradient to that edge and push it up by the bar's own offset, and the bar
+// paints body::after's slice by construction, on any engine.
+//
+// $y-offset: the bar's distance from the top of the viewport.
+@mixin page-surface-gradient($y-offset: 0px) {
+  background: var(--color-background-gradient-second); // fallback, no color-mix
+  // Longhands from here down, and no second `background:` shorthand after them -
+  // one would silently reset size/position/origin back to their initial values.
+  background-image: linear-gradient(130deg,
+    color-mix(in srgb, var(--color-background-gradient-first) 91%, var(--color-background-page)),
+    color-mix(in srgb, var(--color-background-gradient-second) 91%, var(--color-background-page)) 41.07%,
+    color-mix(in srgb, var(--color-background-gradient-third) 91%, var(--color-background-page)) 84.05%);
+  // 100vh to match body::after's own height: 100vh - same unit, so the two
+  // resolve to the same number on iOS, where it means the large (toolbar
+  // collapsed) viewport and therefore holds still as the toolbar moves.
+  // 100vw for the width: the bars are as wide as the viewport only on a narrow
+  // screen, so 100% would compress the ramp into the rail's leftovers on a
+  // desktop one.
+  background-size: 100vw 100vh;
+  background-repeat: no-repeat;
+  // border-box, or the bar's own padding would offset the copy by that much.
+  background-origin: border-box;
+  background-position: right 0 top calc(-1 * #{$y-offset});
+}
+
 #diff-form {
 
   background: rgba(0, 0, 0, .05);
@@ -40,8 +85,451 @@
 }
 
 body.difference-page {
-  section.content {
-    padding-top: 40px;
+  // Keep the top menu (watch URL, EDIT, theme/GitHub icons) on screen while the
+  // diff scrolls, stacked above #diff-header. Scoped to the diff page on
+  // purpose - upstream's @todo in parts/_top_menu.scss wants this globally, but
+  // that is a separate change.
+  //
+  // Sticky makes .header a stacking context, so its mobile drawer / overlay
+  // (z-index 10000 / 9999) are now capped by this value. 30 clears #diff-header
+  // below and still leaves toasts (10000, fixed) painting over the bar.
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    @include page-surface-gradient(0px);
+  }
+
+  // .app-main's 0.55rem gap sits between the two sticky bars, so #diff-header
+  // starts 8.8px below the top menu and then slides up to meet it over the
+  // first 8.8px of scroll - a visible twitch right as scrolling begins. The gap
+  // can't be preserved once stuck (it is outside both bars, so the diff would
+  // scroll through it), so close it here and let them sit flush at every scroll
+  // position. Only the .header/section.content pair is affected; .app-main has
+  // no other children.
+  .app-main {
+    gap: 0;
+  }
+
+  .tab-pane-inner {
+    scroll-margin-top: calc(var(--app-header-height, 0px) + var(--diff-header-height, 0px) + 1rem);
+  }
+
+  // The 2px activity strip is fixed on body, so it lives in the root stacking
+  // context and would paint over the mobile drawer now that the drawer is capped
+  // inside .header's context above. Drop it below .header rather than raising
+  // .header past the action rail (60), which would hide the rail's hover flyout.
+  // Still above #diff-header (20) and the minimap (10); on this page it now also
+  // passes under the rail's flyout, which is 2px of imperceptible overlap.
+  #pure-menu-horizontal-spinner {
+    z-index: 29;
+  }
+
+  // The bar is the page's whole chrome now, so trim the tabs' vertical padding
+  // (0.7em on all four sides) to half. Saves ~11px of every scroll position and
+  // leaves the horizontal padding, and so the tab widths, as they are.
+  .tabs ul li a {
+    padding: 0.35em 0.7em;
+  }
+
+  // The thin blue line under the active tab. Nothing at that boundary has a
+  // border - the active tab and #diff-ui are both var(--color-background) - so
+  // it can only be the page gradient showing through a device-pixel row where
+  // neither white paints. Whether such a row exists comes down to one number,
+  // the bar's bottom edge minus the card's top edge, and measured across 14
+  // viewports at three device pixel ratios that number is 0.813, 0.203 or
+  // exactly 0.000 and never a whole pixel. At 0.000 the outcome belongs
+  // entirely to the engine's sub-pixel rounding - which is why a DPR 3 phone
+  // can show a line a DPR 1 desktop does not, and why 390x844 on the Screenshot
+  // tab, the exact case reported, measures 0.000.
+  //
+  // So take the margin out of the engine's hands instead of hoping two white
+  // edges land on the same device row. A pixel of overlap covers the gradient
+  // on any grid; measured the same way afterwards, the worst case over those 42
+  // readings becomes exactly 1.000px.
+  //
+  // The other candidate was a white skirt under the active tab
+  // (box-shadow: 0 1px 0) which would have touched nothing else, and it does not
+  // work: the shadow hangs below the bar's last child and #diff-header's
+  // overflow: auto - the thing enforcing its height cap - clips it. Measured
+  // with the card held 3px away so the skirt and the card are separable, it
+  // painted 0 device rows of the 3 it needs at 844x390 and 926x428, and 0 to 2
+  // in the sticky modes. Recorded here so it is not proposed again.
+  //
+  // What the overlap costs, stated rather than discovered later: where the bar
+  // is sticky it is invisible, and a device-pixel diff of the seam band at
+  // 390x844 and DPR 3 says so exactly - zero differing pixels, because the bar
+  // is opaque and paints over the card. Below the short-viewport breakpoint the
+  // bar has no background of its own, so the card's white also reaches the
+  // bottom pixel of the *inactive* tabs and the 5px gaps between them: 4374
+  // device pixels at 844x390, gradient turning white. The tab row ends up
+  // sitting flush on the card rather than floating a pixel above it, which is
+  // how tabs normally meet their panel and is the same continuity the active
+  // tab was asked for.
+  //
+  // Scoped to the diff page deliberately. diff.css is NOT diff-page-only - it
+  // is also served to the preview page (blueprint/ui/preview.py) and the
+  // extract page (processors/extract.py), and both have a #diff-ui of their own
+  // with no bar above it to absorb the pixel. Only difference.py sets the
+  // difference-page class.
+  #diff-ui {
+    margin-top: -1px;
+  }
+}
+
+#diff-header {
+  position: sticky;
+  // Sits directly under the now-sticky top menu. The 0 fallback (JS off) just
+  // slides this under the bar - the same degradation the minimap already takes.
+  top: var(--app-header-height, 0px);
+  z-index: 20;
+  // section.content insets its children by $common-gap so they clear the left
+  // rail, while the top menu above stays flush against it. A bar that paints
+  // the page's own backdrop therefore leaves an 8.8px strip of real page
+  // background down each side, and on a device those strips read as mismatched
+  // borders. Cancel the inset rather than try to blend across it: with no
+  // gutter there is nothing left to keep aligned, and the flush right edge is
+  // what page-surface-gradient anchors its copy of the page gradient to. The
+  // controls do not move - the bar grows outwards by exactly the margin it
+  // takes back.
+  //
+  // The width has to come from align-self, not width: 100%. .content-main
+  // centres its children, so an item is fit-content unless it stretches, and a
+  // percentage width resolves against the parent without the negative margins -
+  // it would leave the bar short by 17.6px.
+  align-self: stretch;
+  margin-left: -$common-gap;
+  margin-right: -$common-gap;
+  box-sizing: border-box;
+  // Center children at their intrinsic width, the same way section.content does
+  // for the non-sticky siblings it still lays out (align-items: center).
+  // Three rows: title, the toolbar, the tabs.
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  // No bottom padding: the tab row is the bar's last child, and the active tab
+  // and #diff-ui below it are both var(--color-background). 4px of gradient
+  // between them reads as a seam across an otherwise continuous white surface -
+  // the same tabs on the extract page, which are not in a bar, measure 0. The
+  // top padding stays; nothing sits above the title.
+  padding: 0.25rem 1rem 0;
+  // Keep the diff readable even with wrapped controls, zoom, or a short viewport.
+  // The budget is for the whole sticky stack, so the top menu above comes out of
+  // it - otherwise the two bars together take 64% of a 390px-tall landscape phone.
+  //
+  // svh, not dvh. dvh tracks the dynamic viewport, which on iOS Safari grows and
+  // shrinks as the browser's own toolbar collapses and expands while you scroll:
+  // the cap would then breathe mid-scroll, changing the header's height and
+  // shifting everything below it, and each transition also fires resize and
+  // re-runs the sticky measurement behind it. svh is defined as the
+  // toolbar-expanded minimum and holds still for the life of the page, so the
+  // budget is a constant. It is the smaller of the two, which is the safe side to
+  // be wrong on for a cap. The plain vh line stays as the fallback for engines
+  // without the new units.
+  max-height: calc(50vh - var(--app-header-height, 0px));
+  max-height: calc(50svh - var(--app-header-height, 0px));
+  overflow: auto;
+
+  // Same offset as `top` above: the bar's constant distance from the top of the
+  // viewport. With JS off the var is absent and the copy is misaligned by the
+  // top menu's height - the same tier of degradation `top` itself already takes.
+  @include page-surface-gradient(var(--app-header-height, 0px));
+
+  > * {
+    // A centered flex item is sized to fit-content, which has a min-content
+    // floor (the version <select> is as wide as its longest option). Without
+    // this cap a narrow viewport would centre an over-wide child and spill it
+    // out of both sides of the header.
+    max-width: 100%;
+  }
+
+  // base.html's wrap detector decides body.wrapped-tabs by flipping the tab <ul>
+  // to flex-wrap and seeing whether any tab lands on a second row - so what it
+  // measures against is the width of .tabs. _tabs.scss says in upstream's own
+  // words that .tabs has to take the full width of the centred column "so the
+  // wrap-detector JS has the real available space to measure against", and the
+  // two properties that would do it are commented out directly underneath. As
+  // shipped, .tabs is fit-content inside any centred column, so the detector
+  // measures a container that moves with the layout state it is judging: the
+  // active tab's label is bold, and selecting the widest one ("Current
+  // screenshot") grows .tabs by ~9px. In the band where that crosses the
+  // available width the verdict flips per tab - measured here at 350, 355 and
+  // 358px, where Text and Extract Data report one row and Current screenshot
+  // reports three. iOS puts the same band at 390px because its fonts are wider,
+  // which is how a phone showed one row in a screenshot and a vertical stack in
+  // a video of the same page.
+  //
+  // Give the detector a fixed target on this page only. Un-commenting the lines
+  // in _tabs.scss would fix it everywhere and change every page upstream owns;
+  // this PR does not have the standing to do that.
+  .tabs {
+    align-self: stretch;
+    // Never give up height to keep the controls whole - see #settings below.
+    flex: none;
+
+    // .tabs no longer shrink-wraps, so the grid would sit left-aligned in it.
+    ul {
+      justify-content: center;
+
+      // Stretching the container fixes one side of the detector's comparison;
+      // this fixes the other. `.active a { font-weight: bold }` in _tabs.scss
+      // makes the row's width depend on which label is currently bold: at 355px
+      // the Text and Extract states measure 332.9 and 330.5 against a 339.0
+      // container and stay on one row, while Current screenshot - the widest
+      // label - measures over it and wraps to three. Neutralising just that rule
+      // collapses all three states to 330.5 and the flipping stops, which is what
+      // identifies the weight as the variable rather than the container.
+      //
+      // So drop the bold here rather than reserve room for it. Reserving the bold
+      // width on every tab (a hidden bold copy behind each label) also stabilises
+      // it, but it makes the row ~14px wider in every state and that pushes 360px
+      // - a common Android width that fits on one row today - into the stacked
+      // layout. The active tab does not need the third signal: _tabs.scss already
+      // gives it its own background-color and its own text colour.
+      li.active a,
+      li :target a {
+        font-weight: inherit;
+      }
+    }
+  }
+
+  // The title owns the full width of the bar on its own row above the controls,
+  // so it truncates only when it is wider than the whole viewport - the common
+  // long title fits in full. One line rather than a two-line clamp, matching the
+  // watch URL's existing truncation and keeping the bar's height constant. The
+  // template carries the untruncated text in the title attribute for hover.
+  #diff-watch-title {
+    width: 100%;
+    // One line, and not a line the height budget may take back - see #settings.
+    flex: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    color: #fff; // match #diff-form's white-on-gradient text
+  }
+
+  // The bar's height budget (max-height above) is smaller than its contents on a
+  // landscape phone: iOS gives the two datetime <select>s enough intrinsic width
+  // that From and To each take their own row, and title + From + To + Filters +
+  // tabs is then taller than 50svh minus the top menu. With overflow: auto on
+  // the bar itself the row that leaves the visible box is the last one - the
+  // tabs, which are the page's navigation and have no scrollbar to advertise
+  // themselves. Measured in Chromium with no iOS emulation at 736x414, 667x375,
+  // 780x360 and 844x330: the tab row sits outside #diff-header's own rect.
+  //
+  // So spend the budget on the row that can afford it. #settings is the only
+  // child allowed to shrink, and it is what scrolls; the title and the tabs are
+  // flex: none and therefore always inside the bar at any viewport height. The
+  // shrink needs min-height: 0 - a flex item's automatic minimum size is its
+  // content, which is what would otherwise push the tabs back out.
+  #settings {
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    // Same reason the Filters popover carries it: a nested scroller inside a
+    // sticky bar that chains its overscroll to the diff behind is worse than no
+    // scroller at all on a touch screen.
+    overscroll-behavior: contain;
+  }
+
+  // One toolbar row: From/To chips and their selects, the version arrows, and
+  // the Filters toggle.
+  #diff-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem 0.9rem;
+    padding: 0.2rem 0.7rem;
+    margin-bottom: 0;
+
+    fieldset {
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    // The From/To labels shrink to chips rather than hiding: display:none takes
+    // the <label> out of the accessibility tree and the selects lose their
+    // accessible name entirely, and two identically formatted datetime selects
+    // side by side need the red/green cue sighted users already know. The
+    // shipped width: 4rem is what makes them full-size plates. "From" is wider
+    // than "To", which left-ragged the selects once they stack, so the floor is
+    // wide enough for the longer word - it costs width only, never height.
+    .from-to-label {
+      width: auto;
+      min-width: 2.4rem;
+      text-align: center;
+      font-size: 0.75rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      line-height: 1.5;
+    }
+  }
+
+  #keyboard-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    // The arrows speak for themselves at this size; the links keep the full
+    // wording as aria-label and title (see diff.html).
+    strong,
+    .keyboard-nav-label {
+      display: none;
+    }
+  }
+
+  // Seven set-once options are a popover, not a permanent row of the bar. The
+  // swap happens only once diff-overview.js has wired the toggle up, so with
+  // scripting off the fieldset stays inline and submits as it does today.
+  #diff-filters-toggle {
+    display: none;
+    font-size: 0.85rem;
+    padding: 0.3em 0.8em;
+  }
+
+  &.diff-filters-js {
+    #diff-filters-toggle {
+      display: inline-block;
+    }
+
+    #diff-style {
+      display: none;
+    }
+  }
+
+  &.diff-filters-js.diff-filters-open {
+    #diff-style {
+      // fixed, not absolute: #diff-header carries overflow: auto to enforce the
+      // 50svh cap above, which clips an absolutely positioned descendant at the
+      // bar's bottom edge. The bar is sticky with no transform/filter/contain,
+      // so it is not a containing block for fixed and the panel escapes the
+      // clip. diff-overview.js parks it under the toggle.
+      display: block;
+      position: fixed;
+      z-index: 25;
+      min-width: 14rem;
+      // diff-overview.js caps max-height to the room below the button that the
+      // viewport actually has - on a landscape phone that is less than the
+      // seven rows need. The rows past the cap have to stay reachable, and the
+      // scroll must not chain out to the diff behind once they run out.
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .28);
+      text-align: left;
+
+      // The bar repaints the page's own backdrop; so must anything that has to
+      // be opaque over the scrolling diff. This one is not pinned to an edge of
+      // the viewport - diff-overview.js decides where it goes - so the same
+      // file overwrites background-position from the coordinates it just set.
+      // The declaration here is what a placement-less first paint falls back to.
+      @include page-surface-gradient;
+    }
+
+    // Out-specifies #diff-form #diff-style > span's inline-block above.
+    #diff-form #diff-style > span {
+      display: block;
+      padding: 0.2em 0;
+    }
+  }
+
+  .diff-fieldset {
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    > span {
+      max-width: 100%;
+      min-width: 0;
+      gap: 0.25rem;
+      // Size to content so From/To stay side-by-side on desktop (as they were
+      // before the header existed); shrink and wrap only when the row can't fit.
+      flex: 0 1 auto;
+      display: flex;
+      align-items: center;
+      // A <select> keeps the intrinsic min-content width of its longest option
+      // (min-width: 0 does not lower it), so label + select cannot fit a phone
+      // viewport side by side. Let the label drop above it instead of forcing
+      // the whole header wider than the screen.
+      flex-wrap: wrap;
+    }
+
+    select {
+      min-width: 0;
+      max-width: 100%;
+      flex: 1;
+    }
+
+    label {
+      flex-shrink: 0;
+    }
+  }
+}
+
+// The one narrow-viewport breakpoint for the whole bar - title, fit and
+// gutters all hang off it rather than letting magic numbers multiply.
+//
+// Every selector below carries an ID on purpose. The rules it has to beat are
+// written above as `#diff-header .diff-fieldset > span` and friends, and a
+// single ID outranks any number of classes, so a class-only override loses
+// silently and the chain goes on shrink-wrapping. Please don't tidy the IDs
+// away.
+@media (max-width: 700px) {
+  // Once the From/To chip takes inline width the <select> clips its own
+  // displayed value, and two snapshots from the same day differ only by the
+  // meridiem - so they read identically while closed. Shrinking the font alone
+  // cannot fix that: #settings, #diff-form, .diff-fieldset and the span are all
+  // sized to max-content, which *is* the select's text, so the container
+  // shrinks by exactly as much as the text does and the headroom stays pinned
+  // at zero at every font size. Pin the chain to the row first; only then does
+  // the smaller font buy anything.
+  #diff-header > #settings {
+    width: 100%;
+  }
+
+  #diff-header #diff-form {
+    width: 100%;
+    box-sizing: border-box;
+    // 16px of bar gutter plus 11.2px of form gutter a side is 54px of a 390px
+    // row spent on nothing.
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+  }
+
+  #diff-header {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  #diff-header #diff-form > .diff-fieldset {
+    flex: 1 1 100%;
+  }
+
+  #diff-header .diff-fieldset > span {
+    flex: 1 1 100%;
+  }
+
+  // With the chain pinned the select holds its width, so this is what actually
+  // buys the room. The worst realistic English value - a two-digit day, the
+  // longest month and a two-digit hour - still clips at 0.8rem.
+  #diff-header .diff-fieldset select {
+    font-size: 0.75rem;
+    padding-left: 0.3em;
+    padding-right: 0.3em;
   }
 }
 
@@ -170,7 +658,7 @@ body.difference-page {
     border-radius: 3px;
     overflow-x: hidden;
     position: sticky;
-    top: 0;
+    top: calc(var(--app-header-height, 0px) + var(--diff-header-height, 0px));
     z-index: 10;
     padding-top: 1rem;
     padding-bottom: 1rem;
@@ -244,5 +732,84 @@ body.difference-page {
     > * {
       padding-right: 1rem;
     }
+  }
+}
+
+// Placed last on purpose. Several of these rules out-specify nothing - they
+// tie with the rule they are overriding, and a tie is decided by source
+// order. The minimap's sticky offset is written further down this file as
+// `#diff-ui #cell-diff-jump-visualiser`, so a block that sits above it loses
+// silently. Keep this one at the bottom.
+//
+// A phone held sideways is the one place the sticky design cannot pay for
+// itself. 50svh of a 390px-tall viewport is 195px, the top menu takes 55 of it,
+// and what is left has to hold From, To, Filters and the tab row - three of
+// those on their own lines, because iOS gives the two datetime selects enough
+// width that From and To cannot share one. #settings shrinking and scrolling
+// (see above) keeps the tabs inside the bar, but a bar you have to scroll
+// *inside* to reach half its controls is still a bar in the way, and no amount
+// of trimming decoration finds 195px.
+//
+// So stop compensating for the budget here and give up the budget instead.
+// Below 500px of viewport height both bars are ordinary static blocks: no
+// height cap, no inner scroller, title and every control present at once, and
+// the page scrolls as one document. The trade is the sticky guarantee itself -
+// the controls and the tab row scroll away with the diff, so switching tabs
+// means scrolling back up - which is the right side to be wrong on when the
+// alternative is controls you cannot see. Portrait is untouched.
+//
+// Keyed on viewport height rather than orientation: a short desktop window has
+// the identical problem for the identical reason.
+@media (max-height: 500px) {
+  body.difference-page .header {
+    // Not a new state: parts/_top_menu.scss ships .header with its sticky
+    // commented out, so this is the position every other page's top menu is
+    // already in. z-index goes inert along with it, which hands the mobile
+    // drawer's 10000 back to the root stacking context.
+    position: static;
+    // Nothing scrolls underneath a static bar, so it neither needs its
+    // pre-composited copy of the page gradient nor may keep it: the copy is
+    // aligned by pushing it up by the bar's own *constant* viewport offset, and
+    // a bar that scrolls has no constant offset. It would slide out of phase
+    // with body::after's fixed layer and read as a moving seam. The shorthand,
+    // not background-image - it resets size, origin and position too.
+    background: none;
+  }
+
+  #diff-header {
+    position: static;
+    // The cap and the scroller are what the sticky design pays for its
+    // guarantee that the diff keeps half the viewport. There is no longer a
+    // guarantee to pay for.
+    max-height: none;
+    overflow: visible;
+    background: none;
+
+    #settings {
+      // Same: it only shrank and scrolled to keep the tab row inside the cap.
+      min-height: auto;
+      overflow-y: visible;
+    }
+  }
+
+  // .tab-pane-inner's scroll-margin-top is deliberately NOT overridden here,
+  // and dropping it to a bare 1rem is a trap worth naming. It reads as an
+  // allowance for pinned chrome, so with nothing pinned it looks like dead
+  // weight - but upstream's tabs.js rewrites an empty hash to the first tab's
+  // (tabs.js:15) and the browser then jumps to that pane on load, before any
+  // of this is a choice. At 1rem that jump lands with the whole static bar
+  // already scrolled off the top: measured -175.8px at 844x390, a landscape
+  // page that opens with no controls on it at all. The existing formula is the
+  // right number in both modes for two different reasons - in the sticky one it
+  // clears chrome that is pinned over the pane, in the static one it keeps
+  // chrome that sits above the pane on screen. Leave it alone.
+
+  // The minimap is sticky inside the diff card, offset to sit directly below
+  // the sticky stack. With that stack gone its offset would pin it a top menu
+  // plus a whole toolbar down the viewport - past halfway on a 390px-tall one,
+  // a strip floating in mid-screen beneath nothing. It is still worth pinning;
+  // pin it to the viewport, which is now free.
+  #diff-ui #cell-diff-jump-visualiser {
+    top: 0;
   }
 }
