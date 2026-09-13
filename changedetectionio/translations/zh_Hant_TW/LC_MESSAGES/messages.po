@@ -4592,8 +4592,8 @@ msgid ""
 "<strong>Off</strong> &ndash; no AI for any watch in this group. <strong>Leave it to each watch</strong> &ndash; this "
 "group has no say; each watch uses its own AI settings."
 msgstr ""
-"<strong>開啟</strong> &ndash; 此群組中的每個監測任務都使用下方的 AI 設定，除非個別設定。<strong>關閉</strong> &ndash; "
-"此群組中的所有監測任務皆不使用 AI。<strong>由個別監測任務自行決定</strong> &ndash; 此群組不進行限制；每個監測任務使用自己的 AI 設定。"
+"<strong>開啟</strong> &ndash; 此群組中的每個監測任務都使用下方的 AI 設定，除非個別設定。<strong>關閉</strong> &ndash; 此群組中的所有監測任務皆不使用 "
+"AI。<strong>由個別監測任務自行決定</strong> &ndash; 此群組不進行限制；每個監測任務使用自己的 AI 設定。"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 #, python-format
