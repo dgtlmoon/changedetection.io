@@ -62,6 +62,15 @@
 
     // Close modal when clicking the backdrop
     searchModal.addEventListener('click', function(e) {
+      // Only real pointer clicks can land on the backdrop. Keyboard-synthesised clicks
+      // report detail 0 and coordinates of 0,0, which the geometry test below reads as
+      // "outside the dialog" - and implicit form submission (Enter in the input) fires
+      // exactly such a click at the Search button. That closed the modal and blanked
+      // the input mid-dispatch, so the submit that followed hit an empty `required`
+      // field and was rejected: Enter appeared to just dismiss the form.
+      if (e.detail === 0) {
+        return;
+      }
       const rect = searchModal.getBoundingClientRect();
       const isInDialog = (
         rect.top <= e.clientY &&
