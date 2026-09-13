@@ -13,7 +13,7 @@ from changedetectionio.auth_decorator import login_optionally_required
 # Shared filtering — the single source of truth, also used by the ui blueprint's
 # bulk actions so a filtered view and the actions taken on it always agree.
 from changedetectionio.blueprint.watchlist import filters as wl_filters
-from changedetectionio.blueprint.watchlist.row_context import watch_row_context
+from changedetectionio.blueprint.watchlist.row_context import watch_row_context, processor_badge_texts_for_watches
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
@@ -113,9 +113,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         # Everything the row markup itself needs comes from here, shared with the Socket.IO
         # row push so a live-updated row can't drift from the server-rendered one.
+        processor_badge_texts = processors.get_processor_badge_texts()
         row_ctx = watch_row_context(datastore,
                                     active_tag_uuid=active_tag_uuid,
-                                    queued_uuids=update_q.get_queued_uuids())
+                                    queued_uuids=update_q.get_queued_uuids(),
+                                    processor_badge_texts_by_watch=processor_badge_texts_for_watches(
+                                        datastore, sorted_watches, processor_badge_texts))
 
         output = render_template(
             "watch-overview.html",
@@ -143,7 +146,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             now_time_server=round(time.time()),
             pagination=pagination,
             processor_badge_css=processors.get_processor_badge_css(),
-            processor_badge_texts=processors.get_processor_badge_texts(),
+            processor_badge_texts=processor_badge_texts,
             queue_size=update_q.qsize(),
             # Active view filters (tag/processor/q/unread/...) so links (e.g. column sorting)
             # can re-apply them and not drop the operator's current filtered view.
