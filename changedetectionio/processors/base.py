@@ -267,7 +267,7 @@ class difference_detection_processor():
         await self.fetcher.run(
             current_include_filters=self.watch.get('include_filters'),
             empty_pages_are_a_change=empty_pages_are_a_change,
-            fetch_favicon=self.watch.favicon_is_expired(),
+            fetch_favicon=self.watch.favicon_is_expired() and self.datastore.data['settings']['application'].get('ui', {}).get('favicons_enabled', True),
             ignore_status_codes=ignore_status_codes,
             is_binary=is_binary,
             request_body=request_body,
