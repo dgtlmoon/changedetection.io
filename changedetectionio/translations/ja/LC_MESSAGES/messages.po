@@ -839,6 +839,10 @@ msgid "Enable or Disable Favicons next to the watch list"
 msgstr "ウォッチリスト横のファビコンを有効または無効にする"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "ウォッチ一覧ページの1ページあたりの表示件数（0で無効化）。"
 
