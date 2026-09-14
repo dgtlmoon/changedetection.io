@@ -20,17 +20,17 @@ msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/__init__.py
 msgid "Adding a watch with a browser needs an interactive browser (screenshots + element data) - none is configured."
-msgstr ""
+msgstr "使用瀏覽器新增監測任務需要互動式瀏覽器（螢幕截圖 + 元素資料）— 目前未設定任何瀏覽器。"
 
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
-msgstr ""
+msgstr "系統設定預設值 (%(browser)s)"
 
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s - no live preview)"
-msgstr ""
+msgstr "系統設定預設值 (%(browser)s - 無即時預覽)"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Add a new web page change detection watch"
@@ -60,7 +60,7 @@ msgstr "目前："
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #, python-format
 msgid "%(browser)s cannot render a live preview, choose a browser below"
-msgstr ""
+msgstr "%(browser)s 無法渲染即時預覽，請在下方選擇瀏覽器"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Select by element"
@@ -85,7 +85,7 @@ msgstr "關鍵條件 — 何時發送通知"
 msgid ""
 "e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
 "appear. Skip review additions."
-msgstr "例如：當產品到貨或缺貨、交貨時間變更超過 1 週，或出現新的產品款式時通知我。跳過新增的評論。"
+msgstr "例如：當產品到貨或缺貨、交期變更超過 1 週，或出現新的產品款式時通知我。跳過新增的評論。"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
@@ -209,7 +209,7 @@ msgstr "還原正在執行中！"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Restore a backup. Must be a .zip backup file created on/after v0.53.1 (new database layout)."
-msgstr "還原備份。必須是於 v0.53.1 或之後版本（新資料庫版面配置）建立的 .zip 備份檔案。"
+msgstr "還原備份。必須是於 v0.53.1 或之後版本（新資料庫配置）建立的 .zip 備份檔案。"
 
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Note: This does not override the main application settings, only watches and groups."
@@ -380,15 +380,15 @@ msgstr "匯入"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Expand on hover"
-msgstr ""
+msgstr "懸停時展開"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Always expanded"
-msgstr ""
+msgstr "一律展開"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Stays minimal"
-msgstr ""
+msgstr "保持精簡"
 
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
@@ -460,7 +460,7 @@ msgstr "所有通知已取消靜音。"
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
-msgstr "當 api_base 與儲存的設定不同時，必須提供 api_key。拒絕將儲存的 API 金鑰發送到不同的端點。"
+msgstr "當 api_base 與儲存的設定不同時，必須提供 api_key。拒絕將儲存的 API 金鑰發送至不同的端點。"
 
 #: changedetectionio/blueprint/settings/llm.py
 msgid "AI / LLM configuration removed."
@@ -506,7 +506,7 @@ msgstr "通知除錯記錄"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
-msgstr "出於安全考量，此記錄在重啟時會被清空。"
+msgstr "基於安全考量，此記錄在重啟時會被清空。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -1126,7 +1126,7 @@ msgstr "移除所有監測任務中所有已快取的 AI 變更摘要。它們�
 msgid ""
 "Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
 "Leave off in production — generates a lot of log volume."
-msgstr "啟用 litellm 詳細輸出（透過 loguru 路由）。在診斷供應商錯誤或空回應時非常有用。在生產環境中請保持關閉 — 這會產生大量的日誌量。"
+msgstr "啟用 litellm 詳細輸出（透過 loguru 路由）。在診斷供應商錯誤或空回應時非常有用。在正式環境中請保持關閉 — 這會產生大量的日誌量。"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Default AI Change Summary"
@@ -1357,19 +1357,19 @@ msgstr "必須是十六進位色碼，例如 #4f8ef7"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "AI for watches in this group"
-msgstr ""
+msgstr "此群組中監測任務的 AI 設定"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "On, use the settings below"
-msgstr ""
+msgstr "開啟，使用下方設定"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "Off for every watch"
-msgstr ""
+msgstr "對所有監測任務關閉"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "Leave it to each watch"
-msgstr ""
+msgstr "由個別監測任務自行決定"
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
@@ -1412,7 +1412,7 @@ msgstr "請謹慎使用！"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will easily fill up your email storage quota or flood other storages."
-msgstr "這很容易填滿您的電子郵件儲存配額或淹沒其他儲存空間。"
+msgstr "這很容易填滿您的電子郵件儲存配額或塞滿其他儲存空間。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Look out!"
@@ -1552,7 +1552,7 @@ msgstr "{} 個監測任務錯誤已清除"
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "{} watches cleared/reset."
-msgstr "{} 個監測任務已清除 / 重置。"
+msgstr "{} 個監測任務已清除 / 重設。"
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
@@ -1658,7 +1658,7 @@ msgstr "歷史記錄不足（需要 2 個快照）以顯示此監測任務的差
 #: changedetectionio/blueprint/ui/diff.py
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
-msgstr "已達到每月 %(budget)s 權杖的 AI 權杖配額（已使用 %(used)s）。將於下個月重置。"
+msgstr "已達到每月 %(budget)s 權杖的 AI 權杖配額（已使用 %(used)s）。將於下個月重設。"
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "No watches to edit"
@@ -1702,7 +1702,7 @@ msgstr "已更新監測任務。"
 
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
-msgstr "預覽無法使用 - 未完成抓取 / 檢查或未觸發"
+msgstr "預覽無法使用 - 未完成抓取 / 檢查或未達到觸發條件"
 
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Diff"
@@ -1711,7 +1711,7 @@ msgstr "差異"
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
 msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
-msgstr "顯示第 <b>{start} - {end}</b> 條{record_name}，共 <b>{total}</b> 條"
+msgstr "顯示第 <b>{start} - {end}</b> 筆 {record_name}，共 <b>{total}</b> 筆"
 
 #: changedetectionio/blueprint/ui/queue.py
 msgid "queued items"
@@ -1724,7 +1724,7 @@ msgstr "已清除排程佇列（已移除 {} 個項目）。"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
-msgstr "這將移除「所有」監測任務的版本歷史記錄（快照），外加保留您的 URL 列表！"
+msgstr "這將移除「所有」監測任務的版本歷史記錄（快照），但會保留您的 URL 列表！"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
@@ -1963,11 +1963,11 @@ msgstr "如果找到頁面標題將自動使用，您也可以在此使用您自
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Extra Page Title and Link options"
-msgstr ""
+msgstr "額外網頁標題與連結選項"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
-msgstr ""
+msgstr "選填 - 列表、歷史記錄與通知中的連結將改為開啟此 URL。這不會變更正在檢查的 URL。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
@@ -2407,31 +2407,31 @@ msgstr "監測任務已新增。"
 
 #: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
-msgstr "記錄"
+msgstr "筆記錄"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Pause checks"
-msgstr ""
+msgstr "暫停檢查"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "UnPause checks"
-msgstr ""
+msgstr "取消暫停檢查"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Mute notification"
-msgstr ""
+msgstr "靜音通知"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "UnMute notification"
-msgstr ""
+msgstr "取消靜音通知"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Goto web page"
-msgstr ""
+msgstr "前往網頁"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Create a link to share watch config with others"
-msgstr ""
+msgstr "建立連結以與他人分享監測任務設定"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Detecting restock and price"
@@ -2457,7 +2457,7 @@ msgstr "價格"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #, python-format
 msgid "Price change since previous price (%(prev)s)"
-msgstr ""
+msgstr "自上次價格以來的價格變更 (%(prev)s)"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "No information"
@@ -2480,7 +2480,7 @@ msgstr "變更"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Summary"
-msgstr ""
+msgstr "摘要"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/processors/text_json_diff/difference.py
@@ -2493,7 +2493,7 @@ msgstr "預覽"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
-msgstr "Changedetection.io 不僅能監測網頁！快來看看我們的外掛程式！"
+msgstr "Changedetection.io 不僅能監測網頁！快來看看我們擴充外掛！"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "More info"
@@ -2713,7 +2713,7 @@ msgstr "確定"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear/reset history"
-msgstr "清除 / 重置歷史記錄"
+msgstr "清除 / 重設歷史記錄"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
@@ -3072,7 +3072,7 @@ msgstr "秒"
 
 #: changedetectionio/forms.py
 msgid "Unknown fetch method."
-msgstr ""
+msgstr "未知的抓取方式。"
 
 #: changedetectionio/forms.py
 msgid "Notification Body and Title is required when a Notification URL is used"
@@ -3223,7 +3223,7 @@ msgstr "網頁 URL"
 
 #: changedetectionio/forms.py
 msgid "Open Link Override"
-msgstr ""
+msgstr "開啟連結覆寫"
 
 #: changedetectionio/forms.py
 msgid "Group Tag"
@@ -3239,7 +3239,7 @@ msgstr "檢查與排程時間使用全域設定。"
 
 #: changedetectionio/forms.py
 msgid "AI Change Intent - Notify me when.."
-msgstr ""
+msgstr "AI 變更意圖 - 當發生以下情況時通知我 ..."
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
 #: changedetectionio/forms.py
@@ -3248,19 +3248,19 @@ msgstr "AI 變更摘要"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Change Summary prompt - Append or Replace the default?"
-msgstr ""
+msgstr "變更摘要提示詞 - 附加至預設值或取代預設值？"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Replace the inherited prompt"
-msgstr ""
+msgstr "取代繼承的提示詞"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Append to the inherited prompt"
-msgstr ""
+msgstr "附加至繼承的提示詞"
 
 #: changedetectionio/forms.py
 msgid "AI enabled for this watch?"
-msgstr ""
+msgstr "是否為此監測任務啟用 AI？"
 
 #: changedetectionio/forms.py
 msgid "CSS/JSONPath/JQ/XPath Filters"
@@ -4053,7 +4053,7 @@ msgstr "正在被監測的 URL。"
 msgid ""
 "The Open Link Override set on the watch, otherwise the same as watch_url. Use this when the watched URL is an API "
 "endpoint or RSS feed but you want to link to the real page."
-msgstr ""
+msgstr "於監測任務上設定的「開啟連結覆寫」，若未設定則與 watch_url 相同。當監測的 URL 是 API 端點或 RSS Feed 但您希望連結至實際網頁時使用此設定。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The UUID of the watch."
@@ -4258,7 +4258,7 @@ msgstr "（或使用純文字 / Markdown 格式）"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
-msgstr "用於直接 API 呼喚（或省略"
+msgstr "用於直接 API 呼叫（或省略"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "for non-SSL ie"
@@ -4287,7 +4287,7 @@ msgstr "對於 JSON 承載資料（Payloads），使用"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "without quotes for automatic escaping, for example -"
-msgstr "且不加引號以進行自動逸出，例如 -"
+msgstr "且不加引號以進行自動跳脫，例如 -"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
@@ -4592,16 +4592,18 @@ msgid ""
 "<strong>Off</strong> &ndash; no AI for any watch in this group. <strong>Leave it to each watch</strong> &ndash; this "
 "group has no say; each watch uses its own AI settings."
 msgstr ""
+"<strong>開啟</strong> &ndash; 此群組中的每個監測任務都使用下方的 AI 設定，除非個別設定。<strong>關閉</strong> &ndash; 此群組中的所有監測任務皆不使用 "
+"AI。<strong>由個別監測任務自行決定</strong> &ndash; 此群組不進行限制；每個監測任務使用自己的 AI 設定。"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 #, python-format
 msgid "Group %(name)s decides this: AI is ON for every watch in that group."
-msgstr ""
+msgstr "由群組 %(name)s 決定：該群組中的每個監測任務皆開啟 AI。"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 #, python-format
 msgid "Group %(name)s decides this: AI is OFF for every watch in that group."
-msgstr ""
+msgstr "由群組 %(name)s 決定：該群組中的每個監測任務皆關閉 AI。"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -4666,13 +4668,13 @@ msgstr "描述此群組中所有監測任務的通知應如何摘要變更。"
 msgid ""
 "Appending keeps the prompt inherited from the group or from global settings and adds your text after it, so later "
 "edits to that prompt still reach this watch."
-msgstr ""
+msgstr "附加會保留從群組或全域設定繼承的提示詞，並在其後加入您的文字，因此日後對該提示詞的編輯仍會套用至此監測任務。"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
 "Appending keeps the prompt inherited from global settings and adds your text after it, so later edits to that prompt "
 "still reach this group."
-msgstr ""
+msgstr "附加會保留從全域設定繼承的提示詞，並在其後加入您的文字，因此日後對該提示詞的編輯仍會套用至此群組。"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "List each new item added with its name and price. Translate to English."
@@ -4896,7 +4898,7 @@ msgstr "已暫停"
 
 #: changedetectionio/templates/menu.html
 msgid "Running"
-msgstr ""
+msgstr "執行中"
 
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
@@ -4964,7 +4966,7 @@ msgstr "匯入網頁清單"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Browsers (coming soon)"
-msgstr "瀏覽器（即即推出）"
+msgstr "瀏覽器（即將推出）"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Browsers"
