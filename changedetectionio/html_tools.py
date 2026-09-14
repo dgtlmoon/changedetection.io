@@ -164,6 +164,25 @@ _DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
 ]
 
 
+# XPath 3.1 says the default collation is Unicode codepoint collation. elementpath instead leaves
+# its collation functions pointing at locale.strxfrm / locale.strcoll, so the process-wide
+# LC_COLLATE decides what contains() means:
+#
+#     def contains(self, a, b):  return self.strxfrm(b) in self.strxfrm(a)
+#
+# With LC_COLLATE=C, strxfrm() is the identity and that is an ordinary substring test. With
+# LC_COLLATE=en_US.UTF-8 it returns a binary collation key, and a substring of a collation key is
+# not the collation key of the substring - so contains(), starts-with(), ends-with() and
+# substring-before/after() return false for every input, and a filter that matches 67 elements
+# matches 0 (#4437). Name tests, axes and '=' are unaffected, which is what made it look like the
+# page had changed layout.
+#
+# flask_app.py keeps LC_COLLATE in "C" for this reason, but a filter must not depend on a distant
+# module's locale bookkeeping, nor on what an operator puts in LANG/LC_ALL. Pinning the collation
+# per evaluation makes the filter mean the same thing in every deployment.
+XPATH_CODEPOINT_COLLATION = 'http://www.w3.org/2005/xpath-functions/collation/codepoint'
+
+
 def get_safe_xpath3_parser():
     """Return an XPath3Parser subclass with filesystem/environment access functions removed.
 
@@ -383,7 +402,9 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             # This allows //title to match elements in the default namespace
             namespaces[''] = tree.nsmap[None]
 
-        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=get_safe_xpath3_parser())
+        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces,
+                               parser=get_safe_xpath3_parser(),
+                               default_collation=XPATH_CODEPOINT_COLLATION)
         #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
         #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
 
