@@ -443,7 +443,21 @@ class fetcher(Fetcher):
                         # Main frame started a new document
                         resets += 1
                         if resets > max_content_ready_resets:
-                            logger.debug(f"Main frame keeps re-navigating, not restarting the content-ready wait again")
+                            # The cap is there to stop a page that re-navigates in a loop from
+                            # extending the fetch forever - it is NOT permission to extract
+                            # immediately. Breaking straight out here landed on whatever document
+                            # happened to be mid-flight, with zero settle time: measured against a
+                            # page that hops every 500ms, the fetch ended after 2.7s holding 130
+                            # bytes of an intermediate hop, no final document and no JS-rendered
+                            # content, while logging "content-ready wait of 12s elapsed".
+                            #
+                            # So spend the delay one last time, just without arming another reset.
+                            # Total stays bounded at (max_resets + 2) * extra_wait, and whatever we
+                            # extract has had the same settle time every other fetch gets.
+                            logger.debug(f"Main frame re-navigated {resets} times (cap "
+                                         f"{max_content_ready_resets}), waiting {extra_wait}s once "
+                                         f"more without restarting, then extracting regardless")
+                            await asyncio.sleep(extra_wait)
                             break
                         logger.debug(f"Main frame started a new document, restarting the {extra_wait}s "
                                      f"content-ready wait ({resets}/{max_content_ready_resets})")
@@ -456,7 +470,7 @@ class fetcher(Fetcher):
             # Stop whatever is still in flight so the DOM and screenshot come from what rendered,
             # rather than waiting on a subresource that may never answer
             try:
-                logger.debug(f"Content-ready wait of {extra_wait}s elapsed, issuing Page.stopLoading before extracting")
+                logger.debug(f"Content-ready wait finished, issuing Page.stopLoading before extracting")
                 await self.page._client.send('Page.stopLoading')
                 logger.debug("stopLoading command sent!")
 
