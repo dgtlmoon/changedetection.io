@@ -6,6 +6,8 @@ and makes the call easy to mock in tests.
 
 import logging
 import os
+import random
+import time
 
 from loguru import logger
 
@@ -29,6 +31,7 @@ DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
 _NO_TEMPERATURE_MODEL_KEYWORDS = ('flash-lite', 'thinking-exp', 'o1', 'o3', 'o4')
 
 DEFAULT_RETRIES = 3
+DEFAULT_MAX_RETRY_DELAY = 15.0
 
 
 class _LoguruInterceptHandler(logging.Handler):
@@ -67,6 +70,26 @@ def _install_litellm_debug():
     logger.info("LLM client: litellm debug logging routed through loguru")
 
 
+def _get_retry_delay(exc, attempt: int, max_delay: float = DEFAULT_MAX_RETRY_DELAY) -> float | None:
+    """Return backoff delay in seconds with jitter, or None if Retry-After exceeds max_delay (abort)."""
+    ra = getattr(exc, 'retry_after', None)
+    if ra is None:
+        headers = getattr(getattr(exc, 'response', None), 'headers', None) or getattr(exc, 'headers', None) or {}
+        ra = headers.get('retry-after') or headers.get('Retry-After') if hasattr(headers, 'get') else None
+
+    if ra is not None:
+        try:
+            sec = float(ra)
+            if sec > max_delay:
+                return None  # Server asked for longer than ceiling; abort immediately
+            return round(min(sec + random.uniform(0.1, 0.5), max_delay), 2)
+        except (ValueError, TypeError):
+            pass
+
+    base = 2 ** (attempt - 1)
+    return round(min(base + random.uniform(0, base), max_delay), 2)
+
+
 def completion(  # noqa: C901
     model: str,
     messages: list,
@@ -76,15 +99,17 @@ def completion(  # noqa: C901
     max_tokens: int = None,
     extra_body: dict = None,
     debug: bool = False,
+    retries: int = None,
 ) -> tuple[str, int, int, int]:
     """
     Call the LLM and return (response_text, total_tokens, input_tokens, output_tokens).
-    Retries up to DEFAULT_RETRIES times on timeout or connection errors.
+    Retries up to retries times on timeout, connection, or transient errors.
     Token counts are 0 if the provider doesn't return usage data.
     Raises on network/auth errors — callers handle gracefully.
 
     timeout: seconds for the request. Local endpoints get a longer value than cloud —
     see evaluator.resolve_llm_timeout().
+    retries: number of retry attempts. Use 0 for user-facing interactive paths.
     """
     try:
         import litellm
@@ -95,6 +120,7 @@ def completion(  # noqa: C901
         _install_litellm_debug()
 
     _timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
+    max_attempts = (retries + 1) if retries is not None else DEFAULT_RETRIES
 
     kwargs = {
         'model': model,
@@ -113,7 +139,13 @@ def completion(  # noqa: C901
     if extra_body:
         kwargs['extra_body'] = extra_body
 
-    _retryable = (litellm.Timeout, litellm.APIConnectionError)
+    _retryable = (
+        litellm.Timeout,
+        litellm.APIConnectionError,
+        litellm.ServiceUnavailableError,
+        litellm.RateLimitError,
+        litellm.InternalServerError,
+    )
 
     # Some models reject sampling params outright: Anthropic Claude Opus 4.7/4.8 and
     # Fable return HTTP 400 for 'temperature', and OpenAI reasoning models (o1/o3/gpt-5)
@@ -131,7 +163,7 @@ def completion(  # noqa: C901
     logger.trace(messages)
 
     attempt = 0
-    while attempt < DEFAULT_RETRIES:
+    while attempt < max_attempts:
         attempt += 1
         try:
             response = litellm.completion(**kwargs)
@@ -179,22 +211,31 @@ def completion(  # noqa: C901
             return text, total_tokens, input_tokens, output_tokens
 
         except _retryable as e:
-            # litellm formats its Timeout message with None when the provider doesn't
-            # propagate the timeout value — patch the exception args in-place so every
-            # caller that logs str(e) sees the real number.
-            _fix = f'after {_timeout} seconds'
-            try:
-                e.args = tuple(str(a).replace('after None seconds', _fix) for a in e.args)
-            except Exception:
-                pass
-            if attempt < DEFAULT_RETRIES:
+            # litellm formats its Timeout message with 'after None seconds' when the
+            # provider doesn't propagate the timeout value — patch the exception args
+            # in-place so callers that log str(e) see the configured timeout.
+            if isinstance(e, litellm.Timeout):
+                _fix = f'after {_timeout} seconds'
+                try:
+                    e.args = tuple(str(a).replace('after None seconds', _fix) for a in e.args)
+                except Exception:
+                    pass
+            if attempt < max_attempts:
+                delay = _get_retry_delay(e, attempt)
+                if delay is None:
+                    logger.warning(
+                        f"LLM call {type(e).__name__} Retry-After exceeds ceiling ({DEFAULT_MAX_RETRY_DELAY}s), "
+                        f"aborting retry — model={model!r} error={e}"
+                    )
+                    raise
                 logger.warning(
-                    f"LLM call timed out/connection error (attempt {attempt}/{DEFAULT_RETRIES}), "
-                    f"retrying — model={model!r} timeout={_timeout}s error={e}"
+                    f"LLM call transient error ({type(e).__name__}, attempt {attempt}/{max_attempts}), "
+                    f"retrying in {delay}s — model={model!r} timeout={_timeout}s error={e}"
                 )
+                time.sleep(delay)
                 continue
             logger.warning(
-                f"LLM call failed after {DEFAULT_RETRIES} attempts ({_timeout}s timeout) "
+                f"LLM call failed after {attempt} attempt(s) ({_timeout}s timeout) "
                 f"model={model!r} error={e}"
             )
             raise

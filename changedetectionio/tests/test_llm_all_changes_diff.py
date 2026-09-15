@@ -55,7 +55,7 @@ def test_all_changes_sends_multi_segment_diff_to_llm(
 
     captured_diff = {}
 
-    def fake_summarise(watch, datastore, diff, current_snapshot=None):
+    def fake_summarise(watch, datastore, diff, current_snapshot=None, **kwargs):
         captured_diff['diff'] = diff
         return 'Multi-step summary.'
 
@@ -93,7 +93,7 @@ def test_default_mode_sends_single_diff_to_llm(
 
     captured_diff = {}
 
-    def fake_summarise(watch, datastore, diff, current_snapshot=None):
+    def fake_summarise(watch, datastore, diff, current_snapshot=None, **kwargs):
         captured_diff['diff'] = diff
         return 'Single-range summary.'
 
@@ -125,7 +125,7 @@ def test_all_changes_and_direct_use_separate_cache_keys(
 
     call_count = {'n': 0}
 
-    def fake_summarise(watch, datastore, diff, current_snapshot=None):
+    def fake_summarise(watch, datastore, diff, current_snapshot=None, **kwargs):
         call_count['n'] += 1
         return f'Summary call #{call_count["n"]}'
 
@@ -162,7 +162,7 @@ def test_all_changes_result_is_cached(
 
     call_count = {'n': 0}
 
-    def fake_summarise(watch, datastore, diff, current_snapshot=None):
+    def fake_summarise(watch, datastore, diff, current_snapshot=None, **kwargs):
         call_count['n'] += 1
         return 'Cached multi-step summary.'
 
