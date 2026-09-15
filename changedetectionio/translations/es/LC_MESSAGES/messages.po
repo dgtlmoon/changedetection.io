@@ -868,6 +868,10 @@ msgid "Enable or Disable Favicons next to the watch list"
 msgstr "Habilitar o deshabilitar favicons junto a la lista de monitores"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "Número de elementos por página en la lista general de monitores, 0 para desactivar."
 

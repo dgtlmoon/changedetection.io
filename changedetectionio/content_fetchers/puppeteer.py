@@ -443,7 +443,21 @@ class fetcher(Fetcher):
                         # Main frame started a new document
                         resets += 1
                         if resets > max_content_ready_resets:
-                            logger.debug(f"Main frame keeps re-navigating, not restarting the content-ready wait again")
+                            # The cap is there to stop a page that re-navigates in a loop from
+                            # extending the fetch forever - it is NOT permission to extract
+                            # immediately. Breaking straight out here landed on whatever document
+                            # happened to be mid-flight, with zero settle time: measured against a
+                            # page that hops every 500ms, the fetch ended after 2.7s holding 130
+                            # bytes of an intermediate hop, no final document and no JS-rendered
+                            # content, while logging "content-ready wait of 12s elapsed".
+                            #
+                            # So spend the delay one last time, just without arming another reset.
+                            # Total stays bounded at (max_resets + 2) * extra_wait, and whatever we
+                            # extract has had the same settle time every other fetch gets.
+                            logger.debug(f"Main frame re-navigated {resets} times (cap "
+                                         f"{max_content_ready_resets}), waiting {extra_wait}s once "
+                                         f"more without restarting, then extracting regardless")
+                            await asyncio.sleep(extra_wait)
                             break
                         logger.debug(f"Main frame started a new document, restarting the {extra_wait}s "
                                      f"content-ready wait ({resets}/{max_content_ready_resets})")
@@ -456,11 +470,32 @@ class fetcher(Fetcher):
             # Stop whatever is still in flight so the DOM and screenshot come from what rendered,
             # rather than waiting on a subresource that may never answer
             try:
-                logger.debug(f"Content-ready wait of {extra_wait}s elapsed, issuing Page.stopLoading before extracting")
+                logger.debug(f"Content-ready wait finished, issuing Page.stopLoading before extracting")
                 await self.page._client.send('Page.stopLoading')
                 logger.debug("stopLoading command sent!")
+
+                # stopLoading stops the network, not script execution. A page whose JS has pegged
+                # the renderer's main thread (a runaway loop, a rAF that never settles) holds that
+                # thread indefinitely, and every CDP call that needs to run script then queues
+                # behind it and never returns - page.content, the xPath scraper, the favicon
+                # fetcher. The fetch dies at PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS having
+                # extracted nothing, with a core spinning the entire time.
+                #
+                # Nothing else recovers this. Runtime.evaluate's own `timeout` parameter bounds an
+                # evaluation once it starts, not time spent queued behind the running task, and
+                # wrapping the call in asyncio.wait_for is worse than useless: cancelling a
+                # pyppeteer request mid-flight leaves the connection unusable ("Target closed" on
+                # everything after it). Terminating execution is what releases the thread -
+                # measured against a deliberately spinning page, extraction went from timing out
+                # to returning the full DOM in 0.0s and the renderer dropped from 1.00 to 0.08
+                # cores. Safe here because stopLoading has already declared "give me what
+                # rendered", and the content-ready wait above has already had its chance to let
+                # late JS-rendered content appear.
+                await self.page._client.send('Runtime.terminateExecution')
+                logger.debug("Runtime.terminateExecution sent, any runaway page script is stopped")
             except Exception as e:
-                logger.debug(f"Page.stopLoading skipped, page is most likely already gone: {e}")
+                logger.debug(f"Page.stopLoading/Runtime.terminateExecution skipped, page is most "
+                             f"likely already gone: {e}")
 
         # Track the LATEST main-frame document response for the whole fetch, not just the one that
         # goto() happens to return. This app compares the text of the page the browser ends up on,

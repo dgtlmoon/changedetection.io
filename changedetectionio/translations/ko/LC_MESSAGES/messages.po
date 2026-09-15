@@ -834,6 +834,10 @@ msgid "Enable or Disable Favicons next to the watch list"
 msgstr "모니터링 목록 옆 파비콘 표시 여부"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "모니터링 목록 페이지당 항목 수입니다. 0이면 비활성화됩니다."
 

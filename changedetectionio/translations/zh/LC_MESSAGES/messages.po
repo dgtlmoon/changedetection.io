@@ -837,6 +837,10 @@ msgid "Enable or Disable Favicons next to the watch list"
 msgstr "在监控列表中启用或禁用站点图标"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "监控概览列表每页数量，0 为禁用。"
 

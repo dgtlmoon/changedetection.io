@@ -845,6 +845,10 @@ msgid "Enable or Disable Favicons next to the watch list"
 msgstr "Увімкнути або вимкнути значки (фавіконки) поруч зі списком завдань"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "Кількість елементів на сторінці у списку завдань, 0 для вимкнення."
 
