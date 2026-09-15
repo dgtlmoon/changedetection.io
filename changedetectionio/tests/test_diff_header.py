@@ -149,3 +149,34 @@ def test_difference_page_class_scopes_sticky_header(client):
     extract = client.get(url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid))
     assert extract.status_code == 200
     assert 'difference-page' not in BeautifulSoup(extract.data, 'html.parser').select_one('body').get('class')
+
+
+def test_scrollable_title_script_is_global(client):
+    """The top line is a scroll container whose fades are maintained by JS. The
+    restock difference page and the image-SSIM preview page both render that line
+    and neither loads diff-overview.js, so the script belongs in base.html - which
+    is what putting it on a page with no title line at all demonstrates."""
+    datastore = client.application.config['DATASTORE']
+    uuid = datastore.add_watch(url='https://example.com/releases', extras={'paused': True})
+    watch = datastore.data['watching'][uuid]
+    watch.save_history_blob('First release', 1700000000, 'first')
+    watch.save_history_blob('Second release', 1700000060, 'second')
+
+    def scripts(response):
+        assert response.status_code == 200
+        page = BeautifulSoup(response.data, 'html.parser')
+        return page, {s['src'] for s in page.select('script[src]')}
+
+    page, srcs = scripts(client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid)))
+    assert page.select_one('.header .current-diff-url') is not None
+    script = page.select_one('script[src*="scrollable-title.js"]')
+    assert script is not None
+    # Deferred, so jQuery and the markup both exist by the time it runs.
+    assert script.has_attr('defer')
+
+    # The watch overview has no title line, and still serves the script: that is
+    # only true of a base.html script, and it is what the other pages rely on.
+    overview, srcs = scripts(client.get(url_for('watchlist.index')))
+    assert overview.select_one('.header .current-diff-url') is None
+    assert any('scrollable-title.js' in src for src in srcs)
+    assert not any('diff-overview.js' in src for src in srcs)
