@@ -1,74 +1,47 @@
+// Previous / Next step both version selects one position back or forward and
+// rebuild the href from the current diff options; the arrow keys do the same
+// thing. Recomputed at press time rather than cached, because changing either
+// select submits the form and re-renders them.
+function diffStepHref(direction) {
+    var $from = $('#diff-from-version option:selected')[direction]();
+    var $to = $('#diff-to-version option:selected')[direction]();
+    if (!$from.length || !$to.length) {
+        return null;
+    }
+    var params = new URLSearchParams(window.location.search);
+    params.set('from_version', $from.val());
+    params.set('to_version', $to.val());
+    return '?' + params.toString();
+}
+
 function setupDiffNavigation() {
-    var $fromSelect = $('#diff-from-version');
-    var $toSelect = $('#diff-to-version');
-    var $fromSelected = $fromSelect.find('option:selected');
-    var $toSelected = $toSelect.find('option:selected');
+    var BUTTONS = {prev: '#btn-previous', next: '#btn-next'};
 
-    if ($fromSelected.length && $toSelected.length) {
-        // Find the previous pair (move both back one position)
-        var $prevFrom = $fromSelected.prev();
-        var $prevTo = $toSelected.prev();
-
-        // Find the next pair (move both forward one position)
-        var $nextFrom = $fromSelected.next();
-        var $nextTo = $toSelected.next();
-
-        // Build URL with current diff preferences
-        var currentParams = new URLSearchParams(window.location.search);
-
-        // Previous button: only show if both can move back
-        if ($prevFrom.length && $prevTo.length) {
-            currentParams.set('from_version', $prevFrom.val());
-            currentParams.set('to_version', $prevTo.val());
-            $('#btn-previous').attr('href', '?' + currentParams.toString());
-        } else {
-            $('#btn-previous').remove();
-        }
-
-        // Next button: only show if both can move forward
-        if ($nextFrom.length && $nextTo.length) {
-            currentParams.set('from_version', $nextFrom.val());
-            currentParams.set('to_version', $nextTo.val());
-            $('#btn-next').attr('href', '?' + currentParams.toString());
-        } else {
-            $('#btn-next').remove();
-        }
+    if ($('#diff-from-version option:selected').length && $('#diff-to-version option:selected').length) {
+        $.each(BUTTONS, function (direction, selector) {
+            var href = diffStepHref(direction);
+            // Nothing to step to that way: drop the button rather than leave a
+            // dead one on the bar.
+            if (href) {
+                $(selector).attr('href', href);
+            } else {
+                $(selector).remove();
+            }
+        });
     }
 
-    // Keyboard navigation
-    window.addEventListener('keydown', function (event) {
-        // Don't trigger if user is typing in an input field
-        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
+    $(window).on('keydown', function (event) {
+        // Not while someone is typing or working a select.
+        if (/^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)) {
             return;
         }
-
-        var $fromSelected = $fromSelect.find('option:selected');
-        var $toSelected = $toSelect.find('option:selected');
-
-        if ($fromSelected.length && $toSelected.length) {
-            if (event.key === 'ArrowLeft') {
-                var $prevFrom = $fromSelected.prev();
-                var $prevTo = $toSelected.prev();
-                if ($prevFrom.length && $prevTo.length) {
-                    var prevHref = $('#btn-previous').attr('href');
-                    if (prevHref) {
-                        event.preventDefault();
-                        window.location.href = prevHref;
-                    }
-                }
-            } else if (event.key === 'ArrowRight') {
-                var $nextFrom = $fromSelected.next();
-                var $nextTo = $toSelected.next();
-                if ($nextFrom.length && $nextTo.length) {
-                    var nextHref = $('#btn-next').attr('href');
-                    if (nextHref) {
-                        event.preventDefault();
-                        window.location.href = nextHref;
-                    }
-                }
-            }
+        var direction = {ArrowLeft: 'prev', ArrowRight: 'next'}[event.key];
+        var href = direction && diffStepHref(direction) && $(BUTTONS[direction]).attr('href');
+        if (href) {
+            event.preventDefault();
+            window.location.href = href;
         }
-    }, false);
+    });
 }
 
 // The seven diff options collapse behind the 'Filters' button so the sticky bar
@@ -76,93 +49,76 @@ function setupDiffNavigation() {
 // runs the fieldset is inline and the toggle hidden, so with scripting off the
 // options are still reachable and still submit with the form.
 function setupDiffFilters() {
-    var header = document.getElementById('diff-header');
-    var toggle = document.getElementById('diff-filters-toggle');
-    var panel = document.getElementById('diff-style');
-    if (!header || !toggle || !panel) {
+    var $header = $('#diff-header');
+    var $toggle = $('#diff-filters-toggle');
+    var $panel = $('#diff-style');
+    if (!$header.length || !$toggle.length || !$panel.length) {
         return;
     }
+    var header = $header[0], toggle = $toggle[0], panel = $panel[0];
 
-    header.classList.add('diff-filters-js');
+    $header.addClass('diff-filters-js');
 
     function isOpen() {
-        return header.classList.contains('diff-filters-open');
+        return $header.hasClass('diff-filters-open');
     }
 
     var EDGE_GAP = 8;   // keep the panel clear of the viewport edges
     var BUTTON_GAP = 4; // between the toggle and the panel
 
-    // The panel is position: fixed - #diff-header's overflow: auto would clip an
-    // absolutely positioned one - so it has to be parked under the button by
-    // hand, and kept inside the viewport on a small screen. Fixed also means the
-    // page scrolling underneath will never bring a row that hangs off the bottom
-    // back into reach, so the height has to fit at placement time or not at all:
-    // below the button there is always at least half the viewport, because the
-    // bar's own cap keeps its bottom edge inside 50svh - what there is not
-    // always enough of is room for the whole seven-row panel. Cap it to the
-    // space there is and let it scroll (see diff.scss). Parking it at full
-    // height put the last three filters off-screen and unclickable in a
-    // landscape phone viewport.
+    // position: fixed, because #diff-header's overflow: auto would clip an absolute
+    // panel - which means parking it by hand, and that scrolling will never bring a
+    // row hanging off the bottom back into reach. So it has to fit at placement time
+    // or not at all: cap it to the room there is and let it scroll (see diff.scss).
     function place() {
         var button = toggle.getBoundingClientRect();
         // A fixed element is positioned against the layout viewport, but iOS
-        // shrinks the *visual* one behind its toolbars, so budget with
-        // whichever is smaller.
+        // shrinks the *visual* one behind its toolbars, so budget with whichever
+        // is smaller.
         var viewportHeight = document.documentElement.clientHeight;
         if (window.visualViewport) {
             viewportHeight = Math.min(viewportHeight, window.visualViewport.height);
         }
 
-        // Measure unconstrained: a cap left over from the previous placement
-        // would otherwise read back as the panel's natural height.
+        // Measure unconstrained: a cap left over from the previous placement would
+        // otherwise read back as the panel's natural height.
         panel.style.maxHeight = '';
 
-        // Below the button used to be the roomier side by construction - the
-        // bar's own 50svh cap kept its bottom edge inside the top half of the
-        // viewport - and this function had no flip-above branch for that
-        // reason. diff.scss's short-viewport breakpoint takes the cap away and
-        // lets the bar scroll with the page, so the premise is gone: at 280x300
-        // the button sits with 147.6px above it and 104.2px below. Pick the
-        // roomier side rather than assume one.
+        // Pick the roomier side rather than assume one: below used to be roomier by
+        // construction, but diff.scss's short-viewport breakpoint drops the bar's
+        // 50svh cap and at 280x300 above wins 147.6px to 104.2px.
         var roomBelow = viewportHeight - button.bottom - BUTTON_GAP - EDGE_GAP;
         var roomAbove = button.top - BUTTON_GAP - EDGE_GAP;
         var above = roomAbove > roomBelow;
         var room = above ? roomAbove : roomBelow;
 
         if (panel.offsetHeight > room) {
-            // max-height caps the content box, and the panel is content-box
-            // (leave it that way: border-box would fold the padding into the
-            // min-width too and narrow the panel by 24px). Hand it the room
-            // less its own padding and borders so offsetHeight lands on room.
+            // max-height caps the content box, and the panel must stay content-box
+            // (border-box would fold the padding into min-width and narrow it by
+            // 24px) - so subtract its own padding and borders.
             var style = window.getComputedStyle(panel);
             var trim = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) +
                        parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
             panel.style.maxHeight = Math.max(room - trim, 0) + 'px';
         }
 
-        // offsetHeight after the cap, not before: parking above the button
-        // measures from the panel's own bottom edge.
+        // offsetHeight after the cap: parking above measures from the panel's bottom.
         var top = above ? button.top - BUTTON_GAP - panel.offsetHeight
                         : button.bottom + BUTTON_GAP;
         panel.style.top = top + 'px';
 
         var available = document.documentElement.clientWidth - panel.offsetWidth - EDGE_GAP;
         var left = Math.max(EDGE_GAP, Math.min(button.left, available));
-        panel.style.left = left + 'px';
 
-        // The panel paints the page's own backdrop (see diff.scss), and that
-        // copy is aligned by geometry rather than by background-attachment:
-        // fixed, which iOS Safari ignores. The two sticky bars can state their
-        // viewport offset in CSS because it never changes; this one cannot -
-        // it is wherever the button just was - so hand it the offset here. Both
-        // values are negative: the copy's top-left corner belongs at the
-        // viewport's, which is up and to the left of the panel.
-        panel.style.backgroundPosition = (-left) + 'px ' + (-top) + 'px';
+        // The panel paints the page's own backdrop (see diff.scss), aligned by
+        // geometry because iOS Safari ignores background-attachment: fixed. Negative
+        // because the copy's top-left corner belongs at the viewport's.
+        $panel.css({left: left + 'px', backgroundPosition: (-left) + 'px ' + (-top) + 'px'});
     }
 
     function open() {
-        header.classList.add('diff-filters-open');
-        toggle.setAttribute('aria-expanded', 'true');
+        $header.addClass('diff-filters-open');
+        $toggle.attr('aria-expanded', 'true');
         place();
     }
 
@@ -170,14 +126,14 @@ function setupDiffFilters() {
         if (!isOpen()) {
             return;
         }
-        header.classList.remove('diff-filters-open');
-        toggle.setAttribute('aria-expanded', 'false');
+        $header.removeClass('diff-filters-open');
+        $toggle.attr('aria-expanded', 'false');
         if (restoreFocus) {
-            toggle.focus();
+            $toggle.trigger('focus');
         }
     }
 
-    toggle.addEventListener('click', function (event) {
+    $toggle.on('click', function (event) {
         event.preventDefault();
         if (isOpen()) {
             close(false);
@@ -186,43 +142,34 @@ function setupDiffFilters() {
         }
     });
 
-    document.addEventListener('click', function (event) {
+    $(document).on('click', function (event) {
         if (isOpen() && !panel.contains(event.target) && !toggle.contains(event.target)) {
             close(false);
         }
     });
 
-    document.addEventListener('keydown', function (event) {
+    $(document).on('keydown', function (event) {
         if (event.key === 'Escape') {
             close(true);
         }
     });
 
-    // The bar is sticky directly under the top menu, so the button keeps its
-    // viewport position as the *page* scrolls. A tab switch hides #settings, and
-    // the panel with it, so drop the open state rather than leave aria-expanded
-    // lying.
-    window.addEventListener('resize', function () {
+    // A tab switch hides #settings and the panel with it, so drop the open state
+    // rather than leave aria-expanded lying.
+    $(window).on('hashchange', function () {
+        close(false);
+    });
+
+    $(window).on('resize', function () {
         if (isOpen()) {
             place();
         }
     });
-    // The bar contains a scroll container though - overflow enforces the 50svh
-    // cap - so on a short viewport the button can scroll under a panel that,
-    // being fixed, stays where it was put: measured 16px of drift at 390x390 and
-    // 30px at 320x480, enough to leave the popover pointing at the wrong
-    // control. Follow the button, and close once it has scrolled out of the bar
-    // entirely rather than park the panel over the title.
-    //
-    // Below diff.scss's max-height: 500px breakpoint the bar is not sticky, so
-    // the button does not keep its viewport position either: the whole bar
-    // scrolls away with the document while the fixed panel stays where place()
-    // left it. The two modes drift for opposite reasons - in the sticky one the
-    // bar holds still and #settings moves inside it, in the static one nothing
-    // moves inside the bar and the bar itself moves - so the same follow/close
-    // rule covers both, and it needs both closing tests. Each is inert in the
-    // mode it was not written for: the button cannot leave a sticky bar's box
-    // by scrolling the page, and it cannot leave a static bar's box at all.
+
+    // The button can drift out from under the fixed panel two ways: #settings
+    // scrolling inside a sticky bar (16px at 390x390, 30px at 320x480), or the whole
+    // bar scrolling away below diff.scss's max-height: 500px breakpoint. Opposite
+    // causes, one follow/close rule; each closing test is inert in the other mode.
     function followButton() {
         if (!isOpen()) {
             return;
@@ -238,22 +185,14 @@ function setupDiffFilters() {
         }
     }
 
-    // Capture, not bubble: scroll events do not bubble, and the container that
-    // actually scrolls is #settings (diff.scss keeps the tab row out of the
-    // budget by shrinking that one child), which is a descendant. Capturing on
-    // the bar catches it and #diff-header's own last-resort scroll alike. It
-    // does not catch the document's own scroll, which is the static mode's
-    // only source of drift - hence the second registration.
+    // Native, not jQuery: .on() cannot pass passive or capture. Capture is required
+    // because scroll does not bubble and the element that scrolls is #settings, a
+    // descendant; the window registration covers the static mode's document scroll.
     header.addEventListener('scroll', followButton, {passive: true, capture: true});
     window.addEventListener('scroll', followButton, {passive: true});
-    // place() budgets against the *visual* viewport when it is the smaller of
-    // the two, and on iOS that one can shrink on its own - a toolbar expanding
-    // or the on-screen keyboard coming up moves it without resizing the layout
-    // viewport, so no window resize fires. Without this the cap stays at the
-    // height it was placed with and the bottom rows sit behind the chrome
-    // again. Measured in Chromium via CDP pinch-zoom, which splits the two
-    // viewports the same way: the panel kept a 195px cap against a viewport
-    // that had become 260px tall and overhung it by 122px.
+    // On iOS the visual viewport shrinks on its own - a toolbar or the keyboard -
+    // without resizing the layout viewport, so no window resize fires and the cap
+    // place() budgeted stays wrong. Reproduced in Chromium via CDP pinch-zoom.
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', function () {
             if (isOpen()) {
@@ -261,9 +200,6 @@ function setupDiffFilters() {
             }
         });
     }
-    window.addEventListener('hashchange', function () {
-        close(false);
-    });
 }
 
 $(document).ready(function () {
@@ -285,36 +221,15 @@ $(document).ready(function () {
     setupDiffFilters();
 
     // Load it when the #screenshot tab is in use, so we dont give a slow experience when waiting for the text diff to load
-    window.addEventListener('hashchange', function (e) {
+    $(window).on('hashchange', function () {
         toggle(location.hash);
         realignPane();
-    }, false);
+    });
 
-    // The browser runs the fragment jump first; only afterwards does toggle()
-    // hide #settings and the outgoing pane stop being :target, which collapses
-    // the text diff's ~8000px document to a fraction of a screen. The engine is
-    // then holding a scroll offset for a page that no longer exists and clamps
-    // it to the new maximum instead of re-running the jump. On iOS that maximum
-    // is never 0 - styles.scss floors the shell at min-height: 100vh and 100vh
-    // there is the toolbar-collapsed viewport - so you arrive on the Screenshot
-    // tab with its first line behind the bar. Measured off a device recording:
-    // about one line, held for roughly a second before Safari re-settled it.
-    //
-    // So re-run the jump once the layout has stopped moving. scrollIntoView, not
-    // scrollTo(0, 0): .tab-pane-inner already declares the offset the sticky
-    // stack needs as scroll-margin-top, and this is the same alignment the
-    // browser was asked for, just applied to the layout that actually resulted.
-    //
-    // setTimeout(0) rather than requestAnimationFrame: that scroll-margin-top is
-    // written in terms of --diff-header-height, which diff-render.js's
-    // ResizeObserver updates during the rendering update - after animation frame
-    // callbacks have already run, and hiding #settings is exactly what changes
-    // it.
-
-    // Where the last alignment we performed left the page, so a later one can
-    // tell "still where we put them" from "the reader has moved since".
+    // Where the last alignment we performed left the page, so a later one can tell
+    // "still where we put them" from "the reader has moved since", and the
+    // scroll-margin-top it was computed against.
     var alignedY = null;
-    // The scroll-margin-top that alignment was computed against.
     var alignedMargin = null;
 
     function targetPane() {
@@ -323,6 +238,13 @@ $(document).ready(function () {
         return pane && pane.classList.contains('tab-pane-inner') ? pane : null;
     }
 
+    // The fragment jump runs before toggle() hides #settings, which collapses the
+    // ~8000px document; the engine then clamps its held offset rather than re-running
+    // the jump, and on iOS that clamp is never 0. So re-run it once the layout has
+    // settled. scrollIntoView, not scrollTo(0, 0): .tab-pane-inner already declares
+    // the sticky stack's offset as scroll-margin-top. setTimeout(0) rather than rAF,
+    // because that margin resolves against --diff-header-height, which
+    // diff-render.js's ResizeObserver updates after frame callbacks have run.
     function realignPane() {
         var pane = targetPane();
         if (!pane) {
@@ -335,31 +257,14 @@ $(document).ready(function () {
         }, 0);
     }
 
-    // The load path has the same stale offset for a nearer reason, and needs a
-    // different trigger. tabs.js rewrites an empty hash to the first tab's
-    // (tabs.js:15) and the browser performs that jump the moment the diff is
-    // built - which is before diff-render.js has measured the bar, so
-    // scroll-margin-top is still resolving against its --diff-header-height: 0
-    // fallback. Traced at 844x390: the jump lands at scrollY 231 against a 16px
-    // margin at t=132ms, and the margin becomes the real 202px at t=167ms with
-    // the offset left exactly where it was. Under a sticky bar none of that
-    // shows, because the chrome is pinned whatever the offset is. Below
-    // diff.scss's short-viewport breakpoint the bar is in flow, and those same
-    // 231px put every control above the top of the page: a landscape phone
-    // opens on a bare diff with no title, no From/To, no tabs.
-    //
-    // So re-run the alignment when the quantity it was wrong about settles.
-    // The margin is written in terms of the bar's height, so the bar's own
-    // resize is the signal - and comparing the margin rather than counting
-    // callbacks means this fires when something actually changed.
-    //
-    // Guarded on the reader still being where the last alignment left them.
-    // That matters beyond load: rotating the phone across the breakpoint
-    // resizes the bar too, and someone who has scrolled into the diff must not
-    // be thrown back to the top of the pane for it. The first alignment is the
-    // unguarded one, because the jump it is correcting was the browser's rather
-    // than ours - a 35ms window in which a reader could in principle have
-    // scrolled first.
+    // The load path is stale for a nearer reason: tabs.js rewrites an empty hash and
+    // the browser jumps before diff-render.js has measured the bar, so
+    // scroll-margin-top is still on its --diff-header-height: 0 fallback. Traced at
+    // 844x390: landed at scrollY 231 against a 16px margin that then became 202px.
+    // Below the short-viewport breakpoint the bar is in flow, so that puts every
+    // control off the top of the page. Re-run when the bar resizes - comparing the
+    // margin, so it only fires on a real change - and only while the reader is still
+    // where we left them, since rotating the phone resizes the bar too.
     var bar = document.getElementById('diff-header');
     if (bar && typeof ResizeObserver !== 'undefined') {
         new ResizeObserver(function () {
@@ -394,23 +299,14 @@ $(document).ready(function () {
         }
     }
 
-    const article = $('#difference')[0];
+    // We could also add the 'touchend' event for touch devices, but since most
+    // iOS/Android browsers already show a dialog when you select text (often with a
+    // Share option) we'll skip that. mouseup goes on the page rather than the
+    // article, because they might 'mouse up' outside it.
+    $('#difference').on('mousedown', clean);
+    $('.difference-page').on('mouseup', dragTextHandler);
 
-    // We could also add the  'touchend' event for touch devices, but since
-    // most iOS/Android browsers already show a dialog when you select
-    // text (often with a Share option) we'll skip that
-    if (article) {
-        article.addEventListener('mousedown', clean, false);
-    }
-
-    // Because they might 'mouse up' outside the article but on the page
-    const d_page = $(".difference-page")[0]
-    if (d_page ) {
-        d_page.addEventListener('mouseup', dragTextHandler, false);
-    }
-
-
-    $('#highlightSnippetActions a').bind('click', function (e) {
+    $('#highlightSnippetActions a').on('click', function (e) {
         if (!window.getSelection().toString().trim().length) {
             alert('Oops no text selected!');
             return;
@@ -441,12 +337,11 @@ $(document).ready(function () {
         $('#bottom-horizontal-offscreen').hide();
     }
 
-    // Listen for Escape key press
-    window.addEventListener('keydown', function (e) {
+    $(window).on('keydown', function (e) {
         if (e.key === 'Escape') {
             clean();
         }
-    }, false);
+    });
 
     function dragTextHandler(event) {
         console.log('mouseupped');
