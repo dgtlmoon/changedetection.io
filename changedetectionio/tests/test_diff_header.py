@@ -9,6 +9,9 @@ import pytest
     ('', '', 'https://example.com/releases'),
 ])
 def test_diff_header_watch_label(client, title, page_title, expected):
+    """The top line of the menu names the watch, so the page does not print the
+    same URL twice: the watch's own title when it has one, the fetched page title
+    next, and the URL only when neither is set."""
     datastore = client.application.config['DATASTORE']
     uuid = datastore.add_watch(url='https://example.com/releases', extras={
         'title': title, 'page_title': page_title, 'paused': True,
@@ -20,16 +23,64 @@ def test_diff_header_watch_label(client, title, page_title, expected):
     response = client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid))
     assert response.status_code == 200
     page = BeautifulSoup(response.data, 'html.parser')
-    heading = page.select_one('#diff-header #diff-watch-title')
-    assert heading.get_text() == expected
+    heading = page.select_one('.header .current-diff-url')
+    assert heading.get_text(strip=True) == expected
     assert heading.find('script') is None
+    # Clicking it still goes to the watched page - only the text changed.
+    assert heading.get('href') == 'https://example.com/releases'
+    # The separate heading this replaced is gone, so the bar is one row shorter.
+    assert page.select_one('#diff-watch-title') is None
     assert page.select_one('#diff-header #diff-form') is not None
     assert page.select_one('#diff-header .tabs') is not None
     assert page.select_one('#diff-header #difference') is None
     assert 'Second release' in page.select_one('#difference').get_text()
-    # The title is one line and ellipsizes when it outgrows the bar, so the
-    # untruncated text has to stay reachable on hover.
-    assert heading.get('title') == expected
+    # The line is one line and fades out when it outgrows the bar, so the
+    # untruncated text has to stay reachable on hover / long-press.
+    assert expected in heading.get('title')
+
+
+def test_diff_header_label_keeps_the_url_reachable(client):
+    """A title covers the URL that used to be printed here, so the hover text has
+    to carry both - otherwise the only way to read the URL is to follow it."""
+    datastore = client.application.config['DATASTORE']
+    uuid = datastore.add_watch(url='https://example.com/releases', extras={
+        'title': 'Release notes', 'paused': True,
+    })
+    watch = datastore.data['watching'][uuid]
+    watch.save_history_blob('First release', 1700000000, 'first')
+    watch.save_history_blob('Second release', 1700000060, 'second')
+
+    page = BeautifulSoup(client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid)).data,
+                         'html.parser')
+    link = page.select_one('.header .current-diff-url')
+    hover = link.get('title')
+    assert 'Release notes' in hover
+    assert 'https://example.com/releases' in hover
+
+    # Without a title the line already *is* the URL, so hover must not repeat it.
+    untitled = datastore.add_watch(url='https://example.com/other', extras={'paused': True})
+    other = datastore.data['watching'][untitled]
+    other.save_history_blob('First', 1700000000, 'first')
+    other.save_history_blob('Second', 1700000060, 'second')
+    page = BeautifulSoup(client.get(url_for('ui.ui_diff.diff_history_page', uuid=untitled)).data,
+                         'html.parser')
+    link = page.select_one('.header .current-diff-url')
+    assert link.get('title') == 'https://example.com/other'
+
+
+def test_diff_header_heart_stays_in_the_markup(client):
+    """The heart is folded away by a media query on this page, not removed from
+    it - so it has to still be in the DOM. Its visibility is in diff.scss and
+    cannot be seen from here."""
+    datastore = client.application.config['DATASTORE']
+    uuid = datastore.add_watch(url='https://example.com/releases', extras={'paused': True})
+    watch = datastore.data['watching'][uuid]
+    watch.save_history_blob('First release', 1700000000, 'first')
+    watch.save_history_blob('Second release', 1700000060, 'second')
+
+    page = BeautifulSoup(client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid)).data,
+                         'html.parser')
+    assert page.select_one('#heart-us') is not None
 
 
 def _seeded_diff_page(client, **extras):

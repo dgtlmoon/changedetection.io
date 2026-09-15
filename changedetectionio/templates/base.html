@@ -117,8 +117,12 @@
     <div>
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
           {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
-          <a class="current-diff-url" href="{{ current_diff_url }}" title="{{ current_diff_url }}">
-            <span>{{ current_diff_url }}</span></a>
+          {# The watch's own name when it has one, so the diff/preview pages do not print
+             the same URL twice. The title attribute keeps the full text reachable on hover
+             or long-press once the line truncates, and keeps the URL discoverable when a
+             title is covering it. #}
+          <a class="current-diff-url" href="{{ current_diff_url }}" title="{% if current_diff_label and current_diff_label != current_diff_url %}{{ current_diff_label }}&#10;{% endif %}{{ current_diff_url }}">
+            <span>{{ current_diff_label or current_diff_url }}</span></a>
         {% endif %}
 
         <ul class="top-menu-list" id="top-right-menu">

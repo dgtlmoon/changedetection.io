@@ -100,6 +100,34 @@ body.difference-page {
     @include page-surface-gradient(0px);
   }
 
+  // The top line now carries the watch's name, so give it back the room the two
+  // stacked left insets were taking. Its text starts $common-gap twice in: the
+  // menu row's own padding, which every item on the row needs to clear the edge,
+  // plus the link's own left margin, which on the row's first item only repeats
+  // that padding. Drop the repeat and keep the row's padding: 8.8px back, and
+  // the line still sits on the same left edge as the diff below it rather than
+  // hard against the viewport. The right side of both is untouched - the link's
+  // right margin still separates it from the menu icons.
+  .current-diff-url {
+    margin-left: 0;
+  }
+
+  // Wherever the hamburger is (max-width: $desktop-wide-breakpoint, set in
+  // parts/_hamburger_menu.scss), the menu row is at its tightest and every item
+  // on it competes with the watch name for the same line. The heart is the one
+  // item on that row that is neither navigation nor status, so it is what gives
+  // way - on this page only, and only under that width. Desktop diff pages and
+  // every other page keep it.
+  //
+  // CSS rather than a {% if %} in base.html: the heart's own reason to exist is
+  // that it is always there, and a template branch would take it off the page
+  // entirely rather than fold it away with the rest of the row.
+  @media only screen and (max-width: $desktop-wide-breakpoint) {
+    #heart-us {
+      display: none;
+    }
+  }
+
   // .app-main's 0.55rem gap sits between the two sticky bars, so #diff-header
   // starts 8.8px below the top menu and then slides up to meet it over the
   // first 8.8px of scroll - a visible twitch right as scrolling begins. The gap
@@ -203,7 +231,7 @@ body.difference-page {
   box-sizing: border-box;
   // Center children at their intrinsic width, the same way section.content does
   // for the non-sticky siblings it still lays out (align-items: center).
-  // Three rows: title, the toolbar, the tabs.
+  // Two rows: the toolbar and the tabs.
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -212,7 +240,7 @@ body.difference-page {
   // and #diff-ui below it are both var(--color-background). 4px of gradient
   // between them reads as a seam across an otherwise continuous white surface -
   // the same tabs on the extract page, which are not in a bar, measure 0. The
-  // top padding stays; nothing sits above the title.
+  // top padding stays; nothing sits above the toolbar.
   padding: 0.25rem 1rem 0;
   // Keep the diff readable even with wrapped controls, zoom, or a short viewport.
   // The budget is for the whole sticky stack, so the top menu above comes out of
@@ -294,40 +322,19 @@ body.difference-page {
     }
   }
 
-  // The title owns the full width of the bar on its own row above the controls,
-  // so it truncates only when it is wider than the whole viewport - the common
-  // long title fits in full. One line rather than a two-line clamp, matching the
-  // watch URL's existing truncation and keeping the bar's height constant. The
-  // template carries the untruncated text in the title attribute for hover.
-  #diff-watch-title {
-    width: 100%;
-    // One line, and not a line the height budget may take back - see #settings.
-    flex: none;
-    margin: 0;
-    padding: 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
-    color: #fff; // match #diff-form's white-on-gradient text
-  }
-
   // The bar's height budget (max-height above) is smaller than its contents on a
   // landscape phone: iOS gives the two datetime <select>s enough intrinsic width
-  // that From and To each take their own row, and title + From + To + Filters +
-  // tabs is then taller than 50svh minus the top menu. With overflow: auto on
-  // the bar itself the row that leaves the visible box is the last one - the
-  // tabs, which are the page's navigation and have no scrollbar to advertise
-  // themselves. Measured in Chromium with no iOS emulation at 736x414, 667x375,
+  // that From and To each take their own row, and From + To + Filters + tabs is
+  // then taller than 50svh minus the top menu. With overflow: auto on the bar
+  // itself the row that leaves the visible box is the last one - the tabs, which
+  // are the page's navigation and have no scrollbar to advertise themselves. Measured in Chromium with no iOS emulation at 736x414, 667x375,
   // 780x360 and 844x330: the tab row sits outside #diff-header's own rect.
   //
   // So spend the budget on the row that can afford it. #settings is the only
-  // child allowed to shrink, and it is what scrolls; the title and the tabs are
-  // flex: none and therefore always inside the bar at any viewport height. The
-  // shrink needs min-height: 0 - a flex item's automatic minimum size is its
-  // content, which is what would otherwise push the tabs back out.
+  // child allowed to shrink, and it is what scrolls; the tab row never does and
+  // is therefore always inside the bar at any viewport height. The shrink needs
+  // min-height: 0 - a flex item's automatic minimum size is its content, which
+  // is what would otherwise push the tabs back out.
   #settings {
     min-width: 0;
     display: flex;
