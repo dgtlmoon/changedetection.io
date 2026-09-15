@@ -1771,17 +1771,17 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgctxt "diff version"
 msgid "From"
-msgstr ""
+msgstr "Da"
 
 #. 'To' labels the newer snapshot version selector on the diff page
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgctxt "diff version"
 msgid "To"
-msgstr ""
+msgstr "A"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "Filtri"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
@@ -1793,7 +1793,7 @@ msgstr "Righe"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Ignore Whitespace"
-msgstr ""
+msgstr "Ignora spazi"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Same/non-changed"
@@ -1821,7 +1821,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Keyboard:"
-msgstr ""
+msgstr "Tastiera:"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "Previous"
@@ -1833,7 +1833,7 @@ msgstr "Successivo"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Jump to next difference"
-msgstr ""
+msgstr "Vai alla differenza successiva"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Jump"
@@ -1856,12 +1856,12 @@ msgstr "Testo"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Screenshot"
-msgstr ""
+msgstr "Screenshot"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html
 msgid "Extract Data"
-msgstr ""
+msgstr "Estrai dati"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "seconds ago."

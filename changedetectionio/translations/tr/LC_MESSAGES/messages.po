@@ -1818,7 +1818,7 @@ msgstr "Kime"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "Filtreler"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
@@ -1893,7 +1893,7 @@ msgstr "Metin"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Screenshot"
-msgstr ""
+msgstr "Ekran görüntüsü"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html

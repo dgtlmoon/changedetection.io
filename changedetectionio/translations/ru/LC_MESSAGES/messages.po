@@ -1875,7 +1875,7 @@ msgstr "К"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "Фильтры"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"

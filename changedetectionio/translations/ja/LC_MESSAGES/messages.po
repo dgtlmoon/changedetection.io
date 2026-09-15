@@ -1790,7 +1790,7 @@ msgstr "変更後"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "フィルタ"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"

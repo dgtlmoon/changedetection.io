@@ -1784,7 +1784,7 @@ msgstr "到"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "过滤器"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
@@ -1859,7 +1859,7 @@ msgstr "文本"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Screenshot"
-msgstr ""
+msgstr "截图"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html

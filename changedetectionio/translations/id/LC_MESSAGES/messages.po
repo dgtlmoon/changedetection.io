@@ -1872,7 +1872,7 @@ msgstr "Ke"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "Filter"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"

@@ -1785,7 +1785,7 @@ msgstr "Na"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "Filtry"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
@@ -1860,7 +1860,7 @@ msgstr "Text"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Screenshot"
-msgstr ""
+msgstr "Snímek obrazovky"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html

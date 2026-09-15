@@ -1913,7 +1913,7 @@ msgstr "Do"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "Filtry"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"

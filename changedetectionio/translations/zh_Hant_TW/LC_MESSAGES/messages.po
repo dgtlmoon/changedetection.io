@@ -1788,7 +1788,7 @@ msgstr "到"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "過濾器"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"

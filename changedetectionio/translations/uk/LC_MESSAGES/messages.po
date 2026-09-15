@@ -1799,7 +1799,7 @@ msgstr "До"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "Фільтри"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
@@ -1874,7 +1874,7 @@ msgstr "Текст"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Screenshot"
-msgstr ""
+msgstr "Скріншот"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html

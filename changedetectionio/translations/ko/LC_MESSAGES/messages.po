@@ -1789,7 +1789,7 @@ msgstr "비교 후"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "필터"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"

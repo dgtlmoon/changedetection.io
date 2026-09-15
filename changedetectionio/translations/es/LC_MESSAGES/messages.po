@@ -1828,7 +1828,7 @@ msgstr "A"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Filters"
-msgstr ""
+msgstr "Filtros"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
@@ -1903,7 +1903,7 @@ msgstr "Texto"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
 msgid "Screenshot"
-msgstr ""
+msgstr "Captura de pantalla"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html
