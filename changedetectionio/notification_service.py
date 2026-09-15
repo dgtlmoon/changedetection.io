@@ -54,20 +54,88 @@ def _check_cascading_vars(datastore, var_name, watch):
     return None
 
 
+def _get_notification_default(datastore, var_name):
+    """Resolve a notification field from global settings, then built-in defaults."""
+    from changedetectionio.notification import (
+        default_notification_body,
+        default_notification_title,
+    )
+
+    value = datastore.data['settings']['application'].get(var_name)
+    if value:
+        return value
+
+    if var_name == 'notification_format':
+        return default_notification_format
+    if var_name == 'notification_body':
+        return default_notification_body
+    if var_name == 'notification_title':
+        return default_notification_title
+
+    return None
+
+
+def _get_content_notification_configs(datastore, watch):
+    """Return every notification configuration that applies to a changed watch.
+
+    A watch-level notification URL retains the existing highest-priority behavior.
+    Otherwise, each unmuted tag with notification URLs is a complete notification
+    configuration. This is important because independently cascading each field
+    selects only the first tag URL and can mix templates from unrelated tags.
+    """
+    from changedetectionio.notification import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+
+    if not watch or watch.get('notification_muted'):
+        return []
+
+    fields = (
+        'notification_urls',
+        'notification_title',
+        'notification_body',
+        'notification_format',
+    )
+
+    # Preserve the established watch > tag > global cascade when the watch has
+    # explicitly configured its own destination(s).
+    if watch.get('notification_urls'):
+        return [{field: _check_cascading_vars(datastore, field, watch) for field in fields}]
+
+    tag_configs = []
+    tags = datastore.get_all_tags_for_watch(uuid=watch.get('uuid')) or {}
+    for tag in tags.values():
+        if tag.get('notification_muted') or not tag.get('notification_urls'):
+            continue
+
+        config = {'notification_urls': tag.get('notification_urls')}
+        for field in fields[1:]:
+            value = tag.get(field)
+            if field == 'notification_format' and value == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
+                value = None
+            config[field] = value or _get_notification_default(datastore, field)
+        tag_configs.append(config)
+
+    if tag_configs:
+        return tag_configs
+
+    global_urls = _get_notification_default(datastore, 'notification_urls')
+    if not global_urls:
+        return []
+
+    return [{field: _get_notification_default(datastore, field) for field in fields}]
+
+
 def watch_will_send_content_changed_notification(datastore, watch):
     """Single source of truth for: will a *content changed* notification actually be
     delivered for this watch?
 
     This mirrors exactly the decision the worker + send_content_changed_notification()
-    make together: the watch must not be muted, and a notification URL must resolve via
-    the watch > tag > global cascade. Anything that wants to know "is a notification
-    going to fire?" (e.g. the worker deciding whether to spend tokens pre-computing the
-    LLM change summary that fills the notification body) should ask here, so the answer
-    can never drift from what actually gets sent.
+    make together: the watch must not be muted, and at least one watch, tag, or global
+    notification configuration must resolve. Anything that wants to know "is a
+    notification going to fire?" (e.g. the worker deciding whether to spend tokens
+    pre-computing the LLM change summary that fills the notification body) should ask
+    here, so the answer can never drift from what actually gets sent.
     """
-    if not watch or watch.get('notification_muted'):
-        return False
-    return bool(_check_cascading_vars(datastore, 'notification_urls', watch))
+    return bool(_get_content_notification_configs(datastore, watch))
 
 
 class FormattableTimestamp(str):
@@ -434,7 +502,6 @@ class NotificationService:
         """
         Send notification when content changes are detected
         """
-        n_object = NotificationContextData()
         watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
             return
@@ -448,31 +515,22 @@ class NotificationService:
                 "History index had 2 or more, but only 1 date loaded, timestamps were not unique? maybe two of the same timestamps got written, needs more delay?"
             )
 
-        # Should be a better parent getter in the model object
+        notification_configs = _get_content_notification_configs(self.datastore, watch)
+        if not notification_configs:
+            return False
 
-        # Prefer - Individual watch settings > Tag settings >  Global settings (in that order)
-        # this change probably not needed?
-        n_object['notification_urls'] = _check_cascading_vars(self.datastore, 'notification_urls', watch)
-        n_object['notification_title'] = _check_cascading_vars(self.datastore,'notification_title', watch)
-        n_object['notification_body'] = _check_cascading_vars(self.datastore,'notification_body', watch)
-        n_object['notification_format'] = _check_cascading_vars(self.datastore,'notification_format', watch)
+        count = watch.get('notification_alert_count', 0) + 1
+        self.datastore.update_watch(uuid=watch_uuid, update_obj={'notification_alert_count': count})
 
-        # Attach LLM results so notification tokens render correctly
-        n_object['_llm_result'] = watch.get('_llm_result')
-        n_object['_llm_intent'] = watch.get('_llm_intent', '')
-        n_object['_llm_change_summary'] = watch.get('_llm_change_summary', '')
-
-        # (Individual watch) Only prepare to notify if the rules above matched
-        queued = False
-        if n_object and n_object.get('notification_urls'):
-            queued = True
-
-            count = watch.get('notification_alert_count', 0) + 1
-            self.datastore.update_watch(uuid=watch_uuid, update_obj={'notification_alert_count': count})
-
+        for config in notification_configs:
+            n_object = NotificationContextData(config)
+            # Attach LLM results so notification tokens render correctly
+            n_object['_llm_result'] = watch.get('_llm_result')
+            n_object['_llm_intent'] = watch.get('_llm_intent', '')
+            n_object['_llm_change_summary'] = watch.get('_llm_change_summary', '')
             self.queue_notification_for_watch(n_object=n_object, watch=watch)
 
-        return queued
+        return True
 
     def send_filter_failure_notification(self, watch_uuid):
         """
