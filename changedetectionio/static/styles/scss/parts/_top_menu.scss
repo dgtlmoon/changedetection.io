@@ -47,10 +47,6 @@ ul#top-right-menu {
   }
 }
 
-// The current diff URL sits between the logo and the right-hand menu in the
-// horizontal nav. It can be arbitrarily long, so it must never push the
-// surrounding items around: it absorbs the available middle space and trims
-// its own text, fading out toward the cut edge instead of a hard clip.
 $current-diff-url-fade: 2.5em;
 
 // -webkit- is still required for the mask on Safari, so every fade state has to
@@ -60,6 +56,10 @@ $current-diff-url-fade: 2.5em;
   mask-image: $image;
 }
 
+// The current diff URL sits between the logo and the right-hand menu in the
+// horizontal nav. It can be arbitrarily long, so it must never push the
+// surrounding items around: it absorbs the available middle space and scrolls
+// its own text, fading out toward the cut edge instead of a hard clip.
 .current-diff-url {
   // Fill the space between the logo and the right-hand menu so the URL block
   // sits in the central region of the row without pushing either side around.
