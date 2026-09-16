@@ -999,27 +999,6 @@ ul {
   vertical-align: middle;
 }
 
-
-#quick-watch-processor-type {
-  ul#processor {
-    color: #fff;
-    padding-left: 0px;
-    li {
-      list-style: none;
-      font-size: 0.9rem;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-  }
-  label, input {
-    padding: 0;
-    margin: 0;
-  }
-}
-
 .restock-label {
   &.in-stock {
     background-color: #7a0cc5;

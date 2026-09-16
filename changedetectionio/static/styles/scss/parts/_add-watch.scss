@@ -170,10 +170,19 @@ body {
     }
 
     li {
+      list-style: none;
+      font-size: .9rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: .5rem;
+
+      input[type="radio"] {
+        flex: 0 0 auto;
+      }
+
       > label {
         font-weight: normal;
-        margin: 0 !important;
-        padding-bottom: 0.5rem;
       }
     }
 
@@ -181,32 +190,6 @@ body {
     // a radio list whose labels wrap inside the narrow pane instead of a <select> that would
     // overflow it. The system-default entry is listed even when it can't render a preview.
     #quick-watch-fetch-backend {
-      ul {
-        margin: 0.35rem 0 0 0;
-        padding: 0;
-        list-style: none;
-      }
-
-      li {
-        list-style: none;
-        font-size: .9rem;
-        display: grid;
-        grid-template-columns: auto 1fr;
-        align-items: center;
-        gap: .5rem;
-        margin-bottom: .5rem;
-
-        input[type="radio"] {
-          flex: 0 0 auto;
-          margin-top: 0.2em;
-        }
-
-        label {
-          display: inline-block;
-          padding: 0;
-          margin: 0;
-        }
-      }
 
       li.unusable {
         opacity: 0.55;

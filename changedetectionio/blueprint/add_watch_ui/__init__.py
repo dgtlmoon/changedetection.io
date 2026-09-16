@@ -76,6 +76,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Note this fetch never reaches difference_detection_processor.call_browser(), so it gets
         # no gating from there - it has to validate for itself.
         url = (request.form.get('url') or '').strip()
+        if not url.lower().startswith('http'):
+            url='https://' + url
+            
         ok, reason = is_fetch_url_allowed(url)
         if not ok:
             logger.warning(f"Add-watch snapshot: refused '{url}' - {reason}")
