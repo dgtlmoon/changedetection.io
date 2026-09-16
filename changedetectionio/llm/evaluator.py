@@ -160,9 +160,21 @@ LLM_PROMPT_MODE_REPLACE = 'replace'
 LLM_PROMPT_MODE_APPEND = 'append'
 
 
-def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS) -> int:
-    """Scale completion tokens to diff size: floor 400, ~1 token per 4 chars, ceiling max_cap."""
-    return max(400, min(len(diff) // 4, max_cap))
+def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS, thinking_budget: int = 0) -> int:
+    """Scale completion tokens to diff size: floor 400, ~1 token per 4 chars, ceiling max_cap.
+
+    The scaled budget above covers the ANSWER only. Thinking/reasoning tokens
+    (Gemini thinkingBudget, or provider-default chain-of-thought on reasoning
+    models such as DeepSeek via OpenRouter) count against the same max_tokens
+    output budget, so the configured thinking_budget is added on top as
+    headroom — mirroring the restock plugin's max(1000, thinking + 800).
+    Default 0 preserves the historical caps exactly.
+    """
+    try:
+        thinking_budget = int(thinking_budget or 0)
+    except (TypeError, ValueError):
+        thinking_budget = 0
+    return max(400, min(len(diff) // 4, max_cap)) + max(0, thinking_budget)
 
 
 def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
@@ -778,7 +790,8 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
             api_base=cfg.get('api_base'),
             timeout=resolve_llm_timeout(cfg),
             max_tokens=apply_local_token_multiplier(
-                _summary_max_tokens(diff, max_cap=settings.max_summary_tokens),
+                _summary_max_tokens(diff, max_cap=settings.max_summary_tokens,
+                                    thinking_budget=settings.thinking_budget),
                 cfg,
             ),
             extra_body=_extra_body,

@@ -621,6 +621,19 @@ class TestSummariseChange:
         assert passed_max_tokens == _summary_max_tokens(diff)
         assert passed_max_tokens >= 400  # always more generous than eval cap of 200
 
+    def test_summary_passes_thinking_headroom(self):
+        """summarise_change adds thinking_budget on top of the diff-scaled cap."""
+        from changedetectionio.llm.evaluator import summarise_change, _summary_max_tokens
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'thinking_budget': 2000})
+        watch = _make_watch(llm_change_summary='Describe changes')
+        diff = '- old\n+ new'
+        with patch('changedetectionio.llm.client.completion',
+                   return_value=('Some summary', 100)) as mock_llm:
+            summarise_change(watch, ds, diff=diff)
+        call_kwargs = mock_llm.call_args
+        passed_max_tokens = call_kwargs.kwargs.get('max_tokens')
+        assert passed_max_tokens == _summary_max_tokens(diff, thinking_budget=2000)
+
     def test_dynamic_token_cap_scales_with_diff_size(self):
         """Larger diffs produce a higher max_tokens cap, bounded at 3000."""
         from changedetectionio.llm.evaluator import _summary_max_tokens
@@ -628,6 +641,14 @@ class TestSummariseChange:
         assert _summary_max_tokens('x' * 4000)  == 1000
         assert _summary_max_tokens('x' * 12000) == 3000  # ceiling
         assert _summary_max_tokens('x' * 99999) == 3000  # never exceeds ceiling
+
+    def test_thinking_budget_added_as_headroom(self):
+        """thinking_budget rides on top of the diff-scaled cap, never inside it."""
+        from changedetectionio.llm.evaluator import _summary_max_tokens
+        assert _summary_max_tokens('x' * 4000, thinking_budget=2000) == 3000  # 1000 + 2000
+        assert _summary_max_tokens('x' * 100, thinking_budget=2000) == 2400   # 400 + 2000
+        assert _summary_max_tokens('x' * 4000) == 1000  # default 0 preserves history
+        assert _summary_max_tokens('x' * 4000, thinking_budget=-5) == 1000
 
 
 # ---------------------------------------------------------------------------
