@@ -62,6 +62,18 @@ jobs:
           echo "---- Built for Python ${{ env.PYTHON_VERSION }} -----"
           docker run test-changedetectionio bash -c 'pip list'
 
+      - name: License compliance - no strong copyleft in shipped image
+        run: |
+          # Runs against the built image, i.e. exactly what ships, with the entrypoint
+          # bypassed so EXTRA_PACKAGES cannot pull in the opt-in AGPL osint plugin.
+          # --partial-match is required: plain --fail-on is an exact string match and
+          # would silently miss declarations like "GPL-2.0-or-later".
+          docker run --rm --entrypoint /bin/bash test-changedetectionio -c '
+            pip install --quiet pip-licenses &&
+            pip-licenses --partial-match \
+              --fail-on="GPL-2.0;GPL-3.0;AGPL;GNU General Public License;GNU Affero General Public License"
+          '
+
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
         run: |
           docker run test-changedetectionio bash -c 'python3 --version'
