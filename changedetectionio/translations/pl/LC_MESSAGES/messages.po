@@ -2743,21 +2743,6 @@ msgstr "Adres URL strony internetowej"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
-msgid "All %(page)s on this page are selected."
-msgstr "Wszystkie %(page)s na tej stronie są zaznaczone."
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Select all %(total)s matching"
-msgstr "Zaznacz wszystkie %(total)s pasujące do"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "All %(total)s matching are selected."
-msgstr "Zaznaczono wszystkie %(total)s pasujące wyniki."
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
 msgid "%(count)s records selected"
 msgstr "Wybrano %(count)s rekordów"
 
@@ -2886,6 +2871,21 @@ msgstr "Usunąć obserwacje?"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr "<p><strong>Czy na pewno chcesz usunąć wybrane obserwacje?</strong></p><p>Tej czynności nie można cofnąć.</p>"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "All %(page)s on this page are selected."
+msgstr "Wszystkie %(page)s na tej stronie są zaznaczone."
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "Select all %(total)s matching"
+msgstr "Zaznacz wszystkie %(total)s pasujące do"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "All %(total)s matching are selected."
+msgstr "Zaznaczono wszystkie %(total)s pasujące wyniki."
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"
