@@ -77,10 +77,6 @@ msgstr "%(browser)s tidak dapat menampilkan pratinjau langsung, pilih browser di
 msgid "Select by element"
 msgstr "Pilih berdasarkan elemen"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Hover & click the preview to watch just one part of the page."
-msgstr "Arahkan kursor & klik pratinjau untuk memantau hanya satu bagian halaman."
-
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear selection"

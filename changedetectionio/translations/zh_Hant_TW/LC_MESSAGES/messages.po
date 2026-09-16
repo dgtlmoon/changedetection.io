@@ -74,10 +74,6 @@ msgstr "%(browser)s 無法渲染即時預覽，請在下方選擇瀏覽器"
 msgid "Select by element"
 msgstr "按元素選擇"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Hover & click the preview to watch just one part of the page."
-msgstr "將滑鼠懸停並點擊預覽畫面，以僅監測網頁的特定部分。"
-
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear selection"

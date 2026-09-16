@@ -53,7 +53,7 @@
                     <div class="add-watch-option-group" id="quick-watch-processor-type">
                         {{ render_simple_field(form.processor, label=_('What do you want to achieve?')) }}
                     </div>
-
+{%- if not browser_backend_disabled -%}
                     <div class="add-watch-option-group" id="quick-watch-fetch-backend">
                         {# Rendered by hand rather than with render_field(): the system-default entry
                            is listed for explanation and has to render disabled, and WTForms can't
@@ -68,7 +68,7 @@
                             {%- endfor -%}
                         </ul>
                     </div>
-
+{%- endif -%}
                     <div class="add-watch-option-group" id="by-element-toggle-group">
                         {%- if llm_configured -%}
                         <label class="pure-checkbox" for="by-element-toggle">
@@ -78,7 +78,6 @@
                         {# No LLM intent available? Then narrowing by element is the only thing this
                            page can do - selection is always on, so nothing is labelled or offered
                            here, just the hint on how to use the preview. #}
-                        <i>{{ _('Hover & click the preview to watch just one part of the page.') }}</i>
                         <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="display: none;">{{ _('Clear selection') }}</a>
                     </div>
 

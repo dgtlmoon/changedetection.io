@@ -70,10 +70,6 @@ msgstr ""
 msgid "Select by element"
 msgstr "Wybierz według elementu"
 
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Hover & click the preview to watch just one part of the page."
-msgstr "Najedź kursorem na podgląd i kliknij, aby obejrzeć tylko jedną część strony."
-
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear selection"
