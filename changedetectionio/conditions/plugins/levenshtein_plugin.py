@@ -14,7 +14,11 @@ global_hookimpl = pluggy.HookimplMarker("changedetectionio")
 
 def levenshtein_ratio_recent_history(watch, incoming_text=None):
     try:
-        from Levenshtein import ratio, distance
+        # rapidfuzz (MIT) instead of Levenshtein (GPL-2.0-or-later), to keep the
+        # shipped deps free of strong copyleft. Indel.normalized_similarity is the
+        # exact equivalent of Levenshtein.ratio - Levenshtein.normalized_similarity is not.
+        from rapidfuzz.distance.Levenshtein import distance
+        from rapidfuzz.distance.Indel import normalized_similarity as ratio
         k = list(watch.history.keys())
         a = None
         b = None
