@@ -537,6 +537,23 @@ body.blueprint-watchlist {
   #quick-watch-llm-intent {
     margin-top: $common-gap;
   }
+  #quick-watch-processor-type {
+    span.label {
+      display: none;
+    }
+    label {
+      font-weight: normal;
+    }
+    ul {
+      list-style: none;
+      margin-left: 0;
+      padding-left: 0;
+    }
+    li {
+      margin: .5em 0 .2em;
+    }
+
+  }
 
   // Let the URL field grow with what's typed, from a compact minimum up to 80% of
   // the row, instead of always filling it. `field-sizing: content` is the pure-CSS
