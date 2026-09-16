@@ -534,23 +534,47 @@ body.blueprint-watchlist {
   #add-watch-url-row {
     margin-bottom: 0 !important;
   }
+
   #quick-watch-llm-intent {
     margin-top: $common-gap;
   }
+
   #quick-watch-processor-type {
     span.label {
       display: none;
     }
+
     label {
       font-weight: normal;
+      font-size: .9rem;
+      margin: 0;
     }
+
     ul {
       list-style: none;
       margin-left: 0;
       padding-left: 0;
     }
+
     li {
-      margin: .5em 0 .2em;
+      list-style: none;
+      font-size: .9rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: .5rem;
+
+      input[type="radio"] {
+        flex: 0 0 auto;
+      }
+
+      > label {
+        font-weight: normal;
+      }
+    }
+
+    li + li { /* gap between */
+      margin-top: .75rem;
     }
 
   }
