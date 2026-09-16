@@ -117,11 +117,17 @@ def _get_content_notification_configs(datastore, watch):
     if tag_configs:
         return tag_configs
 
-    global_urls = _get_notification_default(datastore, 'notification_urls')
-    if not global_urls:
+    # No notification-enabled tags apply, so retain the original per-field
+    # watch > tag > global cascade. A watch may override the title, body, or
+    # format while inheriting only its destination URL from global settings.
+    fallback_config = {
+        field: _check_cascading_vars(datastore, field, watch)
+        for field in fields
+    }
+    if not fallback_config['notification_urls']:
         return []
 
-    return [{field: _get_notification_default(datastore, field) for field in fields}]
+    return [fallback_config]
 
 
 def watch_will_send_content_changed_notification(datastore, watch):

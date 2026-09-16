@@ -156,6 +156,37 @@ def test_group_system_default_format_uses_global_format():
     assert configs[0]['notification_format'] == 'markdown'
 
 
+def test_watch_fields_override_global_notification_fallback():
+    watch = _watch(
+        notification_title='Watch title',
+        notification_body='Watch body',
+        notification_format='html',
+    )
+    tags = OrderedDict({
+        'ordinary-tag': {
+            'notification_urls': [],
+            'notification_muted': False,
+        },
+    })
+    datastore = FakeDatastore(
+        watch,
+        tags,
+        application={
+            'notification_urls': ['mailto://user:password@example.com'],
+            'notification_format': 'text',
+        },
+    )
+
+    configs = _get_content_notification_configs(datastore, watch)
+
+    assert configs == [{
+        'notification_urls': ['mailto://user:password@example.com'],
+        'notification_title': 'Watch title',
+        'notification_body': 'Watch body',
+        'notification_format': 'html',
+    }]
+
+
 def test_watch_notification_urls_keep_priority_over_notification_groups():
     watch = _watch(
         notification_urls=['mailto://user:password@example.com'],
