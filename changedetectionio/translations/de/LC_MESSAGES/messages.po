@@ -2702,6 +2702,10 @@ msgstr "in '%(title)s'"
 msgid "RSS Feed"
 msgstr ""
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr ""
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr ""
@@ -2778,10 +2782,6 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr ""
 "<p><strong>Möchten Sie die ausgewählten Überwachungen wirklich löschen?</strong></p><p>Diese Aktion kann nicht "
 "rückgängig gemacht werden.</p>"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-msgid "Close"
-msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"

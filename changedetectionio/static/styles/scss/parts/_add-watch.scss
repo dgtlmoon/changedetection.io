@@ -158,14 +158,22 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
+    color: #fff;
 
     @media (max-width: 900px) {
       flex: 1 1 auto;
     }
 
-    .add-watch-option-group {
-      label {
-        display: inline-block;
+    span.label {
+      padding-bottom: 0.5rem;
+      display: inline-block !important;
+    }
+
+    li {
+      > label {
+        font-weight: normal;
+        margin: 0 !important;
+        padding-bottom: 0.5rem;
       }
     }
 
@@ -180,10 +188,13 @@ body {
       }
 
       li {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.5em;
-        padding: 0.15rem 0;
+        list-style: none;
+        font-size: .9rem;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: .5rem;
+        margin-bottom: .5rem;
 
         input[type="radio"] {
           flex: 0 0 auto;
@@ -191,12 +202,9 @@ body {
         }
 
         label {
-          // Wrap rather than push the pane wider
-          display: block;
-          min-width: 0;
-          overflow-wrap: anywhere;
-          font-size: 0.85rem;
-          line-height: 1.35;
+          display: inline-block;
+          padding: 0;
+          margin: 0;
         }
       }
 

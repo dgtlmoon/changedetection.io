@@ -51,14 +51,14 @@
                 <!-- RIGHT : options -->
                 <div id="add-watch-options-pane">
                     <div class="add-watch-option-group" id="quick-watch-processor-type">
-                        {{ render_simple_field(form.processor) }}
+                        {{ render_simple_field(form.processor, label=_('What do you want to achieve?')) }}
                     </div>
 
                     <div class="add-watch-option-group" id="quick-watch-fetch-backend">
                         {# Rendered by hand rather than with render_field(): the system-default entry
                            is listed for explanation and has to render disabled, and WTForms can't
                            carry a per-option disabled attribute through a RadioField's choices. #}
-                        <span class="label"><label>{{ form.fetch_backend.label.text }}</label></span>
+                        <label>{{ _('Select a browser') }}</label>
                         <ul>
                             {%- for browser in form.fetch_backend -%}
                             {%- set unusable = browser.data in unusable_browsers -%}
@@ -78,7 +78,7 @@
                         {# No LLM intent available? Then narrowing by element is the only thing this
                            page can do - selection is always on, so nothing is labelled or offered
                            here, just the hint on how to use the preview. #}
-                        <span class="pure-form-message-inline">{{ _('Hover & click the preview to watch just one part of the page.') }}</span>
+                        <i>{{ _('Hover & click the preview to watch just one part of the page.') }}</i>
                         <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="display: none;">{{ _('Clear selection') }}</a>
                     </div>
 

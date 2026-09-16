@@ -2662,6 +2662,10 @@ msgstr "於 '%(title)s'"
 msgid "RSS Feed"
 msgstr "RSS Feed"
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr "關閉"
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr "反選"
@@ -2734,10 +2738,6 @@ msgstr "刪除監測任務？"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr "<p><strong>您確定要刪除所選的監測任務嗎？</strong></p><p>此動作無法復原。</p>"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-msgid "Close"
-msgstr "關閉"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"

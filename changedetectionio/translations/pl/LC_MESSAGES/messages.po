@@ -2806,6 +2806,10 @@ msgstr "w „%(title)s”"
 msgid "RSS Feed"
 msgstr "Kanał RSS"
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr "Zamknij"
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr "Odwróć"
@@ -2878,10 +2882,6 @@ msgstr "Usunąć obserwacje?"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr "<p><strong>Czy na pewno chcesz usunąć wybrane obserwacje?</strong></p><p>Tej czynności nie można cofnąć.</p>"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-msgid "Close"
-msgstr "Zamknij"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"

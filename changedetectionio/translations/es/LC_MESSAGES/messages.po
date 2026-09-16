@@ -2718,6 +2718,10 @@ msgstr "en '%(title)s'"
 msgid "RSS Feed"
 msgstr ""
 
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr ""
+
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
 msgstr ""
@@ -2794,10 +2798,6 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr ""
 "<p><strong>¿Está seguro de que desea eliminar los monitores seleccionados?</strong></p><p>Esta acción no se puede "
 "deshacer.</p>"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-msgid "Close"
-msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"
