@@ -76,7 +76,7 @@
   --color-background-messages-notice: rgba(255, 255, 255, .5);
   --color-border-notification: #ccc;
 
-  --color-background-checkbox-operations: rgba(0, 0, 0, 0.05);
+  --color-background-checkbox-operations: rgba(255, 255, 255, 0.7);
   --color-warning: #ff3300;
   --color-border-warning: var(--color-warning);
   --color-text-legend: var(--color-white);
@@ -124,7 +124,6 @@
   --color-sidebar-shadow: 6px 0 28px rgba(0, 0, 0, 0.18);
   --color-sidebar-item-hover-bg: rgba(0, 0, 0, 0.06);
   --color-sidebar-item-active-bg: rgba(0, 0, 0, 0.10);
-
   --common-round-border: 8px;
 }
 
@@ -142,7 +141,7 @@ html[data-darkmode="true"] {
   --color-background-table-thead: var(--color-grey-200);
   --color-table-background: var(--color-grey-300);
   --color-table-stripe: var(--color-grey-325);
-
+  --color-background-checkbox-operations: rgba(50, 50, 50, 0.7);
   --watchlist-row-selected: #1e3a5f; // darker blue highlight for selected rows in dark mode
   --watchlist-row-hover: #2a2a2a;     // subtle grey highlight on row hover (dark mode)
 
