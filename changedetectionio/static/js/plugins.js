@@ -179,6 +179,25 @@ function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
     checkbox.addEventListener('change', updateOpacity);
 }
 
+// Radio-group counterpart of toggleOpacity: fields are full opacity only while the named
+// radio group sits on activeValue, otherwise greyed out. Used by the tag AI/LLM tab, where a
+// ternary (On / Off / Leave it to each watch) decides whether the prompts below apply.
+function toggleOpacityByRadioValue(radioName, activeValue, fieldSelector) {
+    const radios = document.querySelectorAll(`input[type="radio"][name="${radioName}"]`);
+    const fields = document.querySelectorAll(fieldSelector);
+
+    function updateOpacity() {
+        const active = Array.from(radios).some(radio => radio.checked && radio.value === activeValue);
+        fields.forEach(field => {
+            field.style.opacity = active ? 1 : 0.6;
+        });
+    }
+
+    // Initial setup
+    updateOpacity();
+    radios.forEach(radio => radio.addEventListener('change', updateOpacity));
+}
+
 function toggleVisibility(checkboxSelector, fieldSelector, inverted) {
     const checkbox = document.querySelector(checkboxSelector);
     const fields = document.querySelectorAll(fieldSelector);

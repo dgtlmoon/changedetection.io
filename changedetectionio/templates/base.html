@@ -16,8 +16,9 @@
         {%- endif -%}
     {%- endif -%}
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='flag-icons.min.css')}}" >
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='flag-icons.min.css')}}"  >
+    {# ?v= is appended automatically for static_content (see _fingerprint_static_urls) #}
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}" >
     {% if extra_stylesheets %}
       {% for m in extra_stylesheets %}
         <link rel="stylesheet" href="{{ m }}?ver={{ get_css_version() }}" >
@@ -87,8 +88,10 @@
         };
     </script>
     <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='feather-icons.min.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='sidebar.js')}}"></script>
+
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>
-    <script src="{{url_for('static_content', group='js', filename='feather-icons.min.js')}}" defer></script>
     {# Render all <i data-feather="..."> icons app-wide (jQuery ready), so individual pages don't each need their own feather.replace() call. #}
     <script>$(function () { if (window.feather) feather.replace(); });</script>
     {% if socket_io_enabled %}
@@ -117,8 +120,12 @@
     <div>
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
           {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
-          <a class="current-diff-url" href="{{ current_diff_url }}" title="{{ current_diff_url }}">
-            <span>{{ current_diff_url }}</span></a>
+          {# The watch's own name when it has one, so the diff/preview pages do not print
+             the same URL twice. The title attribute keeps the full text reachable on hover
+             or long-press once the line truncates, and keeps the URL discoverable when a
+             title is covering it. #}
+          <a class="current-diff-url" href="{{ current_diff_url }}" title="{% if current_diff_label and current_diff_label != current_diff_url %}{{ current_diff_label }}&#10;{% endif %}{{ current_diff_url }}">
+            <span>{{ current_diff_label or current_diff_url }}</span></a>
         {% endif %}
 
         <ul class="top-menu-list" id="top-right-menu">
@@ -252,8 +259,9 @@
     </div><!-- /.app -->
     <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='hamburger-menu.js')}}" defer></script>
-    <script src="{{url_for('static_content', group='js', filename='sidebar.js')}}" defer></script>
+
     <script src="{{url_for('static_content', group='js', filename='menu-pop.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='scrollable-title.js')}}" defer></script>
 
     <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span></div>
     <div id="realtime-conn-error" style="display:none">{{ _('Real-time updates offline') }}</div>
@@ -271,13 +279,19 @@
       <div class="modal-body">
         <div class="language-list">
           {% for locale, lang_data in available_languages.items()|sort %}
-          <a href="{{ url_for('set_language', locale=locale, redirect=request.path) }}" class="language-option" data-locale="{{ locale }}">
-            <span class="lang-option {{ lang_data.flag }}"></span> <span class="language-name">{{ lang_data.name }}</span>
-          </a>
+          <form method="POST" action="{{ url_for('set_language', locale=locale) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="language-option" data-locale="{{ locale }}">
+              <span class="lang-option {{ lang_data.flag }}"></span> <span class="language-name">{{ lang_data.name }}</span>
+            </button>
+          </form>
           {% endfor %}
         </div>
         <div>
-            <a href="{{ url_for('ui.delete_locale_language_session_var_if_it_exists', redirect=request.path) }}" >{{ _('Auto-detect from browser') }}</a>
+            <form method="POST" action="{{ url_for('ui.delete_locale_language_session_var_if_it_exists') }}" style="display: inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="bare-btn">{{ _('Auto-detect from browser') }}</button>
+            </form>
         </div>
         <div>
             {{ _('Language support is in beta, please help us improve by opening a PR on GitHub with any updates.') }}
@@ -311,11 +325,18 @@
         <h2 class="modal-title" id="search-modal-title">{{ _('Search') }}</h2>
       </div>
       <div class="modal-body">
-        <form id="search-form" method="GET">
+        {# Plain GET submit to the watchlist - url_for() carries the reverse-proxy sub-path
+           (SCRIPT_NAME), so no client-side URL building is needed. #}
+        <form id="search-form" method="GET" action="{{ url_for('watchlist.index') }}">
           <div class="pure-control-group">
-            <label for="search-modal-input">{% if active_tag_uuid %}{{ _("URL or Title in '%(title)s'", title=active_tag.title) }}{% else %}{{ _('URL or Title') }}{% endif %}</label>
+            {# Matches watch_passes_search() in blueprint/watchlist/filters.py - title, URL and last error text #}
+            <label for="search-modal-input">{{ _('URL, title or error text') }}</label>
             <input id="search-modal-input" class="m-d" name="q" placeholder="{{ _('Enter search term...') }}" required type="text" value="" autofocus>
-            <input name="tags" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
+            {# 'tag' (not 'tags') - that's the arg the watchlist filters on #}
+            {% if active_tag_uuid %}
+            <input name="tag" type="hidden" value="{{ active_tag_uuid }}">
+            <span class="pure-form-message-inline">{{ _("Searching in current group '%(title)s' only", title=active_tag.title) }}</span>
+            {% endif %}
           </div>
         </form>
       </div>

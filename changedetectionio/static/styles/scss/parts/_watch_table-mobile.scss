@@ -93,8 +93,11 @@ $watch-table-mobile-max: 767px;
   .watch-table {
     tbody {
       tr {
-        padding-bottom: 10px;
-        padding-top: 10px;
+
+        padding-inline: 12px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+
         display: grid;
         grid-template-columns: $grid-col-checkbox 1fr $grid-col-watch;
         grid-template-rows: auto auto auto auto;
@@ -148,7 +151,7 @@ $watch-table-mobile-max: 767px;
           grid-row: 4;
           display: flex;
           align-items: center;
-          justify-content: flex-start;
+          justify-content: center;
         }
 
         > td.watch-controls {

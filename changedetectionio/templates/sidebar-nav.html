@@ -7,17 +7,20 @@
     <li class="action-sidebar-li" id="action-sidebar-logo">
 
         {%- if has_password and not current_user.is_authenticated -%}
-          <a id="cdio-logo" href="https://changedetection.io" rel="noopener">
+          <a id="cdio-logo" href="https://changedetection.io" rel="noopener" title="ChangeDetection.io intelligent web page change detection.">
               <span id="logo-expanded"><strong>Change</strong>Detection.io</span>
               <span id="logo-short"><strong>CD</strong>IO</span>
           </a>
         {%- else -%}
-          <a id="cdio-logo" href="{{url_for('watchlist.index')}}">
+          <a id="cdio-logo" href="{{url_for('watchlist.index')}}" title="ChangeDetection.io intelligent web page change detection.">
               <span id="logo-expanded"><strong>Change</strong>Detection.io</span>
               <span id="logo-short"><strong>CD</strong>IO</span>
           </a>
         {%- endif -%}
     </li>
+    {# Add-Watch needs a browser that can render a live preview (see the add_watch_ui
+       blueprint's browser_config) - without one the page can only fail, so don't offer it #}
+    {%- if has_visual_browser -%}
     <li class="action-sidebar-li">
         <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
            class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
@@ -37,6 +40,7 @@
             <span class="action-label">{{ _('Add a page watch') }}</span>
         </a>
     </li>
+    {%- endif -%}
     <li class="action-sidebar-li">
         <a href="{{ url_for('watchlist.index') }}"
            class="action-sidebar-item {% if ep == 'watchlist.index' or ep.startswith('ui.ui_views') or ep.startswith('ui.ui_edit') %}active{% endif %}"

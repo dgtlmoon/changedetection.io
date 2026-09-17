@@ -80,7 +80,6 @@ Note:
     This extension uses the Arrow library for timezone-aware datetime handling.
     All timezone names should be valid IANA timezone identifiers (e.g., 'America/New_York').
 """
-import arrow
 
 from jinja2 import nodes
 from jinja2.ext import Extension
@@ -125,6 +124,7 @@ class TimeExtension(Extension):
             _datetime('UTC', '+', 'hours=2,minutes=30', '%Y-%m-%d %H:%M:%S')
             # Returns current time + 2.5 hours
         """
+        import arrow
         # Use default timezone if none specified
         if not timezone or timezone == '':
             timezone = self.environment.default_timezone
@@ -162,6 +162,7 @@ class TimeExtension(Extension):
             _now('America/New_York', '%Y-%m-%d %H:%M:%S')
             # Returns current time in New York timezone
         """
+        import arrow
         # Use default timezone if none specified
         if not timezone or timezone == '':
             timezone = self.environment.default_timezone

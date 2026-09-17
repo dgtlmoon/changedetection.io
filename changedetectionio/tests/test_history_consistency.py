@@ -30,7 +30,7 @@ def test_consistent_history(client, live_server, measure_memory_usage, datastore
         test_url = url_for('test_endpoint', content_type="text/html", content=content, _external=True)
         uuids.add(client.application.config.get('DATASTORE').add_watch(url=test_url, extras={'title': str(one)}))
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     duration = time.time() - now
@@ -159,7 +159,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -168,7 +168,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>test-two</html>")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("ui.ui_diff.diff_history_page", uuid=uuid))
@@ -179,7 +179,7 @@ def test_check_text_history_view(client, live_server, measure_memory_usage, data
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>test-three</html>")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # It should remember the last viewed time, so the first difference is not shown
@@ -202,7 +202,7 @@ def test_history_trim_global_only(client, live_server, measure_memory_usage, dat
             f.write(f"<html>test {i}</html>")
         if not uuid:
             uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
         if i ==8:
@@ -252,7 +252,7 @@ def test_history_trim_global_override_in_watch(client, live_server, measure_memo
 
             wait_for_all_checks(client)
 
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
         if i == 8:

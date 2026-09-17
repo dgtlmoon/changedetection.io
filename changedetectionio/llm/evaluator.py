@@ -5,7 +5,8 @@ Two public entry points:
   - run_setup(watch, datastore)        — one-time: decide if pre-filter needed
   - evaluate_change(watch, datastore, diff, current_snapshot) — per-change evaluation
 
-Intent resolution: watch.llm_intent → first tag with llm_intent → None (no evaluation)
+Intent resolution: watch.llm_intent → first tag with llm_intent whose AI switch is "on"
+                   (see tag_llm_applies_to_watches) → None (no evaluation)
 Cache: each (intent, diff) pair is evaluated exactly once, result stored in watch.
 
 Environment variable overrides (take priority over datastore settings):
@@ -97,6 +98,8 @@ def _thinking_extra_body(model: str, budget: int) -> dict | None:
     """
     if not model.startswith('gemini/'):
         return None
+    if 'flash-lite' in model.lower():
+        return None
     try:
         import litellm
         if not litellm.get_model_info(model).get('supports_reasoning'):
@@ -148,6 +151,13 @@ DEFAULT_CHANGE_SUMMARY_PROMPT = (
     "Do not quote non-English text verbatim; translate and summarise all content into English. "
     "Do not give partial listings such as 'Examples include:', always be thorough."
 )
+
+# How a watch's or tag's llm_change_summary combines with the prompt it inherits.
+# 'replace' is the default and the historical behaviour; 'append' lets a watch add a line
+# or two to the inherited prompt instead of holding a full private copy of it, so later
+# edits to the global prompt still reach that watch. Re #4251.
+LLM_PROMPT_MODE_REPLACE = 'replace'
+LLM_PROMPT_MODE_APPEND = 'append'
 
 
 def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS) -> int:
@@ -237,6 +247,70 @@ def resolve_llm_timeout(llm_cfg: dict) -> int:
 # Intent resolution
 # ---------------------------------------------------------------------------
 
+# A group/tag has exactly one AI control (`llm_backend_profile`), and it is ternary:
+#
+#   True  — AI on for every watch in the group, using the group's AI settings
+#           (llm_intent / llm_change_summary cascade down to the watches)
+#   False — AI off for every watch in the group; its prompts are stored but never used
+#   None  — the group has no opinion: each watch's own AI switch and prompts apply
+#
+# On a *watch* the same key is a plain bool (on/off, default on). One control per level, so
+# there is nothing to reconcile between an "override?" flag and an "enabled?" flag.
+def tag_llm_decision(tag):
+    """This group's AI decision: True (on, use its settings), False (off), or None (no opinion)."""
+    if not tag:
+        return None
+    value = tag.get('llm_backend_profile')
+    return None if value is None else bool(value)
+
+
+def tag_llm_applies_to_watches(tag) -> bool:
+    """True when this group hands its AI settings down to its watches.
+
+    Only the "on" state does that: a group set to "off" suppresses AI for its watches rather
+    than lending them prompts, and a group with no opinion leaves them alone entirely. This is
+    the single gate behind both the evaluator cascade and the watch edit page's
+    "From group ..." placeholder.
+    """
+    return tag_llm_decision(tag) is True
+
+
+def _watch_tags(watch, datastore):
+    """Yield this watch's tag dicts, in the watch's own tag order, skipping unknown UUIDs."""
+    for tag_uuid in watch.get('tags', []):
+        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+        if tag:
+            yield tag
+
+
+def _tags_applying_llm(watch, datastore):
+    """Yield this watch's groups, in order, that hand their AI settings to their watches."""
+    for tag in _watch_tags(watch, datastore):
+        if tag_llm_applies_to_watches(tag):
+            yield tag
+
+
+def llm_enabled_for_watch(watch, datastore) -> tuple[bool, str]:
+    """Is automatic AI evaluation switched on for this watch? Returns (enabled, source).
+
+    See #4204 — users with hundreds of watches want AI on only a select few.
+
+    A group with an opinion decides for all of its watches ("the group setting overrides any
+    watch on/off"), so the first such group wins over the watch's own switch; groups set to
+    "leave it to each watch" are skipped. With no group deciding, the watch decides — and a
+    missing key means on, so watches predating this switch keep working.
+
+    Only gates *automatic* spend (the worker's intent/summary passes and the restock AI
+    plugin). Explicit user actions — the diff page "Summary" button, the intent preview —
+    stay available, since those cost tokens only when someone deliberately clicks.
+    """
+    for tag in _watch_tags(watch, datastore):
+        decision = tag_llm_decision(tag)
+        if decision is not None:
+            return decision, tag.get('title', 'tag')
+    return bool(watch.get('llm_backend_profile', True)), 'watch'
+
+
 def resolve_llm_field(watch, datastore, field: str) -> tuple[str, str]:
     """
     Generic cascade resolver for any LLM per-watch field.
@@ -247,12 +321,10 @@ def resolve_llm_field(watch, datastore, field: str) -> tuple[str, str]:
     if value:
         return value, 'watch'
 
-    for tag_uuid in watch.get('tags', []):
-        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-        if tag:
-            tag_value = (tag.get(field) or '').strip()
-            if tag_value:
-                return tag_value, tag.get('title', 'tag')
+    for tag in _tags_applying_llm(watch, datastore):
+        tag_value = (tag.get(field) or '').strip()
+        if tag_value:
+            return tag_value, tag.get('title', 'tag')
 
     return '', ''
 
@@ -266,12 +338,10 @@ def resolve_intent(watch, datastore) -> tuple[str, str]:
     if intent:
         return intent, 'watch'
 
-    for tag_uuid in watch.get('tags', []):
-        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-        if tag:
-            tag_intent = (tag.get('llm_intent') or '').strip()
-            if tag_intent:
-                return tag_intent, tag.get('title', 'tag')
+    for tag in _tags_applying_llm(watch, datastore):
+        tag_intent = (tag.get('llm_intent') or '').strip()
+        if tag_intent:
+            return tag_intent, tag.get('title', 'tag')
 
     return '', ''
 
@@ -405,23 +475,25 @@ def accumulate_global_tokens(datastore, tokens: int,
 
     current_month = _get_month_key()
     cost = _estimate_cost_usd(model, input_tokens, output_tokens)
-    settings = get_llm_settings(datastore)
 
-    # Month rollover: reset monthly counters
-    if settings.tokens_month_key != current_month:
-        settings.tokens_this_month = 0
-        settings.cost_usd_this_month = 0.0
-        settings.tokens_month_key = current_month
+    with datastore.lock:
+        settings = get_llm_settings(datastore)
 
-    settings.tokens_total_cumulative += tokens
-    settings.tokens_this_month       += tokens
-    settings.cost_usd_total_cumulative += cost
-    settings.cost_usd_this_month       += cost
+        # Month rollover: reset monthly counters
+        if settings.tokens_month_key != current_month:
+            settings.tokens_this_month = 0
+            settings.cost_usd_this_month = 0.0
+            settings.tokens_month_key = current_month
 
-    # Round-trip through model_dump so storage stays a plain dict and the schema
-    # contract (extra='forbid', type coercion) is re-enforced on every write.
-    datastore.data['settings']['application']['llm'] = settings.model_dump()
-    datastore.commit()
+        settings.tokens_total_cumulative += tokens
+        settings.tokens_this_month += tokens
+        settings.cost_usd_total_cumulative += cost
+        settings.cost_usd_this_month += cost
+
+        # Round-trip through model_dump so storage stays a plain dict and the schema
+        # contract (extra='forbid', type coercion) is re-enforced on every write.
+        datastore.data['settings']['application']['llm'] = settings.model_dump()
+        datastore.commit()
 
 
 def is_global_token_budget_exceeded(datastore) -> bool:
@@ -537,16 +609,53 @@ def run_setup(watch, datastore, snapshot_text: str) -> None:
 # AI Change Summary — human-readable description of what changed
 # ---------------------------------------------------------------------------
 
+def _first_tag_with_field(watch, datastore, field: str):
+    """Return (value, tag) for the first linked tag with a non-empty `field`, else ('', None).
+
+    Same first-match-wins order as resolve_llm_field() (so only groups opted in via
+    tag_llm_applies_to_watches() count); this variant also hands back the tag itself so
+    the caller can read sibling keys such as the prompt mode.
+    """
+    for tag in _tags_applying_llm(watch, datastore):
+        value = (tag.get(field) or '').strip()
+        if value:
+            return value, tag
+    return '', None
+
+
+def _apply_prompt_layer(inherited: str, value: str, mode: str) -> str:
+    """Fold one cascade level's prompt onto what it inherited.
+
+    'append' keeps the inherited prompt and adds `value` after it, so a watch can add a
+    sentence or two without pinning a private copy of the prompt above it (see #4251).
+    Anything else replaces, which is the historical behaviour and stays the default.
+    """
+    if not value:
+        return inherited
+    if mode == LLM_PROMPT_MODE_APPEND and inherited:
+        return f"{inherited}\n\n{value}"
+    return value
+
+
 def get_effective_summary_prompt(watch, datastore) -> str:
     """Return the prompt that summarise_change will use.
 
-    Cascade: watch → tag → global settings default → hardcoded fallback.
+    Cascade: hardcoded fallback → global settings default → tag → watch. Each level with a
+    value either replaces what it inherited or appends to it, per its own
+    `llm_change_summary_mode`. With every level left on the default 'replace' this reduces
+    to the original watch → tag → global → hardcoded first-non-empty-wins behaviour.
     """
-    prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
-    if prompt:
-        return prompt
-    global_default = get_llm_settings(datastore).change_summary_default.strip()
-    return global_default or DEFAULT_CHANGE_SUMMARY_PROMPT
+    prompt = get_llm_settings(datastore).change_summary_default.strip() or DEFAULT_CHANGE_SUMMARY_PROMPT
+
+    tag_value, tag = _first_tag_with_field(watch, datastore, 'llm_change_summary')
+    if tag_value:
+        prompt = _apply_prompt_layer(prompt, tag_value, tag.get('llm_change_summary_mode'))
+
+    watch_value = (watch.get('llm_change_summary') or '').strip()
+    if watch_value:
+        prompt = _apply_prompt_layer(prompt, watch_value, watch.get('llm_change_summary_mode'))
+
+    return prompt
 
 
 def compute_summary_cache_key(diff_text: str, prompt: str) -> str:

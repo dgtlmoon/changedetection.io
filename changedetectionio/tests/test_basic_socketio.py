@@ -51,7 +51,7 @@ def run_socketio_watch_update_test(client, live_server, password_mode="", datast
     set_modified_response(datastore_path=datastore_path)
 
     # Force recheck
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     # Wait for the watch to be checked
@@ -79,7 +79,7 @@ def run_socketio_watch_update_test(client, live_server, password_mode="", datast
         # Force a recheck every 5 seconds to ensure events are emitted
 #        if i > 0 and i % 5 == 0:
 #            print(f"Still waiting for events, forcing another recheck...")
-#            res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+#            res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 #            assert b'Queued 1 watch for rechecking.' in res.data
 #            wait_for_all_checks(client)
 

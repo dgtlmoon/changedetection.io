@@ -9,7 +9,7 @@ import asyncio
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
-from changedetectionio.validate_url import is_private_hostname, is_url_private_or_parser_confused
+from changedetectionio.validate_url import is_fetch_url_allowed, is_private_hostname, is_url_private_or_parser_confused
 
 
 # "html_requests" is listed as the default fetcher in store.py!
@@ -87,13 +87,12 @@ class fetcher(Fetcher):
 
         try:
             # Fresh DNS check at fetch time — catches DNS rebinding regardless of add-time cache.
-            # Validates every hostname both urlparse and urllib3 see, so parser-differential
-            # payloads (GHSA-rph4-96w6-q594) cannot smuggle an internal target past the gate.
-            if not allow_iana_restricted:
-                if is_url_private_or_parser_confused(url):
-                    raise Exception(f"Fetch blocked: '{url}' resolves to a private/reserved IP address "
-                                    f"or contains a parser-differential payload. "
-                                    f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow.")
+            # Shared with every other fetch entry point, so the scheme allowlist and the
+            # parser-differential rejection (GHSA-rph4-96w6-q594) stay in step here too.
+            # Per-redirect-hop re-validation is done separately in the loop below.
+            ok, reason = is_fetch_url_allowed(url)
+            if not ok:
+                raise Exception(reason)
 
             r = session.request(method=request_method,
                                 data=request_body.encode('utf-8') if type(request_body) is str else request_body,

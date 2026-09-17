@@ -158,15 +158,37 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
+    color: #fff;
 
     @media (max-width: 900px) {
       flex: 1 1 auto;
     }
 
-    .add-watch-option-group {
-      label {
-        display: inline-block;
+    span.label {
+      padding-bottom: 0.5rem;
+      display: inline-block !important;
+    }
+    label {
+      margin: 0 !important;; /* override */
+    }
+    li {
+      list-style: none;
+      font-size: .9rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: .5rem;
+
+      input[type="radio"] {
+        flex: 0 0 auto;
       }
+
+      > label {
+        font-weight: normal;
+      }
+    }
+    li + li { /* gap between */
+      margin-top: .75rem;
     }
 
     #by-element-toggle-group {

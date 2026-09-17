@@ -61,7 +61,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
 
     logger.info(f"TEST: First check - queuing UUID {uuid}")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     logger.info(f"TEST: Waiting for first check to complete")
     wait_result = wait_for_all_checks(client)
@@ -75,7 +75,7 @@ def test_normal_page_check_works_with_ignore_status_code(client, live_server, me
 
     # Trigger a check
     logger.info(f"TEST: Second check - queuing UUID {uuid}")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     logger.info(f"TEST: Waiting for second check to complete")
     wait_result = wait_for_all_checks(client)
@@ -109,7 +109,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
     # Add our URL to the import page
     test_url = url_for('test_endpoint', status_code=403, _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -129,7 +129,7 @@ def test_403_page_check_works_with_ignore_status_code(client, live_server, measu
     set_some_changed_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 

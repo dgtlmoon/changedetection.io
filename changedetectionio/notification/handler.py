@@ -1,11 +1,8 @@
 
 import time
 import re
-import apprise
-from apprise import NotifyFormat
 from loguru import logger
 from urllib.parse import urlparse
-from .apprise_plugin.assets import apprise_asset, APPRISE_AVATAR_URL
 from .email_helpers import as_monospaced_html_email
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
@@ -64,6 +61,7 @@ def notification_format_align_with_apprise(n_format : str):
     :param n_format:
     :return:
     """
+    from apprise import NotifyFormat
 
     if not n_format:
         return NotifyFormat.TEXT.value
@@ -208,6 +206,7 @@ def replace_placemarkers_in_text(text, url, requested_output_format):
 
 def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
+    from .apprise_plugin.assets import APPRISE_AVATAR_URL
     logger.debug(f"Applying markup in '{requested_output_format}' mode")
 
     # Re 323 - Limit discord length to their 2000 char limit total or it wont send.
@@ -305,6 +304,9 @@ def apply_service_tweaks(url, n_body, n_title, requested_output_format):
 
 
 def process_notification(n_object: NotificationContextData, datastore):
+    import apprise
+    from apprise import NotifyFormat
+    from .apprise_plugin.assets import apprise_asset
     from changedetectionio.jinja2_custom import render as jinja_render
     from . import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH, default_notification_format, valid_notification_formats
     # be sure its registered
