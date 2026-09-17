@@ -137,6 +137,35 @@ def read_saved_diff_preferences(watch):
 
     return prefs
 
+
+def request_may_save_diff_preferences(datastore):
+    """Whether this request is allowed to change what the watch remembers.
+
+    `shared_diff_access` exempts this page from login so a history link can be handed to
+    someone without an account, and auth_decorator.SHARED_DIFF_READ_ONLY_ENDPOINTS classes
+    it read-only - the advisory that introduced that set (GHSA-vwgh-2hvh-4xm5) was exactly
+    a state-changing endpoint reached through the exemption. So an anonymous viewer's
+    filters still apply to the page they asked for; they are simply not written to the
+    watch, where they would decide what the operator sees on their next visit and would
+    commit the watch to disk once per request.
+
+    Where that exemption cannot apply, the route is unreachable while logged out, so the
+    visitor is the operator.
+    """
+    from flask import current_app
+    from flask_login import current_user
+
+    application_settings = datastore.data['settings']['application']
+    if not (application_settings.get('password') or os.getenv("SALTED_PASS", False)):
+        return True
+    if current_app.config.get('LOGIN_DISABLED'):
+        return True
+    if not application_settings.get('shared_diff_access'):
+        return True
+
+    return bool(current_user.is_authenticated)
+
+
 def render(watch, datastore, request, url_for, render_template, flash, redirect, extract_form=None):
     """
     Render the history/diff view for text/JSON/HTML changes.
@@ -205,8 +234,9 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
 
     # Remember the submission so the next visit to this watch - in any browser, on any
     # device - renders the same view. Only write when something actually changed, or every
-    # click on a filter would commit the watch to disk again.
-    if user_submitted:
+    # click on a filter would commit the watch to disk again, and only for a requester who
+    # is entitled to change it (see request_may_save_diff_preferences).
+    if user_submitted and request_may_save_diff_preferences(datastore):
         prefs_to_save = {key: value for key, value in diff_prefs.items()
                          if DIFF_PREFERENCES_CONFIG[key].get('persist', True)}
         if watch.get(DIFF_PREFERENCES_WATCH_KEY) != prefs_to_save:
