@@ -814,7 +814,7 @@ def changedetection_app(config=None, datastore_o=None):
     @app.after_request
     def strip_duplicate_date_header(response):
         if request.environ.get('SERVER_SOFTWARE', '').startswith('Werkzeug'):
-           response.headers.pop("Date", None)        
+            response.headers.pop("Date", None)
         return response
 
     watch_api.add_resource(
