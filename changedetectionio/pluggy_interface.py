@@ -336,6 +336,17 @@ def register_builtin_fetchers():
     except ImportError:
         logger.debug("playwright library not installed - html_playwright_builtin fetcher not offered")
 
+    # html_external_cdp - an external CDP-over-WebSocket browser named by each browser config.
+    # Registered UNCONDITIONALLY, unlike html_playwright_builtin: saved browser configs (including
+    # every extra browser migrated by update_36) name this engine, so it has to resolve even where
+    # the playwright library is absent - resolve_content_fetcher() would otherwise fall through to
+    # the plain HTTP client and silently fetch those watches with the wrong thing. The library is
+    # imported lazily inside run(), so a missing install surfaces as a clear error at fetch time.
+    from changedetectionio.content_fetchers import external_cdp
+    if hasattr(external_cdp, 'external_cdp_plugin'):
+        _register_fetcher(external_cdp.external_cdp_plugin, 'builtin_external_cdp',
+                          'html_external_cdp', external_cdp.fetcher)
+
     if hasattr(playwright, 'playwright_plugin'):
         plugin_manager.register(playwright.playwright_plugin, 'builtin_playwright')
 

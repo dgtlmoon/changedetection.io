@@ -155,9 +155,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         form.fetch_backend.choices = list_watch_browser_choices(datastore)
         form.fetch_backend.label.text = gettext('Browser')
         # Only offer Default + user browsers, but still ACCEPT legacy raw-engine values
-        # ('html_requests'/'html_webdriver'/'extra_browser_*') that existing watches/API
-        # clients store - resolve_content_fetcher handles them. Without this, editing a
-        # pre-existing watch would fail RadioField choice validation.
+        # ('html_requests'/'html_webdriver'/...) that existing watches/API clients store -
+        # resolve_content_fetcher handles them. Without this, editing a pre-existing watch
+        # would fail RadioField choice validation.
         form.fetch_backend.validate_choice = False
 
         # For the form widget tag UUID back to "string name" for the field
@@ -199,12 +199,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                     logger.debug(f"Loaded processor config from {config_filename}: {sub_key} = {sub_value}")
             except Exception as e:
                 logger.warning(f"Failed to load processor config: {e}")
-
-        # extra_browsers (CDP endpoints) are also selectable browsers. The 'system' /
-        # "Default (system settings)" entry is already provided by list_watch_browser_choices()
-        # above, so do NOT append another system option here (was a duplicate).
-        for p in datastore.extra_browsers:
-            form.fetch_backend.choices.append(p)
 
         # form.browser_steps[0] can be assumed that we 'goto url' first
 

@@ -19,13 +19,27 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
         url_for("settings.settings_page"),
         data={"application-empty_pages_are_a_change": "",
               "requests-time_between_check-minutes": 180,
-              'requests-extra_browsers-0-browser_connection_url': 'ws://sockpuppetbrowser-custom-url:3000',
-              'requests-extra_browsers-0-browser_name': custom_browser_name
               },
         follow_redirects=True
     )
 
     assert b"Settings updated." in res.data
+
+    # A second browser, running somewhere else. This used to be a settings.requests.extra_browsers
+    # row; it is now an ordinary browser config based on the External CDP engine (update_36
+    # migrates the old rows to exactly this). Keyed by the legacy selector so that migrated
+    # installs and this test name the browser the same way.
+    res = client.post(
+        url_for("ui.browser_config.browser_config_add", base_fetcher='html_external_cdp'),
+        data={'label': custom_browser_name,
+              'connection_url': 'ws://sockpuppetbrowser-custom-url:3000',
+              'screenshot_format': 'JPEG'},
+        follow_redirects=True
+    )
+    assert b"Browser added" in res.data
+    custom_browser_id = next(c for c, e in
+                             client.application.config.get('DATASTORE').browser_config_store.all().items()
+                             if e.get('label') == custom_browser_name)
 
     # The global "Default browser" is now chosen on the /browsers tab (was the settings-page
     # application-fetch_backend radio). Make html_webdriver the default.
@@ -56,7 +70,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
                   "url": "https://changedetection.io/ci-test.html?custom-browser-search-string=1",
                   "tags": "",
                   "headers": "",
-                  'fetch_backend': f"extra_browser_{custom_browser_name}",
+                  'fetch_backend': custom_browser_id,
                   'webdriver_js_execute_code': '',
                   "time_between_check_use_default": "y"
             },

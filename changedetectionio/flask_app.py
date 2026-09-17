@@ -821,8 +821,7 @@ def clean_startup_state(datastore):
         # A user browser-config id is also a valid default (it maps to an engine).
         valid_fetchers |= set(datastore.browser_config_store.all().keys())
         cur_default = datastore.data['settings']['application'].get('fetch_backend')
-        if cur_default and cur_default != 'system' and cur_default not in valid_fetchers \
-                and not cur_default.startswith('extra_browser_'):
+        if cur_default and cur_default != 'system' and cur_default not in valid_fetchers:
             logger.warning(
                 f"Configured default fetch_backend '{cur_default}' is not an available fetcher "
                 f"(plugin uninstalled?) - resetting default to 'html_requests'."

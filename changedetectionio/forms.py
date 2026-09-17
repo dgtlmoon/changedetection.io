@@ -463,7 +463,7 @@ class ValidateContentFetcherIsReady(object):
     def __call__(self, form, field):
         return
 
-# AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'extra_browser_unlocked<>ASDF213r123r'
+# AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'html_unlocked<>ASDF213r123r'
         # Better would be a radiohandler that keeps a reference to each class
         # if field.data is not None and field.data != 'system':
         #     klass = getattr(content_fetcher, field.data)
@@ -506,21 +506,14 @@ class ValidateKnownContentFetcher(object):
 
     def __call__(self, form, field):
         from flask import current_app
-        from changedetectionio import content_fetchers
+        from changedetectionio.model.browser_config import is_valid_browser_selector
 
         if not field.data:
             return
 
-        allowed = {'system'} | {name for name, _description in content_fetchers.available_fetchers()}
         datastore = current_app.config.get('DATASTORE')
-        if datastore:
-            allowed |= {value for value, _label in datastore.extra_browsers}
-            # A saved browser config is picked by its id, not an engine name (it maps to one) -
-            # the Add-Watch browser list offers these, so the shared quick-add has to accept them.
-            allowed |= set(datastore.browser_config_store.all().keys())
-
-        if field.data not in allowed:
-            logger.warning(f"Rejected unknown fetch_backend {field.data!r} - known: {sorted(allowed)}")
+        if not is_valid_browser_selector(field.data, datastore):
+            logger.warning(f"Rejected unknown fetch_backend {field.data!r}")
             raise ValidationError(self.message or gettext("Unknown fetch method."))
 
 
@@ -1129,18 +1122,6 @@ class SingleExtraProxy(Form):
         ValidateSimpleURL()
     ], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
 
-class SingleExtraBrowser(Form):
-    browser_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": _l("Name")})
-    browser_connection_url = StringField(_l('Browser connection URL'), [
-        validators.Optional(),
-        ValidateStartsWithRegex(
-            regex=r'^(wss?|ws)://',
-            flags=re.IGNORECASE,
-            message=_l('Browser URLs must start with wss:// or ws://')
-        ),
-        ValidateSimpleURL()
-    ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
-
 # datastore.data['settings']['requests']..
 # NOTE: the plain-client request timeout and per-engine default User-Agent were migrated out of
 # here to per-engine browser configs on the /browsers tab (update_35), so there is no `timeout`
@@ -1159,7 +1140,6 @@ class globalSettingsRequestForm(Form):
                                                              message=_l("Should be between 1 and 50"))])
 
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
-    extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:

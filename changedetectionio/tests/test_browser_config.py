@@ -856,3 +856,155 @@ def test_plugin_can_supply_a_whole_new_browser_base(client, live_server, measure
     # And it is eligible for the Add-Watch live preview, on its own declared capabilities
     assert add_watch_browsers.is_visual_capable(cid, datastore)
     assert cid in {v for v, _ in add_watch_browsers.list_visual_browser_choices(datastore)}
+
+
+def test_update_36_migrates_extra_browsers(client, live_server, measure_memory_usage, datastore_path):
+    """update_36 turns each settings.requests.extra_browsers row into an External CDP browser.
+
+    The point of keying them by their legacy 'extra_browser_<name>' selector is that NOTHING else
+    has to be rewritten, so this asserts the watch / group override / global default that already
+    hold that string keep resolving - now to html_external_cdp with the endpoint on the config.
+    """
+    from changedetectionio.content_fetchers import resolve_content_fetcher
+    datastore = client.application.config.get('DATASTORE')
+    req = datastore.data['settings']['requests']
+
+    # An existing browser whose label collides with one of the rows about to be migrated
+    _add_browser(client, label="BrightData", base_fetcher="html_webdriver")
+
+    # Simulate a pre-migration install, including the blank slots the settings FieldList kept
+    # and a duplicate name (two rows could share one; the old resolver took the first match)
+    req['extra_browsers'] = [
+        {'browser_name': 'BrightData', 'browser_connection_url': 'wss://brd.example:9222'},
+        {'browser_name': '', 'browser_connection_url': ''},
+        {'browser_name': 'BrightData', 'browser_connection_url': 'wss://duplicate.example:9222'},
+        {'browser_name': 'Oxylabs', 'browser_connection_url': 'wss://oxy.example:9222'},
+    ]
+
+    # Things already pointing at the legacy selectors
+    watch_uuid = datastore.add_watch(url="https://example.com",
+                                     extras={'fetch_backend': 'extra_browser_Oxylabs'})
+    tag_uuid = datastore.add_tag("Force BrightData")
+    datastore.data['settings']['application']['tags'][tag_uuid]['browser_config_overrides_watch'] = True
+    datastore.data['settings']['application']['tags'][tag_uuid]['browser_config'] = 'extra_browser_BrightData'
+    grouped_uuid = datastore.add_watch(url="https://example.com/grouped", tag_uuids=[tag_uuid])
+    datastore.data['settings']['application']['fetch_backend'] = 'extra_browser_BrightData'
+
+    datastore.update_36()
+
+    # The old settings key is gone, and each row is now a browser config on the new engine
+    assert 'extra_browsers' not in req
+    brd = datastore.browser_config_store.get('extra_browser_BrightData')
+    assert brd['base_fetcher'] == 'html_external_cdp'
+    assert brd['browser_config']['connection_url'] == 'wss://brd.example:9222'
+    # ...with a de-duplicated label, or the /browsers form could never save it again
+    assert brd['label'] == 'BrightData (2)'
+    oxy = datastore.browser_config_store.get('extra_browser_Oxylabs')
+    assert oxy['browser_config']['connection_url'] == 'wss://oxy.example:9222'
+    # The blank row was skipped, and the duplicate name did not overwrite the first
+    assert datastore.browser_config_store.get('extra_browser_') is None
+
+    # Zero rewrite: the watch that already held the legacy selector resolves to the new engine,
+    # and gets the endpoint injected as part of its browser config
+    watch = datastore.data['watching'][watch_uuid]
+    assert watch.get_fetch_backend == 'extra_browser_Oxylabs'
+    assert watch.resolved_fetch_engine == 'html_external_cdp'
+    _cls, engine, _custom_url, cfg = resolve_content_fetcher(watch, datastore)
+    assert engine == 'html_external_cdp'
+    assert cfg.connection_url == 'wss://oxy.example:9222'
+
+    # Group override and the global default keep working too
+    grouped = datastore.data['watching'][grouped_uuid]
+    assert grouped.get_fetch_backend == 'extra_browser_BrightData'
+    _cls, engine, _custom_url, cfg = resolve_content_fetcher(grouped, datastore)
+    assert engine == 'html_external_cdp' and cfg.connection_url == 'wss://brd.example:9222'
+    datastore.data['watching'][watch_uuid]['fetch_backend'] = 'system'
+    assert datastore.data['watching'][watch_uuid].resolved_fetch_engine == 'html_external_cdp'
+
+    # Idempotent, and a re-run must not clobber a rename the user made afterwards
+    datastore.browser_config_store.update('extra_browser_Oxylabs', label='My Oxylabs')
+    datastore.update_36()
+    assert datastore.browser_config_store.get('extra_browser_Oxylabs')['label'] == 'My Oxylabs'
+
+
+def test_external_cdp_browser_requires_an_endpoint(client, live_server, measure_memory_usage, datastore_path):
+    """An External CDP browser with nowhere to connect is refused at the form, and the engine
+    itself is base-only (you configure an endpoint, you don't select the bare engine)."""
+    from changedetectionio import content_fetchers
+    from changedetectionio.model.browser_config import list_builtin_browsers
+    datastore = client.application.config.get('DATASTORE')
+
+    assert getattr(content_fetchers.html_external_cdp, 'ready_to_use') is False
+    assert 'html_external_cdp' not in {b['id'] for b in list_builtin_browsers()}, \
+        "base-only: an endpoint is required, so the bare engine is never directly selectable"
+
+    before = len(datastore.browser_config_store.all())
+    res = _add_browser(client, label="No endpoint", base_fetcher="html_external_cdp")
+    assert len(datastore.browser_config_store.all()) == before, "must not save without an endpoint"
+
+    # Wrong scheme is rejected by the model (one rule, not a form copy of it)
+    res = _add_browser(client, label="Wrong scheme", base_fetcher="html_external_cdp",
+                       connection_url="http://not-a-websocket:9222")
+    assert len(datastore.browser_config_store.all()) == before
+    assert b'ws://' in res.data
+
+    # And a good one saves, keeping the endpoint on the config
+    res = _add_browser(client, label="ACME scraping browser", base_fetcher="html_external_cdp",
+                       connection_url="wss://acme.example:9222")
+    assert b'ACME scraping browser' in res.data
+    cid = next(c for c, e in datastore.browser_config_store.all().items()
+               if e.get('label') == 'ACME scraping browser')
+    assert datastore.browser_config_store.get(cid)['browser_config']['connection_url'] == 'wss://acme.example:9222'
+
+
+def test_live_session_refuses_a_browser_that_cannot_do_it(client, live_server, measure_memory_usage, datastore_path):
+    """Browser steps / the visual selector must use the browser the watch fetches with.
+
+    Engines that cannot drive a live session (the plain HTTP client; Selenium, which can
+    screenshot but not drive the interactive session) are refused instead of silently connecting
+    to whatever PLAYWRIGHT_DRIVER_URL points at - previewing a watch with a browser it does not
+    check with shows the operator something untrue.
+    """
+    import asyncio
+    from changedetectionio.blueprint.browser_steps import acquire_browser_for_fetcher
+    from changedetectionio.content_fetchers.exceptions import BrowserConnectError
+
+    for cannot in ('html_requests', 'made_up_engine', None):
+        with pytest.raises(BrowserConnectError):
+            asyncio.run(acquire_browser_for_fetcher(cannot, keepalive_ms=1000))
+
+
+def test_external_cdp_live_session_uses_its_own_endpoint(client, live_server, measure_memory_usage, datastore_path):
+    """A live session for an External CDP browser connects to THAT browser, not the system one."""
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.exceptions import BrowserConnectError
+    from changedetectionio.model.browser_config import FetcherConfig
+
+    engine = content_fetchers.html_external_cdp
+    assert engine.browser_steps_connection_url(
+        FetcherConfig(connection_url='wss://acme.example:9222')) == 'wss://acme.example:9222'
+
+    # ...and says so plainly when the browser has no endpoint yet
+    with pytest.raises(BrowserConnectError):
+        engine.browser_steps_connection_url(FetcherConfig())
+
+
+def test_update_36_survives_an_unusable_legacy_endpoint(client, live_server, measure_memory_usage, datastore_path):
+    """A legacy endpoint the model rejects must not take startup down with it.
+
+    settings.json could be hand-edited or restored from anywhere, so one bad row logs and is
+    skipped - the rest migrate, the old settings key still goes, and the app boots.
+    """
+    datastore = client.application.config.get('DATASTORE')
+    req = datastore.data['settings']['requests']
+    req['extra_browsers'] = [
+        {'browser_name': 'Broken', 'browser_connection_url': 'http://not-a-websocket:9222'},
+        {'browser_name': 'Good', 'browser_connection_url': 'wss://good.example:9222'},
+    ]
+
+    datastore.update_36()
+
+    assert 'extra_browsers' not in req
+    assert datastore.browser_config_store.get('extra_browser_Broken') is None
+    assert datastore.browser_config_store.get('extra_browser_Good')['browser_config']['connection_url'] \
+        == 'wss://good.example:9222'

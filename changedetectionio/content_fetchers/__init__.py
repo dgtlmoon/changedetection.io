@@ -112,7 +112,6 @@ def resolve_content_fetcher(watch, datastore):
     PDF / group override / watch / 'system' -> global Default browser). This function takes that
     resolved selector and turns it into a fetcher instance, collapsing the special forms:
       - a user browser-config id    -> its base_fetcher engine + its FetcherConfig
-      - 'extra_browser_<key>'       -> html_webdriver + custom connection URL
       - html_webdriver + browser_steps -> playwright override (puppeteer steps incomplete)
       - a deleted browser-config id -> raises BrowserConfigDoesntExist
 
@@ -130,7 +129,7 @@ def resolve_content_fetcher(watch, datastore):
 
     # THE single resolved selector for this watch (PDF / group override / watch / 'system' ->
     # global default) - the Watch owns this chain so every codepath agrees. The value is a
-    # built-in engine name, 'extra_browser_*', or the stable id of a user browser config.
+    # built-in engine name or the stable id of a user browser config.
     selected = watch.get_fetch_backend
 
     store = getattr(datastore, 'browser_config_store', None)
@@ -139,25 +138,17 @@ def resolve_content_fetcher(watch, datastore):
     else:
         entry, prefer_fetch_backend = None, selected
     if entry is None:
-        # Not a stored browser config. The only valid non-config values are a built-in engine
-        # name or 'extra_browser_*'. Anything else is a reference to a browser config that has
-        # been deleted - fail loudly instead of silently defaulting.
-        if selected and selected != 'system' \
-                and not selected.startswith('extra_browser_') \
-                and not hasattr(this_module, selected):
+        # Not a stored browser config, so the only valid value left is a built-in engine name.
+        # Anything else is a reference to a browser config that has been deleted - fail loudly
+        # instead of silently defaulting.
+        if selected and selected != 'system' and not hasattr(this_module, selected):
             raise BrowserConfigDoesntExist(config_id=selected, uuid=watch.get('uuid'))
         prefer_fetch_backend = selected
 
-    # Custom browser endpoint (extra_browser_<key>) -> webdriver with a specific connection URL
+    # An external browser's endpoint lives on its browser config (FetcherConfig.connection_url,
+    # read at connect time by html_external_cdp), not in a per-fetcher constructor argument -
+    # which is what the old 'extra_browser_<name>' selector needed this hook for.
     custom_browser_connection_url = None
-    if prefer_fetch_backend and prefer_fetch_backend.startswith('extra_browser_'):
-        (t, key) = prefer_fetch_backend.split('extra_browser_')
-        connection = list(
-            filter(lambda s: (s['browser_name'] == key),
-                   datastore.data['settings']['requests'].get('extra_browsers', [])))
-        if connection:
-            prefer_fetch_backend = 'html_webdriver'
-            custom_browser_connection_url = connection[0].get('browser_connection_url')
 
     # PDF watches are already forced to 'html_requests' by Watch.get_fetch_backend (playwright
     # can't render a PDF in-page yet - @todo https://github.com/dgtlmoon/changedetection.io/issues/2019),
@@ -176,7 +167,11 @@ def resolve_content_fetcher(watch, datastore):
         else:
             fetcher_obj = getattr(this_module, prefer_fetch_backend)
     else:
-        # What it referenced doesn't exist, just use a default
+        # What it referenced doesn't exist. Falling back to the plain client keeps the check
+        # running, but it fetches with something other than what the watch asked for - so say so
+        # rather than letting a browser watch quietly become a plaintext one.
+        logger.warning(f"Fetcher '{prefer_fetch_backend}' is not available in this install - "
+                       f"falling back to html_requests for watch {watch.get('uuid')}")
         fetcher_obj = getattr(this_module, "html_requests")
 
     _log_fetcher_capabilities(fetcher_obj, prefer_fetch_backend, uuid=watch.get('uuid'))

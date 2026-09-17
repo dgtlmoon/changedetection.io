@@ -10,8 +10,7 @@ The preview drives an interactive browser session, so a usable browser needs
 is what rules out Selenium/WebDriver: it can screenshot during a normal check, but it
 cannot drive the interactive session the preview needs (it would quietly connect to
 PLAYWRIGHT_DRIVER_URL instead, which is not the browser the user picked). It also rules
-out settings.requests extra_browsers, which are WebDriver connection URLs, so they are not
-offered here.
+out Selenium-backed setups generally.
 
 A "browser" here is a *selector*, not necessarily an engine name: it can be a saved
 browser config id (see model/browser_config.py) as well as a built-in engine or 'system'.
@@ -74,10 +73,6 @@ def resolve_backend(fetch_backend, datastore):
     entry, engine, _config = datastore.browser_config_store.engine_and_config(selected)
     if entry:
         return engine
-
-    if selected.startswith('extra_browser_'):
-        # settings.requests extra_browsers are WebDriver connection URLs
-        return 'html_webdriver'
 
     # A built-in engine name - or something invented by a client, which resolves to no fetcher
     # class and therefore to no capabilities, so it can never pass is_visual_capable().

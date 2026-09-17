@@ -99,12 +99,10 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         result_message = gettext("{} watches set to use default notification settings").format(len(uuids))
 
     elif (op == 'set-fetch-backend'):
-        # extra_data = the chosen "Browser": 'system', a built-in engine name, an
-        # extra_browser_* endpoint, or a saved browser-config id - same set as the edit picker.
-        from changedetectionio import content_fetchers
-        valid = set(f[0] for f in content_fetchers.available_fetchers()) | {'system'} \
-            | set(datastore.browser_config_store.all().keys())
-        if extra_data in valid or (extra_data or '').startswith('extra_browser_'):
+        # extra_data = the chosen "Browser": 'system', a built-in engine name, or a saved
+        # browser-config id - the same set as the edit picker.
+        from changedetectionio.model.browser_config import is_valid_browser_selector
+        if is_valid_browser_selector(extra_data, datastore, allow_empty=False):
             for uuid in uuids:
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid]['fetch_backend'] = extra_data

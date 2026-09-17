@@ -72,7 +72,14 @@ class BrowserOptionsForm(Form):
     block_url_patterns = StringListField(_l('Block URL patterns'), validators=[validators.Optional()],
                                          render_kw={"placeholder": "*.ttf\n*/analytics/*"})
 
-    # Plain HTTP client options (gated by supports_http_options)
+    # External browser endpoint (gated by supports_connection_url). No scheme/format validators
+    # here on purpose: FetcherConfig.connection_url enforces them, and the blueprint attaches the
+    # model's error to this field - so there is one rule, not a form copy that can drift.
+    connection_url = StringField(_l('Browser connection URL'), validators=[validators.Optional()],
+                                 render_kw={"placeholder": "wss://brd… wss://oxylabs… ws://my-browser:3000",
+                                            "size": 50})
+
+    # Plain HTTP client options (gated by supports_request_timeout / supports_custom_user_agent)
     timeout = IntegerField(_l('Request timeout (seconds)'), validators=[
         validators.Optional(), validators.NumberRange(min=1, max=999)],
         render_kw={"placeholder": "30", "style": "width: 6em;"})
@@ -93,6 +100,7 @@ class BrowserOptionsForm(Form):
             'delete_created_files': bool(self.delete_created_files.data),
             'block_resource_types': self.block_resource_types.data or [],
             'block_url_patterns': self.block_url_patterns.data or [],
+            'connection_url': (self.connection_url.data or None),
             'user_agent': (self.user_agent.data or None),
         }
         # Blank timeout means "use the model default" (DEFAULT_REQUEST_TIMEOUT_SECONDS), so omit the

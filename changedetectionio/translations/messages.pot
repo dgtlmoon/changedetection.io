@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.60.7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-17 17:12+0200\n"
+"POT-Creation-Date: 2026-09-17 19:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1681,6 +1681,10 @@ msgid "Language set to auto-detect from browser"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/browser_config.py
+msgid "This is required for this browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
 msgid "Browser configuration is locked on this instance"
 msgstr ""
 
@@ -1835,6 +1839,10 @@ msgid "Block URL patterns"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Browser connection URL"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
 msgid "Request timeout (seconds)"
 msgstr ""
 
@@ -1910,6 +1918,18 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Browser endpoint"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Address of the external browser to connect to, e.g. a Bright Data or Oxylabs Scraping Browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "More instructions and examples here"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -3731,14 +3751,6 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Proxy URLs must start with http://, https:// or socks5://"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Browser connection URL"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Browser URLs must start with wss:// or ws://"
 msgstr ""
 
 #: changedetectionio/forms.py

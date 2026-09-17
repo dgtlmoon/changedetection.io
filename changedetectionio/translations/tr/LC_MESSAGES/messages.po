@@ -1717,6 +1717,10 @@ msgid "Language set to auto-detect from browser"
 msgstr "Dil, tarayıcıdan otomatik algılanacak şekilde ayarlandı"
 
 #: changedetectionio/blueprint/ui/browser_config.py
+msgid "This is required for this browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
 msgid "Browser configuration is locked on this instance"
 msgstr ""
 
@@ -1871,6 +1875,10 @@ msgid "Block URL patterns"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Browser connection URL"
+msgstr "Tarayıcı bağlantı URL'si"
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
 msgid "Request timeout (seconds)"
 msgstr ""
 
@@ -1946,6 +1954,18 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Browser endpoint"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Address of the external browser to connect to, e.g. a Bright Data or Oxylabs Scraping Browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "More instructions and examples here"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -3786,14 +3806,6 @@ msgstr "Proxy URL'si"
 #: changedetectionio/forms.py
 msgid "Proxy URLs must start with http://, https:// or socks5://"
 msgstr "Proxy URL'leri http://, https:// veya socks5:// ile başlamalıdır"
-
-#: changedetectionio/forms.py
-msgid "Browser connection URL"
-msgstr "Tarayıcı bağlantı URL'si"
-
-#: changedetectionio/forms.py
-msgid "Browser URLs must start with wss:// or ws://"
-msgstr "Tarayıcı URL'leri wss:// veya ws:// ile başlamalıdır"
 
 #: changedetectionio/forms.py
 msgid "Default proxy"

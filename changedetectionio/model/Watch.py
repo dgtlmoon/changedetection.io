@@ -480,7 +480,7 @@ class model(EntityPersistenceMixin, watch_base):
             4. 'system' / unset -> the global Default browser (_global_default_fetch_backend)
 
         Never returns 'system'. The value is a user browser-config id, a built-in engine name
-        ('html_requests'/'html_webdriver'/...), or 'extra_browser_<key>'. Map it to the concrete
+        ('html_requests'/'html_webdriver'/...). Map it to the concrete
         engine with .resolved_fetch_engine; build the fetcher class/config via
         content_fetchers.resolve_content_fetcher (which consumes this).
         """

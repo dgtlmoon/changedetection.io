@@ -23,6 +23,7 @@ class FetcherCapabilities(BaseModel):
     supports_delete_created_files: bool = False # Launches locally & can clean up its temp files
     supports_request_timeout: bool = False     # Plain HTTP client: honours a per-profile request timeout
     supports_custom_user_agent: bool = False   # Honours a per-profile User-Agent (all fetchers)
+    supports_connection_url: bool = False      # Connects to an endpoint named by the browser config
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -97,6 +98,20 @@ class Fetcher():
     # Resolved per-watch browser behaviour (FetcherConfig), injected after construction.
     # None by default so a fetcher that never reads it is completely unaffected.
     browser_config = None
+    # True for engines that reach the web through someone else's service (an external CDP
+    # endpoint), where layering our own per-watch proxy on top is wrong rather than merely
+    # redundant. Read by call_browser() when it decides whether to pass a proxy URL.
+    ignores_proxy_setting = False
+
+    @classmethod
+    def browser_steps_connection_url(cls, browser_config=None):
+        """CDP endpoint a live browser-steps / visual-selector session connects to.
+
+        A live session is always driven with Playwright whatever the engine fetches with, so the
+        default is the system driver. An engine whose browser lives somewhere else overrides this
+        and answers from the watch's browser config (see external_cdp).
+        """
+        return os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
 
     # Whether this fetcher is usable directly, out-of-the-box, as a built-in "browser" (has sane
     # env defaults). False means it's a *base only* - it must be configured via a browser config

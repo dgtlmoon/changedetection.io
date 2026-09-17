@@ -69,17 +69,23 @@ def _available_timezones():
         return _TZ_CACHE
 
 
-def _needs(capability, **field_kwargs):
+def _needs(capability, required=False, **field_kwargs):
     """A FetcherConfig field only the engines with `capability` may carry.
 
     The capability rides on the field itself rather than in a separate name->flag table, so
     there is exactly one place to declare a field and no second list to keep in step. Read back
     by FetcherConfig.applicable_fields(), which drives BOTH which fields the /browsers form
     renders and which ones may be saved.
+
+    `required=True` means an engine that has this capability cannot work without a value (an
+    external browser with no endpoint has nothing to connect to), enforced on submitted input by
+    required_fields(). The field itself stays Optional because the model is shared by every
+    engine, most of which must not carry it at all.
     """
     if 'default_factory' not in field_kwargs:
         field_kwargs.setdefault('default', None)
-    return Field(json_schema_extra={'capability': capability}, **field_kwargs)
+    return Field(json_schema_extra={'capability': capability, 'required_when_applicable': required},
+                 **field_kwargs)
 
 
 class FetcherConfig(BaseModel):
@@ -112,6 +118,10 @@ class FetcherConfig(BaseModel):
     # existing install's previous settings.requests.timeout is carried onto its html_requests
     # config by update_35 (the migration hook), so upgrades keep whatever the user had.
     timeout: Optional[int] = _needs('supports_request_timeout', default=DEFAULT_REQUEST_TIMEOUT_SECONDS)   # request timeout in seconds
+    # connection_url: the endpoint of an external browser this profile talks to (capability
+    # supports_connection_url). CDP over a WebSocket, e.g. a Bright Data / Oxylabs Scraping
+    # Browser or a second sockpuppetbrowser. Commonly carries credentials, so never log it.
+    connection_url: Optional[str] = _needs('supports_connection_url', required=True)
     # user_agent: honoured by every engine (capability supports_custom_user_agent) via the
     # request_headers User-Agent channel.
     user_agent: Optional[str] = _needs('supports_custom_user_agent') # overrides the User-Agent header for this profile
@@ -132,13 +142,21 @@ class FetcherConfig(BaseModel):
                 return bool(capabilities.get(flag))
             return bool(getattr(capabilities, flag, False))
 
-        out = set()
-        for name, field in cls.model_fields.items():
-            extra = field.json_schema_extra if isinstance(field.json_schema_extra, dict) else {}
-            capability = extra.get('capability')
-            if capability is None or _has(capability):
-                out.add(name)
-        return out
+        return {name for name, extra in cls._field_metadata().items()
+                if extra.get('capability') is None or _has(extra['capability'])}
+
+    @classmethod
+    def _field_metadata(cls):
+        """{field_name: its _needs() metadata dict} - {} for fields declared without it."""
+        return {name: (field.json_schema_extra if isinstance(field.json_schema_extra, dict) else {})
+                for name, field in cls.model_fields.items()}
+
+    @classmethod
+    def required_fields(cls, capabilities):
+        """Applicable fields an engine with these capabilities cannot work without."""
+        applicable = cls.applicable_fields(capabilities)
+        return {name for name, extra in cls._field_metadata().items()
+                if name in applicable and extra.get('required_when_applicable')}
 
     @classmethod
     def from_submitted(cls, data, capabilities):
@@ -190,6 +208,22 @@ class FetcherConfig(BaseModel):
     def effective_timeout(self, default):
         """This profile's request timeout, else the caller's default (plain HTTP client only)."""
         return self.timeout or default
+
+    @field_validator('connection_url')
+    @classmethod
+    def _validate_connection_url(cls, v):
+        # The engine connects to whatever this says, so the scheme is enforced at the model (not
+        # just in the form): CDP over a WebSocket is the only thing html_external_cdp speaks, and
+        # a wrong scheme here used to be accepted and then silently handed to a WebDriver client.
+        # Control characters are refused for the same reason as user_agent.
+        if not v:
+            return v
+        v = v.strip()
+        if any(ord(c) < 0x20 or ord(c) == 0x7f for c in v):
+            raise ValueError("Browser connection URL cannot contain control characters")
+        if not v.lower().startswith(('ws://', 'wss://')):
+            raise ValueError("Browser connection URL must start with ws:// or wss://")
+        return v
 
     @field_validator('user_agent')
     @classmethod
@@ -423,6 +457,29 @@ def list_builtin_browsers():
             continue
         out.append({'id': name, 'label': description, 'base_fetcher': name})
     return out
+
+
+def is_valid_browser_selector(value, datastore, allow_empty=True):
+    """True when `value` is something a watch may legitimately store in fetch_backend.
+
+    That is: 'system' (follow the global default), an installed engine name (built-in or
+    plugin-provided), or the id of a saved browser config - which is what a migrated
+    'extra_browser_<name>' endpoint is since update_36.
+
+    THE one answer to this question. The API (create/update/import), the quick-add form
+    validator and the bulk "set browser" operation each used to keep their own copy, which is how
+    they ended up disagreeing about whether a browser-config id was acceptable.
+    """
+    from changedetectionio import content_fetchers
+
+    if not value:
+        return allow_empty
+    if value == 'system':
+        return True
+    store = getattr(datastore, 'browser_config_store', None) if datastore is not None else None
+    if store is not None and store.get(value):
+        return True
+    return value in {name for name, _description in content_fetchers.available_fetchers()}
 
 
 def list_watch_browser_choices(datastore):

@@ -1774,6 +1774,10 @@ msgid "Language set to auto-detect from browser"
 msgstr "Язык настроен на автоматическое определение в браузере"
 
 #: changedetectionio/blueprint/ui/browser_config.py
+msgid "This is required for this browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
 msgid "Browser configuration is locked on this instance"
 msgstr ""
 
@@ -1928,6 +1932,10 @@ msgid "Block URL patterns"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Browser connection URL"
+msgstr "URL-адрес подключения браузера"
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
 msgid "Request timeout (seconds)"
 msgstr ""
 
@@ -2003,6 +2011,18 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Browser endpoint"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Address of the external browser to connect to, e.g. a Bright Data or Oxylabs Scraping Browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "More instructions and examples here"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -3849,14 +3869,6 @@ msgstr "URL-адрес прокси-сервера"
 #: changedetectionio/forms.py
 msgid "Proxy URLs must start with http://, https:// or socks5://"
 msgstr "URL-адреса прокси-серверов должны начинаться с http://, https:// или Socks5://."
-
-#: changedetectionio/forms.py
-msgid "Browser connection URL"
-msgstr "URL-адрес подключения браузера"
-
-#: changedetectionio/forms.py
-msgid "Browser URLs must start with wss:// or ws://"
-msgstr "URL-адреса браузера должны начинаться с wss:// или ws://."
 
 #: changedetectionio/forms.py
 msgid "Default proxy"

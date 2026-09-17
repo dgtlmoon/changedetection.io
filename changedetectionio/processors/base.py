@@ -204,12 +204,14 @@ class difference_detection_processor():
 
         proxy_url = None
         if preferred_proxy_id:
-            # Custom browser endpoints should NOT have a proxy added
-            if not prefer_fetch_backend.startswith('extra_browser_'):
+            # An engine that reaches the web through someone else's browser service handles its
+            # own egress, so our proxy must not be layered on top (Fetcher.ignores_proxy_setting).
+            if not getattr(fetcher_obj, 'ignores_proxy_setting', False):
                 proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
                 logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
             else:
-                logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
+                logger.debug(f"Skipping proxy data - '{prefer_fetch_backend}' connects to an "
+                             f"external browser service that handles its own egress.")
 
         logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
 

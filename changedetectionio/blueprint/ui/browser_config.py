@@ -143,7 +143,19 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         """
         from changedetectionio.model.browser_config import FetcherConfig
         try:
-            return FetcherConfig.from_submitted(form.to_fetcher_config_dict(), capabilities)
+            cfg = FetcherConfig.from_submitted(form.to_fetcher_config_dict(), capabilities)
+            # Fields this engine cannot work without (an external browser with no endpoint has
+            # nowhere to connect) - declared on the field via _needs(required=True).
+            for name in FetcherConfig.required_fields(capabilities):
+                if not getattr(cfg, name, None):
+                    field = getattr(form, name, None)
+                    message = gettext('This is required for this browser')
+                    if field is not None:
+                        field.errors.append(message)
+                    else:
+                        flash(message, 'error')
+                    return None
+            return cfg
         except ValidationError as e:
             for err in e.errors():
                 loc = err['loc'][0] if err['loc'] else ''

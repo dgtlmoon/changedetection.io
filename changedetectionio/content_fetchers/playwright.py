@@ -182,6 +182,7 @@ class fetcher(Fetcher):
         body is shared."""
         return await browser_type.connect_over_cdp(self.browser_connection_url, timeout=60000)
 
+
     def _resolve_browser_type_name(self):
         """chromium/firefox/webkit - from the browser_config when the engine supports choosing
         it (local launch), else the env default."""

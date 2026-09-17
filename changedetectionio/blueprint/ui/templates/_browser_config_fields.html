@@ -64,6 +64,19 @@
 </fieldset>
 {% endif %}
 
+{% if 'connection_url' in applicable %}
+<fieldset>
+    <legend>{{ _('Browser endpoint') }}</legend>
+    <div class="pure-control-group">
+        {{ render_field(form.connection_url) }}
+        <span class="pure-form-message-inline">
+            {{ _('Address of the external browser to connect to, e.g. a Bright Data or Oxylabs Scraping Browser.') }}
+            <a href="https://changedetection.io/tutorial/using-bright-datas-scraping-browser-pass-captchas-and-other-protection-when-monitoring">{{ _('More instructions and examples here') }}</a>
+        </span>
+    </div>
+</fieldset>
+{% endif %}
+
 {% if 'timeout' in applicable or 'user_agent' in applicable %}
 <fieldset>
     <legend>{{ _('HTTP request options') }}</legend>

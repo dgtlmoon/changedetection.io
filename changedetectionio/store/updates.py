@@ -15,6 +15,7 @@ import tarfile
 import time
 from loguru import logger
 from copy import deepcopy
+from pydantic import ValidationError
 
 
 # Try to import orjson for faster JSON serialization
@@ -883,9 +884,8 @@ class DatastoreUpdatesMixin:
         engine, honouring DEFAULT_FETCH_BACKEND (the same env var fresh installs use), else
         'html_requests'.
 
-        Concrete values already stored - a built-in engine name (e.g. 'html_webdriver'), an
-        'extra_browser_*' key, or a still-existing saved browser-config id - are left untouched.
-        Idempotent.
+        Concrete values already stored - a built-in engine name (e.g. 'html_webdriver') or a
+        still-existing saved browser-config id - are left untouched. Idempotent.
         """
         app = self.data['settings']['application']
         current = app.get('fetch_backend')
@@ -893,9 +893,7 @@ class DatastoreUpdatesMixin:
         def _is_valid_default(value):
             if not value or value == 'system':
                 return False
-            if value.startswith('extra_browser_'):
-                return True
-            # A saved browser config?
+            # A saved browser config? (which is what a migrated extra browser is - update_36)
             if self.browser_config_store.get(value):
                 return True
             # A built-in engine that actually exists in this build?
@@ -949,5 +947,77 @@ class DatastoreUpdatesMixin:
         req.pop('timeout', None)
         req.pop('default_ua', None)
         logger.info("update_35: removed migrated requests.timeout / requests.default_ua from settings")
+
+    def update_36(self):
+        """Migrate settings.requests.extra_browsers into browser configs on the /browsers tab.
+
+        Each 'extra browser' was a name + a ws(s):// endpoint, selected by a watch as the magic
+        string 'extra_browser_<name>'. That string was resolved to html_webdriver + a custom
+        connection URL, which meant the protocol the endpoint was spoken to depended on env vars
+        (Playwright/Puppeteer = CDP, Selenium = W3C WebDriver, where a wss:// URL cannot work).
+        Each one now becomes an ordinary browser config based on html_external_cdp, which pins
+        the protocol to the engine.
+
+        Keyed by the SAME 'extra_browser_<name>' string the watches already hold, so no watch,
+        group override, API value or global default needs rewriting - the legacy selector simply
+        becomes a real browser-config id (update_35 set the precedent of non-uuid keys; anything
+        created from the UI afterwards is a uuid).
+
+        Idempotent: gated on the settings key still being there.
+        """
+        req = self.data['settings']['requests']
+        if 'extra_browsers' not in req:
+            return  # already migrated / never had any
+
+        store = self.browser_config_store
+        # Same predicate the old datastore.extra_browsers property used - the settings form keeps
+        # five blank FieldList slots, and a row without both halves was never selectable.
+        rows = [r for r in (req.get('extra_browsers') or [])
+                if r.get('browser_name') and r.get('browser_connection_url')]
+
+        existing_labels = {(e.get('label') or '').strip().lower()
+                           for e in store.all().values()}
+        seen = set()
+        migrated = 0
+        for row in rows:
+            name = row['browser_name'].strip()
+            config_id = f"extra_browser_{name}"
+            if config_id in seen:
+                # Two rows could share a name; the old resolver just took the first match.
+                logger.warning(f"update_36: ignoring duplicate extra browser '{name}'")
+                continue
+            seen.add(config_id)
+            if store.get(config_id):
+                continue  # already migrated (a re-run with the settings key still present)
+
+            # A label that collides with an existing browser would make this entry unsaveable
+            # later, because the /browsers form rejects duplicate names.
+            label = name
+            suffix = 2
+            while label.strip().lower() in existing_labels:
+                label = f"{name} ({suffix})"
+                suffix += 1
+            existing_labels.add(label.strip().lower())
+
+            try:
+                store.upsert(config_id,
+                             label=label,
+                             base_fetcher='html_external_cdp',
+                             browser_config={'connection_url': row['browser_connection_url'].strip()})
+            except ValidationError as e:
+                # An endpoint that fails FetcherConfig's rules (the old settings could be
+                # hand-edited or restored from anywhere) must not take the whole update chain -
+                # and with it startup - down. Say so loudly and carry on; the operator can add
+                # the browser on the Browsers page.
+                logger.error(f"update_36: could not migrate extra browser '{name}' "
+                             f"(endpoint rejected: {e}) - add it on the Browsers page instead")
+                continue
+            migrated += 1
+            logger.info(f"update_36: migrated extra browser '{name}' to browser config "
+                        f"'{config_id}' (label '{label}')")
+
+        req.pop('extra_browsers', None)
+        logger.info(f"update_36: migrated {migrated} extra browser(s) and removed "
+                    f"settings.requests.extra_browsers")
 
 

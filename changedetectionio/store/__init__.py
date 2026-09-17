@@ -1171,18 +1171,6 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         return result
 
-    @property
-    def extra_browsers(self):
-        res = []
-        p = list(filter(
-            lambda s: (s.get('browser_name') and s.get('browser_connection_url')),
-            self.__data['settings']['requests'].get('extra_browsers', [])))
-        if p:
-            for i in p:
-                res.append(("extra_browser_" + i['browser_name'], i['browser_name']))
-
-        return res
-
     def tag_exists_by_name(self, tag_name):
         # Check if any tag dictionary has a 'title' attribute matching the provided tag_name
         tags = self.__data['settings']['application']['tags'].values()
