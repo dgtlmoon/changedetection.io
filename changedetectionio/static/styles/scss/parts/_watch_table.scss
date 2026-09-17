@@ -54,11 +54,6 @@ $title-col-stack-breakpoint: 1200px;
   }
   .left {
     text-align: left;
-
-    .records-selected {
-      margin-top: 0.25rem;
-      opacity: 0.9;
-    }
   }
 
   .right {
@@ -108,14 +103,19 @@ body.watch-selection-active #checkbox-operations {
   display: block;
 }
 
-
-.pure-table.watch-table td {
-  /* override of pure-css */
-    padding: .7em 0.7em;
-}
-
 // Watch-list-specific styling layered on top of the shared .cdio-table base.
 .watch-table {
+  td,th {
+    padding-block: $common-gap; /* top/bottom*/
+    padding-inline: $common-gap/2; /*side to side */
+    &:first-child {
+      padding-left: 1rem;
+    }
+    &:last-child {
+      padding-right: 1rem;
+    }
+  }
+
   .checkbox-uuid {
     >* {
       vertical-align: middle;
