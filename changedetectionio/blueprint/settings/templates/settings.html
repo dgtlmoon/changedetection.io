@@ -281,7 +281,8 @@ nav
                 </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.form.favicons_enabled, class="") }}
-                    <span class="pure-form-message-inline">{{ _('Enable or Disable Favicons next to the watch list') }}</span>
+                    <span class="pure-form-message-inline">{{ _('Enable or Disable Favicons next to the watch list') }}</span><br>
+                    <span class="pure-form-message-inline">{{ _('Disabling this can speed up your page fetches because the favicon does not need to be fetched.') }}</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.use_page_title_in_list) }}

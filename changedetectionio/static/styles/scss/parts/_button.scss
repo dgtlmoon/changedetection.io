@@ -3,9 +3,13 @@
 // Clean outline button — surface background, hairline border, muted label that
 // darkens on hover. The app's neutral/secondary action button (toolbars, list
 // actions), a calmer alternative to the solid pure-button. Pairs with .seg.
+
 .cdio-btn {
   display: inline-flex;
   align-items: center;
+  vertical-align: middle;
+  box-sizing: border-box;
+
   gap: 6px;
   height: 32px;
   padding: 0 12px;

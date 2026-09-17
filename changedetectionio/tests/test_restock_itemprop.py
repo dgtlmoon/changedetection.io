@@ -3,6 +3,7 @@ import os
 import time
 
 from flask import url_for
+from bs4 import BeautifulSoup
 from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client, delete_all_watches
 from ..notification import default_notification_format
 
@@ -114,6 +115,10 @@ def test_restock_badge_uses_price_when_availability_detection_is_off(
         res = client.get(url_for("watchlist.index"))
         assert b'>Price</a>' in res.data
         assert b'>Restock</a>' not in res.data
+        page = BeautifulSoup(res.data, 'html.parser')
+        badges = page.select('.processor-badge-restock_diff')
+        assert len(badges) == 1
+        assert page.select_one('td.watch-processor .processor-badge-restock_diff').get_text(strip=True) == 'Price'
     finally:
         delete_all_watches(client)
 

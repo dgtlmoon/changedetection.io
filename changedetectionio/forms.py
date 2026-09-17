@@ -4,6 +4,7 @@ from loguru import logger
 from wtforms.widgets.core import TimeInput
 from flask_babel import lazy_gettext as _l, gettext
 
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
 from changedetectionio.llm.evaluator import (
@@ -696,14 +697,18 @@ class ValidateCSSJSONXPATHInput(object):
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 import elementpath
-                from changedetectionio.html_tools import get_safe_xpath3_parser, lxml_guard, lxml_html_parser
+                from changedetectionio.html_tools import get_safe_xpath3_parser, lxml_guard, lxml_html_parser, \
+                    XPATH_CODEPOINT_COLLATION
                 line = line.replace('xpath:', '')
 
                 try:
                     # Runs on a Flask request thread - must share the worker's lxml lock.
                     with lxml_guard():
                         tree = html.fromstring("<html></html>", parser=lxml_html_parser())
-                        elementpath.select(tree, line.strip(), parser=get_safe_xpath3_parser())
+                        # Same collation the filter will actually run under, so validation
+                        # cannot accept an expression that then behaves differently at check time.
+                        elementpath.select(tree, line.strip(), parser=get_safe_xpath3_parser(),
+                                           default_collation=XPATH_CODEPOINT_COLLATION)
                 except elementpath.ElementPathError as e:
                     message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
                     raise ValidationError(message % {'expression': line, 'error': str(e)})
@@ -939,6 +944,7 @@ class SingleBrowserStep(Form):
 class processor_text_json_diff_form(commonSettingsForm):
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
+    link_to_open = StringField(_l('Open Link Override'), validators=[validators.Optional(), validateURL()], default='')
     tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
@@ -1045,6 +1051,19 @@ class processor_text_json_diff_form(commonSettingsForm):
             logger.error(e)
             self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
             result = False
+
+        # Attempt to validate jinja2 templates in the optional "Link to Open"
+        if self.link_to_open.data and self.link_to_open.data.strip():
+            try:
+                jinja_render(template_str=self.link_to_open.data)
+            except ModuleNotFoundError as e:
+                logger.error(e)
+                self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
+                result = False
 
         # Attempt to validate jinja2 templates in the body
         if self.body.data and self.body.data.strip():
@@ -1164,9 +1183,8 @@ class globalSettingsApplicationUIForm(Form):
                                  choices=[('long', _l('Long (1 minute ago)')), ('short', _l('Short (1m ago)'))],
                                  default='long', validators=[validators.Optional()])
     sidebar_mode = SelectField(_l('Navigation sidebar'),
-                               choices=[('collapsed', _l('Collapsed icon rail (expands on hover)')),
-                                        ('pinned', _l('Always expanded'))],
-                               default='collapsed', validators=[validators.Optional()])
+                               choices=MENU_SIDEBAR_ACTIONMODES,
+                               default=MENU_SIDEBAR_ACTIONMODES_DEFAULT, validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):

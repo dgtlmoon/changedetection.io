@@ -40,7 +40,7 @@ orjson~=3.11
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise==1.9.9
+apprise==1.13.1
 
 diff_match_patch
 
@@ -116,7 +116,9 @@ babel==2.18.0
 # For internationalization (i18n) support
 Flask-Babel>=4.0.0
 
-levenshtein
+# rapidfuzz (MIT) - do NOT swap back to `levenshtein`, which is GPL-2.0-or-later
+# and would force the combined work to be GPL. See the license-compliance CI step.
+rapidfuzz
 
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3

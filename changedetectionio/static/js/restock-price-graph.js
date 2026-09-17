@@ -23,8 +23,11 @@
         no_data: 'No price data available to graph yet.', load_error: 'Could not load price history.',
         changes: 'Changes', avg_price: 'Average price',
         price_low: 'Currently low', price_typical: 'Currently typical', price_high: 'Currently high',
-        cheaper_than: 'cheaper than %s% of tracked prices',
-        pricier_than: 'more expensive than %s% of tracked prices',
+        // {pct} is substituted with an already-formatted percentage, e.g. "80%". The percent sign is
+        // NOT part of the msgid on purpose: a bare "%" followed by a letter (" of") parses as a
+        // python-format conversion ("% o"), which makes pybabel reject any translation of it.
+        cheaper_than: 'cheaper than {pct} of tracked prices',
+        pricier_than: 'more expensive than {pct} of tracked prices',
         typical_note: 'around the usual price', avg_label: 'avg' };
     const OVERLAY_MIN_POINTS = 5; // need enough history for low/typical/high to be meaningful
 
@@ -260,9 +263,9 @@
             $pill.append($('<span class="rg-status-label"></span>').text(i18n['price_' + summary.status] || ''));
             let sub;
             if (summary.status === 'low') {
-                sub = (i18n.cheaper_than || '').replace('%s', summary.cheaper_than_pct);
+                sub = (i18n.cheaper_than || '').replace('{pct}', summary.cheaper_than_pct + '%');
             } else if (summary.status === 'high') {
-                sub = (i18n.pricier_than || '').replace('%s', summary.pricier_than_pct);
+                sub = (i18n.pricier_than || '').replace('{pct}', summary.pricier_than_pct + '%');
             } else {
                 sub = i18n.typical_note || '';
             }
