@@ -77,7 +77,7 @@
                                 {% else %}
                                     {{ watch.get('title') or watch.link }}
                                 {% endif %}
-                                <a class="external" target="_blank" rel="noopener" href="{{ open_link }}" title="{{ open_link }}">&nbsp;</a>
+                                <a class="external" target="_blank" rel="noopener" href="{{ open_link }}" title="{{ open_link }}"><i data-feather="external-link"></i></a>
                             </span>
 
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
