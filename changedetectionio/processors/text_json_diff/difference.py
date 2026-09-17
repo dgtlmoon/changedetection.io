@@ -98,7 +98,10 @@ DIFF_PREFERENCES_CONFIG = {
     'added': {'default': True, 'type': 'bool'},
     'replaced': {'default': True, 'type': 'bool'},
     'type': {'default': 'diffLines', 'type': 'value', 'allowed': ('diffLines', 'diffWords')},
-    'llm_all_changes': {'default': False, 'type': 'bool'},
+    # persist=False: the style filters above are remembered per watch (see below), but this
+    # one asks the LLM for a wider summary, and a remembered tick would spend tokens on every
+    # new change pair without the operator asking again. It resets on each visit.
+    'llm_all_changes': {'default': False, 'type': 'bool', 'persist': False},
 }
 
 # Where a watch's last submitted display preferences are kept. Stored on the watch itself
@@ -123,7 +126,7 @@ def read_saved_diff_preferences(watch):
 
     prefs = {}
     for key, config in DIFF_PREFERENCES_CONFIG.items():
-        if key not in saved:
+        if key not in saved or not config.get('persist', True):
             continue
         value = saved[key]
         if config['type'] == 'bool':
@@ -203,9 +206,12 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
     # Remember the submission so the next visit to this watch - in any browser, on any
     # device - renders the same view. Only write when something actually changed, or every
     # click on a filter would commit the watch to disk again.
-    if user_submitted and watch.get(DIFF_PREFERENCES_WATCH_KEY) != diff_prefs:
-        watch.update({DIFF_PREFERENCES_WATCH_KEY: diff_prefs})
-        watch.commit()
+    if user_submitted:
+        prefs_to_save = {key: value for key, value in diff_prefs.items()
+                         if DIFF_PREFERENCES_CONFIG[key].get('persist', True)}
+        if watch.get(DIFF_PREFERENCES_WATCH_KEY) != prefs_to_save:
+            watch.update({DIFF_PREFERENCES_WATCH_KEY: prefs_to_save})
+            watch.commit()
 
     content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
                                newest_version_file_contents=to_version_file_contents,
