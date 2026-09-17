@@ -776,7 +776,8 @@ def changedetection_app(config=None, datastore_o=None):
     # server's single header is what reaches the wire.
     @app.after_request
     def strip_duplicate_date_header(response):
-        response.headers.pop("Date", None)
+        if request.environ.get('SERVER_SOFTWARE', '').startswith('Werkzeug'):
+           response.headers.pop("Date", None)        
         return response
 
     watch_api.add_resource(
