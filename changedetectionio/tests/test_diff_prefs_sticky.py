@@ -29,6 +29,12 @@ def add_watch_with_history(client, url='https://example.com/releases'):
     return uuid, watch
 
 
+def configure_llm(client):
+    """The AI checkbox only renders on an instance with a model configured."""
+    datastore = client.application.config['DATASTORE']
+    datastore.data['settings']['application']['llm'] = {'model': 'gpt-4o-mini', 'api_key': 'sk-test'}
+
+
 def get_diff_page(test_client, uuid, query_string=None):
     url = url_for('ui.ui_diff.diff_history_page', uuid=uuid)
     if query_string:
@@ -84,7 +90,6 @@ def test_submitted_prefs_are_applied_to_the_next_plain_visit(client):
         'added': True,
         'replaced': True,
         'type': 'diffWords',
-        'llm_all_changes': False,
     }
 
     # The load that matters - no query string at all.
@@ -167,6 +172,33 @@ def test_saving_prefs_does_not_mark_the_watch_as_edited(client):
     # assertion above is the exemption working rather than a flag that never sets.
     watch['title'] = 'renamed'
     assert watch.was_edited is True
+
+
+def test_the_ai_checkbox_is_not_remembered(client):
+    """The style filters stick; the AI toggle deliberately does not.
+
+    A remembered tick would ask for a wider - and billable - summary on every later change
+    pair without anyone asking for it again, so it resets on each visit.
+    """
+    configure_llm(client)
+    uuid, watch = add_watch_with_history(client)
+
+    page = get_diff_page(client, uuid, f"{SUBMITTED_PREFS}&llm_all_changes=on")
+    assert is_checked(page, 'llm_all_changes'),         "precondition: the submission itself still honours the tick"
+    assert 'llm_all_changes' not in watch.get('diff_display_prefs')
+
+    page = get_diff_page(client, uuid)
+    assert not is_checked(page, 'llm_all_changes')
+    # The style filters from that same submission did stick, so this is the exclusion
+    # working rather than the whole submission having been dropped.
+    assert is_checked(page, 'diffWords')
+    assert is_checked(page, 'ignoreWhitespace')
+
+    # Nor can a stored value resurrect it - the read side skips it too.
+    watch['diff_display_prefs'] = {'llm_all_changes': True, 'ignoreWhitespace': True}
+    page = get_diff_page(client, uuid)
+    assert not is_checked(page, 'llm_all_changes')
+    assert is_checked(page, 'ignoreWhitespace')
 
 
 def test_saved_prefs_stay_off_the_api(client):
