@@ -71,17 +71,20 @@
                 <label for="changesOnly" class="pure-checkbox" id="label-diff-changes">
                 <input type="checkbox" id="changesOnly" name="changesOnly" {% if diff_prefs.changesOnly %}checked=""{% endif %}> {{ _('Same/non-changed') }}</label>
             </span>
+            {# TRANSLATORS: 'Removed' is a noun label for a diff display filter (toggles removed lines), not a verb phrase or status badge #}
             <span>
                 <label for="removed" class="pure-checkbox" id="label-diff-removed">
-                <input type="checkbox" id="removed" name="removed" {% if diff_prefs.removed %}checked=""{% endif %}> {{ _('Removed') }}</label>
+                <input type="checkbox" id="removed" name="removed" {% if diff_prefs.removed %}checked=""{% endif %}> {{ pgettext('diff filter', 'Removed') }}</label>
             </span>
+            {# TRANSLATORS: 'Added' is a noun label for a diff display filter (toggles added lines), not a verb phrase or status badge #}
             <span>
                 <label for="added" class="pure-checkbox" id="label-diff-added">
-                <input type="checkbox" id="added" name="added" {% if diff_prefs.added %}checked=""{% endif %}> {{ _('Added') }}</label>
+                <input type="checkbox" id="added" name="added" {% if diff_prefs.added %}checked=""{% endif %}> {{ pgettext('diff filter', 'Added') }}</label>
             </span>
+            {# TRANSLATORS: 'Replaced' is a noun label for a diff display filter (toggles replaced lines), not a verb phrase or status badge #}
             <span>
                 <label for="replaced" class="pure-checkbox" id="label-diff-replaced">
-                <input type="checkbox" id="replaced"  name="replaced" {% if diff_prefs.replaced %}checked=""{% endif %}> {{ _('Replaced') }}</label>
+                <input type="checkbox" id="replaced"  name="replaced" {% if diff_prefs.replaced %}checked=""{% endif %}> {{ pgettext('diff filter', 'Replaced') }}</label>
             </span>
             {%- if llm_configured -%}
             <span>
