@@ -1008,3 +1008,33 @@ def test_update_36_survives_an_unusable_legacy_endpoint(client, live_server, mea
     assert datastore.browser_config_store.get('extra_browser_Broken') is None
     assert datastore.browser_config_store.get('extra_browser_Good')['browser_config']['connection_url'] \
         == 'wss://good.example:9222'
+
+
+def test_browser_picker_lists_each_browser_once(client, live_server, measure_memory_usage, datastore_path):
+    """A saved config that shares a built-in engine's id must not appear twice in the picker.
+
+    update_35 migrates the old per-engine request timeout / User-Agent into configs keyed
+    'html_requests' / 'html_webdriver', so on any upgraded install those ids exist in BOTH the
+    built-in engine list and browsers.json - which rendered the same browser as two radios on the
+    watch edit page (and in the group override select).
+    """
+    from changedetectionio.model.browser_config import list_watch_browser_choices
+    datastore = client.application.config.get('DATASTORE')
+
+    # Exactly what an upgraded install looks like after update_35
+    datastore.browser_config_store.upsert('html_requests', label='Basic fast Plaintext/HTTP Client',
+                                          base_fetcher='html_requests', browser_config={'timeout': 33})
+
+    values = [value for value, _label in list_watch_browser_choices(datastore)]
+    assert len(values) == len(set(values)), f"each browser must be offered once: {values}"
+    assert values.count('html_requests') == 1
+
+    # ...and the watch edit page renders one radio per browser
+    uuid = datastore.add_watch(url="https://example.com")
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    assert res.status_code == 200
+    assert res.data.count(b'name="fetch_backend" type="radio" value="html_requests"') == 1
+
+    # A renamed config wins the label, since it is the same browser under a name the user chose
+    datastore.browser_config_store.update('html_requests', label='Fast plain client')
+    assert dict(list_watch_browser_choices(datastore))['html_requests'] == 'Fast plain client'

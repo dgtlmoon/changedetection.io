@@ -91,13 +91,8 @@ def list_visual_browser_choices(datastore):
     """
     from changedetectionio.model.browser_config import list_watch_browser_choices
 
-    # A saved browser config deliberately shares its id with the built-in engine it was
-    # migrated from (see update_35), so the candidate list can name the same browser twice -
-    # keep the later (saved) label, which is the one the user can rename.
-    candidates = {value: label for value, label in list_watch_browser_choices(datastore)
-                  if value != SYSTEM_DEFAULT}
-    choices = [(value, str(label)) for value, label in candidates.items()
-               if is_visual_capable(value, datastore)]
+    choices = [(value, str(label)) for value, label in list_watch_browser_choices(datastore)
+               if value != SYSTEM_DEFAULT and is_visual_capable(value, datastore)]
     logger.debug(f"Add-watch browsers offered for the live preview: "
                  f"{[value for value, _label in choices] or 'none'}")
     return choices

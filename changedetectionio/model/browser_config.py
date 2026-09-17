@@ -485,13 +485,19 @@ def is_valid_browser_selector(value, datastore, allow_empty=True):
 def list_watch_browser_choices(datastore):
     """(value, label) choices for the watch-level 'Browser' picker:
     system default, the always-present built-in engine browsers, then the user's saved browsers.
+
+    Deduplicated by value, because a saved config legitimately shares a built-in engine's id -
+    update_35 migrated the old per-engine request timeout / User-Agent into configs keyed
+    'html_requests' and 'html_webdriver' - and listing one browser twice is not a choice. The
+    saved label wins: it is the same browser, and that is the name the user can change.
     """
-    choices = [('system', _system_default_label(datastore))]
+    choices = {'system': _system_default_label(datastore)}
     for b in list_builtin_browsers():
-        choices.append((b['id'], b['label']))
+        choices[b['id']] = b['label']
     for cid, entry in datastore.browser_config_store.all().items():
-        choices.append((cid, entry.get('label') or cid))
-    return choices
+        choices[cid] = entry.get('label') or cid
+    # dict keeps each value's first position (built-ins stay in engine order) with its last label
+    return list(choices.items())
 
 
 def _system_default_label(datastore):

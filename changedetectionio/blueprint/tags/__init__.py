@@ -10,17 +10,13 @@ from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
 
 
 def _browser_config_choices(datastore):
-    """Browsers the group can override with: the always-present built-in engines, then the
-    user's saved browsers - the same set a watch can pick. No 'None' entry: the enabler
-    checkbox (browser_config_overrides_watch) is what turns the override on/off, and the
-    select is disabled when it's unchecked."""
-    from changedetectionio.model.browser_config import list_builtin_browsers
-    choices = []
-    for b in list_builtin_browsers():
-        choices.append((b['id'], b['label']))
-    for cid, entry in datastore.browser_config_store.all().items():
-        choices.append((cid, entry.get('label') or cid))
-    return choices
+    """Browsers the group can override with: exactly what a watch can pick, minus 'system'.
+
+    No 'None'/'system' entry: the enabler checkbox (browser_config_overrides_watch) is what
+    turns the override on/off, and the select is disabled when it's unchecked."""
+    from changedetectionio.model.browser_config import list_watch_browser_choices
+    return [(value, label) for value, label in list_watch_browser_choices(datastore)
+            if value != 'system']
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
