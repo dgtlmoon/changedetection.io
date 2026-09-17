@@ -288,6 +288,10 @@ nav
                     {{ render_checkbox_field(form.application.form.ui.use_page_title_in_list) }}
                 </div>
                 <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.ui.use_share_watch) }}
+                    <span class="pure-form-message-inline">{{ _('This copies your watch to a temporary hosted database and returns a link to make sharing/copying the watch to other people') }}</span>
+                </div>
+                <div class="pure-control-group">
                     {{ render_field(form.application.form.pager_size) }}
                     <span class="pure-form-message-inline">{{ _('Number of items per page in the watch overview list, 0 to disable.') }}</span>
                 </div>

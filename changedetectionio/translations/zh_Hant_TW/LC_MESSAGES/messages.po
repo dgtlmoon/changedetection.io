@@ -844,6 +844,12 @@ msgid "Disabling this can speed up your page fetches because the favicon does no
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"This copies your watch to a temporary hosted database and returns a link to make sharing/copying the watch to other "
+"people"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "監測概覽列表中每頁的項目數量，設為 0 以停用。"
 
@@ -3497,6 +3503,10 @@ msgstr "啟用網站圖示 (Favicons)"
 #: changedetectionio/forms.py
 msgid "Use page <title> in watch overview list"
 msgstr "在監測概覽列表中使用頁面 <title>"
+
+#: changedetectionio/forms.py
+msgid "Enable watch \"sharing\""
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Relative time format"
