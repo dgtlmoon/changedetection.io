@@ -77,6 +77,7 @@ class model(dict):
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'ui': {
                         'use_page_title_in_list': True,
+                        'use_share_watch': False,  # "Share watch" link is a power-user feature, off by default
                         'open_diff_in_new_tab': True,
                         'socket_io_enabled': True,
                         'favicons_enabled': True,
