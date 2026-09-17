@@ -153,13 +153,6 @@ body.difference-page {
     z-index: 29;
   }
 
-  // The bar is the page's whole chrome now, so trim the tabs' vertical padding
-  // (0.7em on all four sides) to half. Saves ~11px of every scroll position and
-  // leaves the horizontal padding, and so the tab widths, as they are.
-  .tabs ul li a {
-    padding: 0.35em 0.7em;
-  }
-
   // The thin blue line under the active tab. Nothing at that boundary has a
   // border - the active tab and #diff-ui are both var(--color-background) - so
   // it can only be the page gradient showing through a device-pixel row where
