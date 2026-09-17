@@ -143,6 +143,7 @@ body.watch-selection-active #checkbox-operations {
        The restock column is optional; below $title-col-stack-breakpoint it drops
        onto its own row, centered beneath the three columns above it.
     */
+
     td.inline.title-col {
       width: 100%;
       .grid-wrapper {
@@ -169,6 +170,27 @@ body.watch-selection-active #checkbox-operations {
           }
         }
       }
+    }
+
+    /* page title and external link, needs to align center in its own container */
+    .watch-title {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+
+      > * {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      a.external {
+        width: 18px;
+        height: 18px;
+        margin-bottom: 4px;
+      }
+    }
+    .watch-tag-list {
+      margin-left: 10px;
     }
 
     .watch-text-info {
@@ -293,20 +315,6 @@ body.watch-selection-active #checkbox-operations {
       white-space: normal;
     }
 
-    a.external::after {
-      // Inline "external link" glyph (open-cornered square + outbound arrow) as a
-      // background image so its box can be sized off the doc text-size variable
-      // (a data-URI in `content:url()` can't be reliably resized). Neutral grey so
-      // it reads on light backgrounds; dark mode lightens it via the existing
-      // invert filter on .title-col a[target="_blank"]::after.
-      content: "";
-      display: inline-block;
-      width: var(--body-main-text-size);
-      height: var(--body-main-text-size);
-      vertical-align: -0.1em;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E") no-repeat center / contain;
-      margin: 0 3px 0 5px;
-    }
     &.watch-controls {
       > div {
         display: flex;
