@@ -158,47 +158,43 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
+    color: #fff;
 
     @media (max-width: 900px) {
       flex: 1 1 auto;
     }
 
-    .add-watch-option-group {
-      label {
-        display: inline-block;
+    span.label {
+      padding-bottom: 0.5rem;
+      display: inline-block !important;
+    }
+    label {
+      margin: 0 !important;; /* override */
+    }
+    li {
+      list-style: none;
+      font-size: .9rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: .5rem;
+
+      input[type="radio"] {
+        flex: 0 0 auto;
       }
+
+      > label {
+        font-weight: normal;
+      }
+    }
+    li + li { /* gap between */
+      margin-top: .75rem;
     }
 
     // Browser picker: fetcher descriptions are long (they carry the driver URL), so this is
     // a radio list whose labels wrap inside the narrow pane instead of a <select> that would
     // overflow it. The system-default entry is listed even when it can't render a preview.
     #quick-watch-fetch-backend {
-      ul {
-        margin: 0.35rem 0 0 0;
-        padding: 0;
-        list-style: none;
-      }
-
-      li {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.5em;
-        padding: 0.15rem 0;
-
-        input[type="radio"] {
-          flex: 0 0 auto;
-          margin-top: 0.2em;
-        }
-
-        label {
-          // Wrap rather than push the pane wider
-          display: block;
-          min-width: 0;
-          overflow-wrap: anywhere;
-          font-size: 0.85rem;
-          line-height: 1.35;
-        }
-      }
 
       li.unusable {
         opacity: 0.55;

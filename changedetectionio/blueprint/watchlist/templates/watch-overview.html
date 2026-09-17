@@ -156,7 +156,7 @@ window.watchOverviewI18n = {
         <div id="add-watch-url-row">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="url"><strong>{{ _('Web page URL') }}</strong></label><br>
-            {{ render_nolabel_field(form.url, placeholder="https://...", required=true, class="pure-input-1") }}
+            {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1") }}
             <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
         </div>
         {% if llm_configured %}
@@ -195,13 +195,6 @@ window.watchOverviewI18n = {
         {% endfor %}
     </template>
     {% endif %}
-    {# "Select all matching" banner — shown by watch-overview.js when the whole
-       visible page is selected but more matching rows exist on other pages. #}
-    <div id="select-all-banner" class="select-all-banner" style="display: none;"
-         data-select-all-tmpl="{{ _('All %(page)s on this page are selected.') }}"
-         data-select-all-action="{{ _('Select all %(total)s matching') }}"
-         data-all-selected-tmpl="{{ _('All %(total)s matching are selected.') }}"
-         data-clear-action="{{ _('Clear selection') }}"></div>
 
     <div id="stats_row">
         <div class="left">{%- if watches|length >= pagination.per_page -%}{{ pagination.info }}{%- endif -%}
@@ -210,11 +203,7 @@ window.watchOverviewI18n = {
         </div>
     </div>
 
-
-
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
-
-
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
@@ -325,7 +314,12 @@ window.watchOverviewI18n = {
                        data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" ></i>&nbsp;{{ _('Delete') }}</button>
     </div>
-
+        <div id="select-all-banner" class="select-all-banner" style="display: none;"
+             data-select-all-tmpl="{{ _('All %(page)s on this page are selected.') }}"
+             data-select-all-action="{{ _('Select all %(total)s matching') }}"
+             data-all-selected-tmpl="{{ _('All %(total)s matching are selected.') }}"
+             data-clear-action="{{ _('Clear selection') }}">
+        </div>
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
