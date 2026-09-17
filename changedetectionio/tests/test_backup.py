@@ -24,7 +24,7 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     wait_for_all_checks(client)
 
     # Launch the thread in the background to create the backup
-    res = client.get(
+    res = client.post(
         url_for("backups.request_backup"),
         follow_redirects=True
     )
@@ -136,7 +136,7 @@ def test_backup_restore(client, live_server, measure_memory_usage, datastore_pat
     wait_for_all_checks(client)
 
     # Create a full backup
-    client.get(url_for("backups.request_backup"), follow_redirects=True)
+    client.post(url_for("backups.request_backup"), follow_redirects=True)
     time.sleep(4)
 
     # Download the latest backup zip

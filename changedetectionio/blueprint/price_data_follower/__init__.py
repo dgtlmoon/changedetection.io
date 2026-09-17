@@ -14,7 +14,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q: PriorityQueue
 
     price_data_follower_blueprint = Blueprint('price_data_follower', __name__)
 
-    @price_data_follower_blueprint.route("/<uuid_str:uuid>/accept", methods=['GET'])
+    @price_data_follower_blueprint.route("/<uuid_str:uuid>/accept", methods=['POST'])
     @login_optionally_required
     def accept(uuid):
         datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_ACCEPT
@@ -24,7 +24,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q: PriorityQueue
         worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
         return redirect(url_for("watchlist.index"))
 
-    @price_data_follower_blueprint.route("/<uuid_str:uuid>/reject", methods=['GET'])
+    @price_data_follower_blueprint.route("/<uuid_str:uuid>/reject", methods=['POST'])
     @login_optionally_required
     def reject(uuid):
         datastore.data['watching'][uuid]['track_ldjson_price_data'] = PRICE_DATA_TRACK_REJECT

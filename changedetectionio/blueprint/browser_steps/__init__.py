@@ -296,7 +296,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return browsersteps_start_session
 
 
-    @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
+    @browser_steps_blueprint.route("/browsersteps_start_session", methods=['POST'])
     @login_optionally_required
     def browsersteps_start_session():
         # A new session was requested, return sessionID

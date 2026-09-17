@@ -140,8 +140,10 @@ window.watchOverviewI18n = {
     priceLow:          {{ _('Currently low')|tojson }},
     priceTypical:      {{ _('Currently typical')|tojson }},
     priceHigh:         {{ _('Currently high')|tojson }},
-    cheaperThan:       {{ _('cheaper than %s% of tracked prices')|tojson }},
-    pricierThan:       {{ _('more expensive than %s% of tracked prices')|tojson }},
+    {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
+    cheaperThan:       {{ _('cheaper than {pct} of tracked prices')|tojson }},
+    {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
+    pricierThan:       {{ _('more expensive than {pct} of tracked prices')|tojson }},
     typicalNote:       {{ _('around the usual price')|tojson }},
     avgLabel:          {{ _('avg')|tojson }}
 };
@@ -287,6 +289,7 @@ window.watchOverviewI18n = {
         </div>
 
     <div id="checkbox-operations">
+        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
         <button type="button" class="pure-button button-secondary button-xsmall" id="check-invert"><i data-feather="repeat" ></i>&nbsp;{{ _('Invert') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" ></i>&nbsp;{{ _('Pause') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" ></i>&nbsp;{{ _('UnPause') }}</button>
@@ -321,7 +324,6 @@ window.watchOverviewI18n = {
                        data-confirm-title="{{ _('Delete Watches?') }}"
                        data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" ></i>&nbsp;{{ _('Delete') }}</button>
-        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
     </div>
 
         {%- set table_classes = [

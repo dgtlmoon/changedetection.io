@@ -3,9 +3,13 @@
 // Clean outline button — surface background, hairline border, muted label that
 // darkens on hover. The app's neutral/secondary action button (toolbars, list
 // actions), a calmer alternative to the solid pure-button. Pairs with .seg.
+
 .cdio-btn {
   display: inline-flex;
   align-items: center;
+  vertical-align: middle;
+  box-sizing: border-box;
+
   gap: 6px;
   height: 32px;
   padding: 0 12px;
@@ -89,5 +93,28 @@
   &--warning {
     color: #d68a00;
     &:hover { color: #d68a00; border-color: #d68a00; }
+  }
+}
+
+// State-mutating controls have to POST, and only a <button> can submit - these strip
+// the browser's button chrome so they render exactly like the <a> they replaced.
+.bare-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  // Matches `a { color: var(--color-link) }` - these replace anchors, and the row
+  // icons stroke with currentColor, so `inherit` would pick up .watch-controls red.
+  color: var(--color-link);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+
+  &--link {
+    text-decoration: underline;
   }
 }

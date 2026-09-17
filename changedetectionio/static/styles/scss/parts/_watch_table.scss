@@ -99,6 +99,8 @@ body.has-queue {
     /* vertically center icon and text */
     display: inline-flex;
     align-items: center;
+    background: #00125b;
+    font-weight: bold;
   }
     i,svg {
     width: 14px;
@@ -112,6 +114,10 @@ body.watch-selection-active #checkbox-operations {
 }
 
 
+.pure-table.watch-table td {
+  /* override of pure-css */
+    padding: .7em 0.7em;
+}
 
 // Watch-list-specific styling layered on top of the shared .cdio-table base.
 .watch-table {
@@ -205,7 +211,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.queued {
-      a.recheck {
+      .recheck {
         display: none !important;
       }
 
@@ -216,7 +222,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.paused {
-      a.pause-toggle {
+      .pause-toggle {
         &.state-on {
           display: inline !important;
         }
@@ -228,7 +234,7 @@ body.watch-selection-active #checkbox-operations {
     }
 
     &.notification_muted {
-      a.mute-toggle {
+      .mute-toggle {
         &.state-on {
           display: inline !important;
         }
@@ -279,9 +285,11 @@ body.watch-selection-active #checkbox-operations {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        > * {
-          opacity: 0;
-          transition: opacity 0.12s ease;
+        @media (min-width: 767px) {
+          > * {
+            opacity: 0.2;
+            transition: opacity 0.12s ease;
+          }
         }
       }
     }
@@ -359,6 +367,7 @@ body.watch-selection-active #checkbox-operations {
     gap: 4px; /* Space between image and text */
     > * {
       vertical-align: middle;
+      height: 1.4rem;
     }
   }
 

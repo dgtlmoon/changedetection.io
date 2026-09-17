@@ -100,7 +100,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         results = _recalc_check_status(uuid=uuid)
         return results
 
-    @check_proxies_blueprint.route("/<uuid_str:uuid>/start", methods=['GET'])
+    @check_proxies_blueprint.route("/<uuid_str:uuid>/start", methods=['POST'])
     @login_optionally_required
     def start_check(uuid):
 

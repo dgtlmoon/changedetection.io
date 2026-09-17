@@ -56,6 +56,7 @@ from changedetectionio.api import (
     WatchSingleHistory,
 )
 from changedetectionio.api.Search import Search
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.favicon_utils import get_favicon_mime_type
 from changedetectionio.languages import (
     get_available_languages,
@@ -215,13 +216,37 @@ csrf = CSRFProtect()
 csrf.init_app(app)
 notification_debug_log = []
 
-# Locale for correct presentation of prices etc
+# Locale for correct presentation of prices etc.
+#
+# Deliberately NOT locale.LC_ALL - LC_COLLATE must stay in the "C" locale.
+#
+# elementpath implements the XPath string functions on top of locale.strxfrm:
+#
+#     def contains(self, a, b):  return self.strxfrm(b) in self.strxfrm(a)
+#
+# Under LC_COLLATE=C, strxfrm() is the identity function and that substring test means what it
+# says. Under any real locale it returns a binary collation key, and a substring of a collation
+# key is not the collation key of the substring - so contains(), starts-with(), ends-with() and
+# substring-before/after() silently return false for EVERY input. Every xPath filter using
+# contains() then matches nothing and the watch reports "no filters were found" on a page whose
+# HTML plainly contains the target (#4437).
+#
+# That stayed hidden until the image actually generated its locales: before then this call raised
+# locale.Error, we logged a warning and stayed in C. Once en_US.UTF-8 existed the call succeeded
+# and took LC_COLLATE with it. Setting the presentation categories individually keeps what this
+# block is for - 1234567 still renders as "1,234,567" - without touching collation.
+#
+# Per XPath 3.1 the default collation is codepoint and must not consult LC_COLLATE at all, so
+# this is arguably an elementpath bug; html_tools.xpath_filter() pins the collation explicitly as
+# well, so a filter is correct even if an operator sets LC_COLLATE themselves.
 default_locale = locale.getdefaultlocale()
 logger.info(f"System locale default is {default_locale}")
-try:
-    locale.setlocale(locale.LC_ALL, default_locale)
-except locale.Error:
-    logger.warning(f"Unable to set locale {default_locale}, locale is not installed maybe?")
+for _category in (locale.LC_CTYPE, locale.LC_NUMERIC, locale.LC_MONETARY, locale.LC_TIME):
+    try:
+        locale.setlocale(_category, default_locale)
+    except locale.Error:
+        logger.warning(f"Unable to set locale {default_locale} for category {_category}, "
+                       f"locale is not installed maybe?")
 
 watch_api = Api(app, decorators=[csrf.exempt])
 
@@ -286,20 +311,32 @@ def _filter_url(**overrides):
 
 @app.template_global()
 def get_sidebar_mode_class():
-    """Body class that drives the left-rail behaviour (see parts/_action_sidebar.scss).
+    """Body class(es) that drive the left-rail behaviour (see parts/_action_sidebar.scss).
 
-    'collapsed' -> slim icon rail that expands on hover/focus (actionsidebar-minimal)
-    'pinned'    -> rail always expanded with labels visible (actionside-bar-on)
+    Only the modes offered by MENU_SIDEBAR_ACTIONMODES are honoured - anything else in the
+    datastore (a stale value from an older release, hand-edited JSON) falls back to
+    MENU_SIDEBAR_ACTIONMODES_DEFAULT rather than leaking through as a body class.
+
+    'expandable'      -> icon-only rail, rolls out over the content on hover/focus
+    'pinned-expanded' -> rail always expanded, labels visible at rest
+    'minimal'         -> icon-only rail that never expands
     """
-    mode = datastore.data['settings']['application'].get('ui', {}).get('sidebar_mode', 'collapsed')
-    # Pinned mode is permanently expanded, so it carries 'action-side-bar-expanded'
-    # from the start. In collapsed mode that class is toggled on hover/focus by
-    # static/js/sidebar.js.
-    return (
-        'actionside-bar-on action-side-bar-expanded'
-        if mode == 'pinned'
-        else 'actionsidebar-minimal'
-    )
+
+    # 'actionsidebar-minimal'   - collapsed icon rail (hover-to-expand lives in CSS + static/js/sidebar.js)
+    # 'actionsidebar-no-expand' - opts that rail out of hover-to-expand
+    # 'actionside-bar-on'       - always-open rail
+    # 'actionsidebar-expanded'- expanded logo/stats block
+    body_classes = {
+        'expandable': 'actionsidebar-minimal',
+        'pinned-expanded': 'actionside-bar-on actionsidebar-expanded',
+        'minimal': 'actionsidebar-minimal actionsidebar-no-expand',
+    }
+
+    mode = datastore.data['settings']['application'].get('ui', {}).get('sidebar_mode')
+    if mode not in {choice for choice, _label in MENU_SIDEBAR_ACTIONMODES} or mode not in body_classes:
+        mode = MENU_SIDEBAR_ACTIONMODES_DEFAULT
+
+    return body_classes[mode]
 
 
 @app.template_global()
@@ -849,7 +886,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Pass the current request path so users are redirected back after login
         return redirect(url_for('login', redirect=request.path))
 
-    @app.route('/logout')
+    @app.route('/logout', methods=['POST'])
     def logout():
         flask_login.logout_user()
 
@@ -863,7 +900,7 @@ def changedetection_app(config=None, datastore_o=None):
         # Otherwise just go to watchlist
         return redirect(url_for('watchlist.index'))
 
-    @app.route('/set-language/<locale>')
+    @app.route('/set-language/<locale>', methods=['POST'])
     def set_language(locale):
         """Set the user's preferred language in the session"""
         if not request.cookies:

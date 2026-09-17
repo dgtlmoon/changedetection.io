@@ -79,24 +79,39 @@ def test_snapshot_refuses_browser_that_cannot_preview(client, live_server, measu
     from changedetectionio.blueprint.add_watch_ui import browser_config
     monkeypatch.setattr(browser_config, 'is_visual_capable', lambda name, datastore: False)
 
+    snapshot_url = url_for('add_watch_ui.add_watch_ui_snapshot')
+
     # Nothing capable, and no explicit browser asked for -> nothing to preview with
-    res = client.get(url_for('add_watch_ui.add_watch_ui_snapshot', url='https://example.com'))
+    res = client.post(snapshot_url, data={'url': 'https://example.com'})
     assert res.status_code == 400
     assert b'No interactive browser' in res.data
 
     # Explicitly asking for a browser that can't preview is refused just the same
-    res = client.get(url_for('add_watch_ui.add_watch_ui_snapshot', url='https://example.com',
-                             fetch_backend='html_requests'))
+    res = client.post(snapshot_url, data={'url': 'https://example.com',
+                                          'fetch_backend': 'html_requests'})
     assert res.status_code == 400
 
     # A made-up name never resolves to a capable fetcher either (real capability lookup here)
     monkeypatch.undo()
-    res = client.get(url_for('add_watch_ui.add_watch_ui_snapshot', url='https://example.com',
-                             fetch_backend='../../etc/passwd'))
+    res = client.post(snapshot_url, data={'url': 'https://example.com',
+                                          'fetch_backend': '../../etc/passwd'})
     assert res.status_code == 400
-    res = client.get(url_for('add_watch_ui.add_watch_ui_snapshot', url='https://example.com',
-                             fetch_backend='os'))
+    res = client.post(snapshot_url, data={'url': 'https://example.com',
+                                          'fetch_backend': 'os'})
     assert res.status_code == 400
+
+
+def test_snapshot_is_post_only(client, live_server, measure_memory_usage, datastore_path):
+    """A GET must not reach the endpoint at all.
+
+    /snapshot drives a real server-side browser fetch and hands the rendered result back in
+    the response (GHSA-56fq-63vj-9992). As a GET that is reachable by anything that can make
+    the operator's browser issue a request - an <img>/<iframe>/link from another site - with
+    no CSRF token in play. POST-only + CSRFProtect means only our own page can trigger it.
+    """
+    # Method mismatch surfaces as 404 here rather than 405
+    res = client.get(url_for('add_watch_ui.add_watch_ui_snapshot') + '?url=https://example.com')
+    assert res.status_code in (404, 405)
 
 
 def test_submit_rejects_unknown_fetcher(client, live_server, measure_memory_usage, datastore_path):

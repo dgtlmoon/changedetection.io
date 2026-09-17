@@ -11,7 +11,7 @@ def test_zh_TW(client, live_server, measure_memory_usage, datastore_path):
     # Be sure we got a session cookie
     res = client.get(url_for("watchlist.index"), follow_redirects=True)
 
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="zh_Hant_TW"), # Traditional
         follow_redirects=True
     )
@@ -21,7 +21,7 @@ def test_zh_TW(client, live_server, measure_memory_usage, datastore_path):
     assert '選擇語言'.encode() in res.data
 
     # Check second set works
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="en_GB"),
         follow_redirects=True
     )
@@ -30,7 +30,7 @@ def test_zh_TW(client, live_server, measure_memory_usage, datastore_path):
     assert b"Select Language" in res.data, "Second set of language worked"
 
     # Check arbitration between zh_Hant_TW<->zh
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="zh"), # Simplified chinese
         follow_redirects=True
     )
@@ -89,7 +89,7 @@ def test_language_switching(client, live_server, measure_memory_usage, datastore
     client.get(url_for("add_watch_ui.add_watch_ui_index"), follow_redirects=True)
 
     # Step 1: Set the language to Italian using the /set-language endpoint
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="it"),
         follow_redirects=True
     )
@@ -119,7 +119,7 @@ def test_language_switching(client, live_server, measure_memory_usage, datastore
     # NB: use 'en_GB' not 'en' — only the variants are in language_codes; the
     # plain 'en' code is silently rejected by set_language and the locale would
     # remain at 'it', defeating the round-trip assertion below.
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="en_GB"),
         follow_redirects=True
     )
@@ -152,7 +152,7 @@ def test_invalid_locale(client, live_server, measure_memory_usage, datastore_pat
     # bare 'en' is NOT in language_codes and is silently rejected by
     # set_language, so passing it here would leave the session locale unset
     # and let the (unrelated) Accept-Language fallback decide what renders.
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="en_GB"),
         follow_redirects=True
     )
@@ -160,7 +160,7 @@ def test_invalid_locale(client, live_server, measure_memory_usage, datastore_pat
     assert res.status_code == 200
 
     # Try to set an invalid locale
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="invalid_locale_xyz"),
         follow_redirects=True
     )
@@ -190,7 +190,7 @@ def test_language_persistence_in_session(client, live_server, measure_memory_usa
     client.get(url_for("watchlist.index"), follow_redirects=True)
 
     # Set language to Italian
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="it"),
         follow_redirects=True
     )
@@ -215,7 +215,7 @@ def test_language_persistence_in_session(client, live_server, measure_memory_usa
         assert sess.get('locale') == 'it', "Locale should be set in session"
 
     # Call auto-detect to clear the locale
-    res = client.get(
+    res = client.post(
         url_for("ui.delete_locale_language_session_var_if_it_exists"),
         follow_redirects=True
     )
@@ -254,7 +254,7 @@ def test_set_language_with_redirect(client, live_server, measure_memory_usage, d
     client.get(url_for("watchlist.index"), follow_redirects=True)
 
     # Set language with a redirect parameter (simulating language change from /settings)
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="de", redirect="/settings"),
         follow_redirects=False
     )
@@ -268,7 +268,7 @@ def test_set_language_with_redirect(client, live_server, measure_memory_usage, d
         assert sess.get('locale') == 'de'
 
     # Test with invalid locale (should still redirect safely)
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="invalid_locale", redirect="/settings"),
         follow_redirects=False
     )
@@ -276,7 +276,7 @@ def test_set_language_with_redirect(client, live_server, measure_memory_usage, d
     assert '/settings' in res.location
 
     # Test with malicious redirect (should default to watchlist)
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="en", redirect="https://evil.com"),
         follow_redirects=False
     )
@@ -296,7 +296,7 @@ def test_time_unit_translations(client, live_server, measure_memory_usage, datas
     client.get(url_for("watchlist.index"), follow_redirects=True)
 
     # Test Italian translations
-    res = client.get(url_for("set_language", locale="it"), follow_redirects=True)
+    res = client.post(url_for("set_language", locale="it"), follow_redirects=True)
     assert res.status_code == 200
 
     res = client.get(url_for("settings.settings_page"), follow_redirects=True)
@@ -312,7 +312,7 @@ def test_time_unit_translations(client, live_server, measure_memory_usage, datas
     assert b"Time Between Check" not in res.data, "Should not have English 'Time Between Check'"
 
     # Test Korean translations
-    res = client.get(url_for("set_language", locale="ko"), follow_redirects=True)
+    res = client.post(url_for("set_language", locale="ko"), follow_redirects=True)
     assert res.status_code == 200
 
     res = client.get(url_for("settings.settings_page"), follow_redirects=True)
@@ -332,7 +332,7 @@ def test_time_unit_translations(client, live_server, measure_memory_usage, datas
     assert b"Time Between Check" not in res.data, "Should not have English 'Time Between Check'"
 
     # Test Chinese Simplified translations
-    res = client.get(url_for("set_language", locale="zh"), follow_redirects=True)
+    res = client.post(url_for("set_language", locale="zh"), follow_redirects=True)
     assert res.status_code == 200
 
     res = client.get(url_for("settings.settings_page"), follow_redirects=True)
@@ -348,7 +348,7 @@ def test_time_unit_translations(client, live_server, measure_memory_usage, datas
     assert b"Time Between Check" not in res.data, "Should not have English 'Time Between Check'"
 
     # Test German translations
-    res = client.get(url_for("set_language", locale="de"), follow_redirects=True)
+    res = client.post(url_for("set_language", locale="de"), follow_redirects=True)
     assert res.status_code == 200
 
     res = client.get(url_for("settings.settings_page"), follow_redirects=True)
@@ -363,7 +363,7 @@ def test_time_unit_translations(client, live_server, measure_memory_usage, datas
     assert b"Time Between Check" not in res.data, "Should not have English 'Time Between Check'"
 
     # Test Russian translations
-    res = client.get(url_for("set_language", locale="ru"), follow_redirects=True)
+    res = client.post(url_for("set_language", locale="ru"), follow_redirects=True)
     assert res.status_code == 200
 
     res = client.get(url_for("settings.settings_page"), follow_redirects=True)
@@ -378,7 +378,7 @@ def test_time_unit_translations(client, live_server, measure_memory_usage, datas
     assert b"Time Between Check" not in res.data, "Should not have English 'Time Between Check'"
 
     # Test Traditional Chinese (zh_Hant_TW) translations
-    res = client.get(url_for("set_language", locale="zh_Hant_TW"), follow_redirects=True)
+    res = client.post(url_for("set_language", locale="zh_Hant_TW"), follow_redirects=True)
     assert res.status_code == 200
 
     res = client.get(url_for("settings.settings_page"), follow_redirects=True)
@@ -627,7 +627,7 @@ def test_session_locale_overrides_accept_language(client, live_server, measure_m
         "Expected Taiwan flag 'fi fi-tw' from auto-detect"
 
     # Step 2: User explicitly selects Korean language
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="ko"),
         headers={'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8'},  # Browser still sends zh-TW
         follow_redirects=True
@@ -700,7 +700,7 @@ def test_clear_history_translated_confirmation(client, live_server, measure_memo
     wait_for_all_checks(client)
 
     # Set language to German
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="de"),
         follow_redirects=True
     )
@@ -726,7 +726,7 @@ def test_clear_history_translated_confirmation(client, live_server, measure_memo
         "German confirmation word 'loschen' should be accepted (issue #3865)"
 
     # Switch back to English and verify English word still works
-    res = client.get(
+    res = client.post(
         url_for("set_language", locale="en_US"),
         follow_redirects=True
     )

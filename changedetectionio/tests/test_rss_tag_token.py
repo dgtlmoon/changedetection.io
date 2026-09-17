@@ -38,7 +38,7 @@ def test_rss_tag_feed_ignores_security_token(client, live_server, datastore_path
     wait_for_all_checks(client)
 
     # Logout
-    client.get(url_for("logout"), follow_redirects=True)
+    client.post(url_for("logout"), follow_redirects=True)
 
     # Request the tag RSS feed WITH the token
     res = client.get(

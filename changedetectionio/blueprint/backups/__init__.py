@@ -98,7 +98,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     backups_blueprint.register_blueprint(construct_restore_blueprint(datastore))
     backup_threads = []
 
-    @backups_blueprint.route("/request-backup", methods=['GET'])
+    @backups_blueprint.route("/request-backup", methods=['POST'])
     @login_optionally_required
     def request_backup():
         if any(thread.is_alive() for thread in backup_threads):
