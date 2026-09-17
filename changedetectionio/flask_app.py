@@ -214,6 +214,7 @@ def _configure_plugin_templates():
 _configure_plugin_templates()
 csrf = CSRFProtect()
 csrf.init_app(app)
+
 notification_debug_log = []
 
 # Locale for correct presentation of prices etc.
@@ -815,6 +816,19 @@ def changedetection_app(config=None, datastore_o=None):
     def strip_duplicate_date_header(response):
         if request.environ.get('SERVER_SOFTWARE', '').startswith('Werkzeug'):
             response.headers.pop("Date", None)
+        return response
+
+    # Dynamic/authenticated pages (forms carrying a CSRF token, watch data, settings) must not
+    # be stored by an intermediate CDN or reverse proxy. Flask already sends "Vary: Cookie" on
+    # these, but an edge cache configured to key purely on URL will ignore it and can serve a
+    # stale CSRF token (breaking form submits) or one session's page to another visitor.
+    # Only fills in the header when the route didn't set one, so the explicit Cache-Control on
+    # static assets, screenshots, favicons and plugin files is left untouched. Note that
+    # werkzeug's send_file() always sets Cache-Control, so file responses never reach here.
+    @app.after_request
+    def add_no_cache_headers(response):
+        if 'Cache-Control' not in response.headers:
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return response
 
     watch_api.add_resource(
