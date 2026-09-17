@@ -303,6 +303,7 @@ class watch_base(dict):
             'trigger_text': [],  # List of text or regex to wait for until a change is detected
             'url': '',
             'use_page_title_in_list': None, # None = use system settings
+            'use_share_watch': False,
             'uuid': str(uuid.uuid4()),
             'webdriver_delay': None,
             'webdriver_js_execute_code': None,  # Run before change-detection
