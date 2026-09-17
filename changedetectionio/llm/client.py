@@ -6,6 +6,7 @@ and makes the call easy to mock in tests.
 
 import logging
 import os
+
 from loguru import logger
 
 # Default output token cap for JSON-returning calls (intent eval, preview, setup).
@@ -24,6 +25,9 @@ DEFAULT_TIMEOUT = int(os.getenv('LLM_TIMEOUT', 300))
 # longer deadline (Hermes-style, 30 min). Overridable via LLM_LOCAL_TIMEOUT; see
 # evaluator.resolve_llm_timeout() for how the endpoint is classified.
 DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
+# Models and reasoning architectures that reject explicit sampling parameters (temperature/top_p)
+_NO_TEMPERATURE_MODEL_KEYWORDS = ('flash-lite', 'thinking-exp', 'o1', 'o3', 'o4')
+
 DEFAULT_RETRIES = 3
 
 
@@ -63,10 +67,16 @@ def _install_litellm_debug():
     logger.info("LLM client: litellm debug logging routed through loguru")
 
 
-def completion(model: str, messages: list, api_key: str = None,
-               api_base: str = None, timeout: int = DEFAULT_TIMEOUT,
-               max_tokens: int = None, extra_body: dict = None,
-               debug: bool = False) -> tuple[str, int, int, int]:
+def completion(  # noqa: C901
+    model: str,
+    messages: list,
+    api_key: str = None,
+    api_base: str = None,
+    timeout: int = DEFAULT_TIMEOUT,
+    max_tokens: int = None,
+    extra_body: dict = None,
+    debug: bool = False,
+) -> tuple[str, int, int, int]:
     """
     Call the LLM and return (response_text, total_tokens, input_tokens, output_tokens).
     Retries up to DEFAULT_RETRIES times on timeout or connection errors.
@@ -79,7 +89,7 @@ def completion(model: str, messages: list, api_key: str = None,
     try:
         import litellm
     except ImportError:
-        raise RuntimeError("litellm is not installed. Add it to requirements.txt.")
+        raise RuntimeError("litellm is not installed. Add it to requirements.txt.") from None
 
     if debug:
         _install_litellm_debug()
@@ -90,9 +100,12 @@ def completion(model: str, messages: list, api_key: str = None,
         'model': model,
         'messages': messages,
         'timeout': _timeout,
-        'temperature': 0,
         'max_tokens': max_tokens if max_tokens is not None else _MAX_COMPLETION_TOKENS,
     }
+    _m_lower = (model or '').lower()
+    if not any(k in _m_lower for k in _NO_TEMPERATURE_MODEL_KEYWORDS):
+        kwargs['temperature'] = 0
+
     if api_key:
         kwargs['api_key'] = api_key
     if api_base:
@@ -122,9 +135,9 @@ def completion(model: str, messages: list, api_key: str = None,
         attempt += 1
         try:
             response = litellm.completion(**kwargs)
-            choice   = response.choices[0]
-            message  = choice.message
-            finish   = getattr(choice, 'finish_reason', None)
+            choice = response.choices[0]
+            message = choice.message
+            finish = getattr(choice, 'finish_reason', None)
 
             text = message.content or ''
 
@@ -133,7 +146,9 @@ def completion(model: str, messages: list, api_key: str = None,
                 parts = getattr(message, 'parts', None)
                 if parts:
                     text = ''.join(getattr(p, 'text', '') or '' for p in parts).strip()
-                    logger.debug(f"LLM client: extracted text from message.parts ({len(parts)} parts) model={model!r}")
+                    logger.debug(
+                        f"LLM client: extracted text from message.parts ({len(parts)} parts) model={model!r}"
+                    )
 
             if finish == 'length':
                 logger.warning(
@@ -149,9 +164,13 @@ def completion(model: str, messages: list, api_key: str = None,
                 )
 
             usage = getattr(response, 'usage', None)
-            input_tokens  = int(getattr(usage, 'prompt_tokens',     0) or 0) if usage else 0
+            input_tokens = int(getattr(usage, 'prompt_tokens', 0) or 0) if usage else 0
             output_tokens = int(getattr(usage, 'completion_tokens', 0) or 0) if usage else 0
-            total_tokens  = int(getattr(usage, 'total_tokens',      0) or 0) if usage else (input_tokens + output_tokens)
+            total_tokens = (
+                int(getattr(usage, 'total_tokens', 0) or 0)
+                if usage
+                else (input_tokens + output_tokens)
+            )
             logger.debug(
                 f"LLM client: model={model!r} finish={finish!r} "
                 f"tokens={total_tokens} (in={input_tokens} out={output_tokens}) "
@@ -181,21 +200,37 @@ def completion(model: str, messages: list, api_key: str = None,
             raise
 
         except litellm.BadRequestError as e:
-            # If the provider rejected an unsupported sampling param (and we haven't
-            # already stripped them), drop them and retry once. attempt-=1 keeps this
-            # off the timeout-retry budget; _stripped_sampling prevents a loop.
-            msg = str(e).lower()
-            if (not _stripped_sampling
-                    and any(p in kwargs for p in _sampling_params)
-                    and any(p in msg for p in _sampling_params)):
+            # If the provider rejected an unsupported sampling param or extra_body
+            # (e.g. Gemini INVALID_ARGUMENT on thinkingConfig or temperature), drop
+            # them and retry once.
+            if not _stripped_sampling:
                 dropped = [p for p in _sampling_params if kwargs.pop(p, None) is not None]
-                _stripped_sampling = True
-                attempt -= 1
-                logger.warning(
-                    f"LLM client: model={model!r} rejected sampling params {dropped} "
-                    f"({e}); retrying without them"
-                )
-                continue
+                extra_body = kwargs.get('extra_body')
+                if isinstance(extra_body, dict):
+                    gen_cfg = extra_body.get('generationConfig')
+                    if (
+                        isinstance(gen_cfg, dict)
+                        and gen_cfg.pop('thinkingConfig', None) is not None
+                    ):
+                        dropped.append('thinkingConfig')
+                        if not gen_cfg:
+                            extra_body.pop('generationConfig', None)
+                        if not extra_body:
+                            kwargs.pop('extra_body', None)
+                    elif 'thinkingConfig' in extra_body:
+                        extra_body.pop('thinkingConfig', None)
+                        dropped.append('thinkingConfig')
+                        if not extra_body:
+                            kwargs.pop('extra_body', None)
+
+                if dropped:
+                    _stripped_sampling = True
+                    attempt -= 1
+                    logger.warning(
+                        f"LLM client: model={model!r} rejected request ({e}); "
+                        f"stripped {dropped} and retrying once"
+                    )
+                    continue
             logger.warning(f"LLM call failed: model={model!r} error={e}")
             raise
 

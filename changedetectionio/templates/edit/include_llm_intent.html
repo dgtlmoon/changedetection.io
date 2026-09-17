@@ -5,59 +5,130 @@
     llm_configured  — bool: LLM provider is configured in settings
     form            — the WTForms form (must have .llm_intent and .llm_change_summary fields)
 
-  Optional (watch edit only):
+  Group/tag edit only:
+    llm_group_edit  — bool: True when rendering the tag/group edit page. This is the ONLY
+                      way to tell the two contexts apart — the tags blueprint also passes
+                      the tag dict as `watch`, so `watch` is truthy in both.
+                      form.llm_backend_profile is ternary here (On / Off / Leave it to each
+                      watch) and is the group's only AI control; on a watch it is a checkbox.
+
+  Watch edit only:
     watch               — the Watch object (for processor check and prefilter display)
     llm_group_overrides — dict returned by _resolve_llm_group_overrides():
                           {'llm_intent': {'value': str, 'group_name': str} | None,
-                           'llm_change_summary': {'value': str, 'group_name': str} | None}
-                          Present only in watch edit context; absent in tag edit context.
+                           'llm_change_summary': {'value': str, 'group_name': str} | None,
+                           'llm_backend_profile': {'value': bool, 'group_name': str} | None}
+                          The two prompt entries are non-None only when the watch has no own
+                          value AND a linked group set to "On" has one — that is what puts
+                          "From group '<name>': <value>" in the placeholder.
+                          llm_backend_profile is non-None when a linked group has taken the
+                          on/off decision (On or Off, not "leave it to each watch") — #4204.
 
-  Usage in watch edit (edit.html):
-    {% include "edit/include_llm_intent.html" %}
-
-  Usage in tag edit (edit-tag.html):
-    {% include "edit/include_llm_intent.html" %}
-    (watch is not set → tag mode: no processor check, no examples, different description)
+  Usage (both): {% include "edit/include_llm_intent.html" %}
 #}
-{% from '_helpers.html' import render_field %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_ternary_field %}
 
-{# Processor check only applies in watch-edit context (llm_group_overrides present). #}
-{# In tag/group edit context the AI section is always visible.                        #}
+{% set llm_group_mode = llm_group_edit|default(false) %}
+
+{# Processor check only applies in watch-edit context.                                 #}
+{# In tag/group edit context the AI section is always visible.                         #}
 {# Processors whose edit form carries the AI Intent / Change Summary fields (i.e. those whose
    form inherits processor_text_json_diff_form). text_json_diff + restock_diff today. #}
-{% if llm_group_overrides is defined %}
-    {% set show_ai_section = not watch.get('processor') or watch.get('processor') in ['text_json_diff', 'restock_diff'] %}
-{% else %}
+{% if llm_group_mode %}
     {% set show_ai_section = true %}
+{% else %}
+    {% set show_ai_section = not watch.get('processor') or watch.get('processor') in ['text_json_diff', 'restock_diff'] %}
+{% endif %}
+
+{# An unrendered switch is absent from the POST, and WTForms reads that as off. So whenever we
+   do NOT render the AI switch (no LLM provider configured, or a processor whose form has no AI
+   fields) we carry its saved state through in a hidden input — otherwise merely saving the page
+   would silently switch AI off. #}
+{% if not (show_ai_section and llm_configured) %}
+    {% if llm_group_mode %}
+        {# Group: ternary, so preserve whichever of the three states it is in #}
+        {% if form.llm_backend_profile.data is not none %}<input type="hidden" name="llm_backend_profile" value="{{ 'true' if form.llm_backend_profile.data else 'false' }}">{% endif %}
+    {% elif form.llm_backend_profile.data %}
+        <input type="hidden" name="llm_backend_profile" value="y">
+    {% endif %}
 {% endif %}
 
 {% if show_ai_section %}
 
 {# ── Configured: show the intent + summary fields ────────────────── #}
 {% if llm_configured %}
-<div class="border-fieldset" id="llm-intent-section">
-    <h3>&#x2728; {{ _('AI') }}</h3>
+<div id="llm-intent-section">
 
-    {# — AI Change Intent — #}
-    <h4 style="margin: 0 0 0.3em 0;">{{ _('AI — Notify when…') }}</h4>
+{% if llm_group_mode %}
+{# The group's single AI control. "On" is also what makes the prompts below cascade to the
+   watches (tag_llm_applies_to_watches), so there is no second "does this override?" flag. #}
+<div class="pure-control-group inline-radio" id="llm-ai-enabled-row">
+    {{ render_ternary_field(form.llm_backend_profile) }}
+    <span class="pure-form-message-inline">
+        {{ _('<strong>On</strong> &ndash; every watch in this group uses the AI settings below, unless it fills in its own. <strong>Off</strong> &ndash; no AI for any watch in this group. <strong>Leave it to each watch</strong> &ndash; this group has no say; each watch uses its own AI settings.')|safe }}
+    </span>
+</div>
+{# The prompts below only mean something in the "On" state, so grey them out otherwise — the
+   radio counterpart of the toggleOpacity cue used by #overrides_watch on the restock tab. #}
+<script id="llm-group-opacity-toggle">
+    $(document).ready(function () {
+        toggleOpacityByRadioValue('llm_backend_profile', 'true', '#change-intent-notify-me-when, #change-summary');
+    });
+</script>
+{% else %}
+{# Per-watch AI on/off (#4204). Resolution is global settings → group → watch, so a group that
+   has taken the decision (its AI setting is On or Off rather than "leave it to each watch")
+   owns this control: we disable it, show the state the group decided, and name the group.
+   The watch's own preference is not lost — because the field isn't user-writable in this
+   state, edit.py ignores whatever the POST says for it and keeps the stored value. #}
+{% set profile_group = llm_group_overrides.llm_backend_profile if llm_group_overrides is defined else none %}
+<div class="pure-control-group" id="llm-ai-enabled-row">
+    {# Only the checkbox is dimmed — the explanation of *why* has to stay readable. #}
+    <div{% if profile_group %} style="opacity: 0.6;"{% endif %}>
+        {% if profile_group %}
+            {# Show what the group decided, not this watch's now-inert own value. #}
+            {% set dummy = form.llm_backend_profile.__setattr__('checked', profile_group.value) %}
+            {{ render_checkbox_field(form.llm_backend_profile, disabled=True) }}
+        {% else %}
+            {{ render_checkbox_field(form.llm_backend_profile) }}
+        {% endif %}
+    </div>
+    {% if profile_group %}
+    {# The group name links to its edit page so the decision can be changed where it lives.
+       Built as escaped markup and passed into the sentence, so translators keep one string. #}
+    {%- set group_link -%}
+        <a href="{{ url_for('tags.form_tag_edit', uuid=profile_group.group_uuid) }}#ai-llm">{{ profile_group.group_name }}</a>
+    {%- endset -%}
+    <span class="pure-form-message-inline">
+        {% if profile_group.value %}
+            {{ _("Group %(name)s decides this: AI is ON for every watch in that group.", name=group_link) | safe }}
+        {% else %}
+            {{ _("Group %(name)s decides this: AI is OFF for every watch in that group.", name=group_link) | safe }}
+        {% endif %}
+    </span>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="border-fieldset" id="change-intent-notify-me-when">
     <p class="pure-form-message-inline" style="margin-top:0">
-        {% if watch is defined and watch %}
+        {% if not llm_group_mode %}
             {{ _('Describe what you care about. The AI evaluates every detected change against this and only notifies you when it matches.') }}
         {% else %}
             {{ _('Set a change intent for all watches in this tag/group. Each watch can override with its own.') }}
         {% endif %}
     </p>
     <div class="pure-control-group">
-        {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_intent %}
+        {% if not llm_group_mode and llm_group_overrides is defined and llm_group_overrides.llm_intent %}
             {% set intent_placeholder = _("From group '%(name)s': %(value)s", name=llm_group_overrides.llm_intent.group_name, value=llm_group_overrides.llm_intent.value) %}
-        {% elif watch is defined and watch %}
+        {% elif not llm_group_mode %}
             {% set intent_placeholder = _('e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes.') %}
         {% else %}
             {% set intent_placeholder = _('e.g. Flag price changes or new product launches across all watches in this group') %}
         {% endif %}
         {{ render_field(form.llm_intent, placeholder=intent_placeholder, rows=5, class="pure-input-1") }}
     </div>
-    {% if watch is defined and watch %}
+    {% if not llm_group_mode %}
     <div class="pure-form-message-inline">
         <strong>{{ _('Examples:') }}</strong>
         <ul style="margin: 0.3em 0 0 1.2em; padding: 0;">
@@ -67,19 +138,19 @@
             <li><em>{{ _('Only important if package versions change or a CVE is mentioned') }}</em></li>
         </ul>
     </div>
-    {% if watch.get('llm_prefilter') %}
+    {% if watch is defined and watch.get('llm_prefilter') %}
     <div class="pure-form-message-inline" style="margin-top: 0.5em;">
         <small>{{ _('AI pre-filter active: <code>%(filter)s</code> — narrows content scope before evaluation', filter=watch.get('llm_prefilter')|e) | safe }}</small>
     </div>
     {% endif %}
     {% endif %}
 
-    <hr style="margin: 1.2em 0; border: none; border-top: 1px solid var(--color-border, #ddd);">
+</div>
+<div class="border-fieldset" id="change-summary">
 
     {# — AI Change Summary — #}
-    <h4 style="margin: 0 0 0.3em 0;">{{ _('AI Change Summary') }}</h4>
     <p class="pure-form-message-inline" style="margin-top:0">
-        {% if watch is defined and watch %}
+        {% if not llm_group_mode %}
             {{ _('When a change is detected, the AI describes it according to your instructions and replaces <code>%(diff)s</code> in your notification. Use <code>%(raw_diff)s</code> if you still want the original diff.',
                  diff='{{diff}}', raw_diff='{{raw_diff}}') | safe }}
         {% else %}
@@ -87,34 +158,30 @@
         {% endif %}
     </p>
     <div class="pure-control-group">
-        {% if watch is defined and watch and llm_group_overrides is defined and llm_group_overrides.llm_change_summary %}
+        {% if not llm_group_mode and llm_group_overrides is defined and llm_group_overrides.llm_change_summary %}
             {% set summary_placeholder = _("From group '%(name)s': %(value)s", name=llm_group_overrides.llm_change_summary.group_name, value=llm_group_overrides.llm_change_summary.value) %}
         {% else %}
             {% set summary_placeholder = form.llm_change_summary.render_kw['placeholder'] %}
         {% endif %}
         {{ render_field(form.llm_change_summary, placeholder=summary_placeholder, rows=5, class="pure-input-1") }}
-    </div>
-    <div style="margin-top: 0.3em;">
+
         <a href="#" class="pure-button button-xsmall" onclick="var t=document.getElementById('llm_change_summary'); if(!t.value&amp;&amp;t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
-    </div>
-    <div class="pure-control-group" style="margin-top: 0.6em;">
-        <label>{{ form.llm_change_summary_mode.label.text }}</label>
-        <div>
-            {% for subfield in form.llm_change_summary_mode %}
-            <label class="pure-radio" style="display:block; font-weight:normal; margin-bottom:0.3em;">
-                {{ subfield() }} {{ subfield.label.text }}
-            </label>
-            {% endfor %}
+        <br>
+        <div class="inline-radio">
+            {{ render_field(form.llm_change_summary_mode) }}
+            <span class="pure-form-message-inline">
+            {% if not llm_group_mode %}
+                {{ _('Appending keeps the prompt inherited from the group or from global settings and adds your text after it, so later edits to that prompt still reach this watch.') }}
+            {% else %}
+                {{ _('Appending keeps the prompt inherited from global settings and adds your text after it, so later edits to that prompt still reach this group.') }}
+            {% endif %}
+            </span>
         </div>
-        <span class="pure-form-message-inline">
-        {% if watch is defined and watch %}
-            {{ _('Appending keeps the prompt inherited from the group or from global settings and adds your text after it, so later edits to that prompt still reach this watch.') }}
-        {% else %}
-            {{ _('Appending keeps the prompt inherited from global settings and adds your text after it, so later edits to that prompt still reach this group.') }}
-        {% endif %}
-        </span>
     </div>
-    {% if watch is defined and watch %}
+
+
+
+    {% if not llm_group_mode %}
     <div class="pure-form-message-inline">
         <strong>{{ _('Examples:') }}</strong>
         <ul style="margin: 0.3em 0 0 1.2em; padding: 0;">
@@ -125,13 +192,14 @@
     </div>
     {% endif %}
 </div>
+</div>
 
 {# ── Not configured: greyed-out prompt to configure ──────────────── #}
 {% else %}
 <div class="border-fieldset" id="llm-intent-section-disabled" style="opacity: 0.5;">
     <h3>&#x2728; {{ _('AI') }}</h3>
     <p>
-       {% if watch is defined and watch %}
+       {% if not llm_group_mode %}
            {{ _('Configure an AI / LLM provider in <a href="%(url)s">Settings → AI / LLM</a> to enable AI Change Intent and AI Change Summary.',
                 url=url_for('settings.settings_page') + '#ai') | safe }}
        {% else %}

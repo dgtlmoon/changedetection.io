@@ -577,7 +577,10 @@
     if (mult.trim())    params.set('local_token_multiplier', mult.trim());
 
     try {
-      const resp = await fetch('{{ url_for("settings.llm.llm_test") }}?' + params);
+      const resp = await fetch('{{ url_for("settings.llm.llm_test") }}?' + params, {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrftoken}
+      });
       const data = await resp.json();
       if (data.ok) {
         result.style.cssText = 'display:block; background:rgba(39,174,96,0.08); border:1px solid rgba(39,174,96,0.3); border-radius:5px; padding:0.6em 0.85em; font-size:0.88em; line-height:1.45;';

@@ -1,6 +1,7 @@
 from os import getenv
 from copy import deepcopy
 
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_CONTENT_FORMAT_DEFAULT
 from changedetectionio.model.Tags import TagsDict
 
@@ -80,7 +81,7 @@ class model(dict):
                         'socket_io_enabled': True,
                         'favicons_enabled': True,
                         'timeago_format': 'long',  # 'long' = "1 minute ago", 'short' = "1m ago"
-                        'sidebar_mode': 'collapsed',  # 'collapsed' = slim icon rail, expands on hover; 'pinned' = always expanded
+                        'sidebar_mode': MENU_SIDEBAR_ACTIONMODES_DEFAULT,  # one of blueprint.menu_modes.MENU_SIDEBAR_ACTIONMODES
                     },
                 }
             }

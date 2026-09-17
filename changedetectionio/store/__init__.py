@@ -5,7 +5,8 @@ from changedetectionio.strtobool import strtobool
 from changedetectionio.validate_url import is_safe_valid_url
 
 from flask import (
-    flash
+    flash,
+    has_request_context
 )
 from flask_babel import gettext
 
@@ -35,7 +36,8 @@ except ImportError:
 from ..processors import get_custom_watch_obj_for_processor, find_processors
 
 # Import the base class and helpers
-from .file_saving_datastore import FileSavingDataStore, load_all_watches, load_all_tags, save_json_atomic
+from .file_saving_datastore import (FileSavingDataStore, load_all_watches, load_all_tags, load_watch_from_file,
+                                    save_json_atomic)
 from .updates import DatastoreUpdatesMixin
 
 # Because the server will run as a daemon and wont know the URL for notification links when firing off a notification
@@ -47,6 +49,9 @@ dictfilt = lambda x, y: dict([(i, x[i]) for i in x if i in set(y)])
 # Is there an existing library to ensure some data store (JSON etc) is in sync with CRUD methods?
 # Open a github issue if you know something :)
 # https://stackoverflow.com/questions/6190468/how-to-trigger-function-on-value-change
+_TAG_UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+
+
 class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     __version_check = True
 
@@ -660,9 +665,8 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # NOTE: dict() is shallow copy but safe since add_watch() deepcopies it
         with self.lock:
             extras = dict(self.data['watching'][uuid])
-        new_uuid = self.add_watch(url=url, extras=extras)
-        watch = self.data['watching'][new_uuid]
-        return new_uuid
+        # None when add_watch() refused it (e.g. PAGE_WATCH_LIMIT), having already flashed why
+        return self.add_watch(url=url, extras=extras)
 
     def url_exists(self, url):
 
@@ -677,6 +681,38 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
     def clear_watch_history(self, uuid):
         self.__data['watching'][uuid].clear_watch()
         self.__data['watching'][uuid].commit()
+
+    @property
+    def watch_limit(self):
+        """Total watches allowed by PAGE_WATCH_LIMIT, or None when there is no limit.
+
+        None means "unlimited" and is the normal case - the env var being absent, empty or
+        unparseable all leave the limit switched off entirely. There is no default.
+        """
+        limit = os.getenv('PAGE_WATCH_LIMIT')
+        if not limit:
+            return None
+        try:
+            return int(limit)
+        except ValueError:
+            logger.warning(f"Invalid PAGE_WATCH_LIMIT value: {limit}, ignoring limit check")
+            return None
+
+    def watch_limit_reached(self):
+        """True when the limit is set and leaves no room for another watch.
+
+        add_watch() enforces this on its own, but it can only return None. Callers that can
+        report something better - a 429 in the API, one flash instead of one per row in the
+        importers - should check this first.
+        """
+        limit = self.watch_limit
+        return limit is not None and len(self.__data['watching']) >= limit
+
+    def watch_limit_message(self):
+        """The single wording for a blocked add, so every UI surface says the same thing."""
+        return gettext("Watch limit reached ({current}/{limit} watches). Cannot add more watches.").format(
+            current=len(self.__data['watching']), limit=self.watch_limit
+        )
 
     def add_watch(self, url, tag='', extras=None, tag_uuids=None, save_immediately=True, seed_data_dir=None):
         """
@@ -741,32 +777,48 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 return False
 
         if not is_safe_valid_url(url):
-            from flask import has_request_context
             if has_request_context():
                 flash(gettext('Watch protocol is not permitted or invalid URL format'), 'error')
             else:
                 logger.error(f"add_watch: URL '{url}' is not permitted or invalid, skipping.")
             return None
 
-        # Check PAGE_WATCH_LIMIT if set
-        page_watch_limit = os.getenv('PAGE_WATCH_LIMIT')
-        if page_watch_limit:
-            try:
-                page_watch_limit = int(page_watch_limit)
-                current_watch_count = len(self.__data['watching'])
-                if current_watch_count >= page_watch_limit:
-                    logger.error(f"Watch limit reached: {current_watch_count}/{page_watch_limit} watches. Cannot add {url}")
-                    flash(gettext("Watch limit reached ({current}/{limit} watches). Cannot add more watches.").format(current=current_watch_count, limit=page_watch_limit), 'error')
-                    return None
-            except ValueError:
-                logger.warning(f"Invalid PAGE_WATCH_LIMIT value: {page_watch_limit}, ignoring limit check")
+        # Backstop for PAGE_WATCH_LIMIT - every add path funnels through here, so nothing can
+        # get past the limit even if a caller forgets to pre-check watch_limit_reached().
+        if self.watch_limit_reached():
+            logger.error(f"Watch limit reached: {len(self.__data['watching'])}/{self.watch_limit} watches. Cannot add {url}")
+            # The CLI (-u) and the API's background import thread have no request context,
+            # where flash() raises instead of reporting anything
+            if has_request_context():
+                flash(self.watch_limit_message(), 'error')
+            return None
 
         if tag and type(tag) == str:
-            # Then it's probably a string of the actual tag by name, split and add it
-            for t in tag.split(','):
-                # for each stripped tag, add tag as UUID
-                for a_t in t.split(','):
-                    tag_uuid = self.add_tag(a_t)
+            # A comma separated string of tag *titles*, created when they don't exist yet.
+            # An existing tag's UUID is accepted here too: the API documented this field as taking
+            # a UUID for years, and honouring that beats creating a tag *titled* with the UUID.
+            existing_tag_uuids = self.__data['settings']['application'].get('tags', {})
+
+            for tag_name in tag.split(','):
+                tag_name = tag_name.strip()
+                if not tag_name:
+                    continue
+
+                if _TAG_UUID_RE.match(tag_name):
+                    if tag_name in existing_tag_uuids:
+                        apply_extras['tags'].append(tag_name)
+                        continue
+                    # UUID-shaped but no such tag, and no tag literally titled that either -
+                    # a stale or foreign ID. Skip it rather than leave behind a group named
+                    # after a UUID, which is never what the caller wanted.
+                    if not self.tag_uuid_for_title(tag_name):
+                        logger.warning(f"Tag '{tag_name}' looks like a UUID but no such tag exists, skipping")
+                        continue
+
+                tag_uuid = self.add_tag(tag_name)
+                # add_tag() returns False for a title it won't create - never let that into the list,
+                # a falsy entry blows up every lookup of watch['tags']
+                if tag_uuid:
                     apply_extras['tags'].append(tag_uuid)
 
         # Or if UUIDs given directly
@@ -852,10 +904,26 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         last-screenshot.png + elements.deflate in final on-disk format) is renamed into
         place as the new watch's data_dir - no re-fetch, no copy. If the temp_uuid is
         missing/expired/invalid we fall back to a normal add_watch() so the UI still works.
+
+        Settings the snapshot recorded for itself in its own watch.json (currently just
+        fetch_backend - the browser that rendered the preview) win over the posted form,
+        because they describe what actually fetched. add_watch() -> commit() rewrites that
+        file in full once the directory has been promoted.
         """
         seed_dir = self.get_temporary_watch_dir(temp_uuid)
         if not (seed_dir and os.path.isdir(seed_dir)):
             seed_dir = None
+
+        extras = dict(extras or {})
+        seed_watch_json = os.path.join(seed_dir, "watch.json") if seed_dir else None
+        # isfile() first - a snapshot parked before this file existed is normal, not an error
+        if seed_watch_json and os.path.isfile(seed_watch_json):
+            seed_watch = load_watch_from_file(seed_watch_json, temp_uuid, self.rehydrate_entity)
+            if seed_watch and seed_watch.get('fetch_backend'):
+                extras['fetch_backend'] = seed_watch.get('fetch_backend')
+                logger.debug(f"Promoting temporary watch {temp_uuid} with its recorded "
+                             f"fetch_backend '{extras['fetch_backend']}'")
+
         return self.add_watch(url=url, tag=tag, extras=extras, seed_data_dir=seed_dir)
 
     def cleanup_temporary_watches(self, ttl_seconds=3600):
@@ -1024,6 +1092,18 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         return ret
 
+    def tag_uuid_for_title(self, title):
+        """UUID of the tag with this title (case/space insensitive), or None. Creates nothing."""
+        n = title.strip().lower()
+        if not n:
+            return None
+
+        for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
+            if n == tag.get('title', '').lower().strip():
+                return uuid
+
+        return None
+
     def add_tag(self, title):
         # If name exists, return that
         n = title.strip().lower()
@@ -1031,10 +1111,10 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if not n:
             return False
 
-        for uuid, tag in self.__data['settings']['application'].get('tags', {}).items():
-            if n == tag.get('title', '').lower().strip():
-                logger.warning(f"Tag '{title}' already exists, skipping creation.")
-                return uuid
+        existing_uuid = self.tag_uuid_for_title(title)
+        if existing_uuid:
+            logger.warning(f"Tag '{title}' already exists, skipping creation.")
+            return existing_uuid
 
         # Eventually almost everything todo with a watch will apply as a Tag
         # So we use the same model as a Watch

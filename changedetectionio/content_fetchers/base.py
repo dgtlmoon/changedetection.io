@@ -4,6 +4,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from changedetectionio.content_fetchers import BrowserStepsStepException
+from changedetectionio.strtobool import strtobool
 
 
 class FetcherCapabilities(BaseModel):
@@ -25,6 +26,16 @@ class FetcherCapabilities(BaseModel):
             name: getattr(fetcher_class, name, False)
             for name in cls.model_fields
         })
+
+
+def get_playwright_bypass_csp():
+    """Return whether Playwright-compatible browser contexts should bypass CSP.
+
+    Bypassing CSP remains enabled by default for backward compatibility. Some
+    remote CDP implementations do not support ``Page.setBypassCSP``; operators
+    can disable the option by setting ``PLAYWRIGHT_BYPASS_CSP=false``.
+    """
+    return strtobool(os.getenv('PLAYWRIGHT_BYPASS_CSP', 'true'))
 
 
 def manage_user_agent(headers, current_ua=''):
@@ -79,6 +90,7 @@ class Fetcher():
     screenshot_format = None
     status_code = None
     webdriver_js_execute_code = None
+    worker_id = None
     xpath_data = None
     xpath_element_js = ""
 
@@ -108,6 +120,11 @@ class Fetcher():
         # Allow lock_viewport_elements to be set via kwargs
         if kwargs and 'lock_viewport_elements' in kwargs:
             self.lock_viewport_elements = kwargs.get('lock_viewport_elements')
+
+        # Which async worker is driving this fetch, subclasses use it to keep per-worker browser
+        # state (profile dirs etc) apart, stays None when we're not called from a worker
+        if kwargs and 'worker_id' in kwargs:
+            self.worker_id = kwargs.get('worker_id')
 
 
     @classmethod

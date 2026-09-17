@@ -22,6 +22,19 @@ def _make_datastore(llm_cfg=None, tags=None):
     return ds
 
 
+def _make_tag(ai=True, **fields):
+    """Build a tag dict.
+
+    `ai` is the group's single AI control (llm_backend_profile): True = on, and its AI
+    settings apply to its watches; False = off for every watch in the group; None = the
+    group has no say. Defaults to True because most cases here are about what a group set
+    to "On" does.
+    """
+    tag = {'title': 'grp', 'llm_backend_profile': ai}
+    tag.update(fields)
+    return tag
+
+
 def _make_watch(llm_intent='', llm_change_summary='', tags=None, uuid='test-uuid-1234'):
     w = {}
     w['llm_intent'] = llm_intent
@@ -43,7 +56,7 @@ class TestResolveIntent:
     def test_watch_intent_takes_priority(self):
         from changedetectionio.llm.evaluator import resolve_intent
 
-        tag = {'title': 'mygroup', 'llm_intent': 'group intent'}
+        tag = _make_tag(title='mygroup', llm_intent='group intent')
         ds = _make_datastore(tags={'tag-1': tag})
         watch = _make_watch(llm_intent='watch intent', tags=['tag-1'])
 
@@ -54,7 +67,7 @@ class TestResolveIntent:
     def test_tag_intent_used_when_watch_has_none(self):
         from changedetectionio.llm.evaluator import resolve_intent
 
-        tag = {'title': 'pricing-group', 'llm_intent': 'flag price drops'}
+        tag = _make_tag(title='pricing-group', llm_intent='flag price drops')
         ds = _make_datastore(tags={'tag-1': tag})
         watch = _make_watch(llm_intent='', tags=['tag-1'])
 
@@ -73,10 +86,10 @@ class TestResolveIntent:
         assert source == ''
 
     def test_tag_applied_to_all_watches_in_group(self):
-        """Tag intent propagates to every watch in the tag (no opt-in needed)."""
+        """An opted-in tag's intent propagates to every watch in the tag."""
         from changedetectionio.llm.evaluator import resolve_intent
 
-        tag = {'title': 'job-board', 'llm_intent': 'new engineering jobs'}
+        tag = _make_tag(title='job-board', llm_intent='new engineering jobs')
         ds = _make_datastore(tags={'tag-1': tag})
 
         # Three different watches, all in the tag, none have their own intent
@@ -101,6 +114,114 @@ class TestResolveIntent:
         watch = _make_watch(llm_intent='', tags=['nonexistent-tag'])
         intent, source = resolve_intent(watch, ds)
         assert intent == ''
+
+
+# ---------------------------------------------------------------------------
+# The group's AI setting gates the whole cascade
+# ---------------------------------------------------------------------------
+
+class TestGroupAiSettingGatesTheCascade:
+    def test_only_the_on_state_hands_settings_down(self):
+        from changedetectionio.llm.evaluator import tag_llm_applies_to_watches
+        assert tag_llm_applies_to_watches(_make_tag(ai=True)) is True
+        # "Off" suppresses AI rather than lending prompts; "leave it to each watch" and tags
+        # predating the setting (and missing tags) hand nothing down either
+        assert tag_llm_applies_to_watches(_make_tag(ai=False)) is False
+        assert tag_llm_applies_to_watches(_make_tag(ai=None)) is False
+        assert tag_llm_applies_to_watches({'title': 'legacy'}) is False
+        assert tag_llm_applies_to_watches(None) is False
+
+    def test_intent_not_inherited_when_group_is_off(self):
+        from changedetectionio.llm.evaluator import resolve_intent
+        tag = _make_tag(ai=False, title='pricing-group', llm_intent='flag price drops')
+        ds = _make_datastore(tags={'tag-1': tag})
+        watch = _make_watch(llm_intent='', tags=['tag-1'])
+        assert resolve_intent(watch, ds) == ('', '')
+
+    def test_field_not_inherited_when_group_is_off(self):
+        from changedetectionio.llm.evaluator import resolve_llm_field
+        tag = _make_tag(ai=False, llm_change_summary='list new events')
+        ds = _make_datastore(tags={'t1': tag})
+        watch = _make_watch(llm_change_summary='', tags=['t1'])
+        assert resolve_llm_field(watch, ds, 'llm_change_summary') == ('', '')
+
+    def test_summary_prompt_not_inherited_when_group_is_off(self):
+        from changedetectionio.llm.evaluator import get_effective_summary_prompt
+        tag = _make_tag(ai=False, llm_change_summary='TAG')
+        ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'}, tags={'t1': tag})
+        watch = _make_watch(llm_change_summary='', tags=['t1'])
+        assert get_effective_summary_prompt(watch, ds) == 'GLOBAL'
+
+    def test_first_group_set_to_on_wins_over_an_earlier_one_that_is_off(self):
+        """A group that isn't "On" is skipped entirely, not treated as "found, but empty"."""
+        from changedetectionio.llm.evaluator import resolve_intent
+        ds = _make_datastore(tags={
+            'ignored': _make_tag(ai=False, title='ignored-group', llm_intent='IGNORED'),
+            'used': _make_tag(ai=True, title='used-group', llm_intent='USED'),
+        })
+        watch = _make_watch(llm_intent='', tags=['ignored', 'used'])
+        assert resolve_intent(watch, ds) == ('USED', 'used-group')
+
+
+# ---------------------------------------------------------------------------
+# llm_enabled_for_watch — per-watch / per-group AI on-off switch (#4204)
+# ---------------------------------------------------------------------------
+
+class TestLlmEnabledForWatch:
+    def test_enabled_by_default(self):
+        """Watches predating the switch (no key at all) keep AI on."""
+        from changedetectionio.llm.evaluator import llm_enabled_for_watch
+        ds = _make_datastore()
+        assert llm_enabled_for_watch(_make_watch(), ds) == (True, 'watch')
+
+    def test_watch_switch_off(self):
+        from changedetectionio.llm.evaluator import llm_enabled_for_watch
+        ds = _make_datastore()
+        watch = _make_watch()
+        watch['llm_backend_profile'] = False
+        assert llm_enabled_for_watch(watch, ds) == (False, 'watch')
+
+    def test_group_switch_overrides_watch_off(self):
+        """"The group setting overrides any watch on/off" — group ON beats watch OFF."""
+        from changedetectionio.llm.evaluator import llm_enabled_for_watch
+        tag = _make_tag(ai=True, title='ai-group')
+        ds = _make_datastore(tags={'t1': tag})
+        watch = _make_watch(tags=['t1'])
+        watch['llm_backend_profile'] = False
+        assert llm_enabled_for_watch(watch, ds) == (True, 'ai-group')
+
+    def test_group_switch_overrides_watch_on(self):
+        from changedetectionio.llm.evaluator import llm_enabled_for_watch
+        tag = _make_tag(ai=False, title='no-ai-group')
+        ds = _make_datastore(tags={'t1': tag})
+        watch = _make_watch(tags=['t1'])
+        watch['llm_backend_profile'] = True
+        assert llm_enabled_for_watch(watch, ds) == (False, 'no-ai-group')
+
+    def test_group_leaving_it_to_each_watch_does_not_decide(self):
+        from changedetectionio.llm.evaluator import llm_enabled_for_watch
+        ds = _make_datastore(tags={'t1': _make_tag(ai=None, title='undecided-group')})
+        watch = _make_watch(tags=['t1'])
+        watch['llm_backend_profile'] = False
+        assert llm_enabled_for_watch(watch, ds) == (False, 'watch')
+
+    def test_group_without_the_key_leaves_it_to_the_watch(self):
+        """Tags predating the setting behave like "leave it to each watch"."""
+        from changedetectionio.llm.evaluator import llm_enabled_for_watch
+        ds = _make_datastore(tags={'t1': {'title': 'legacy'}})
+        watch = _make_watch(tags=['t1'])
+        watch['llm_backend_profile'] = False
+        assert llm_enabled_for_watch(watch, ds) == (False, 'watch')
+
+    def test_first_deciding_group_wins(self):
+        """An undecided group is skipped; the next group with an opinion decides."""
+        from changedetectionio.llm.evaluator import llm_enabled_for_watch
+        ds = _make_datastore(tags={
+            'a': _make_tag(ai=None, title='undecided-group'),
+            'b': _make_tag(ai=False, title='no-ai-group'),
+        })
+        watch = _make_watch(tags=['a', 'b'])
+        assert llm_enabled_for_watch(watch, ds) == (False, 'no-ai-group')
 
 
 # ---------------------------------------------------------------------------
@@ -386,7 +507,7 @@ class TestTokenBudget:
 class TestResolveLlmField:
     def test_watch_value_takes_priority(self):
         from changedetectionio.llm.evaluator import resolve_llm_field
-        tag = {'title': 'mygroup', 'llm_change_summary': 'tag summary prompt'}
+        tag = _make_tag(title='mygroup', llm_change_summary='tag summary prompt')
         ds = _make_datastore(tags={'tag-1': tag})
         watch = _make_watch(llm_change_summary='watch summary prompt', tags=['tag-1'])
         value, source = resolve_llm_field(watch, ds, 'llm_change_summary')
@@ -395,7 +516,7 @@ class TestResolveLlmField:
 
     def test_tag_value_used_when_watch_empty(self):
         from changedetectionio.llm.evaluator import resolve_llm_field
-        tag = {'title': 'events-group', 'llm_change_summary': 'list new events'}
+        tag = _make_tag(title='events-group', llm_change_summary='list new events')
         ds = _make_datastore(tags={'tag-1': tag})
         watch = _make_watch(llm_change_summary='', tags=['tag-1'])
         value, source = resolve_llm_field(watch, ds, 'llm_change_summary')
@@ -413,7 +534,7 @@ class TestResolveLlmField:
     def test_works_for_llm_intent_field_too(self):
         """resolve_llm_field is generic — works for llm_intent same as llm_change_summary."""
         from changedetectionio.llm.evaluator import resolve_llm_field
-        tag = {'title': 'grp', 'llm_intent': 'flag price drops'}
+        tag = _make_tag(llm_intent='flag price drops')
         ds = _make_datastore(tags={'t1': tag})
         watch = _make_watch(llm_intent='', tags=['t1'])
         value, source = resolve_llm_field(watch, ds, 'llm_intent')
@@ -469,7 +590,7 @@ class TestSummariseChange:
     def test_cascades_from_tag(self):
         """llm_change_summary on a tag propagates to watches in that tag."""
         from changedetectionio.llm.evaluator import summarise_change
-        tag = {'title': 'events', 'llm_change_summary': 'Translate events to English'}
+        tag = _make_tag(title='events', llm_change_summary='Translate events to English')
         ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini'}, tags={'tag-1': tag})
         watch = _make_watch(llm_change_summary='', tags=['tag-1'])
         with patch('changedetectionio.llm.client.completion',
@@ -552,7 +673,7 @@ class TestSummaryCacheKey:
 
     def test_get_effective_prompt_cascades_from_tag(self):
         from changedetectionio.llm.evaluator import get_effective_summary_prompt
-        tag = {'title': 'grp', 'llm_change_summary': 'tag-level prompt'}
+        tag = _make_tag(llm_change_summary='tag-level prompt')
         ds = _make_datastore(tags={'t1': tag})
         watch = _make_watch(llm_change_summary='', tags=['t1'])
         assert get_effective_summary_prompt(watch, ds) == 'tag-level prompt'
@@ -592,7 +713,7 @@ class TestSummaryPromptAppendMode:
     def test_watch_append_targets_the_tag_prompt_when_a_tag_supplies_one(self):
         """The watch appends to what it would otherwise have inherited — here the tag."""
         from changedetectionio.llm.evaluator import get_effective_summary_prompt
-        tag = {'title': 'grp', 'llm_change_summary': 'TAG'}
+        tag = _make_tag(llm_change_summary='TAG')
         ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'}, tags={'t1': tag})
         watch = _make_watch(llm_change_summary='WATCH', tags=['t1'])
         watch['llm_change_summary_mode'] = 'append'
@@ -600,7 +721,7 @@ class TestSummaryPromptAppendMode:
 
     def test_tag_and_watch_can_both_append_forming_a_chain(self):
         from changedetectionio.llm.evaluator import get_effective_summary_prompt
-        tag = {'title': 'grp', 'llm_change_summary': 'TAG', 'llm_change_summary_mode': 'append'}
+        tag = _make_tag(llm_change_summary='TAG', llm_change_summary_mode='append')
         ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'}, tags={'t1': tag})
         watch = _make_watch(llm_change_summary='WATCH', tags=['t1'])
         watch['llm_change_summary_mode'] = 'append'
@@ -608,7 +729,7 @@ class TestSummaryPromptAppendMode:
 
     def test_tag_appends_while_watch_replaces(self):
         from changedetectionio.llm.evaluator import get_effective_summary_prompt
-        tag = {'title': 'grp', 'llm_change_summary': 'TAG', 'llm_change_summary_mode': 'append'}
+        tag = _make_tag(llm_change_summary='TAG', llm_change_summary_mode='append')
         ds = _make_datastore(llm_cfg={'change_summary_default': 'GLOBAL'}, tags={'t1': tag})
         watch = _make_watch(llm_change_summary='WATCH', tags=['t1'])
         assert get_effective_summary_prompt(watch, ds) == 'WATCH'

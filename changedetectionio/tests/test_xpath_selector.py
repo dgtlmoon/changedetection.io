@@ -595,11 +595,11 @@ def test_rss_xpath(client, live_server, measure_memory_usage, datastore_path):
 
 
 # GHSA-6fmw-82m7-jq6p — XPath arbitrary file read via unparsed-text() and friends
-# Unit-level: verify xpath_filter() and SafeXPath3Parser block all dangerous functions.
+# Unit-level: verify xpath_filter() and the safe XPath3 parser block all dangerous functions.
 def test_xpath_blocked_functions_unit():
     """Dangerous XPath 3.0 functions must be rejected at the parser level (no live server needed)."""
     import elementpath
-    from changedetectionio.html_tools import xpath_filter, SafeXPath3Parser
+    from changedetectionio.html_tools import xpath_filter, get_safe_xpath3_parser
     from lxml import html
 
     html_content = '<html><body><p>safe content</p></body></html>'
@@ -627,11 +627,11 @@ def test_xpath_blocked_functions_unit():
         except elementpath.ElementPathError:
             pass  # expected
 
-        # SafeXPath3Parser must reject the expression at parse time
+        # the safe parser must reject the expression at parse time
         tree = html.fromstring(html_content)
         try:
-            elementpath.select(tree, expr, parser=SafeXPath3Parser)
-            assert False, f"SafeXPath3Parser should have raised for: {expr!r}"
+            elementpath.select(tree, expr, parser=get_safe_xpath3_parser())
+            assert False, f"safe XPath3 parser should have raised for: {expr!r}"
         except elementpath.ElementPathError:
             pass  # expected
 

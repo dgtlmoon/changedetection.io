@@ -86,8 +86,10 @@
         price_low: {{ _('Currently low')|tojson }},
         price_typical: {{ _('Currently typical')|tojson }},
         price_high: {{ _('Currently high')|tojson }},
-        cheaper_than: {{ _('cheaper than %s% of tracked prices')|tojson }},
-        pricier_than: {{ _('more expensive than %s% of tracked prices')|tojson }},
+        {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
+        cheaper_than: {{ _('cheaper than {pct} of tracked prices')|tojson }},
+        {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
+        pricier_than: {{ _('more expensive than {pct} of tracked prices')|tojson }},
         typical_note: {{ _('around the usual price')|tojson }},
         avg_label: {{ _('avg')|tojson }}
     };

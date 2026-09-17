@@ -75,9 +75,10 @@ def test_llm_change_summary_cascades_from_tag(
     _set_response(datastore_path, HTML_V1)
     test_url = url_for('test_endpoint', _external=True)
 
-    # Create a tag with llm_change_summary
+    # Create a tag with llm_change_summary, AI set to On so its watches inherit it
     tag_uuid = ds.add_tag('events-group')
     ds.data['settings']['application']['tags'][tag_uuid]['llm_change_summary'] = 'Summarise new events'
+    ds.data['settings']['application']['tags'][tag_uuid]['llm_backend_profile'] = True
 
     # Watch in that tag, no own summary prompt
     uuid = ds.add_watch(url=test_url)
@@ -281,6 +282,7 @@ def test_tag_prompt_overrides_global_default(
 
     tag_uuid = ds.add_tag('my-group')
     ds.data['settings']['application']['tags'][tag_uuid]['llm_change_summary'] = 'Tag: bullet points.'
+    ds.data['settings']['application']['tags'][tag_uuid]['llm_backend_profile'] = True
 
     uuid = ds.add_watch(url='https://example.com')
     watch = ds.data['watching'][uuid]
@@ -306,6 +308,7 @@ def test_watch_prompt_overrides_tag_and_global(
 
     tag_uuid = ds.add_tag('my-group')
     ds.data['settings']['application']['tags'][tag_uuid]['llm_change_summary'] = 'Tag prompt.'
+    ds.data['settings']['application']['tags'][tag_uuid]['llm_backend_profile'] = True
 
     uuid = ds.add_watch(url='https://example.com')
     watch = ds.data['watching'][uuid]

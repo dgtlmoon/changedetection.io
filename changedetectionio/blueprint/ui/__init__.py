@@ -293,6 +293,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
+        if not new_uuid:
+            # Refused (e.g. PAGE_WATCH_LIMIT) - the reason is already flashed
+            return redirect(url_for('watchlist.index'))
 
         if not datastore.data['watching'].get(uuid).get('paused'):
             worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
@@ -404,7 +407,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         return redirect(url_for('watchlist.index'))
 
 
-    @ui_blueprint.route("/share-url/<uuid_str:uuid>", methods=['GET'])
+    @ui_blueprint.route("/share-url/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def form_share_put_watch(uuid):
         """Given a watch UUID, upload the info and return a share-link
@@ -452,7 +455,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index'))
 
-    @ui_blueprint.route("/language/auto-detect", methods=['GET'])
+    @ui_blueprint.route("/language/auto-detect", methods=['POST'])
     def delete_locale_language_session_var_if_it_exists():
         """Clear the session locale preference to auto-detect from browser Accept-Language header"""
         if 'locale' in session:

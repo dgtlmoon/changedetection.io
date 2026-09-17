@@ -30,10 +30,10 @@ def watch_row_context(datastore, active_tag_uuid=None, queued_uuids=None):
 
     return {
         'active_tag_uuid': active_tag_uuid,
-        # Kept 0 (rather than any_watches_have_processor_by_name) while the price column is
-        # disabled — it also decides cols_required on the page, so page and row must agree or
-        # a pushed row ends up with a different <td> count than the table header.
-        'any_has_restock_price_processor': 0,
+        # Also decides cols_required on the page, so page and row must agree or a pushed row
+        # ends up with a different <td> count than the table header — which is why it is
+        # computed here and not passed separately by the page.
+        'any_has_restock_price_processor': datastore.any_watches_have_processor_by_name("restock_diff"),
         'datastore': datastore,
         'has_proxies': datastore.proxy_list,
         'processor_descriptions': processors.get_processor_descriptions(),

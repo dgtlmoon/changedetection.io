@@ -27,9 +27,9 @@
     <div class="tabs collapsable">
         <ul>
             <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
-            {% if llm_configured %}
+            {# Always shown, like the watch edit page: with no provider configured the pane
+               explains how to set one up (and carries the AI switches through on save). #}
             <li class="tab"><a href="#ai-llm">{{ _('AI / LLM') }}</a></li>
-            {% endif %}
             <li class="tab"><a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a></li>
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
@@ -92,11 +92,9 @@
                 </fieldset>
             </div>
 
-            {% if llm_configured %}
             <div class="tab-pane-inner" id="ai-llm">
                 {% include "edit/include_llm_intent.html" %}
             </div>
-            {% endif %}
 
             <div class="tab-pane-inner" id="filters-and-triggers">
                 {# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}

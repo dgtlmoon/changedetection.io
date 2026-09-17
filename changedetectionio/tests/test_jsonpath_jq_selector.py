@@ -158,6 +158,35 @@ def test_lone_surrogate_escapes_do_not_break_filters():
         assert '\U0001F600' in text
         text.encode('utf-8')
 
+    # The surrogate can just as easily land in an object *key*, which has to be sanitized too -
+    # otherwise the whole-document re-serialization still trips over it
+    lone_key = '{"ti' + BS + 'uD800tle": "value", "other": "untouched"}'
+    for f in ("json:$.other", "jq:.other", "jqraw:.other") if jq_support else ("json:$.other",):
+        text = html_tools.extract_json_as_string(lone_key, f)
+        assert "untouched" in text
+        text.encode('utf-8')
+
+    # Dumping the whole document exercises the key path directly
+    for f in ("json:$", "jq:.") if jq_support else ("json:$",):
+        text = html_tools.extract_json_as_string(lone_key, f)
+        assert "value" in text
+        assert not any(0xD800 <= ord(c) <= 0xDFFF for c in text)
+        text.encode('utf-8')
+
+    # Nested arrays and non-string scalars have to be walked too. The scalars come first
+    # deliberately: detection short-circuits on the first surrogate it finds, so anything after
+    # the offending value would never be visited.
+    nested = ('{"count": 3, "flag": null, "ok": true, '
+              '"items": ["clean", "bad' + BS + 'uD800", [1, "deep' + BS + 'uDC00"]]}')
+    for f in ("json:$", "jq:.") if jq_support else ("json:$",):
+        text = html_tools.extract_json_as_string(nested, f)
+        assert "clean" in text and "deep" in text
+        assert not any(0xD800 <= ord(c) <= 0xDFFF for c in text)
+        text.encode('utf-8')
+
+    # ...and the scalars must survive the round-trip unmangled
+    assert html_tools.extract_json_as_string(nested, "json:$.count").strip() == "3"
+
 
 def test_unittest_inline_extract_body():
     content = """
