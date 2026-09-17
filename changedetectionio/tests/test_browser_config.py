@@ -757,3 +757,102 @@ def test_user_agent_cannot_carry_control_characters(client, live_server, measure
                        user_agent="Mozilla/5.0\r\nX-Injected: 1")
     assert b"Header splitter" not in res.data or b"control characters" in res.data
     assert len(datastore.browser_config_store.all()) == before, "must not have been saved"
+
+
+@pytest.fixture
+def acme_browser_plugin():
+    """Register a whole new browser engine the way an external pip package does.
+
+    Goes through the public `register_content_fetcher` hook rather than
+    register_builtin_fetchers(), and mirrors what get_plugin_fetchers() does at import time
+    (the setattr, so getattr(content_fetchers, name) resolution works). Yields the class.
+    """
+    import sys
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.base import Fetcher
+    from changedetectionio.pluggy_interface import hookimpl, plugin_manager
+
+    class acme_cloud_browser(Fetcher):
+        fetcher_description = "ACME Cloud Browser"
+        # A full browser: everything the visual selector needs
+        supports_browser_steps = True
+        supports_screenshots = True
+        supports_xpath_element_data = True
+        supports_custom_user_agent = True
+        supports_request_blocking = True
+
+        def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+            super().__init__(**kwargs)
+
+        async def run(self, *args, **kwargs):
+            raise NotImplementedError("this engine is never actually fetched with in the test")
+
+    class AcmePlugin:
+        @hookimpl
+        def register_content_fetcher(self):
+            return ('html_acme_cloud', acme_cloud_browser)
+
+    plugin = AcmePlugin()
+    plugin_manager.register(plugin, 'acme_test_plugin')
+    setattr(sys.modules['changedetectionio.content_fetchers'], 'html_acme_cloud', acme_cloud_browser)
+    content_fetchers._plugin_fetchers['html_acme_cloud'] = acme_cloud_browser
+    try:
+        yield acme_cloud_browser
+    finally:
+        plugin_manager.unregister(plugin)
+        content_fetchers._plugin_fetchers.pop('html_acme_cloud', None)
+        delattr(sys.modules['changedetectionio.content_fetchers'], 'html_acme_cloud')
+
+
+def test_plugin_can_supply_a_whole_new_browser_base(client, live_server, measure_memory_usage,
+                                                    datastore_path, acme_browser_plugin):
+    """A plugin-provided engine must be a first-class browser base, with no core changes.
+
+    Pins the whole contract in one place: discovery, the /browsers base row + "Add variation",
+    capability-gated fields, the watch picker, resolution to the plugin's own class with its
+    FetcherConfig injected, and eligibility for the Add-Watch live preview. If the browser-config
+    layer ever starts assuming built-in engines, this is what says so.
+    """
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers import resolve_content_fetcher
+    from changedetectionio.model.browser_config import list_builtin_browsers, list_watch_browser_choices
+    from changedetectionio.blueprint.add_watch_ui import browser_config as add_watch_browsers
+    datastore = client.application.config.get('DATASTORE')
+
+    # Discoverable as an engine, and offered as a browser base + in the watch picker
+    assert 'html_acme_cloud' in dict(content_fetchers.available_fetchers())
+    assert 'html_acme_cloud' in {b['id'] for b in list_builtin_browsers()}
+    assert 'html_acme_cloud' in {v for v, _ in list_watch_browser_choices(datastore)}
+
+    # A base row on /browsers, with a working "Add variation" link
+    res = client.get(url_for('ui.browser_config.browsers_overview'))
+    assert b'ACME Cloud Browser' in res.data
+    assert url_for('ui.browser_config.browser_config_add',
+                   base_fetcher='html_acme_cloud').encode() in res.data
+
+    # Its declared capabilities gate the form (it does screenshots -> viewport fields render)
+    res = client.get(url_for('ui.browser_config.browser_config_add', base_fetcher='html_acme_cloud'))
+    assert res.status_code == 200
+    assert b'viewport_width' in res.data
+
+    # Create a variation of it through the real Add flow
+    res = client.post(url_for('ui.browser_config.browser_config_add', base_fetcher='html_acme_cloud'),
+                      data={'label': 'ACME German mobile', 'viewport_width': 390,
+                            'viewport_height': 844, 'locale': 'de-DE', 'screenshot_format': 'JPEG'},
+                      follow_redirects=True)
+    assert b'ACME German mobile' in res.data
+    cid = next(c for c, e in datastore.browser_config_store.all().items()
+               if e.get('label') == 'ACME German mobile')
+    assert datastore.browser_config_store.get(cid)['base_fetcher'] == 'html_acme_cloud'
+
+    # A watch pinned to it resolves to the PLUGIN's class, with the variation's config injected
+    uuid = datastore.add_watch(url='https://example.com', extras={'fetch_backend': cid})
+    watch = datastore.data['watching'][uuid]
+    assert watch.resolved_fetch_engine == 'html_acme_cloud'
+    cls, engine, _custom_url, cfg = resolve_content_fetcher(watch, datastore)
+    assert cls is acme_browser_plugin and engine == 'html_acme_cloud'
+    assert cfg.viewport_width == 390 and cfg.locale == 'de-DE'
+
+    # And it is eligible for the Add-Watch live preview, on its own declared capabilities
+    assert add_watch_browsers.is_visual_capable(cid, datastore)
+    assert cid in {v for v, _ in add_watch_browsers.list_visual_browser_choices(datastore)}
