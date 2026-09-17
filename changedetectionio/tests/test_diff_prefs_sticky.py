@@ -19,6 +19,12 @@ SECOND_VERSION = "alpha\nbravo\ndelta"
 # off the inclusion of unchanged lines and switches to word diffing.
 SUBMITTED_PREFS = 'type=diffWords&ignoreWhitespace=on&removed=on&added=on&replaced=on'
 
+# The opposite of SUBMITTED_PREFS on every key that differs, so a write by a requester who
+# should not be able to write is loud rather than coincidentally equal.
+OTHER_PREFS = 'type=diffLines&changesOnly=on&removed=on&added=on&replaced=on'
+
+SHARED_INSTANCE_PASSWORD = 'foobar'
+
 
 def add_watch_with_history(client, url='https://example.com/releases'):
     datastore = client.application.config['DATASTORE']
@@ -33,6 +39,23 @@ def configure_llm(client):
     """The AI checkbox only renders on an instance with a model configured."""
     datastore = client.application.config['DATASTORE']
     datastore.data['settings']['application']['llm'] = {'model': 'gpt-4o-mini', 'api_key': 'sk-test'}
+
+
+def enable_password_protected_sharing(client):
+    """Password on, `shared_diff_access` on - the setup the auth exemption exists for.
+
+    Posting the real settings form rather than poking the datastore, so the stored password
+    is a hash the login route will actually accept.
+    """
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={"application-password": SHARED_INSTANCE_PASSWORD,
+              "application-shared_diff_access": "True",
+              "requests-time_between_check-minutes": 180,
+              "application-fetch_backend": "html_requests"},
+        follow_redirects=True,
+    )
+    assert b"Password protection enabled." in res.data
 
 
 def get_diff_page(test_client, uuid, query_string=None):
@@ -199,6 +222,45 @@ def test_the_ai_checkbox_is_not_remembered(client):
     page = get_diff_page(client, uuid)
     assert not is_checked(page, 'llm_all_changes')
     assert is_checked(page, 'ignoreWhitespace')
+
+
+def test_an_anonymous_shared_diff_viewer_cannot_change_what_the_watch_remembers(client):
+    """`shared_diff_access` makes this page readable without a login, and read-only.
+
+    Anyone holding a shared history link could otherwise decide the filters the operator
+    sees on their next visit, and force a watch commit per request. Their filters still
+    apply to the page they asked for - they are just not remembered.
+    """
+    uuid, watch = add_watch_with_history(client)
+    get_diff_page(client, uuid, SUBMITTED_PREFS)
+    operators_prefs = watch.get('diff_display_prefs')
+    assert operators_prefs, "precondition: a submission from the operator is saved"
+
+    enable_password_protected_sharing(client)
+
+    stranger = client.application.test_client()
+    page = get_diff_page(stranger, uuid, OTHER_PREFS)
+    # The page they asked for is the page they get - this is a 200 with the diff on it, so
+    # the auth exemption is genuinely in force and the assertion below is not vacuous.
+    assert is_checked(page, 'diffLines')
+    assert is_checked(page, 'changesOnly')
+
+    assert watch.get('diff_display_prefs') == operators_prefs, \
+        "An anonymous shared-diff viewer must not write preferences onto the watch"
+    # Reading stays shared: their plain visit still shows the operator's choices.
+    assert_renders_submitted_prefs(get_diff_page(stranger, uuid))
+
+    # Control: the guard is about being anonymous, not about a password being configured.
+    # Logging in on the same instance restores saving, so the assertion above is the
+    # authorisation check working rather than saving being switched off wholesale.
+    operator = client.application.test_client()
+    res = operator.post(url_for("login"), data={"password": SHARED_INSTANCE_PASSWORD},
+                        follow_redirects=True)
+    assert b"/logout" in res.data, "precondition: the control client really is logged in"
+
+    get_diff_page(operator, uuid, OTHER_PREFS)
+    assert watch.get('diff_display_prefs') != operators_prefs
+    assert watch.get('diff_display_prefs')['type'] == 'diffLines'
 
 
 def test_saved_prefs_stay_off_the_api(client):
