@@ -26,7 +26,7 @@ orphans the watches that reference it.
 import os
 import uuid as uuid_builder
 from os import path
-from typing import List, Optional
+from typing import ClassVar, Dict, List, Optional
 
 from loguru import logger
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -69,6 +69,19 @@ def _available_timezones():
         return _TZ_CACHE
 
 
+def _needs(capability, **field_kwargs):
+    """A FetcherConfig field only the engines with `capability` may carry.
+
+    The capability rides on the field itself rather than in a separate name->flag table, so
+    there is exactly one place to declare a field and no second list to keep in step. Read back
+    by FetcherConfig.applicable_fields(), which drives BOTH which fields the /browsers form
+    renders and which ones may be saved.
+    """
+    if 'default_factory' not in field_kwargs:
+        field_kwargs.setdefault('default', None)
+    return Field(json_schema_extra={'capability': capability}, **field_kwargs)
+
+
 class FetcherConfig(BaseModel):
     """Engine-agnostic per-instance browser behaviour.
 
@@ -79,29 +92,66 @@ class FetcherConfig(BaseModel):
     Keep every field optional with a sensible default.
     """
     # Rendering / device
-    viewport_width: Optional[int] = None       # px; None -> engine default
-    viewport_height: Optional[int] = None
+    viewport_width: Optional[int] = _needs('supports_screenshots')   # px; None -> engine default
+    viewport_height: Optional[int] = _needs('supports_screenshots')
     # Identity / locale
-    locale: Optional[str] = None               # e.g. 'de-DE' -> Accept-Language + navigator.language
-    timezone_id: Optional[str] = None          # e.g. 'Europe/Berlin'
+    locale: Optional[str] = _needs('supports_screenshots')           # e.g. 'de-DE' -> Accept-Language + navigator.language
+    timezone_id: Optional[str] = _needs('supports_screenshots')      # e.g. 'Europe/Berlin'
     # Screenshot
-    screenshot_format: str = 'JPEG'
+    screenshot_format: str = _needs('supports_screenshots', default='JPEG')
     # Cost / bandwidth - block assets (capability-gated by supports_request_blocking)
-    block_resource_types: List[str] = Field(default_factory=list)  # e.g. ['image', 'font', 'media']
-    block_url_patterns: List[str] = Field(default_factory=list)    # globs, e.g. ['*.ttf', '*/analytics/*']
+    block_resource_types: List[str] = _needs('supports_request_blocking', default_factory=list)  # e.g. ['image', 'font', 'media']
+    block_url_patterns: List[str] = _needs('supports_request_blocking', default_factory=list)    # globs, e.g. ['*.ttf', '*/analytics/*']
     # Local-launch engines only (capability-gated by supports_browser_type)
-    browser_type: Optional[str] = None         # 'chromium' | 'firefox' | 'webkit'
+    browser_type: Optional[str] = _needs('supports_browser_type')    # 'chromium' | 'firefox' | 'webkit'
     # Delete the per-fetch temp profile after use (capability-gated by supports_delete_created_files)
-    delete_created_files: bool = True
+    delete_created_files: bool = _needs('supports_delete_created_files', default=True)
     # timeout: plain HTTP client only (capability-gated by supports_request_timeout).
     # Defaults to DEFAULT_REQUEST_TIMEOUT_SECONDS (45s) so a fresh install / built-in html_requests
     # config has a sane, browser-like read timeout without relying on any global setting. An
     # existing install's previous settings.requests.timeout is carried onto its html_requests
     # config by update_35 (the migration hook), so upgrades keep whatever the user had.
-    timeout: Optional[int] = DEFAULT_REQUEST_TIMEOUT_SECONDS   # request timeout in seconds
+    timeout: Optional[int] = _needs('supports_request_timeout', default=DEFAULT_REQUEST_TIMEOUT_SECONDS)   # request timeout in seconds
     # user_agent: honoured by every engine (capability supports_custom_user_agent) via the
     # request_headers User-Agent channel.
-    user_agent: Optional[str] = None           # overrides the User-Agent header for this profile
+    user_agent: Optional[str] = _needs('supports_custom_user_agent') # overrides the User-Agent header for this profile
+
+    @classmethod
+    def applicable_fields(cls, capabilities):
+        """The field names an engine with these `capabilities` may carry.
+
+        `capabilities` is a FetcherCapabilities or its .model_dump() dict (the blueprint holds
+        one of each). A field declared without _needs() applies to every engine; an unknown/None
+        capability set yields only those, so a made-up base engine can never widen what is
+        storable.
+        """
+        def _has(flag):
+            if capabilities is None:
+                return False
+            if isinstance(capabilities, dict):
+                return bool(capabilities.get(flag))
+            return bool(getattr(capabilities, flag, False))
+
+        out = set()
+        for name, field in cls.model_fields.items():
+            extra = field.json_schema_extra if isinstance(field.json_schema_extra, dict) else {}
+            capability = extra.get('capability')
+            if capability is None or _has(capability):
+                out.add(name)
+        return out
+
+    @classmethod
+    def from_submitted(cls, data, capabilities):
+        """Build from untrusted input (a form POST), dropping every field this engine cannot
+        honour. The engine's capabilities are the allowlist, so a crafted POST - or an
+        unrendered field falling back to its own widget default - cannot put a setting on a
+        browser that ignores it.
+
+        Deliberately NOT used when loading browsers.json: reads stay tolerant so a file written
+        by another version still parses (see the module docstring).
+        """
+        allowed = cls.applicable_fields(capabilities)
+        return cls(**{k: v for k, v in (data or {}).items() if k in allowed})
 
     @field_validator('timeout')
     @classmethod
@@ -140,6 +190,17 @@ class FetcherConfig(BaseModel):
     def effective_timeout(self, default):
         """This profile's request timeout, else the caller's default (plain HTTP client only)."""
         return self.timeout or default
+
+    @field_validator('user_agent')
+    @classmethod
+    def _validate_user_agent(cls, v):
+        # This value is written straight into an outbound request header (apply_user_agent), so
+        # CR/LF or other control characters have no legitimate use here and are exactly what a
+        # header-splitting attempt looks like. The HTTP clients would reject them anyway; refusing
+        # at the model means it can never be persisted in browsers.json in the first place.
+        if v and any(ord(c) < 0x20 or ord(c) == 0x7f for c in v):
+            raise ValueError("User-Agent cannot contain control characters")
+        return v
 
     @field_validator('browser_type')
     @classmethod

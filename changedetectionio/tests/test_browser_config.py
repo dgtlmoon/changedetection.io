@@ -691,3 +691,69 @@ def test_locked_browser_config_blocks_mutations(client, live_server, measure_mem
     # Clean up so the shared datastore doesn't leak this config into other tests
     monkeypatch.delenv('LOCKED_BROWSER_CONFIG', raising=False)
     datastore.browser_config_store.delete(cid)
+
+
+def test_config_only_stores_fields_the_engine_honours(client, live_server, measure_memory_usage, datastore_path):
+    """A browser config may only carry settings its base engine can actually honour.
+
+    Two ways junk used to reach browsers.json: an unrendered WTForms field falling back to its
+    own widget default (the plain HTTP client stored browser_type='chromium' and
+    delete_created_files=False, neither of which it honours), and a crafted POST naming fields
+    the form never rendered. FetcherConfig.applicable_fields() is the allowlist for both, and is
+    the same set the form template renders from.
+    """
+    datastore = client.application.config.get('DATASTORE')
+
+    # A variation of the plain HTTP client: no screenshots, no local launch
+    res = _add_browser(client, label="Fast plain client", base_fetcher="html_requests", timeout=30)
+    assert b"Fast plain client" in res.data
+
+    cid = next(c for c, e in datastore.browser_config_store.all().items()
+               if e.get('label') == "Fast plain client")
+    stored = datastore.browser_config_store.get(cid)['browser_config']
+    assert stored.get('timeout') == 30, "a field this engine honours is kept"
+    # The store re-expands every FetcherConfig key with its default on write, so what matters is
+    # that no inapplicable field carries a *value*: browser_type came back as 'chromium' (the
+    # SelectField default) and delete_created_files as False (unchecked box) before the filter.
+    assert stored.get('browser_type') is None
+    assert stored.get('delete_created_files') is True, "must stay at the model default, not the unrendered widget's"
+    for untouched in ('viewport_width', 'viewport_height', 'locale', 'timezone_id'):
+        assert stored.get(untouched) is None, f"{untouched} does not apply to html_requests"
+    assert not stored.get('block_resource_types')
+
+    # Same route, but the POST names browser-only fields the form never rendered for this engine
+    res = _add_browser(client, label="Crafted", base_fetcher="html_requests", timeout=30,
+                       viewport_width=1920, viewport_height=1080, locale='de-DE',
+                       browser_type='firefox')
+    assert b"Crafted" in res.data
+    cid = next(c for c, e in datastore.browser_config_store.all().items()
+               if e.get('label') == "Crafted")
+    stored = datastore.browser_config_store.get(cid)['browser_config']
+    assert stored.get('timeout') == 30
+    assert stored.get('viewport_width') is None and stored.get('browser_type') is None \
+        and stored.get('locale') is None
+
+    # And the fields a real browser DOES honour still save
+    res = _add_browser(client, label="German desktop", base_fetcher="html_webdriver",
+                       viewport_width=1920, viewport_height=1080, locale='de-DE')
+    assert b"German desktop" in res.data
+    cid = next(c for c, e in datastore.browser_config_store.all().items()
+               if e.get('label') == "German desktop")
+    stored = datastore.browser_config_store.get(cid)['browser_config']
+    assert stored.get('viewport_width') == 1920 and stored.get('locale') == 'de-DE'
+
+
+def test_user_agent_cannot_carry_control_characters(client, live_server, measure_memory_usage, datastore_path):
+    """The per-profile User-Agent lands in an outbound header, so CR/LF can't be stored."""
+    from pydantic import ValidationError
+    from changedetectionio.model.browser_config import FetcherConfig
+
+    with pytest.raises(ValidationError):
+        FetcherConfig(user_agent="Mozilla/5.0\r\nX-Injected: 1")
+
+    datastore = client.application.config.get('DATASTORE')
+    before = len(datastore.browser_config_store.all())
+    res = _add_browser(client, label="Header splitter", base_fetcher="html_webdriver",
+                       user_agent="Mozilla/5.0\r\nX-Injected: 1")
+    assert b"Header splitter" not in res.data or b"control characters" in res.data
+    assert len(datastore.browser_config_store.all()) == before, "must not have been saved"

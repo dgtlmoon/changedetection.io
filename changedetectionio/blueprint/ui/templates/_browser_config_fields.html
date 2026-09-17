@@ -1,7 +1,12 @@
-{# Browser config form fields for the add/edit page. Expects `form`, `caps` (the base engine's
-   capability dict) and `base_label` (read-only base engine name). The base engine is fixed by
-   the page (chosen via the "Add variation" link, or the existing config's base), so it's shown
-   read-only, not as a picker. Fields are gated server-side by `caps`. #}
+{# Browser config form fields for the add/edit page. Expects `form`, `applicable` (the set of
+   FetcherConfig fields this base engine can honour - FetcherConfig.applicable_fields()) and
+   `base_label` (read-only base engine name). The base engine is fixed by the page (chosen via
+   the "Add variation" link, or the existing config's base), so it's shown read-only, not as a
+   picker.
+
+   Gating on `applicable` rather than on capability flags directly is deliberate: it is the same
+   set the save path allows (FetcherConfig.from_submitted), so a field can never be rendered but
+   unsaveable, or hidden but written from its widget default. #}
 {% from '_helpers.html' import render_field, render_checkbox_field %}
 
 <fieldset>
@@ -13,18 +18,18 @@
         {{ render_field(form.label) }}
         <span class="pure-form-message-inline">{{ _('A friendly name, e.g. “Mobile” or “German desktop”.') }}</span>
     </div>
-    {% if caps.supports_browser_type %}
+    {% if 'browser_type' in applicable %}
     <div class="pure-control-group">
         {{ render_field(form.browser_type) }}
         <span class="pure-form-message-inline">{{ _('Which browser engine to launch locally.') }}</span>
     </div>
     {% endif %}
-    {% if caps.supports_delete_created_files %}
+    {% if 'delete_created_files' in applicable %}
     <div class="pure-control-group">{{ render_checkbox_field(form.delete_created_files) }}</div>
     {% endif %}
 </fieldset>
 
-{% if caps.supports_screenshots %}
+{% if 'viewport_width' in applicable %}
 <fieldset>
     <legend>{{ _('Screen size') }}</legend>
     <div class="pure-control-group">
@@ -59,16 +64,16 @@
 </fieldset>
 {% endif %}
 
-{% if caps.supports_request_timeout or caps.supports_custom_user_agent %}
+{% if 'timeout' in applicable or 'user_agent' in applicable %}
 <fieldset>
     <legend>{{ _('HTTP request options') }}</legend>
-    {% if caps.supports_request_timeout %}
+    {% if 'timeout' in applicable %}
     <div class="pure-control-group">
         {{ render_field(form.timeout) }}
         <span class="pure-form-message-inline">{{ _('Maximum seconds to wait for the response (plain HTTP client only).') }}</span>
     </div>
     {% endif %}
-    {% if caps.supports_custom_user_agent %}
+    {% if 'user_agent' in applicable %}
     <div class="pure-control-group">
         {{ render_field(form.user_agent) }}
         <span class="pure-form-message-inline">{{ _('Sent as the User-Agent header for requests using this browser.') }}</span>
@@ -77,7 +82,7 @@
 </fieldset>
 {% endif %}
 
-{% if caps.supports_request_blocking %}
+{% if 'block_resource_types' in applicable %}
 <fieldset>
     <legend>{{ _('Skip downloads (save bandwidth)') }}</legend>
     <div class="pure-control-group">
@@ -95,7 +100,7 @@
 </fieldset>
 {% endif %}
 
-{% if caps.supports_screenshots %}
+{% if 'screenshot_format' in applicable %}
 <fieldset>
     <div class="pure-control-group">{{ render_field(form.screenshot_format) }}</div>
 </fieldset>

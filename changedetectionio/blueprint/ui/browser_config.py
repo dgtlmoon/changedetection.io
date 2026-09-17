@@ -80,6 +80,13 @@ def _caps_for(base_name):
     return FetcherCapabilities.from_fetcher(getattr(content_fetchers, base_name, None)).model_dump()
 
 
+def _applicable_fields_for(capabilities):
+    """The FetcherConfig fields an engine with these capabilities may carry - the one set that
+    both the form template and the save path use, so they cannot drift apart."""
+    from changedetectionio.model.browser_config import FetcherConfig
+    return FetcherConfig.applicable_fields(capabilities)
+
+
 def _entry_to_formdata(entry):
     """Flatten a browsers.json entry into flat form field values (base is contextual, not a field)."""
     data = {'label': entry.get('label')}
@@ -127,11 +134,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 return True
         return False
 
-    def _validate_and_build_config(form):
-        """Return a validated FetcherConfig, or None (with errors attached to form)."""
+    def _validate_and_build_config(form, capabilities):
+        """Return a validated FetcherConfig, or None (with errors attached to form).
+
+        `capabilities` is the base engine's capability set and acts as the allowlist: only fields
+        that engine can honour are taken from the submitted form (FetcherConfig.from_submitted),
+        so nothing this browser ignores can be written into browsers.json.
+        """
         from changedetectionio.model.browser_config import FetcherConfig
         try:
-            return FetcherConfig(**form.to_fetcher_config_dict())
+            return FetcherConfig.from_submitted(form.to_fetcher_config_dict(), capabilities)
         except ValidationError as e:
             for err in e.errors():
                 loc = err['loc'][0] if err['loc'] else ''
@@ -167,7 +179,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             if _label_is_taken(form.label.data):
                 form.label.errors.append(gettext("A browser with this name already exists"))
             else:
-                cfg = _validate_and_build_config(form)
+                cfg = _validate_and_build_config(form, caps)
                 if cfg is not None:
                     datastore.browser_config_store.add(
                         label=form.label.data,
@@ -179,7 +191,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         locale_choices, timezone_choices = _autocomplete_choices()
         return render_template("browser-config-form.html", form=form, mode='add',
-                               base_fetcher=base_fetcher, base_label=base_label, caps=caps.model_dump(),
+                               base_fetcher=base_fetcher, base_label=base_label,
+                               applicable=_applicable_fields_for(caps),
                                locale_choices=locale_choices, timezone_choices=timezone_choices,
                                form_action=url_for('ui.browser_config.browser_config_add', base_fetcher=base_fetcher))
 
@@ -211,7 +224,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if (not is_builtin) and _label_is_taken(form.label.data, exclude_id=config_id):
                     form.label.errors.append(gettext("A browser with this name already exists"))
                 else:
-                    cfg = _validate_and_build_config(form)
+                    cfg = _validate_and_build_config(form, _caps_for(base) if base else None)
                     if cfg is not None:
                         datastore.browser_config_store.upsert(
                             config_id,
@@ -228,7 +241,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return render_template("browser-config-form.html", form=form, mode='edit',
                                config_id=config_id, is_builtin=is_builtin,
                                base_fetcher=base, base_label=base_label,
-                               caps=_caps_for(base) if base else {},
+                               applicable=_applicable_fields_for(_caps_for(base) if base else None),
                                locale_choices=locale_choices, timezone_choices=timezone_choices,
                                form_action=url_for('ui.browser_config.browser_config_edit', config_id=config_id))
 
