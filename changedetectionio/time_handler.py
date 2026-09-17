@@ -1,7 +1,29 @@
+import os
 from functools import lru_cache
 
-import arrow
 from enum import IntEnum
+
+
+def default_timezone_name(configured=None):
+    """
+    Resolve the scheduler's default IANA timezone name. Never returns None/''.
+
+    `scheduler_timezone_default` is initialised to None in model/App.py, so the
+    key always EXISTS with a None value. That makes the common idiom
+
+        settings['application'].get('scheduler_timezone_default', os.getenv('TZ', 'UTC'))
+
+    silently return None - dict.get() only falls back when the key is absent,
+    not when its value is None. The None then reaches is_within_schedule(),
+    which does `tz_name.strip()` and raises AttributeError.
+
+    Args:
+        configured: the stored setting value (may be None or empty)
+
+    Returns:
+        str: a non-empty timezone name, falling back to $TZ then 'UTC'
+    """
+    return (configured or os.getenv('TZ') or 'UTC').strip() or 'UTC'
 
 
 class Weekday(IntEnum):
@@ -32,6 +54,7 @@ def am_i_inside_time(
     Returns:
         bool: True if the current time is within the time range, False otherwise.
     """
+    import arrow
     # Parse the target day of the week
     try:
         target_weekday = Weekday[day_of_week.capitalize()]
@@ -91,6 +114,7 @@ def is_within_schedule(time_schedule_limit, default_tz="UTC"):
     Returns:
         bool: True if current time is within the schedule, False otherwise.
     """
+    import arrow
     if time_schedule_limit and time_schedule_limit.get('enabled'):
         # Get the timezone the time schedule is in, so we know what day it is there
         tz_name = time_schedule_limit.get('timezone')

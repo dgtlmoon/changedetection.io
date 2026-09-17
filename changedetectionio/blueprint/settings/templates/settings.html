@@ -211,7 +211,7 @@ nav
                     </div>
                 </div>
                 <div class="pure-control-group">
-                    <a href="{{url_for('settings.settings_reset_api_key')}}" class="pure-button button-small button-cancel">{{ _('Regenerate API key') }}</a>
+                    <button type="submit" formmethod="post" formnovalidate formaction="{{url_for('settings.settings_reset_api_key')}}" class="pure-button button-small button-cancel">{{ _('Regenerate API key') }}</button>
                 </div>
                 <div class="pure-control-group">
                     <h4>{{ _('Chrome Extension') }}</h4>
@@ -284,10 +284,15 @@ nav
                 </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.form.favicons_enabled, class="") }}
-                    <span class="pure-form-message-inline">{{ _('Enable or Disable Favicons next to the watch list') }}</span>
+                    <span class="pure-form-message-inline">{{ _('Enable or Disable Favicons next to the watch list') }}</span><br>
+                    <span class="pure-form-message-inline">{{ _('Disabling this can speed up your page fetches because the favicon does not need to be fetched.') }}</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_checkbox_field(form.application.form.ui.use_page_title_in_list) }}
+                </div>
+                <div class="pure-control-group">
+                    {{ render_checkbox_field(form.application.form.ui.use_share_watch) }}
+                    <span class="pure-form-message-inline">{{ _('This copies your watch to a temporary hosted database and returns a link to make sharing/copying the watch to other people') }}</span>
                 </div>
                 <div class="pure-control-group">
                     {{ render_field(form.application.form.pager_size) }}
@@ -394,6 +399,9 @@ nav
             <div class="tab-pane-inner" id="info">
                 <p><strong>{{ _('Uptime:') }}</strong> {{ uptime_seconds|format_duration }}</p>
                 <p><strong>{{ _('Python version:') }}</strong> {{ python_version }}</p>
+                {% if watch_limit is not none %}
+                <p><strong>{{ _('Maximum number of page watches:') }}</strong> {{ watch_limit }}</p>
+                {% endif %}
                 <p><strong>{{ _('Plugins active:') }}</strong></p>
                 {% if active_plugins %}
                 <ul>

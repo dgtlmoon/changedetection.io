@@ -8,7 +8,7 @@ from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
-from changedetectionio.content_fetchers.base import Fetcher, manage_user_agent
+from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, \
     BrowserStepsStepException
 
@@ -304,7 +304,9 @@ class fetcher(Fetcher):
             # (locale also drives the Accept-Language header - see issues #4210 #1412; timezone #3303)
             context_kwargs = dict(
                 accept_downloads=False,  # Should never be needed
-                bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+                # Enabled by default because sites such as GitHub need it for injected JavaScript.
+                # Some CDP implementations do not support Page.setBypassCSP, so allow operators to disable it.
+                bypass_csp=get_playwright_bypass_csp(),
                 extra_http_headers=request_headers,
                 ignore_https_errors=True,
                 proxy=self.proxy,
@@ -323,6 +325,20 @@ class fetcher(Fetcher):
             context = await browser.new_context(**context_kwargs)
 
             self.page = await context.new_page()
+
+            # Track the LATEST main-frame document response for the whole fetch, not just the one
+            # goto() returns. This app compares the text of the page the browser ends up on, and a
+            # site that gates with an interstitial (503/429 + meta-refresh) navigates to the real
+            # page *during* the extra_wait below - judging the fetch on the first response fails a
+            # watch whose content is present and fine. Same for plain client-side redirects.
+            # Shared with action_goto_url() so only one 'response' listener exists on the page.
+            from changedetectionio.browser_steps.browser_steps import track_latest_navigation_response
+            # Must be an identity check - the tracker hands back the same (initially empty, so
+            # falsy) dict the listener writes into, and `or {}` would quietly swap in a different
+            # one that never gets updated.
+            latest_navigation_response = track_latest_navigation_response(self.page)
+            if latest_navigation_response is None:
+                latest_navigation_response = {}
 
             # Listen for all console events and handle errors
             self.page.on("console", lambda msg: logger.debug(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
@@ -363,6 +379,25 @@ class fetcher(Fetcher):
 
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             await self.page.wait_for_timeout(extra_wait * 1000)
+
+            # A meta-refresh or client-side redirect usually lands during that wait, so judge the
+            # fetch on the document we are actually about to extract rather than the first one.
+            latest = latest_navigation_response.get('response')
+            if latest is not None and latest is not response:
+                logger.debug(f"Page navigated again while waiting, judging the fetch on {latest.url} "
+                             f"(status {latest.status}) instead of the first response for {url}")
+                response = latest
+                try:
+                    self.headers = await response.all_headers()
+                except Exception as e:
+                    logger.debug(f"Could not refresh headers from the final document: {e}")
+
+            # Don't extract while a navigation is mid-flight, that is what produces
+            # "Execution context was destroyed, most likely because of a navigation"
+            try:
+                await self.page.wait_for_load_state('load', timeout=extra_wait * 1000)
+            except Exception as e:
+                logger.debug(f"Page did not reach a settled load state, continuing anyway: {e}")
 
             try:
                 self.status_code = response.status
@@ -499,6 +534,5 @@ class PlaywrightFetcherPlugin:
 
 # Create module-level instance for plugin registration
 playwright_plugin = PlaywrightFetcherPlugin()
-
 
 

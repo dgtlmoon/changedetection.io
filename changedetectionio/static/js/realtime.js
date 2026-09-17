@@ -242,6 +242,11 @@ $(document).ready(function () {
             })
 
             socket.on('general_stats_update', function (general_stats) {
+                // Drives the "Mark all viewed" button, which is always in the DOM and revealed by
+                // this class (see body.has-any-unviewed in _watch_table.scss). Emitted whenever a
+                // worker finishes a watch, and once after bulk ops like mark-all-viewed - so every
+                // open tab shows/hides the button without needing a reload.
+                document.body.classList.toggle('has-any-unviewed', general_stats.unread_changes_count !== 0);
                 $('#watch-table-wrapper').toggleClass("has-unread-changes", general_stats.unread_changes_count !==0)
                 $('#watch-table-wrapper').toggleClass("has-error", general_stats.count_errors !== 0)
                 // NB: the watch-list status .seg counts (unread/errors/deals) are

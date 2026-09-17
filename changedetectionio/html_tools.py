@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import lru_cache, wraps
 
 from loguru import logger
 from typing import List
@@ -6,6 +6,89 @@ import html
 import json
 import os
 import re
+import threading
+
+# ---------------------------------------------------------------------------------------
+# libxml2 (lxml) concurrency guard
+#
+# Watch checks run run_changedetection() on a shared ThreadPoolExecutor
+# (worker_pool.queue_executor), so extraction for different watches parses HTML in parallel
+# threads. A single check uses TWO different lxml parsers: xpath_filter() builds its own
+# etree.HTMLParser(), while html_to_text() -> inscriptis parses with lxml's process-global
+# html_parser. lxml locks per parser OBJECT, so many threads on the SAME parser serialise
+# safely - but that lock does not span two DIFFERENT parsers, and they still share libxml2's
+# interned-string dictionary. Concurrent parses corrupt it, and the rendered text of one
+# watch's page ends up inside another watch's snapshot.
+#
+# lxml's FAQ sanctions exactly two patterns: "the default parser (which is replicated for
+# each thread) or create a parser for each thread yourself". A parser per CALL is neither -
+# but note that a parser per THREAD does not fix this either (measured: still leaks), because
+# inscriptis picks its own parser internally and we cannot redirect it. Serialising is the
+# only configuration measured clean.
+#
+# Serialising is measured to be free: extraction is ~80ms mean / 204ms p95 over real data,
+# a ceiling of ~12 checks/sec against the ~0.5 checks/sec that browser fetches can feed.
+# It also HALVES peak RSS on large pages (481MB -> 232MB on a 3.85MB page across 7 threads),
+# because only one libxml2 document is ever live.
+#
+# EVERY lxml entry point in this process must go through here - a single unguarded parse in
+# any thread (Flask request, worker) is enough to reintroduce the corruption.
+#
+# This is a threading lock, not an asyncio one, and that is deliberate: nothing here is called
+# from a coroutine. The async workers hand run_changedetection() to a ThreadPoolExecutor
+# (worker.py: "Run change detection in executor to avoid blocking event loop"), the requests
+# fetcher does the same, and Flask is synchronous. If you ever call a guarded function directly
+# from a coroutine you will stall that worker's event loop for the duration of someone else's
+# parse - bounded and deadlock-free (the holder is pure CPU and never awaits), but avoid it.
+#
+# Re-entrant: these helpers call into each other (element_removal -> subtractive_xpath_selector).
+#
+# LXML_LOCK_DISABLED=true removes the guard. It exists so the corruption can be reproduced on
+# demand (see tests/test_lxml_concurrency.py) - it is NOT a tuning option, it reinstates a
+# data-integrity bug that silently writes one watch's page text into another watch's snapshot.
+def _build_lxml_lock():
+    from changedetectionio.strtobool import strtobool
+
+    if not strtobool(os.getenv('LXML_LOCK_DISABLED', 'false')):
+        return threading.RLock()
+
+    logger.warning("LXML_LOCK_DISABLED=true - lxml parsing is unguarded. Under concurrency this "
+                   "is known to leak one watch's rendered page text into another watch's "
+                   "snapshot. For testing only, never run this in production.")
+
+    class _NullLock:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    return _NullLock()
+
+
+_LXML_LOCK = _build_lxml_lock()
+
+
+def lxml_guarded(fn):
+    """Serialise a function's libxml2 work - parse, xpath traversal, tostring() and clear()
+    all touch the document, so the whole call is held, not just the parse."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        with _LXML_LOCK:
+            return fn(*args, **kwargs)
+    return wrapper
+
+
+def lxml_guard():
+    """Context manager for code OUTSIDE this module that drives lxml directly, so it shares the
+    same lock (e.g. XPath validation in forms.py, which runs on Flask request threads)."""
+    return _LXML_LOCK
+
+
+def lxml_html_parser():
+    """A fresh parser for each call, freed immediately afterwards. Never lxml's process-global
+    default parser, which is shared across every thread."""
+    from lxml import etree
+    return etree.HTMLParser()
+
+# ---------------------------------------------------------------------------------------
 
 # HTML added to be sure each result matching a filter (.example) gets converted to a new line by Inscriptis
 TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
@@ -81,7 +164,26 @@ _DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
 ]
 
 
-def _build_safe_xpath3_parser():
+# XPath 3.1 says the default collation is Unicode codepoint collation. elementpath instead leaves
+# its collation functions pointing at locale.strxfrm / locale.strcoll, so the process-wide
+# LC_COLLATE decides what contains() means:
+#
+#     def contains(self, a, b):  return self.strxfrm(b) in self.strxfrm(a)
+#
+# With LC_COLLATE=C, strxfrm() is the identity and that is an ordinary substring test. With
+# LC_COLLATE=en_US.UTF-8 it returns a binary collation key, and a substring of a collation key is
+# not the collation key of the substring - so contains(), starts-with(), ends-with() and
+# substring-before/after() return false for every input, and a filter that matches 67 elements
+# matches 0 (#4437). Name tests, axes and '=' are unaffected, which is what made it look like the
+# page had changed layout.
+#
+# flask_app.py keeps LC_COLLATE in "C" for this reason, but a filter must not depend on a distant
+# module's locale bookkeeping, nor on what an operator puts in LANG/LC_ALL. Pinning the collation
+# per evaluation makes the filter mean the same thing in every deployment.
+XPATH_CODEPOINT_COLLATION = 'http://www.w3.org/2005/xpath-functions/collation/codepoint'
+
+
+def get_safe_xpath3_parser():
     """Return an XPath3Parser subclass with filesystem/environment access functions removed.
 
     XPath 3.0 includes functions that can read arbitrary files or environment variables:
@@ -112,9 +214,6 @@ def _build_safe_xpath3_parser():
 
     return SafeXPath3Parser
 
-
-# Module-level singleton — built once, reused everywhere.
-SafeXPath3Parser = _build_safe_xpath3_parser()
 
 # Doesn't look like python supports forward slash auto enclosure in re.findall
 # So convert it to inline flag "(?i)foobar" type configuration
@@ -168,10 +267,11 @@ def subtractive_css_selector(css_selector, content):
 
     return str(soup)
 
+@lxml_guarded
 def subtractive_xpath_selector(selectors: List[str], html_content: str) -> str:
     from lxml import etree
-    # Parse the HTML content using lxml
-    html_tree = etree.HTML(html_content)
+    # Parse the HTML content using lxml. Own parser, not etree.HTML()'s process-global default.
+    html_tree = etree.fromstring(html_content, parser=lxml_html_parser())
 
     # First, collect all elements to remove
     elements_to_remove = []
@@ -265,6 +365,7 @@ def elementpath_tostring(obj):
     return str(obj)
 
 # Return str Utf-8 of matched rules
+@lxml_guarded
 def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_xml=False):
     """
 
@@ -277,7 +378,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
     from lxml import etree, html
     import elementpath
 
-    parser = etree.HTMLParser()
+    parser = lxml_html_parser()
     tree = None
     try:
         if is_xml:
@@ -301,7 +402,9 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             # This allows //title to match elements in the default namespace
             namespaces[''] = tree.nsmap[None]
 
-        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=SafeXPath3Parser)
+        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces,
+                               parser=get_safe_xpath3_parser(),
+                               default_collation=XPATH_CODEPOINT_COLLATION)
         #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
         #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
 
@@ -338,10 +441,12 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
 
 # Return str Utf-8 of matched rules
 # 'xpath1:'
+@lxml_guarded
 def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=False, is_xml=False):
     from lxml import etree, html
 
-    parser = None
+    # Own parser, not lxml's process-global default (which parser=None would select).
+    parser = lxml_html_parser()
     tree = None
     try:
         if is_xml:
@@ -406,9 +511,50 @@ def extract_element(find='title', html_content=''):
 
     return element_text
 
+# Any surrogate still present after json.loads() is a lone one - the decoder already folds
+# well-formed pairs (😀 -> a single emoji character) before we see them. Lone ones
+# come from escapes like \uD800 in the source document, which travel as plain ASCII and so
+# pass straight through the fetched-content sanitizer in processors/base.py.
+_LONE_SURROGATE_RE = re.compile(r'[\ud800-\udfff]')
+
+def _has_lone_surrogate(value):
+    if isinstance(value, str):
+        return bool(_LONE_SURROGATE_RE.search(value))
+    if isinstance(value, dict):
+        return any(_has_lone_surrogate(k) or _has_lone_surrogate(v) for k, v in value.items())
+    if isinstance(value, list):
+        return any(_has_lone_surrogate(v) for v in value)
+    return False
+
+def _sanitize_lone_surrogate_str(value: str) -> str:
+    return _LONE_SURROGATE_RE.sub('\ufffd', value)
+
+def _sanitize_lone_surrogates(value):
+    if isinstance(value, str):
+        return _sanitize_lone_surrogate_str(value)
+    if isinstance(value, dict):
+        # JSON object keys are always strings, so they only need the substitution - recursing on a
+        # key would (in theory) hand back an unhashable dict/list
+        return {_sanitize_lone_surrogate_str(k) if isinstance(k, str) else k: _sanitize_lone_surrogates(v)
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_lone_surrogates(v) for v in value]
+    return value
+
 #
 def _parse_json(json_data, json_filter):
     from jsonpath_ng.ext import parse
+
+    # Replace lone surrogates with U+FFFD, matching what processors/base.py already does for
+    # fetched content. Two separate failures otherwise, neither of which is confined to the
+    # offending value: jq re-serializes the whole document for its own C parser, which rejects
+    # a lone high surrogate, so every jq:/jqraw: filter on the page errors even when it points
+    # at an unrelated field; and on the json: path the surrogate reaches the caller intact and
+    # raises UnicodeEncodeError later in checksums and history writes.
+    # See: https://github.com/dgtlmoon/changedetection.io/issues/4273
+    if _has_lone_surrogate(json_data):
+        logger.warning("Lone unicode surrogate(s) in JSON document, replacing with U+FFFD before filtering")
+        json_data = _sanitize_lone_surrogates(json_data)
 
     if json_filter.startswith("json:"):
         jsonpath_expression = parse(json_filter.replace('json:', ''))
@@ -652,14 +798,14 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
     """
     Convert HTML content to plain text using inscriptis.
 
-    Thread-Safety: This function uses inscriptis.get_text() which internally calls
-    lxml.html.fromstring() with the default parser. Testing with 50 concurrent threads
-    confirms this approach is thread-safe and produces deterministic output.
+    Thread-Safety: inscriptis.get_text() parses with lxml's process-global default parser.
+    That is fine on its own, but NOT alongside the xpath helpers' own parser - see the
+    _LXML_LOCK comment at the top of this module. So the get_text() call is guarded.
 
-    Alternative Approach Rejected: An explicit HTMLParser instance (thread-local or fresh)
-    would also be thread-safe, but was found to break change detection logic in subtle ways
-    (test_check_basic_change_detection_functionality). The default parser provides correct
-    and reliable behavior.
+    Do NOT "fix" this by giving get_text() its own parser instead. That was tried
+    (bee1130c6, reverted by 272e68ad2) and measured at ~10x WORSE cross-document leakage,
+    because then both sides use unlocked per-call parsers and lxml's per-parser lock stops
+    helping at all.
     """
     from inscriptis import get_text
     from inscriptis.model.config import ParserConfig
@@ -699,7 +845,9 @@ def html_to_text(html_content: str, render_anchor_tag_content=False, is_rss=Fals
 
         html_content = str(soup)
 
-    text_content = get_text(html_content, config=parser_config)
+    # Only the lxml part is guarded - the BeautifulSoup stripping above is pure Python.
+    with _LXML_LOCK:
+        text_content = get_text(html_content, config=parser_config)
     return text_content
 
 # Does LD+JSON exist with a @type=='product' and a .price set anywhere?

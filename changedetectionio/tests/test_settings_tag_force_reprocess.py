@@ -40,7 +40,7 @@ def test_settings_change_forces_reprocess(client, live_server, measure_memory_us
     datastore.data['watching'][uuid2]['paused'] = False
 
     # First check - establishes baseline
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Verify checksum files were created
@@ -69,7 +69,7 @@ def test_settings_change_forces_reprocess(client, live_server, measure_memory_us
     assert not os.path.isfile(checksum2), "Settings change should delete checksum for watch 2"
 
     # Next check should reprocess (not skip) and recreate checksums
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Verify checksum files were recreated
@@ -109,7 +109,7 @@ def test_tag_change_forces_reprocess(client, live_server, measure_memory_usage, 
     datastore.data['watching'][uuid_without_tag]['paused'] = False
 
     # First check - establishes baseline
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Verify checksum files were created
@@ -139,7 +139,7 @@ def test_tag_change_forces_reprocess(client, live_server, measure_memory_usage, 
     assert os.path.isfile(checksum_without), "Tag change should NOT delete checksum for watch WITHOUT tag"
 
     # Next check should reprocess tagged watch and recreate its checksum
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Verify tagged watch's checksum was recreated
@@ -177,7 +177,7 @@ def test_tag_change_via_api_forces_reprocess(client, live_server, measure_memory
     datastore.data['watching'][uuid_with_tag].commit()
 
     # First check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Verify checksum exists

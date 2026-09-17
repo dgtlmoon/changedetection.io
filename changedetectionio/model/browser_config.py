@@ -381,54 +381,11 @@ def _system_default_label(datastore):
     return gettext('Default (system settings)')
 
 
-def _engine_supports_interactive_browser(engine_name):
-    """True if `engine_name` can drive the LIVE interactive browser flow used by /add-watch-ui and
-    Browser Steps - i.e. a Playwright-family engine (screenshots + visual selector + browser steps).
-
-    We key off the fetcher's own `supports_browser_steps` capability rather than a driver env var,
-    because that flag already reflects the env-driven `html_webdriver` alias: with a Playwright/
-    Puppeteer driver configured `html_webdriver` is the Playwright fetcher (True), otherwise it's
-    Selenium (False). Selenium can screenshot but CANNOT drive the live Playwright session, so it's
-    correctly excluded. The extra screenshots/xpath checks are belt-and-braces (every
-    browser-steps-capable engine also has them)."""
-    from changedetectionio import content_fetchers
-    from changedetectionio.content_fetchers.base import FetcherCapabilities
-    caps = FetcherCapabilities.from_fetcher(getattr(content_fetchers, engine_name, None))
-    return bool(caps.supports_browser_steps and caps.supports_screenshots and caps.supports_xpath_element_data)
-
-
-def list_visual_browser_choices(datastore):
-    """(value, label) browser choices restricted to engines that can drive the live interactive
-    browser (screenshots + visual selector + browser steps = the Playwright family) - used by the
-    Add-Watch-with-a-browser flow. Built-in engines are filtered by their own capabilities; user
-    browser configs by their base_fetcher. There is deliberately NO 'system' entry: this flow must
-    drive a concrete interactive browser, and the global default may be the plain HTTP client."""
-    choices = []
-    for b in list_builtin_browsers():
-        if _engine_supports_interactive_browser(b['base_fetcher']):
-            choices.append((b['id'], b['label']))
-    for cid, entry in datastore.browser_config_store.all().items():
-        if _engine_supports_interactive_browser(entry.get('base_fetcher') or ''):
-            choices.append((cid, entry.get('label') or cid))
-    return choices
-
-
-def has_visual_browser(datastore):
-    """True when at least one interactive browser (screenshots + visual selector) is available, i.e.
-    the Add-Watch-with-a-browser flow can work at all. Drives the sidebar link visibility and the
-    blueprint guard."""
-    return bool(list_visual_browser_choices(datastore))
-
-
-def default_visual_browser(datastore):
-    """Value to pre-select in the visual-browser picker: the global default browser when it is
-    itself a visual one, else the first available visual browser (None when there are none)."""
-    choices = list_visual_browser_choices(datastore)
-    if not choices:
-        return None
-    default = datastore.data['settings']['application'].get('fetch_backend')
-    values = [v for v, _ in choices]
-    return default if default in values else values[0]
+# "Which of these can drive the LIVE interactive browser (screenshots + visual selector)?" is
+# deliberately NOT answered here - it lives in blueprint/add_watch_ui/browser_config.py, which
+# filters list_watch_browser_choices() above through one capability check. Keeping it in a single
+# place is what stops the Add-Watch page, its /snapshot endpoint and the sidebar gate from
+# disagreeing about which browsers are usable.
 
 
 # --- Thin free-function delegators --------------------------------------------------------

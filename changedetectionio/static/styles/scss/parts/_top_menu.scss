@@ -25,6 +25,9 @@
       rgba(200, 200, 200, 0.02),
       rgba(200, 200, 200, 0.6));
   }
+  .bare-btn {
+    color: var(--color-text-menu-heading);
+  }
 }
 
 ul#top-right-menu {
@@ -47,9 +50,18 @@ ul#top-right-menu {
   }
 }
 
+$current-diff-url-fade: 2.5em;
+
+// -webkit- is still required for the mask on Safari, so every fade state has to
+// set the pair.
+@mixin current-diff-url-mask($image) {
+  -webkit-mask-image: $image;
+  mask-image: $image;
+}
+
 // The current diff URL sits between the logo and the right-hand menu in the
 // horizontal nav. It can be arbitrarily long, so it must never push the
-// surrounding items around: it absorbs the available middle space and trims
+// surrounding items around: it absorbs the available middle space and scrolls
 // its own text, fading out toward the cut edge instead of a hard clip.
 .current-diff-url {
   // Fill the space between the logo and the right-hand menu so the URL block
@@ -58,19 +70,54 @@ ul#top-right-menu {
   // min-width:0 is required for a flex item to shrink below its content width,
   // otherwise the long URL forces the row to grow and shoves the menu off-screen.
   min-width: 0;
-  overflow: hidden;
+  // A scroll container rather than a clip, so the trimmed end can be reached by
+  // dragging or swiping the line instead of only by hovering it. Browsers tell a
+  // pan apart from a tap, so the anchor still navigates on a tap.
+  //
+  // overflow-y stays hidden: the content is one non-wrapping line, and an axis
+  // that can scroll by a sub-pixel rounding error lets a diagonal swipe jog the
+  // text vertically. The scrollbar is hidden in both engines - this is a nav
+  // line a few characters tall, and a bar across it would cost more than it
+  // says; the fades below are the affordance instead.
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
   white-space: nowrap;
   // Anchor the text to the start of the href so the beginning of the URL is
   // always visible; only the far (right) end gets trimmed when it overflows.
   text-align: left;
   margin: 0 $common-gap;
 
-  // Fade the text toward the trimmed (right) edge. On short URLs the text ends
-  // before this region, so the fade falls over empty space and stays invisible;
-  // only an overflowing URL actually shows the fade-out.
-  $fade-width: 2.5em;
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - #{$fade-width}), transparent);
-  mask-image: linear-gradient(to right, #000 calc(100% - #{$fade-width}), transparent);
+  // No-JS default: without a scroll handler the line can only ever be cut at its
+  // right edge, because nothing moves it. On short URLs the text ends before this
+  // region, so the fade falls over empty space and stays invisible.
+  @include current-diff-url-mask(linear-gradient(to right, #000 calc(100% - #{$current-diff-url-fade}), transparent));
+
+  // static/js/scrollable-title.js sets .js-fades once it is maintaining the
+  // state, and from there the fade belongs on whichever edge is actually cut
+  // off - a fixed right-hand fade would dim the ending the reader just dragged
+  // over to read. No state class means nothing is cut off (a short title, or a
+  // long one scrolled to neither end, which cannot happen on one axis), so no
+  // mask at all. The mask tracks the element's own box, not its scrolled
+  // content, so each fade stays pinned to the edge it names.
+  &.js-fades {
+    @include current-diff-url-mask(none);
+
+    &.fade-right {
+      @include current-diff-url-mask(linear-gradient(to right, #000 calc(100% - #{$current-diff-url-fade}), transparent));
+    }
+
+    &.fade-left {
+      @include current-diff-url-mask(linear-gradient(to right, transparent, #000 #{$current-diff-url-fade}));
+    }
+
+    &.fade-left.fade-right {
+      @include current-diff-url-mask(linear-gradient(to right, transparent, #000 #{$current-diff-url-fade}, #000 calc(100% - #{$current-diff-url-fade}), transparent));
+    }
+  }
 
   span {
     overflow: visible;
@@ -128,6 +175,8 @@ ul#top-right-menu {
   font-weight: 600;
   white-space: nowrap;
   text-decoration: none;
+  font-family: inherit;
+  cursor: pointer;
 
   &:hover {
     background: rgba(255, 255, 255, 0.18);
@@ -144,9 +193,11 @@ ul#top-right-menu {
 
   // Paused = steady amber dot (no pulse).
   &.paused .live-dot {
-    background: #e8a33d;
-    box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.3);
+    background: #e83d3d;
+    box-shadow: 0 0 0 3px rgb(232 61 61 / 0.3);
     animation: none;
+    width: 12px;
+    height: 12px;
   }
 
   // Icon-led pills (e.g. the mute toggle) keep the feather icon compact.

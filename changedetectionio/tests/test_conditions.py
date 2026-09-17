@@ -62,7 +62,7 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Configure the watch with two conditions connected with AND:
@@ -109,12 +109,12 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
     assert b"Updated watch." in res.data
 
     wait_for_all_checks(client)
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(1)
 
     # Case 1
     set_number_in_range_response(datastore_path=datastore_path, number="70.5")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # 75 is > 20 and < 100 and contains "5"
@@ -123,12 +123,12 @@ def test_conditions_with_text_and_number(client, live_server, measure_memory_usa
 
     # Case 2: Change with one condition violated
     # Number out of range (150) but contains '5'
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
 
     set_number_out_of_range_response(datastore_path=datastore_path, number="150.5")
 
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Should NOT be marked as having changes since not all conditions are met
@@ -146,7 +146,7 @@ def test_condition_validate_rule_row(client, live_server, measure_memory_usage, 
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
 
@@ -213,7 +213,7 @@ def test_wordcount_conditions_plugin(client, live_server, measure_memory_usage, 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -294,7 +294,7 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage, datast
      </html>
     """)
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
 
@@ -314,13 +314,13 @@ def test_lev_conditions_plugin(client, live_server, measure_memory_usage, datast
 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data)
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
     # cleanup for the next
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )

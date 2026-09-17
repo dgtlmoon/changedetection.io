@@ -15,7 +15,7 @@
 
             <!-- TOP : enter the URL and fetch a live preview -->
             <div id="add-watch-url-row">
-                {{ render_nolabel_field(form.url, placeholder="https://...", required=true, class="pure-input-1") }}
+                {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1") }}
                 <button type="button" id="add-watch-go" class="pure-button pure-button-primary">{{ _('Go') }}</button>
             </div>
 
@@ -50,36 +50,38 @@
 
                 <!-- RIGHT : options -->
                 <div id="add-watch-options-pane">
-                    <!-- Which interactive browser fetches the live preview (and the created watch).
-                         Only browsers that support screenshots + the visual selector are listed. -->
-                    <div class="add-watch-option-group" id="quick-watch-browser">
-                        <label><strong>{{ _('Fetch with browser') }}</strong></label>
-                        <ul class="pure-radio-list" id="add-watch-browser-list">
-                            {% for value, label in browser_choices %}
-                            <li>
-                                <label class="pure-radio">
-                                    <input type="radio" name="fetch_backend" value="{{ value }}"
-                                           {% if value == default_browser %}checked{% endif %}>
-                                    {{ label }}
-                                </label>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
                     <div class="add-watch-option-group" id="quick-watch-processor-type">
-                        {{ render_simple_field(form.processor) }}
+                        {{ render_simple_field(form.processor, label=_('What do you want to achieve?')) }}
                         <!-- Per-processor preview of what it would read off the fetched page
                              (e.g. restock shows the detected price/stock); filled in by add-watch.js
                              from the snapshot response, and swapped when the processor changes. -->
                         <div id="processor-add-watch-ui-preview-text" style="display: none;"></div>
                     </div>
-
+{%- if not browser_backend_disabled -%}
+                    <div class="add-watch-option-group" id="quick-watch-fetch-backend">
+                        {# Rendered by hand rather than with render_field(): the system-default entry
+                           is listed for explanation and has to render disabled, and WTForms can't
+                           carry a per-option disabled attribute through a RadioField's choices. #}
+                        <label>{{ _('Select a browser') }}</label>
+                        <ul>
+                            {%- for browser in form.fetch_backend -%}
+                            {%- set unusable = browser.data in unusable_browsers -%}
+                            <li{% if unusable %} class="unusable" title="{{ _('%(browser)s cannot render a live preview, choose a browser below', browser=system_default_browser) }}"{% endif %}>
+                                {{ browser(disabled=true) if unusable else browser() }}{{ browser.label }}
+                            </li>
+                            {%- endfor -%}
+                        </ul>
+                    </div>
+{%- endif -%}
                     <div class="add-watch-option-group" id="by-element-toggle-group">
+                        {%- if llm_configured -%}
                         <label class="pure-checkbox" for="by-element-toggle">
                             <input type="checkbox" id="by-element-toggle"> {{ _('Select by element') }}
                         </label>
-                        <span class="pure-form-message-inline">{{ _('Hover & click the preview to watch just one part of the page.') }}</span>
+                        {%- endif -%}
+                        {# No LLM intent available? Then narrowing by element is the only thing this
+                           page can do - selection is always on, so nothing is labelled or offered
+                           here, just the hint on how to use the preview. #}
                         <a id="clear-selector" class="pure-button button-secondary button-xsmall" style="display: none;">{{ _('Clear selection') }}</a>
                     </div>
 
