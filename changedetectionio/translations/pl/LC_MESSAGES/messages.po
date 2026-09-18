@@ -304,6 +304,7 @@ msgstr ".XLSX i Wachete"
 msgid "Backup Restore"
 msgstr "Tworzenie kopii zapasowej i przywracanie danych"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "Przywracanie kopii zapasowych ze strony changedetection.io odbywa się w"
@@ -348,6 +349,7 @@ msgstr "Jak wyeksportować?"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "W razie potrzeby pamiętaj, aby ustawić przeglądarkę Chrome jako domyślną przeglądarkę do pobierania treści."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "Tabela przyporządkowania niestandardowych kolumn i typów danych dla"
@@ -495,6 +497,7 @@ msgstr ""
 "Powiadomienia te dotyczą wszystkich obserwowanych stron internetowych; można je jednak skonfigurować osobno dla "
 "poszczególnych grup lub obserwowanych stron."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "Podstawowy adres URL używany do"
@@ -562,6 +565,7 @@ msgstr "Sztuczna inteligencja / Wielkie modele językowe"
 msgid "Info"
 msgstr "Informacje"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Domyślny czas ponownego sprawdzania dla wszystkich obserwacji; aktualne minimalne ustawienie systemowe wynosi"
@@ -653,6 +657,7 @@ msgstr ""
 "Liczba procesów działających jednocześnie do przetwarzania obserwacji. Więcej procesów oznacza szybsze przetwarzanie,"
 " ale większe zużycie pamięci."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "Obecnie uruchomione:"
@@ -682,6 +687,7 @@ msgid ""
 " page (Edit the browser, under “HTTP request options”)."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr ""
@@ -691,6 +697,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "all of the ways that the browser is detected"
 msgstr "wszystkie sposoby wykrywania przeglądarki"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Applied to all requests."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Connect using Bright Data proxies, find out more here."
@@ -775,6 +785,7 @@ msgstr "Korzystaj z serwisu changedetection.io za pośrednictwem API. Więcej in
 msgid "API access and examples here"
 msgstr "Dostęp do API i przykłady znajdziesz tutaj"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "Ogranicz limit dostępu do API za pomocą"
@@ -2161,6 +2172,7 @@ msgstr ""
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr "Spowoduje to usunięcie historii wersji (migawek) dla WSZYSTKICH obserwacji, ale lista adresów URL zostanie zachowana!"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "Być może zechcesz skorzystać z"
@@ -2177,6 +2189,7 @@ msgstr "najpierw link."
 msgid "Confirmation text"
 msgstr "Tekst potwierdzenia"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "Wpisz słowo"
@@ -2237,15 +2250,21 @@ msgstr "Ignoruj spacje"
 msgid "Same/non-changed"
 msgstr "Tak samo / bez zmian"
 
+#. 'Removed' is a noun label for a diff display filter (toggles removed lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff filter"
 msgid "Removed"
 msgstr "Usunięto"
 
+#. 'Added' is a noun label for a diff display filter (toggles added lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Added"
 msgstr "Dodano"
 
+#. 'Replaced' is a noun label for a diff display filter (toggles replaced lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Replaced"
 msgstr "Wymieniono"
 
@@ -2373,6 +2392,7 @@ msgstr "Warunki"
 msgid "Stats"
 msgstr "Statystyki"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "Niektóre strony wykorzystują JavaScript do generowania treści, dlatego należy"
@@ -2535,6 +2555,7 @@ msgstr ""
 msgid "to one that supports interactive Javascript."
 msgstr "na taką, która obsługuje interaktywny JavaScript."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "Musisz"
@@ -2555,6 +2576,7 @@ msgstr ""
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr "Użyj przycisku „Sprawdź” (✓), aby sprawdzić, czy warunek jest spełniony w odniesieniu do bieżącej migawki."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "Zapoznaj się z krótkim poradnikiem na temat"
@@ -2587,6 +2609,7 @@ msgstr ""
 "Uwaga: W zależności od długości i podobieństwa tekstu w poszczególnych wierszach algorytm może na przykład rozważyć "
 "<strong>dodanie</strong> zamiast <strong>zamiany</strong>."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "Dlatego zawsze lepiej jest wybrać"
@@ -2595,6 +2618,7 @@ msgstr "Dlatego zawsze lepiej jest wybrać"
 msgid "when you're interested in new content."
 msgstr "gdy chcesz otrzymywać informacje o nowych treściach."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "Gdy treść zostanie po prostu przeniesiona w obrębie listy, spowoduje to również"
@@ -2639,6 +2663,7 @@ msgstr "Podgląd intencji AI"
 msgid "Loading..."
 msgstr "Ładowanie..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "Narzędzie „Visual Selector” pozwala wybrać"
@@ -2949,8 +2974,10 @@ msgstr "Zmiana ceny w stosunku do poprzedniej ceny (%(prev)s)"
 msgid "No information"
 msgstr "Brak informacji"
 
+#. 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Checked"
 msgstr "Zaznaczone"
 
@@ -2959,8 +2986,10 @@ msgstr "Zaznaczone"
 msgid "Checking now"
 msgstr "Sprawdzam to teraz"
 
+#. 'Changed' labels the last-changed time column in the watch overview list, not a status badge
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Changed"
 msgstr "Zmieniono"
 
@@ -3221,6 +3250,7 @@ msgstr "Strona internetowa"
 msgid "Restock & Price"
 msgstr "Uzupełnienie zapasów i cena"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "Nie skonfigurowano żadnych obserwacji stron internetowych. Dodaj adres URL w polu powyżej lub"
@@ -4485,6 +4515,7 @@ msgstr "Wyrażenie regularne do wyodrębnienia:"
 msgid "Be sure to test your RegEx here."
 msgstr "Pamiętaj, aby przetestować swój wyrażenie regularne właśnie tutaj."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr "Każdy nawias grupy wyrażenia regularnego"
@@ -4515,6 +4546,7 @@ msgstr "Wystąpił błąd podczas pobierania metadanych dla {}"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Protokół „watch” jest niedozwolony lub format adresu URL jest nieprawidłowy"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "Treść wszystkich powiadomień — Można użyć"
@@ -4578,6 +4610,7 @@ msgstr "Adres URL wyników porównania dla tej obserwacji."
 msgid "The diff output - only changes, additions, and removals"
 msgstr "Wynik porównania – wyłącznie zmiany, dodania i usunięcia"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr "Wszystkie warianty różnicowe obsługują"
@@ -4671,6 +4704,7 @@ msgstr "Tekst podsumowania zmian wygenerowany przez AI (odpowiada ulepszonej fun
 msgid "The AI Change Intent that was evaluated."
 msgstr "Oceniony zamiar zmiany AI."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "Ostrzeżenie: Treść"
@@ -4733,6 +4767,7 @@ msgstr ""
 msgid "Show advanced help and tips"
 msgstr "Pokaż zaawansowaną pomoc i wskazówki"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "(lub"
@@ -4755,6 +4790,7 @@ msgstr ""
 "Boty nie mogą wysyłać wiadomości do innych botów, dlatego należy podać identyfikator czatu użytkownika, który nie "
 "jest botem."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr ""
@@ -4765,6 +4801,7 @@ msgstr ""
 msgid "(or use plaintext/markdown format)"
 msgstr "(lub użyj formatu zwykłego tekstu/Markdown)"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "w przypadku bezpośrednich wywołań API (lub pomijając"
@@ -4790,6 +4827,7 @@ msgstr "Dostosuj powiadomienia"
 msgid "Title for all notifications"
 msgstr "Tytuł dla wszystkich powiadomień"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "W przypadku danych JSON należy użyć"
@@ -4798,6 +4836,7 @@ msgstr "W przypadku danych JSON należy użyć"
 msgid "without quotes for automatic escaping, for example -"
 msgstr "bez cudzysłowów, aby zapewnić automatyczne zamienianie znaków, na przykład —"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "Kodowanie adresów URL, zastosowanie"
@@ -4806,6 +4845,7 @@ msgstr "Kodowanie adresów URL, zastosowanie"
 msgid "for example -"
 msgstr "na przykład –"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "Zastępowanie za pomocą wyrażeń regularnych, użycie"
@@ -4818,6 +4858,7 @@ msgstr "Pełny spis wszystkich wbudowanych filtrów biblioteki Jinja2 można zna
 msgid "Format for all notifications"
 msgstr "Format wszystkich powiadomień"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr "Discord nie wyświetla kodu HTML — przełącz się na"
@@ -5310,6 +5351,7 @@ msgstr "Każdy wiersz jest przetwarzany osobno (każdy wiersz należy traktować
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "Uwaga: Aby użyć wyrażenia regularnego, należy ująć je w ukośniki /. Przykład:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr "Można również skorzystać z"
@@ -5405,6 +5447,7 @@ msgstr "Użyj flag typu <code>//(?aiLmsux))</code> (więcej <a href=\"%(url)s\">
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr "Przykład słowa kluczowego – przykład: <code>Brak na stanie</code>"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "Skorzystaj z grup, aby wyodrębnić właśnie ten tekst – przykład"

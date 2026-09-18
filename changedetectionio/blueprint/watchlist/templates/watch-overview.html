@@ -340,14 +340,17 @@ window.watchOverviewI18n = {
              {%- if any_has_restock_price_processor -%}
                 <th class="col-restock-price">{{ _('Restock & Price') }}</th>
              {%- endif -%}
-                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
-                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                {# TRANSLATORS: 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state #}
+                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ pgettext('timestamp', 'Checked') }}</span><span class="hide-on-desktop">{{ pgettext('timestamp', 'Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                {# TRANSLATORS: 'Changed' labels the last-changed time column in the watch overview list, not a status badge #}
+                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ pgettext('timestamp', 'Changed') }}</span><span class="hide-on-desktop">{{ pgettext('timestamp', 'Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
             </tr>
             </thead>
             <tbody>
             {%- if not watches|length -%}
             <tr>
+                {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                 <td colspan="{{ cols_required }}" style="text-wrap: wrap;">{{ _('No web page change detection watches configured, please add a URL in the box above, or') }} <a href="{{ url_for('imports.import_page')}}" >{{ _('import a list') }}</a>.</td>
             </tr>
             {%- endif -%}

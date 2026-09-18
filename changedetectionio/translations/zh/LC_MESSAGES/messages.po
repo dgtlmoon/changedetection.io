@@ -298,6 +298,7 @@ msgstr ".XLSX 与 Wachete"
 msgid "Backup Restore"
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr ""
@@ -343,6 +344,7 @@ msgstr "如何导出？"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "如有需要，请将默认抓取器设置为 Chrome。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "用于以下内容的自定义列与数据类型映射表"
@@ -484,6 +486,7 @@ msgstr ""
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "用于通知链接中的"
@@ -551,6 +554,7 @@ msgstr ""
 msgid "Info"
 msgstr "信息"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "所有监控项的默认复检间隔，当前系统最小值为"
@@ -634,6 +638,7 @@ msgstr "这将等待 <i>n</i> 秒后再提取文本。"
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "用于处理监控项的并发工作线程数。线程越多=处理更快但内存占用更高。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "当前运行:"
@@ -661,6 +666,7 @@ msgid ""
 " page (Edit the browser, under “HTTP request options”)."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "注意：仅更换 User-Agent 往往无法绕过反爬虫技术，务必考虑"
@@ -668,6 +674,10 @@ msgstr "注意：仅更换 User-Agent 往往无法绕过反爬虫技术，务必
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "all of the ways that the browser is detected"
 msgstr "浏览器被识别的各种方式"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Applied to all requests."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Connect using Bright Data proxies, find out more here."
@@ -746,6 +756,7 @@ msgstr "通过 API 控制 changedetection.io，更多信息"
 msgid "API access and examples here"
 msgstr "API访问和示例"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "通过以下方式限制 API 访问"
@@ -2038,6 +2049,7 @@ msgstr ""
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr "这将删除所有监控项的版本历史（快照），但会保留 URL 列表！"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "你可能需要先使用"
@@ -2054,6 +2066,7 @@ msgstr "链接。"
 msgid "Confirmation text"
 msgstr "确认文本"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "请输入单词"
@@ -2114,15 +2127,21 @@ msgstr "忽略空白"
 msgid "Same/non-changed"
 msgstr "未变化"
 
+#. 'Removed' is a noun label for a diff display filter (toggles removed lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff filter"
 msgid "Removed"
 msgstr "已删除"
 
+#. 'Added' is a noun label for a diff display filter (toggles added lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Added"
 msgstr "新增"
 
+#. 'Replaced' is a noun label for a diff display filter (toggles replaced lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Replaced"
 msgstr "替换"
 
@@ -2248,6 +2267,7 @@ msgstr "条件"
 msgid "Stats"
 msgstr "统计"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "有些网站使用 JavaScript 生成内容，此时你应该"
@@ -2402,6 +2422,7 @@ msgstr "抱歉，此功能仅适用于支持交互式 JavaScript 的抓取器（
 msgid "to one that supports interactive Javascript."
 msgstr "为支持交互式 JavaScript 的方式。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "你需要"
@@ -2420,6 +2441,7 @@ msgstr "当页面上找不到该过滤器时发送通知，便于知晓页面已
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr "使用验证（✓）按钮测试条件是否符合当前快照。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "阅读快速教程"
@@ -2450,6 +2472,7 @@ msgid ""
 "<strong>addition</strong> instead of <strong>replacement</strong> for example."
 msgstr "注意：根据每行文本长度与相似度，算法可能把 <strong>替换</strong> 视为 <strong>新增</strong>，例如。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "因此当你关注新增内容时，最好选择"
@@ -2458,6 +2481,7 @@ msgstr "因此当你关注新增内容时，最好选择"
 msgid "when you're interested in new content."
 msgstr "。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "当内容仅在列表中移动时，也会触发"
@@ -2498,6 +2522,7 @@ msgstr ""
 msgid "Loading..."
 msgstr "加载中..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "可视化选择器工具可让你选择"
@@ -2802,8 +2827,10 @@ msgstr ""
 msgid "No information"
 msgstr "暂无信息"
 
+#. 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Checked"
 msgstr "检查"
 
@@ -2812,8 +2839,10 @@ msgstr "检查"
 msgid "Checking now"
 msgstr "正在检查"
 
+#. 'Changed' labels the last-changed time column in the watch overview list, not a status badge
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Changed"
 msgstr "变更"
 
@@ -3074,6 +3103,7 @@ msgstr ""
 msgid "Restock & Price"
 msgstr "补货与价格"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "尚未配置网站监控项，请在上方输入 URL 或"
@@ -4332,6 +4362,7 @@ msgstr ""
 msgid "Be sure to test your RegEx here."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr ""
@@ -4362,6 +4393,7 @@ msgstr "获取 {} 的元数据失败"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "监控协议不允许或 URL 格式无效"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "所有通知的正文 — 您可以使用"
@@ -4425,6 +4457,7 @@ msgstr "该监控项的差异输出 URL。"
 msgid "The diff output - only changes, additions, and removals"
 msgstr "差异输出 - 仅包含更改、新增与删除"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr ""
@@ -4511,6 +4544,7 @@ msgstr ""
 msgid "The AI Change Intent that was evaluated."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "警告：以下内容"
@@ -4571,6 +4605,7 @@ msgstr "<strong>请阅读通知服务 Wiki 以了解重要配置说明</strong>"
 msgid "Show advanced help and tips"
 msgstr "显示高级帮助和提示"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "（或"
@@ -4591,6 +4626,7 @@ msgstr "通知文本,包括标题。"
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "机器人无法向其他机器人发送消息，因此应指定非机器人用户的聊天 ID。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "仅支持非常有限的 HTML，发送额外标签可能失败，"
@@ -4599,6 +4635,7 @@ msgstr "仅支持非常有限的 HTML，发送额外标签可能失败，"
 msgid "(or use plaintext/markdown format)"
 msgstr "（或使用纯文本/Markdown 格式）"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "用于直接 API 调用（或省略"
@@ -4624,6 +4661,7 @@ msgstr ""
 msgid "Title for all notifications"
 msgstr "所有通知的标题"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "对于 JSON 负载，使用"
@@ -4632,6 +4670,7 @@ msgstr "对于 JSON 负载，使用"
 msgid "without quotes for automatic escaping, for example -"
 msgstr "无需引号以自动转义，例如 -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "URL 编码使用"
@@ -4640,6 +4679,7 @@ msgstr "URL 编码使用"
 msgid "for example -"
 msgstr "例如 -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "正则替换使用"
@@ -4652,6 +4692,7 @@ msgstr "关于 Jinja2 内置过滤器的完整参考，请见"
 msgid "Format for all notifications"
 msgstr "所有通知的格式"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr ""
@@ -5112,6 +5153,7 @@ msgstr "每行单独处理（可理解为每行都是“或”）"
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "注意：使用正则时请用斜杠 / 包裹，例如："
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr ""
@@ -5190,6 +5232,7 @@ msgstr "使用 <code>//(?aiLmsux))</code> 类型标志（更多<a href=\"%(url)s
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr "关键字示例 - 示例: <code>缺货</code>"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "使用分组仅提取该文本 - 示例"
