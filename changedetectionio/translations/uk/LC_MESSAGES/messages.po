@@ -17,6 +17,92 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Adding a watch with a browser needs an interactive browser (screenshots + element data) - none is configured."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/browser_config.py
+#, python-format
+msgid "System settings default (%(browser)s)"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/browser_config.py
+#, python-format
+msgid "System settings default (%(browser)s - no live preview)"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Add a new web page change detection watch"
+msgstr "Додати нове завдання відстеження змін веб-сторінки"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/ui/templates/preview.html
+msgid "Go"
+msgstr "Перейти"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Enter a URL to get started!"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Enter a URL in the input box above to get started."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Fetching screenshot and element information…"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Currently:"
+msgstr "В даний час:"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "What do you want to achieve?"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Select a browser"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#, python-format
+msgid "%(browser)s cannot render a live preview, choose a browser below"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Select by element"
+msgstr "Вибір за елементом"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear selection"
+msgstr "Очистити вибір"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "What matters — when to notify me"
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid ""
+"e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants "
+"appear. Skip review additions."
+msgstr ""
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "Watch group / tag"
+msgstr "Група / Тег відстеження"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Watch this URL!"
+msgstr "Відстежувати цей URL!"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Edit first then Watch"
+msgstr "Спочатку редагувати, потім Відстежувати"
+
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "A backup is already running, check back in a few minutes"
 msgstr "Резервне копіювання вже виконується, перевірте через кілька хвилин"
@@ -289,9 +375,21 @@ msgstr "Група / Ім'я тегу(ів)"
 msgid "Recheck time (minutes)"
 msgstr "Час перевірки (хвилини)"
 
-#: changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
 msgid "Import"
 msgstr "Імпорт"
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Expand on hover"
+msgstr ""
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Always expanded"
+msgstr ""
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Stays minimal"
+msgstr ""
 
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
@@ -332,12 +430,12 @@ msgstr "Помилка налаштування воркерів: {}"
 msgid "Password protection enabled."
 msgstr "Захист паролем увімкнено."
 
-#: changedetectionio/blueprint/settings/__init__.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Settings updated."
 msgstr "Налаштування оновлено."
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "Сталася помилка, дивіться подробиці нижче."
 
@@ -376,9 +474,42 @@ msgstr ""
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Default Notifications"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Base URL used for the"
+msgstr "Базовий URL, що використовується для"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "token in notification links."
+msgstr "токена в посиланнях сповіщень."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Default value is the system environment variable"
+msgstr "Значення за замовчуванням береться із системної змінної оточення"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+#: changedetectionio/templates/_common_fields.html
+msgid "read more here"
+msgstr "читати більше тут"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Back to settings"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
 msgstr "Журнал налагодження сповіщень"
+
+#: changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "For security this log is emptied on restart."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -451,6 +582,10 @@ msgid "Password is locked."
 msgstr "Пароль заблоковано."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Clear Snapshot History"
+msgstr "Очистити історію знімків"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Allow access to the watch change history page when password is enabled (Good for sharing the diff page)"
 msgstr "Дозволити доступ до сторінки історії змін при увімкненому паролі (корисно для поширення посилань на різницю)"
 
@@ -461,22 +596,6 @@ msgstr "Чи вважати зміною, якщо запит не поверт�
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Виберіть проксі за замовчуванням для всіх завдань"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Base URL used for the"
-msgstr "Базовий URL, що використовується для"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "token in notification links."
-msgstr "токена в посиланнях сповіщень."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Default value is the system environment variable"
-msgstr "Значення за замовчуванням береться із системної змінної оточення"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/templates/_common_fields.html
-msgid "read more here"
-msgstr "читати більше тут"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
@@ -730,8 +849,28 @@ msgid "Enable or Disable Favicons next to the watch list"
 msgstr "Увімкнути або вимкнути значки (фавіконки) поруч зі списком завдань"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"This copies your watch to a temporary hosted database and returns a link to make sharing/copying the watch to other "
+"people"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "Кількість елементів на сторінці у списку завдань, 0 для вимкнення."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "How \"Checked\" and \"Changed\" times are shown in the watch overview list."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"\"Collapsed icon rail\" keeps the left navigation slim and reveals labels on mouse-over; \"Always expanded\" keeps "
+"labels visible."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Tip"
@@ -762,20 +901,16 @@ msgid "Python version:"
 msgstr "Версія Python:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Maximum number of page watches:"
+msgstr "Максимальна кількість завдань моніторингу:"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Plugins active:"
 msgstr "Активні плагіни:"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "Немає активних плагінів"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Back"
-msgstr "Назад"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Clear Snapshot History"
-msgstr "Очистити історію знімків"
 
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1052,6 +1187,10 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Configure a provider first to unlock behaviour settings."
 msgstr ""
 
@@ -1233,6 +1372,26 @@ msgid "Tag colour"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Must be a hex colour, for example #4f8ef7"
+msgstr "Має бути шістнадцятковий колір, наприклад #4f8ef7"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "AI for watches in this group"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "On, use the settings below"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Off for every watch"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Leave it to each watch"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -1302,11 +1461,6 @@ msgid "Add a new organisational tag"
 msgstr "Додати новий організаційний тег"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Watch group / tag"
-msgstr "Група / Тег відстеження"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
 msgstr "Групи дозволяють керувати фільтрами та сповіщеннями для кількох завдань під одним організаційним тегом."
 
@@ -1326,15 +1480,16 @@ msgstr "Організаційні теги/групи сайтів не нал�
 msgid "Mute notifications"
 msgstr "Вимкнути сповіщення"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Edit"
-msgstr "Редагувати"
-
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "Перевірити знову"
+
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Edit"
+msgstr "Редагувати"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Delete Group?"
@@ -1346,7 +1501,7 @@ msgid "<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><
 msgstr "<p>Ви впевнені, що бажаєте видалити групу <strong>%(title)s</strong>?</p><p>Цю дію неможливо скасувати.</p>"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Delete"
 msgstr "Видалити"
 
@@ -1367,7 +1522,7 @@ msgstr ""
 "<p>Ви впевнені, що хочете відв'язати всі завдання від групи <strong>%(title)s</strong>?</p><p>Тег збережеться, але "
 "завдання будуть видалені з нього.</p>"
 
-#: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/templates/base.html
 msgid "Unlink"
 msgstr "Відв'язати"
 
@@ -1431,10 +1586,28 @@ msgstr "Для {} завдань встановлено налаштування
 
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
+msgid "Browser / fetch method updated on {} watches"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Invalid browser / fetch method selected"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
+msgid "Proxy updated on {} watches"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "Invalid proxy selected"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py
+#, python-brace-format
 msgid "{} watches were tagged"
 msgstr "{} завдань було позначено тегами"
 
-#: changedetectionio/blueprint/ui/__init__.py
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Завдання не знайдено"
 
@@ -1536,11 +1709,11 @@ msgstr "Не вдалося завантажити процесор '{}', мож
 msgid "Could not load '{}' processor, processor plugin might be missing."
 msgstr "Не вдалося завантажити процесор '{}', можливо плагін відсутній."
 
-#: changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "System settings default"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Default"
 msgstr ""
 
@@ -1558,6 +1731,20 @@ msgstr "Попередній перегляд недоступний — пер�
 
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Diff"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
+#, python-brace-format
+msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
+msgstr "відображено <b>{start} - {end}</b> {record_name}, всього <b>{total}</b>"
+
+#: changedetectionio/blueprint/ui/queue.py
+msgid "queued items"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/queue.py
+#, python-brace-format
+msgid "Queue cleared ({} items removed)."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
@@ -1619,6 +1806,10 @@ msgstr "Від"
 msgctxt "diff version"
 msgid "To"
 msgstr "До"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Filters"
+msgstr "Фільтри"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
@@ -1691,9 +1882,9 @@ msgstr "Скріншот помилки"
 msgid "Text"
 msgstr "Текст"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
-msgid "Current screenshot"
-msgstr "Поточний скріншот"
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
+msgid "Screenshot"
+msgstr "Скріншот"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html
@@ -1717,7 +1908,7 @@ msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"
 msgstr "Порада: Ви можете увімкнути <strong>\"ділитися доступом при увімкненому паролі\"</strong> у налаштуваннях."
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Generating summary…"
+msgid "Generating change summary…"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
@@ -1737,10 +1928,12 @@ msgid "For now, Differences are performed on text, not graphically, only the lat
 msgstr "На даний момент порівняння виконується за текстом, а не графічно; доступний лише останній скріншот."
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Current screenshot from most recent request"
 msgstr "Поточний скріншот з останнього запиту"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "No screenshot available just yet! Try rechecking the page."
 msgstr "Скріншот поки недоступний! Спробуйте перевірити сторінку ще раз."
 
@@ -1797,16 +1990,16 @@ msgid "Automatically uses the page title if found, you can also use your own tit
 msgstr "Автоматично використовує заголовок сторінки, якщо знайдено. Ви також можете вказати тут свою назву/опис."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "Інтервал часу між перевірками."
+msgid "Extra Page Title and Link options"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
-"your filter will not work anymore."
+msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
 msgstr ""
-"Надсилає сповіщення, коли фільтр більше не видно на сторінці. Корисно, щоб дізнатися, що сторінка змінилася і ваш "
-"фільтр більше не працює."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "Інтервал часу між перевірками."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -1907,6 +2100,14 @@ msgstr "Вам потрібно"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set the fetch method"
 msgstr "Встановити метод завантаження"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
+"your filter will not work anymore."
+msgstr ""
+"Надсилає сповіщення, коли фільтр більше не видно на сторінці. Корисно, щоб дізнатися, що сторінка змінилася і ваш "
+"фільтр більше не працює."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
@@ -2028,24 +2229,12 @@ msgid "Selection Mode:"
 msgstr "Режим вибору:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Select by element"
-msgstr "Вибір за елементом"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Draw area"
 msgstr "Малювання області"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Clear selection"
-msgstr "Очистити вибір"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "One moment, fetching screenshot and element information.."
 msgstr "Хвилинку, отримання скріншота та інформації про елементи..."
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Currently:"
-msgstr "В даний час:"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Sorry, this functionality only works with fetchers that support Javascript and screenshots (such as playwright etc)."
@@ -2078,6 +2267,14 @@ msgstr "Кількість надісланих сповіщень"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Server type reply"
 msgstr "Відповідь типу сервера"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "Так"
+
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "Ні"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI tokens (last check)"
@@ -2132,8 +2329,9 @@ msgid "Select timestamp"
 msgstr "Виберіть мітку часу"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
-msgid "Go"
-msgstr "Перейти"
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Current screenshot"
+msgstr "Поточний скріншот"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current erroring screenshot from most recent request"
@@ -2142,6 +2340,100 @@ msgstr "Поточний скріншот з помилкою з останнь�
 #: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Screenshot requires a Content Fetcher ( Sockpuppetbrowser, selenium, etc ) that supports screenshots."
 msgstr "Скріншот вимагає завантажувача контенту (Sockpuppetbrowser, selenium тощо), який підтримує створення скріншотів."
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+#, python-format
+msgid "Worker %(num)s"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "— idle"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "running"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "idle"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "done"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "cancel"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "No workers configured and queue is empty"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Watch no longer exists"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Nothing running"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Check queue"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Live view of what the workers are doing right now and what is waiting in line."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Workers"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Running now"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Queued"
+msgstr "В черзі"
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Clear Queue?"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "<p>This will remove every pending check from the queue.</p><p>Running checks will continue.</p>"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Clear"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Clear Queue"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Workers & queue"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Elapsed"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Status"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "No workers configured (FETCH_WORKERS=0) and queue is empty"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/queue.html
+msgid "Waiting for new pages to check…"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/views.py
 #, python-brace-format
@@ -2157,13 +2449,90 @@ msgid "Watch added."
 msgstr "Завдання додано."
 
 #: changedetectionio/blueprint/watchlist/__init__.py
-#, python-brace-format
-msgid "displaying <b>{start} - {end}</b> {record_name} in total <b>{total}</b>"
-msgstr "відображено <b>{start} - {end}</b> {record_name}, всього <b>{total}</b>"
-
-#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "записів"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Pause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnPause checks"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Mute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "UnMute notification"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Goto web page"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Create a link to share watch config with others"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Detecting restock and price"
+msgstr "Визначення наявності та ціни"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Not in stock"
+msgstr "Немає в наявності"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "In stock"
+msgstr "В наявності"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price"
+msgstr "Ціна"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "No information"
+msgstr "Немає інформації"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Checked"
+msgstr "Перевірено"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/templates/base.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Checking now"
+msgstr "Перевірка..."
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Changed"
+msgstr "Змінено"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Summary"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/text_json_diff/difference.py
+msgid "History"
+msgstr "Історія"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Preview"
+msgstr "Прев'ю"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
@@ -2178,24 +2547,143 @@ msgid "You can also add 'shared' watches."
 msgstr "Ви також можете додати 'спільні' завдання."
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Add a new web page change detection watch"
-msgstr "Додати нове завдання відстеження змін веб-сторінки"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Watch this URL!"
-msgstr "Відстежувати цей URL!"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Edit first then Watch"
-msgstr "Спочатку редагувати, потім Відстежувати"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI — Notify when…"
+msgid "Goto full history"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Goto full history"
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Loading price history…"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Out of stock"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "No price data available to graph yet."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Could not load price history."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Changes"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Average price"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Currently low"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Currently typical"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Currently high"
+msgstr ""
+
+#. {pct} is a percentage including the % sign, e.g. "80%"
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+#, python-brace-format
+msgid "cheaper than {pct} of tracked prices"
+msgstr ""
+
+#. {pct} is a percentage including the % sign, e.g. "80%"
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+#, python-brace-format
+msgid "more expensive than {pct} of tracked prices"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "around the usual price"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "avg"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Web page URL"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "%(count)s records selected"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Searching"
+msgstr "Пошук"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All"
+msgstr "Всі"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter watches"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Unread"
+msgstr "Непрочитане"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Deals"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "With errors"
+msgstr "З помилками"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter by type"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "All types"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark all viewed"
+msgstr "Позначити все як переглянуте"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Recheck all"
+msgstr "Перевірити всі"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "in '%(title)s'"
+msgstr "в '%(title)s'"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "RSS Feed"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Invert"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -2217,6 +2705,18 @@ msgstr "Увімкнути звук"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Tag"
 msgstr "Тег"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set proxy for selected"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
@@ -2256,40 +2756,27 @@ msgid "<p><strong>Are you sure you want to delete the selected watches?</strong>
 msgstr "<p><strong>Ви впевнені, що хочете видалити вибрані завдання?</strong></p><p>Цю дію неможливо скасувати.</p>"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued size"
-msgstr "Розмір черги"
+#, python-format
+msgid "All %(page)s on this page are selected."
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Searching"
-msgstr "Пошук"
+#, python-format
+msgid "Select all %(total)s matching"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "All"
-msgstr "Всі"
+#, python-format
+msgid "All %(total)s matching are selected."
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Website"
-msgstr "Вебсайт"
+msgid "Web page"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Restock & Price"
 msgstr "Наявність та Ціна"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Checked"
-msgstr "Перевірено"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Checked"
-msgstr "Останній Перевірено"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Changed"
-msgstr "Змінено"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Last Changed"
-msgstr "Останній Змінено"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
@@ -2298,93 +2785,6 @@ msgstr "Немає налаштованих завдань для відстеж
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "import a list"
 msgstr "імпортуйте список"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Pause checks"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnPause checks"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mute notification"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "UnMute notification"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Create a link to share watch config with others"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Detecting restock and price"
-msgstr "Визначення наявності та ціни"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "In stock"
-msgstr "В наявності"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Not in stock"
-msgstr "Немає в наявності"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Price"
-msgstr "Ціна"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "No information"
-msgstr "Немає інформації"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-msgid "Checking now"
-msgstr "Перевірка..."
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Queued"
-msgstr "В черзі"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Summary"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/text_json_diff/difference.py
-msgid "History"
-msgstr "Історія"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Preview"
-msgstr "Прев'ю"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "With errors"
-msgstr "З помилками"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Mark all viewed"
-msgstr "Позначити все як переглянуте"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Mark all viewed in '%(title)s'"
-msgstr "Позначити все як переглянуте в '%(title)s'"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Unread"
-msgstr "Непрочитане"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Recheck all"
-msgstr "Перевірити всі"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "in '%(title)s'"
-msgstr "в '%(title)s'"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"
@@ -2548,7 +2948,7 @@ msgstr ""
 msgid "Basic fast Plaintext/HTTP Client"
 msgstr ""
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/flask_app.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "Ще ні"
@@ -2714,6 +3114,10 @@ msgid "Seconds"
 msgstr "Секунди"
 
 #: changedetectionio/forms.py
+msgid "Unknown fetch method."
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Notification Body and Title is required when a Notification URL is used"
 msgstr "Тіло та заголовок сповіщення обов'язкові, якщо використовується URL сповіщення"
 
@@ -2754,6 +3158,7 @@ msgstr "Неприпустиме значення."
 msgid "Group tag"
 msgstr "Тег групи"
 
+#: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py
 msgid "Watch"
 msgstr "Завдання"
@@ -2761,6 +3166,10 @@ msgstr "Завдання"
 #: changedetectionio/forms.py
 msgid "Processor"
 msgstr "Процесор"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
+msgid "Browser"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Edit > Watch"
@@ -2803,6 +3212,19 @@ msgid "Should contain one or more seconds"
 msgstr "Має містити одну або більше секунд"
 
 #: changedetectionio/forms.py
+msgid "Notification base URL override"
+msgstr "Перевизначення базового URL сповіщень"
+
+#: changedetectionio/forms.py
+msgid "Not set"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/forms.py
+msgid "Save"
+msgstr "Зберегти"
+
+#: changedetectionio/forms.py
 msgid "URLs"
 msgstr "URL-адреси"
 
@@ -2843,6 +3265,10 @@ msgid "Web Page URL"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Open Link Override"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Group Tag"
 msgstr ""
 
@@ -2855,12 +3281,28 @@ msgid "Use global settings for time between check and scheduler."
 msgstr "Використовувати глобальні налаштування для часу між перевірками та планувальника."
 
 #: changedetectionio/forms.py
-msgid "AI Change Intent"
+msgid "AI Change Intent - Notify me when.."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/forms.py changedetectionio/templates/edit/include_llm_intent.html
+#: changedetectionio/forms.py
 msgid "AI Change Summary"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Change Summary prompt - Append or Replace the default?"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Replace the inherited prompt"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+msgid "Append to the inherited prompt"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "AI enabled for this watch?"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -2943,12 +3385,7 @@ msgstr "Блокувати виявлення змін, поки текст зб
 msgid "Execute JavaScript before change detection"
 msgstr "Виконати JavaScript перед виявленням змін"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
-msgid "Save"
-msgstr "Зберегти"
-
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Проксі"
 
@@ -2957,17 +3394,17 @@ msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "Надіслати сповіщення, коли фільтр більше не може бути знайдений на сторінці"
 
 #: changedetectionio/forms.py
-msgid "Muted"
-msgstr "Заглушено"
-
-#: changedetectionio/forms.py
 msgid "On"
 msgstr "Увімк"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Сповіщення"
+
+#: changedetectionio/forms.py changedetectionio/templates/menu.html
+msgid "Muted"
+msgstr "Заглушено"
 
 #: changedetectionio/forms.py
 msgid "Attach screenshot to notification (where possible)"
@@ -3089,16 +3526,28 @@ msgid "Use page <title> in watch overview list"
 msgstr "Використовувати <title> сторінки у списку огляду завдань"
 
 #: changedetectionio/forms.py
+msgid "Enable watch \"sharing\""
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Relative time format"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Long (1 minute ago)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Short (1m ago)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Navigation sidebar"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "API access token security check enabled"
 msgstr "Перевірку безпеки токена доступу API увімкнено"
-
-#: changedetectionio/forms.py
-msgid "Notification base URL override"
-msgstr "Перевизначення базового URL сповіщень"
-
-#: changedetectionio/forms.py
-msgid "Not set"
-msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Treat empty pages as a change?"
@@ -3249,12 +3698,150 @@ msgid "Skip the watch check entirely"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Watchlist \"Summary\" link compares"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Previous version (second-last vs latest)"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Changes since you last viewed the watch"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "RegEx to extract"
 msgstr "RegEx для вилучення"
 
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Вилучити як CSV"
+
+#: changedetectionio/languages.py
+msgid "just now"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "right now"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%ss ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %ss"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "1m ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "in 1m"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sm ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sm"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "1h ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "in 1h"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sh ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sh"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "1d ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "in 1d"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sd ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sd"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "1w ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "in 1w"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%sw ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %sw"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "1mo ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "in 1mo"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%smo ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %smo"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "1yr ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+msgid "in 1yr"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "%syr ago"
+msgstr ""
+
+#: changedetectionio/languages.py
+#, python-format
+msgid "in %syr"
+msgstr ""
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
@@ -3334,6 +3921,23 @@ msgstr "Візуальне / Скріншотне виявлення змін"
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
 msgstr "Порівнює скриншоти, використовуючи швидкий алгоритм OpenCV, в 10-100 разів швидше за SSIM"
 
+#: changedetectionio/processors/restock_diff/difference.py
+msgid "Date"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/difference.py
+msgid "Stock status"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/difference.py
+msgid "Currency"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price history"
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
 msgstr "Виявлення поповнення (restock)"
@@ -3363,9 +3967,8 @@ msgid "Above price to trigger notification"
 msgstr "Ціна вище для спрацювання сповіщення"
 
 #: changedetectionio/processors/restock_diff/forms.py
-#, python-format
-msgid "Threshold in %% for price changes since the original price"
-msgstr "Поріг у %% для зміни ціни від початкової"
+msgid "Threshold (%) for price changes since the previous check"
+msgstr "Поріг (%) для зміни ціни від попередньої перевірки"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Should be between 0 and 100"
@@ -3387,8 +3990,24 @@ msgstr "Виявлення поповнення та ціни для сторі�
 msgid "Detects if the product goes back to in-stock"
 msgstr "Визначає, чи повернувся товар у наявність"
 
-#: changedetectionio/processors/templates/extract.html
-msgid "Screenshot"
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Price & stock history"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Download as XLSX"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "When"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Stock"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here."
 msgstr ""
 
 #: changedetectionio/processors/templates/extract.html
@@ -3433,17 +4052,17 @@ msgstr "Виявляє всі текстові зміни, де це можли�
 
 #: changedetectionio/store/__init__.py
 #, python-brace-format
+msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
+msgstr "Досягнуто ліміту завдань ({current}/{limit}). Неможливо додати більше."
+
+#: changedetectionio/store/__init__.py
+#, python-brace-format
 msgid "Error fetching metadata for {}"
 msgstr "Помилка отримання метаданих для {}"
 
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Протокол завдання не дозволено або невірний формат URL"
-
-#: changedetectionio/store/__init__.py
-#, python-brace-format
-msgid "Watch limit reached ({current}/{limit} watches). Cannot add more watches."
-msgstr "Досягнуто ліміту завдань ({current}/{limit}). Неможливо додати більше."
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -3472,6 +4091,12 @@ msgstr "URL екземпляра changedetection.io, який ви викори�
 #: changedetectionio/templates/_common_fields.html
 msgid "The URL being watched."
 msgstr "URL, за яким ведеться спостереження."
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"The Open Link Override set on the watch, otherwise the same as watch_url. Use this when the watched URL is an API "
+"endpoint or RSS feed but you want to link to the real page."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The UUID of the watch."
@@ -3609,6 +4234,30 @@ msgid "More Here"
 msgstr "Детальніше тут"
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Add email notification:"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Add an email address"
+msgstr "Додати адресу електронної пошти"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "Надіслати тестове сповіщення"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Notification debug logs"
+msgstr "Журнали налагодження сповіщень"
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "Обробка..."
+
+#: changedetectionio/templates/_common_fields.html
 #, python-format
 msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
 msgstr ""
@@ -3670,24 +4319,8 @@ msgid "Accepts the <code>%(token)s</code> placeholders listed below"
 msgstr "Приймає заповнювачі <code>%(token)s</code>, перелічені нижче"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "Надіслати тестове сповіщення"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add email"
-msgstr "Додати email"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add an email address"
-msgstr "Додати адресу електронної пошти"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Notification debug logs"
-msgstr "Журнали налагодження сповіщень"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "Обробка..."
+msgid "Customise notifications"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Title for all notifications"
@@ -3798,40 +4431,156 @@ msgid "First confirm/save your Time Zone Settings"
 msgstr "Спочатку підтвердіть/збережіть налаштування часового поясу"
 
 #: changedetectionio/templates/_helpers.html
-msgid "Triggers a change if this text appears, AND something changed in the document."
-msgstr "Викликає зміну, якщо цей текст з'являється І щось змінилося в документі."
-
-#: changedetectionio/templates/_helpers.html
 msgid "Triggered text"
 msgstr "Тригерний текст"
 
-#: changedetectionio/templates/_helpers.html
-msgid "Ignored for calculating changes, but still shown."
-msgstr "Ігнорується при розрахунку змін, але все ще відображається."
+#: changedetectionio/templates/_helpers.html changedetectionio/templates/base.html
+msgid "Triggers a change if this text appears, AND something changed in the document."
+msgstr "Викликає зміну, якщо цей текст з'являється І щось змінилося в документі."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Ignored text"
 msgstr "Ігнорований текст"
 
-#: changedetectionio/templates/_helpers.html
-msgid "No change-detection will occur because this text exists."
-msgstr "Виявлення змін не відбудеться, оскільки цей текст існує."
+#: changedetectionio/templates/_helpers.html changedetectionio/templates/base.html
+msgid "Ignored for calculating changes, but still shown."
+msgstr "Ігнорується при розрахунку змін, але все ще відображається."
 
 #: changedetectionio/templates/_helpers.html
 msgid "Blocked text"
 msgstr "Блокуючий текст"
+
+#: changedetectionio/templates/_helpers.html changedetectionio/templates/base.html
+msgid "No change-detection will occur because this text exists."
+msgstr "Виявлення змін не відбудеться, оскільки цей текст існує."
 
 #: changedetectionio/templates/_stab.html
 msgid "Settings sections"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "A new version is available"
+msgid "Confirm Action"
 msgstr ""
 
 #: changedetectionio/templates/base.html
-msgid "Search, or Use Alt+S Key"
-msgstr "Пошук, або використовуйте Alt+S"
+msgid "Are you sure?"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "<p>Are you sure you want to proceed?</p>"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Confirm"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Delete %(name)s?"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "<p>Are you sure you want to delete <strong>%(name)s</strong>?</p><p>This action cannot be undone.</p>"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Unlink %(name)s?"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid ""
+"<p>Are you sure you want to unlink all watches from <strong>%(name)s</strong>?</p><p>The tag will be kept but watches"
+" will be removed from it.</p>"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "There was an error communicating with the server."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "There was a problem processing the request, please reload the page."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "There was a problem processing the request: %(error)s"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Existing filters under the 'Filters & Triggers' tab were cleared."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Fetching element data.."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Rendering.."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Draw mode - click and drag to select an area"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Hover over elements to select"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Image copied to clipboard!"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Failed to copy image. Your browser may not support this feature."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Please select the text/lines you want to capture first by highlighting with your mouse."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Please select text within the diff content."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Failed to generate image: %(error)s"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Change Detection Diff"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Check out this change detected via changedetection.io"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Please fill in all fields (Field, Operator, and Value) before verifying."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Error verifying condition."
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Destination email"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Content after filters"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Content raw/before filters"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Main navigation"
+msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Share this link:"
@@ -3865,29 +4614,38 @@ msgstr ""
 msgid "Go to AI / LLM Settings"
 msgstr ""
 
-#: changedetectionio/templates/base.html
-msgid "Close"
-msgstr ""
-
-#: changedetectionio/templates/base.html
+#: changedetectionio/templates/base.html changedetectionio/templates/sidebar-nav.html
 msgid "Search"
 msgstr "Пошук"
 
 #: changedetectionio/templates/base.html
-#, python-format
-msgid "URL or Title in '%(title)s'"
-msgstr "URL або Назва у '%(title)s'"
-
-#: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URL або Назва"
+msgid "URL, title or error text"
+msgstr "URL, заголовок або текст помилки"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "Введіть пошуковий запит..."
 
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Searching in current group '%(title)s' only"
+msgstr "Пошук лише в групі '%(title)s'"
+
 #: changedetectionio/templates/edit/include_llm_intent.html
-msgid "AI"
+msgid ""
+"<strong>On</strong> &ndash; every watch in this group uses the AI settings below, unless it fills in its own. "
+"<strong>Off</strong> &ndash; no AI for any watch in this group. <strong>Leave it to each watch</strong> &ndash; this "
+"group has no say; each watch uses its own AI settings."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "Group %(name)s decides this: AI is ON for every watch in that group."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+#, python-format
+msgid "Group %(name)s decides this: AI is OFF for every watch in that group."
 msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
@@ -3950,6 +4708,18 @@ msgid "Describe how changes should be summarised in notifications for all watche
 msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Appending keeps the prompt inherited from the group or from global settings and adds your text after it, so later "
+"edits to that prompt still reach this watch."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid ""
+"Appending keeps the prompt inherited from global settings and adds your text after it, so later edits to that prompt "
+"still reach this group."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
 msgid "List each new item added with its name and price. Translate to English."
 msgstr ""
 
@@ -3959,6 +4729,10 @@ msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Describe the price change: old price, new price, percentage difference."
+msgstr ""
+
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "AI"
 msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
@@ -4143,18 +4917,6 @@ msgid "Login"
 msgstr "Вхід"
 
 #: changedetectionio/templates/menu.html
-msgid "GROUPS"
-msgstr "ГРУПИ"
-
-#: changedetectionio/templates/menu.html
-msgid "SETTINGS"
-msgstr "НАЛАШТУВАННЯ"
-
-#: changedetectionio/templates/menu.html
-msgid "IMPORT"
-msgstr "ІМПОРТ"
-
-#: changedetectionio/templates/menu.html
 msgid "Resume automatic scheduling"
 msgstr "Відновити авто-планування"
 
@@ -4163,8 +4925,20 @@ msgid "Pause auto-queue scheduling of watches"
 msgstr "Призупинити авто-чергу завдань"
 
 #: changedetectionio/templates/menu.html
-msgid "Scheduling is paused - click to resume"
-msgstr "Планування на паузі - натисніть для відновлення"
+msgid "Scheduling paused — click to resume"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Scheduling active — click to pause all"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Paused"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Running"
+msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
@@ -4175,12 +4949,20 @@ msgid "Notifications are muted - click to unmute"
 msgstr "Сповіщення вимкнено - натисніть для увімкнення"
 
 #: changedetectionio/templates/menu.html
-msgid "EDIT"
-msgstr "РЕДАГУВАТИ"
+msgid "Alerts on"
+msgstr ""
 
 #: changedetectionio/templates/menu.html
-msgid "LOG OUT"
-msgstr "ВИЙТИ"
+msgid "Log out"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr ""
+
+#: changedetectionio/templates/menu.html
+msgid "EDIT"
+msgstr "РЕДАГУВАТИ"
 
 #: changedetectionio/templates/menu.html
 msgid "Website Change Detection and Notification."
@@ -4202,13 +4984,53 @@ msgstr "Переключити Світлий/Темний режим"
 msgid "Toggle light/dark mode"
 msgstr "Переключити світлий/темний режим"
 
-#: changedetectionio/templates/menu.html
-msgid "Change Language"
-msgstr "Змінити мову"
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Add a page watch"
+msgstr ""
 
-#: changedetectionio/templates/menu.html
-msgid "Change language"
-msgstr "Змінити мову"
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Page Watches"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Unread changes"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Watch Groups"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import lists of web pages"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers (coming soon)"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "soon"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Search, or Use Alt+S Key"
+msgstr "Пошук, або використовуйте Alt+S"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Queue"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Live activity"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "A new version is available"
+msgstr ""
 
 #: changedetectionio/validate_url.py
 msgid "API Base URL is not a valid http(s) URL."
@@ -4220,14 +5042,6 @@ msgid ""
 "allow LLM endpoints on private networks (e.g. a local Ollama server) set the environment variable "
 "ALLOW_IANA_RESTRICTED_ADDRESSES=true and restart."
 msgstr ""
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "Yes"
-msgstr "Так"
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "No"
-msgstr "Ні"
 
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"

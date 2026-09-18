@@ -51,13 +51,11 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
-              "application-notification_body": "some text\nfallback-body<br> " + default_notification_body,
-              "application-notification_format": 'html',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title " + default_notification_title,
+              "notification_body": "some text\nfallback-body<br> " + default_notification_body,
+              "notification_format": 'html'},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -76,7 +74,7 @@ def test_check_notification_email_formats_default_HTML(client, live_server, meas
     set_longer_modified_response(datastore_path=datastore_path)
     time.sleep(2)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)
@@ -123,13 +121,11 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title {{watch_title}}  {{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}  " + default_notification_title,
-              "application-notification_body": f"some text\n" + default_notification_body + f"\nMore output test\n{ALL_MARKUP_TOKENS}",
-              "application-notification_format": 'text',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title {{watch_title}}  {{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}  " + default_notification_title,
+              "notification_body": f"some text\n" + default_notification_body + f"\nMore output test\n{ALL_MARKUP_TOKENS}",
+              "notification_format": 'text'},
         follow_redirects=True
     )
 
@@ -138,11 +134,11 @@ def test_check_notification_plaintext_format(client, live_server, measure_memory
     # Add a watch and trigger a HTTP POST
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(2)
 
     set_longer_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)
@@ -185,13 +181,11 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title {{watch_title}} - diff_added_lines_test : '{{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}' " + default_notification_title,
-              "application-notification_body": f"some text\n{default_notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
-              "application-notification_format": 'htmlcolor',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title {{watch_title}} - diff_added_lines_test : '{{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}' " + default_notification_title,
+              "notification_body": f"some text\n{default_notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
+              "notification_format": 'htmlcolor'},
         follow_redirects=True
     )
 
@@ -211,7 +205,7 @@ def test_check_notification_html_color_format(client, live_server, measure_memor
     set_longer_modified_response(datastore_path=datastore_path)
     time.sleep(2)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)
@@ -270,13 +264,11 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title  diff_added_lines_test : '{{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}' " + default_notification_title,
-              "application-notification_body": "*header*\n\nsome text\n" + default_notification_body,
-              "application-notification_format": 'markdown',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title  diff_added_lines_test : '{{ diff_added.splitlines()[0] if diff_added else 'diff added didnt split' }}' " + default_notification_title,
+              "notification_body": "*header*\n\nsome text\n" + default_notification_body,
+              "notification_format": 'markdown'},
         follow_redirects=True
     )
 
@@ -296,7 +288,7 @@ def test_check_notification_markdown_format(client, live_server, measure_memory_
     set_longer_modified_response(datastore_path=datastore_path)
     time.sleep(2)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)
@@ -366,13 +358,11 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
-              "application-notification_body": notification_body,
-              "application-notification_format": 'text',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title " + default_notification_title,
+              "notification_body": notification_body,
+              "notification_format": 'text'},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -391,7 +381,7 @@ def test_check_notification_email_formats_default_Text_override_HTML(client, liv
     wait_for_all_checks(client)
     set_longer_modified_response(datastore_path=datastore_path)
     time.sleep(2)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)
@@ -478,13 +468,11 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
-              "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
-              "application-notification_format": 'text',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title " + default_notification_title,
+              "notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
+              "notification_format": 'text'},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -492,7 +480,7 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Change the content
@@ -501,7 +489,7 @@ def test_check_plaintext_document_plaintext_notification_smtp(client, live_serve
 
 
     time.sleep(1)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Parse the email properly using Python's email library
@@ -531,13 +519,11 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
-              "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
-              "application-notification_format": 'html',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title " + default_notification_title,
+              "notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
+              "notification_format": 'html'},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -545,7 +531,7 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Change the content
@@ -554,7 +540,7 @@ def test_check_plaintext_document_html_notifications(client, live_server, measur
 
 
     time.sleep(2)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Parse the email properly using Python's email library
@@ -611,13 +597,11 @@ def test_check_plaintext_document_html_color_notifications(client, live_server, 
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
-              "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
-              "application-notification_format": 'htmlcolor',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title " + default_notification_title,
+              "notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
+              "notification_format": 'htmlcolor'},
         follow_redirects=True
     )
 
@@ -626,7 +610,7 @@ def test_check_plaintext_document_html_color_notifications(client, live_server, 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="text/plain", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Change the content
@@ -634,7 +618,7 @@ def test_check_plaintext_document_html_color_notifications(client, live_server, 
         f.write("Some nice plain text\nwhich we add some extra data\nAnd let's talk about <title> tags\nover here\n")
 
     time.sleep(1)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Parse the email properly using Python's email library
@@ -684,13 +668,11 @@ def test_check_html_document_plaintext_notification(client, live_server, measure
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
-              "application-notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
-              "application-notification_format": 'text',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title " + default_notification_title,
+              "notification_body": f"{notification_body}\nMore output test\n{ALL_MARKUP_TOKENS}",
+              "notification_format": 'text'},
         follow_redirects=True
     )
 
@@ -699,14 +681,14 @@ def test_check_html_document_plaintext_notification(client, live_server, measure
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="text/html", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html><body>sxome stuff<br>and more stuff<br>lets slip this in<br>and this in<br>and even more stuff<br>&lt;tag&gt;</body></html>")
 
     time.sleep(0.1)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
 
@@ -738,13 +720,11 @@ def test_check_html_notification_with_apprise_format_is_html(client, live_server
     #####################
     # Set this up for when we remove the notification from the watch, it should fallback with these details
     res = client.post(
-        url_for("settings.settings_page"),
-        data={"application-notification_urls": notification_url,
-              "application-notification_title": "fallback-title " + default_notification_title,
-              "application-notification_body": "some text\nfallback-body<br> " + default_notification_body,
-              "application-notification_format": 'html',
-              "requests-time_between_check-minutes": 180,
-              'application-fetch_backend': "html_requests"},
+        url_for("settings.notifications.apprise"),
+        data={"notification_urls": notification_url,
+              "notification_title": "fallback-title " + default_notification_title,
+              "notification_body": "some text\nfallback-body<br> " + default_notification_body,
+              "notification_format": 'html'},
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
@@ -763,7 +743,7 @@ def test_check_html_notification_with_apprise_format_is_html(client, live_server
     set_longer_modified_response(datastore_path=datastore_path)
     time.sleep(2)
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     time.sleep(3)

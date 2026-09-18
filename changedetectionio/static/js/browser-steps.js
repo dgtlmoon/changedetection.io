@@ -78,7 +78,9 @@ $(document).ready(function () {
     // bootstrap it, this will trigger everything else
     $('#browsersteps-img').bind('load', function () {
         $('body').addClass('full-width');
-        console.log("Loaded background...");
+        console.log(`Loaded background ${this.naturalWidth}px` );
+        // For the UI width of the whole edit area
+        document.documentElement.style.setProperty('--browser-steps-max-width', `${this.naturalWidth+200}px` );
 
         document.getElementById("browsersteps-selector-canvas");
         c = document.getElementById("browsersteps-selector-canvas");
@@ -161,7 +163,7 @@ $(document).ready(function () {
             // Find the best one
             if (possible_elements.length) {
                 possible_elements.forEach(function (item, index) {
-                  if (["a", "input", "textarea", "button"].includes(item['tagName'])) {
+                  if (["a", "input", "select", "textarea", "button"].includes(item['tagName'])) {
                       current_selected_i = item;
                   }
                 });
@@ -248,7 +250,7 @@ $(document).ready(function () {
             data: data,
             statusCode: {
                 400: function () {
-                    alert("There was a problem processing the request, please reload the page.");
+                    alert(i18nT('reloadProblem', "There was a problem processing the request, please reload the page."));
                     $("#loading-status-text").hide();
                     $('#browser-steps-ui .loader .spinner').fadeOut();
                 },
@@ -284,12 +286,12 @@ $(document).ready(function () {
         $('#browser-steps-ui .loader .spinner').show();
         // Request a new session
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: browser_steps_start_url,
             statusCode: {
                 400: function () {
                     // More than likely the CSRF token was lost when the server restarted
-                    alert("There was a problem processing the request, please reload the page.");
+                    alert(i18nT('reloadProblem', "There was a problem processing the request, please reload the page."));
                 },
                 401: function (err) {
                     // This will be a custom error
@@ -307,7 +309,7 @@ $(document).ready(function () {
 
         }).fail(function (data) {
             console.log(data);
-            alert('There was an error communicating with the server.');
+            alert(i18nT('serverCommError', 'There was an error communicating with the server.'));
         });
 
     }

@@ -38,7 +38,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -123,7 +123,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage
     assert b'Settings updated' in res.data
 
     # Force recheck
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -150,7 +150,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage
     assert b'Settings updated' in res.data
 
     # Force recheck
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -264,27 +264,28 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
     wait_for_all_checks(client)
 
     set_modified_response(datastore_path=datastore_path)
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 2 watches for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
-    assert b'<span id="unread-tab-counter">2</span>' in res.data
+    # The Unread filter chip carries the count; the span has classes before the id, so match on the id+value.
+    assert b'id="unread-tab-counter">2<' in res.data
     assert res.data.count(b'data-watch-uuid') == 2
 
     # one should now be viewed, but two in total still
     client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
     res = client.get(url_for("watchlist.index"))
-    assert b'<span id="unread-tab-counter">1</span>' in res.data
+    assert b'id="unread-tab-counter">1<' in res.data
     assert res.data.count(b'data-watch-uuid') == 2
 
     # check ?unread=1 works
     res = client.get(url_for("watchlist.index")+"?unread=1")
     assert res.data.count(b'data-watch-uuid') == 1
-    assert b'<span id="unread-tab-counter">1</span>' in res.data
+    assert b'id="unread-tab-counter">1<' in res.data
 
-    # Mark all viewed test again
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    # Mark all viewed test again - with 0 unread the Unread filter chip is hidden entirely
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(0.2)
     res = client.get(url_for("watchlist.index"))
-    assert b'<span id="unread-tab-counter">0</span>' in res.data
+    assert b'unread-tab-counter' not in res.data, "Unread filter chip should disappear when there are no unread changes"
     delete_all_watches(client)

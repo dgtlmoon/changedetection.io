@@ -1,6 +1,5 @@
-import timeago
 from flask_socketio import SocketIO
-from flask_babel import gettext, get_locale
+from flask_babel import gettext
 
 import time
 import os
@@ -8,7 +7,6 @@ from loguru import logger
 from blinker import signal
 
 from changedetectionio import strtobool
-from changedetectionio.languages import get_timeago_locale
 
 
 class SignalHandler:
@@ -42,6 +40,30 @@ class SignalHandler:
         notification_event_signal.connect(self.handle_notification_event, weak=False)
         logger.info("SignalHandler: Connected to notification_event signal")
 
+        # One-shot stats refresh for bulk operations that deliberately skip the per-watch
+        # signal (see set_last_viewed(send_signal=False)) — n signals would mean n full
+        # rescans of every watch plus 3n broadcasts.
+        general_stats_signal = signal('general_stats_update')
+        general_stats_signal.connect(self.handle_general_stats_update, weak=False)
+
+
+    def handle_general_stats_update(self, *args, **kwargs):
+        """Emit the global counters once, without touching any individual row.
+
+        Sent after a bulk operation. The tab that triggered it is usually reloading anyway;
+        this is for OTHER open tabs so their unread/error counters don't sit stale.
+        Note their ROWS still keep a stale 'unviewed' class until the row resync lands —
+        tracked separately, this only fixes the counters.
+        """
+        try:
+            errored_count = sum(1 for w in self.datastore.data['watching'].values() if w.get('last_error'))
+            self.socketio_instance.emit("general_stats_update", {
+                'count_errors': errored_count,
+                'unread_changes_count': self.datastore.unread_changes_count,
+            })
+            logger.trace("Socket.IO: Emitted one-shot general_stats_update")
+        except Exception as e:
+            logger.error(f"Socket.IO error in handle_general_stats_update: {str(e)}")
 
     def handle_watch_small_status_update(self, *args, **kwargs):
         """Small simple status update, for example 'Connecting...'"""
@@ -144,7 +166,7 @@ def handle_watch_update(socketio, **kwargs):
 
         # Emit the watch update to all connected clients
         from changedetectionio.flask_app import update_q
-        from changedetectionio.flask_app import _jinja2_filter_datetime
+        from changedetectionio.flask_app import _jinja2_filter_datetime, _jinja2_filter_datetimestamp
         from changedetectionio import worker_pool
 
         # Get list of watches that are currently running
@@ -165,7 +187,8 @@ def handle_watch_update(socketio, **kwargs):
             'has_error': True if error_texts else False,
             'has_favicon': True if watch.get_favicon_filename() else False,
             'history_n': watch.history_n,
-            'last_changed_text': timeago.format(int(watch.last_changed), time.time(), get_timeago_locale(str(get_locale()))) if watch.history_n >= 2 and int(watch.last_changed) > 0 else gettext('Not yet'),
+            # Uses the same filter as the server-rendered list so the long/short (timeago_format) setting is honoured.
+            'last_changed_text': _jinja2_filter_datetimestamp(int(watch.last_changed)) if watch.history_n >= 2 and int(watch.last_changed) > 0 else gettext('Not yet'),
             'last_checked': watch.get('last_checked'),
             'last_checked_text': _jinja2_filter_datetime(watch),
             'notification_muted': True if watch.get('notification_muted') else False,
@@ -191,6 +214,13 @@ def handle_watch_update(socketio, **kwargs):
         # Emit to all clients (no 'broadcast' parameter needed - it's the default behavior)
         socketio.emit("watch_update", {'watch': watch_data})
         socketio.emit("general_stats_update", general_stats)
+
+        # The set of running UUIDs changes exactly when a worker claims/releases a watch,
+        # and this signal fires at both of those moments - so emit the live "checking now" count here.
+        socketio.emit("checking_now", {
+            "count": len(running_uuids),
+            "event_timestamp": time.time()
+        })
 
         # Log after successful emit - use watch_data['uuid'] to avoid variable shadowing issues
         logger.trace(f"Socket.IO: Emitted update for watch {watch_data['uuid']}, Checking now: {watch_data['checking_now']}")
@@ -282,11 +312,15 @@ def init_socketio(app, datastore):
         logger.trace(f"Got checkbox operations event: {data}")
 
         datastore = socketio.datastore
+        # Capture the requesting client's session id now (request context is gone inside the thread)
+        # so we can send the feedback toast only back to them, not broadcast to everyone.
+        from flask import request
+        sid = getattr(request, 'sid', None)
 
         def run_operation():
             """Run the operation in a background thread to avoid blocking the socket.io event loop"""
             try:
-                _handle_operations(
+                result = _handle_operations(
                     op=data.get('op'),
                     uuids=data.get('uuids'),
                     datastore=datastore,
@@ -297,6 +331,9 @@ def init_socketio(app, datastore):
                     watch_check_update=watch_check_update,
                     emit_flash=False
                 )
+                # Server-driven feedback: tell the requesting client what happened (real count / errors)
+                if result and result.get('message') and sid:
+                    socketio.emit('toast', {'message': result['message'], 'type': result.get('type', 'success')}, to=sid)
             except Exception as e:
                 logger.error(f"Error in checkbox operation thread: {e}")
 
@@ -311,6 +348,7 @@ def init_socketio(app, datastore):
         from flask import request
         from flask_login import current_user
         from changedetectionio.flask_app import update_q
+        from changedetectionio import worker_pool
 
         # Access datastore from socketio
         datastore = socketio.datastore
@@ -331,6 +369,14 @@ def init_socketio(app, datastore):
                 "event_timestamp": time.time()
             }, room=request.sid)  # Send only to this client
             logger.debug(f"Socket.IO: Sent initial queue size {queue_size} to new client")
+
+            # Send the current "checking now" count (how many watches workers are processing right now)
+            checking_now = len(worker_pool.get_running_uuids())
+            socketio.emit("checking_now", {
+                "count": checking_now,
+                "event_timestamp": time.time()
+            }, room=request.sid)  # Send only to this client
+            logger.debug(f"Socket.IO: Sent initial checking_now {checking_now} to new client")
         except Exception as e:
             logger.error(f"Socket.IO error sending initial queue size: {str(e)}")
 

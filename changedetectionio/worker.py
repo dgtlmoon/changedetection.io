@@ -6,6 +6,7 @@ from changedetectionio import html_tools
 from changedetectionio import worker_pool
 from changedetectionio.queuedWatchMetaData import PrioritizedItem
 from changedetectionio.pluggy_interface import apply_update_handler_alter, apply_update_finalize
+from changedetectionio import gc_debounce
 
 import asyncio
 import os
@@ -14,7 +15,7 @@ import sys
 import time
 
 # Allow alphanumerics, space, and a small set of punctuation that appears in legitimate
-# status strings ("Querying AI/LLM (intent)..", "Fetching page.."). Anything that could
+# status strings ("Querying AI/LLM (intent)..", "Fetching..."). Anything that could
 # be HTML-active (<, >, &, ", ', =, ;, {, }, `, \) is stripped.
 _MINITEXT_STATUS_SAFE_RE = re.compile(r'[^A-Za-z0-9 ().,/:\-]')
 _MINITEXT_STATUS_MAX_LEN = 80
@@ -30,7 +31,7 @@ DEFER_SLEEP_TIME_ALREADY_QUEUED = 0.3 if IN_PYTEST else 10.0
 
 def set_watch_minitext_status(watch, status):
     """
-    Set a transient status line for a watch (e.g. "Fetching page..", "Querying AI/LLM..").
+    Set a transient status line for a watch (e.g. "Fetching...", "Querying AI/LLM..").
 
     Writes to watch['__check_status'] so a client reloading the page can render the
     last known status, and fires the realtime signal so already-connected clients
@@ -177,12 +178,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         raise ModuleNotFoundError(error_msg)
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,
-                                                                         watch_uuid=uuid)
+                                                                         watch_uuid=uuid,
+                                                                         worker_id=worker_id)
 
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
 
-                    set_watch_minitext_status(watch, "Fetching page..")
+                    set_watch_minitext_status(watch, "Fetching...")
 
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
@@ -324,7 +326,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     if not datastore.data['watching'].get(uuid):
                         continue
 
-                    error_step = e.step_n + 1
+                    error_step = e.step_n
                     from playwright._impl._errors import TimeoutError, Error
 
                     # Generally enough info for TimeoutError (couldnt locate the element after default seconds)
@@ -446,18 +448,29 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                 logger.info(f"LLM monthly budget exceeded — skipping check for {uuid} (budget_action=skip_check)")
                                 changed_detected = False
 
-                        if changed_detected:
+                        # Only run AI intent/summary when there's a PREVIOUS snapshot to diff
+                        # against. On the very first check history_n is 0 (the new snapshot is
+                        # saved further below), so there's no "change" to describe — running the
+                        # LLM here would summarise the whole page as if it just changed (e.g.
+                        # "price updated to 860" on first sight). Mirrors the notification gate
+                        # (which only fires at history_n >= 2).
+                        if changed_detected and watch.history_n >= 1:
                             try:
                                 from changedetectionio.llm.evaluator import (
-                                    evaluate_change, resolve_intent, resolve_llm_field,
-                                    summarise_change, _runtime_llm_config,
+                                    evaluate_change, llm_enabled_for_watch, resolve_intent,
+                                    resolve_llm_field, summarise_change, _runtime_llm_config,
                                 )
+                                # Per-watch (or group-wide) AI on/off — #4204. Checked before
+                                # any diff work so a switched-off watch costs nothing.
+                                _llm_on, _llm_on_source = llm_enabled_for_watch(watch, datastore)
+                                if not _llm_on:
+                                    logger.debug(f"LLM disabled for {uuid} (by {_llm_on_source}) — skipping AI intent/summary")
                                 # _runtime_llm_config returns None (and logs a debug skip
                                 # message) when the master 'llm_enabled' toggle is off, so
                                 # the whole block — diff computation, status minitext, and
                                 # the two executor dispatches — is skipped, not just the
                                 # inner LLM lookups.
-                                _llm_cfg = _runtime_llm_config(datastore)
+                                _llm_cfg = _runtime_llm_config(datastore) if _llm_on else None
                                 if _llm_cfg:
                                     # Compute unified diff once — used by both intent and summary
                                     _watch_dates = list(watch.history.keys())
@@ -497,8 +510,16 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                 f"{_llm_result.get('summary', '')[:80]}"
                                             )
 
-                                    # Step 2: AI Change Summary — runs for any LLM-configured watch with a change
-                                    if changed_detected:
+                                    # Step 2: AI Change Summary — only compute it when a notification
+                                    # is actually going to be sent, because that's the only place
+                                    # the worker needs it (it fills {{diff}}/{{llm_summary}} in the
+                                    # notification body). The watch-list / diff-page "Summary" button
+                                    # computes it on demand via the diff_llm_summary AJAX endpoint, so
+                                    # we deliberately do NOT pre-compute it here just for the UI —
+                                    # that would spend tokens on every change for a summary nobody
+                                    # may ever look at.
+                                    from changedetectionio.notification_service import watch_will_send_content_changed_notification
+                                    if changed_detected and watch_will_send_content_changed_notification(datastore, watch):
                                         set_watch_minitext_status(watch, "AI/LLM (summary)..")
                                         _change_summary = await loop.run_in_executor(
                                             executor,
@@ -635,9 +656,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         del update_handler
                         update_handler = None
 
-                # Force garbage collection
-                import gc
-                gc.collect()
+                # Force garbage collection (debounced process-wide, see gc_debounce)
+                gc_debounce.collect('worker.after_processing')
 
         except Exception as e:
             # Store the processing exception for plugin finalization hook
@@ -682,8 +702,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         del contents
 
                     # Force garbage collection after all references are cleared
-                    import gc
-                    gc.collect()
+                    gc_debounce.collect('worker.cleanup_finally')
 
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:

@@ -342,10 +342,10 @@ async function copyImageToClipboard(jpegDataUrl) {
         await navigator.clipboard.write([
             new ClipboardItem({ 'image/jpeg': blob })
         ]);
-        alert('Image copied to clipboard!');
+        alert(i18nT('imgCopied', 'Image copied to clipboard!'));
     } catch (error) {
         console.error('Failed to copy image:', error);
-        alert('Failed to copy image. Your browser may not support this feature.');
+        alert(i18nT('imgCopyFailed', 'Failed to copy image. Your browser may not support this feature.'));
     }
 }
 
@@ -559,7 +559,7 @@ function displayImage(jpegDataUrl) {
                                 const file = new File([blob], "changedetection-diff-" + Date.now() + ".jpg", { type: 'image/jpeg' });
                                 await navigator.share({
                                     title: 'Change Detection Diff',
-                                    text: 'Check out this change detected via changedetection.io',
+                                    text: i18nT('shareText', 'Check out this change detected via changedetection.io'),
                                     files: [file]
                                 });
                             } catch (error) {
@@ -570,7 +570,7 @@ function displayImage(jpegDataUrl) {
                         }
 
                         function shareToTwitter() {
-                            const text = encodeURIComponent('Check out this change detected via changedetection.io');
+                            const text = encodeURIComponent(i18nT('shareText', 'Check out this change detected via changedetection.io'));
                             window.open('https://twitter.com/intent/tweet?text=' + text, '_blank', 'width=600,height=400');
                         }
 
@@ -592,7 +592,7 @@ function displayImage(jpegDataUrl) {
 
                         function shareViaEmail() {
                             const subject = encodeURIComponent('Change Detection Diff');
-                            const body = encodeURIComponent('Check out this change detected via changedetection.io');
+                            const body = encodeURIComponent(i18nT('shareText', 'Check out this change detected via changedetection.io'));
                             window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
                         }
                     </script>
@@ -645,7 +645,7 @@ async function diffToJpeg() {
     // Validate selection
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
-        alert("Please select the text/lines you want to capture first by highlighting with your mouse.");
+        alert(i18nT('imgSelectFirst', "Please select the text/lines you want to capture first by highlighting with your mouse."));
         return;
     }
 
@@ -653,7 +653,7 @@ async function diffToJpeg() {
     const differenceElement = document.getElementById("difference");
 
     if (!differenceElement || !differenceElement.contains(originalRange.commonAncestorContainer)) {
-        alert("Please select text within the diff content.");
+        alert(i18nT('imgSelectWithin', "Please select text within the diff content."));
         return;
     }
 
@@ -718,7 +718,7 @@ async function diffToJpeg() {
 
     } catch (error) {
         console.error("Error generating image:", error);
-        alert("Failed to generate image: " + error.message);
+        alert(i18nT('imgGenerateFailed', 'Failed to generate image: %(error)s').split('%(error)s').join(error.message));
     } finally {
         // Cleanup
         if (tempElement && tempElement.parentNode) {

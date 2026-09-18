@@ -6,6 +6,7 @@ and makes the call easy to mock in tests.
 
 import logging
 import os
+
 from loguru import logger
 
 # Default output token cap for JSON-returning calls (intent eval, preview, setup).
@@ -14,7 +15,19 @@ from loguru import logger
 # _summary_max_tokens() and are NOT subject to this cap.
 _MAX_COMPLETION_TOKENS = 400
 
-DEFAULT_TIMEOUT = int(os.getenv('LLM_TIMEOUT', 60))
+# Default request timeout (seconds). Raised from 60 to 300 because even cloud
+# reasoning models can be slow on the first hit (issue #4225). Overridable via
+# LLM_TIMEOUT.
+DEFAULT_TIMEOUT = int(os.getenv('LLM_TIMEOUT', 300))
+# Relaxed timeout for local / self-hosted endpoints (Ollama, vLLM, LM Studio,
+# llama.cpp on localhost or a LAN address). These run on modest hardware and can
+# spend many minutes on prompt prefill before the first token, so they get a much
+# longer deadline (Hermes-style, 30 min). Overridable via LLM_LOCAL_TIMEOUT; see
+# evaluator.resolve_llm_timeout() for how the endpoint is classified.
+DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
+# Models and reasoning architectures that reject explicit sampling parameters (temperature/top_p)
+_NO_TEMPERATURE_MODEL_KEYWORDS = ('flash-lite', 'thinking-exp', 'o1', 'o3', 'o4')
+
 DEFAULT_RETRIES = 3
 
 
@@ -54,20 +67,29 @@ def _install_litellm_debug():
     logger.info("LLM client: litellm debug logging routed through loguru")
 
 
-def completion(model: str, messages: list, api_key: str = None,
-               api_base: str = None, timeout: int = DEFAULT_TIMEOUT,
-               max_tokens: int = None, extra_body: dict = None,
-               debug: bool = False) -> tuple[str, int, int, int]:
+def completion(  # noqa: C901
+    model: str,
+    messages: list,
+    api_key: str = None,
+    api_base: str = None,
+    timeout: int = DEFAULT_TIMEOUT,
+    max_tokens: int = None,
+    extra_body: dict = None,
+    debug: bool = False,
+) -> tuple[str, int, int, int]:
     """
     Call the LLM and return (response_text, total_tokens, input_tokens, output_tokens).
     Retries up to DEFAULT_RETRIES times on timeout or connection errors.
     Token counts are 0 if the provider doesn't return usage data.
     Raises on network/auth errors — callers handle gracefully.
+
+    timeout: seconds for the request. Local endpoints get a longer value than cloud —
+    see evaluator.resolve_llm_timeout().
     """
     try:
         import litellm
     except ImportError:
-        raise RuntimeError("litellm is not installed. Add it to requirements.txt.")
+        raise RuntimeError("litellm is not installed. Add it to requirements.txt.") from None
 
     if debug:
         _install_litellm_debug()
@@ -78,9 +100,12 @@ def completion(model: str, messages: list, api_key: str = None,
         'model': model,
         'messages': messages,
         'timeout': _timeout,
-        'temperature': 0,
         'max_tokens': max_tokens if max_tokens is not None else _MAX_COMPLETION_TOKENS,
     }
+    _m_lower = (model or '').lower()
+    if not any(k in _m_lower for k in _NO_TEMPERATURE_MODEL_KEYWORDS):
+        kwargs['temperature'] = 0
+
     if api_key:
         kwargs['api_key'] = api_key
     if api_base:
@@ -90,18 +115,29 @@ def completion(model: str, messages: list, api_key: str = None,
 
     _retryable = (litellm.Timeout, litellm.APIConnectionError)
 
+    # Some models reject sampling params outright: Anthropic Claude Opus 4.7/4.8 and
+    # Fable return HTTP 400 for 'temperature', and OpenAI reasoning models (o1/o3/gpt-5)
+    # only accept the default. litellm's per-model param metadata lags new releases, so
+    # drop_params can't be relied on for freshly released models — instead, if the provider
+    # rejects a sampling param, strip them and retry once. Models that accept them are
+    # unaffected (they still receive temperature=0).
+    _sampling_params = ('temperature', 'top_p', 'top_k')
+    _stripped_sampling = False
+
     logger.debug(
         f"LLM client: calling model={model!r} api_base={api_base!r} "
         f"timeout={_timeout}s max_tokens={kwargs['max_tokens']}"
     )
     logger.trace(messages)
 
-    for attempt in range(1, DEFAULT_RETRIES + 1):
+    attempt = 0
+    while attempt < DEFAULT_RETRIES:
+        attempt += 1
         try:
             response = litellm.completion(**kwargs)
-            choice   = response.choices[0]
-            message  = choice.message
-            finish   = getattr(choice, 'finish_reason', None)
+            choice = response.choices[0]
+            message = choice.message
+            finish = getattr(choice, 'finish_reason', None)
 
             text = message.content or ''
 
@@ -110,7 +146,9 @@ def completion(model: str, messages: list, api_key: str = None,
                 parts = getattr(message, 'parts', None)
                 if parts:
                     text = ''.join(getattr(p, 'text', '') or '' for p in parts).strip()
-                    logger.debug(f"LLM client: extracted text from message.parts ({len(parts)} parts) model={model!r}")
+                    logger.debug(
+                        f"LLM client: extracted text from message.parts ({len(parts)} parts) model={model!r}"
+                    )
 
             if finish == 'length':
                 logger.warning(
@@ -126,9 +164,13 @@ def completion(model: str, messages: list, api_key: str = None,
                 )
 
             usage = getattr(response, 'usage', None)
-            input_tokens  = int(getattr(usage, 'prompt_tokens',     0) or 0) if usage else 0
+            input_tokens = int(getattr(usage, 'prompt_tokens', 0) or 0) if usage else 0
             output_tokens = int(getattr(usage, 'completion_tokens', 0) or 0) if usage else 0
-            total_tokens  = int(getattr(usage, 'total_tokens',      0) or 0) if usage else (input_tokens + output_tokens)
+            total_tokens = (
+                int(getattr(usage, 'total_tokens', 0) or 0)
+                if usage
+                else (input_tokens + output_tokens)
+            )
             logger.debug(
                 f"LLM client: model={model!r} finish={finish!r} "
                 f"tokens={total_tokens} (in={input_tokens} out={output_tokens}) "
@@ -155,6 +197,41 @@ def completion(model: str, messages: list, api_key: str = None,
                 f"LLM call failed after {DEFAULT_RETRIES} attempts ({_timeout}s timeout) "
                 f"model={model!r} error={e}"
             )
+            raise
+
+        except litellm.BadRequestError as e:
+            # If the provider rejected an unsupported sampling param or extra_body
+            # (e.g. Gemini INVALID_ARGUMENT on thinkingConfig or temperature), drop
+            # them and retry once.
+            if not _stripped_sampling:
+                dropped = [p for p in _sampling_params if kwargs.pop(p, None) is not None]
+                extra_body = kwargs.get('extra_body')
+                if isinstance(extra_body, dict):
+                    gen_cfg = extra_body.get('generationConfig')
+                    if (
+                        isinstance(gen_cfg, dict)
+                        and gen_cfg.pop('thinkingConfig', None) is not None
+                    ):
+                        dropped.append('thinkingConfig')
+                        if not gen_cfg:
+                            extra_body.pop('generationConfig', None)
+                        if not extra_body:
+                            kwargs.pop('extra_body', None)
+                    elif 'thinkingConfig' in extra_body:
+                        extra_body.pop('thinkingConfig', None)
+                        dropped.append('thinkingConfig')
+                        if not extra_body:
+                            kwargs.pop('extra_body', None)
+
+                if dropped:
+                    _stripped_sampling = True
+                    attempt -= 1
+                    logger.warning(
+                        f"LLM client: model={model!r} rejected request ({e}); "
+                        f"stripped {dropped} and retrying once"
+                    )
+                    continue
+            logger.warning(f"LLM call failed: model={model!r} error={e}")
             raise
 
         except Exception as e:

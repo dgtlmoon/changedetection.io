@@ -68,14 +68,14 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
 
     # And set the trigger text as 'ignore text', it should then not trigger
     live_server.app.config['DATASTORE'].data['settings']['application']['global_ignore_text'] = [trigger_text]
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -103,7 +103,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
     client.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -116,7 +116,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
     set_modified_original_ignore_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # It should report nothing found (no new 'has-unread-changes' class)
@@ -128,7 +128,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
 
     # There is a "ignore text" set of the change that should be also the trigger, it should not trigger
     # because the ignore text should be stripped from the response, therefor, the trigger should not fire
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' not in res.data
@@ -136,7 +136,7 @@ def test_trigger_functionality(client, live_server, measure_memory_usage, datast
 
     live_server.app.config['DATASTORE'].data['settings']['application']['global_ignore_text'] = []
     # check that the trigger fired once we stopped ignore it
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data

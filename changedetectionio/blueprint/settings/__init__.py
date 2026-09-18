@@ -20,6 +20,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
         settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
 
+    # Notification settings live in their own child blueprint so future backends
+    # (simple_email, webhooks, etc.) slot in as /settings/notifications/<backend>
+    # without further URL-shaping churn.
+    from changedetectionio.blueprint.settings.notifications import construct_notifications_blueprint
+    settings_blueprint.register_blueprint(
+        construct_notifications_blueprint(datastore), url_prefix='/notifications',
+    )
+
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
@@ -86,6 +94,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Never update password with '' or False (Added by wtforms when not in submission)
                 if 'password' in app_update and not app_update['password']:
                     del (app_update['password'])
+
+                # Notification fields live on the dedicated /settings/notifications page now.
+                # The application sub-form still defines them (inherited from commonSettingsForm),
+                # so an unrelated save here would clobber the stored values with empty WTForms
+                # defaults. Drop them from the merge to leave the notifications config alone.
+                for nf in ('notification_urls', 'notification_title', 'notification_body',
+                           'notification_format', 'base_url'):
+                    app_update.pop(nf, None)
 
                 datastore.data['settings']['application'].update(app_update)
 
@@ -245,6 +261,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
+                                # None unless PAGE_WATCH_LIMIT is set, which hides the row entirely
+                                watch_limit=datastore.watch_limit,
                                 available_timezones=sorted(available_timezones()),
                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
@@ -260,7 +278,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return output
 
-    @settings_blueprint.route("/reset-api-key", methods=['GET'])
+    @settings_blueprint.route("/reset-api-key", methods=['POST'])
     @login_optionally_required
     def settings_reset_api_key():
         secret = secrets.token_hex(16)
@@ -277,7 +295,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
 
-    @settings_blueprint.route("/toggle-all-paused", methods=['GET'])
+    @settings_blueprint.route("/toggle-all-paused", methods=['POST'])
     @login_optionally_required
     def toggle_all_paused():
         current_state = datastore.data['settings']['application'].get('all_paused', False)
@@ -291,7 +309,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return redirect(url_for('watchlist.index'))
 
-    @settings_blueprint.route("/toggle-all-muted", methods=['GET'])
+    @settings_blueprint.route("/toggle-all-muted", methods=['POST'])
     @login_optionally_required
     def toggle_all_muted():
         current_state = datastore.data['settings']['application'].get('all_muted', False)

@@ -1,11 +1,8 @@
-import asyncio
-import re
 import hashlib
 
 from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
 from changedetectionio.content_fetchers.base import Fetcher
-from changedetectionio.strtobool import strtobool
-from changedetectionio.validate_url import is_private_hostname, is_url_private_or_parser_confused
+from changedetectionio.validate_url import validate_fetch_url_async
 from copy import deepcopy
 from abc import abstractmethod
 import os
@@ -25,10 +22,15 @@ class difference_detection_processor():
     preferred_proxy = None
     screenshot_format = SCREENSHOT_FORMAT_JPEG
     last_raw_content_checksum = None
+    worker_id = None
 
-    def __init__(self, datastore, watch_uuid):
+    def __init__(self, datastore, watch_uuid, worker_id=None):
         self.datastore = datastore
         self.watch_uuid = watch_uuid
+
+        # Which async worker is driving this check, passed down to the fetcher in call_browser()
+        # so it can keep per-worker browser state apart, None when we're not called from a worker
+        self.worker_id = worker_id
 
         # Create a stable snapshot of the watch for processing
         # Why deepcopy?
@@ -97,22 +99,77 @@ class difference_detection_processor():
             logger.warning(f"Failed to read checksum file for {self.watch_uuid}: {e}")
             self.last_raw_content_checksum = None
 
-    async def validate_iana_url(self):
-        """Pre-flight SSRF check — runs DNS lookup in executor to avoid blocking the event loop.
-        Covers all fetchers (requests, playwright, puppeteer, plugins) since every fetch goes
-        through call_browser().
+    async def validate_url_is_fetchable(self):
+        """Pre-flight fetch gate for the regular check path (all fetchers, since they all come
+        through call_browser()). The scheme/file:///private-IP rules live in
+        validate_url.is_fetch_url_allowed() so that the fetch paths which do NOT come through
+        here - the live Browser Steps UI, the Add Watch snapshot preview, and individual
+        'Goto URL' browser steps - enforce exactly the same rules.
         """
-        if strtobool(os.getenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')):
-            return
-        loop = asyncio.get_running_loop()
-        # Use the parser-agnostic check so urlparse/urllib3 differentials (GHSA-rph4-96w6-q594)
-        # can't slip a private/internal hostname past this pre-flight gate.
-        if await loop.run_in_executor(None, is_url_private_or_parser_confused, self.watch.link):
-            raise Exception(
-                f"Fetch blocked: '{self.watch.link}' resolves to a private/reserved IP address "
-                f"or contains a parser-differential payload. "
-                f"Set ALLOW_IANA_RESTRICTED_ADDRESSES=true to allow."
-            )
+        try:
+            await validate_fetch_url_async(self.watch.link)
+        except ValueError as e:
+            # Re-raised as a plain Exception so it lands in the watch's last_error like every other
+            # fetch failure, instead of looking like an internal type error.
+            raise Exception(str(e)) from e
+
+    def _consume_preloaded_fetch(self):
+        """One-shot: if the Add Watch page parked a freshly-fetched snapshot for this
+        watch (html + screenshot + xpath, see add_watch_ui/snapshot), populate self.fetcher
+        from it instead of hitting the network. The marker file is deleted after use so
+        every subsequent check fetches live.
+
+        Returns True if a preload was consumed (caller should skip the network fetch).
+        """
+        import json, zlib
+
+        data_dir = self.watch.data_dir
+        if not data_dir:
+            return False
+
+        preload_path = os.path.join(data_dir, 'preload-fetch.json')
+        if not os.path.isfile(preload_path):
+            return False
+
+        try:
+            with open(preload_path, 'r', encoding='utf-8') as f:
+                meta = json.load(f)
+        except Exception as e:
+            logger.warning(f"Could not read preloaded fetch for {self.watch.get('uuid')}: {e}")
+            try:
+                os.unlink(preload_path)
+            except OSError:
+                pass
+            return False
+
+        # Always delete first - this is one-shot regardless of what happens next.
+        try:
+            os.unlink(preload_path)
+        except OSError:
+            pass
+
+        content = meta.get('content')
+        self.fetcher.content = content
+        self.fetcher.raw_content = content.encode('utf-8', errors='replace') if isinstance(content, str) else content
+        self.fetcher.status_code = meta.get('status_code', 200)
+        self.fetcher.headers = meta.get('headers') or {'content-type': 'text/html'}
+
+        # Screenshot + xpath were migrated alongside in final on-disk format - reuse them.
+        screenshot_path = os.path.join(data_dir, 'last-screenshot.png')
+        if os.path.isfile(screenshot_path):
+            with open(screenshot_path, 'rb') as f:
+                self.fetcher.screenshot = f.read()
+
+        elements_path = os.path.join(data_dir, 'elements.deflate')
+        if os.path.isfile(elements_path):
+            try:
+                with open(elements_path, 'rb') as f:
+                    self.fetcher.xpath_data = json.loads(zlib.decompress(f.read()))
+            except Exception as e:
+                logger.warning(f"Could not load preloaded xpath data for {self.watch.get('uuid')}: {e}")
+
+        logger.info(f"Using preloaded Add-Watch snapshot for {self.watch.get('uuid')} - skipping network fetch")
+        return True
 
     async def call_browser(self, preferred_proxy_id=None):
 
@@ -120,58 +177,19 @@ class difference_detection_processor():
 
         url = self.watch.link
 
-        # Protect against file:, file:/, file:// access, check the real "link" without any meta "source:" etc prepended.
-        if re.search(r'^file:', url.strip(), re.IGNORECASE):
-            if not strtobool(os.getenv('ALLOW_FILE_URI', 'false')):
-                raise Exception(
-                    "file:// type access is denied for security reasons."
-                )
-
-        await self.validate_iana_url()
-
-        # Requests, playwright, other browser via wss:// etc, fetch_extra_something
-        prefer_fetch_backend = self.watch.get('fetch_backend', 'system')
+        # Scheme allowlist (file:// etc), parser-differential and private/reserved IP checks.
+        await self.validate_url_is_fetchable()
 
         # Proxy ID "key"
         preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(
             uuid=self.watch.get('uuid'))
 
-        # Pluggable content self.fetcher
-        if not prefer_fetch_backend or prefer_fetch_backend == 'system':
-            prefer_fetch_backend = self.datastore.data['settings']['application'].get('fetch_backend')
-
-        # In the case that the preferred fetcher was a browser config with custom connection URL..
-        # @todo - on save watch, if its extra_browser_ then it should be obvious it will use playwright (like if its requests now..)
-        custom_browser_connection_url = None
-        if prefer_fetch_backend.startswith('extra_browser_'):
-            (t, key) = prefer_fetch_backend.split('extra_browser_')
-            connection = list(
-                filter(lambda s: (s['browser_name'] == key), self.datastore.data['settings']['requests'].get('extra_browsers', [])))
-            if connection:
-                prefer_fetch_backend = 'html_webdriver'
-                custom_browser_connection_url = connection[0].get('browser_connection_url')
-
-        # PDF should be html_requests because playwright will serve it up (so far) in a embedded page
-        # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
-        # @todo needs test to or a fix
-        if self.watch.is_pdf:
-            prefer_fetch_backend = "html_requests"
-
-        # Grab the right kind of 'fetcher', (playwright, requests, etc)
-        from changedetectionio import content_fetchers
-        if hasattr(content_fetchers, prefer_fetch_backend):
-            # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
-            if prefer_fetch_backend == 'html_webdriver' and self.watch.has_browser_steps:
-                # This is never supported in selenium anyway
-                logger.warning(
-                    "Using playwright fetcher override for possible puppeteer request in browsersteps, because puppetteer:browser steps is incomplete.")
-                from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
-                fetcher_obj = playwright_fetcher
-            else:
-                fetcher_obj = getattr(content_fetchers, prefer_fetch_backend)
-        else:
-            # What it referenced doesnt exist, Just use a default
-            fetcher_obj = getattr(content_fetchers, "html_requests")
+        # Resolve which content fetcher this watch should use. This is the single source of
+        # truth (watch -> group -> system, extra_browser_/pdf/browser_steps overrides etc);
+        # the resolved backend name is stamped onto the fetcher instance below.
+        from changedetectionio.content_fetchers import resolve_content_fetcher
+        fetcher_obj, prefer_fetch_backend, custom_browser_connection_url = resolve_content_fetcher(
+            watch=self.watch, datastore=self.datastore)
 
         proxy_url = None
         if preferred_proxy_id:
@@ -188,8 +206,13 @@ class difference_detection_processor():
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
         self.fetcher = fetcher_obj(proxy_override=proxy_url,
                                    custom_browser_connection_url=custom_browser_connection_url,
-                                   screenshot_format=self.screenshot_format
+                                   screenshot_format=self.screenshot_format,
+                                   worker_id=self.worker_id
                                    )
+
+        # Stamp the resolved backend name so downstream consumers (processors, plugins)
+        # can read it directly instead of re-deriving it from the fetcher class name.
+        self.fetcher.backend_name = prefer_fetch_backend
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
@@ -244,7 +267,7 @@ class difference_detection_processor():
         await self.fetcher.run(
             current_include_filters=self.watch.get('include_filters'),
             empty_pages_are_a_change=empty_pages_are_a_change,
-            fetch_favicon=self.watch.favicon_is_expired(),
+            fetch_favicon=self.watch.favicon_is_expired() and self.datastore.data['settings']['application'].get('ui', {}).get('favicons_enabled', True),
             ignore_status_codes=ignore_status_codes,
             is_binary=is_binary,
             request_body=request_body,
@@ -271,6 +294,38 @@ class difference_detection_processor():
 
         # After init, call run_changedetection() which will do the actual change-detection
 
+    @staticmethod
+    def _resolve_watch_config_path(data_dir, filename):
+        """Resolve `filename` inside `data_dir`, refusing anything that escapes it.
+
+        Security: callers derive `filename` from watch['processor'] (see
+        processors/save_processor_config), and that value is not enum-validated on every
+        write path - so it must be treated as untrusted here. os.path.join() will happily
+        accept '../../../../tmp/pwned', which previously escaped the watch directory and
+        allowed an arbitrary-path JSON file write (and read) as the app user.
+
+        Returns the absolute path, or None if it is not safely contained.
+        """
+        import os
+
+        if not filename or filename in ('.', '..'):
+            logger.error(f"Refusing unsafe watch config filename {filename!r}")
+            return None
+
+        # Must be a bare filename - no directory component, no separator of either flavour
+        if filename != os.path.basename(filename) or '/' in filename or '\\' in filename:
+            logger.error(f"Refusing watch config filename with a path component: {filename!r}")
+            return None
+
+        # realpath both sides so a symlink planted inside data_dir cannot redirect the write
+        base = os.path.realpath(data_dir)
+        filepath = os.path.realpath(os.path.join(base, filename))
+        if os.path.dirname(filepath) != base:
+            logger.error(f"Refusing watch config path outside the watch directory: {filepath!r}")
+            return None
+
+        return filepath
+
     def get_extra_watch_config(self, filename):
         """
         Read processor-specific JSON config file from watch data directory.
@@ -290,7 +345,9 @@ class difference_detection_processor():
         if not data_dir:
             return {}
 
-        filepath = os.path.join(data_dir, filename)
+        filepath = self._resolve_watch_config_path(data_dir, filename)
+        if not filepath:
+            return {}
 
         if not os.path.isfile(filepath):
             return {}
@@ -324,7 +381,9 @@ class difference_detection_processor():
         # Ensure directory exists
         watch.ensure_data_dir_exists()
 
-        filepath = os.path.join(data_dir, filename)
+        filepath = self._resolve_watch_config_path(data_dir, filename)
+        if not filepath:
+            return
 
         try:
             # If merge is enabled, read existing data first

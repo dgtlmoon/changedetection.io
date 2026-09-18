@@ -201,3 +201,34 @@ html[data-darkmode="true"] {
     }
   }
 }
+
+/* Bulk "Browser" / "Proxy" choice list rendered inside the watch-list action modal
+   (see watch-overview.js showBulkChoiceModal + the <template> option lists). */
+.bulk-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 50vh;
+  overflow-y: auto;
+  text-align: left;
+
+  .bulk-choice-row {
+    display: block;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+
+    input[type="radio"] {
+      margin-right: 8px;
+    }
+
+    &:hover {
+      background: rgba(127, 127, 127, 0.15);
+    }
+
+    em {
+      opacity: 0.7;
+      font-size: 0.9em;
+    }
+  }
+}

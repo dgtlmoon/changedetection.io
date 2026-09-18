@@ -9,6 +9,12 @@
 # exit when any command fails
 set -e
 
+# Failing fast is deliberate here (the first failure is usually the real problem, and it keeps
+# the run short) - but this script runs 8 independent pytest groups, so make it obvious that the
+# groups after the failure were SKIPPED rather than passed. Otherwise one failing test reads as
+# "the whole basic suite is broken".
+trap 'rc=$?; echo "::error::run_basic_tests.sh aborted at line $LINENO (exit $rc) - the test groups after this point were SKIPPED, not run"' ERR
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 rm tests/logs/* -f
 
@@ -90,6 +96,10 @@ export BASE_URL="https://really-unique-domain.io"
 export HIDE_REFERER=True
 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notification.py tests/test_access_control.py
 
+
+# Re #4309 - RSS pubDate/timestamps must be correct on containers that don't run UTC
+# (Europe/Athens is UTC+2/+3, so any naive local->UTC relabelling shows up as a shifted date)
+TZ=Europe/Athens pytest -vv -s --maxfail=1 tests/test_rss.py
 
 # Re-run a few tests that will trigger brotli based storage
 # And again with brotli+screenshot attachment

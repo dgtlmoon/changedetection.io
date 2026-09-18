@@ -45,7 +45,7 @@ class Restock(dict):
             'in_stock': None,
             'price': None,
             'currency': None,
-            'original_price': None
+            'last_price': None  # price at the previous check - drives the % threshold and the watch-list up/down arrow
         }
 
         # Initialize the dictionary with default values
@@ -59,13 +59,31 @@ class Restock(dict):
                 raise ValueError("Only one positional argument of type 'dict' is allowed")
 
     def __setitem__(self, key, value):
-        # Custom logic to handle setting price and original_price
-        if key == 'price' or key == 'original_price':
+        # Custom logic to handle setting price and last_price
+        if key == 'price' or key == 'last_price':
             if isinstance(value, str):
                 value = self.parse_currency(raw_value=value)
 
         super().__setitem__(key, value)
 
+    def get_price_change_percent(self):
+        """Signed % change of the current price vs last_price (the previous check's price),
+        rounded to one decimal place (e.g. -18.0, 5.3). Returns None when it can't be computed -
+        no/zero previous price, non-numeric values, or no change."""
+        try:
+            price = float(self.get('price'))
+            prev = self.get('last_price')
+            prev = float(prev) if prev is not None else None
+        except (TypeError, ValueError):
+            return None
+
+        if prev is None or prev == 0:
+            return None
+
+        pct = round((price - prev) / prev * 100.0, 1)
+        return pct if pct != 0 else None
+
+# @todo - kinda bad, needs to be in its own DB
 def get_price_from_history_str(history_str):
     m = _price_re.search(history_str)
     if not m:
@@ -89,17 +107,21 @@ class Watch(BaseWatch):
 
     def extra_notification_token_values(self):
         values = super().extra_notification_token_values()
-        values['restock'] = self.get('restock', {})
+        # Copy so the derived 'previous_price' token added below doesn't mutate the stored restock object
+        values['restock'] = dict(self.get('restock', {}))
 
         values['restock']['previous_price'] = None
         if self.history_n >= 2:
             history = self.history
             if history and len(history) >=2:
                 """Unfortunately for now timestamp is stored as string key"""
+                # Keys are stored oldest-first (ascending). worker.py saves the new snapshot
+                # BEFORE sending the notification, so the newest key ([-1]) is the current check
+                # and the previous check is the second-newest ([-2]). Guaranteed to exist here
+                # because len(history) >= 2.
                 sorted_keys = sorted(list(history), key=lambda x: int(x))
-                sorted_keys.reverse()
 
-                price_str = self.get_history_snapshot(timestamp=sorted_keys[-1])
+                price_str = self.get_history_snapshot(timestamp=sorted_keys[-2])
                 if price_str:
                     values['restock']['previous_price'] = get_price_from_history_str(price_str)
         return values
@@ -109,7 +131,7 @@ class Watch(BaseWatch):
 
         values.append(('restock.price', "Price detected"))
         values.append(('restock.in_stock', "In stock status"))
-        values.append(('restock.original_price', "Original price at first check"))
+        values.append(('restock.last_price', "Price at the previous check"))
         values.append(('restock.previous_price', "Previous price in history"))
 
         return values

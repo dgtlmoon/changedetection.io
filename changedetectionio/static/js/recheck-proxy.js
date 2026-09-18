@@ -73,7 +73,7 @@ $(function () {
 
         // Request start, needs CSRF?
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: recheck_proxy_start_url,
         }).done(function (data) {
             $.each(data, function (proxy_key, state) {
@@ -84,7 +84,7 @@ $(function () {
 
         }).fail(function (data) {
             console.log(data);
-            alert('There was an error communicating with the server.');
+            alert(i18nT('serverCommError', 'There was an error communicating with the server.'));
         });
 
     });

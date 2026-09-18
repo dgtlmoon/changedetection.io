@@ -14,6 +14,7 @@ from changedetectionio.diff import (
     CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED
 )
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.blueprint import plaintext_response
 from changedetectionio.auth_decorator import login_optionally_required
 
 
@@ -195,8 +196,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if len(dates) < 2:
             return jsonify({'summary': None, 'error': 'Not enough history'}), 400
 
-        best_from = watch.get_from_version_based_on_last_viewed
-        from_version      = request.args.get('from_version', best_from if best_from else dates[-2])
+        # Default baseline for the watchlist "Summary" link (when no explicit from_version
+        # is requested) is configurable at Settings > AI. Default 'second_last_version'
+        # compares the previous snapshot; 'since_last_viewed' uses the operator's last view.
+        if llm_cfg.get('watchlist_overview_summary', 'second_last_version') == 'since_last_viewed':
+            best_from = watch.get_from_version_based_on_last_viewed
+            default_from = best_from if best_from else dates[-2]
+        else:
+            default_from = dates[-2]
+        from_version      = request.args.get('from_version', default_from)
         to_version        = request.args.get('to_version', dates[-1])
         from changedetectionio.llm.evaluator import DiffPrefs
         prefs             = DiffPrefs.from_request_args(request.args)
@@ -325,6 +333,67 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         datastore.set_last_viewed(uuid, int(time.time()))
         return jsonify({'summary': summary, 'error': None, 'cached': False})
 
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-data", methods=['GET'])
+    @login_optionally_required
+    def diff_history_page_processor_data(uuid):
+        """
+        Return processor-specific JSON data for the history/diff page (e.g. the restock
+        price/stock timeline that the graph JS fetches).
+
+        Processor-aware: delegates to processors/{type}/difference.py::get_data(), so the
+        heavy data stays out of the rendered HTML (same rationale as the preview asset route).
+        Works for built-in and plugin processors via get_processor_submodule(). Returns 404
+        if the watch's processor doesn't implement get_data().
+        """
+        from flask import jsonify, abort
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            return jsonify({'error': 'Watch not found'}), 404
+
+        processor_name = watch.get('processor', 'text_json_diff')
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'difference')
+
+        if processor_module and hasattr(processor_module, 'get_data'):
+            return jsonify(processor_module.get_data(watch=watch, datastore=datastore, request=request))
+
+        abort(404, description=f"Processor '{processor_name}' does not provide difference data")
+
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-export.xlsx", methods=['GET'])
+    @login_optionally_required
+    def diff_history_page_processor_export(uuid):
+        """
+        Download the processor's history as an .xlsx (e.g. the restock price/stock timeline).
+        Processor-aware: delegates to processors/{type}/difference.py::export_xlsx(), which
+        returns (bytes, filename). 404 if the processor doesn't implement it.
+        """
+        from flask import make_response, abort
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            flash(gettext("No history found for the specified link, bad link?"), "error")
+            return redirect(url_for('watchlist.index'))
+
+        processor_name = watch.get('processor', 'text_json_diff')
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'difference')
+
+        if processor_module and hasattr(processor_module, 'export_xlsx'):
+            data, filename = processor_module.export_xlsx(watch=watch, datastore=datastore)
+            resp = make_response(data)
+            resp.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            resp.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return resp
+
+        abort(404, description=f"Processor '{processor_name}' does not support xlsx export")
+
     @diff_blueprint.route("/diff/<uuid_str:uuid>/extract", methods=['GET'])
     @login_optionally_required
     def diff_history_page_extract_GET(uuid):
@@ -448,20 +517,36 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            return make_response('Watch not found', 404)
+            return plaintext_response('Watch not found', 404)
 
         dates = list(watch.history.keys())
         if len(dates) < 2:
-            return make_response('Not enough history', 400)
+            return plaintext_response('Not enough history', 400)
 
         from_version = request.args.get('from_version', dates[-2])
         to_version   = request.args.get('to_version',   dates[-1])
+
+        # Validate before use. get_history_snapshot() does a plain dict lookup, so an
+        # unknown key raises KeyError whose str() carries the raw query parameter - which
+        # the error path below used to reflect into a text/html response, giving reflected
+        # XSS (GHSA-23mp-8222-96fr). This mirrors the check the API resource already
+        # performs for the same operation in api/Watch.py.
+        for timestamp in (from_version, to_version):
+            if timestamp not in watch.history:
+                return plaintext_response('Snapshot not found', 404)
 
         try:
             from_text = watch.get_history_snapshot(timestamp=from_version)
             to_text   = watch.get_history_snapshot(timestamp=to_version)
         except Exception as e:
-            return make_response(f'Could not read snapshots: {e}', 500)
+            # Never reflect the exception text. Besides the KeyError guarded above, this
+            # also catches brotli decode failures and the data-dir containment guard in
+            # get_history_snapshot(), whose messages carry filesystem paths. Send the
+            # detail to the log and keep the response text/plain regardless, matching the
+            # pattern already applied to rss/single_watch.py, so nothing that reaches the
+            # body can be parsed as HTML by the browser.
+            logger.error(f"download-patch: could not read snapshots for watch {uuid}: {e}")
+            return plaintext_response('Could not read snapshots', 500)
 
         diff_lines = list(difflib.unified_diff(
             from_text.splitlines(keepends=True),

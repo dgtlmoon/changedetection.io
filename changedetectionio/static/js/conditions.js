@@ -46,7 +46,7 @@ $(document).ready(function () {
             
             // Validate that all fields are filled
             if (!field || field === "None" || !operator || operator === "None" || !value) {
-                alert("Please fill in all fields (Field, Operator, and Value) before verifying.");
+                alert(i18nT('condFillFields', "Please fill in all fields (Field, Operator, and Value) before verifying."));
                 return;
             }
 
@@ -111,7 +111,7 @@ $(document).ready(function () {
                     $button.html(originalHTML).prop("disabled", false);
                 },
                 error: function (xhr) {
-                    let errorMsg = "Error verifying condition.";
+                    let errorMsg = i18nT('condVerifyError', "Error verifying condition.");
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMsg = xhr.responseJSON.message;
                     }

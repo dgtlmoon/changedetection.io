@@ -29,4 +29,6 @@ test-datastore/
 
 # Memory consumption log
 test-memory.log
-tests/logs/
+
+# Per-test loguru logs written by tests/conftest.py (dirname(__file__)/logs)
+changedetectionio/tests/logs/

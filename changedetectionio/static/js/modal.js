@@ -10,6 +10,14 @@ function _modalEscapeHTML(str) {
   return div.innerHTML;
 }
 
+// Translatable strings are injected by base.html into window.ModalDialogI18n so
+// Babel can extract them from the Jinja template. Fall back to English when a
+// key is missing (e.g. a page that renders modal.js without the bridge).
+function _modalT(key, fallback) {
+  const i18n = window.ModalDialogI18n || {};
+  return (key in i18n) ? i18n[key] : fallback;
+}
+
 const ModalDialog = {
   /**
    * Show a confirmation dialog
@@ -26,11 +34,11 @@ const ModalDialog = {
   confirm: function(options) {
     return new Promise((resolve) => {
       const defaults = {
-        title: 'Confirm Action',
-        message: 'Are you sure?',
+        title: _modalT('confirmTitle', 'Confirm Action'),
+        message: _modalT('confirmMessage', 'Are you sure?'),
         type: 'info',
-        confirmText: 'Confirm',
-        cancelText: 'Cancel',
+        confirmText: _modalT('confirm', 'Confirm'),
+        cancelText: _modalT('cancel', 'Cancel'),
         onConfirm: null,
         onCancel: null
       };
@@ -134,11 +142,11 @@ const ModalDialog = {
   confirmDelete: function(itemName, onConfirm) {
     const safeName = _modalEscapeHTML(itemName);
     return this.confirm({
-      title: 'Delete ' + safeName + '?',
-      message: `<p>Are you sure you want to delete <strong>${safeName}</strong>?</p><p>This action cannot be undone.</p>`,
+      title: _modalT('deleteTitle', 'Delete %(name)s?').split('%(name)s').join(safeName),
+      message: _modalT('deleteMessage', '<p>Are you sure you want to delete <strong>%(name)s</strong>?</p><p>This action cannot be undone.</p>').split('%(name)s').join(safeName),
       type: 'danger',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
+      confirmText: _modalT('delete', 'Delete'),
+      cancelText: _modalT('cancel', 'Cancel'),
       onConfirm: onConfirm
     });
   },
@@ -151,11 +159,11 @@ const ModalDialog = {
   confirmUnlink: function(itemName, onConfirm) {
     const safeName = _modalEscapeHTML(itemName);
     return this.confirm({
-      title: 'Unlink ' + safeName + '?',
-      message: `<p>Are you sure you want to unlink all watches from <strong>${safeName}</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>`,
+      title: _modalT('unlinkTitle', 'Unlink %(name)s?').split('%(name)s').join(safeName),
+      message: _modalT('unlinkMessage', '<p>Are you sure you want to unlink all watches from <strong>%(name)s</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>').split('%(name)s').join(safeName),
       type: 'warning',
-      confirmText: 'Unlink',
-      cancelText: 'Cancel',
+      confirmText: _modalT('unlink', 'Unlink'),
+      cancelText: _modalT('cancel', 'Cancel'),
       onConfirm: onConfirm
     });
   }
@@ -163,6 +171,44 @@ const ModalDialog = {
 
 // Make available globally
 window.ModalDialog = ModalDialog;
+
+/**
+ * Submit `url` as a POST carrying the CSRF token, via a throwaway body-level form.
+ *
+ * Body-level (rather than wrapping the link) because these links often live inside another
+ * <form> - the watch list and the edit page both do - and nested forms are invalid HTML that
+ * browsers silently drop. The token comes from the global `csrftoken` set in base.html.
+ *
+ * Used for state-changing actions that must not be reachable by GET, otherwise an
+ * <img src="...">  on any page the operator visits performs the action for them.
+ */
+function postWithCsrf(url) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = url;
+  form.style.display = 'none';
+  if (typeof csrftoken !== 'undefined' && csrftoken) {
+    const tok = document.createElement('input');
+    tok.type = 'hidden';
+    tok.name = 'csrf_token';
+    tok.value = csrftoken;
+    form.appendChild(tok);
+  }
+  document.body.appendChild(form);
+  form.submit();
+}
+window.postWithCsrf = postWithCsrf;
+
+/**
+ * Anchors marked data-method="POST" that do NOT also ask for confirmation.
+ * (The confirm variant is handled in the data-requires-confirm handler below.)
+ */
+$(document).ready(function() {
+  $(document).on('click', 'a[data-method="POST"]:not([data-requires-confirm])', function(e) {
+    e.preventDefault();
+    postWithCsrf($(this).attr('href'));
+  });
+});
 
 /**
  * Auto-attach modal confirmations to links with data-requires-confirm attribute
@@ -182,10 +228,10 @@ $(document).ready(function() {
 
     const config = {
       type: $element.attr('data-confirm-type') || 'danger',
-      title: $element.attr('data-confirm-title') || 'Confirm Action',
-      message: $element.attr('data-confirm-message') || '<p>Are you sure you want to proceed?</p>',
-      confirmText: $element.attr('data-confirm-button') || 'Confirm',
-      cancelText: $element.attr('data-cancel-button') || 'Cancel',
+      title: $element.attr('data-confirm-title') || _modalT('confirmTitle', 'Confirm Action'),
+      message: $element.attr('data-confirm-message') || _modalT('proceedMessage', '<p>Are you sure you want to proceed?</p>'),
+      confirmText: $element.attr('data-confirm-button') || _modalT('confirm', 'Confirm'),
+      cancelText: $element.attr('data-cancel-button') || _modalT('cancel', 'Cancel'),
       onConfirm: function() {
         // data-method="POST" — build a body-level hidden form with the CSRF
         // token and submit it. Avoids nested-form HTML invalidity when the
@@ -195,19 +241,7 @@ $(document).ready(function() {
         // on a bare GET, since <img src=...> CSRF relies on GET firing.
         const method = ($element.attr('data-method') || 'GET').toUpperCase();
         if (method === 'POST') {
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = url;
-          form.style.display = 'none';
-          if (typeof csrftoken !== 'undefined' && csrftoken) {
-            const tok = document.createElement('input');
-            tok.type = 'hidden';
-            tok.name = 'csrf_token';
-            tok.value = csrftoken;
-            form.appendChild(tok);
-          }
-          document.body.appendChild(form);
-          form.submit();
+          postWithCsrf(url);
           return;
         }
 

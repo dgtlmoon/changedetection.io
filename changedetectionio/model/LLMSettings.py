@@ -32,6 +32,11 @@ class LLMSettings(BaseModel):
     thinking_budget: int = LLM_DEFAULT_THINKING_BUDGET
     max_summary_tokens: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS
     budget_action: str = LLM_DEFAULT_BUDGET_ACTION
+    # Which baseline the watchlist "Summary" link diffs against by default (when the
+    # request carries no explicit from_version):
+    #   'second_last_version' = the previous snapshot (second-last vs latest)  [default]
+    #   'since_last_viewed'   = the snapshot at the operator's last view
+    watchlist_overview_summary: str = 'second_last_version'
     change_summary_default: str = ''
     token_budget_month: int = 0
     max_input_chars: int = LLM_DEFAULT_MAX_INPUT_CHARS

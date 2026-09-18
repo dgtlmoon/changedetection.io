@@ -1,0 +1,89 @@
+@use "../settings" as *;
+
+.notification-add-buttons {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+
+  .add-destination-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    input[type="email"] {
+      margin: 0;
+      min-width: 16rem;
+    }
+  }
+}
+
+#notification-add-email-preset {
+  padding-top: $common-gap;
+  padding-bottom: $common-gap;
+}
+
+#notification-recipients {
+  padding-bottom: $common-gap;
+}
+
+// Friendly recipient chips rendered from (and kept in sync with) the raw notification URLs.
+.notification-recipients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+
+  .notification-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.5rem;
+    line-height: 1.4;
+    border: 1px solid var(--color-border-notification);
+    border-radius: var(--common-round-border);
+    max-width: 100%;
+
+    .notification-chip-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 22rem;
+    }
+
+    .notification-chip-remove {
+      cursor: pointer;
+      font-weight: bold;
+      opacity: 0.55;
+      text-decoration: none;
+      &:hover { opacity: 1; }
+    }
+  }
+}
+
+.notifications-wrapper {
+  padding-top: 0.5rem;
+  #notification-test-log {
+    margin-top: 1rem;
+    padding: 1rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
+    max-height: 12rem;
+    overflow-y: scroll;
+    border: 1px solid var(--color-border-notification);
+    border-radius: 5px;
+
+  }
+}
+
+
+#notification-error-log {
+  border: 1px solid var(--color-border-notification);
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-wrap: break-word;
+}

@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.7
+  version: 0.1.9
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -293,19 +293,37 @@ components:
           format: uri
           description: URL to monitor for changes
           maxLength: 5000
+        link_to_open:
+          type: string
+          description: |
+            Optional human-facing URL to open instead of `url`. Use when `url` points at something
+            that is not meant to be read in a browser (an API endpoint or RSS feed, for example).
+            An empty string means "use `url`". Exposed rendered as `open_link`.
+          maxLength: 5000
         title:
           type: [string, 'null']
           description: Custom title for the web page change monitor (watch), not to be confused with page_title
           maxLength: 5000
         tag:
           type: string
-          description: Tag UUID to associate with this web page change monitor (watch)
+          deprecated: true
+          description: |
+            **Deprecated - use `tags` instead.** Kept working for API v1 and may be removed in v2.
+
+            Takes comma-separated tag *names* (not UUIDs, despite what earlier revisions of this
+            document said). Names are matched case-insensitively against existing tags and created
+            when they don't exist yet. An existing tag's UUID is also accepted and resolves to that
+            tag; a UUID matching no tag is ignored.
           maxLength: 5000
+          example: "Production, Price tracking"
         tags:
           type: array
           items:
             type: string
-          description: Array of tag UUIDs
+          description: |
+            Array of tag UUIDs. Unlike `tag`, these are applied exactly as given - no tag is ever
+            created from this field. The UUIDs are not validated: an unknown one is stored but
+            resolves to no group.
         paused:
           type: boolean
           description: Whether the web page change monitor (watch) is paused
@@ -569,6 +587,17 @@ components:
               $ref: '#/components/schemas/DaySchedule'
             sunday:
               $ref: '#/components/schemas/DaySchedule'
+            timezone:
+              type: string
+              nullable: true
+              description: >-
+                Optional IANA timezone name the schedule is evaluated in, e.g.
+                "America/Los_Angeles". When empty or omitted, the global
+                scheduler_timezone_default is used, falling back to $TZ then UTC.
+                Must be a name recognised by the server's timezone database -
+                an unknown value is rejected with HTTP 400, because the scheduler
+                cannot resolve it and the watch would never be checked.
+              example: America/Los_Angeles
 
         # Conditions (advanced logic)
         conditions:
@@ -595,6 +624,17 @@ components:
           description: Logic operator - ALL (match all conditions) or ANY (match any condition)
 
         # AI / LLM
+        llm_backend_profile:
+          type: [boolean, 'null']
+          default: true
+          description: |
+            Whether AI/LLM features are enabled. On a watch this is a plain on/off (default true).
+            On a tag/group it is ternary and is that group's only AI control:
+            - true: AI on for every watch in the group, and the group's `llm_intent` /
+              `llm_change_summary` are inherited by its watches (unless a watch sets its own)
+            - false: AI off for every watch in the group
+            - null (group default): the group has no say; each watch uses its own AI settings
+            (Reserved for selecting a named LLM profile in future - currently a plain on/off.)
         llm_intent:
           type: string
           maxLength: 2000
@@ -605,6 +645,11 @@ components:
           maxLength: 2000
           default: ''
           description: Instructions for the AI to summarise changes in notifications. When set, replaces {{diff}} with a human-readable description.
+        llm_change_summary_mode:
+          type: string
+          enum: ['replace', 'append']
+          default: 'replace'
+          description: Whether llm_change_summary replaces the prompt inherited from the tag/global settings, or is appended to the end of it.
         llm_prefilter:
           type: [string, 'null']
           readOnly: true
@@ -679,6 +724,12 @@ components:
               type: string
               format: string
               description: The watch URL rendered in case of any Jinja2 markup, always use this for listing.
+              readOnly: true
+              x-computed: true
+            open_link:
+              type: string
+              format: string
+              description: The URL a human should be sent to - `link_to_open` when set, otherwise the same as `link`.
               readOnly: true
               x-computed: true
             page_title:
@@ -806,6 +857,13 @@ components:
                 Supports fnmatch wildcards (* and ?): e.g. *://example.com/* or github.com/myorg.
                 Plain strings are matched as case-insensitive substrings.
                 Leave empty to disable auto-matching.
+            tag_colour:
+              type: string
+              pattern: '^(#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$'
+              description: |
+                Background colour for this tag's badge, as a hex colour (#rgb or #rrggbb), e.g. #4f8ef7.
+                Only hex colours are accepted - the value is rendered into a CSS stylesheet.
+                Leave empty to use the colour auto-generated from the tag name.
             # Future: Aggregated statistics from all watches with this tag
             # check_count:
             #   type: integer
@@ -1012,6 +1070,15 @@ paths:
               schema:
                 type: string
                 example: "OK"
+        '429':
+          description: |
+            Watch limit reached (server has `PAGE_WATCH_LIMIT` set; unlimited by default).
+            No watch was created - delete one to make room.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Watch limit reached (50/50 watches). Cannot add more watches."
         '500':
           description: Server error
           content:
@@ -1214,6 +1281,40 @@ paths:
               example:
                 "1640995200": "/path/to/snapshot1.txt"
                 "1640998800": "/path/to/snapshot2.txt"
+        '404':
+          description: Web page change monitor (watch) not found
+
+    delete:
+      operationId: deleteWatchHistory
+      tags: [Watch History]
+      summary: Delete watch history
+      description: |
+        Delete/clear all historical snapshots for a web page change monitor (watch), the watch itself is kept.
+        This also resets the "last checked"/"last changed" state, so the watch will be re-checked on the next cycle.
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X DELETE "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f/history" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+            response = requests.delete(f'http://localhost:5000/api/v1/watch/{uuid}/history', headers=headers)
+            print(response.status_code)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Web page change monitor (watch) unique ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: History deleted successfully
         '404':
           description: Web page change monitor (watch) not found
 
@@ -2106,6 +2207,16 @@ paths:
                   type: string
                   format: uuid
                 description: List of created watch UUIDs
+        '429':
+          description: |
+            Watch limit reached (server has `PAGE_WATCH_LIMIT` set; unlimited by default).
+            The batch is rejected whole - no watches are created - so the same request can be
+            retried unchanged once there is room.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Watch limit reached (48/50 watches), importing 5 URL(s) would exceed it. No watches were imported."
         '500':
           description: Server error
 

@@ -138,7 +138,7 @@ def strip_private_keys(data):
     Remove `__`-prefixed keys from a watch/tag dict at the API boundary.
 
     These are transient in-memory fields (e.g. `__check_status` set by the worker to
-    surface "Fetching page..." in the UI) and are not part of the public OpenAPI
+    surface "Fetching...." in the UI) and are not part of the public OpenAPI
     contract. They must never appear in GET responses (otherwise a client that
     round-trips GET → PUT trips the unknown-field validator), and must be silently
     discarded from incoming PUT/POST payloads.
