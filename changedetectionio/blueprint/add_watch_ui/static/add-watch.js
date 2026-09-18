@@ -13,6 +13,23 @@ $(document).ready(() => {
     const $clear = $('#clear-selector');
     const $includeFilters = $('#include_filters');
     const $temporaryUuid = $('#temporary_uuid');
+    const $processorPreview = $('#processor-add-watch-ui-preview-text');
+    // The Watch / Edit>Watch buttons only make sense once we have a fetched page to submit, so they
+    // stay disabled + dimmed until a snapshot comes back, then fade in.
+    const $submitButtons = $('#add-watch-submit-row').find('input[type="submit"], button');
+
+    function setSubmitEnabled(enabled) {
+        $submitButtons.prop('disabled', !enabled).toggleClass('add-watch-submit-ready', enabled);
+    }
+
+    // Per-processor previews from the last snapshot ({processor_name: "line to show"}).
+    let processorPreviews = {};
+
+    function renderProcessorPreview() {
+        const selected = $('input[name="processor"]:checked').val();
+        const text = selected ? processorPreviews[selected] : null;
+        $processorPreview.text(text || '').toggle(!!text);
+    }
 
     // When the LLM intent box isn't available (LLM_FEATURES_DISABLED / not configured) the
     // template renders no "Select by element" checkbox - element selection is the only thing
@@ -30,8 +47,8 @@ $(document).ready(() => {
         $clearButton: $clear,
         enableSelection: selectionAlwaysOn, // otherwise off until the user opts into "Select by element"
         processorIsImage: false,
-        // The snapshot comes from the live browser-steps capture, so scale X by the page
-        // CSS width (browser_width) like browser-steps.js - handles device-scale-factor != 1.
+        // The snapshot comes from a live browser fetch, so scale X by the page CSS width
+        // (browser_width) like browser-steps.js - handles device-scale-factor != 1.
         scaleByBrowserWidth: true,
     });
 
@@ -44,6 +61,8 @@ $(document).ready(() => {
         $wrapper.toggle(ready);
         $xpathRow.toggle(ready && selectionEnabled());
         $clear.toggle(ready && selectionEnabled());
+        // Only allow submitting once a live snapshot is loaded.
+        setSubmitEnabled(ready);
     }
 
     function fetchSnapshot() {
@@ -56,6 +75,8 @@ $(document).ready(() => {
         showState('loading');
         // A previous parked snapshot is now stale; drop it until this fetch succeeds.
         $temporaryUuid.val('');
+        processorPreviews = {};
+        renderProcessorPreview();
 
         $.ajax({
             url: add_watch_snapshot_url,
@@ -75,6 +96,8 @@ $(document).ready(() => {
         }).done((data) => {
             showState('ready');
             $temporaryUuid.val(data.temporary_uuid || '');
+            processorPreviews = data.processor_previews || {};
+            renderProcessorPreview();
             vs.load({screenshotSrc: data.screenshot, xpathData: data.xpath_data});
         }).fail((xhr) => {
             const msg = (xhr && xhr.responseText) ? xhr.responseText : 'Could not fetch a preview for that URL.';
@@ -82,6 +105,9 @@ $(document).ready(() => {
             showState('error');
         });
     }
+
+    // Swap the preview line when the processor selection changes (no re-fetch needed).
+    $(document).on('change', 'input[name="processor"]', renderProcessorPreview);
 
     $go.on('click', fetchSnapshot);
 

@@ -10,7 +10,7 @@ from changedetectionio.blueprint.ui.edit import construct_blueprint as construct
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
 from changedetectionio.blueprint.ui.queue import construct_blueprint as construct_queue_blueprint
-from changedetectionio.blueprint.ui import diff, preview
+from changedetectionio.blueprint.ui import diff, preview, browser_config
 
 def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchMetaData, watch_check_update, extra_data=None, emit_flash=True):
     """Apply a bulk operation to the given watch uuids.
@@ -99,11 +99,10 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         result_message = gettext("{} watches set to use default notification settings").format(len(uuids))
 
     elif (op == 'set-fetch-backend'):
-        # extra_data = the chosen fetch backend key (e.g. 'html_requests', 'html_webdriver')
-        from changedetectionio import content_fetchers
-        # 'system' = inherit the global default fetch method (resolved at fetch time), same as the edit page
-        valid = [f[0] for f in content_fetchers.available_fetchers()] + ['system']
-        if extra_data in valid:
+        # extra_data = the chosen "Browser": 'system', a built-in engine name, or a saved
+        # browser-config id - the same set as the edit picker.
+        from changedetectionio.model.browser_config import is_valid_browser_selector
+        if is_valid_browser_selector(extra_data, datastore, allow_empty=False):
             for uuid in uuids:
                 if datastore.data['watching'].get(uuid):
                     datastore.data['watching'][uuid]['fetch_backend'] = extra_data
@@ -178,6 +177,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
     queue_blueprint = construct_queue_blueprint(datastore, update_q)
     ui_blueprint.register_blueprint(queue_blueprint)
+
+    # Register the browser configs ("Browsers") blueprint
+    browser_config_blueprint = browser_config.construct_blueprint(datastore)
+    ui_blueprint.register_blueprint(browser_config_blueprint)
 
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required

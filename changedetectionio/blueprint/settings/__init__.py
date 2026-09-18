@@ -66,6 +66,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                         extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
+        # The global "Default browser" was migrated to the /browsers tab (its per-row radio
+        # writes settings.application.fetch_backend). Drop the inherited fetch_backend field so a
+        # settings save never renders, validates, or clobbers the default - /browsers owns it now.
+        del form.application.form.fetch_backend
+
         # Remove the last option 'System default'
         form.application.form.notification_format.choices.pop()
 
@@ -248,8 +253,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Cost display: only when user configured their own key (not hosted/operator-managed)
         llm_show_costs = not llm_env_configured
 
+        # Read-only label for the global "Default browser" (managed on the /browsers tab).
+        from changedetectionio.model.browser_config import list_builtin_browsers
+        _default_id = datastore.get_default_backend()
+        _default_entry = datastore.browser_config_store.get(_default_id)
+        if _default_entry:
+            default_browser_label = _default_entry.get('label') or _default_id
+        else:
+            default_browser_label = dict((b['id'], b['label']) for b in list_builtin_browsers()).get(_default_id, _default_id)
+
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
+                                default_browser_label=default_browser_label,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 llm_config=llm_config,
                                 llm_env_configured=llm_env_configured,

@@ -5,13 +5,17 @@ browser list, the /snapshot endpoint and the submit-time form validator all reso
 through here, so the UI can never offer - and the server can never accept - a fetcher
 that is unable to produce what the visual selector needs.
 
-The preview is rendered by browsersteps_live_ui() (see blueprint/browser_steps), so a
-usable browser needs `supports_browser_steps` *as well as* screenshots and xpath
-element data. That third flag is what rules out Selenium/WebDriver: it can screenshot
-during a normal check, but it cannot drive the interactive session the preview needs
-(acquire_browser_for_fetcher() would quietly connect to PLAYWRIGHT_DRIVER_URL instead,
-which is not the browser the user picked). It also rules out settings.requests
-extra_browsers, which are WebDriver connection URLs, so they are not offered here.
+The preview drives an interactive browser session, so a usable browser needs
+`supports_browser_steps` *as well as* screenshots and xpath element data. That third flag
+is what rules out Selenium/WebDriver: it can screenshot during a normal check, but it
+cannot drive the interactive session the preview needs (it would quietly connect to
+PLAYWRIGHT_DRIVER_URL instead, which is not the browser the user picked). It also rules
+out Selenium-backed setups generally.
+
+A "browser" here is a *selector*, not necessarily an engine name: it can be a saved
+browser config id (see model/browser_config.py) as well as a built-in engine or 'system'.
+Everything resolves to a concrete engine through resolve_backend() before capabilities are
+read, so a named config is judged by the engine it is built on.
 """
 
 from loguru import logger
@@ -27,7 +31,7 @@ REQUIRED_CAPABILITIES = (
 
 
 def is_visual_capable(fetch_backend, datastore):
-    """True when this backend can render the Add-Watch live preview.
+    """True when this browser choice can render the Add-Watch live preview.
 
     An unknown name - including anything a client made up - resolves to no fetcher
     class and so to all-False capabilities, so it can never pass. That is what makes
@@ -35,15 +39,13 @@ def is_visual_capable(fetch_backend, datastore):
 
     Reads the flags off the class the same way Watch.fetcher_supports_screenshots does,
     rather than via pluggy_interface.get_fetcher_capabilities(): that logs every lookup
-    at INFO, and this runs for the whole fetcher list on any page carrying the quick-add
+    at INFO, and this runs for the whole browser list on any page carrying the quick-add
     form. Plugin fetchers are registered as module attributes, so they resolve here too.
     """
     from changedetectionio import content_fetchers
     from changedetectionio.content_fetchers.base import FetcherCapabilities
 
-    name = fetch_backend or SYSTEM_DEFAULT
-    if name == SYSTEM_DEFAULT:
-        name = datastore.data['settings']['application'].get('fetch_backend') or 'html_requests'
+    name = resolve_backend(fetch_backend, datastore)
 
     caps = FetcherCapabilities.from_fetcher(getattr(content_fetchers, name, None))
     missing = [flag for flag in REQUIRED_CAPABILITIES if not getattr(caps, flag, False)]
@@ -54,32 +56,45 @@ def is_visual_capable(fetch_backend, datastore):
 
 
 def resolve_backend(fetch_backend, datastore):
-    """The concrete fetcher name behind a choice, so 'system' can be acted on.
+    """The concrete engine name behind a choice, so 'system' and saved browser configs can
+    be acted on.
 
-    Needed because acquire_browser_for_fetcher() looks the name up as a class: handing
-    it 'system' would skip a fetcher that launches its own browser (CloakBrowser) and
-    fall through to the CDP endpoint instead.
+    Needed because launching a browser looks the name up as a fetcher class: handing it
+    'system' would skip a fetcher that launches its own browser (CloakBrowser) and fall
+    through to the CDP endpoint instead, and handing it a browser-config id would resolve
+    to nothing at all.
     """
-    from changedetectionio import content_fetchers
+    selected = fetch_backend or SYSTEM_DEFAULT
+    if selected == SYSTEM_DEFAULT:
+        # The global default is itself a selector - it can name a saved config, so keep resolving.
+        selected = datastore.data['settings']['application'].get('fetch_backend') or 'html_requests'
 
-    _fetcher_class, resolved, _custom_url = content_fetchers.resolve_content_fetcher(
-        {'fetch_backend': fetch_backend or SYSTEM_DEFAULT}, datastore)
-    return resolved
+    # A saved browser config is judged (and launched) by the engine it is built on.
+    entry, engine, _config = datastore.browser_config_store.engine_and_config(selected)
+    if entry:
+        return engine
+
+    # A built-in engine name - or something invented by a client, which resolves to no fetcher
+    # class and therefore to no capabilities, so it can never pass is_visual_capable().
+    return selected
 
 
 def list_visual_browser_choices(datastore):
-    """(value, label) for every fetcher that can drive the visual selector.
+    """(value, label) for every browser that can drive the visual selector.
 
-    is_visual_capable() logs each candidate's capabilities as it goes, so a user
-    wondering why their browser isn't in the list can see the missing flag at debug
-    level.
+    Candidates are the same ones the watch edit picker offers - the built-in engines plus
+    the user's saved browser configs (model/browser_config.py) - minus 'system', which is
+    offered separately by radio_choices() because it needs its own explanatory label.
+
+    is_visual_capable() logs each candidate's capabilities as it goes, so a user wondering
+    why their browser isn't in the list can see the missing flag at debug level.
     """
-    from changedetectionio import content_fetchers
+    from changedetectionio.model.browser_config import list_watch_browser_choices
 
-    choices = [(name, str(description)) for name, description in content_fetchers.available_fetchers()
-               if is_visual_capable(name, datastore)]
+    choices = [(value, str(label)) for value, label in list_watch_browser_choices(datastore)
+               if value != SYSTEM_DEFAULT and is_visual_capable(value, datastore)]
     logger.debug(f"Add-watch browsers offered for the live preview: "
-                 f"{[name for name, _label in choices] or 'none'}")
+                 f"{[value for value, _label in choices] or 'none'}")
     return choices
 
 
@@ -106,10 +121,13 @@ def default_visual_browser(datastore):
 
 
 def system_default_description(datastore):
-    """Label for whatever backend 'system' currently points at."""
+    """Label for whatever browser 'system' currently points at (engine or saved config)."""
     from changedetectionio import content_fetchers
 
     system_backend = datastore.data['settings']['application'].get('fetch_backend') or 'html_requests'
+    entry = datastore.browser_config_store.get(system_backend)
+    if entry:
+        return entry.get('label') or system_backend
     return str(dict(content_fetchers.available_fetchers()).get(system_backend, system_backend))
 
 

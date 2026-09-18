@@ -463,7 +463,7 @@ class ValidateContentFetcherIsReady(object):
     def __call__(self, form, field):
         return
 
-# AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'extra_browser_unlocked<>ASDF213r123r'
+# AttributeError: module 'changedetectionio.content_fetcher' has no attribute 'html_unlocked<>ASDF213r123r'
         # Better would be a radiohandler that keeps a reference to each class
         # if field.data is not None and field.data != 'system':
         #     klass = getattr(content_fetcher, field.data)
@@ -506,18 +506,14 @@ class ValidateKnownContentFetcher(object):
 
     def __call__(self, form, field):
         from flask import current_app
-        from changedetectionio import content_fetchers
+        from changedetectionio.model.browser_config import is_valid_browser_selector
 
         if not field.data:
             return
 
-        allowed = {'system'} | {name for name, _description in content_fetchers.available_fetchers()}
         datastore = current_app.config.get('DATASTORE')
-        if datastore:
-            allowed |= {value for value, _label in datastore.extra_browsers}
-
-        if field.data not in allowed:
-            logger.warning(f"Rejected unknown fetch_backend {field.data!r} - known: {sorted(allowed)}")
+        if not is_valid_browser_selector(field.data, datastore):
+            logger.warning(f"Rejected unknown fetch_backend {field.data!r}")
             raise ValidationError(self.message or gettext("Unknown fetch method."))
 
 
@@ -1126,24 +1122,10 @@ class SingleExtraProxy(Form):
         ValidateSimpleURL()
     ], render_kw={"placeholder": "socks5:// or regular proxy http://user:pass@...:3128", "size":50})
 
-class SingleExtraBrowser(Form):
-    browser_name = StringField(_l('Name'), [validators.Optional()], render_kw={"placeholder": _l("Name")})
-    browser_connection_url = StringField(_l('Browser connection URL'), [
-        validators.Optional(),
-        ValidateStartsWithRegex(
-            regex=r'^(wss?|ws)://',
-            flags=re.IGNORECASE,
-            message=_l('Browser URLs must start with wss:// or ws://')
-        ),
-        ValidateSimpleURL()
-    ], render_kw={"placeholder": "wss://brightdata... wss://oxylabs etc", "size":50})
-
-class DefaultUAInputForm(Form):
-    html_requests = StringField(_l('Plaintext requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
-    if os.getenv("PLAYWRIGHT_DRIVER_URL") or os.getenv("WEBDRIVER_URL"):
-        html_webdriver = StringField(_l('Chrome requests'), validators=[validators.Optional()], render_kw={"placeholder": "<default>"})
-
 # datastore.data['settings']['requests']..
+# NOTE: the plain-client request timeout and per-engine default User-Agent were migrated out of
+# here to per-engine browser configs on the /browsers tab (update_35), so there is no `timeout`
+# field or `default_ua` sub-form anymore.
 class globalSettingsRequestForm(Form):
     time_between_check = RequiredFormField(TimeBetweenCheckForm, label=_l('Time Between Check'))
     time_schedule_limit = FormField(ScheduleLimitForm)
@@ -1151,21 +1133,13 @@ class globalSettingsRequestForm(Form):
     jitter_seconds = IntegerField(_l('Random jitter seconds ± check'),
                                   render_kw={"style": "width: 5em;"},
                                   validators=[validators.NumberRange(min=0, message=_l("Should contain zero or more seconds"))])
-    
+
     workers = IntegerField(_l('Number of fetch workers'),
                           render_kw={"style": "width: 5em;"},
                           validators=[validators.NumberRange(min=1, max=50,
                                                              message=_l("Should be between 1 and 50"))])
 
-    timeout = IntegerField(_l('Requests timeout in seconds'),
-                           render_kw={"style": "width: 5em;"},
-                           validators=[validators.NumberRange(min=1, max=999,
-                                                              message=_l("Should be between 1 and 999"))])
-
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
-    extra_browsers = FieldList(FormField(SingleExtraBrowser), min_entries=5)
-
-    default_ua = FormField(DefaultUAInputForm, label=_l("Default User-Agent overrides"))
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:
@@ -1196,7 +1170,11 @@ class globalSettingsApplicationForm(commonSettingsForm):
                            render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))}
                            )
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
-    fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    # NOTE: the global "Default browser" is NOT a field here anymore - all browser choice was
+    # migrated to the /browsers tab (set-default writes settings.application.fetch_backend). The
+    # inherited commonSettingsForm.fetch_backend field is del()'d from this form in the settings
+    # blueprint so a settings save never touches the default. Watches still pick a browser via
+    # their own commonSettingsForm.fetch_backend (processor_text_json_diff_form).
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
     global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField(_l('Ignore whitespace'))

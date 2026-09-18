@@ -148,6 +148,18 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                           default_system_settings=datastore.data['settings']
                           )
 
+        # The watch-level fetch selector is now a "Browser" picker: system default + the
+        # user's saved browsers (browsers.json). Raw engines are chosen only as a browser's
+        # base in the Add Browser form. Set choices per-request (datastore-dependent).
+        from changedetectionio.model.browser_config import list_watch_browser_choices
+        form.fetch_backend.choices = list_watch_browser_choices(datastore)
+        form.fetch_backend.label.text = gettext('Browser')
+        # Only offer Default + user browsers, but still ACCEPT legacy raw-engine values
+        # ('html_requests'/'html_webdriver'/...) that existing watches/API clients store -
+        # resolve_content_fetcher handles them. Without this, editing a pre-existing watch
+        # would fail RadioField choice validation.
+        form.fetch_backend.validate_choice = False
+
         # For the form widget tag UUID back to "string name" for the field
         form.tags.datastore = datastore
 
@@ -187,11 +199,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                     logger.debug(f"Loaded processor config from {config_filename}: {sub_key} = {sub_value}")
             except Exception as e:
                 logger.warning(f"Failed to load processor config: {e}")
-
-        for p in datastore.extra_browsers:
-            form.fetch_backend.choices.append(p)
-
-        form.fetch_backend.choices.append(("system", gettext('System settings default')))
 
         # form.browser_steps[0] can be assumed that we 'goto url' first
 
@@ -356,9 +363,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if worker_pool.is_watch_running(uuid):
                 c.append('checking-now')
 
+            from changedetectionio.model.browser_config import resolve_browser_config_override
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
+                'browser_config_group_override': resolve_browser_config_override(watch, datastore),
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                 'extra_classes': ' '.join(c),

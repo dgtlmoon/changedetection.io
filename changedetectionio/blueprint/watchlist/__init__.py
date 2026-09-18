@@ -104,8 +104,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
 
-        from changedetectionio import content_fetchers
-        available_fetchers = content_fetchers.available_fetchers()
+        # Same "Browser" choices as the watch edit picker (system default + built-ins + user
+        # browsers) for the bulk "Set browser" modal, so it stays consistent.
+        from changedetectionio.model.browser_config import list_watch_browser_choices
+        browser_choices = list_watch_browser_choices(datastore)
 
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
         from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
@@ -137,7 +139,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             generate_tag_colors=processors.generate_processor_badge_colors,
             wcag_text_color=processors.wcag_text_color,
             guid=datastore.data['app_guid'],
-            available_fetchers=available_fetchers,
+            browser_choices=browser_choices,
             #header=_("todo - tag name etc"),
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
             now_time_server=round(time.time()),

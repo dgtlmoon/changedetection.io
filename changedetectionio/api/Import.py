@@ -174,15 +174,11 @@ class Import(Resource):
         # Validate fetch_backend if provided
         if 'fetch_backend' in extras:
             from changedetectionio.content_fetchers import available_fetchers
-            available = [f[0] for f in available_fetchers()]
-            # Also allow 'system' and extra_browser_* patterns
-            is_valid = (
-                extras['fetch_backend'] == 'system' or
-                extras['fetch_backend'] in available or
-                extras['fetch_backend'].startswith('extra_browser_')
-            )
-            if not is_valid:
-                return f"Invalid fetch_backend '{extras['fetch_backend']}'. Available: system, {', '.join(available)}", 400
+            from changedetectionio.model.browser_config import is_valid_browser_selector
+            if not is_valid_browser_selector(extras['fetch_backend'], self.datastore, allow_empty=False):
+                available = [f[0] for f in available_fetchers()]
+                return (f"Invalid fetch_backend '{extras['fetch_backend']}'. Available: system, "
+                        f"{', '.join(available)}, or the id of a browser from the Browsers page"), 400
 
         # Validate notification_urls if provided
         if 'notification_urls' in extras:

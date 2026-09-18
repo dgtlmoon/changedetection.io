@@ -191,6 +191,15 @@ class Watch(Resource):
                 proxy_list_str = ', '.join(plist) if plist else 'none configured'
                 return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
 
+        # The browser to check with. Valid values are per-install (engines + saved browsers on
+        # the Browsers page), so the schema can only bound the string - this is the real gate.
+        if 'fetch_backend' in request.json:
+            from changedetectionio.model.browser_config import is_valid_browser_selector
+            if not is_valid_browser_selector(request.json['fetch_backend'], self.datastore, allow_empty=False):
+                return (f"Invalid fetch_backend '{request.json['fetch_backend']}' - use 'system', an "
+                        f"installed browser engine, or the id of a browser from the Browsers page"), 400
+
+
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(request.json)
         if validation_error:
@@ -538,6 +547,15 @@ class CreateWatch(Resource):
             if not plist or json_data.get('proxy') not in plist:
                 proxy_list_str = ', '.join(plist) if plist else 'none configured'
                 return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
+
+        # The browser to check with. Valid values are per-install (engines + saved browsers on
+        # the Browsers page), so the schema can only bound the string - this is the real gate.
+        if 'fetch_backend' in json_data:
+            from changedetectionio.model.browser_config import is_valid_browser_selector
+            if not is_valid_browser_selector(json_data['fetch_backend'], self.datastore, allow_empty=False):
+                return (f"Invalid fetch_backend '{json_data['fetch_backend']}' - use 'system', an "
+                        f"installed browser engine, or the id of a browser from the Browsers page"), 400
+
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(json_data)

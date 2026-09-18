@@ -52,6 +52,10 @@
                 <div id="add-watch-options-pane">
                     <div class="add-watch-option-group" id="quick-watch-processor-type">
                         {{ render_simple_field(form.processor, label=_('What do you want to achieve?')) }}
+                        <!-- Per-processor preview of what it would read off the fetched page
+                             (e.g. restock shows the detected price/stock); filled in by add-watch.js
+                             from the snapshot response, and swapped when the processor changes. -->
+                        <div id="processor-add-watch-ui-preview-text" style="display: none;"></div>
                     </div>
 {%- if not browser_backend_disabled -%}
                     <div class="add-watch-option-group" id="quick-watch-fetch-backend">

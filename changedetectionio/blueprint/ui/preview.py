@@ -57,30 +57,34 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         # Fallback: if processor doesn't have preview module, use default text preview
         content = []
-        versions = []
         timestamp = None
 
         extra_stylesheets = [url_for('static_content', group='styles', filename='diff.css')]
-        is_html_webdriver = watch.fetcher_supports_screenshots
+        # Resolve via the datastore so a group override / named browser config's engine is honoured
+        # (watch.fetcher_supports_screenshots can't see the store to resolve those).
+        from changedetectionio.pluggy_interface import get_fetcher_capabilities
+        is_html_webdriver = get_fetcher_capabilities(watch, datastore).get('supports_screenshots', False)
 
         triggered_line_numbers = []
         ignored_line_numbers = []
         blocked_line_numbers = []
 
-        if datastore.data['watching'][uuid].history_n == 0 and (watch.get_error_text() or watch.get_error_snapshot()):
+        # Gate on whether there is a snapshot to show, NOT on whether an error was recorded: a
+        # watch that has never completed a check and has no error text either (freshly added, or
+        # paused before its first check) has nothing to index into, and asking for the newest of
+        # no versions used to be a 500 on a page reachable from the watch list.
+        versions = list(watch.history.keys())
+        if not versions:
             flash(gettext("Preview unavailable - No fetch/check completed or triggers not reached"), "error")
         else:
             # So prepare the latest preview or not
             preferred_version = request.values.get('version') if request.method == 'POST' else request.args.get('version')
 
-
-            versions = list(watch.history.keys())
             timestamp = versions[-1]
             if preferred_version and preferred_version in versions:
                 timestamp = preferred_version
 
             try:
-                versions = list(watch.history.keys())
                 content = watch.get_history_snapshot(timestamp=timestamp)
 
                 triggered_line_numbers = html_tools.strip_ignore_text(content=content,
