@@ -56,6 +56,62 @@ def test_openapi_merged_spec_contains_restock_fields():
         f"WatchBase.processor_config_restock_diff should $ref the schema, got: {ref}"
 
 
+def test_openapi_notification_format_enum_matches_code():
+    """
+    Unit test: the notification_format enum in api-spec.yaml must stay in step with
+    valid_notification_formats, otherwise the API either rejects a format the UI offers or
+    accepts one that blows up when the notification object is built.
+    """
+    from changedetectionio.api import build_merged_spec_dict
+    from changedetectionio.notification import valid_notification_formats
+
+    spec = build_merged_spec_dict()
+    spec_enum = spec['components']['schemas']['WatchBase']['properties']['notification_format'].get('enum')
+
+    assert spec_enum is not None, "notification_format must declare an enum in api-spec.yaml"
+    assert set(spec_enum) == set(valid_notification_formats.keys()), \
+        (f"api-spec.yaml notification_format enum {spec_enum} does not match "
+         f"valid_notification_formats {list(valid_notification_formats.keys())}")
+
+
+def test_openapi_import_rejects_invalid_enum_query_param(client, live_server, measure_memory_usage, datastore_path):
+    """
+    /api/v1/import takes watch config as query params - those must honour the `enum:` in the spec.
+    'Text' is the classic one: it was the display name in an old release, so people still pass it,
+    and a stored 'Text' makes every notification for that watch raise ValueError at send time.
+    """
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+
+    res = client.post(
+        url_for("import") + "?notification_format=Text",
+        data='https://website1.com',
+        headers={'x-api-key': api_key, 'content-type': 'text/plain'},
+    )
+    assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
+    assert b'notification_format' in res.data
+    assert not live_server.app.config['DATASTORE'].data['watching'], "Nothing should have been imported"
+
+    # Another enum field on the same code path
+    res = client.post(
+        url_for("import") + "?method=FETCH",
+        data='https://website1.com',
+        headers={'x-api-key': api_key, 'content-type': 'text/plain'},
+    )
+    assert res.status_code == 400, f"Expected 400 but got {res.status_code}"
+
+    # ...and a valid value still imports and is stored
+    res = client.post(
+        url_for("import") + "?notification_format=htmlcolor",
+        data='https://website1.com',
+        headers={'x-api-key': api_key, 'content-type': 'text/plain'},
+    )
+    assert res.status_code == 200, f"Expected 200 but got {res.status_code}"
+    watch = live_server.app.config['DATASTORE'].data['watching'][res.json[0]]
+    assert watch.get('notification_format') == 'htmlcolor'
+
+    delete_all_watches(client)
+
+
 def test_openapi_validation_invalid_content_type_on_create_watch(client, live_server, measure_memory_usage, datastore_path):
     """Test that creating a watch with invalid content-type triggers OpenAPI validation error."""
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
