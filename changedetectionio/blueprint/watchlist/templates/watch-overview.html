@@ -155,8 +155,8 @@ window.watchOverviewI18n = {
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
         <div id="add-watch-url-row">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <label for="url"><strong>{{ _('Web page URL') }}</strong></label><br>
-            {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1") }}
+            <label for="url"><strong>{{ _('Web page URL') }}</strong></label>
+            {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1", span_wrap=false) }}
             <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
         </div>
         {% if llm_configured %}

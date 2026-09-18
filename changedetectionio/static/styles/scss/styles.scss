@@ -1133,3 +1133,9 @@ header {
 textarea::placeholder {
     white-space: pre-wrap;
 }
+
+@media only screen and (max-width: 480px) {
+  .pure-form button[type=submit] {
+    margin: 0 !important; /*override*/
+  }
+}

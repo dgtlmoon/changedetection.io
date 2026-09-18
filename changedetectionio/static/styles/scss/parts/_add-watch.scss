@@ -191,28 +191,6 @@ body {
       margin-top: .75rem;
     }
 
-    // Browser picker: fetcher descriptions are long (they carry the driver URL), so this is
-    // a radio list whose labels wrap inside the narrow pane instead of a <select> that would
-    // overflow it. The system-default entry is listed even when it can't render a preview.
-    #quick-watch-fetch-backend {
-
-      li.unusable {
-        opacity: 0.55;
-        cursor: not-allowed;
-
-        label {
-          cursor: not-allowed;
-        }
-      }
-
-      .pure-form-message-inline {
-        display: block;
-        margin-top: 0.35rem;
-        font-size: 0.8rem;
-        opacity: 0.8;
-      }
-    }
-
     #by-element-toggle-group {
       .pure-form-message-inline {
         display: block;

@@ -279,7 +279,7 @@
       <div class="modal-body">
         <div class="language-list">
           {% for locale, lang_data in available_languages.items()|sort %}
-          <form method="POST" action="{{ url_for('set_language', locale=locale, redirect=request.path) }}">
+          <form method="POST" action="{{ url_for('set_language', locale=locale) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="language-option" data-locale="{{ locale }}">
               <span class="lang-option {{ lang_data.flag }}"></span> <span class="language-name">{{ lang_data.name }}</span>
@@ -288,7 +288,7 @@
           {% endfor %}
         </div>
         <div>
-            <form method="POST" action="{{ url_for('ui.delete_locale_language_session_var_if_it_exists', redirect=request.path) }}" style="display: inline;">
+            <form method="POST" action="{{ url_for('ui.delete_locale_language_session_var_if_it_exists') }}" style="display: inline;">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="bare-btn">{{ _('Auto-detect from browser') }}</button>
             </form>
