@@ -314,7 +314,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             }), 429
 
         try:
-            summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text)
+            summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text, retries=0)
         except LLMInputTooLargeError as e:
             return jsonify({'summary': None, 'error': str(e)}), 400
         except Exception as e:

@@ -724,7 +724,7 @@ def build_summary_cache_prompt(effective_prompt: str, max_summary_tokens: int,
     )
 
 
-def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') -> str:
+def summarise_change(watch, datastore, diff: str, current_snapshot: str = '', retries: int = None) -> str:
     """
     Generate a plain-language summary of the change using the watch's
     llm_change_summary prompt (cascades from tag if not set on watch).
@@ -783,6 +783,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
             ),
             extra_body=_extra_body,
             debug=settings.debug,
+            retries=retries,
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0
@@ -808,7 +809,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
 # Live-preview extraction (current content, no diff)
 # ---------------------------------------------------------------------------
 
-def preview_extract(watch, datastore, content: str) -> dict | None:
+def preview_extract(watch, datastore, content: str, retries: int = None) -> dict | None:
     """
     For the live-preview endpoint: extract relevant information from the
     *current* page content according to the watch's intent.
@@ -848,6 +849,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
             extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
             debug=settings.debug,
+            retries=retries,
         )
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
         result = parse_preview_response(raw)
