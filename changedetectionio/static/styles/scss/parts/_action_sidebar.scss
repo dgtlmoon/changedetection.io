@@ -90,9 +90,6 @@ $action-sidebar-content-slot: 1100px;
     bottom: 0;
     z-index: 1;
     background-color: var(--color-background-page);   // fallback under the gradient
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)),
-      var(--page-background-gradient);
     background-attachment: fixed, fixed;
   }
 
