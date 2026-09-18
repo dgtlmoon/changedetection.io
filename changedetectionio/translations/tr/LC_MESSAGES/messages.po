@@ -676,6 +676,10 @@ msgid ""
 " page (Edit the browser, under “HTTP request options”)."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Applied to all requests."
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
@@ -684,10 +688,6 @@ msgstr "Not: Sadece User-Agent'ı değiştirmek genellikle anti-robot teknolojil
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "all of the ways that the browser is detected"
 msgstr "tarayıcının tespit edilmesinin tüm yolları"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Applied to all requests."
-msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Connect using Bright Data proxies, find out more here."
