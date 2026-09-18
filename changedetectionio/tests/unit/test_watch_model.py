@@ -5,6 +5,9 @@
 
 import unittest
 import os
+import time
+import glob
+import base64
 import pickle
 import tempfile
 from copy import deepcopy
@@ -277,6 +280,82 @@ class TestFaviconFilenameCache(unittest.TestCase):
 
             self.assertFalse(os.path.exists(favicon_path))
             self.assertIsNone(watch.get_favicon_filename())
+
+
+class TestFaviconExpiry(unittest.TestCase):
+    """favicon_is_expired() must judge the icon the watch actually has now."""
+
+    def _watch(self, datastore_path):
+        from changedetectionio.model.Watch import _FAVICON_FILENAME_CACHE
+        watch = Watch.model(
+            datastore_path=datastore_path,
+            __datastore={'settings': {'application': {}}, 'watching': {}},
+            default={'url': 'https://example.com'}
+        )
+        watch.ensure_data_dir_exists()
+        self.addCleanup(_FAVICON_FILENAME_CACHE.pop, watch.data_dir, None)
+        return watch
+
+    def test_fresh_favicon_wins_over_a_stale_one_of_another_extension(self):
+        """A leftover favicon.<other ext> must not force a refetch on every check.
+
+        bump_favicon() names the file after the icon's type, so a watch whose icon changed
+        type could hold two. glob order is decided by filename hash, so picking the first
+        match meant some extension pairs always chose the stale file - the age check failed
+        every time and the favicon was refetched forever.
+        """
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+
+            stale = os.path.join(watch.data_dir, 'favicon.png')
+            with open(stale, 'wb') as f:
+                f.write(b'stale')
+            old = time.time() - (40 * 86400)
+            os.utime(stale, (old, old))
+
+            fresh = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(fresh, 'wb') as f:
+                f.write(b'fresh')
+
+            self.assertFalse(watch.favicon_is_expired(),
+                             "a favicon saved seconds ago must not count as expired just "
+                             "because an older one of a different extension is also present")
+
+    def test_expired_when_the_newest_favicon_is_old(self):
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            path = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(path, 'wb') as f:
+                f.write(b'old')
+            old = time.time() - (40 * 86400)
+            os.utime(path, (old, old))
+
+            self.assertTrue(watch.favicon_is_expired())
+
+    def test_no_favicon_file_is_expired_and_does_not_raise(self):
+        """The filename cache can say yes after the file is gone; that is a refetch, not an error."""
+        from changedetectionio.model.Watch import _FAVICON_FILENAME_CACHE
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            _FAVICON_FILENAME_CACHE[watch.data_dir] = 'favicon.ico'   # stale positive
+
+            self.assertTrue(watch.favicon_is_expired())
+
+    def test_bump_favicon_removes_the_superseded_file(self):
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            previous = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(previous, 'wb') as f:
+                f.write(b'previous')
+
+            watch.bump_favicon(url='https://example.com/icon.png',
+                               favicon_base_64=base64.b64encode(b'newicon').decode(),
+                               mime_type='image/png')
+
+            remaining = sorted(os.path.basename(x) for x in
+                               glob.glob(os.path.join(watch.data_dir, 'favicon.*')))
+            self.assertEqual(remaining, ['favicon.png'],
+                             "the old favicon.ico should have been removed")
 
 
 class TestLLMDiffSummaryCache(unittest.TestCase):
