@@ -116,7 +116,7 @@ ul.action-sidebar-list {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.8rem;
 }
 
 // Footer list (status counters, live spark, version) sits at the bottom of the
@@ -322,8 +322,8 @@ body.actionside-bar-on {
 
 .action-icon {
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
+  max-width: 20px;
+  height: 22px;
   stroke: currentColor;
   stroke-width: 1.9;
   fill: none;
