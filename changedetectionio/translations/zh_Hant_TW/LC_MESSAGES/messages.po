@@ -298,6 +298,7 @@ msgstr ".XLSX 和 Wachete"
 msgid "Backup Restore"
 msgstr "備份還原"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "還原 changedetection.io 備份功能位於"
@@ -342,6 +343,7 @@ msgstr "如何匯出？"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "如果需要，請務必將您的預設抓取器設為 Chrome。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "自訂欄位與資料類型對應表，適用於"
@@ -483,6 +485,7 @@ msgstr "預設通知"
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr "這些通知套用至所有網頁監測任務，或者您也可以個別針對每個群組或每個監測任務進行設定。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "用於通知連結中"
@@ -550,6 +553,7 @@ msgstr "AI / LLM"
 msgid "Info"
 msgstr "資訊"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "所有監測任務的預設複查時間，目前系統最小值為"
@@ -622,6 +626,7 @@ msgstr "這會等待 <i>n</i> 秒後才提取文字。"
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "處理監測任務的並行工作程序數量。更多工作程序 = 處理速度更快，但記憶體使用量更高。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "目前執行中："
@@ -650,6 +655,7 @@ msgstr "對於一般常規請求（非基於 Chrome），逾時前的最大秒�
 msgid "Applied to all requests."
 msgstr "套用至所有請求。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "注意：僅更改 User-Agent 通常無法破解反機器人技術，考慮瀏覽器被偵測的所有方式非常重要"
@@ -735,6 +741,7 @@ msgstr "透過 API 驅動您的 changedetection.io，更多關於"
 msgid "API access and examples here"
 msgstr "幫助與範例請見此處"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "透過使用以下項目來限制 API 存取限制"
@@ -1740,6 +1747,7 @@ msgstr "已清除排程佇列（已移除 {} 個項目）。"
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr "這將移除「所有」監測任務的版本歷史記錄（快照），但會保留您的 URL 列表！"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "您可能想先使用"
@@ -1756,6 +1764,7 @@ msgstr "連結。"
 msgid "Confirmation text"
 msgstr "確認文字"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "輸入單字"
@@ -1816,15 +1825,21 @@ msgstr "忽略空白"
 msgid "Same/non-changed"
 msgstr "相同 / 未變更"
 
+#. 'Removed' is a noun label for a diff display filter (toggles removed lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff filter"
 msgid "Removed"
 msgstr "已移除"
 
+#. 'Added' is a noun label for a diff display filter (toggles added lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Added"
 msgstr "已新增"
 
+#. 'Replaced' is a noun label for a diff display filter (toggles replaced lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Replaced"
 msgstr "已替換"
 
@@ -1950,6 +1965,7 @@ msgstr "條件"
 msgid "Stats"
 msgstr "統計數據"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "有些網站使用 JavaScript 來建立內容，為此您應該"
@@ -2080,6 +2096,7 @@ msgstr "抱歉，此功能僅適用於支援互動式 Javascript 的抓取器（
 msgid "to one that supports interactive Javascript."
 msgstr "為支援互動式 Javascript 的方式。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "您需要"
@@ -2098,6 +2115,7 @@ msgstr "當頁面上找不到過濾器時發送通知，這有助於了解頁面
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr "使用驗證 (✓) 按鈕測試條件是否符合目前的快照。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "閱讀有關"
@@ -2128,6 +2146,7 @@ msgid ""
 "<strong>addition</strong> instead of <strong>replacement</strong> for example."
 msgstr "注意：根據每行文字的長度和相似度，演算法可能會將 <strong>替換</strong> 誤判為 <strong>新增</strong>，例如。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "所以最好選擇"
@@ -2136,6 +2155,7 @@ msgstr "所以最好選擇"
 msgid "when you're interested in new content."
 msgstr "當您對新內容感興趣時。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "當內容僅在列表中移動時，也會觸發"
@@ -2177,6 +2197,7 @@ msgstr "AI 意圖預覽"
 msgid "Loading..."
 msgstr "載入中 ..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "視覺選擇器工具讓您可以選擇"
@@ -2485,8 +2506,10 @@ msgstr "自上次價格以來的價格變更 (%(prev)s)"
 msgid "No information"
 msgstr "無資訊"
 
+#. 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Checked"
 msgstr "檢查"
 
@@ -2495,8 +2518,10 @@ msgstr "檢查"
 msgid "Checking now"
 msgstr "正在檢查"
 
+#. 'Changed' labels the last-changed time column in the watch overview list, not a status badge
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Changed"
 msgstr "變更"
 
@@ -2757,6 +2782,7 @@ msgstr "網頁"
 msgid "Restock & Price"
 msgstr "補貨與價格"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "未設定網站監測任務，請在上方欄位新增 URL，或"
@@ -4013,6 +4039,7 @@ msgstr "要提取的 RegEx："
 msgid "Be sure to test your RegEx here."
 msgstr "請務必在此處測試您的 RegEx。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr "每個 RegEx 群組括號"
@@ -4043,6 +4070,7 @@ msgstr "讀取 {} 的中繼資料時發生錯誤"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "監測協定不被允許或 URL 格式無效"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "所有通知的內文 — 您可以使用"
@@ -4106,6 +4134,7 @@ msgstr "監測任務差異（Diff）輸出的 URL。"
 msgid "The diff output - only changes, additions, and removals"
 msgstr "差異輸出 - 僅包含變更、新增和移除"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr "所有差異變體皆接受"
@@ -4192,6 +4221,7 @@ msgstr "AI 變更摘要文字（與已升級的 {{diff}} 相同 — 顯式引用
 msgid "The AI Change Intent that was evaluated."
 msgstr "已評估的 AI 變更意圖。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "警告："
@@ -4250,6 +4280,7 @@ msgstr "<i>請在此處閱讀通知服務 Wiki 以獲取重要的設定注意事
 msgid "Show advanced help and tips"
 msgstr "顯示進階說明與提示"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "（或"
@@ -4270,6 +4301,7 @@ msgstr "的通知文字，包含標題。"
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "聊天機器人（Bots）無法向其他機器人發送訊息，因此您應該指定非機器人使用者的聊天 ID（Chat ID）。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "僅支援非常有限的 HTML，且在發送額外標籤時可能會失敗，"
@@ -4278,6 +4310,7 @@ msgstr "僅支援非常有限的 HTML，且在發送額外標籤時可能會失�
 msgid "(or use plaintext/markdown format)"
 msgstr "（或使用純文字 / Markdown 格式）"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "用於直接 API 呼叫（或省略"
@@ -4303,6 +4336,7 @@ msgstr "自訂通知"
 msgid "Title for all notifications"
 msgstr "所有通知的標題"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "對於 JSON 承載資料（Payloads），使用"
@@ -4311,6 +4345,7 @@ msgstr "對於 JSON 承載資料（Payloads），使用"
 msgid "without quotes for automatic escaping, for example -"
 msgstr "且不加引號以進行自動跳脫，例如 -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "URL 編碼，使用"
@@ -4319,6 +4354,7 @@ msgstr "URL 編碼，使用"
 msgid "for example -"
 msgstr "例如 -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "正規表示式替換，使用"
@@ -4331,6 +4367,7 @@ msgstr "如需所有 Jinja2 內建過濾器的完整參考，使用者可以參�
 msgid "Format for all notifications"
 msgstr "所有通知的格式"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr "Discord 不會渲染 HTML — 請切換至"
@@ -4793,6 +4830,7 @@ msgstr "每行獨立處理（將每行視為「或 OR」）"
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "注意：包裹在正斜線 / 中以使用正規表示式，範例："
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr "您也可以使用"
@@ -4878,6 +4916,7 @@ msgstr "使用 <code>//(?aiLmsux))</code> 類型旗標（<a href=\"%(url)s\">更
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr "關鍵字範例 - 範例：<code>Out of stock</code>"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "使用群組以僅提取該文字 - 範例"

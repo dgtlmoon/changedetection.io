@@ -299,6 +299,7 @@ msgstr ".XLSX & Wachete"
 msgid "Backup Restore"
 msgstr "バックアップ復元"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "changedetection.io のバックアップ復元は"
@@ -342,6 +343,7 @@ msgstr "エクスポート方法は？"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "必要に応じてデフォルトのフェッチャーを Chrome に設定してください。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "カスタム列とデータ型マッピングの表："
@@ -486,6 +488,7 @@ msgstr ""
 # 訳注: "Base URL used for the {{base_url}} token in notification links."
 # → 「通知リンクの {{base_url}} トークンに使用するベースURL。」
 # 修飾語と被修飾語の訳を入れ替えた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "通知リンクの"
@@ -553,6 +556,7 @@ msgstr ""
 msgid "Info"
 msgstr "情報"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "すべてのウォッチのデフォルト再チェック時間、現在のシステム最小値は"
@@ -625,6 +629,7 @@ msgstr "テキスト抽出前に <i>n</i> 秒間待機します。"
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "ウォッチを処理する同時ワーカー数。ワーカーが多いほど処理は速くなりますが、メモリ使用量も増えます。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "現在稼働中："
@@ -653,6 +658,7 @@ msgstr "通常のプレーンリクエスト（Chrome以外）の場合、タイ
 msgid "Applied to all requests."
 msgstr "すべてのリクエストに適用されます。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "注意：User-Agentを変更するだけではボット対策技術を回避できない場合が多く、以下を考慮することが重要です"
@@ -738,6 +744,7 @@ msgstr "API で changedetection.io を操作できます。詳細は"
 msgid "API access and examples here"
 msgstr "APIアクセスと例はこちら"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "以下を使用してAPIアクセスを制限："
@@ -1742,6 +1749,7 @@ msgstr "これにより、すべてのウォッチのバージョン履歴（ス
 # 訳注: "You may like to use the [BACKUP] link first."
 # → 「先に[バックアップ]リンクをご利用ください。」
 # 副詞と述語の訳を入れ替えた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "先に"
@@ -1758,6 +1766,7 @@ msgstr "リンクをご利用ください。"
 msgid "Confirmation text"
 msgstr "確認テキスト"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "次の単語を入力してください："
@@ -1818,17 +1827,23 @@ msgstr "空白を無視"
 msgid "Same/non-changed"
 msgstr "同じ/変更なし"
 
+#. 'Removed' is a noun label for a diff display filter (toggles removed lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff filter"
 msgid "Removed"
-msgstr "削除済み"
+msgstr "削除"
 
+#. 'Added' is a noun label for a diff display filter (toggles added lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Added"
-msgstr "追加済み"
+msgstr "追加"
 
+#. 'Replaced' is a noun label for a diff display filter (toggles replaced lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Replaced"
-msgstr "置換済み"
+msgstr "置換"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Include all intermediate snapshots between the selected versions in the AI summary"
@@ -1952,6 +1967,7 @@ msgstr "条件"
 msgid "Stats"
 msgstr "統計"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "一部のサイトはJavaScriptでコンテンツを生成します。その場合は以下を使用してください。"
@@ -2082,6 +2098,7 @@ msgstr "申し訳ありませんが、この機能はインタラクティブな
 msgid "to one that supports interactive Javascript."
 msgstr "インタラクティブなJavascriptをサポートするものに変更してください。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "次の操作が必要です："
@@ -2100,6 +2117,7 @@ msgstr "フィルタがページで見つからなくなったときに通知を
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr "確認ボタン（✓）を使用して、現在のスナップショットに対して条件が満たされるかテストできます。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "次のクイックチュートリアルをご覧ください："
@@ -2133,6 +2151,7 @@ msgstr "注意：各行のテキストの長さと類似度によっては、ア
 # 訳注: "So it's always better to select [X] when you're interested in new content."
 # → 「そのため、新しいコンテンツに興味がある場合は [X] を選択することをおすすめします。」
 # 条件節と述語の訳を入れ替えた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "そのため、新しいコンテンツに興味がある場合は"
@@ -2141,6 +2160,7 @@ msgstr "そのため、新しいコンテンツに興味がある場合は"
 msgid "when you're interested in new content."
 msgstr "を選択することをおすすめします。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "リスト内でコンテンツが移動しただけでも"
@@ -2181,6 +2201,7 @@ msgstr ""
 msgid "Loading..."
 msgstr "読み込み中..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "ビジュアルセレクターツールを使用すると、変更検知に使用する"
@@ -2493,20 +2514,24 @@ msgstr ""
 msgid "No information"
 msgstr "情報なし"
 
+#. 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Checked"
-msgstr "チェック済み"
+msgstr "前回チェック"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/templates/base.html
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Checking now"
-msgstr "今すぐチェック"
+msgstr "チェック中"
 
+#. 'Changed' labels the last-changed time column in the watch overview list, not a status badge
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Changed"
-msgstr "変更済み"
+msgstr "前回変更"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Summary"
@@ -2765,6 +2790,7 @@ msgstr ""
 msgid "Restock & Price"
 msgstr "在庫補充＆価格"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "ウェブページ変更検知ウォッチが設定されていません。上のボックスにURLを追加するか、"
@@ -4021,6 +4047,7 @@ msgstr "抽出用の正規表現："
 msgid "Be sure to test your RegEx here."
 msgstr "ここで正規表現をテストしてください。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr "正規表現の各グループ括弧"
@@ -4051,6 +4078,7 @@ msgstr "{} のメタデータ取得中にエラーが発生しました"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "ウォッチのプロトコルが許可されていないか、URL形式が無効です"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "すべての通知の本文 — 以下を使用できます："
@@ -4117,6 +4145,7 @@ msgstr "差分出力 - 変更、追加、削除のみ"
 # 訳注: "All diff variants accept [codes] args, e.g. [examples]"
 # → 「各種差分出力は [codes] 引数を受け付けます。例: [examples]」
 # 述語の訳を後半にまとめた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr "各種差分出力は"
@@ -4206,6 +4235,7 @@ msgstr ""
 # 訳注: "Warning: Contents of [token1] and [token2] depend on how the difference algorithm perceives the change."
 # → 「警告： [token1] および [token2] の内容は、差分アルゴリズムが変更をどのように認識するかによって異なります。」
 # 主語の訳を後半にまとめた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "警告："
@@ -4265,6 +4295,7 @@ msgstr "<strong>重要な設定に関するメモについては、通知サー�
 msgid "Show advanced help and tips"
 msgstr "詳細なヘルプとヒントを表示"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "（または"
@@ -4288,6 +4319,7 @@ msgstr "です（タイトルを含む）。"
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "ボットは他のボットにメッセージを送信できないため、ボット以外のユーザーのチャットIDを指定してください。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "非常に限られたHTMLのみをサポートしており、追加タグが送信されると失敗する場合があります。"
@@ -4296,6 +4328,7 @@ msgstr "非常に限られたHTMLのみをサポートしており、追加タ�
 msgid "(or use plaintext/markdown format)"
 msgstr "（またはプレーンテキスト/マークダウン形式を使用）"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "直接APIコールの場合（または省略："
@@ -4321,6 +4354,7 @@ msgstr ""
 msgid "Title for all notifications"
 msgstr "すべての通知のタイトル"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "JSONペイロードの場合は以下を使用："
@@ -4329,6 +4363,7 @@ msgstr "JSONペイロードの場合は以下を使用："
 msgid "without quotes for automatic escaping, for example -"
 msgstr "自動エスケープのための引用符なし。例："
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "URLエンコードの場合は使用："
@@ -4337,6 +4372,7 @@ msgstr "URLエンコードの場合は使用："
 msgid "for example -"
 msgstr "例："
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "正規表現による置換の場合は使用："
@@ -4353,6 +4389,7 @@ msgstr "すべての通知のフォーマット"
 # literally in your notifications."
 # → 「Discord は HTML をレンダリングしません。プレーンテキスト形式に切り替えて、通知で &nbsp; などの HTML エンティティがそのまま表示されるのを回避してください。」
 # 3分割された文をプレースホルダー位置に合わせて再配分
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr "Discord は HTML をレンダリングしません。"
@@ -4816,6 +4853,7 @@ msgstr "各行は個別に処理されます（各行を「OR」として考え�
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "注意：正規表現を使用する場合はスラッシュで囲んでください。例："
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr "次も使用できます："
@@ -4901,6 +4939,7 @@ msgstr "<code>//(?aiLmsux))</code> タイプフラグを使用できます（詳
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr "キーワード例 - 例: <code>在庫切れ</code>"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "グループを使用してテキストのみを抽出する - 例"
