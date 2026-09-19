@@ -52,6 +52,15 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
         assert b'Random content' in res.data
 
+        # ...and stay read-only while doing it. The diff page remembers its display filters
+        # on the watch, so an anonymous shared viewer submitting filters must not be able to
+        # decide what the logged-in operator sees next, or to force a watch write per request.
+        watch = list(app.config['DATASTORE'].data['watching'].values())[0]
+        res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first") + "?type=diffWords&ignoreWhitespace=on")
+        assert res.status_code == 200, "precondition: the shared diff page is reachable while logged out"
+        assert not watch.get('diff_display_prefs'), \
+            "Anonymous shared-diff viewers must not write display preferences onto the watch"
+
         # GHSA-vwgh-2hvh-4xm5: shared_diff_access only covers the read-only
         # diff page — the extract endpoints (which run an attacker-supplied
         # regex against history and write a CSV to disk) must still require

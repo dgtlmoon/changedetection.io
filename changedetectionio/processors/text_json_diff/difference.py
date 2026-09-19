@@ -97,9 +97,74 @@ DIFF_PREFERENCES_CONFIG = {
     'removed': {'default': True, 'type': 'bool'},
     'added': {'default': True, 'type': 'bool'},
     'replaced': {'default': True, 'type': 'bool'},
-    'type': {'default': 'diffLines', 'type': 'value'},
-    'llm_all_changes': {'default': False, 'type': 'bool'},
+    'type': {'default': 'diffLines', 'type': 'value', 'allowed': ('diffLines', 'diffWords')},
+    # persist=False: the style filters above are remembered per watch (see below), but this
+    # one asks the LLM for a wider summary, and a remembered tick would spend tokens on every
+    # new change pair without the operator asking again. It resets on each visit.
+    'llm_all_changes': {'default': False, 'type': 'bool', 'persist': False},
 }
+
+# Where a watch's last submitted display preferences are kept. Stored on the watch itself
+# (not in a cookie) so the setting follows the watch rather than the browser it was set in.
+# Listed in SYSTEM_MANAGED_NON_SPEC_FIELDS so writing it does not flag the watch as edited -
+# an edited watch skips the unchanged-content shortcut on its next check, and merely looking
+# at a diff must not cost a reprocess.
+DIFF_PREFERENCES_WATCH_KEY = 'diff_display_prefs'
+
+
+def read_saved_diff_preferences(watch):
+    """Preferences saved from the last submission on this watch's history page.
+
+    Saved values are only accepted when they match the shape their config entry declares -
+    a real bool for bool keys, a known diff type for 'type'. Anything else (missing, wrong
+    type, hand-edited watch.json, a key we no longer use) is dropped so that key falls back
+    to its default, and a malformed value can never break the page.
+    """
+    saved = watch.get(DIFF_PREFERENCES_WATCH_KEY)
+    if not isinstance(saved, dict):
+        return {}
+
+    prefs = {}
+    for key, config in DIFF_PREFERENCES_CONFIG.items():
+        if key not in saved or not config.get('persist', True):
+            continue
+        value = saved[key]
+        if config['type'] == 'bool':
+            if isinstance(value, bool):
+                prefs[key] = value
+        elif value in config.get('allowed', ()):
+            prefs[key] = value
+
+    return prefs
+
+
+def request_may_save_diff_preferences(datastore):
+    """Whether this request is allowed to change what the watch remembers.
+
+    `shared_diff_access` exempts this page from login so a history link can be handed to
+    someone without an account, and auth_decorator.SHARED_DIFF_READ_ONLY_ENDPOINTS classes
+    it read-only - the advisory that introduced that set (GHSA-vwgh-2hvh-4xm5) was exactly
+    a state-changing endpoint reached through the exemption. So an anonymous viewer's
+    filters still apply to the page they asked for; they are simply not written to the
+    watch, where they would decide what the operator sees on their next visit and would
+    commit the watch to disk once per request.
+
+    Where that exemption cannot apply, the route is unreachable while logged out, so the
+    visitor is the operator.
+    """
+    from flask import current_app
+    from flask_login import current_user
+
+    application_settings = datastore.data['settings']['application']
+    if not (application_settings.get('password') or os.getenv("SALTED_PASS", False)):
+        return True
+    if current_app.config.get('LOGIN_DISABLED'):
+        return True
+    if not application_settings.get('shared_diff_access'):
+        return True
+
+    return bool(current_user.is_authenticated)
+
 
 def render(watch, datastore, request, url_for, render_template, flash, redirect, extract_form=None):
     """
@@ -152,6 +217,9 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
     # Check if this is a user submission (any diff pref param exists in query string)
     user_submitted = any(key in request.args for key in DIFF_PREFERENCES_CONFIG.keys())
 
+    # A fresh load restores what this watch was last viewed with, not the config defaults
+    saved_prefs = {} if user_submitted else read_saved_diff_preferences(watch)
+
     diff_prefs = {}
     for key, config in DIFF_PREFERENCES_CONFIG.items():
         if user_submitted:
@@ -161,8 +229,19 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
             else:
                 diff_prefs[key] = request.args.get(key, config['default'])
         else:
-            # Initial load - use defaults from config
-            diff_prefs[key] = config['default']
+            # Initial load - this watch's saved preferences, else defaults from config
+            diff_prefs[key] = saved_prefs.get(key, config['default'])
+
+    # Remember the submission so the next visit to this watch - in any browser, on any
+    # device - renders the same view. Only write when something actually changed, or every
+    # click on a filter would commit the watch to disk again, and only for a requester who
+    # is entitled to change it (see request_may_save_diff_preferences).
+    if user_submitted and request_may_save_diff_preferences(datastore):
+        prefs_to_save = {key: value for key, value in diff_prefs.items()
+                         if DIFF_PREFERENCES_CONFIG[key].get('persist', True)}
+        if watch.get(DIFF_PREFERENCES_WATCH_KEY) != prefs_to_save:
+            watch.update({DIFF_PREFERENCES_WATCH_KEY: prefs_to_save})
+            watch.commit()
 
     content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
                                newest_version_file_contents=to_version_file_contents,
