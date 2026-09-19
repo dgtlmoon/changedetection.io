@@ -49,6 +49,7 @@ def test_check_basic_change_detection_functionality_source(client, live_server, 
     # Only "modified" is shown as added, while <head> and <title> tags remain unchanged
     assert b'aria-label="Changed into" title="Changed into">' in res.data
     assert b'&lt;title&gt;modified head title'
+    assert b'id="diffChars"' in res.data
 
 # `subtractive_selectors` should still work in `source:` type requests
 def test_check_ignore_elements(client, live_server, measure_memory_usage, datastore_path):
