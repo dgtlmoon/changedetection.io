@@ -679,6 +679,7 @@ _RE_SANITIZE_TAG = re.compile(r'[^a-zA-Z0-9]')
 def _jinja2_filter_sanitize_tag_class(tag_title):
     """Sanitize a tag title to create a valid CSS class name.
     Removes all non-alphanumeric characters and converts to lowercase.
+    Uses a stable hash when a non-empty title contains no ASCII alphanumeric characters.
 
     Args:
         tag_title: The tag title string
@@ -688,6 +689,8 @@ def _jinja2_filter_sanitize_tag_class(tag_title):
     """
     # Remove all non-alphanumeric characters and convert to lowercase
     sanitized = _RE_SANITIZE_TAG.sub('', tag_title).lower()
+    if not sanitized and tag_title:
+        return 'tag-' + hashlib.sha256(tag_title.encode('utf-8')).hexdigest()[:16]
     # Ensure it starts with a letter (CSS requirement)
     if sanitized and not sanitized[0].isalpha():
         sanitized = 'tag' + sanitized
