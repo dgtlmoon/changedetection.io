@@ -17,6 +17,37 @@ del _  # Remove marker function
 processor_weight = 1
 list_badge_text = "Restock"  # _()
 
+DEFAULT_RESTOCK_SETTINGS = {
+    'follow_price_changes': True,
+    'in_stock_processing': 'in_stock_only',
+}
+
+
+def get_restock_settings(datastore, watch, log_tag_override=False):
+    """Return the effective restock settings for a watch.
+
+    Restock settings live in the watch's processor config file. A tag with
+    ``overrides_watch`` takes precedence, matching the resolution used while
+    processing a watch. The file reader is shared with other processor callers.
+    """
+    restock_settings = DEFAULT_RESTOCK_SETTINGS.copy()
+    config_data = difference_detection_processor.get_extra_watch_config_for_watch(
+        datastore, watch.get('uuid'), 'restock_diff.json')
+    config_settings = config_data.get('restock_diff') if isinstance(config_data, dict) else None
+    if isinstance(config_settings, dict) and config_settings:
+        restock_settings = config_settings
+
+    tags = datastore.data['settings']['application'].get('tags', {}) or {}
+    for tag_uuid in watch.get('tags') or []:
+        tag = tags.get(tag_uuid, {})
+        if isinstance(tag, dict) and tag.get('overrides_watch'):
+            if log_tag_override:
+                logger.info(f"Watch {watch.get('uuid')} - Tag '{tag.get('title')}' selected for restock settings override")
+            tag_settings = tag.get('processor_config_restock_diff')
+            return tag_settings if isinstance(tag_settings, dict) else {}
+
+    return restock_settings
+
 class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):
         # Set this so we can use it in other parts of the app
@@ -463,19 +494,7 @@ class perform_site_check(difference_detection_processor):
 
         # Which restock settings to compare against?
         # Settings are stored in restock_diff.json (migrated from watch.json by update_30).
-        _extra_config = self.get_extra_watch_config('restock_diff.json')
-        restock_settings = _extra_config.get('restock_diff') or {
-            'follow_price_changes': True,
-            'in_stock_processing': 'in_stock_only',
-        }
-
-        # See if any tags have 'activate for individual watches in this tag/group?' enabled and use the first we find
-        for tag_uuid in watch.get('tags'):
-            tag = self.datastore.data['settings']['application']['tags'].get(tag_uuid, {})
-            if tag.get('overrides_watch'):
-                restock_settings = tag.get('processor_config_restock_diff') or {}
-                logger.info(f"Watch {watch.get('uuid')} - Tag '{tag.get('title')}' selected for restock settings override")
-                break
+        restock_settings = get_restock_settings(self.datastore, watch, log_tag_override=True)
 
 
         itemprop_availability = {}
