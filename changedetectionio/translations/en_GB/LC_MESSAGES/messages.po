@@ -511,6 +511,10 @@ msgstr ""
 msgid "For security this log is emptied on restart."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -600,10 +604,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Install on your phone"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Install and create shortcut"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
