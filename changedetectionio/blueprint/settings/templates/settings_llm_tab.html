@@ -58,12 +58,12 @@
     {% if llm_config and llm_config.get('model') %}
     <span class="stab-configured-badge">&#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}</span>
     {% if not llm_env_configured %}
-    <button type="button" class="pure-button" data-stab-goto="provider">
+    <button type="button" class="cdio-btn" data-stab-goto="provider">
       <i data-feather="settings"></i> {{ _('Edit provider') }} &rarr;
     </button>
     {% endif %}
     {% else %}
-    <button type="button" class="pure-button pure-button-primary" data-stab-goto="provider">
+    <button type="button" class="cdio-btn pure-button-primary" data-stab-goto="provider">
       <i data-feather="settings"></i> {{ _('Configure AI Provider') }} &rarr;
     </button>
     {% endif %}
@@ -153,7 +153,7 @@
 
   <div class="pure-control-group" id="llm-fetch-group" style="display:none">
     <label></label>
-    <button type="button" id="llm-fetch-btn" class="pure-button button-xsmall" onclick="llmFetchModels()"
+    <button type="button" id="llm-fetch-btn" class="cdio-btn button-xsmall" onclick="llmFetchModels()"
             style="background:#27ae60;color:#fff;border:none;">
       &#8635; {{ _('Load available models') }}
     </button>
@@ -183,7 +183,7 @@
       &#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}
     </span>
     &nbsp;
-    <button type="button" class="pure-button button-xsmall"
+    <button type="button" class="cdio-btn button-xsmall"
             onclick="const field = document.getElementById('{{ form.llm.form.model.id }}'); field.focus(); field.select();">
       {{ _('Change model') }}
     </button>
@@ -193,7 +193,7 @@
        Stays as <a> because we're inside the outer settings <form> — nested forms are
        invalid HTML, so modal.js builds a body-level hidden form for the POST. #}
     <a href="{{ url_for('settings.llm.llm_clear') }}"
-       class="pure-button button-xsmall"
+       class="cdio-btn button-xsmall"
        style="background:#c0392b;color:#fff;"
        data-method="POST"
        data-requires-confirm
@@ -205,7 +205,7 @@
       &#10005; {{ _('Remove') }}
     </a>
     &nbsp;
-    <button type="button" id="llm-test-btn" class="pure-button button-xsmall" onclick="llmRunTest()"
+    <button type="button" id="llm-test-btn" class="cdio-btn button-xsmall" onclick="llmRunTest()"
             style="background:#2980b9;color:#fff;border:none;">
       &#9654; {{ _('Test connection') }}
     </button>
@@ -221,7 +221,7 @@
     <label style="color:#888; font-size:0.85em;">{{ _('Cache') }}</label>
     {# See comment above on data-method="POST"+modal.js (GHSA-g36r-fm2p-87xm). #}
     <a href="{{ url_for('settings.llm.llm_clear_summary_cache') }}"
-       class="pure-button button-xsmall"
+       class="cdio-btn button-xsmall"
        style="background:#7f8c8d;color:#fff;"
        data-method="POST"
        data-requires-confirm
@@ -260,7 +260,7 @@
     {{ render_field(form.llm.form.change_summary_default) }}
     <span class="pure-form-message-inline">
       {{ _('Used for all watches unless overridden by the watch or its tag/group.') }}
-      &nbsp;<a href="#" class="pure-button button-small" onclick="var t=document.getElementById('llm-change_summary_default'); if(!t.value && t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
+      &nbsp;<a href="#" class="cdio-btn button-small" onclick="var t=document.getElementById('llm-change_summary_default'); if(!t.value && t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
     </span>
   </div>
 

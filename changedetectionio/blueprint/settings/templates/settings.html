@@ -77,7 +77,7 @@
                         {% endif %}
                     </div>
                     <div class="pure-control-group">
-                      <a href="{{url_for('ui.clear_all_history')}}" class="pure-button button-error">{{ _('Clear Snapshot History') }}</a>
+                      <a href="{{url_for('ui.clear_all_history')}}" class="cdio-btn button-error">{{ _('Clear Snapshot History') }}</a>
                     </div>
                     <div class="pure-control-group">
                         {{ render_checkbox_field(form.application.form.shared_diff_access, class="shared_diff_access") }}
@@ -212,7 +212,7 @@ nav
                     </div>
                 </div>
                 <div class="pure-control-group">
-                    <button type="submit" formmethod="post" formnovalidate formaction="{{url_for('settings.settings_reset_api_key')}}" class="pure-button button-small button-cancel">{{ _('Regenerate API key') }}</button>
+                    <button type="submit" formmethod="post" formnovalidate formaction="{{url_for('settings.settings_reset_api_key')}}" class="cdio-btn button-small button-cancel">{{ _('Regenerate API key') }}</button>
                 </div>
                 <div class="pure-control-group">
                     <h4>{{ _('Chrome Extension') }}</h4>
