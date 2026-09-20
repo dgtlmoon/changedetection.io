@@ -13,12 +13,18 @@ API endpoint's response body for the key string.
 """
 
 import json
+from pathlib import Path
 
 from flask import url_for
 
 from changedetectionio.tests.util import live_server_setup, delete_all_watches
 
 CANARY_KEY = 'sk-CANARY-SECRET-DO-NOT-EXPOSE-12345'
+
+# Resolved from this file rather than the working directory: CI does not run pytest from
+# the repo root, and a cwd-relative path turns a security assertion into a FileNotFoundError
+# there. tests/ -> the changedetectionio package.
+APP_BASE = Path(__file__).resolve().parents[1]
 
 
 def _configure_llm(datastore, api_key=CANARY_KEY):
@@ -30,6 +36,16 @@ def _configure_llm(datastore, api_key=CANARY_KEY):
         'model': 'gpt-4o-mini',
         'api_key': api_key,
     })
+
+
+def _element(page: bytes, element_id: bytes, tag: bytes = b'<input') -> bytes:
+    """Return the whole opening tag carrying `element_id`.
+
+    Not page.split(id)[1] - WTForms emits attributes alphabetically, so `autocomplete` and
+    `disabled` land BEFORE `id=` and slicing forwards from the id silently misses them.
+    """
+    i = page.index(element_id)
+    return page[page.rindex(tag, 0, i):page.index(b'>', i) + 1]
 
 
 def _api_token(client):
@@ -351,6 +367,126 @@ def test_settings_form_preserves_api_key_when_submitted_blank(
         f"Blank PasswordField submission must not clear the existing API key (got '{saved_key}')"
 
     delete_all_watches(client)
+
+
+def test_settings_form_preserves_api_key_when_field_is_absent(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Once a key is stored the field renders disabled, and a disabled input is not submitted
+    at all - so the save path sees no llm-api_key key whatsoever, not an empty one.
+
+    That must preserve the stored key. It does, because the form is built with data=default
+    and the merge is {**stored, **form_input}, but it is exactly the kind of thing a later
+    refactor breaks silently: the symptom is a working API key replaced by nothing, with no
+    copy kept anywhere to restore it from.
+    """
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds, api_key='sk-should-survive-absence')
+
+    res = client.post(
+        url_for('settings.settings_page'),
+        data={
+            'llm-model': 'gpt-4o',
+            # no 'llm-api_key' at all — this is what a disabled input submits
+            'llm-api_base': '',
+            'application-pager_size': '50',
+            'application-notification_format': 'System default',
+            'requests-time_between_check-days': '0',
+            'requests-time_between_check-hours': '0',
+            'requests-time_between_check-minutes': '5',
+            'requests-time_between_check-seconds': '0',
+            'requests-time_between_check-weeks': '0',
+            'requests-workers': '10',
+            'requests-timeout': '60',
+        },
+        follow_redirects=True,
+    )
+    assert res.status_code == 200
+
+    saved_key = ds.data['settings']['application'].get('llm', {}).get('api_key', '')
+    assert saved_key == 'sk-should-survive-absence', \
+        f"An absent llm-api_key must not clear the stored key (got '{saved_key}')"
+
+    delete_all_watches(client)
+
+
+def test_datastore_never_ends_up_with_a_blank_key(
+        client, live_server, measure_memory_usage, datastore_path):
+    """A stored key must never be replaced by an empty/whitespace value through the form.
+
+    Whatever the field submits - missing, empty, or whitespace - the stored key stands. The
+    only supported way to clear it is "Remove provider" (llm_clear).
+    """
+    ds = client.application.config.get('DATASTORE')
+
+    base = {
+        'llm-model': 'gpt-4o',
+        'llm-api_base': '',
+        'application-pager_size': '50',
+        'application-notification_format': 'System default',
+        'requests-time_between_check-days': '0',
+        'requests-time_between_check-hours': '0',
+        'requests-time_between_check-minutes': '5',
+        'requests-time_between_check-seconds': '0',
+        'requests-time_between_check-weeks': '0',
+        'requests-workers': '10',
+        'requests-timeout': '60',
+    }
+
+    for label, extra in (('absent', {}), ('empty', {'llm-api_key': ''}),
+                         ('whitespace', {'llm-api_key': '   '})):
+        _configure_llm(ds, api_key='sk-original')
+        client.post(url_for('settings.settings_page'), data={**base, **extra},
+                    follow_redirects=True)
+        saved = ds.data['settings']['application'].get('llm', {}).get('api_key', '')
+        assert saved == 'sk-original', f"{label} submission blanked the stored key (got '{saved}')"
+
+    delete_all_watches(client)
+
+
+def test_provider_and_key_are_locked_once_a_key_is_stored(
+        client, live_server, measure_memory_usage, datastore_path):
+    """Locked means disabled, not readonly: a disabled input never reaches the POST, so no
+    autofilled or mistyped value can overwrite the key."""
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds, api_key='sk-locked')
+
+    page = client.get(url_for('settings.settings_page')).data
+    key_field = _element(page, b'id="llm-api_key"')
+    assert b'disabled' in key_field, "stored key must render the field disabled"
+
+    provider = _element(page, b'id="llm-provider"', tag=b'<select')
+    assert b'disabled' in provider, "provider select must be locked alongside the key"
+
+    assert b'Remove provider' in page, "the only supported way out of the locked state"
+
+    delete_all_watches(client)
+
+
+def test_provider_and_key_are_editable_when_nothing_is_stored(
+        client, live_server, measure_memory_usage, datastore_path):
+    """The lock must not strand a fresh install with fields it can never fill in."""
+    page = client.get(url_for('settings.settings_page')).data
+
+    key_field = _element(page, b'id="llm-api_key"')
+    assert b'disabled' not in key_field, "no stored key - the field has to be usable"
+
+    provider = _element(page, b'id="llm-provider"', tag=b'<select')
+    assert b'disabled' not in provider
+
+    # While editable it still must not be autofillable. Chrome ignores autocomplete="off"
+    # on type=password, so a saved site password lands in the box and the next Save writes
+    # it over the real key. readonly (Chrome won't autofill one) is dropped by
+    # global-settings.js on first focus or click.
+    assert b'autocomplete="new-password"' in key_field, \
+        'Chrome ignores autocomplete="off" on password inputs'
+    assert b'autocomplete="off"' not in key_field
+    assert b'readonly' in key_field
+    assert b'data-unlock-on-interact' in key_field, "nothing would remove the readonly"
+
+    script = (APP_BASE / 'static' / 'js' / 'global-settings.js').read_bytes()
+    assert b'data-unlock-on-interact' in script and b"removeAttr('readonly')" in script, \
+        "a readonly field that nothing unlocks is just a broken field"
 
 
 # ---------------------------------------------------------------------------
