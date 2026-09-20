@@ -9,6 +9,10 @@
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
+{# PWA related #}
+{%- set menu_icon -%}&nbsp;<i data-feather="more-vertical"></i>{% endset -%}
+{%- set install_action -%}<strong>{{ _('Install and create shortcut - then "install"') }}</strong>{% endset -%}
+
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
@@ -108,8 +112,6 @@
                             {#- The &nbsp; lives in the placeholder and the msgid has no space before
                                 %(icon)s, so the glyph can't be orphaned onto the next line away from
                                 the word it belongs to. -#}
-                            {%- set menu_icon -%}&nbsp;<i data-feather="more-vertical"></i>{% endset -%}
-                            {%- set install_action -%}<strong>{{ _('Install and create shortcut') }}</strong>{% endset -%}
                             <span class="pure-form-message-inline">
                                 {{ _('Scan this, then use your phone browser\'s menu%(icon)s and choose "%(action)s".', icon=menu_icon, action=install_action)|safe }}<br>
                                 {{ _('On Android you can then share any web page straight to this install from the share sheet.') }}<br>
@@ -276,8 +278,6 @@ nav
                             {#- The &nbsp; lives in the placeholder and the msgid has no space before
                                 %(icon)s, so the glyph can't be orphaned onto the next line away from
                                 the word it belongs to. -#}
-                            {%- set menu_icon -%}&nbsp;<i data-feather="more-vertical"></i>{% endset -%}
-                            {%- set install_action -%}<strong>{{ _('Install and create shortcut') }}</strong>{% endset -%}
                             <span class="pure-form-message-inline">
                                 {{ _('Scan this, then use your phone browser\'s menu%(icon)s and choose "%(action)s".', icon=menu_icon, action=install_action)|safe }}<br>
                                 {{ _('On Android you can then share any web page straight to this install from the share sheet.') }}<br>
