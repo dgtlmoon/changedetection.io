@@ -207,7 +207,7 @@ window.watchOverviewI18n = {
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
-    {%- set cols_required = 6 -%}
+    {%- set cols_required = 7 -%}
     {%- if any_has_restock_price_processor -%}
         {%- set cols_required = cols_required + 1 -%}
     {%- endif -%}
