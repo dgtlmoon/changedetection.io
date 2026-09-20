@@ -1062,6 +1062,10 @@ msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
 msgstr "Ollama 또는 사용자 지정/자체 호스팅 엔드포인트에만 필요합니다. 클라우드 프로바이더는 비워 두세요."
 
@@ -1117,6 +1121,10 @@ msgstr "제거"
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "취소"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove provider"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Test connection"
