@@ -438,6 +438,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # refused ours, so nothing was sent to the LLM twice.
             logger.info(f"AI summary for {uuid} was already started by a concurrent request, "
                         f"returning pending")
+        summary_jobs.submit(job_key, _job, on_settled=_announce)
         _mark_viewed(uuid)
         return jsonify({'summary': None, 'error': None, 'status': 'pending'}), 202
 
