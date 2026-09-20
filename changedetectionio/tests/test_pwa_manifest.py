@@ -66,8 +66,8 @@ def test_manifest_name_follows_the_subpath(client, live_server):
     default = _manifest(client)
     # The real product name, not an invented abbreviation - this is the home screen label,
     # and the name is the thing the project actually protects.
-    assert default['name'] == 'changedetection.io'
-    assert default['short_name'] == 'changedetection.io'
+    assert default['name'] == 'ChangeDetection.io'
+    assert default['short_name'] == 'ChangeDetection.io'
 
     tenant = _manifest(client, headers={'X-Forwarded-Prefix': '/acme-monitoring'})
     assert tenant['name'] == 'Acme Monitoring'
