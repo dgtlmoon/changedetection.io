@@ -78,7 +78,9 @@ $(document).ready(function () {
     // bootstrap it, this will trigger everything else
     $('#browsersteps-img').bind('load', function () {
         $('body').addClass('full-width');
-        console.log("Loaded background...");
+        console.log(`Loaded background ${this.naturalWidth}px` );
+        // For the UI width of the whole edit area
+        document.documentElement.style.setProperty('--browser-steps-max-width', `${this.naturalWidth+200}px` );
 
         document.getElementById("browsersteps-selector-canvas");
         c = document.getElementById("browsersteps-selector-canvas");

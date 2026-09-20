@@ -71,6 +71,7 @@ async () => {
             'out of stock',
             'out-of-stock',
             'plus disponible',
+            'producto sin stock',
             'prodotto esaurito',
             'produkt niedostępny',
             'rupture',

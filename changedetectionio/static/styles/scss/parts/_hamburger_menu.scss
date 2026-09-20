@@ -95,7 +95,9 @@
   overflow-y: auto;
   padding-top: 60px;
 
-
+  .action-label {
+    display: block !important;
+  }
   #cdio-logo {
     color: var(--color-text);
 

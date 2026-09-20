@@ -1,7 +1,7 @@
 import time
 import threading
 from blinker import signal
-from flask import Blueprint, request, redirect, url_for, flash, render_template, session, current_app
+from flask import Blueprint, request, redirect, url_for, flash, render_template, session, current_app, abort
 from flask_babel import gettext
 from loguru import logger
 
@@ -406,10 +406,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index'))
 
-
     @ui_blueprint.route("/share-url/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def form_share_put_watch(uuid):
+        if not datastore.data['settings']['application']['ui'].get('use_share_watch'):
+            abort(403, description="Access denied")
+
         """Given a watch UUID, upload the info and return a share-link
            the share-link can be imported/added"""
         import requests

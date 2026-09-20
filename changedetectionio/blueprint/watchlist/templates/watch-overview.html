@@ -140,8 +140,10 @@ window.watchOverviewI18n = {
     priceLow:          {{ _('Currently low')|tojson }},
     priceTypical:      {{ _('Currently typical')|tojson }},
     priceHigh:         {{ _('Currently high')|tojson }},
-    cheaperThan:       {{ _('cheaper than %s% of tracked prices')|tojson }},
-    pricierThan:       {{ _('more expensive than %s% of tracked prices')|tojson }},
+    {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
+    cheaperThan:       {{ _('cheaper than {pct} of tracked prices')|tojson }},
+    {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
+    pricierThan:       {{ _('more expensive than {pct} of tracked prices')|tojson }},
     typicalNote:       {{ _('around the usual price')|tojson }},
     avgLabel:          {{ _('avg')|tojson }}
 };
@@ -153,8 +155,8 @@ window.watchOverviewI18n = {
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
         <div id="add-watch-url-row">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <label for="url"><strong>{{ _('Web page URL') }}</strong></label><br>
-            {{ render_nolabel_field(form.url, placeholder="https://...", required=true, class="pure-input-1") }}
+            <label for="url"><strong>{{ _('Web page URL') }}</strong></label>
+            {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1", span_wrap=false) }}
             <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
         </div>
         {% if llm_configured %}
@@ -193,13 +195,6 @@ window.watchOverviewI18n = {
         {% endfor %}
     </template>
     {% endif %}
-    {# "Select all matching" banner — shown by watch-overview.js when the whole
-       visible page is selected but more matching rows exist on other pages. #}
-    <div id="select-all-banner" class="select-all-banner" style="display: none;"
-         data-select-all-tmpl="{{ _('All %(page)s on this page are selected.') }}"
-         data-select-all-action="{{ _('Select all %(total)s matching') }}"
-         data-all-selected-tmpl="{{ _('All %(total)s matching are selected.') }}"
-         data-clear-action="{{ _('Clear selection') }}"></div>
 
     <div id="stats_row">
         <div class="left">{%- if watches|length >= pagination.per_page -%}{{ pagination.info }}{%- endif -%}
@@ -208,11 +203,7 @@ window.watchOverviewI18n = {
         </div>
     </div>
 
-
-
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
-
-
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
@@ -287,6 +278,7 @@ window.watchOverviewI18n = {
         </div>
 
     <div id="checkbox-operations">
+        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
         <button type="button" class="pure-button button-secondary button-xsmall" id="check-invert"><i data-feather="repeat" ></i>&nbsp;{{ _('Invert') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="pause"><i data-feather="pause" ></i>&nbsp;{{ _('Pause') }}</button>
         <button class="pure-button button-secondary button-xsmall"  name="op" value="unpause"><i data-feather="play" ></i>&nbsp;{{ _('UnPause') }}</button>
@@ -321,9 +313,13 @@ window.watchOverviewI18n = {
                        data-confirm-title="{{ _('Delete Watches?') }}"
                        data-confirm-message="{{ _('<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"><i data-feather="trash" ></i>&nbsp;{{ _('Delete') }}</button>
-        <button type="button" class="pure-button button-xsmall" id="check-cancel" style="background: var(--color-background-button-cancel); color: #333;"><i data-feather="x" ></i>&nbsp;{{ _('Close') }}</button>
     </div>
-
+        <div id="select-all-banner" class="select-all-banner" style="display: none;"
+             data-select-all-tmpl="{{ _('All %(page)s on this page are selected.') }}"
+             data-select-all-action="{{ _('Select all %(total)s matching') }}"
+             data-all-selected-tmpl="{{ _('All %(total)s matching are selected.') }}"
+             data-clear-action="{{ _('Clear selection') }}">
+        </div>
         {%- set table_classes = [
             'favicon-enabled' if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] else 'favicon-not-enabled',
         ] -%}
@@ -340,28 +336,44 @@ window.watchOverviewI18n = {
                         <a class="{{ 'active '+link_order if sort_attribute == 'notification_muted' else 'inactive' }}" href="{{url_for('watchlist.index', sort='notification_muted', order=link_order, **active_filters)}}"><i data-feather="volume-2" style="width: 16px; height: 16px;"></i><span class='arrow {{link_order}}'></span></a>
                     </div>
                 </th>
+                <th><!-- processor/mode --></th>
                 <th id="th-webpage"><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, **active_filters)}}">{{ _('Web page') }} <span class='arrow {{link_order}}'></span></a></th>
              {%- if any_has_restock_price_processor -%}
-                <th>{{ _('Restock & Price') }}</th>
+                <th class="col-restock-price">{{ _('Restock & Price') }}</th>
              {%- endif -%}
-                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
-                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                {# TRANSLATORS: 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state #}
+                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ pgettext('timestamp', 'Checked') }}</span><span class="hide-on-desktop">{{ pgettext('timestamp', 'Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                {# TRANSLATORS: 'Changed' labels the last-changed time column in the watch overview list, not a status badge #}
+                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ pgettext('timestamp', 'Changed') }}</span><span class="hide-on-desktop">{{ pgettext('timestamp', 'Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
             </tr>
             </thead>
             <tbody>
             {%- if not watches|length -%}
             <tr>
+                {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                 <td colspan="{{ cols_required }}" style="text-wrap: wrap;">{{ _('No web page change detection watches configured, please add a URL in the box above, or') }} <a href="{{ url_for('imports.import_page')}}" >{{ _('import a list') }}</a>.</td>
             </tr>
             {%- endif -%}
 
+            {%- set ns = namespace(any_in_page_had_restock=false) -%}
             {%- for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) -%}
                 {%- include "watch-overview-single-row.html" -%}
+
+                {%- if watch['processor'] == 'restock_diff' -%}
+                    {%- set ns.any_in_page_had_restock = true -%}
+                {%- endif -%}
             {%- endfor -%}
             </tbody>
         </table>
         </div>
+        {%- if not ns.any_in_page_had_restock %}
+            <style>
+                .col-restock-price {
+                    display: none;
+                }
+            </style>
+        {%- endif %}
         {{ pagination.links }}
     </div>
     </form>

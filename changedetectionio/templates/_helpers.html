@@ -75,8 +75,8 @@
 {% endmacro %}
 
 
-{% macro render_simple_field(field) %}
-  <span class="label {% if field.errors %}error{% endif %}"><label for="{{ field.id }}">{{ field.label.text | string | forceescape }}</label></span>
+{% macro render_simple_field(field, label=None) %}
+  <span class="label {% if field.errors %}error{% endif %}"><label for="{{ field.id }}">{{ (label if label is not none else field.label.text) | string | forceescape }}</label></span>
   <span {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
   {% if field.errors %}
     <ul class=errors>
@@ -89,8 +89,8 @@
 {% endmacro %}
 
 
-{% macro render_nolabel_field(field) %}
-    <span>
+{% macro render_nolabel_field(field, span_wrap=True) %}
+    {%- if span_wrap %}<span>{% endif %}
     {{ field(**kwargs)|safe }}
         {% if field.errors %}
             <span class="error">
@@ -103,7 +103,7 @@
       {% endif %}
       </span>
         {% endif %}
-    </span>
+    {%- if span_wrap %}</span>{% endif %}
 {% endmacro %}
 
 

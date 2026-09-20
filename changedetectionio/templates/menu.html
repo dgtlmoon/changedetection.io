@@ -18,7 +18,7 @@
     </li>
 {%- if current_user.is_authenticated -%}
     <li class="pure-menu-item menu-collapsible">
-        <form method="POST" action="{{ url_for('logout', redirect=request.path) }}">
+        <form method="POST" action="{{ url_for('logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="bare-btn"><i data-feather="log-out" class="action-icon"></i>&nbsp;{{ _('Log out') }}</button>
         </form>

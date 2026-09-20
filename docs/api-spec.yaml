@@ -28,7 +28,7 @@ info:
     
     For example: `x-api-key: YOUR_API_KEY`
     
-  version: 0.1.8
+  version: 0.1.9
   contact:
     name: ChangeDetection.io
     url: https://github.com/dgtlmoon/changedetection.io
@@ -292,6 +292,13 @@ components:
           type: string
           format: uri
           description: URL to monitor for changes
+          maxLength: 5000
+        link_to_open:
+          type: string
+          description: |
+            Optional human-facing URL to open instead of `url`. Use when `url` points at something
+            that is not meant to be read in a browser (an API endpoint or RSS feed, for example).
+            An empty string means "use `url`". Exposed rendered as `open_link`.
           maxLength: 5000
         title:
           type: [string, 'null']
@@ -717,6 +724,12 @@ components:
               type: string
               format: string
               description: The watch URL rendered in case of any Jinja2 markup, always use this for listing.
+              readOnly: true
+              x-computed: true
+            open_link:
+              type: string
+              format: string
+              description: The URL a human should be sent to - `link_to_open` when set, otherwise the same as `link`.
               readOnly: true
               x-computed: true
             page_title:
@@ -1268,6 +1281,40 @@ paths:
               example:
                 "1640995200": "/path/to/snapshot1.txt"
                 "1640998800": "/path/to/snapshot2.txt"
+        '404':
+          description: Web page change monitor (watch) not found
+
+    delete:
+      operationId: deleteWatchHistory
+      tags: [Watch History]
+      summary: Delete watch history
+      description: |
+        Delete/clear all historical snapshots for a web page change monitor (watch), the watch itself is kept.
+        This also resets the "last checked"/"last changed" state, so the watch will be re-checked on the next cycle.
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X DELETE "http://localhost:5000/api/v1/watch/095be615-a8ad-4c33-8e9c-c7612fbf6c9f/history" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            uuid = '095be615-a8ad-4c33-8e9c-c7612fbf6c9f'
+            response = requests.delete(f'http://localhost:5000/api/v1/watch/{uuid}/history', headers=headers)
+            print(response.status_code)
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: Web page change monitor (watch) unique ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: History deleted successfully
         '404':
           description: Web page change monitor (watch) not found
 
