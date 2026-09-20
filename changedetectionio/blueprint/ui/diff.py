@@ -196,6 +196,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         """
         from changedetectionio.llm.evaluator import (
             DiffPrefs, build_summary_cache_prompt, get_effective_summary_prompt, get_llm_settings,
+            resolve_llm_timeout,
         )
 
         try:
@@ -245,6 +246,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # in-flight job is deduplicated exactly when it would write to the same cache entry.
             'job_key': f"{uuid}|{from_version}|{to_version}|"
                        f"{watch._llm_summary_prompt_hash(cache_prompt)}",
+            # How long this deployment is prepared to wait for the model on one call. The
+            # browser must not give up before this, or it reports a failure for a job that is
+            # still running and will still write its summary - a local Ollama/vLLM endpoint
+            # gets 1800s here against the client's old fixed 180s. See _pending_reply().
+            'llm_timeout': resolve_llm_timeout(llm_cfg),
         }, None
 
     def _build_summary_diff(ctx):
@@ -318,6 +324,40 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         import time
         datastore.set_last_viewed(uuid, int(time.time()))
 
+    # Slack on top of the model's own deadline: the worker still has to come back through
+    # litellm and write the summary to the on-disk cache after the last token.
+    SUMMARY_DEADLINE_MARGIN = 15
+
+    def _pending_reply(ctx):
+        """The 202 body, carrying the point in time after which the summary is not coming.
+
+        The client cannot work this out for itself. It knows neither the configured timeout
+        (300s for a cloud provider, 1800s for a local endpoint) nor when the job started - which
+        is often long before *this* browser asked, because another tab, or this same tab before
+        a reload, already kicked it off. So the deadline is anchored to the job's real start and
+        is the same answer no matter who polls or when.
+
+        Two forms of the same instant, because neither alone is enough:
+          timeout_at  absolute epoch seconds - stable across polls, and what to display.
+          expires_in  seconds from now - what to actually count down with, since a browser clock
+                      that is minutes off would otherwise expire the wait immediately.
+        A job still queued behind another generation has not started its timeout yet, so it
+        measures from now and its deadline keeps moving until a worker picks it up.
+        """
+        import time
+        from changedetectionio.llm.summary_jobs import summary_jobs
+
+        started = summary_jobs.run_started_at(ctx['job_key'])
+        now = time.time()
+        timeout_at = int((started or now) + ctx['llm_timeout'] + SUMMARY_DEADLINE_MARGIN)
+        return {
+            'summary': None,
+            'error': None,
+            'status': 'pending',
+            'timeout_at': timeout_at,
+            'expires_in': max(0, timeout_at - int(now)),
+        }
+
     @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary", methods=['POST'])
     @login_optionally_required
     def diff_llm_summary(uuid):
@@ -326,7 +366,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         Returns JSON:
           200 {"summary": "...", "cached": true,  "status": "done"}     already generated
-          202 {"summary": null,  "status": "pending"}                   generating, poll the GET
+          202 {"summary": null,  "status": "pending",                   generating, poll the GET
+               "timeout_at": epoch, "expires_in": secs}                 (when to stop waiting)
           4xx/5xx {"summary": null, "error": "...", "status": "error"}  cannot be generated
         """
         from flask import jsonify
@@ -357,7 +398,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         if summary_jobs.is_pending(job_key):
             _mark_viewed(uuid)
-            return jsonify({'summary': None, 'error': None, 'status': 'pending'}), 202
+            return jsonify(_pending_reply(ctx)), 202
 
         from changedetectionio.llm.evaluator import (
             LLMInputTooLargeError, get_global_token_budget_month,
@@ -427,7 +468,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         summary_jobs.submit(job_key, _job, on_settled=_announce)
         _mark_viewed(uuid)
-        return jsonify({'summary': None, 'error': None, 'status': 'pending'}), 202
+        return jsonify(_pending_reply(ctx)), 202
 
     @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary", methods=['GET'])
     @login_optionally_required
@@ -437,7 +478,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         Returns JSON:
           200 {"summary": "...", "cached": true, "status": "done"}      ready
-          202 {"summary": null,  "status": "pending"}                   still generating
+          202 {"summary": null,  "status": "pending",                   still generating
+               "timeout_at": epoch, "expires_in": secs}
           200 {"summary": null,  "status": "idle"}                      nothing running - re-POST
           4xx/5xx {"summary": null, "error": "...", "status": "error"}  the job failed
         """
@@ -463,7 +505,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return jsonify({'summary': None, 'error': message, 'status': 'error'}), code
 
         if summary_jobs.is_pending(ctx['job_key']):
-            return jsonify({'summary': None, 'error': None, 'status': 'pending'}), 202
+            return jsonify(_pending_reply(ctx)), 202
 
         # Re-read the cache before giving up. The job can finish in the window between the read
         # above and the is_pending check - it writes the summary and *then* clears the flag - so
