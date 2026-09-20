@@ -11,6 +11,10 @@ polling (no realtime). These tests pin the properties that make that safe:
   - a second click (or a poll) never starts a duplicate generation - that would bill twice
   - the GET is genuinely read-only, so it is safe to leave it as a GET
   - completion announces itself, since a realtime client makes exactly one request per event
+  - every 'pending' reply carries the deadline the server itself is working to, because a client
+    that gives up earlier reports a failure for a job that is still running
+  - that deadline belongs to one job, not to the page: the watchlist has a [Summary] button per
+    row and each one is its own request, started at its own moment
 
 plus the CSRF protection on the POST, which is the reason starting generation is not a GET in the
 first place: a bare <img src="/diff/<uuid>/llm-summary"> on any page would otherwise spend the
@@ -27,10 +31,12 @@ from flask import url_for
 from changedetectionio.tests.util import delete_all_watches, fetch_llm_summary
 
 
-def _configure_llm(client):
+def _configure_llm(client, api_base=None):
     ds = client.application.config.get('DATASTORE')
     existing = ds.data['settings']['application'].get('llm') or {}
     existing.update({'model': 'gpt-4o-mini', 'api_key': 'sk-test'})
+    if api_base is not None:
+        existing['api_base'] = api_base
     ds.data['settings']['application']['llm'] = existing
 
 
@@ -241,6 +247,110 @@ def test_a_job_finishing_mid_request_is_not_reported_as_idle(
     data = res.get_json()
     assert data['status'] == 'done', f"poll reported {data['status']!r} for a cached summary"
     assert data['summary'] == 'Summary that landed mid-request.'
+
+    delete_all_watches(client)
+
+
+def test_pending_reply_carries_the_servers_own_deadline(
+        client, live_server, measure_memory_usage, datastore_path):
+    """A 'pending' reply must say when the summary stops being worth waiting for.
+
+    The browser cannot derive this: it knows neither the configured per-call timeout nor when the
+    job started (another tab may have started it minutes ago). It used to guess 180s, which is
+    shorter than every configured timeout here - so a slow model produced "AI summary timed out"
+    on screen while the job was still running and still about to write its summary.
+    """
+    from changedetectionio.llm import client as llm_client
+
+    _configure_llm(client)
+    uuid, watch = _watch_with_history(client, '5600000000', '5600000001')
+    url = url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                  from_version='5600000000', to_version='5600000001')
+
+    released = threading.Event()
+    try:
+        with patch('litellm.completion', side_effect=lambda *a, **k: (released.wait(10),
+                                                                      _llm_response())[1]):
+            start = client.post(url)
+            assert start.status_code == 202
+            body = start.get_json()
+
+            assert body['expires_in'] >= llm_client.DEFAULT_TIMEOUT, \
+                f"client told to give up after {body['expires_in']}s, before the server would"
+            assert body['timeout_at'] > time.time()
+
+            # The poll reports the same deadline, not one restarted from when it was asked -
+            # otherwise the wait could be extended indefinitely by polling.
+            poll = client.get(url)
+            assert poll.status_code == 202
+            assert abs(poll.get_json()['timeout_at'] - body['timeout_at']) <= 1, \
+                "each poll must report the same instant, anchored to the job's start"
+    finally:
+        released.set()
+
+    delete_all_watches(client)
+
+
+def test_local_endpoint_gets_the_long_deadline(
+        client, live_server, measure_memory_usage, datastore_path):
+    """A local Ollama/vLLM box gets 30 minutes server-side - the browser must be told so.
+
+    This is the case that produced the bug report: LLM_LOCAL_TIMEOUT is 1800s, so a client capped
+    at 180s gave up ten times too early while Ollama was still churning on CPU.
+    """
+    from changedetectionio.llm import client as llm_client
+
+    _configure_llm(client, api_base='http://127.0.0.1:11434')
+    uuid, watch = _watch_with_history(client, '5700000000', '5700000001')
+    url = url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                  from_version='5700000000', to_version='5700000001')
+
+    released = threading.Event()
+    try:
+        with patch('litellm.completion', side_effect=lambda *a, **k: (released.wait(10),
+                                                                      _llm_response())[1]):
+            body = client.post(url).get_json()
+            assert body['expires_in'] >= llm_client.DEFAULT_LOCAL_TIMEOUT, \
+                f"local endpoint deadline was only {body['expires_in']}s"
+    finally:
+        released.set()
+        ds = client.application.config.get('DATASTORE')
+        ds.data['settings']['application']['llm'].pop('api_base', None)
+
+    delete_all_watches(client)
+
+
+def test_each_watch_gets_its_own_deadline(
+        client, live_server, measure_memory_usage, datastore_path):
+    """The watchlist has a [Summary] button per row, so a deadline is per job, never per page.
+
+    Rows are clicked at different moments and the pool is small, so at any instant one row can be
+    generating while another is still queued behind it. Sharing a deadline across the UI would
+    expire a row that had only just been submitted.
+    """
+    _configure_llm(client)
+    first_uuid, _ = _watch_with_history(client, '5800000000', '5800000001')
+    second_uuid, _ = _watch_with_history(client, '5800000000', '5800000001')
+    first_url = url_for('ui.ui_diff.diff_llm_summary', uuid=first_uuid,
+                        from_version='5800000000', to_version='5800000001')
+    second_url = url_for('ui.ui_diff.diff_llm_summary', uuid=second_uuid,
+                         from_version='5800000000', to_version='5800000001')
+
+    released = threading.Event()
+    try:
+        with patch('litellm.completion', side_effect=lambda *a, **k: (released.wait(20),
+                                                                      _llm_response())[1]):
+            first = client.post(first_url).get_json()
+            time.sleep(2)
+            second = client.post(second_url).get_json()
+
+            assert second['timeout_at'] > first['timeout_at'], \
+                "the row clicked later must not inherit the earlier row's deadline"
+
+            # ...and the earlier row keeps its own as the later one runs on.
+            assert client.get(first_url).get_json()['timeout_at'] == first['timeout_at']
+    finally:
+        released.set()
 
     delete_all_watches(client)
 

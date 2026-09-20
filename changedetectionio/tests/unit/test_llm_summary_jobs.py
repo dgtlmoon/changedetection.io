@@ -15,6 +15,7 @@ What this asserts, in the order it matters:
   - failures are held for exactly one reader instead of dying with the thread
   - a different key is never suppressed
   - the "job settled" announcement fires after the result is readable, and cannot break the job
+  - a running job reports when it started, so the routes can hand the browser a real deadline
 
 run from dir above changedetectionio/ dir
 python3 -m unittest changedetectionio.tests.unit.test_llm_summary_jobs
@@ -31,18 +32,19 @@ class TestSummaryJobRegistry(unittest.TestCase):
     def setUp(self):
         self.reg = SummaryJobRegistry(max_workers=4)
 
-    def _wait_until_idle(self, key, timeout=5):
+    def _wait_until_idle(self, key, timeout=5, reg=None):
+        reg = reg or self.reg
         done = threading.Event()
 
         def _poll():
-            if not self.reg.is_pending(key):
+            if not reg.is_pending(key):
                 done.set()
         for _ in range(int(timeout * 100)):
             _poll()
             if done.is_set():
                 return True
             threading.Event().wait(0.01)
-        return not self.reg.is_pending(key)
+        return not reg.is_pending(key)
 
     def test_duplicate_submit_runs_once(self):
         """The whole point: N callers, one LLM call."""
@@ -93,6 +95,34 @@ class TestSummaryJobRegistry(unittest.TestCase):
         self.assertEqual(wrote, ['saved'],
                          "pending cleared before the job wrote its result - a poll could now "
                          "see neither a cached summary nor a running job and re-bill the LLM")
+
+    def test_run_started_at_is_stamped_only_while_the_job_actually_runs(self):
+        """The deadline the browser counts down to is anchored to this.
+
+        A job queued behind another generation has not started burning its LLM timeout yet, so it
+        must report None (the route then measures from now and the deadline keeps sliding) rather
+        than a start time that would expire while it is still waiting for a worker.
+        """
+        reg = SummaryJobRegistry(max_workers=1)
+        release = threading.Event()
+        running = threading.Event()
+
+        def first():
+            running.set()
+            release.wait(5)
+
+        reg.submit('busy', first)
+        reg.submit('queued', lambda: None)
+        self.assertTrue(running.wait(5), "first job never started")
+
+        self.assertIsNotNone(reg.run_started_at('busy'), "a running job must report its start")
+        self.assertIsNone(reg.run_started_at('queued'),
+                          "a job still waiting for a worker has not started its timeout")
+
+        release.set()
+        self.assertTrue(self._wait_until_idle('busy', reg=reg))
+        self.assertIsNone(reg.run_started_at('busy'),
+                          "a finished job must not keep reporting a start time")
 
     def test_handled_failure_is_delivered_once_with_its_status(self):
         def job():

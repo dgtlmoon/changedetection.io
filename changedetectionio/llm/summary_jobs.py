@@ -10,8 +10,10 @@ Note what is *not* stored in this module: the summary itself.  The job writes it
 on-disk cache (``Watch.save_llm_diff_summary``), which every reader already consults, so there is
 no result registry to keep in sync and no memory that grows with history.  All this holds is
 "something is already running for this key" (so polling can never start a second generation and
-pay for the same summary twice) and "the last attempt failed" (so a failure reaches the next poll
-instead of dying with the thread and leaving the browser on a permanent spinner).
+pay for the same summary twice), "when that run actually started" (so the routes can hand the
+browser a real deadline instead of it guessing one) and "the last attempt failed" (so a failure
+reaches the next poll instead of dying with the thread and leaving the browser on a permanent
+spinner).
 
 A process restart therefore loses only the in-flight bookkeeping: the next poll sees neither a
 cache entry nor a pending job, and restarts the work.
@@ -19,6 +21,7 @@ cache entry nor a pending job, and restarts the work.
 
 import os
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 from loguru import logger
@@ -43,7 +46,9 @@ class SummaryJobRegistry:
 
     def __init__(self, max_workers=None):
         self._lock = threading.Lock()
-        self._pending = set()
+        # key -> epoch when the worker picked the job up, or None while it is still queued
+        # behind another generation (the pool is deliberately small, see DEFAULT_MAX_WORKERS).
+        self._pending = {}
         self._errors = {}  # key -> (http_status, message)
         self._pool = None
         self._max_workers = max_workers or int(os.getenv('LLM_SUMMARY_WORKERS', DEFAULT_MAX_WORKERS))
@@ -64,6 +69,16 @@ class SummaryJobRegistry:
     def is_pending(self, key):
         with self._lock:
             return key in self._pending
+
+    def run_started_at(self, key):
+        """Epoch at which the worker began running `key`, None if it is queued or not pending.
+
+        The routes turn this into the deadline they send to the browser: a job still sitting in
+        the queue has not started burning its LLM timeout yet, so its deadline has to keep moving
+        rather than expire while it waits its turn.
+        """
+        with self._lock:
+            return self._pending.get(key)
 
     def take_error(self, key):
         """Pop the stored failure for `key`, or None.
@@ -87,19 +102,23 @@ class SummaryJobRegistry:
                 logger.debug(f"LLM summary job already in flight, not starting a second: {key}")
                 return False
             # Marked pending *before* the pool sees it, so a poll arriving between submit() and
-            # the worker actually starting still gets 'pending' rather than 'idle'.
-            self._pending.add(key)
+            # the worker actually starting still gets 'pending' rather than 'idle'.  No start
+            # time yet - that is stamped in _run when a worker is free to take it.
+            self._pending[key] = None
             self._errors.pop(key, None)
 
         try:
             self._get_pool().submit(self._run, key, fn, on_settled)
         except Exception:
             with self._lock:
-                self._pending.discard(key)
+                self._pending.pop(key, None)
             raise
         return True
 
     def _run(self, key, fn, on_settled=None):
+        with self._lock:
+            if key in self._pending:
+                self._pending[key] = time.time()
         try:
             fn()
         except SummaryJobFailed as e:
@@ -114,7 +133,7 @@ class SummaryJobRegistry:
             # The reverse order would open a window where a poll sees no pending job and no cached
             # summary, decides nothing is running, and pays for the same generation again.
             with self._lock:
-                self._pending.discard(key)
+                self._pending.pop(key, None)
 
             # Announced only after the flag is cleared and the result (or error) is readable, so
             # the single fetch a notified client makes cannot come back "still pending" and leave
