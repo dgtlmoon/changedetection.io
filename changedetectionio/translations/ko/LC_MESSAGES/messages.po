@@ -2462,6 +2462,10 @@ msgid "Watch added."
 msgstr "모니터링이 추가되었습니다."
 
 #: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "항목"
 

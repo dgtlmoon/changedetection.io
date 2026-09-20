@@ -863,6 +863,15 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted - static flag icons need to load on login page
             elif request.endpoint and request.endpoint == 'static_flags':
                 return None
+            # Permitted - the PWA manifest carries no watch data, and bouncing it to /login
+            # makes a password-protected instance silently un-installable: the browser gets
+            # an HTML login page where it expected a manifest and drops the install option.
+            # Permitted - the manifest and service worker carry no watch data, and bouncing
+            # them to /login makes a password-protected instance silently un-installable: the
+            # browser gets an HTML login page where it expected a manifest or JavaScript, the
+            # registration fails, and with it the WebAPK the Android share target needs.
+            elif request.blueprint == 'pwa':
+                return None
             # Permitted - language selection should work on login page.
             # Both halves of the language modal must be exempt: it renders for anonymous
             # users (base.html deliberately leaves it outside the is_authenticated guard),
@@ -988,8 +997,13 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        # Pass the current request path so users are redirected back after login
-        return redirect(url_for('login', redirect=request.path))
+        # Pass the current request path so users are redirected back after login.
+        # full_path keeps the query string: a share arriving at /?pwa_preset_url=... on a
+        # logged-out instance would otherwise come back from the login page as a bare "/",
+        # silently dropping the URL the user just shared. full_path always appends "?", so
+        # only use it when there was actually a query to preserve.
+        target = request.full_path if request.query_string else request.path
+        return redirect(url_for('login', redirect=target))
 
     @app.route('/logout', methods=['POST'])
     def logout():
@@ -1355,6 +1369,11 @@ def changedetection_app(config=None, datastore_o=None):
             datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update
         )
     )
+
+    import changedetectionio.blueprint.pwa as pwa
+
+    # url_prefix='' is required, not cosmetic - see the blueprint docstring
+    app.register_blueprint(pwa.construct_blueprint(), url_prefix='')
 
     import changedetectionio.blueprint.watchlist as watchlist
 

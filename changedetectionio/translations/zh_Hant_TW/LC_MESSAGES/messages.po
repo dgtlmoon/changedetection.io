@@ -2463,6 +2463,10 @@ msgid "Watch added."
 msgstr "監測任務已新增。"
 
 #: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "筆記錄"
 
