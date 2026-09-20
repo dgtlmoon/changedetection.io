@@ -397,6 +397,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return jsonify({'summary': None, 'error': message, 'status': 'error'}), code
 
         if summary_jobs.is_pending(job_key):
+            logger.info(f"AI summary already in progress for {uuid} ({from_version}->{to_version}), "
+                        f"returning pending - not starting a second generation")
             _mark_viewed(uuid)
             return jsonify(_pending_reply(ctx)), 202
 
@@ -431,6 +433,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         def _job():
             """Runs on the summary_jobs pool - no request context available in here."""
+            import time as _time
+            _started = _time.time()
+            logger.info(f"AI summary generation started for {uuid} ({from_version}->{to_version}), "
+                        f"{len(diff_text)} chars of diff")
             try:
                 summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text)
             except LLMInputTooLargeError as e:
@@ -445,6 +451,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Persisted before the job is marked done, so a poll can never see "nothing running,
             # nothing cached" and start paying for the same summary a second time.
             watch.save_llm_diff_summary(summary, from_version, to_version, prompt=cache_prompt)
+            logger.info(f"AI summary generation finished for {uuid} in "
+                        f"{_time.time() - _started:.1f}s ({len(summary)} chars)")
 
         # Re-read the cache. Between the read above and here we have read two snapshots and run
         # difflib, which is long enough for a job started by another tab to have finished and
@@ -466,6 +474,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 watch_uuid=uuid, from_version=from_version, to_version=to_version,
             )
 
+        if not summary_jobs.submit(job_key, _job, on_settled=_announce):
+            # Another request submitted the same key while we were building the diff. The registry
+            # refused ours, so nothing was sent to the LLM twice.
+            logger.info(f"AI summary for {uuid} was already started by a concurrent request, "
+                        f"returning pending")
         summary_jobs.submit(job_key, _job, on_settled=_announce)
         _mark_viewed(uuid)
         return jsonify(_pending_reply(ctx)), 202
