@@ -6,6 +6,7 @@
 ] -%}
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='llm-summary.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='restock-price-graph.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
