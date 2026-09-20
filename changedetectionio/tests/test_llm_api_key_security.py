@@ -13,12 +13,18 @@ API endpoint's response body for the key string.
 """
 
 import json
+from pathlib import Path
 
 from flask import url_for
 
 from changedetectionio.tests.util import live_server_setup, delete_all_watches
 
 CANARY_KEY = 'sk-CANARY-SECRET-DO-NOT-EXPOSE-12345'
+
+# Resolved from this file rather than the working directory: CI does not run pytest from
+# the repo root, and a cwd-relative path turns a security assertion into a FileNotFoundError
+# there. tests/ -> the changedetectionio package.
+APP_BASE = Path(__file__).resolve().parents[1]
 
 
 def _configure_llm(datastore, api_key=CANARY_KEY):
@@ -478,7 +484,7 @@ def test_provider_and_key_are_editable_when_nothing_is_stored(
     assert b'readonly' in key_field
     assert b'data-unlock-on-interact' in key_field, "nothing would remove the readonly"
 
-    script = open('changedetectionio/static/js/global-settings.js', 'rb').read()
+    script = (APP_BASE / 'static' / 'js' / 'global-settings.js').read_bytes()
     assert b'data-unlock-on-interact' in script and b"removeAttr('readonly')" in script, \
         "a readonly field that nothing unlocks is just a broken field"
 
