@@ -1460,7 +1460,7 @@ msgid "Use system defaults"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
+msgid "Add a new organisational tag / group name."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html

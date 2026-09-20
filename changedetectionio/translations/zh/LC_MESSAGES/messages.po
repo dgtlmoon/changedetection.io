@@ -1465,8 +1465,8 @@ msgid "Use system defaults"
 msgstr "使用系统默认值"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
-msgstr "添加新的组织标签"
+msgid "Add a new organisational tag / group name."
+msgstr "添加新的标签 / 分组名称。"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
