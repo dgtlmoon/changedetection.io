@@ -18,6 +18,7 @@
 <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
 <script src="{{url_for('static_content', group='js', filename='snippet-to-image.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='diff-overview.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='llm-summary.js')}}" defer></script>
 
 
 <div id="diff-header">
@@ -220,34 +221,26 @@ $(function () {
     var ignoreWhitespace   = $('#ignoreWhitespace').is(':checked')   ? 1 : 0;
     var showRemoved        = $('#removed').is(':checked')            ? 1 : 0;
     var showAdded          = $('#added').is(':checked')              ? 1 : 0;
-    $.getJSON(summaryUrl, {
-        from_version:      fromVersion,
-        to_version:        toVersion,
-        all_changes:       llmAllChanges,
-        ignore_whitespace: ignoreWhitespace,
-        removed:           showRemoved,
-        added:             showAdded,
-    })
-        .done(function (data) {
-            if (data.summary) {
-                $area.find('.llm-diff-summary-text')
-                     .removeClass('llm-diff-summary-loading')
-                     .text(data.summary);
-                $area.removeAttr('data-pending');
-            } else if (data.error) {
-                showLlmError(data.error);
-            } else {
-                $area.remove();
-            }
-        })
-        .fail(function (xhr) {
-            var resp = xhr.responseJSON;
-            if (resp && resp.error) {
-                showLlmError(resp.error);
-            } else {
-                showLlmError('AI summary request failed (HTTP ' + xhr.status + ').');
-            }
-        });
+    window.llmSummary.fetch({
+        url:  summaryUrl,
+        uuid: "{{ uuid }}",
+        params: {
+            from_version:      fromVersion,
+            to_version:        toVersion,
+            all_changes:       llmAllChanges,
+            ignore_whitespace: ignoreWhitespace,
+            removed:           showRemoved,
+            added:             showAdded,
+        },
+        onDone: function (summary) {
+            $area.find('.llm-diff-summary-text')
+                 .removeClass('llm-diff-summary-loading')
+                 .text(summary);
+            $area.find('.llm-diff-summary-prompt').remove();
+            $area.removeAttr('data-pending');
+        },
+        onError: showLlmError,
+    });
 });
 </script>
 {% endif %}
