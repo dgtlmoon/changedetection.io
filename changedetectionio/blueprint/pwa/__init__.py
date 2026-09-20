@@ -27,6 +27,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def construct_blueprint():
     pwa_blueprint = Blueprint('pwa', __name__, template_folder="templates")
 
+    @pwa_blueprint.app_template_global('pwa_https_mode')
+    def pwa_https_mode():
+        """Template-side gate for anything that invites a phone install.
+
+        Registered app-wide (not just on this blueprint) so the Settings page - and a future
+        welcome wizard - can ask the same question and get the same answer.
+        """
+        return service.https_mode(request.is_secure)
+
     @pwa_blueprint.route("/site.webmanifest", methods=['GET'])
     def site_webmanifest():
         """The PWA manifest.

@@ -5,7 +5,7 @@ favicon-generator output, 3a8a41a3f) and onto a route, so that:
 
   - its URLs can be relative. A manifest's scope defaults to its own directory and relative
     URLs resolve against the manifest's URL, so serving it from the app root is what lets an
-    instance proxied at https://host/blockbuster-regal/ scope itself correctly without being
+    instance proxied at https://example.com/my-instance/ scope itself correctly without being
     told its own prefix. From /static/favicons/ the whole app would have been scoped to the
     favicons directory,
   - it can vary its name per instance, so co-tenanted sub-path installs are distinguishable
@@ -67,9 +67,9 @@ def test_manifest_name_follows_the_subpath(client, live_server):
     assert default['name'] == 'ChangeDetection.io'
     assert default['short_name'] == 'ChangeDetect'
 
-    tenant = _manifest(client, headers={'X-Forwarded-Prefix': '/blockbuster-regal'})
-    assert tenant['name'] == 'Blockbuster Regal'
-    assert tenant['short_name'] == 'Blockbuster', "launcher labels ellipsise around 12 chars"
+    tenant = _manifest(client, headers={'X-Forwarded-Prefix': '/acme-monitoring'})
+    assert tenant['name'] == 'Acme Monitoring'
+    assert tenant['short_name'] == 'Acme', "launcher labels ellipsise around 12 chars"
 
     assert os.getenv('PWA_NAME') is None  # the override is env-only, nothing else sets it
 

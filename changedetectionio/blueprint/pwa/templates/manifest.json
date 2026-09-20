@@ -1,11 +1,11 @@
 {#
-  PWA manifest. Served by the site_webmanifest() route in flask_app.py, NOT as a static file.
+  PWA manifest. Served by site_webmanifest() in the pwa blueprint, NOT as a static file.
 
   Every URL below is deliberately RELATIVE. Relative URLs in a manifest resolve against the
-  manifest's own URL, so an instance reverse-proxied at https://host/blockbuster-regal/ gets
-  a scope and start_url of /blockbuster-regal/ without ever being told its own prefix. That
-  is why these are not url_for(): url_for only produces the prefix when USE_X_SETTINGS is on
-  AND nginx actually sends X-Forwarded-Prefix, whereas the URL the browser used to fetch this
+  manifest's own URL, so an instance reverse-proxied at https://example.com/my-instance/ gets
+  a scope and start_url of /my-instance/ without ever being told its own prefix. That is why
+  these are not url_for(): url_for only produces the prefix when USE_X_SETTINGS is on AND the
+  proxy actually sends X-Forwarded-Prefix, whereas the URL the browser used to fetch this
   file is always right.
 
   "id" pins the app identity. It resolves to the same value that the old manifest's implicit

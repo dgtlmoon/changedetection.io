@@ -9,15 +9,38 @@ import os
 DEFAULT_NAME = 'ChangeDetection.io'
 DESCRIPTION = 'Web page change detection and monitoring'
 
+# Set to force the mobile-install UI on (or off) regardless of the detected scheme
+HTTPS_OVERRIDE_ENV = 'FORCE_MOBILE_HTTPS_STYLE_MANIFEST'
+
+
+def https_mode(is_secure):
+    """Should this instance offer the phone-install UI?
+
+    A PWA can only be installed over HTTPS, so anything that invites someone to install
+    (today the Settings QR code, later an Install button) has to be hidden otherwise - it
+    would send them to a page with no Install option and no explanation why.
+
+    Detection is request.is_secure, which reads X-Forwarded-Proto via ProxyFix - but only
+    when USE_X_SETTINGS is set. Terminating TLS at a proxy that doesn't send that header, or
+    running without USE_X_SETTINGS, makes a perfectly installable instance look like plain
+    http, so FORCE_MOBILE_HTTPS_STYLE_MANIFEST overrides the guess in either direction.
+    """
+    forced = os.getenv(HTTPS_OVERRIDE_ENV, '').strip()
+    if forced:
+        from changedetectionio import strtobool
+        return bool(strtobool(forced))
+
+    return bool(is_secure)
+
 
 def instance_names(forwarded_prefix='', script_root=''):
     """Work out what this instance should be called on a home screen.
 
     Co-tenanted instances (same host, different sub-path, as in
-    https://host/blockbuster-regal/) install as separate PWAs with separate icons and
+    https://example.com/my-instance/) install as separate PWAs with separate icons and
     separate Android share-sheet entries. Sharing one name makes them indistinguishable at
     the point of use, so allow an override and otherwise derive something human out of the
-    sub-path: /blockbuster-regal -> "Blockbuster Regal".
+    sub-path: /my-instance -> "My Instance".
 
     Returns (name, short_name).
     """

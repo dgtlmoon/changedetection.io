@@ -87,6 +87,26 @@
                         {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
                         <span class="pure-form-message-inline">{{ _('When a request returns no content, or the HTML does not contain any text, is this considered a change?') }}</span>
                     </div>
+                    {#- Installing on a phone otherwise means typing this instance's URL, sub-path and
+                        all, on a phone keyboard. Only shown over HTTPS because that is a hard
+                        requirement for installing a PWA - offering it over plain http would just
+                        send people to a page with no Install option and no explanation why.
+                        FORCE_MOBILE_HTTPS_STYLE_MANIFEST overrides the detection. -#}
+                    {% if pwa_https_mode() %}
+                    <div class="pure-control-group" id="pwa-install">
+                        <img id="pwa-install-qr"
+                             src="{{ url_for('settings.pwa_install_qrcode') }}"
+                             alt="{{ _('QR code linking to this changedetection.io instance') }}"
+                             width="104" height="104">
+                        <div id="pwa-install-text">
+                            <strong><i data-feather="smartphone"></i> {{ _('Install on your phone') }}</strong>
+                            <span class="pure-form-message-inline">
+                                {{ _('Scan this, then use your phone browser\'s menu to "Install app".') }}
+                                {{ _('On Android you can then share any web page straight to this install from the share sheet. On iPhone the app installs but Safari has no share sheet support.') }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
                 {% if form.requests.proxy %}
                     <div>
                     <br>

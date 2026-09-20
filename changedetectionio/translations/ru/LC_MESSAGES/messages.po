@@ -608,6 +608,24 @@ msgid "When a request returns no content, or the HTML does not contain any text,
 msgstr "Если запрос не возвращает содержимого или HTML не содержит текста, считается ли это изменением?"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Scan this, then use your phone browser's menu to \"Install app\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"On Android you can then share any web page straight to this install from the share sheet. On iPhone the app installs "
+"but Safari has no share sheet support."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Выберите прокси-сервер по умолчанию для всех часов"
 
