@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.60.7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-20 17:17+0200\n"
+"POT-Creation-Date: 2026-09-20 17:21+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -611,9 +611,11 @@ msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(acti
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"On Android you can then share any web page straight to this install from the share sheet. On iPhone the app installs "
-"but Safari has no share sheet support."
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
