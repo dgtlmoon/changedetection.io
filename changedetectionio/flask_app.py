@@ -870,7 +870,7 @@ def changedetection_app(config=None, datastore_o=None):
             # them to /login makes a password-protected instance silently un-installable: the
             # browser gets an HTML login page where it expected a manifest or JavaScript, the
             # registration fails, and with it the WebAPK the Android share target needs.
-            elif request.blueprint == 'pwa':
+            elif request.endpoint in ('pwa.site_webmanifest', 'pwa.service_worker'):
                 return None
             # Permitted - language selection should work on login page.
             # Both halves of the language modal must be exempt: it renders for anonymous

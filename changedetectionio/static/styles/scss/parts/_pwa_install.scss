@@ -11,6 +11,7 @@
     width: 104px;
     height: 104px;
     flex: 0 0 auto;
+    border: 1px #ccc solid;
     // The SVG is black-on-white by necessity (a QR needs contrast and a quiet zone), so
     // give it a plate with the same rounding as everything else rather than letting a bare
     // white square sit on a dark background.
@@ -23,7 +24,10 @@
     flex: 1 1 16rem;
     min-width: 0;
 
-    strong {
+    // Direct child ONLY: this is the "Install on your phone" heading. Without the >, it
+    // also caught the <strong> around the button name inside the sentence below and turned
+    // it into a flex block, which pushed it onto a line of its own.
+    > strong {
       display: flex;
       align-items: center;
       gap: .35rem;
@@ -37,6 +41,16 @@
     .pure-form-message-inline {
       display: block;
       margin-top: .2rem;
+
+      // The inline "⋮" standing in for the browser menu button. Sized in em so it tracks
+      // the surrounding text, and only nudged a little below the baseline - a bigger drop
+      // grows the line box and leaves that one line spaced further from its neighbour,
+      // which reads as a stray line break.
+      svg {
+        width: 1em;
+        height: 1em;
+        vertical-align: -.125em;
+      }
     }
   }
 }

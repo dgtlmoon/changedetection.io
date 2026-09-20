@@ -19,6 +19,8 @@ import os
 
 from flask import Blueprint, make_response, render_template, request, send_from_directory, g
 
+from changedetectionio.auth_decorator import login_optionally_required
+
 from . import service
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -76,6 +78,44 @@ def construct_blueprint():
         # browsers re-fetch it to detect updates and will honour a stale cache entry.
         response.headers['Cache-Control'] = 'no-cache, must-revalidate'
         g.public_static_asset = True
+        return response
+
+    @pwa_blueprint.route("/pwa/install-qrcode.svg", methods=['GET'])
+    @login_optionally_required
+    def install_qrcode():
+        """QR code pointing at this instance, for installing the PWA on a phone.
+
+        Getting the app onto a phone otherwise means typing a URL like
+        https://example.com/my-instance/ on a phone keyboard, sub-path and all. That is the
+        actual barrier to the share-sheet feature existing at all, so it is worth removing.
+
+        Unlike the manifest and the worker, this one is NOT public - it is only rendered
+        inside Settings, and it would tell an anonymous caller the instance's external
+        address. The blueprint-wide exemption in check_authentication() deliberately lists
+        endpoints rather than the whole blueprint, so adding a route here doesn't publish it.
+
+        The path carries an explicit /pwa/ even though this blueprint is mounted at the
+        root: only the manifest and the worker actually need to sit at the top level.
+
+        SVG rather than PNG: a few hundred bytes, crisp at any size, no image library. Black
+        on white regardless of theme - a QR needs its quiet zone and contrast, and an <img>
+        can't inherit the page's dark mode anyway.
+        """
+        import io as _io
+
+        import segno
+
+        # request.url_root, NOT url_for(_external=True): url_for builds from the configured
+        # SERVER_NAME, so behind a reverse proxy it emits the internal address and the QR
+        # sends the phone somewhere it can't reach. url_root is scheme + host + sub-path
+        # exactly as the browser asked for them.
+        buffer = _io.BytesIO()
+        segno.make(request.url_root, error='m').save(buffer, kind='svg', scale=4, border=2,
+                                                     dark='#000000', light='#ffffff')
+
+        response = make_response(buffer.getvalue())
+        response.headers['Content-Type'] = 'image/svg+xml'
+        response.headers['Cache-Control'] = 'no-store'
         return response
 
     return pwa_blueprint

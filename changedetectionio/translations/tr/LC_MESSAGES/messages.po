@@ -614,7 +614,12 @@ msgid "Install on your phone"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Scan this, then use your phone browser's menu to \"Install app\"."
+msgid "Install and create shortcut"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html

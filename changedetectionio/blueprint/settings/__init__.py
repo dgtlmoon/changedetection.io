@@ -28,39 +28,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         construct_notifications_blueprint(datastore), url_prefix='/notifications',
     )
 
-    @settings_blueprint.route("/pwa-install-qrcode.svg", methods=['GET'])
-    @login_optionally_required
-    def pwa_install_qrcode():
-        """QR code pointing at this instance, for installing the PWA on a phone.
-
-        Getting the app onto a phone otherwise means typing a URL like
-        https://example.com/my-instance/ on a phone keyboard, sub-path and all. That is the
-        actual barrier to the share-sheet feature existing at all, so it is worth removing.
-
-        SVG rather than PNG: it is a few hundred bytes, stays crisp at any size, and needs
-        no image library. Black on white regardless of theme - a QR needs its quiet zone and
-        contrast, and an <img> can't inherit the page's dark mode anyway.
-        """
-        import io as _io
-
-        import segno
-        from flask import make_response
-
-        # request.url_root, NOT url_for(_external=True): url_for builds from the configured
-        # SERVER_NAME, so behind a reverse proxy it emits the internal address and the QR
-        # sends the phone somewhere it can't reach. url_root is scheme + host + sub-path
-        # exactly as the browser asked for them.
-        target = request.url_root
-
-        buffer = _io.BytesIO()
-        segno.make(target, error='m').save(buffer, kind='svg', scale=4, border=2,
-                                           dark='#000000', light='#ffffff')
-
-        response = make_response(buffer.getvalue())
-        response.headers['Content-Type'] = 'image/svg+xml'
-        response.headers['Cache-Control'] = 'no-store'
-        return response
-
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():

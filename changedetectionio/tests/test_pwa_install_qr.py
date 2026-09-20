@@ -17,7 +17,7 @@ import segno
 
 from changedetectionio.blueprint.pwa.service import HTTPS_OVERRIDE_ENV, https_mode
 
-QR_URL = '/settings/pwa-install-qrcode.svg'
+QR_URL = '/pwa/install-qrcode.svg'
 
 
 def test_qr_is_served_as_svg(client, live_server):
@@ -97,3 +97,25 @@ def test_override_reveals_the_qr_on_a_plain_http_instance(client, live_server):
         os.environ.pop(HTTPS_OVERRIDE_ENV, None)
         if previous is not None:
             os.environ[HTTPS_OVERRIDE_ENV] = previous
+
+
+def test_qr_is_not_public(app, client, live_server, datastore_path):
+    """The manifest and service worker are exempt from the login gate because a PWA can't
+    install without them. This is not - it is only ever rendered inside Settings, and it
+    would hand an anonymous caller the instance's external address."""
+    with app.test_client(use_cookies=True) as c:
+        res = c.post("/settings",
+                     data={"application-password": "foobar",
+                           "requests-time_between_check-minutes": 180,
+                           'application-fetch_backend': "html_requests"},
+                     follow_redirects=True)
+        assert b"Password protection enabled." in res.data
+
+        try:
+            assert c.get(QR_URL).status_code == 302, "QR must not be readable when logged out"
+            # ...while the two that genuinely have to be public still are
+            assert c.get('/site.webmanifest').status_code == 200
+            assert c.get('/sw.js').status_code == 200
+        finally:
+            c.post("/settings", data={"application-removepassword_button": "Remove password"},
+                   follow_redirects=True)
