@@ -64,12 +64,14 @@ def test_manifest_name_follows_the_subpath(client, live_server):
     """Co-tenanted instances share an origin, so identical names are indistinguishable
     in the share sheet and on the home screen."""
     default = _manifest(client)
-    assert default['name'] == 'ChangeDetection.io'
-    assert default['short_name'] == 'ChangeDetect'
+    # The real product name, not an invented abbreviation - this is the home screen label,
+    # and the name is the thing the project actually protects.
+    assert default['name'] == 'changedetection.io'
+    assert default['short_name'] == 'changedetection.io'
 
     tenant = _manifest(client, headers={'X-Forwarded-Prefix': '/acme-monitoring'})
     assert tenant['name'] == 'Acme Monitoring'
-    assert tenant['short_name'] == 'Acme', "launcher labels ellipsise around 12 chars"
+    assert tenant['short_name'] == 'Acme Monitoring'
 
     assert os.getenv('PWA_NAME') is None  # the override is env-only, nothing else sets it
 

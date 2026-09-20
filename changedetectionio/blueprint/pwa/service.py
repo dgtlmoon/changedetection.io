@@ -6,7 +6,7 @@ watch list pass the request values in.
 
 import os
 
-DEFAULT_NAME = 'ChangeDetection.io'
+DEFAULT_NAME = 'changedetection.io'
 DESCRIPTION = 'Web page change detection and monitoring'
 
 # Set to force the mobile-install UI on (or off) regardless of the detected scheme
@@ -49,10 +49,13 @@ def instance_names(forwarded_prefix='', script_root=''):
         prefix = (forwarded_prefix or script_root or '').strip('/')
         name = prefix.replace('-', ' ').replace('_', ' ').title() if prefix else DEFAULT_NAME
 
-    short_name = os.getenv('PWA_SHORT_NAME', '').strip()
-    if not short_name:
-        # Launcher labels ellipsise somewhere around 12 characters
-        short_name = name if len(name) <= 12 else name.split(' ')[0][:12]
+    # short_name is the home screen label, and there is no honest 12-character form of
+    # "changedetection.io". Truncating it here invented "ChangeDetect" - a second name for
+    # the product, on the most visible surface there is, when the trademark is the whole
+    # protective mechanism (see CLAUDE.md). Better to ship the real name and let the
+    # launcher ellipsise it like it does for every other long app name. PWA_SHORT_NAME is
+    # there for anyone who wants something shorter.
+    short_name = os.getenv('PWA_SHORT_NAME', '').strip() or name
 
     return name, short_name
 
