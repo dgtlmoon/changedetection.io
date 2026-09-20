@@ -522,6 +522,10 @@ msgstr "Log debug notifikasi"
 msgid "For security this log is emptied on restart."
 msgstr "Demi keamanan, log ini dikosongkan saat aplikasi dimulai ulang."
 
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -608,6 +612,27 @@ msgid "When a request returns no content, or the HTML does not contain any text,
 msgstr ""
 "Jika permintaan tidak mengembalikan konten, atau HTML tidak berisi teks apa pun, apakah ini dianggap sebagai "
 "perubahan?"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
@@ -2567,6 +2592,10 @@ msgstr "Monitor ditambahkan dalam keadaan Dijeda, menyimpan akan melanjutkannya.
 #: changedetectionio/blueprint/ui/views.py
 msgid "Watch added."
 msgstr "Monitor ditambahkan."
+
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"

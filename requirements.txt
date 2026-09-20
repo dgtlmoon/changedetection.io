@@ -166,3 +166,8 @@ psutil==7.2.2
 blinker
 pytest-xdist
 
+
+# QR code for the "install on your phone" PWA hand-off in Settings > General.
+# BSD-3-Clause and dependency-free. Chosen over `qrcode`, which ships both a BSD and an
+# "Other/Proprietary" trove classifier - ambiguity we don't want in an Apache-2.0 tree.
+segno==1.6.6

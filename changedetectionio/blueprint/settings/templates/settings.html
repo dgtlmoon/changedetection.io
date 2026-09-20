@@ -9,6 +9,10 @@
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
+{# PWA related #}
+{%- set menu_icon -%}&nbsp;<i data-feather="more-vertical"></i>{% endset -%}
+{%- set install_action -%}<strong>{{ _('Install and create shortcut - then "install"') }}</strong>{% endset -%}
+
 <div class="edit-form">
     <div class="tabs collapsable">
         <ul>
@@ -87,6 +91,35 @@
                         {{ render_checkbox_field(form.application.form.empty_pages_are_a_change) }}
                         <span class="pure-form-message-inline">{{ _('When a request returns no content, or the HTML does not contain any text, is this considered a change?') }}</span>
                     </div>
+                    {#- Installing on a phone otherwise means typing this instance's URL, sub-path and
+                        all, on a phone keyboard. Only shown over HTTPS because that is a hard
+                        requirement for installing a PWA - offering it over plain http would just
+                        send people to a page with no Install option and no explanation why.
+                        FORCE_MOBILE_HTTPS_STYLE_MANIFEST overrides the detection. -#}
+                    {% if pwa_https_mode() %}
+                    <div class="pure-control-group" id="pwa-install">
+                        <img id="pwa-install-qr"
+                             src="{{ url_for('pwa.install_qrcode') }}"
+                             alt="{{ _('QR code linking to this changedetection.io instance') }}"
+                             width="104" height="104">
+                        <div id="pwa-install-text">
+                            <strong><i data-feather="smartphone"></i> {{ _('Install on your phone') }}</strong>
+                            {#- Icon and bolded button label are passed in as placeholders rather than
+                                baked into the msgid: it keeps raw HTML out of the .po files, and lets a
+                                translator move the menu glyph to wherever the verb lands in their
+                                language. |safe is needed for the substituted markup - both values are
+                                ours, neither is user input. -#}
+                            {#- The &nbsp; lives in the placeholder and the msgid has no space before
+                                %(icon)s, so the glyph can't be orphaned onto the next line away from
+                                the word it belongs to. -#}
+                            <span class="pure-form-message-inline">
+                                {{ _('Scan this, then use your phone browser\'s menu%(icon)s and choose "%(action)s".', icon=menu_icon, action=install_action)|safe }}<br>
+                                {{ _('On Android you can then share any web page straight to this install from the share sheet.') }}<br>
+                                {{ _('On iPhone the app installs but Safari has no share sheet support.') }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
                 {% if form.requests.proxy %}
                     <div>
                     <br>
@@ -228,6 +261,31 @@ nav
                         </a>
                     </p>
                 </div>
+
+                {% if pwa_https_mode() %}
+                    <div class="pure-control-group" id="pwa-install">
+                        <img id="pwa-install-qr"
+                             src="{{ url_for('pwa.install_qrcode') }}"
+                             alt="{{ _('QR code linking to this changedetection.io instance') }}"
+                             width="104" height="104">
+                        <div id="pwa-install-text">
+                            <strong><i data-feather="smartphone"></i> {{ _('Install on your phone') }}</strong>
+                            {#- Icon and bolded button label are passed in as placeholders rather than
+                                baked into the msgid: it keeps raw HTML out of the .po files, and lets a
+                                translator move the menu glyph to wherever the verb lands in their
+                                language. |safe is needed for the substituted markup - both values are
+                                ours, neither is user input. -#}
+                            {#- The &nbsp; lives in the placeholder and the msgid has no space before
+                                %(icon)s, so the glyph can't be orphaned onto the next line away from
+                                the word it belongs to. -#}
+                            <span class="pure-form-message-inline">
+                                {{ _('Scan this, then use your phone browser\'s menu%(icon)s and choose "%(action)s".', icon=menu_icon, action=install_action)|safe }}<br>
+                                {{ _('On Android you can then share any web page straight to this install from the share sheet.') }}<br>
+                                {{ _('On iPhone the app installs but Safari has no share sheet support.') }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
             </div>
             <div class="tab-pane-inner" id="rss">
                 <div class="pure-control-group">
