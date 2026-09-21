@@ -90,8 +90,14 @@ $watch-table-mobile-max: 767px;
 }
 /* watch table snap to stacked horizontal */
 @media (max-width: $watch-table-mobile-max) {
+  .blueprint-watchlist {
+    #mobile-home {
+      opacity: 0.5;
+    }
+  }
   #mobile-home {
-    display: inline-block;
+    /* Basic little home button for mobile so we dont feel lost */
+    display: inline-block !important;
   }
   #menu-mute {
     span {
