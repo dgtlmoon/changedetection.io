@@ -97,6 +97,9 @@
   .action-sidebar-divider {
     display: none;
   }
+  .is-disabled {
+    display: none;
+  }
   .action-sidebar-item.active {
     background-color: inherit;
     font-weight: bold;
