@@ -1,0 +1,28 @@
+# UTF-8
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 3, 0, 0),
+    prodvers=(1, 3, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        '040904B0',
+        [StringStruct('CompanyName', 'Given-Dream'),
+         StringStruct('FileDescription', 'GitHub repository monitor and downloader'),
+         StringStruct('FileVersion', '1.3.0'),
+         StringStruct('InternalName', 'GitHubMonitor'),
+         StringStruct('OriginalFilename', 'GitHubMonitor.exe'),
+         StringStruct('ProductName', 'GitHub Monitor'),
+         StringStruct('ProductVersion', '1.3.0')]
+      )
+    ]),
+    VarFileInfo([VarStruct('Translation', [0x0409, 1200])])
+  ]
+)

@@ -59,6 +59,22 @@ changedetection.io 是一个开源、可自托管的网站变化监控与通知�
 
 使用云端模型时，页面差异和提取文本会发送给所选的第三方 AI 服务，并可能产生 API 费用。需要完全本地处理时，可以配置 Ollama、vLLM、LM Studio 等本地端点。LLM 输出可能存在遗漏或错误，不应被视为完整、准确的事实来源。
 
+## Windows GitHub 仓库监控 EXE
+
+本分支新增了独立的 Windows 桌面工具 **GitHubMonitor.exe**，用于监控一个或多个 GitHub 仓库。添加仓库 URL 后，可以分别选择：
+
+- README；
+- 配置文件（支持自定义 Glob 匹配规则）；
+- Releases（附件可按 Windows、macOS、Linux、其他/通用版本筛选下载）；
+- Issues；
+- Pull requests；
+- Security alerts（Dependabot、Code scanning、Secret scanning）；
+- Discussions。
+
+第一次检查会建立基线并自动测试下载：保存当前 README 和全部匹配配置文件，同时保存最近更新的一条 Release、Issue、Pull request、Discussion 以及每类最新安全告警。Release 的说明和元数据始终保存；附件仅下载用户勾选的 Windows、macOS、Linux、其他/通用版本，源码 ZIP 使用独立开关。以后检测到新 Release 或实际内容变化时，程序会弹窗提醒并下载更新。GitHub Token 即 GitHub Personal Access Token（PAT）；单击“Token 设置…”后只需粘贴令牌，程序会自动验证，并可使用当前 Windows 用户的 DPAPI 加密保存，不以明文写入配置文件。
+
+使用、权限、下载目录结构和自行构建 EXE 的说明见：[Windows GitHub 仓库监控器](docs/GITHUB_MONITOR_WINDOWS.md)。
+
 ## 快速开始
 
 ### 方式一：Docker Compose（推荐）

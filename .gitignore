@@ -10,6 +10,7 @@
 # Distribution / packaging
 build/
 dist/
+artifacts/
 *.egg-info*
 
 # Virtual environment
