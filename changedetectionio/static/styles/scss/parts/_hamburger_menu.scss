@@ -94,7 +94,25 @@
   transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   overflow-y: auto;
   padding-top: 60px;
+  .action-sidebar-divider {
+    display: none;
+  }
+  .action-sidebar-item.active {
+    background-color: inherit;
+    font-weight: bold;
+    span {
+      font-weight: bold;
+    }
+  }
+  #action-sidebar-logo {
+    padding: 0;
+  }
 
+  .action-badge--count {
+    position: initial !important;
+    top: 0;
+    left: 0;
+  }
   .action-label {
     display: block !important;
   }
@@ -115,16 +133,20 @@
   &.active {
     right: 0;
   }
-
+  #live-queue-line, #extra-item, #hosting-offer {
+    display: none;
+  }
   .mobile-menu-items {
     list-style: none;
     padding: 1rem 0;
     margin: 0;
-
+    button {
+      color: var(--color-text);
+    }
     li {
       border-bottom: 1px solid var(--color-border-table-cell);
 
-      >*, >form>button {
+      >*  {
         display: block;
         padding: 1rem 1.5rem;
         color: var(--color-text);

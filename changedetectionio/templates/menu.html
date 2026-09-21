@@ -13,7 +13,7 @@
     <li class="pure-menu-item " id="menu-mute">
         <form method="POST" action="{{ url_for('settings.toggle_all_muted') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="status-pill {{ 'muted' if all_muted }}" aria-label="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}"><i data-feather="{{ 'bell-off' if all_muted else 'bell' }}" class="action-icon"></i>{% if all_muted %}{{ _('Muted') }}{% else %}{{ _('Alerts on') }}{% endif %}</button>
+            <button type="submit" class="status-pill {{ 'muted' if all_muted }}" aria-label="{% if all_muted %}{{ _('Unmute notifications') }}{% else %}{{ _('Mute notifications') }}{% endif %}" title="{% if all_muted %}{{ _('Notifications are muted - click to unmute') }}{% else %}{{ _('Mute notifications') }}{% endif %}"><i data-feather="{{ 'bell-off' if all_muted else 'bell' }}" class="action-icon"></i><span>{% if all_muted %}{{ _('Muted') }}{% else %}{{ _('Alerts on') }}{% endif %}</span></button>
         </form>
     </li>
 {%- if current_user.is_authenticated -%}

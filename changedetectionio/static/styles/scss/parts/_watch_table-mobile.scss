@@ -90,14 +90,27 @@ $watch-table-mobile-max: 767px;
 }
 /* watch table snap to stacked horizontal */
 @media (max-width: $watch-table-mobile-max) {
+  #mobile-home {
+    display: inline-block;
+  }
+  #menu-mute {
+    span {
+      display: none;
+    }
+  }
   .watch-table {
+    border: none;
+  // Row hover highlight (the app's tables don't zebra-stripe).
+
     tbody {
       tr {
-
+        &:hover > td {
+          background-color: inherit !important;
+        }
         padding-inline: 12px;
         padding-top: 12px;
         padding-bottom: 12px;
-
+        margin-bottom: 1rem;
         display: grid;
         grid-template-columns: $grid-col-checkbox 1fr $grid-col-watch;
         grid-template-rows: auto auto auto auto;

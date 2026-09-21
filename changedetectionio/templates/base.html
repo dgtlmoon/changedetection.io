@@ -121,6 +121,8 @@
     <div class="header">
     <div>
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
+          <a id="mobile-home" style="display: none;" href="{{ url_for('watchlist.index') }}"><i data-feather="home"></i></a>
+
           {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
           {# The watch's own name when it has one, so the diff/preview pages do not print
              the same URL twice. The title attribute keeps the full text reachable on hover
@@ -171,7 +173,7 @@
           {% include "menu.html" %}
             <li class=" menu-collapsible">
                 {%- if right_sticky -%}<div>{{ right_sticky }}</div>{%- endif -%}
-                <a href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a><br>
+                <a id="hosting-offer" href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a>
             </li>
         </ul>
       </div>

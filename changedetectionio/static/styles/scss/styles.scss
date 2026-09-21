@@ -1103,7 +1103,9 @@ ul#highlightSnippetActions {
 }
 @media only screen and (max-width: 768px) {
   .box {
-    padding: 0.25rem !important;
+    padding: 0 !important;
+    border: none;
+    border-style: none !important;
   }
 }
 
