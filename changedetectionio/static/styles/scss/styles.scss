@@ -38,11 +38,13 @@
 @use "parts/restock_graph";
 @use "parts/toast";
 @use "parts/login_form";
+@use "parts/pwa_install";
 @use "parts/tabs";
 @use "parts/sub_tabs";
 
 // Smooth transitions for theme switching
-body,
+// Disabled - people complained
+/*body,
 .pure-table,
 .pure-table thead,
 .pure-table td,
@@ -65,7 +67,7 @@ code,
 a,
 .watch-controls img {
   transition: color 0.4s ease, background-color 0.4s ease, background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
-}
+}*/
 
 body {
   color: var(--color-text);
@@ -305,7 +307,7 @@ code {
 
 body:after {
   content: "";
-  background: linear-gradient(130deg, var(--color-background-gradient-first), var(--color-background-gradient-second) 41.07%, var(--color-background-gradient-third) 84.05%);
+  background: var(--page-background-gradient);
 }
 
 body:after,
@@ -475,10 +477,6 @@ label {
   input:not(.pure-button) {
     background-color: var(--color-background-new-watch-input);
     color: var(--color-text-new-watch-input);
-  }
-
-  .label {
-    display: none;
   }
 
   legend {
@@ -697,12 +695,13 @@ footer {
   }
 }
 
-
 @media only screen and (max-width: 760px),
 (min-device-width: 768px) and (max-device-width: $desktop-wide-breakpoint) {
   .edit-form {
     padding: 0.5em;
     margin: 0;
+    width: 100%;
+    max-width: 100% !important;
   }
 
   #nav-menu {
@@ -1002,27 +1001,6 @@ ul {
   vertical-align: middle;
 }
 
-
-#quick-watch-processor-type {
-  ul#processor {
-    color: #fff;
-    padding-left: 0px;
-    li {
-      list-style: none;
-      font-size: 0.9rem;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-  }
-  label, input {
-    padding: 0;
-    margin: 0;
-  }
-}
-
 .restock-label {
   &.in-stock {
     background-color: #7a0cc5;
@@ -1126,7 +1104,9 @@ ul#highlightSnippetActions {
 }
 @media only screen and (max-width: 768px) {
   .box {
-    padding: 0.25rem !important;
+    padding: 0 !important;
+    border: none;
+    border-style: none !important;
   }
 }
 
@@ -1156,4 +1136,10 @@ header {
 
 textarea::placeholder {
     white-space: pre-wrap;
+}
+
+@media only screen and (max-width: 480px) {
+  .pure-form button[type=submit] {
+    margin: 0 !important; /*override*/
+  }
 }

@@ -4,6 +4,7 @@ from loguru import logger
 from wtforms.widgets.core import TimeInput
 from flask_babel import lazy_gettext as _l, gettext
 
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
 from changedetectionio.llm.evaluator import (
@@ -696,14 +697,18 @@ class ValidateCSSJSONXPATHInput(object):
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 import elementpath
-                from changedetectionio.html_tools import get_safe_xpath3_parser, lxml_guard, lxml_html_parser
+                from changedetectionio.html_tools import get_safe_xpath3_parser, lxml_guard, lxml_html_parser, \
+                    XPATH_CODEPOINT_COLLATION
                 line = line.replace('xpath:', '')
 
                 try:
                     # Runs on a Flask request thread - must share the worker's lxml lock.
                     with lxml_guard():
                         tree = html.fromstring("<html></html>", parser=lxml_html_parser())
-                        elementpath.select(tree, line.strip(), parser=get_safe_xpath3_parser())
+                        # Same collation the filter will actually run under, so validation
+                        # cannot accept an expression that then behaves differently at check time.
+                        elementpath.select(tree, line.strip(), parser=get_safe_xpath3_parser(),
+                                           default_collation=XPATH_CODEPOINT_COLLATION)
                 except elementpath.ElementPathError as e:
                     message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
                     raise ValidationError(message % {'expression': line, 'error': str(e)})
@@ -939,6 +944,7 @@ class SingleBrowserStep(Form):
 class processor_text_json_diff_form(commonSettingsForm):
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
+    link_to_open = StringField(_l('Open Link Override'), validators=[validators.Optional(), validateURL()], default='')
     tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
@@ -1045,6 +1051,19 @@ class processor_text_json_diff_form(commonSettingsForm):
             logger.error(e)
             self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
             result = False
+
+        # Attempt to validate jinja2 templates in the optional "Link to Open"
+        if self.link_to_open.data and self.link_to_open.data.strip():
+            try:
+                jinja_render(template_str=self.link_to_open.data)
+            except ModuleNotFoundError as e:
+                logger.error(e)
+                self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+                result = False
+            except Exception as e:
+                logger.error(e)
+                self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
+                result = False
 
         # Attempt to validate jinja2 templates in the body
         if self.body.data and self.body.data.strip():
@@ -1160,13 +1179,13 @@ class globalSettingsApplicationUIForm(Form):
     socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
+    use_share_watch = BooleanField(_l('Enable watch "sharing"'))
     timeago_format = SelectField(_l('Relative time format'),
                                  choices=[('long', _l('Long (1 minute ago)')), ('short', _l('Short (1m ago)'))],
                                  default='long', validators=[validators.Optional()])
     sidebar_mode = SelectField(_l('Navigation sidebar'),
-                               choices=[('collapsed', _l('Collapsed icon rail (expands on hover)')),
-                                        ('pinned', _l('Always expanded'))],
-                               default='collapsed', validators=[validators.Optional()])
+                               choices=MENU_SIDEBAR_ACTIONMODES,
+                               default=MENU_SIDEBAR_ACTIONMODES_DEFAULT, validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
@@ -1246,7 +1265,23 @@ class globalSettingsLLMForm(Form):
         _l('API Key'),
         validators=[validators.Optional()],
         render_kw={
-            "autocomplete": "off",
+            # NOT "off": Chrome deliberately ignores autocomplete="off" on type=password,
+            # so the browser's saved site password was being prefilled here. This field
+            # renders blank precisely so that submitting it untouched PRESERVES the stored
+            # key - a prefilled value therefore silently overwrote a working API key on the
+            # next Save. "new-password" is the value Chrome honours; the data-* attributes
+            # ask 1Password and LastPass to keep out of it too.
+            "autocomplete": "new-password",
+            "data-1p-ignore": "true",
+            "data-lpignore": "true",
+            "data-form-type": "other",
+            # Belt and braces, for when no key is stored yet and the field is editable
+            # (once one IS stored the template disables it outright). Chrome will not
+            # autofill a readonly input, and global-settings.js drops the attribute the
+            # moment the field is focused or clicked. readonly rather than disabled here,
+            # because a disabled input is not submitted and the key could never be set.
+            "readonly": True,
+            "data-unlock-on-interact": "1",
             "style": "width: 24em;",
         },
     )

@@ -172,29 +172,45 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             prompt = ''
         return jsonify({'prompt': prompt})
 
-    @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary", methods=['GET'])
-    @login_optionally_required
-    def diff_llm_summary(uuid):
+    # ── AI change summary ────────────────────────────────────────────────────────────────────
+    # Generation is slow (an LLM round-trip), so it does not happen in the request thread:
+    #
+    #   POST /diff/<uuid>/llm-summary   start it (or return an already-cached summary)
+    #   GET  /diff/<uuid>/llm-summary   poll for the result
+    #
+    # POST is deliberate: starting a generation spends tokens and marks the watch viewed, which
+    # must not be reachable from a bare cross-site GET (an <img src=...> would do it). Flask-WTF's
+    # CSRFProtect covers every non-GET route, and static/js/csrf.js puts the token on the header
+    # of every jQuery non-GET call, so the browser side needs nothing extra.
+    #
+    # The GET poll stays side-effect free: it reads the cache and the in-flight registry and never
+    # starts work, which is what makes it safe to leave as a GET.
+
+    def _summary_request_context(uuid):
+        """Resolve everything both routes need, without reading snapshots or building a diff.
+
+        Returns (context_dict, None) or (None, (json_body, http_status)) when the request cannot
+        be served at all.  Kept cheap so the poll route stays cheap: the cache key does not depend
+        on the diff text, only on the version pair, the effective prompt, the diff prefs and the
+        model - so a poll never has to re-run difflib over two snapshots.
         """
-        Generate (or return cached) an AI summary of the diff between two snapshots.
-        Called via AJAX from the diff page when no cached summary exists.
-        Returns JSON: {"summary": "...", "error": null} or {"summary": null, "error": "..."}
-        """
-        import difflib
-        from flask import jsonify
+        from changedetectionio.llm.evaluator import (
+            DiffPrefs, build_summary_cache_prompt, get_effective_summary_prompt, get_llm_settings,
+            resolve_llm_timeout,
+        )
 
         try:
             watch = datastore.data['watching'][uuid]
         except KeyError:
-            return jsonify({'summary': None, 'error': 'Watch not found'}), 404
+            return None, ({'summary': None, 'error': 'Watch not found', 'status': 'error'}, 404)
 
         llm_cfg = datastore.data.get('settings', {}).get('application', {}).get('llm', {})
         if not llm_cfg.get('model'):
-            return jsonify({'summary': None, 'error': 'LLM not configured'}), 400
+            return None, ({'summary': None, 'error': 'LLM not configured', 'status': 'error'}, 400)
 
         dates = list(watch.history.keys())
         if len(dates) < 2:
-            return jsonify({'summary': None, 'error': 'Not enough history'}), 400
+            return None, ({'summary': None, 'error': 'Not enough history', 'status': 'error'}, 400)
 
         # Default baseline for the watchlist "Summary" link (when no explicit from_version
         # is requested) is configurable at Settings > AI. Default 'second_last_version'
@@ -204,18 +220,50 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             default_from = best_from if best_from else dates[-2]
         else:
             default_from = dates[-2]
-        from_version      = request.args.get('from_version', default_from)
-        to_version        = request.args.get('to_version', dates[-1])
-        from changedetectionio.llm.evaluator import DiffPrefs
-        prefs             = DiffPrefs.from_request_args(request.args)
-        all_changes       = prefs.all_changes
-        ignore_whitespace = prefs.ignore_whitespace
-        show_removed      = prefs.show_removed
-        show_added        = prefs.show_added
+
+        prefs = DiffPrefs.from_request_args(request.args)
+        from_version = request.args.get('from_version', default_from)
+        to_version = request.args.get('to_version', dates[-1])
+
+        settings = get_llm_settings(datastore)
+        # Diff-pref flags + system prompt + active model are part of the cache key
+        # so prompt or model changes bust the cache.
+        cache_prompt = build_summary_cache_prompt(
+            effective_prompt=get_effective_summary_prompt(watch, datastore),
+            max_summary_tokens=settings.max_summary_tokens,
+            prefs=prefs,
+            model=settings.model,
+        )
+
+        return {
+            'watch': watch,
+            'dates': dates,
+            'prefs': prefs,
+            'from_version': from_version,
+            'to_version': to_version,
+            'cache_prompt': cache_prompt,
+            # Same granularity as the on-disk cache filename (version pair + prompt hash), so an
+            # in-flight job is deduplicated exactly when it would write to the same cache entry.
+            'job_key': f"{uuid}|{from_version}|{to_version}|"
+                       f"{watch._llm_summary_prompt_hash(cache_prompt)}",
+            # How long this deployment is prepared to wait for the model on one call. The
+            # browser must not give up before this, or it reports a failure for a job that is
+            # still running and will still write its summary - a local Ollama/vLLM endpoint
+            # gets 1800s here against the client's old fixed 180s. See _pending_reply().
+            'llm_timeout': resolve_llm_timeout(llm_cfg),
+        }, None
+
+    def _build_summary_diff(ctx):
+        """Build the diff text to summarise. The expensive half - POST only."""
+        import difflib
+
+        watch = ctx['watch']
+        prefs = ctx['prefs']
+        from_version, to_version = ctx['from_version'], ctx['to_version']
 
         def _prep(text):
             """Optionally normalise whitespace on each line before diffing."""
-            if not ignore_whitespace:
+            if not prefs.ignore_whitespace:
                 return text.splitlines()
             return [' '.join(line.split()) for line in text.splitlines()]
 
@@ -225,13 +273,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         def _apply_filters(diff_text):
             """Strip +/- lines the user has hidden in the UI so the LLM matches what they see."""
-            if show_removed and show_added:
+            if prefs.show_removed and prefs.show_added:
                 return diff_text
             out = []
             for line in diff_text.splitlines():
-                if line.startswith('-') and not show_removed:
+                if line.startswith('-') and not prefs.show_removed:
                     continue
-                if line.startswith('+') and not show_added:
+                if line.startswith('+') and not prefs.show_added:
                     continue
                 out.append(line)
             return '\n'.join(out)
@@ -240,15 +288,16 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             from_text = watch.get_history_snapshot(timestamp=from_version)
             to_text = watch.get_history_snapshot(timestamp=to_version)
         except Exception as e:
-            return jsonify({'summary': None, 'error': f'Could not read snapshots: {e}'}), 500
+            return None, None, ({'summary': None, 'error': f'Could not read snapshots: {e}',
+                                 'status': 'error'}, 500)
 
-        if all_changes:
+        if prefs.all_changes:
             # Build sequential diffs for every intermediate snapshot between from and to
             # so the LLM sees the full timeline of changes, not just start→end
-            sorted_dates = sorted(dates)
+            sorted_dates = sorted(ctx['dates'])
             try:
                 start_idx = sorted_dates.index(from_version)
-                end_idx   = sorted_dates.index(to_version)
+                end_idx = sorted_dates.index(to_version)
             except ValueError:
                 start_idx, end_idx = 0, len(sorted_dates) - 1
 
@@ -269,34 +318,94 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         else:
             diff_text = _apply_filters(_make_unified_diff(from_text, to_text))
 
-        if not diff_text.strip():
-            return jsonify({'summary': None, 'error': 'No differences found'})
+        return diff_text, to_text, None
 
-        from changedetectionio.llm.evaluator import (
-            summarise_change, get_effective_summary_prompt, build_summary_cache_prompt,
-            is_global_token_budget_exceeded, get_global_token_budget_month,
-            LLMInputTooLargeError,
-        )
+    def _mark_viewed(uuid):
+        import time
+        datastore.set_last_viewed(uuid, int(time.time()))
 
-        # Diff-pref flags + system prompt + active model are part of the cache key
-        # so prompt or model changes bust the cache.
-        from changedetectionio.llm.evaluator import get_llm_settings
-        _ls = get_llm_settings(datastore)
-        _max_summary_tokens = _ls.max_summary_tokens
-        _llm_model = _ls.model
-        cache_prompt = build_summary_cache_prompt(
-            effective_prompt=get_effective_summary_prompt(watch, datastore),
-            max_summary_tokens=_max_summary_tokens,
-            prefs=prefs,
-            model=_llm_model,
-        )
+    # Slack on top of the model's own deadline: the worker still has to come back through
+    # litellm and write the summary to the on-disk cache after the last token.
+    SUMMARY_DEADLINE_MARGIN = 15
+
+    def _pending_reply(ctx):
+        """The 202 body, carrying the point in time after which the summary is not coming.
+
+        The client cannot work this out for itself. It knows neither the configured timeout
+        (300s for a cloud provider, 1800s for a local endpoint) nor when the job started - which
+        is often long before *this* browser asked, because another tab, or this same tab before
+        a reload, already kicked it off. So the deadline is anchored to the job's real start and
+        is the same answer no matter who polls or when.
+
+        Two forms of the same instant, because neither alone is enough:
+          timeout_at  absolute epoch seconds - stable across polls, and what to display.
+          expires_in  seconds from now - what to actually count down with, since a browser clock
+                      that is minutes off would otherwise expire the wait immediately.
+        A job still queued behind another generation has not started its timeout yet, so it
+        measures from now and its deadline keeps moving until a worker picks it up.
+        """
+        import time
+        from changedetectionio.llm.summary_jobs import summary_jobs
+
+        started = summary_jobs.run_started_at(ctx['job_key'])
+        now = time.time()
+        timeout_at = int((started or now) + ctx['llm_timeout'] + SUMMARY_DEADLINE_MARGIN)
+        return {
+            'summary': None,
+            'error': None,
+            'status': 'pending',
+            'timeout_at': timeout_at,
+            'expires_in': max(0, timeout_at - int(now)),
+        }
+
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary", methods=['POST'])
+    @login_optionally_required
+    def diff_llm_summary(uuid):
+        """
+        Start (or serve from cache) an AI summary of the diff between two snapshots.
+
+        Returns JSON:
+          200 {"summary": "...", "cached": true,  "status": "done"}     already generated
+          202 {"summary": null,  "status": "pending",                   generating, poll the GET
+               "timeout_at": epoch, "expires_in": secs}                 (when to stop waiting)
+          4xx/5xx {"summary": null, "error": "...", "status": "error"}  cannot be generated
+        """
+        from flask import jsonify
+
+        ctx, err = _summary_request_context(uuid)
+        if err:
+            body, code = err
+            return jsonify(body), code
+
+        watch = ctx['watch']
+        from_version, to_version = ctx['from_version'], ctx['to_version']
+        cache_prompt, job_key = ctx['cache_prompt'], ctx['job_key']
 
         # Check cache — keyed by version pair + prompt hash (invalidates if prompt changes)
         cached = watch.get_llm_diff_summary(from_version, to_version, prompt=cache_prompt)
         if cached:
-            import time
-            datastore.set_last_viewed(uuid, int(time.time()))
-            return jsonify({'summary': cached, 'error': None, 'cached': True})
+            _mark_viewed(uuid)
+            return jsonify({'summary': cached, 'error': None, 'cached': True, 'status': 'done'})
+
+        from changedetectionio.llm.summary_jobs import SummaryJobFailed, summary_jobs
+
+        # A failure from a previous attempt that no poll collected (e.g. the user navigated away).
+        # Deliver it once rather than silently starting a fresh attempt on the same broken config.
+        stored = summary_jobs.take_error(job_key)
+        if stored:
+            code, message = stored
+            return jsonify({'summary': None, 'error': message, 'status': 'error'}), code
+
+        if summary_jobs.is_pending(job_key):
+            logger.info(f"AI summary already in progress for {uuid} ({from_version}->{to_version}), "
+                        f"returning pending - not starting a second generation")
+            _mark_viewed(uuid)
+            return jsonify(_pending_reply(ctx)), 202
+
+        from changedetectionio.llm.evaluator import (
+            LLMInputTooLargeError, get_global_token_budget_month,
+            is_global_token_budget_exceeded, summarise_change,
+        )
 
         # Check global monthly token budget before making an LLM call
         if is_global_token_budget_exceeded(datastore):
@@ -311,27 +420,119 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     used=f'{used:,}',
                 ),
                 'budget_exceeded': True,
+                'status': 'error',
             }), 429
 
-        try:
-            summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text, retries=0)
-        except LLMInputTooLargeError as e:
-            return jsonify({'summary': None, 'error': str(e)}), 400
-        except Exception as e:
-            logger.error(f"LLM summary generation failed for {uuid}: {e}")
-            return jsonify({'summary': None, 'error': _clean_litellm_error(e)}), 500
+        diff_text, to_text, err = _build_summary_diff(ctx)
+        if err:
+            body, code = err
+            return jsonify(body), code
 
-        if not summary:
-            return jsonify({'summary': None, 'error': 'LLM returned empty summary'})
+        if not diff_text.strip():
+            return jsonify({'summary': None, 'error': 'No differences found', 'status': 'error'})
 
-        try:
+        def _job():
+            """Runs on the summary_jobs pool - no request context available in here."""
+            import time as _time
+            _started = _time.time()
+            logger.info(f"AI summary generation started for {uuid} ({from_version}->{to_version}), "
+                        f"{len(diff_text)} chars of diff")
+            try:
+                summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text, retries=0)
+            except LLMInputTooLargeError as e:
+                raise SummaryJobFailed(str(e), http_status=400)
+            except Exception as e:
+                logger.error(f"LLM summary generation failed for {uuid}: {e}")
+                raise SummaryJobFailed(_clean_litellm_error(e), http_status=500)
+
+            if not summary:
+                raise SummaryJobFailed('LLM returned empty summary', http_status=200)
+
+            # Persisted before the job is marked done, so a poll can never see "nothing running,
+            # nothing cached" and start paying for the same summary a second time.
             watch.save_llm_diff_summary(summary, from_version, to_version, prompt=cache_prompt)
-        except Exception as e:
-            logger.warning(f"Could not cache llm summary for {uuid}: {e}")
+            logger.info(f"AI summary generation finished for {uuid} in "
+                        f"{_time.time() - _started:.1f}s ({len(summary)} chars)")
 
-        import time
-        datastore.set_last_viewed(uuid, int(time.time()))
-        return jsonify({'summary': summary, 'error': None, 'cached': False})
+        # Re-read the cache. Between the read above and here we have read two snapshots and run
+        # difflib, which is long enough for a job started by another tab to have finished and
+        # written the summary - and submitting now would pay the LLM for it a second time.
+        cached = watch.get_llm_diff_summary(from_version, to_version, prompt=cache_prompt)
+        if cached:
+            return jsonify({'summary': cached, 'error': None, 'cached': True, 'status': 'done'})
+
+        def _announce(_key):
+            """Tell any connected browser the job is done so it does not have to poll.
+
+            A blinker signal rather than a direct emit: the socket server subscribes to it when
+            realtime is enabled, and when it is disabled nothing is listening and this is a no-op.
+            The payload is only an identifier - the client fetches the summary through the normal
+            authenticated poll route, so the text never goes out over a broadcast channel.
+            """
+            from blinker import signal
+            signal('llm_summary_ready').send(
+                watch_uuid=uuid, from_version=from_version, to_version=to_version,
+            )
+
+        if not summary_jobs.submit(job_key, _job, on_settled=_announce):
+            # Another request submitted the same key while we were building the diff. The registry
+            # refused ours, so nothing was sent to the LLM twice.
+            logger.info(f"AI summary for {uuid} was already started by a concurrent request, "
+                        f"returning pending")
+        summary_jobs.submit(job_key, _job, on_settled=_announce)
+        _mark_viewed(uuid)
+        return jsonify(_pending_reply(ctx)), 202
+
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/llm-summary", methods=['GET'])
+    @login_optionally_required
+    def diff_llm_summary_poll(uuid):
+        """
+        Poll for a summary started by the POST above. Read-only: never calls the LLM.
+
+        Returns JSON:
+          200 {"summary": "...", "cached": true, "status": "done"}      ready
+          202 {"summary": null,  "status": "pending",                   still generating
+               "timeout_at": epoch, "expires_in": secs}
+          200 {"summary": null,  "status": "idle"}                      nothing running - re-POST
+          4xx/5xx {"summary": null, "error": "...", "status": "error"}  the job failed
+        """
+        from flask import jsonify
+
+        ctx, err = _summary_request_context(uuid)
+        if err:
+            body, code = err
+            return jsonify(body), code
+
+        cached = ctx['watch'].get_llm_diff_summary(
+            ctx['from_version'], ctx['to_version'], prompt=ctx['cache_prompt']
+        )
+        if cached:
+            _mark_viewed(uuid)
+            return jsonify({'summary': cached, 'error': None, 'cached': True, 'status': 'done'})
+
+        from changedetectionio.llm.summary_jobs import summary_jobs
+
+        stored = summary_jobs.take_error(ctx['job_key'])
+        if stored:
+            code, message = stored
+            return jsonify({'summary': None, 'error': message, 'status': 'error'}), code
+
+        if summary_jobs.is_pending(ctx['job_key']):
+            return jsonify(_pending_reply(ctx)), 202
+
+        # Re-read the cache before giving up. The job can finish in the window between the read
+        # above and the is_pending check - it writes the summary and *then* clears the flag - so
+        # 'idle' here would send the client back to POST for a summary already sitting on disk.
+        cached = ctx['watch'].get_llm_diff_summary(
+            ctx['from_version'], ctx['to_version'], prompt=ctx['cache_prompt']
+        )
+        if cached:
+            _mark_viewed(uuid)
+            return jsonify({'summary': cached, 'error': None, 'cached': True, 'status': 'done'})
+
+        # Genuinely nothing: the process restarted mid-generation. Tell the client to start again
+        # rather than poll forever.
+        return jsonify({'summary': None, 'error': None, 'status': 'idle'})
 
     @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-data", methods=['GET'])
     @login_optionally_required

@@ -370,6 +370,23 @@ class TestHistoryPathTraversal(unittest.TestCase):
         history = watch.history
         self.assertEqual(history, {}, "Path traversal entry must be rejected")
 
+    def test_parent_dir_entry_is_rejected_by_the_containment_check(self):
+        """A bare '..' is the shortest entry that reaches and fails the containment check.
+
+        os.path.basename() reduces '/etc/passwd' and '../../etc/passwd' to
+        'passwd', so those two stop at the os.path.exists() check below the
+        guard rather than at the guard itself. '..' survives basename() intact
+        and resolves to the parent of data_dir, which does exist, so the
+        containment check is what rejects it. Not the only such input —
+        '../..' and 'foo/..' collapse to the same thing — and not the only
+        reason the check exists: it also blocks a filename inside data_dir
+        that is itself a symlink pointing outside.
+        """
+        watch = self._make_watch()
+        self._write_history_txt(watch, ['1000000000,..\n'])
+        history = watch.history
+        self.assertEqual(history, {}, "Parent-directory entry must be rejected")
+
     def test_normal_snapshot_entry_is_accepted(self):
         """A bare filename written by save_history_blob must still load correctly."""
         import uuid as uuid_builder
@@ -377,8 +394,11 @@ class TestHistoryPathTraversal(unittest.TestCase):
         watch.save_history_blob(contents="hello world", timestamp=1000000000, snapshot_id=str(uuid_builder.uuid4()))
         history = watch.history
         self.assertEqual(len(history), 1, "Normal snapshot entry must be accepted")
+        # Watch.history resolves entries with os.path.realpath, so compare against a
+        # resolved data_dir. On macOS the datastore lives under /tmp, which is a symlink
+        # to /private/tmp, and an unresolved comparison fails there for a correct path.
         self.assertTrue(
-            list(history.values())[0].startswith(watch.data_dir),
+            list(history.values())[0].startswith(os.path.realpath(watch.data_dir)),
             "Resolved path must be inside the watch data directory"
         )
 
@@ -406,6 +426,48 @@ class TestHistoryPathTraversal(unittest.TestCase):
                 os.path.realpath(path).startswith(safe_dir),
                 f"Path {path!r} escapes the watch data directory"
             )
+
+
+class TestLinkToOpen(unittest.TestCase):
+    """`link_to_open` - the optional human-facing URL used instead of the watched URL."""
+
+    def _make_watch(self, **fields):
+        mock_datastore = {'settings': {'application': {}}, 'watching': {}}
+        return Watch.model(datastore_path='/tmp', __datastore=mock_datastore, default=fields)
+
+    def test_defaults_to_the_watched_url(self):
+        watch = self._make_watch(url='https://example.com/feed.xml')
+        assert watch.open_link_override == ''
+        assert watch.open_link == 'https://example.com/feed.xml'
+        assert watch.open_link == watch.link
+
+    def test_override_wins_when_set(self):
+        watch = self._make_watch(url='https://example.com/api/v1/items.json',
+                                 link_to_open='https://example.com/shop/items')
+        assert watch.link == 'https://example.com/api/v1/items.json'
+        assert watch.open_link == 'https://example.com/shop/items'
+        assert watch.open_link_override == 'https://example.com/shop/items'
+
+    def test_whitespace_only_override_is_ignored(self):
+        watch = self._make_watch(url='https://example.com/feed.xml', link_to_open='   ')
+        assert watch.open_link_override == ''
+        assert watch.open_link == 'https://example.com/feed.xml'
+
+    def test_unsafe_override_falls_back_to_the_watched_url(self):
+        watch = self._make_watch(url='https://example.com/feed.xml',
+                                 link_to_open='javascript:alert(1)')
+        assert watch.open_link_override == ''
+        assert watch.open_link == 'https://example.com/feed.xml'
+
+    def test_source_prefix_is_stripped_from_the_override(self):
+        watch = self._make_watch(url='source:https://example.com/feed.xml',
+                                 link_to_open='source:https://example.com/page')
+        assert watch.open_link == 'https://example.com/page'
+
+    def test_jinja2_in_the_override_is_rendered(self):
+        watch = self._make_watch(url='https://example.com/feed.xml',
+                                 link_to_open='https://example.com/page?id={{ 1+1 }}')
+        assert watch.open_link == 'https://example.com/page?id=2'
 
 
 if __name__ == '__main__':

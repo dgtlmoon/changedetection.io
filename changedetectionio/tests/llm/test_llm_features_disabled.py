@@ -47,13 +47,19 @@ def test_llm_features_disabled_hides_ui(client, live_server, monkeypatch):
     _llm_markers_absent(res.data, where='settings')
 
     # 3. Edit page for a watch (should not have an AI / LLM tab or include_llm_intent body)
-    uuid = datastore.add_watch(url='http://example.com', extras={'title': 'Disabled LLM watch'})
+    uuid = datastore.add_watch(url='http://example.com', extras={'title': 'Disabled LLM watch'}, tag="LLMgroup")
+    tag_uuid = live_server.app.config['DATASTORE'].data['watching'][uuid]['tags'][0]
     res = client.get(url_for('ui.ui_edit.edit_page', uuid=uuid))
     assert res.status_code == 200
     _llm_markers_absent(res.data, where='edit')
     # The watch-edit-only intent textarea should also be absent
     assert b'name="llm_intent"' not in res.data
     assert b'name="llm_change_summary"' not in res.data
+
+    res = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid))
+    assert res.status_code == 200
+    assert b'id="ai-llm"' not in res.data
+    assert b'llm_intent' not in res.data
 
     # 4. Add-watch page - with no "what matters" intent box there is nothing to choose
     # between, so element selection is always on and the opt-in checkbox is not rendered.

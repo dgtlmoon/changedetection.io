@@ -238,6 +238,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         )
         llm_config = _get_llm_cfg(datastore) or {}
         llm_env_configured = llm_configured_via_env()
+
+        # Once a key is stored, the provider and the key itself are locked and can only be
+        # cleared with "Remove provider". The key field renders blank so that an untouched
+        # save preserves it, which makes any stray value in it - a browser autofill, a bad
+        # paste - silently overwrite a working key on the next Save, with no copy kept
+        # anywhere to recover from. Disabling the input takes it out of the POST entirely;
+        # the form is seeded with data=default, so an absent field falls back to the stored
+        # value and the merge below is a no-op for it.
+        llm_provider_locked = bool(llm_config.get('api_key')) and not llm_env_configured
         llm_stored = datastore.data['settings']['application'].get('llm') or {}
         llm_token_budget_month = get_global_token_budget_month(datastore)
         llm_token_budget_month_env = get_global_token_budget_month()  # env var only, for readonly logic
@@ -253,6 +262,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 llm_config=llm_config,
                                 llm_env_configured=llm_env_configured,
+                                llm_provider_locked=llm_provider_locked,
                                 llm_stored=llm_stored,
                                 llm_token_budget_month=llm_token_budget_month,
                                 llm_token_budget_month_env=llm_token_budget_month_env,

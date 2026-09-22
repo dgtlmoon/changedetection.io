@@ -25,7 +25,7 @@ requests-file
 
 # urllib3==1.26.19  # Unpinned - let requests decide compatible version
 # If specific version needed for security, use urllib3>=1.26.19,<3.0
-chardet>2.3.0
+chardet>=7.6.0
 
 wtforms~=3.2
 jsonpath-ng~=1.8.0
@@ -40,7 +40,7 @@ orjson~=3.11
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise==1.9.9
+apprise==1.13.1
 
 diff_match_patch
 
@@ -76,7 +76,7 @@ elementpath==5.1.1
 # - Pixelmatch is used as fallback when OpenCV is unavailable
 # - To install manually: pip install opencv-python-headless>=4.8.0.76
 
-selenium~=4.31.0
+selenium~=4.49.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
@@ -116,7 +116,9 @@ babel==2.18.0
 # For internationalization (i18n) support
 Flask-Babel>=4.0.0
 
-levenshtein
+# rapidfuzz (MIT) - do NOT swap back to `levenshtein`, which is GPL-2.0-or-later
+# and would force the combined work to be GPL. See the license-compliance CI step.
+rapidfuzz
 
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
 greenlet >= 3.0.3
@@ -164,3 +166,8 @@ psutil==7.2.2
 blinker
 pytest-xdist
 
+
+# QR code for the "install on your phone" PWA hand-off in Settings > General.
+# BSD-3-Clause and dependency-free. Chosen over `qrcode`, which ships both a BSD and an
+# "Other/Proprietary" trove classifier - ambiguity we don't want in an Apache-2.0 tree.
+segno==1.6.6

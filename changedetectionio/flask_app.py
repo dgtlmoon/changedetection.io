@@ -19,6 +19,7 @@ from flask import (
     Flask,
     abort,
     flash,
+    g,
     redirect,
     render_template,
     request,
@@ -26,6 +27,7 @@ from flask import (
     session,
     url_for,
 )
+from flask.sessions import SecureCookieSessionInterface
 from flask_cors import CORS
 from flask_restful import Api, abort
 
@@ -56,6 +58,7 @@ from changedetectionio.api import (
     WatchSingleHistory,
 )
 from changedetectionio.api.Search import Search
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.favicon_utils import get_favicon_mime_type
 from changedetectionio.languages import (
     get_available_languages,
@@ -138,7 +141,8 @@ if strtobool(os.getenv("FLASK_ENABLE_COMPRESSION")):
 app.config['TEMPLATES_AUTO_RELOAD'] = False
 
 
-# Stop browser caching of assets
+# Default to revalidate-always for anything served with send_file(); static_content() then
+# opts the fingerprinted asset URLs into real caching (see _fingerprint_static_urls).
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config.exit = Event()
 
@@ -213,15 +217,40 @@ def _configure_plugin_templates():
 _configure_plugin_templates()
 csrf = CSRFProtect()
 csrf.init_app(app)
+
 notification_debug_log = []
 
-# Locale for correct presentation of prices etc
+# Locale for correct presentation of prices etc.
+#
+# Deliberately NOT locale.LC_ALL - LC_COLLATE must stay in the "C" locale.
+#
+# elementpath implements the XPath string functions on top of locale.strxfrm:
+#
+#     def contains(self, a, b):  return self.strxfrm(b) in self.strxfrm(a)
+#
+# Under LC_COLLATE=C, strxfrm() is the identity function and that substring test means what it
+# says. Under any real locale it returns a binary collation key, and a substring of a collation
+# key is not the collation key of the substring - so contains(), starts-with(), ends-with() and
+# substring-before/after() silently return false for EVERY input. Every xPath filter using
+# contains() then matches nothing and the watch reports "no filters were found" on a page whose
+# HTML plainly contains the target (#4437).
+#
+# That stayed hidden until the image actually generated its locales: before then this call raised
+# locale.Error, we logged a warning and stayed in C. Once en_US.UTF-8 existed the call succeeded
+# and took LC_COLLATE with it. Setting the presentation categories individually keeps what this
+# block is for - 1234567 still renders as "1,234,567" - without touching collation.
+#
+# Per XPath 3.1 the default collation is codepoint and must not consult LC_COLLATE at all, so
+# this is arguably an elementpath bug; html_tools.xpath_filter() pins the collation explicitly as
+# well, so a filter is correct even if an operator sets LC_COLLATE themselves.
 default_locale = locale.getdefaultlocale()
 logger.info(f"System locale default is {default_locale}")
-try:
-    locale.setlocale(locale.LC_ALL, default_locale)
-except locale.Error:
-    logger.warning(f"Unable to set locale {default_locale}, locale is not installed maybe?")
+for _category in (locale.LC_CTYPE, locale.LC_NUMERIC, locale.LC_MONETARY, locale.LC_TIME):
+    try:
+        locale.setlocale(_category, default_locale)
+    except locale.Error:
+        logger.warning(f"Unable to set locale {default_locale} for category {_category}, "
+                       f"locale is not installed maybe?")
 
 watch_api = Api(app, decorators=[csrf.exempt])
 
@@ -265,6 +294,103 @@ def get_css_version():
     return hashlib.sha256(f"{salt}{__version__}".encode()).hexdigest()[:10]
 
 
+# Static groups that are plain files on disk under changedetectionio/static/<group>/ - the
+# same bytes for every visitor, so they can be fingerprinted and cached hard. Deliberately
+# excludes the dynamic groups handled inside static_content() ('screenshot', 'favicon',
+# 'visual_selector_data', 'plugin'), which are per-watch and/or password protected.
+STATIC_CACHEABLE_GROUPS = frozenset(['favicons', 'images', 'js', 'styles'])
+
+# How long a fingerprint is trusted before the file is stat()ed again. The lookup sits in the
+# hot path (one watch-list render emits hundreds of asset url_for() calls) so it can't stat
+# per URL, but the URLs we hand out are served `immutable` - an edited .js/.css that never
+# re-fingerprinted would be pinned in the browser for a year. A few seconds of staleness is
+# the compromise: invisible in production (files only change on upgrade, and the container
+# restarts) and self-correcting while developing.
+STATIC_FINGERPRINT_TTL = 10.0
+_static_fingerprints = {}
+_static_fingerprints_expires = 0.0
+
+
+def get_static_fingerprint(group, filename):
+    """Short token identifying this exact revision of a static file, for `?v=` cache busting.
+
+    Built from the file's own mtime+size rather than get_css_version()'s app-version token:
+    a version-wide token silently serves a stale asset whenever content changes without a
+    release (local dev, a patched image, a rebuilt styles.css), which is not survivable once
+    the response says `immutable`. Returns '' when the file can't be stat()ed, so the request
+    stays unversioned (and revalidating) rather than being pinned under a made-up token.
+    """
+    global _static_fingerprints_expires
+
+    now = time.monotonic()
+    if now > _static_fingerprints_expires:
+        _static_fingerprints.clear()
+        _static_fingerprints_expires = now + STATIC_FINGERPRINT_TTL
+
+    key = (group, filename)
+    token = _static_fingerprints.get(key)
+    if token is None:
+        try:
+            st = os.stat(os.path.join(app.static_folder, group, filename))
+            token = f"{int(st.st_mtime)}-{st.st_size}"
+        except OSError:
+            token = ''
+        _static_fingerprints[key] = token
+
+    return token
+
+
+@app.url_defaults
+def _fingerprint_static_urls(endpoint, values):
+    """Pin every static asset URL to the revision of the file it resolves to.
+
+    Doing it here rather than in the templates means an asset can't be added without its
+    cache-buster - the `?v=` is what lets static_content() answer with a year-long
+    `immutable` instead of making the browser revalidate on every page load.
+    """
+    if endpoint != 'static_content' or 'v' in values:
+        return
+
+    if values.get('group') in STATIC_CACHEABLE_GROUPS:
+        token = get_static_fingerprint(values['group'], values.get('filename', ''))
+        if token:
+            values['v'] = token
+
+
+class PublicStaticAssetSessionInterface(SecureCookieSessionInterface):
+    """Keeps "Vary: Cookie" and the session cookie refresh off public static asset responses.
+
+    Flask tags any response whose session was touched with "Vary: Cookie", and flask_login's
+    auth check touches it on every single request. Since Flask 3.1.3 the request context sets
+    `session.accessed` itself, so a view or an after_request hook can't opt out - the header is
+    added in save_session(), which runs last. It has to go for the files marked by
+    static_content(): our session cookie is permanent and re-signed (fresh timestamp) on every
+    response, so the Cookie request header keeps changing, and a browser honouring
+    "Vary: Cookie" would then miss its cache on every asset of every page load - the immutable
+    caching would never be used at all. Nothing in those groups depends on the session.
+    """
+
+    def save_session(self, app, session, response):
+        public_asset = g.get('public_static_asset', False)
+
+        if public_asset and not session.modified:
+            # Same bytes for every visitor and nothing to persist: skip the cookie refresh
+            # and the Vary entirely.
+            return
+
+        super().save_session(app, session, response)
+
+        if public_asset and 'Set-Cookie' in response.headers:
+            # Shouldn't happen (these requests don't write to the session), but if something
+            # ever does, the response now carries one visitor's cookie - it must not be stored
+            # by a shared cache under the long-lived header static_content() just set.
+            response.cache_control.public = False
+            response.cache_control.private = True
+
+
+app.session_interface = PublicStaticAssetSessionInterface()
+
+
 @app.template_global('filtered_action_url')
 def _filtered_action_url(endpoint, **overrides):
     """Build a URL to `endpoint` carrying the CURRENT watch-list filters (query args)
@@ -286,20 +412,32 @@ def _filter_url(**overrides):
 
 @app.template_global()
 def get_sidebar_mode_class():
-    """Body class that drives the left-rail behaviour (see parts/_action_sidebar.scss).
+    """Body class(es) that drive the left-rail behaviour (see parts/_action_sidebar.scss).
 
-    'collapsed' -> slim icon rail that expands on hover/focus (actionsidebar-minimal)
-    'pinned'    -> rail always expanded with labels visible (actionside-bar-on)
+    Only the modes offered by MENU_SIDEBAR_ACTIONMODES are honoured - anything else in the
+    datastore (a stale value from an older release, hand-edited JSON) falls back to
+    MENU_SIDEBAR_ACTIONMODES_DEFAULT rather than leaking through as a body class.
+
+    'expandable'      -> icon-only rail, rolls out over the content on hover/focus
+    'pinned-expanded' -> rail always expanded, labels visible at rest
+    'minimal'         -> icon-only rail that never expands
     """
-    mode = datastore.data['settings']['application'].get('ui', {}).get('sidebar_mode', 'collapsed')
-    # Pinned mode is permanently expanded, so it carries 'action-side-bar-expanded'
-    # from the start. In collapsed mode that class is toggled on hover/focus by
-    # static/js/sidebar.js.
-    return (
-        'actionside-bar-on action-side-bar-expanded'
-        if mode == 'pinned'
-        else 'actionsidebar-minimal'
-    )
+
+    # 'actionsidebar-minimal'   - collapsed icon rail (hover-to-expand lives in CSS + static/js/sidebar.js)
+    # 'actionsidebar-no-expand' - opts that rail out of hover-to-expand
+    # 'actionside-bar-on'       - always-open rail
+    # 'actionsidebar-expanded'- expanded logo/stats block
+    body_classes = {
+        'expandable': 'actionsidebar-minimal',
+        'pinned-expanded': 'actionside-bar-on actionsidebar-expanded',
+        'minimal': 'actionsidebar-minimal actionsidebar-no-expand',
+    }
+
+    mode = datastore.data['settings']['application'].get('ui', {}).get('sidebar_mode')
+    if mode not in {choice for choice, _label in MENU_SIDEBAR_ACTIONMODES} or mode not in body_classes:
+        mode = MENU_SIDEBAR_ACTIONMODES_DEFAULT
+
+    return body_classes[mode]
 
 
 @app.template_global()
@@ -533,27 +671,18 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
 
     return ''
 
-
-_RE_SANITIZE_TAG = re.compile(r'[^a-zA-Z0-9]')
-
-
 @app.template_filter('sanitize_tag_class')
 def _jinja2_filter_sanitize_tag_class(tag_title):
     """Sanitize a tag title to create a valid CSS class name.
-    Removes all non-alphanumeric characters and converts to lowercase.
-
     Args:
         tag_title: The tag title string
 
     Returns:
         str: A sanitized string suitable for use as a CSS class name
     """
-    # Remove all non-alphanumeric characters and convert to lowercase
-    sanitized = _RE_SANITIZE_TAG.sub('', tag_title).lower()
-    # Ensure it starts with a letter (CSS requirement)
-    if sanitized and not sanitized[0].isalpha():
-        sanitized = 'tag' + sanitized
-    return sanitized if sanitized else 'tag'
+    #
+    tag_class_name = hashlib.sha256(tag_title.encode('utf-8')).hexdigest()[:16]
+    return tag_class_name if tag_class_name else 'tag'
 
 
 # Import login_optionally_required from auth_decorator
@@ -734,6 +863,15 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted - static flag icons need to load on login page
             elif request.endpoint and request.endpoint == 'static_flags':
                 return None
+            # Permitted - the PWA manifest carries no watch data, and bouncing it to /login
+            # makes a password-protected instance silently un-installable: the browser gets
+            # an HTML login page where it expected a manifest and drops the install option.
+            # Permitted - the manifest and service worker carry no watch data, and bouncing
+            # them to /login makes a password-protected instance silently un-installable: the
+            # browser gets an HTML login page where it expected a manifest or JavaScript, the
+            # registration fails, and with it the WebAPK the Android share target needs.
+            elif request.endpoint in ('pwa.site_webmanifest', 'pwa.service_worker'):
+                return None
             # Permitted - language selection should work on login page.
             # Both halves of the language modal must be exempt: it renders for anonymous
             # users (base.html deliberately leaves it outside the is_authenticated guard),
@@ -766,6 +904,32 @@ def changedetection_app(config=None, datastore_o=None):
                 return None
             else:
                 return login_manager.unauthorized()
+
+    # #4299: werkzeug's send_file() (via make_conditional) injects a Date
+    # header into the WSGI response for conditional/static responses, and the
+    # Werkzeug built-in server (allow_unsafe_werkzeug=True) then writes its own
+    # Date via BaseHTTPRequestHandler.send_response() — emitting the Date
+    # header line twice, which RFC 9110 forbids and nginx rejects ("upstream
+    # sent duplicate header line"). Strip the application-side copy so the
+    # server's single header is what reaches the wire.
+    @app.after_request
+    def strip_duplicate_date_header(response):
+        if request.environ.get('SERVER_SOFTWARE', '').startswith('Werkzeug'):
+            response.headers.pop("Date", None)
+        return response
+
+    # Dynamic/authenticated pages (forms carrying a CSRF token, watch data, settings) must not
+    # be stored by an intermediate CDN or reverse proxy. Flask already sends "Vary: Cookie" on
+    # these, but an edge cache configured to key purely on URL will ignore it and can serve a
+    # stale CSRF token (breaking form submits) or one session's page to another visitor.
+    # Only fills in the header when the route didn't set one, so the explicit Cache-Control on
+    # static assets, screenshots, favicons and plugin files is left untouched. Note that
+    # werkzeug's send_file() always sets Cache-Control, so file responses never reach here.
+    @app.after_request
+    def add_no_cache_headers(response):
+        if 'Cache-Control' not in response.headers:
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return response
 
     watch_api.add_resource(
         WatchHistoryDiff,
@@ -833,8 +997,13 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        # Pass the current request path so users are redirected back after login
-        return redirect(url_for('login', redirect=request.path))
+        # Pass the current request path so users are redirected back after login.
+        # full_path keeps the query string: a share arriving at /?pwa_preset_url=... on a
+        # logged-out instance would otherwise come back from the login page as a bare "/",
+        # silently dropping the URL the user just shared. full_path always appends "?", so
+        # only use it when there was actually a query to preserve.
+        target = request.full_path if request.query_string else request.path
+        return redirect(url_for('login', redirect=target))
 
     @app.route('/logout', methods=['POST'])
     def logout():
@@ -958,6 +1127,9 @@ def changedetection_app(config=None, datastore_o=None):
                 response = make_response(send_from_directory(f"static/flags/{subdir}", svg_file))
                 response.headers['Content-type'] = 'image/svg+xml'
                 response.headers['Cache-Control'] = 'max-age=86400, public'  # Cache for 24 hours
+                # Same for everyone, and the language modal pulls a few hundred of them - see
+                # PublicStaticAssetSessionInterface for why the "Vary: Cookie" has to go.
+                g.public_static_asset = True
                 return response
             except FileNotFoundError:
                 abort(404)
@@ -1107,9 +1279,34 @@ def changedetection_app(config=None, datastore_o=None):
 
         # These files should be in our subdirectory
         try:
-            return send_from_directory(f"static/{group}", path=filename)
+            response = make_response(send_from_directory(f"static/{group}", path=filename))
         except FileNotFoundError:
             abort(404)
+
+        # SEND_FILE_MAX_AGE_DEFAULT=0 means werkzeug hands these out as "no-cache, max-age=0",
+        # so every asset on every page load costs a request - a 304, but still a round trip.
+        # A `?v=` matching the file's current fingerprint (added by _fingerprint_static_urls)
+        # means the caller asked for this exact revision and can keep it for good; the next
+        # upgrade changes the URL, not the cache entry. Anything unversioned - older cached
+        # HTML, a hand-typed or third-party URL - keeps revalidating, where the ETag werkzeug
+        # already set turns the round trip into a 304 rather than a re-download.
+        if group in STATIC_CACHEABLE_GROUPS and request.args.get('v') == get_static_fingerprint(
+            group, filename
+        ):
+            response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+            # werkzeug derived an "Expires: <now>" from SEND_FILE_MAX_AGE_DEFAULT=0. Cache-Control
+            # wins over it for anything HTTP/1.1, but leaving the two contradicting each other
+            # means an HTTP/1.0-era cache treats the file as already stale.
+            response.expires = int(time.time()) + 31536000
+        else:
+            response.headers['Cache-Control'] = 'public, max-age=0, must-revalidate'
+
+        # Identical for every visitor (the password-protected groups returned further up), so
+        # let PublicStaticAssetSessionInterface strip the "Vary: Cookie" that would otherwise
+        # key each of these on the caller's cookies and defeat the caching above.
+        g.public_static_asset = True
+
+        return response
 
     import changedetectionio.blueprint.browser_steps as browser_steps
 
@@ -1172,6 +1369,11 @@ def changedetection_app(config=None, datastore_o=None):
             datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update
         )
     )
+
+    import changedetectionio.blueprint.pwa as pwa
+
+    # url_prefix='' is required, not cosmetic - see the blueprint docstring
+    app.register_blueprint(pwa.construct_blueprint(), url_prefix='')
 
     import changedetectionio.blueprint.watchlist as watchlist
 
