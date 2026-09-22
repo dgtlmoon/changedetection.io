@@ -1,0 +1,56 @@
+// Settings > General: "install on your phone" QR hand-off.
+// Kept deliberately small - it only has to survive a phone camera from ~20cm, and at any
+// larger size it dominates a page that is otherwise a dense list of checkboxes.
+#pwa-install {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  #pwa-install-qr {
+    width: 104px;
+    height: 104px;
+    flex: 0 0 auto;
+    border: 1px #ccc solid;
+    // The SVG is black-on-white by necessity (a QR needs contrast and a quiet zone), so
+    // give it a plate with the same rounding as everything else rather than letting a bare
+    // white square sit on a dark background.
+    background: #fff;
+    padding: 4px;
+    border-radius: var(--common-round-border);
+  }
+
+  #pwa-install-text {
+    flex: 1 1 16rem;
+    min-width: 0;
+
+    // Direct child ONLY: this is the "Install on your phone" heading. Without the >, it
+    // also caught the <strong> around the button name inside the sentence below and turned
+    // it into a flex block, which pushed it onto a line of its own.
+    > strong {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .pure-form-message-inline {
+      display: block;
+      margin-top: .2rem;
+
+      // The inline "⋮" standing in for the browser menu button. Sized in em so it tracks
+      // the surrounding text, and only nudged a little below the baseline - a bigger drop
+      // grows the line box and leaves that one line spaced further from its neighbour,
+      // which reads as a stray line break.
+      svg {
+        width: 1em;
+        height: 1em;
+        vertical-align: -.125em;
+      }
+    }
+  }
+}

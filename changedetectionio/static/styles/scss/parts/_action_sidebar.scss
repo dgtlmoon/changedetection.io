@@ -12,6 +12,11 @@ $action-sidebar-content-slot: 1100px;
 // Desktop left rail — fixed positioning frame, full-height, but only the
 // inner item-list block captures hover. Empty area is pointer-events:none so
 // the top header stays clickable behind it.
+.action-sidebar-inner {
+  background-color: var(--color-background-page); // fallback under the gradient
+  background-attachment: fixed, fixed;
+}
+
 .action-sidebar {
   display: flex;
   flex-direction: column;
@@ -25,7 +30,7 @@ $action-sidebar-content-slot: 1100px;
   position: sticky;
   top: 0;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.05);
+
   z-index: 60;
   pointer-events: none; // empty space doesn't intercept clicks/hovers
   @media only screen and (max-width: $desktop-wide-breakpoint) {
@@ -89,11 +94,6 @@ $action-sidebar-content-slot: 1100px;
     left: 0;
     bottom: 0;
     z-index: 1;
-    background-color: var(--color-background-page);   // fallback under the gradient
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)),
-      var(--page-background-gradient);
-    background-attachment: fixed, fixed;
   }
 
   // Hover-to-expand only fires in minimal mode, and not for 'minimal' (no-expand).
@@ -119,7 +119,7 @@ ul.action-sidebar-list {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.8rem;
 }
 
 // Footer list (status counters, live spark, version) sits at the bottom of the
@@ -325,10 +325,10 @@ body.actionside-bar-on {
 
 .action-icon {
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
+  max-width: 20px;
+  height: 22px;
   stroke: currentColor;
-  stroke-width: 1.9;
+  stroke-width: 1.4;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -471,10 +471,17 @@ body.actionside-bar-on {
   padding-left: $common-gap;
 }
 
+.actionsidebar-expanded {
+  #logo-short {
+    display: none;
+  }
+}
+
 .actionsidebar-minimal {
   #checking-now-stats-sidebar {
     display: none;
   }
+
   #cdio-logo {
     #logo-expanded {
       display: none;
@@ -482,16 +489,15 @@ body.actionside-bar-on {
   }
 
   &.actionsidebar-expanded {
-    #checking-now-stats-sidebar{
+    #checking-now-stats-sidebar {
       display: block;
     }
+
     #cdio-logo {
       #logo-expanded {
         display: inline-block;
       }
-      #logo-short {
-        display: none;
-      }
+
     }
 
   }

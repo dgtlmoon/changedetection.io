@@ -25,7 +25,7 @@ requests-file
 
 # urllib3==1.26.19  # Unpinned - let requests decide compatible version
 # If specific version needed for security, use urllib3>=1.26.19,<3.0
-chardet>2.3.0
+chardet>=7.6.0
 
 wtforms~=3.2
 jsonpath-ng~=1.8.0
@@ -76,7 +76,7 @@ elementpath==5.1.1
 # - Pixelmatch is used as fallback when OpenCV is unavailable
 # - To install manually: pip install opencv-python-headless>=4.8.0.76
 
-selenium~=4.31.0
+selenium~=4.49.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
@@ -166,3 +166,8 @@ psutil==7.2.2
 blinker
 pytest-xdist
 
+
+# QR code for the "install on your phone" PWA hand-off in Settings > General.
+# BSD-3-Clause and dependency-free. Chosen over `qrcode`, which ships both a BSD and an
+# "Other/Proprietary" trove classifier - ambiguity we don't want in an Apache-2.0 tree.
+segno==1.6.6

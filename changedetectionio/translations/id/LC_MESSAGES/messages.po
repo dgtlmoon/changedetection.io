@@ -303,6 +303,7 @@ msgstr ".XLSX & Wachete"
 msgid "Backup Restore"
 msgstr "Pemulihan Cadangan"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "Pemulihan cadangan changedetection.io tersedia di"
@@ -345,6 +346,7 @@ msgstr "Bagaimana cara mengekspor?"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "Pastikan pengambil default Anda diatur ke Chrome jika diperlukan."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "Tabel pemetaan kolom kustom dan tipe data untuk"
@@ -490,6 +492,7 @@ msgstr ""
 "Notifikasi ini berlaku untuk semua monitor halaman web, atau Anda dapat mengonfigurasinya secara terpisah per grup "
 "atau per monitor."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "URL dasar yang digunakan untuk"
@@ -518,6 +521,10 @@ msgstr "Log debug notifikasi"
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
 msgstr "Demi keamanan, log ini dikosongkan saat aplikasi dimulai ulang."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -557,6 +564,7 @@ msgstr "AI / LLM"
 msgid "Info"
 msgstr "Info"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "Waktu periksa ulang default untuk semua monitor, minimum sistem saat ini adalah"
@@ -606,6 +614,27 @@ msgstr ""
 "perubahan?"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Pilih proksi default untuk semua monitor"
 
@@ -639,6 +668,7 @@ msgstr ""
 "Jumlah worker bersamaan untuk memproses monitor. Lebih banyak worker = pemrosesan lebih cepat tetapi penggunaan "
 "memori lebih tinggi."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "Sedang berjalan:"
@@ -667,6 +697,7 @@ msgstr "Untuk permintaan biasa (bukan berbasis Chrome), jumlah detik maksimum hi
 msgid "Applied to all requests."
 msgstr "Diterapkan ke semua permintaan."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "Catatan: Mengubah User-Agent saja sering kali tidak dapat melewati teknologi antirobot, penting untuk mempertimbangkan"
@@ -754,6 +785,7 @@ msgstr "Kendalikan changedetection.io Anda melalui API, selengkapnya tentang"
 msgid "API access and examples here"
 msgstr "akses API dan contohnya di sini"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "Batasi akses API menggunakan"
@@ -868,6 +900,12 @@ msgstr "Aktifkan atau Nonaktifkan Favicon di samping daftar monitor"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"This copies your watch to a temporary hosted database and returns a link to make sharing/copying the watch to other "
+"people"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -1007,6 +1045,10 @@ msgid "AI / LLM configured:"
 msgstr "AI / LLM dikonfigurasi:"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Edit provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Configure AI Provider"
 msgstr "Konfigurasikan Penyedia AI"
 
@@ -1101,6 +1143,10 @@ msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
 msgstr "Kompatibel dengan OpenAI (vLLM, LM Studio, llama.cpp)"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
 msgstr "Hanya diperlukan untuk Ollama atau endpoint kustom/self-hosted. Biarkan kosong untuk penyedia cloud."
 
@@ -1132,8 +1178,18 @@ msgid "choose a model"
 msgstr "pilih model"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Enter API key and click 'Load available models'"
-msgstr "Masukkan kunci API lalu klik 'Muat model yang tersedia'"
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Change model"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Remove AI / LLM configuration?"
@@ -1151,6 +1207,10 @@ msgstr "Hapus"
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "Batal"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove provider"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Test connection"
@@ -1522,8 +1582,8 @@ msgid "Use system defaults"
 msgstr "Gunakan default sistem"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
-msgstr "Tambahkan tag organisasi baru"
+msgid "Add a new organisational tag / group name."
+msgstr "Tambahkan tag / nama grup baru."
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
@@ -1818,6 +1878,7 @@ msgstr "Antrean dibersihkan ({} item dihapus)."
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr "Ini akan menghapus riwayat versi (snapshot) untuk SEMUA monitor, tetapi tetap mempertahankan daftar URL Anda!"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "Anda mungkin ingin menggunakan"
@@ -1834,6 +1895,7 @@ msgstr "terlebih dahulu."
 msgid "Confirmation text"
 msgstr "Teks konfirmasi"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "Ketik kata"
@@ -1894,15 +1956,21 @@ msgstr "Abaikan Spasi"
 msgid "Same/non-changed"
 msgstr "Sama/tidak berubah"
 
+#. 'Removed' is a noun label for a diff display filter (toggles removed lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff filter"
 msgid "Removed"
 msgstr "Dihapus"
 
+#. 'Added' is a noun label for a diff display filter (toggles added lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Added"
 msgstr "Ditambahkan"
 
+#. 'Replaced' is a noun label for a diff display filter (toggles replaced lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Replaced"
 msgstr "Diganti"
 
@@ -2028,6 +2096,7 @@ msgstr "Kondisi"
 msgid "Stats"
 msgstr "Statistik"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "Beberapa situs menggunakan JavaScript untuk membuat konten, untuk ini Anda sebaiknya"
@@ -2160,6 +2229,7 @@ msgstr ""
 msgid "to one that supports interactive Javascript."
 msgstr "ke pengambil yang mendukung Javascript interaktif."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "Anda perlu"
@@ -2180,6 +2250,7 @@ msgstr ""
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr "Gunakan tombol verifikasi (✓) untuk menguji apakah suatu kondisi terpenuhi terhadap snapshot saat ini."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "Baca tutorial singkat tentang"
@@ -2212,6 +2283,7 @@ msgstr ""
 "Catatan: Bergantung pada panjang dan kemiripan teks pada setiap baris, algoritme mungkin menganggapnya sebagai "
 "<strong>penambahan</strong> alih-alih <strong>penggantian</strong>, misalnya."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "Jadi selalu lebih baik memilih"
@@ -2220,6 +2292,7 @@ msgstr "Jadi selalu lebih baik memilih"
 msgid "when you're interested in new content."
 msgstr "saat Anda tertarik pada konten baru."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "Saat konten hanya dipindahkan dalam daftar, hal itu juga akan memicu"
@@ -2263,6 +2336,7 @@ msgstr "Pratinjau Intent AI"
 msgid "Loading..."
 msgstr "Memuat..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "Alat Selektor Visual memungkinkan Anda memilih"
@@ -2520,6 +2594,10 @@ msgid "Watch added."
 msgstr "Monitor ditambahkan."
 
 #: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "rekaman"
 
@@ -2577,8 +2655,10 @@ msgstr "Perubahan harga sejak harga sebelumnya (%(prev)s)"
 msgid "No information"
 msgstr "Tidak ada informasi"
 
+#. 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Checked"
 msgstr "Diperiksa"
 
@@ -2587,8 +2667,10 @@ msgstr "Diperiksa"
 msgid "Checking now"
 msgstr "Sedang diperiksa"
 
+#. 'Changed' labels the last-changed time column in the watch overview list, not a status badge
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Changed"
 msgstr "Berubah"
 
@@ -2849,6 +2931,7 @@ msgstr "Halaman web"
 msgid "Restock & Price"
 msgstr "Stok Kembali & Harga"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "Belum ada monitor deteksi perubahan halaman web yang dikonfigurasi, silakan tambahkan URL pada kotak di atas, atau"
@@ -3601,6 +3684,10 @@ msgid "Use page <title> in watch overview list"
 msgstr "Gunakan <title> halaman dalam daftar ringkasan monitor"
 
 #: changedetectionio/forms.py
+msgid "Enable watch \"sharing\""
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Relative time format"
 msgstr "Format waktu relatif"
 
@@ -4105,6 +4192,7 @@ msgstr "RegEx untuk diekstrak:"
 msgid "Be sure to test your RegEx here."
 msgstr "Pastikan untuk menguji RegEx Anda di sini."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr "Setiap tanda kurung grup RegEx"
@@ -4135,6 +4223,7 @@ msgstr "Kesalahan saat mengambil metadata untuk {}"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Protokol monitor tidak diizinkan atau format URL tidak valid"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "Isi untuk semua notifikasi — Anda dapat menggunakan"
@@ -4198,6 +4287,7 @@ msgstr "URL keluaran diff untuk monitor."
 msgid "The diff output - only changes, additions, and removals"
 msgstr "Keluaran diff - hanya perubahan, penambahan, dan penghapusan"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr "Semua varian diff menerima"
@@ -4290,6 +4380,7 @@ msgstr "Teks Ringkasan Perubahan AI (sama dengan {{diff}} yang ditingkatkan — 
 msgid "The AI Change Intent that was evaluated."
 msgstr "Intent Perubahan AI yang dievaluasi."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "Peringatan: Isi dari"
@@ -4348,6 +4439,7 @@ msgstr "<i>Harap baca wiki layanan notifikasi di sini untuk catatan konfigurasi 
 msgid "Show advanced help and tips"
 msgstr "Tampilkan bantuan dan kiat lanjutan"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "(atau"
@@ -4368,6 +4460,7 @@ msgstr "teks notifikasi, termasuk judul."
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "bot tidak dapat mengirim pesan ke bot lain, jadi Anda harus menentukan chat ID pengguna non-bot."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "hanya mendukung HTML yang sangat terbatas dan dapat gagal saat tag tambahan dikirim,"
@@ -4376,6 +4469,7 @@ msgstr "hanya mendukung HTML yang sangat terbatas dan dapat gagal saat tag tamba
 msgid "(or use plaintext/markdown format)"
 msgstr "(atau gunakan format plaintext/markdown)"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "untuk panggilan API langsung (atau hilangkan"
@@ -4401,6 +4495,7 @@ msgstr "Sesuaikan notifikasi"
 msgid "Title for all notifications"
 msgstr "Judul untuk semua notifikasi"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "Untuk payload JSON, gunakan"
@@ -4409,6 +4504,7 @@ msgstr "Untuk payload JSON, gunakan"
 msgid "without quotes for automatic escaping, for example -"
 msgstr "tanpa tanda kutip untuk escaping otomatis, misalnya -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "Encoding URL, gunakan"
@@ -4417,6 +4513,7 @@ msgstr "Encoding URL, gunakan"
 msgid "for example -"
 msgstr "misalnya -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "Penggantian regular-expression, gunakan"
@@ -4429,6 +4526,7 @@ msgstr "Untuk referensi lengkap semua filter bawaan Jinja2, pengguna dapat melih
 msgid "Format for all notifications"
 msgstr "Format untuk semua notifikasi"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr "Discord tidak merender HTML — beralih ke"
@@ -4911,6 +5009,7 @@ msgstr "Setiap baris diproses secara terpisah (anggap setiap baris sebagai \"OR\
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "Catatan: Bungkus dengan garis miring / untuk menggunakan regex, contoh:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr "Anda juga dapat menggunakan"
@@ -5002,6 +5101,7 @@ msgstr "Gunakan flag tipe <code>//(?aiLmsux))</code> (lebih banyak <a href=\"%(u
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr "Contoh kata kunci - contoh: <code>Stok habis</code>"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "Gunakan grup untuk mengekstrak hanya teks tersebut - contoh"

@@ -6,6 +6,7 @@
 ] -%}
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='llm-summary.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='restock-price-graph.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
@@ -155,8 +156,8 @@ window.watchOverviewI18n = {
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
         <div id="add-watch-url-row">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <label for="url"><strong>{{ _('Web page URL') }}</strong></label><br>
-            {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1") }}
+            <label for="url"><strong>{{ _('Web page URL') }}</strong></label>
+            {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1", span_wrap=false) }}
             <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
         </div>
         {% if llm_configured %}
@@ -207,7 +208,7 @@ window.watchOverviewI18n = {
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
-    {%- set cols_required = 6 -%}
+    {%- set cols_required = 7 -%}
     {%- if any_has_restock_price_processor -%}
         {%- set cols_required = cols_required + 1 -%}
     {%- endif -%}
@@ -339,26 +340,41 @@ window.watchOverviewI18n = {
                 <th><!-- processor/mode --></th>
                 <th id="th-webpage"><a class="{{ 'active '+link_order if sort_attribute == 'label' else 'inactive' }}" href="{{url_for('watchlist.index', sort='label', order=link_order, **active_filters)}}">{{ _('Web page') }} <span class='arrow {{link_order}}'></span></a></th>
              {%- if any_has_restock_price_processor -%}
-                <th>{{ _('Restock & Price') }}</th>
+                <th class="col-restock-price">{{ _('Restock & Price') }}</th>
              {%- endif -%}
-                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Checked') }}</span><span class="hide-on-desktop">{{ _('Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
-                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ _('Changed') }}</span><span class="hide-on-desktop">{{ _('Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                {# TRANSLATORS: 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state #}
+                <th id="h-lastchecked"><a class="{{ 'active '+link_order if sort_attribute == 'last_checked' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_checked', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ pgettext('timestamp', 'Checked') }}</span><span class="hide-on-desktop">{{ pgettext('timestamp', 'Checked') }}</span> <span class='arrow {{link_order}}'></span></a></th>
+                {# TRANSLATORS: 'Changed' labels the last-changed time column in the watch overview list, not a status badge #}
+                <th id="h-lastchanged"><a class="{{ 'active '+link_order if sort_attribute == 'last_changed' else 'inactive' }}" href="{{url_for('watchlist.index', sort='last_changed', order=link_order, **active_filters)}}"><span class="hide-on-mobile">{{ pgettext('timestamp', 'Changed') }}</span><span class="hide-on-desktop">{{ pgettext('timestamp', 'Changed') }}</span> <span class='arrow {{link_order}}'></span></a></th>
                 <th class="empty-cell"></th>
             </tr>
             </thead>
             <tbody>
             {%- if not watches|length -%}
             <tr>
+                {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                 <td colspan="{{ cols_required }}" style="text-wrap: wrap;">{{ _('No web page change detection watches configured, please add a URL in the box above, or') }} <a href="{{ url_for('imports.import_page')}}" >{{ _('import a list') }}</a>.</td>
             </tr>
             {%- endif -%}
 
+            {%- set ns = namespace(any_in_page_had_restock=false) -%}
             {%- for watch in (watches|sort(attribute=sort_attribute, reverse=sort_order == 'asc'))|pagination_slice(skip=pagination.skip) -%}
                 {%- include "watch-overview-single-row.html" -%}
+
+                {%- if watch['processor'] == 'restock_diff' -%}
+                    {%- set ns.any_in_page_had_restock = true -%}
+                {%- endif -%}
             {%- endfor -%}
             </tbody>
         </table>
         </div>
+        {%- if not ns.any_in_page_had_restock %}
+            <style>
+                .col-restock-price {
+                    display: none;
+                }
+            </style>
+        {%- endif %}
         {{ pagination.links }}
     </div>
     </form>

@@ -16,6 +16,7 @@
                 {%- set open_link = watch.open_link -%}
                 {%- set error_texts = watch.compile_error_texts(has_proxies=has_proxies) -%}
                 {%- set system_use_url_watchlist = datastore.data['settings']['application']['ui'].get('use_page_title_in_list')  -%}
+                {%- set system_use_share = datastore.data['settings']['application']['ui'].get('use_share_watch')  -%}
                 {#  Class settings mirrored in changedetectionio/static/js/realtime.js for the frontend #}
 {#                    loop.cycle('pure-table-odd', 'pure-table-even'),#}
                 {%- set row_classes = [
@@ -95,7 +96,7 @@
 
                         </div>
                     <div class="status-icons">
-                            <button type="submit" formmethod="post" formaction="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}" class="bare-btn link-spread"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="{{ _('Create a link to share watch config with others') }}" ></button>
+{%- if system_use_share -%}  <button type="submit" formmethod="post" formaction="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}" class="bare-btn link-spread"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="{{ _('Create a link to share watch config with others') }}" ></button>{%-  endif -%}
                             {%- set effective_fetcher = watch.get_fetch_backend if watch.get_fetch_backend != "system" else system_default_fetcher -%}
                             {%- if effective_fetcher and ("html_webdriver" in effective_fetcher or "html_" in effective_fetcher or "extra_browser_" in effective_fetcher) -%}
                                 {{ effective_fetcher|fetcher_status_icons }}
@@ -109,7 +110,7 @@
                 </td>
 
 {%- if any_has_restock_price_processor -%}
-                <td class="restock-and-price">
+                <td class="restock-and-price col-restock-price">
 {%- if watch['processor'] == 'restock_diff'  -%}
     {#-  @todo - this could be injected somehow watch.extra_row_info or something -#}
                     <div class="restock-info-wrap">
@@ -154,13 +155,13 @@
 {%- endif -%}
 
             {#last_checked becomes fetch-start-time#}
-                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ _('Checked') }}">
+                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ pgettext('timestamp', 'Checked') }}">
                     <div class="spinner-wrapper" style="display:none;" >
                         <span class="spinner"></span><span class="status-text">&nbsp;{{ watch['__check_status'] or _('Checking now') }}</span>
                     </div>
                     <span class="innertext">{{watch|format_last_checked_time|safe}}</span>
                 </td>
-                <td class="last-changed" data-timestamp="{{ watch.last_changed }}" data-label="{{ _('Changed') }}">
+                <td class="last-changed" data-timestamp="{{ watch.last_changed }}" data-label="{{ pgettext('timestamp', 'Changed') }}">
                     <span class="innertext">{%- if watch.history_n >=2 and watch.last_changed >0 -%}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {%- else -%}

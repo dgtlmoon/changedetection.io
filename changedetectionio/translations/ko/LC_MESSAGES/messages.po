@@ -298,6 +298,7 @@ msgstr ".XLSX 및 Wachete"
 msgid "Backup Restore"
 msgstr "백업 복원"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "changedetection.io 백업 복원은"
@@ -340,6 +341,7 @@ msgstr "내보내는 방법"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "필요한 경우 기본 가져오기 방식을 Chrome으로 설정해 주세요."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "사용자 정의 열 및 데이터 유형 매핑 표"
@@ -481,6 +483,7 @@ msgstr ""
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "알림 링크의"
@@ -508,6 +511,10 @@ msgstr "알림 디버그 로그"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -548,6 +555,7 @@ msgstr "AI / LLM"
 msgid "Info"
 msgstr "정보"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "모든 모니터링의 기본 재확인 간격입니다. 현재 시스템 최소값은"
@@ -593,6 +601,27 @@ msgid "When a request returns no content, or the HTML does not contain any text,
 msgstr "요청 결과에 내용이 없거나 HTML에 텍스트가 없는 경우도 변경으로 간주"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "모든 모니터링의 기본 프록시 선택"
 
@@ -620,6 +649,7 @@ msgstr "텍스트를 추출하기 전에 <i>n</i>초 동안 기다립니다."
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "모니터링을 처리할 동시 워커 수입니다. 워커가 많을수록 처리는 빨라지지만 메모리 사용량도 늘어납니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "현재 실행 중:"
@@ -648,6 +678,7 @@ msgstr "일반 요청(Chrome 기반이 아님)의 최대 타임아웃 시간(초
 msgid "Applied to all requests."
 msgstr "모든 요청에 적용됩니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "참고: User-Agent만 바꾼다고 해서 반봇 기술을 우회할 수 있는 것은 아닙니다. 다음 요소도 함께 고려해야 합니다."
@@ -733,6 +764,7 @@ msgstr "API로 changedetection.io를 제어할 수 있습니다. 자세한 내�
 msgid "API access and examples here"
 msgstr "API 액세스 및 예제"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "다음을 사용해 API 액세스를 제한합니다."
@@ -839,6 +871,12 @@ msgstr "모니터링 목록 옆 파비콘 표시 여부"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"This copies your watch to a temporary hosted database and returns a link to make sharing/copying the watch to other "
+"people"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -966,6 +1004,10 @@ msgid "AI / LLM configured:"
 msgstr "AI / LLM 설정됨:"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Edit provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Configure AI Provider"
 msgstr "AI 프로바이더 설정"
 
@@ -1045,6 +1087,10 @@ msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
 msgstr "Ollama 또는 사용자 지정/자체 호스팅 엔드포인트에만 필요합니다. 클라우드 프로바이더는 비워 두세요."
 
@@ -1071,8 +1117,18 @@ msgid "choose a model"
 msgstr "모델 선택"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Enter API key and click 'Load available models'"
-msgstr "API 키를 입력하고 '사용 가능한 모델 불러오기'를 클릭하세요"
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Change model"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Remove AI / LLM configuration?"
@@ -1090,6 +1146,10 @@ msgstr "제거"
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "취소"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove provider"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Test connection"
@@ -1443,8 +1503,8 @@ msgid "Use system defaults"
 msgstr "시스템 기본값 사용"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
-msgstr "새 그룹 / 태그 추가"
+msgid "Add a new organisational tag / group name."
+msgstr "새 태그 / 그룹 이름 추가."
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
@@ -1735,6 +1795,7 @@ msgstr ""
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
 msgstr "이 작업은 모든 모니터링의 버전 기록(스냅샷)을 삭제하지만 URL 목록은 유지합니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "먼저 "
@@ -1751,6 +1812,7 @@ msgstr " 기능을 사용하는 것이 좋습니다."
 msgid "Confirmation text"
 msgstr "확인 텍스트"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "이해하셨다면 "
@@ -1811,15 +1873,21 @@ msgstr "공백 무시"
 msgid "Same/non-changed"
 msgstr "동일/변경되지 않음"
 
+#. 'Removed' is a noun label for a diff display filter (toggles removed lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff filter"
 msgid "Removed"
 msgstr "제거됨"
 
+#. 'Added' is a noun label for a diff display filter (toggles added lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Added"
 msgstr "추가됨"
 
+#. 'Replaced' is a noun label for a diff display filter (toggles replaced lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Replaced"
 msgstr "교체됨"
 
@@ -1945,6 +2013,7 @@ msgstr "조건"
 msgid "Stats"
 msgstr "통계"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "일부 사이트에서는 JavaScript를 사용하여 콘텐츠를 생성합니다."
@@ -2075,6 +2144,7 @@ msgstr "이 기능은 대화형 JavaScript를 지원하는 가져오기 방식�
 msgid "to one that supports interactive Javascript."
 msgstr "대화형 JavaScript를 지원하는 방식으로 변경해야 합니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "먼저"
@@ -2093,6 +2163,7 @@ msgstr "필터가 페이지에 더 이상 보이지 않을 때 알림을 보냅�
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr "체크(✓) 버튼을 눌러 현재 스냅샷에서 조건이 통과하는지 테스트해 보세요."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "빠른 튜토리얼 보기:"
@@ -2123,6 +2194,7 @@ msgid ""
 "<strong>addition</strong> instead of <strong>replacement</strong> for example."
 msgstr "참고: 각 줄의 텍스트 길이와 유사도에 따라 알고리즘이 예를 들어 <strong>교체</strong>가 아닌 <strong>추가</strong>로 판단할 수 있습니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "새 콘텐츠를 보고 싶다면"
@@ -2131,6 +2203,7 @@ msgstr "새 콘텐츠를 보고 싶다면"
 msgid "when you're interested in new content."
 msgstr "를 선택하는 것이 좋습니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "콘텐츠가 목록 안에서 단순히 이동해도"
@@ -2170,6 +2243,7 @@ msgstr "AI 판단 기준 미리보기"
 msgid "Loading..."
 msgstr "불러오는 중..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "시각 선택기 도구로 변경 감지에 사용할"
@@ -2421,6 +2495,10 @@ msgid "Watch added."
 msgstr "모니터링이 추가되었습니다."
 
 #: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "항목"
 
@@ -2478,8 +2556,10 @@ msgstr ""
 msgid "No information"
 msgstr "정보 없음"
 
+#. 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Checked"
 msgstr "확인됨"
 
@@ -2488,8 +2568,10 @@ msgstr "확인됨"
 msgid "Checking now"
 msgstr "지금 확인 중"
 
+#. 'Changed' labels the last-changed time column in the watch overview list, not a status badge
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Changed"
 msgstr "변경됨"
 
@@ -2750,6 +2832,7 @@ msgstr ""
 msgid "Restock & Price"
 msgstr "재입고 및 가격"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "설정된 웹페이지 변경 감지 모니터링이 없습니다. 위 입력란에 URL을 추가하거나"
@@ -3498,6 +3581,10 @@ msgid "Use page <title> in watch overview list"
 msgstr "모니터링 목록에 페이지 <title> 사용"
 
 #: changedetectionio/forms.py
+msgid "Enable watch \"sharing\""
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Relative time format"
 msgstr ""
 
@@ -4002,6 +4089,7 @@ msgstr "추출할 정규식:"
 msgid "Be sure to test your RegEx here."
 msgstr "여기에서 정규식을 꼭 테스트해 보세요."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr "각 정규식 그룹 괄호는"
@@ -4032,6 +4120,7 @@ msgstr "{}의 메타데이터를 가져오는 중 오류가 발생했습니다."
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "모니터링 프로토콜이 허용되지 않거나 URL 형식이 올바르지 않습니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "모든 알림 본문 — 다음을 사용할 수 있습니다:"
@@ -4095,6 +4184,7 @@ msgstr "모니터링의 비교 결과 URL입니다."
 msgid "The diff output - only changes, additions, and removals"
 msgstr "비교 결과 - 변경, 추가, 삭제만"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr "모든 diff 변형은"
@@ -4181,6 +4271,7 @@ msgstr "AI 변경 요약 텍스트입니다. (업그레이드된 {{diff}}와 동
 msgid "The AI Change Intent that was evaluated."
 msgstr "평가에 사용된 AI 판단 기준입니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "주의:"
@@ -4239,6 +4330,7 @@ msgstr "<i>중요한 설정 참고 사항은 여기의 알림 서비스 위키�
 msgid "Show advanced help and tips"
 msgstr "고급 도움말 표시"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "(또는"
@@ -4259,6 +4351,7 @@ msgstr "까지의 알림 텍스트만 지원합니다. 제목도 포함됩니다
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "봇은 다른 봇에게 메시지를 보낼 수 없으므로, 봇이 아닌 사용자의 채팅 ID를 지정해야 합니다."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "매우 제한된 HTML만 지원하므로 추가 태그를 보내면 실패할 수 있습니다,"
@@ -4267,6 +4360,7 @@ msgstr "매우 제한된 HTML만 지원하므로 추가 태그를 보내면 실�
 msgid "(or use plaintext/markdown format)"
 msgstr "(또는 일반 텍스트/마크다운 형식 사용)"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "직접 API 호출용입니다. (비SSL의 경우 "
@@ -4292,6 +4386,7 @@ msgstr ""
 msgid "Title for all notifications"
 msgstr "모든 알림 제목"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "JSON 페이로드에서는"
@@ -4300,6 +4395,7 @@ msgstr "JSON 페이로드에서는"
 msgid "without quotes for automatic escaping, for example -"
 msgstr "를 따옴표 없이 사용하면 자동으로 이스케이프됩니다. 예:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "URL 인코딩에는"
@@ -4308,6 +4404,7 @@ msgstr "URL 인코딩에는"
 msgid "for example -"
 msgstr "예 -"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "정규식 치환에는"
@@ -4320,6 +4417,7 @@ msgstr "Jinja2 기본 내장 필터 전체 목록은 다음 문서를 참고하�
 msgid "Format for all notifications"
 msgstr "모든 알림 형식"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr "Discord는 HTML을 렌더링하지 않으므로"
@@ -4782,6 +4880,7 @@ msgstr "각 줄은 개별적으로 처리됩니다. (각 줄은 \"OR\" 조건)"
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "참고: 정규식을 사용하려면 슬래시 / 로 감싸세요. 예:"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr "또는"
@@ -4868,6 +4967,7 @@ msgstr "<code>//(?aiLmsux))</code> 형식의 플래그를 사용하세요(<a hre
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr "키워드 예시 - 예: <code>Out of stock</code>"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "그룹을 사용해 해당 텍스트만 추출하는 예시"

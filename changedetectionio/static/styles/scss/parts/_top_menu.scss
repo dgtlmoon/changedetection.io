@@ -13,17 +13,9 @@
   a {
     color: var(--color-text-menu-heading);
   }
-  &::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 1px;
-    pointer-events: none;
-    background: linear-gradient(to right,
-      rgba(200, 200, 200, 0.02),
-      rgba(200, 200, 200, 0.6));
+
+  .bare-btn {
+    color: var(--color-text-menu-heading);
   }
 }
 
