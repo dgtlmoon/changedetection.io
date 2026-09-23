@@ -2313,7 +2313,7 @@ msgstr "履歴の件数"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Last fetch duration"
-msgstr "最後の取得時間"
+msgstr "前回の取得時間"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Notification alert count"
@@ -3115,7 +3115,7 @@ msgstr "開始時刻"
 
 #: changedetectionio/forms.py
 msgid "Run duration"
-msgstr "実行期間"
+msgstr "実行時間"
 
 #: changedetectionio/forms.py
 msgid "Use time scheduler"
