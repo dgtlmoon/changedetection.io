@@ -45,7 +45,7 @@
                         {{ render_field(form.requests.form.time_between_check, class="time-check-widget") }}
 
                         {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
-                        <span class="pure-form-message-inline">{{ _('Default recheck time for all watches, current system minimum is') }} <i>{{min_system_recheck_seconds}}</i> {{ _('seconds') }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">{{ _('more info') }}</a>).</span>
+                        <span class="pure-form-message-inline">{{ _('Default recheck time for all watches, current system minimum is') }} <i>{{min_system_recheck_seconds}}</i> {{ ngettext('second', 'seconds', min_system_recheck_seconds) }} (<a href="https://github.com/dgtlmoon/changedetection.io/wiki/Misc-system-settings#enviroment-variables">{{ _('more info') }}</a>).</span>
                             <div id="time-between-check-schedule">
                                 <!-- Start Time and End Time {{ timezone_default_config }} -->
                                 <div id="limit-between-time">

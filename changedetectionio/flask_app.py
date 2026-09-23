@@ -38,7 +38,7 @@ from changedetectionio.strtobool import strtobool
 # Create specific signals for application events
 # Make this a global singleton to avoid multiple signal objects
 watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
-from flask_babel import Babel, get_locale, gettext
+from flask_babel import Babel, get_locale, gettext, ngettext
 from flask_wtf import CSRFProtect
 from loguru import logger
 
@@ -603,19 +603,19 @@ def _jinja2_filter_format_duration(seconds):
     # Build parts list
     parts = []
     if years > 0:
-        parts.append(f"{years} {gettext('year') if years == 1 else gettext('years')}")
+        parts.append(f"{years} {ngettext('year', 'years', years)}")
     if months > 0:
-        parts.append(f"{months} {gettext('month') if months == 1 else gettext('months')}")
+        parts.append(f"{months} {ngettext('month', 'months', months)}")
     if weeks > 0:
-        parts.append(f"{weeks} {gettext('week') if weeks == 1 else gettext('weeks')}")
+        parts.append(f"{weeks} {ngettext('week', 'weeks', weeks)}")
     if days > 0:
-        parts.append(f"{days} {gettext('day') if days == 1 else gettext('days')}")
+        parts.append(f"{days} {ngettext('day', 'days', days)}")
     if hours > 0:
-        parts.append(f"{hours} {gettext('hour') if hours == 1 else gettext('hours')}")
+        parts.append(f"{hours} {ngettext('hour', 'hours', hours)}")
     if minutes > 0:
-        parts.append(f"{minutes} {gettext('minute') if minutes == 1 else gettext('minutes')}")
+        parts.append(f"{minutes} {ngettext('minute', 'minutes', minutes)}")
     if secs > 0 or not parts:
-        parts.append(f"{secs} {gettext('second') if secs == 1 else gettext('seconds')}")
+        parts.append(f"{secs} {ngettext('second', 'seconds', secs)}")
 
     return ", ".join(parts)
 
