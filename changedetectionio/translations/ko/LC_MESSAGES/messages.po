@@ -4122,6 +4122,10 @@ msgstr "{}의 메타데이터를 가져오는 중 오류가 발생했습니다."
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "모니터링 프로토콜이 허용되지 않거나 URL 형식이 올바르지 않습니다."
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

@@ -4165,6 +4165,10 @@ msgstr "{} için meta veri getirilirken hata oluştu"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "İzleyici protokolüne izin verilmiyor veya geçersiz URL formatı"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

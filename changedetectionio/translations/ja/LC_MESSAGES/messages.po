@@ -4131,6 +4131,10 @@ msgstr "{} のメタデータ取得中にエラーが発生しました"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "ウォッチのプロトコルが許可されていないか、URL形式が無効です"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr "プロキシなし"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

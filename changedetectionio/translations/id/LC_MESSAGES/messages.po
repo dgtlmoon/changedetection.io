@@ -4225,6 +4225,10 @@ msgstr "Kesalahan saat mengambil metadata untuk {}"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Protokol monitor tidak diizinkan atau format URL tidak valid"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

@@ -4114,6 +4114,10 @@ msgstr "Errore nel recupero metadati per {}"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Protocollo non consentito o formato URL non valido"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

@@ -4123,6 +4123,10 @@ msgstr "讀取 {} 的中繼資料時發生錯誤"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "監測協定不被允許或 URL 格式無效"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

@@ -4162,6 +4162,10 @@ msgstr "Erro ao buscar metadados para {}"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "O protocolo de monitoramento não é permitido ou o formato da URL é inválido"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

@@ -4118,6 +4118,10 @@ msgstr "获取 {} 的元数据失败"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "监控协议不允许或 URL 格式无效"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"

@@ -4230,6 +4230,10 @@ msgstr "Ошибка при получении метаданных для {}."
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Протокол просмотра не разрешен или неверный формат URL."
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
