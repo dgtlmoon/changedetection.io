@@ -70,11 +70,19 @@
   }
 
   .stab-icon {
-    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 1.1rem;
-    text-align: center;
     flex-shrink: 0;
     opacity: 0.8;
+
+    svg {
+      width: 0.95rem;
+      height: 0.95rem;
+      stroke: currentColor;
+      fill: none;
+    }
   }
 }
 
@@ -123,6 +131,14 @@
   .stab-overview-glyph {
     color: var(--color-menu-accent);
     margin-right: 0.2rem;
+
+    svg {
+      width: 1.1rem;
+      height: 1.1rem;
+      stroke: currentColor;
+      fill: none;
+      vertical-align: -0.15em;
+    }
   }
 
   p {
@@ -156,12 +172,19 @@
   }
 
   .stab-overview-icon {
-    font-size: 1.1rem;
     width: 1.6rem;
     flex-shrink: 0;
-    text-align: center;
     padding-top: 0.05rem;
     opacity: 0.7;
+    display: flex;
+    justify-content: center;
+
+    svg {
+      width: 1.3rem;
+      height: 1.3rem;
+      stroke: currentColor;
+      fill: none;
+    }
   }
 
   .stab-overview-text {
@@ -187,10 +210,16 @@
   background: rgba(255, 180, 0, 0.07);
 
   .stab-disclaimer-icon {
-    font-size: 1.15rem;
     flex-shrink: 0;
     padding-top: 0.05rem;
     color: #c07800;
+
+    svg {
+      width: 1.2rem;
+      height: 1.2rem;
+      stroke: currentColor;
+      fill: none;
+    }
   }
 
   .stab-disclaimer-body {

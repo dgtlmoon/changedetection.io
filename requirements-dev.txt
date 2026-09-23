@@ -1,0 +1,5 @@
+-r requirements.txt
+
+ruff >= 0.11.2
+pre_commit >= 4.2.0
+dennis >= 1.3.0

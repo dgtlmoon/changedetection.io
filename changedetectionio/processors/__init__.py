@@ -5,6 +5,7 @@ import importlib
 import inspect
 import os
 import pkgutil
+import re
 
 def find_sub_packages(package_name):
     """
@@ -407,8 +408,10 @@ def get_processor_badge_css():
         colors = generate_processor_badge_colors(sub_package_name)
 
         # Light mode rule
+        # Double class (.processor-badge.processor-badge-{name}) bumps specificity so the
+        # color survives the browser's a:visited rule now that the badge is rendered as a link.
         css_rules.append(
-            f".processor-badge-{sub_package_name} {{\n"
+            f".processor-badge.processor-badge-{sub_package_name} {{\n"
             f"  background-color: {colors['light']['bg']};\n"
             f"  color: {colors['light']['color']};\n"
             f"}}"
@@ -416,7 +419,7 @@ def get_processor_badge_css():
 
         # Dark mode rule
         css_rules.append(
-            f"html[data-darkmode=\"true\"] .processor-badge-{sub_package_name} {{\n"
+            f"html[data-darkmode=\"true\"] .processor-badge.processor-badge-{sub_package_name} {{\n"
             f"  background-color: {colors['dark']['bg']};\n"
             f"  color: {colors['dark']['color']};\n"
             f"}}"
@@ -453,6 +456,15 @@ def save_processor_config(datastore, watch_uuid, config_data):
             return False
 
         processor_name = watch.get('processor', 'text_json_diff')
+
+        # The processor name becomes a filename below, and it is not enum-validated on every
+        # write path (/imports/import accepts it verbatim), so treat it as untrusted: a value
+        # like '../../../../tmp/pwned' would otherwise escape the watch directory.
+        # update_extra_watch_config() also contains the path, this is the second layer.
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', processor_name or ''):
+            logger.error(f"Refusing to save processor config: unsafe processor name {processor_name!r} "
+                         f"on watch {watch_uuid}")
+            return False
 
         # Create a processor instance to access config methods
         processor_instance = difference_detection_processor(datastore, watch_uuid)

@@ -1,8 +1,41 @@
 import os
 from abc import abstractmethod
 from loguru import logger
+from pydantic import BaseModel
 
 from changedetectionio.content_fetchers import BrowserStepsStepException
+from changedetectionio.strtobool import strtobool
+
+
+class FetcherCapabilities(BaseModel):
+    """Typed view of what a content fetcher can do.
+
+    Single source of truth for the fetcher capability flags. The flags live as
+    class attributes on each fetcher (supports_browser_steps etc); build a
+    validated instance from a fetcher class with FetcherCapabilities.from_fetcher(),
+    and call .model_dump() where a plain dict is expected (templates, plugin API).
+    """
+    supports_browser_steps: bool = False       # Can execute browser automation steps
+    supports_screenshots: bool = False         # Can capture page screenshots
+    supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
+
+    @classmethod
+    def from_fetcher(cls, fetcher_class):
+        """Build capabilities from a fetcher class (or None -> all False)."""
+        return cls(**{
+            name: getattr(fetcher_class, name, False)
+            for name in cls.model_fields
+        })
+
+
+def get_playwright_bypass_csp():
+    """Return whether Playwright-compatible browser contexts should bypass CSP.
+
+    Bypassing CSP remains enabled by default for backward compatibility. Some
+    remote CDP implementations do not support ``Page.setBypassCSP``; operators
+    can disable the option by setting ``PLAYWRIGHT_BYPASS_CSP=false``.
+    """
+    return strtobool(os.getenv('PLAYWRIGHT_BYPASS_CSP', 'true'))
 
 
 def manage_user_agent(headers, current_ua=''):
@@ -39,6 +72,10 @@ def manage_user_agent(headers, current_ua=''):
     return None
 
 class Fetcher():
+    # The fully-resolved concrete backend name this fetcher was chosen as
+    # (e.g. 'html_requests', 'html_webdriver'). Set by resolve_content_fetcher()
+    # so downstream consumers don't have to re-derive it from the class name.
+    backend_name = None
     browser_connection_is_custom = None
     browser_connection_url = None
     browser_steps = None
@@ -53,6 +90,7 @@ class Fetcher():
     screenshot_format = None
     status_code = None
     webdriver_js_execute_code = None
+    worker_id = None
     xpath_data = None
     xpath_element_js = ""
 
@@ -82,6 +120,11 @@ class Fetcher():
         # Allow lock_viewport_elements to be set via kwargs
         if kwargs and 'lock_viewport_elements' in kwargs:
             self.lock_viewport_elements = kwargs.get('lock_viewport_elements')
+
+        # Which async worker is driving this fetch, subclasses use it to keep per-worker browser
+        # state (profile dirs etc) apart, stays None when we're not called from a worker
+        if kwargs and 'worker_id' in kwargs:
+            self.worker_id = kwargs.get('worker_id')
 
 
     @classmethod
@@ -193,7 +236,11 @@ class Fetcher():
                                                       optional_value=optional_value)
                     await self.screenshot_step(step_n)
                     await self.save_step_html(step_n)
-                except (Error, TimeoutError) as e:
+                except (Error, TimeoutError, ValueError) as e:
+                    # ValueError is what validate_fetch_url_async() raises when a step's URL is
+                    # refused (file://, private IP, bad scheme) - report it against the offending
+                    # step number like any other step failure, rather than failing the whole watch
+                    # with an opaque error.
                     logger.debug(str(e))
                     # Stop processing here
                     raise BrowserStepsStepException(step_n=step_n, original_e=e)

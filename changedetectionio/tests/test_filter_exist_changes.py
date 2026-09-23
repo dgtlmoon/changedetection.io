@@ -111,7 +111,7 @@ def test_filter_doesnt_exist_then_exists_should_get_notification(client, live_se
     assert not os.path.isfile(os.path.join(datastore_path, "notification.txt"))
     # Now the filter should exist
     set_response_with_filter(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
 

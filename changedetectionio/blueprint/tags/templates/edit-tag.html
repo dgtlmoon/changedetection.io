@@ -27,9 +27,11 @@
     <div class="tabs collapsable">
         <ul>
             <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
-            {% if llm_configured %}
+            {# Always shown, like the watch edit page: with no provider configured the pane
+               explains how to set one up (and carries the AI switches through on save). #}
+{%- if not llm_features_disabled %}
             <li class="tab"><a href="#ai-llm">{{ _('AI / LLM') }}</a></li>
-            {% endif %}
+{%- endif -%}
             <li class="tab"><a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a></li>
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
@@ -64,15 +66,16 @@
                     {% endif %}
                     <div class="pure-control-group">
                         <label>{{ _('Tag colour') }}</label>
+                        {%- set tag_colour = data.get('tag_colour')|safe_css_colour -%}
                         <div style="display:flex; align-items:center; gap:0.75em;">
                             <input type="checkbox" id="use_custom_colour"
-                                   {% if data.get('tag_colour') %}checked{% endif %}>
+                                   {% if tag_colour %}checked{% endif %}>
                             <label for="use_custom_colour" style="margin:0">{{ _('Custom colour') }}</label>
                             <input type="color" id="tag_colour_picker"
-                                   value="{{ data.get('tag_colour') or '#4f8ef7' }}"
-                                   {% if not data.get('tag_colour') %}disabled{% endif %}>
+                                   value="{{ tag_colour or '#4f8ef7' }}"
+                                   {% if not tag_colour %}disabled{% endif %}>
                             <input type="hidden" name="tag_colour" id="tag_colour_hidden"
-                                   value="{{ data.get('tag_colour', '') }}">
+                                   value="{{ tag_colour }}">
                         </div>
                         <span class="pure-form-message-inline">{{ _('Leave unchecked to use the auto-generated colour based on the tag name.') }}</span>
                     </div>
@@ -90,13 +93,11 @@
                     </script>
                 </fieldset>
             </div>
-
-            {% if llm_configured %}
+{%- if not llm_features_disabled %}
             <div class="tab-pane-inner" id="ai-llm">
                 {% include "edit/include_llm_intent.html" %}
             </div>
-            {% endif %}
-
+{%- endif -%}
             <div class="tab-pane-inner" id="filters-and-triggers">
                 {# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}
                 <p>{{ _('These settings are <strong><i>added</i></strong> to any existing watch configurations.')|safe }}</p>
@@ -131,7 +132,7 @@
                         {% if has_default_notification_urls %}
                         <div class="inline-warning">
                             <img class="inline-warning-icon" src="{{url_for('static_content', group='images', filename='notice.svg')}}" alt="{{ _('Look out!') }}" title="{{ _('Lookout!') }}" >
-                            {{ _('There are <a href="%(url)s">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.', url=url_for('settings.settings_page') ~ '#notifications')|safe }}
+                            {{ _('There are <a href="%(url)s">system-wide notification URLs enabled</a>, this form will override notification settings for this watch only &dash; an empty Notification URL list here will still send notifications.', url=url_for('settings.notifications.apprise'))|safe }}
                         </div>
                         {% endif %}
                         <a href="#notifications" id="notification-setting-reset-to-default" class="pure-button button-xsmall" style="right: 20px; top: 20px; position: absolute; background-color: #5f42dd; border-radius: 4px; font-size: 70%; color: #fff">{{ _('Use system defaults') }}</a>

@@ -69,14 +69,14 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
 
     wait_for_all_checks(client)
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # set a new html text with a modified link
     set_modified_ignore_response(datastore_path=datastore_path)
     wait_for_all_checks(client)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -97,7 +97,7 @@ def test_render_anchor_tag_content_true(client, live_server, measure_memory_usag
     assert b"Settings updated." in res.data
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)

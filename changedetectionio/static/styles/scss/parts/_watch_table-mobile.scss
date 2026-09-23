@@ -1,9 +1,15 @@
-$grid-col-checkbox: 20px;
+$grid-col-checkbox: 40px;
 $grid-col-watch: 100px;
 $grid-gap: 0.5rem;
 
+// Breakpoint at which the watch list snaps from horizontal table rows to the
+// stacked mobile grid layout. The min-width companion (= max + 1px) handles
+// the desktop-only side so the two queries can never overlap or leave a 1px
+// gap between them.
+$watch-table-mobile-max: 767px;
 
-@media (max-width: 767px) {
+
+@media (max-width: $watch-table-mobile-max) {
 
   /*
   Max width before this PARTICULAR table gets nasty
@@ -18,11 +24,10 @@ $grid-gap: 0.5rem;
       tr {
         th {
           display: inline-block;
-          // Hide the "Last" text for smaller screens
-          @media (max-width: 768px) {
-            .hide-on-mobile {
-              display: none;
-            }
+          // Hide the "Last" text for smaller screens — the parent
+          // @media already gates this to the mobile breakpoint.
+          .hide-on-mobile {
+            display: none;
           }
         }
       }
@@ -30,19 +35,6 @@ $grid-gap: 0.5rem;
       .empty-cell {
         display: none;
       }
-    }
-
-
-    .last-checked {
-      margin-left: calc($grid-col-checkbox + $grid-gap);
-
-      > span {
-        vertical-align: middle;
-      }
-    }
-
-    .last-changed {
-      margin-left: calc($grid-col-checkbox + $grid-gap);
     }
 
     .last-checked::before {
@@ -96,13 +88,35 @@ $grid-gap: 0.5rem;
     }
   }
 }
-
-@media (max-width: 767px) {
+/* watch table snap to stacked horizontal */
+@media (max-width: $watch-table-mobile-max) {
+  .blueprint-watchlist {
+    #mobile-home {
+      opacity: 0.5;
+    }
+  }
+  #mobile-home {
+    /* Basic little home button for mobile so we dont feel lost */
+    display: inline-block !important;
+  }
+  #menu-mute {
+    span {
+      display: none;
+    }
+  }
   .watch-table {
+    border: none;
+  // Row hover highlight (the app's tables don't zebra-stripe).
+
     tbody {
       tr {
-        padding-bottom: 10px;
-        padding-top: 10px;
+        &:hover > td {
+          background-color: inherit !important;
+        }
+        padding-inline: 12px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        margin-bottom: 1rem;
         display: grid;
         grid-template-columns: $grid-col-checkbox 1fr $grid-col-watch;
         grid-template-rows: auto auto auto auto;
@@ -110,11 +124,6 @@ $grid-gap: 0.5rem;
 
         .counter-i {
           display: none;
-        }
-
-        td.checkbox-uuid {
-          display: grid;
-          place-items: center;
         }
 
         td.inline {
@@ -161,7 +170,7 @@ $grid-gap: 0.5rem;
           grid-row: 4;
           display: flex;
           align-items: center;
-          justify-content: flex-start;
+          justify-content: center;
         }
 
         > td.watch-controls {
@@ -178,12 +187,21 @@ $grid-gap: 0.5rem;
     }
   }
   .pure-table td {
-    padding: 3px !important;
+    padding: 0 !important;
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: $watch-table-mobile-max + 1px) {
   .watch-table thead tr th .hide-on-desktop {
     display: none;
   }
+  .watch-table {
+    td.last-checked, td.last-changed {
+      .innertext {
+        white-space: nowrap;
+      }
+    }
+  }
 }
+
+

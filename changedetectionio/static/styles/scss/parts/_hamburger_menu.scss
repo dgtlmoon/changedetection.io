@@ -6,7 +6,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: $common-gap;
   z-index: 10001;
   position: relative;
 
@@ -26,11 +26,12 @@
   flex-direction: column;
   justify-content: space-between;
 
+  /* actual stripes */
   span {
     display: block;
     height: 3px;
     width: 100%;
-    background: var(--color-text);
+    background: var(--color-white);
     border-radius: 2px;
     transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     transform-origin: center;
@@ -38,6 +39,14 @@
 }
 
 .hamburger-menu.active {
+
+  /* actual stripes */
+  .hamburger-icon {
+    span {
+      background-color: var(--color-text);
+    }
+  }
+
   .hamburger-icon span:nth-child(1) {
     transform: translateY(8.5px) rotate(45deg);
   }
@@ -85,20 +94,62 @@
   transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   overflow-y: auto;
   padding-top: 60px;
+  .action-sidebar-divider {
+    display: none;
+  }
+  .is-disabled {
+    display: none;
+  }
+  .action-sidebar-item.active {
+    background-color: inherit;
+    font-weight: bold;
+    span {
+      font-weight: bold;
+    }
+  }
+  #action-sidebar-logo {
+    padding: 0;
+  }
 
+  .action-badge--count {
+    position: initial !important;
+    top: 0;
+    left: 0;
+  }
+  .action-label {
+    display: block !important;
+  }
+  #cdio-logo {
+    color: var(--color-text);
+
+    #logo-short {
+      display: none;
+    }
+
+    #logo-expanded {
+      display: inline-block;
+    }
+  }
+  .action-icon {
+    stroke: var(--color-text);
+  }
   &.active {
     right: 0;
   }
-
+  #live-queue-line, #extra-item, #hosting-offer {
+    display: none;
+  }
   .mobile-menu-items {
     list-style: none;
     padding: 1rem 0;
     margin: 0;
-
+    button {
+      color: var(--color-text);
+    }
     li {
       border-bottom: 1px solid var(--color-border-table-cell);
 
-      >* {
+      >*  {
         display: block;
         padding: 1rem 1.5rem;
         color: var(--color-text);
@@ -109,6 +160,14 @@
         &:hover {
           background: var(--color-background-menu-link-hover);
         }
+      }
+
+      // Buttons shrink-wrap and centre their label; anchors don't. No global
+      // border-box reset here, so this must not be folded into the rule above.
+      >form>button {
+        box-sizing: border-box;
+        width: 100%;
+        text-align: left;
       }
       &#menu-pause, &#menu-mute {
         display: none;

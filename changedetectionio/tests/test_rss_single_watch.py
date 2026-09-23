@@ -62,7 +62,7 @@ def test_rss_single_watch_order(client, live_server, measure_memory_usage, datas
     # Create multiple versions by triggering changes
     for version in range(2, 6):  # Create versions 2, 3, 4, 5
         set_response(datastore_path, version)
-        res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         time.sleep(0.5)  # Small delay to ensure different timestamps
 
@@ -184,7 +184,7 @@ def test_rss_categories_from_tags(client, live_server, measure_memory_usage, dat
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data_v2)
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Get RSS token
@@ -270,17 +270,39 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
     rss_token = extract_rss_token_from_UI(client)
 
 
+    # Notification body belongs to the notifications page now; rss_template_type
+    # still belongs to the main settings RSS section. Split the save.
+    res = client.post(
+        url_for("settings.notifications.apprise"),
+        data={
+              "notification_body": 'Boo yeah hello from main settings notification body<br>\nTitle: {{ watch_title }} changed',
+              "notification_format": default_notification_format,
+              "notification_urls": "",
+              },
+        follow_redirects=True
+    )
+    assert b'Settings updated' in res.data
+
+    # Now flip rss_template_type so the RSS feed uses the notification_body
+    # we just saved.
     res = client.post(
         url_for("settings.settings_page"),
         data={
-              "application-fetch_backend": "html_requests",
-              "application-minutes_between_check": 180,
-              "application-notification_body": 'Boo yeah hello from main settings notification body<br>\nTitle: {{ watch_title }} changed',
-              "application-notification_format": default_notification_format,
-              "application-rss_template_type" : 'notification_body',
-              "application-notification_urls": "",
-
-              },
+            "application-rss_template_type": 'notification_body',
+            "application-pager_size": '50',
+            "application-notification_format": 'html',
+            "application-fetch_backend": 'html_requests',
+            "application-rss_diff_length": '5',
+            "application-filter_failure_notification_threshold_attempts": '0',
+            "requests-time_between_check-days": '0',
+            "requests-time_between_check-hours": '0',
+            "requests-time_between_check-minutes": '5',
+            "requests-time_between_check-seconds": '0',
+            "requests-time_between_check-weeks": '0',
+            "requests-jitter_seconds": '0',
+            "requests-workers": '10',
+            "requests-timeout": '60',
+        },
         follow_redirects=True
     )
     assert b'Settings updated' in res.data
@@ -291,11 +313,11 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag="RSS-Custom")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
 

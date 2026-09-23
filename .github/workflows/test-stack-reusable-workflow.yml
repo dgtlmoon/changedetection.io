@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -64,6 +64,18 @@ jobs:
         run: |
           echo "---- Built for Python ${{ env.PYTHON_VERSION }} -----"
           docker run test-changedetectionio bash -c 'pip list'
+
+      - name: License compliance - no strong copyleft in shipped image
+        run: |
+          # Runs against the built image, i.e. exactly what ships, with the entrypoint
+          # bypassed so EXTRA_PACKAGES cannot pull in the opt-in AGPL osint plugin.
+          # --partial-match is required: plain --fail-on is an exact string match and
+          # would silently miss declarations like "GPL-2.0-or-later".
+          docker run --rm --entrypoint /bin/bash test-changedetectionio -c '
+            pip install --quiet pip-licenses &&
+            pip-licenses --partial-match \
+              --fail-on="GPL-2.0;GPL-3.0;AGPL;GNU General Public License;GNU Affero General Public License"
+          '
 
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
         run: |
@@ -204,10 +216,20 @@ jobs:
 
       - name: Playwright - Specific tests in built container
         run: |
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+          # Deliberately fail fast - the first failure is nearly always the real problem and it
+          # keeps the run short. Each file is wrapped in its own log group and the failing one is
+          # named explicitly, because everything after it is SKIPPED rather than run, and that is
+          # otherwise easy to misread as "the whole browser suite broke".
+          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py; do
+            echo "::group::pytest $t"
+            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+                 bash -c "cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
+              echo "::endgroup::"
+              echo "::error::$t FAILED - stopping here. Any later test file and the remaining steps of this job were SKIPPED, not failed."
+              exit 1
+            fi
+            echo "::endgroup::"
+          done
 
       - name: Playwright - Headers and requests
         run: |
@@ -245,10 +267,17 @@ jobs:
 
       - name: Pyppeteer - Specific tests in built container
         run: |
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_content.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_errorhandling.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/visualselector/test_fetch_data.py'
-          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_custom_js_before_content.py'
+          # Fail fast, but name the file that failed - see the note in the playwright job above
+          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py; do
+            echo "::group::pytest $t"
+            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+                 bash -c "cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
+              echo "::endgroup::"
+              echo "::error::$t FAILED - stopping here. Any later test file and the remaining steps of this job were SKIPPED, not failed."
+              exit 1
+            fi
+            echo "::endgroup::"
+          done
 
       - name: Pyppeteer - Headers and requests checks
         run: |
@@ -702,7 +731,7 @@ jobs:
           fetch-depth: 0  # Fetch all history and tags for upgrade testing
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 

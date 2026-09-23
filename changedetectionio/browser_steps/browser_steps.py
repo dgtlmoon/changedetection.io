@@ -5,8 +5,42 @@ from random import randint
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
-from changedetectionio.content_fetchers.base import manage_user_agent
+from changedetectionio.content_fetchers.base import get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
+from changedetectionio.validate_url import validate_fetch_url_async
+
+def track_latest_navigation_response(page):
+    """Record the latest main-frame document response seen on this page, and return the holder.
+
+    Idempotent on purpose - every navigation would otherwise add another 'response' listener, and
+    that event fires once per HTTP response (hundreds on a heavy page), so the callbacks are worth
+    not duplicating. One tracker per page is installed and then shared by the fetcher and by every
+    action_goto_url() call on it.
+
+    Returns a dict that holds {'response': <latest main-frame document response>}, or None if the
+    page does not support event listeners (the unit test stubs, mainly).
+    """
+    if not hasattr(page, 'on'):
+        return None
+
+    existing = getattr(page, '_cdio_latest_navigation_response', None)
+    if existing is not None:
+        return existing
+
+    latest = {}
+
+    def _keep(response):
+        try:
+            if response.frame == page.main_frame and response.request.is_navigation_request():
+                latest['response'] = response
+        except Exception as e:
+            # Never let a bookkeeping listener break a fetch
+            logger.debug(f"Could not record navigation response: {e}")
+
+    page.on("response", _keep)
+    page._cdio_latest_navigation_response = latest
+    return latest
+
 
 def browser_steps_get_valid_steps(browser_steps: list):
     if browser_steps is not None and len(browser_steps):
@@ -135,9 +169,32 @@ class steppable_browser_interface():
         if not value:
             logger.warning("No URL provided for goto_url action")
             return None
-            
+
+        # Every browser navigation we initiate funnels through here - the "Goto URL" step, the
+        # "Goto site" step, the live Browser Steps UI and the Add Watch snapshot preview - so this
+        # is the one place that has to enforce the fetch rules. Step values are plain user-supplied
+        # strings (forms.SingleBrowserStep.optional_value, or the browser_steps[] API field) and are
+        # NOT covered by the watch URL validation, which is what made file:///etc/passwd readable
+        # and private-IP SSRF possible via a browser step (GHSA-hm22-wg2m-35v4).
+        await validate_fetch_url_async(value)
+
+        # Chrome 153+ refuses to commit a navigation when an error status arrives with a
+        # zero-length body, so page.goto() raises net::ERR_HTTP_RESPONSE_CODE_FAILURE instead of
+        # handing back the response. The response was received fine, we just never get it as a
+        # return value, so fall back to the page's navigation-response tracker and hand that back -
+        # callers then report a real "Error - 404" instead of a raw net:: string.
+        navigation_response = track_latest_navigation_response(self.page)
+
         now = time.time()
-        response = await self.page.goto(value, timeout=0, wait_until='load')
+        try:
+            response = await self.page.goto(value, timeout=0, wait_until='load')
+        except Exception as e:
+            if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
+                raise
+            response = navigation_response['response']
+            logger.debug(f"Navigation was aborted by the browser (empty body on an error status), "
+                         f"recovered status {response.status} from the response event")
+
         logger.debug(f"Time to goto URL {time.time()-now:.2f}s")
         return response
 
@@ -358,7 +415,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
         self.context = await self.playwright_browser.new_context(
             accept_downloads=False,  # Should never be needed
-            bypass_csp=True,  # This is needed to enable JavaScript execution on GitHub and others
+            bypass_csp=get_playwright_bypass_csp(),
             extra_http_headers=self.headers,
             ignore_https_errors=True,
             proxy=proxy,
@@ -505,4 +562,3 @@ class browsersteps_live_ui(steppable_browser_interface):
             pass
             
         return (screenshot, xpath_data)
-

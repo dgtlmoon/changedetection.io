@@ -1,5 +1,7 @@
 from .util import live_server_setup, wait_for_all_checks
 from flask import url_for
+from changedetectionio import __version__
+import re
 import time
 
 def test_check_access_control(app, client, live_server, measure_memory_usage, datastore_path):
@@ -22,7 +24,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         # causes a 'Popped wrong request context.' error when client. is accessed?
         wait_for_all_checks(client)
 
-        res = c.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        res = c.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         assert b'Queued 1 watch for rechecking.' in res.data
         wait_for_all_checks(client)
 
@@ -43,6 +45,8 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         res = c.get(url_for("watchlist.index"), follow_redirects=True)
         # Should be logged out
         assert b"Login" in res.data
+        # The login page must not leak the running version via the static asset cache-busters (#2190)
+        assert not re.search(rb'\?v(?:er)?=' + re.escape(__version__.encode()), res.data)
 
         # The diff page should return something valid when logged out
         res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first"))
@@ -94,7 +98,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             follow_redirects=True
         )
 
-        assert b"LOG OUT" not in res.data
+        assert b"/logout" not in res.data
         assert b"Incorrect password" in res.data
 
 
@@ -110,8 +114,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             follow_redirects=True
         )
 
-        # Yes we are correctly logged in
-        assert b"LOG OUT" in res.data
+        assert b"/logout" in res.data
 
         # 598 - Password should be set and not accidently removed
         res = c.post(
@@ -122,7 +125,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             follow_redirects=True
         )
 
-        res = c.get(url_for("logout"),
+        res = c.post(url_for("logout"),
             follow_redirects=True)
 
         assert b"Login" in res.data
@@ -144,14 +147,14 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         )
 
         # Yes we are correctly logged in
-        assert b"LOG OUT" in res.data
+        assert b"/logout" in res.data
 
         res = c.get(url_for("settings.settings_page"))
 
-        # Menu should be available now
-        assert b"SETTINGS" in res.data
-        assert b"IMPORT" in res.data
-        assert b"LOG OUT" in res.data
+        # Menu should be available now (Settings/Import moved to sidebar-nav.html as translated mixed-case strings)
+        assert b"Settings" in res.data
+        assert b"Import" in res.data
+        assert b"/logout" in res.data
         assert b"time_between_check-minutes" in res.data
         assert b"fetch_backend" in res.data
 
@@ -168,7 +171,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
             follow_redirects=True,
         )
         assert b"Password protection removed." in res.data
-        assert b"LOG OUT" not in res.data
+        assert b"/logout" not in res.data
 
         ############################################################
         # Be sure a blank password doesnt setup password protection

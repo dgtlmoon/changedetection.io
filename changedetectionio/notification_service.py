@@ -54,6 +54,22 @@ def _check_cascading_vars(datastore, var_name, watch):
     return None
 
 
+def watch_will_send_content_changed_notification(datastore, watch):
+    """Single source of truth for: will a *content changed* notification actually be
+    delivered for this watch?
+
+    This mirrors exactly the decision the worker + send_content_changed_notification()
+    make together: the watch must not be muted, and a notification URL must resolve via
+    the watch > tag > global cascade. Anything that wants to know "is a notification
+    going to fire?" (e.g. the worker deciding whether to spend tokens pre-computing the
+    LLM change summary that fills the notification body) should ask here, so the answer
+    can never drift from what actually gets sent.
+    """
+    if not watch or watch.get('notification_muted'):
+        return False
+    return bool(_check_cascading_vars(datastore, 'notification_urls', watch))
+
+
 class FormattableTimestamp(str):
     """
     A str subclass representing a formatted datetime. As a plain string it renders
@@ -225,6 +241,7 @@ class NotificationContextData(dict):
             'watch_tag': None,
             'watch_title': None,
             'watch_url': 'https://WATCH-PLACE-HOLDER/',
+            'watch_open_url': 'https://WATCH-PLACE-HOLDER/',  # watch['link_to_open'] when set, otherwise the same as watch_url
             'watch_uuid': 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',  # Converted to 'watch_uuid' in create_notification_parameters
         })
 
@@ -334,6 +351,7 @@ def set_basic_notification_vars(current_snapshot, prev_snapshot, watch, triggere
         'triggered_text': triggered_text,
         'uuid': watch.get('uuid') if watch else None,
         'watch_url': watch.get('url') if watch else None,
+        'watch_open_url': (watch.open_link_override or watch.get('url')) if watch else None,
         'watch_uuid': watch.get('uuid') if watch else None,
         'watch_mime_type': watch.get('content-type')
     }
@@ -495,6 +513,7 @@ Thanks - Your omniscient changedetection.io installation.
         if 'notification_urls' in n_object:
             n_object.update({
                 'watch_url': watch['url'],
+                'watch_open_url': watch.open_link_override or watch['url'],
                 'uuid': watch_uuid,
                 'screenshot': None
             })
@@ -512,7 +531,7 @@ Thanks - Your omniscient changedetection.io installation.
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
 
-        step = step_n + 1
+        step = step_n
         # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
 
         # {{{{ }}}} because this will be Jinja2 {{ }} tokens
@@ -544,6 +563,7 @@ Thanks - Your omniscient changedetection.io installation.
         if 'notification_urls' in n_object:
             n_object.update({
                 'watch_url': watch['url'],
+                'watch_open_url': watch.open_link_override or watch['url'],
                 'uuid': watch_uuid
             })
             self.notification_q.put(n_object)

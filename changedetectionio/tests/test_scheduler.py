@@ -35,7 +35,7 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     assert b'Pacific/Kiritimati' in res.data
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
@@ -96,7 +96,7 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
     test_url = url_for('test_random_content_endpoint', _external=True)
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
 
@@ -175,7 +175,7 @@ def test_check_basic_global_scheduler_functionality(client, live_server, measure
 def test_validation_time_interval_field(client, live_server, measure_memory_usage, datastore_path):
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
 
     res = client.post(

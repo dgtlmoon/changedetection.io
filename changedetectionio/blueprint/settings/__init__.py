@@ -20,6 +20,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
         settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
 
+    # Notification settings live in their own child blueprint so future backends
+    # (simple_email, webhooks, etc.) slot in as /settings/notifications/<backend>
+    # without further URL-shaping churn.
+    from changedetectionio.blueprint.settings.notifications import construct_notifications_blueprint
+    settings_blueprint.register_blueprint(
+        construct_notifications_blueprint(datastore), url_prefix='/notifications',
+    )
+
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
@@ -86,6 +94,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 # Never update password with '' or False (Added by wtforms when not in submission)
                 if 'password' in app_update and not app_update['password']:
                     del (app_update['password'])
+
+                # Notification fields live on the dedicated /settings/notifications page now.
+                # The application sub-form still defines them (inherited from commonSettingsForm),
+                # so an unrelated save here would clobber the stored values with empty WTForms
+                # defaults. Drop them from the merge to leave the notifications config alone.
+                for nf in ('notification_urls', 'notification_title', 'notification_body',
+                           'notification_format', 'base_url'):
+                    app_update.pop(nf, None)
 
                 datastore.data['settings']['application'].update(app_update)
 
@@ -222,6 +238,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         )
         llm_config = _get_llm_cfg(datastore) or {}
         llm_env_configured = llm_configured_via_env()
+
+        # Once a key is stored, the provider and the key itself are locked and can only be
+        # cleared with "Remove provider". The key field renders blank so that an untouched
+        # save preserves it, which makes any stray value in it - a browser autofill, a bad
+        # paste - silently overwrite a working key on the next Save, with no copy kept
+        # anywhere to recover from. Disabling the input takes it out of the POST entirely;
+        # the form is seeded with data=default, so an absent field falls back to the stored
+        # value and the merge below is a no-op for it.
+        llm_provider_locked = bool(llm_config.get('api_key')) and not llm_env_configured
         llm_stored = datastore.data['settings']['application'].get('llm') or {}
         llm_token_budget_month = get_global_token_budget_month(datastore)
         llm_token_budget_month_env = get_global_token_budget_month()  # env var only, for readonly logic
@@ -237,6 +262,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 llm_config=llm_config,
                                 llm_env_configured=llm_env_configured,
+                                llm_provider_locked=llm_provider_locked,
                                 llm_stored=llm_stored,
                                 llm_token_budget_month=llm_token_budget_month,
                                 llm_token_budget_month_env=llm_token_budget_month_env,
@@ -245,6 +271,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
+                                # None unless PAGE_WATCH_LIMIT is set, which hides the row entirely
+                                watch_limit=datastore.watch_limit,
                                 available_timezones=sorted(available_timezones()),
                                 emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                                 extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),
@@ -260,7 +288,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return output
 
-    @settings_blueprint.route("/reset-api-key", methods=['GET'])
+    @settings_blueprint.route("/reset-api-key", methods=['POST'])
     @login_optionally_required
     def settings_reset_api_key():
         secret = secrets.token_hex(16)
@@ -277,7 +305,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
 
-    @settings_blueprint.route("/toggle-all-paused", methods=['GET'])
+    @settings_blueprint.route("/toggle-all-paused", methods=['POST'])
     @login_optionally_required
     def toggle_all_paused():
         current_state = datastore.data['settings']['application'].get('all_paused', False)
@@ -291,7 +319,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return redirect(url_for('watchlist.index'))
 
-    @settings_blueprint.route("/toggle-all-muted", methods=['GET'])
+    @settings_blueprint.route("/toggle-all-muted", methods=['POST'])
     @login_optionally_required
     def toggle_all_muted():
         current_state = datastore.data['settings']['application'].get('all_muted', False)

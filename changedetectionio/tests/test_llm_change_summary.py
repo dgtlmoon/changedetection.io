@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 from flask import url_for
 
-from changedetectionio.tests.util import wait_for_all_checks, delete_all_watches
+from changedetectionio.tests.util import fetch_llm_summary, wait_for_all_checks, delete_all_watches
 
 HTML_V1 = "<html><body><ul><li>Item A</li><li>Item B</li></ul></body></html>"
 HTML_V2 = "<html><body><ul><li>Item A</li><li>Item B</li><li>Item C — NEW</li></ul></body></html>"
@@ -75,9 +75,10 @@ def test_llm_change_summary_cascades_from_tag(
     _set_response(datastore_path, HTML_V1)
     test_url = url_for('test_endpoint', _external=True)
 
-    # Create a tag with llm_change_summary
+    # Create a tag with llm_change_summary, AI set to On so its watches inherit it
     tag_uuid = ds.add_tag('events-group')
     ds.data['settings']['application']['tags'][tag_uuid]['llm_change_summary'] = 'Summarise new events'
+    ds.data['settings']['application']['tags'][tag_uuid]['llm_backend_profile'] = True
 
     # Watch in that tag, no own summary prompt
     uuid = ds.add_watch(url=test_url)
@@ -182,10 +183,8 @@ def test_llm_summary_ajax_surfaces_rate_limit_error(
         rate_limit_msg, llm_provider='gemini', model='gemini/gemini-2.5-pro'
     )
     with patch('litellm.completion', side_effect=exc):
-        res = client.get(
-            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
-                    from_version='2000000000', to_version='2000000001'),
-        )
+        res = fetch_llm_summary(client, url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='2000000000', to_version='2000000001'))
 
     assert res.status_code == 500
     data = res.get_json()
@@ -223,10 +222,8 @@ def test_llm_summary_ajax_error_displayed_not_silenced(
         llm_provider='openai', model='gpt-4o-mini'
     )
     with patch('litellm.completion', side_effect=exc):
-        res = client.get(
-            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
-                    from_version='3000000000', to_version='3000000001'),
-        )
+        res = fetch_llm_summary(client, url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='3000000000', to_version='3000000001'))
 
     assert res.status_code == 500
     data = res.get_json()
@@ -281,6 +278,7 @@ def test_tag_prompt_overrides_global_default(
 
     tag_uuid = ds.add_tag('my-group')
     ds.data['settings']['application']['tags'][tag_uuid]['llm_change_summary'] = 'Tag: bullet points.'
+    ds.data['settings']['application']['tags'][tag_uuid]['llm_backend_profile'] = True
 
     uuid = ds.add_watch(url='https://example.com')
     watch = ds.data['watching'][uuid]
@@ -306,6 +304,7 @@ def test_watch_prompt_overrides_tag_and_global(
 
     tag_uuid = ds.add_tag('my-group')
     ds.data['settings']['application']['tags'][tag_uuid]['llm_change_summary'] = 'Tag prompt.'
+    ds.data['settings']['application']['tags'][tag_uuid]['llm_backend_profile'] = True
 
     uuid = ds.add_watch(url='https://example.com')
     watch = ds.data['watching'][uuid]
@@ -315,6 +314,99 @@ def test_watch_prompt_overrides_tag_and_global(
     _set_global_default(ds, 'Global prompt.')
 
     assert get_effective_summary_prompt(watch, ds) == 'Watch: my own prompt.'
+
+    delete_all_watches(client)
+
+
+def test_append_mode_saved_via_edit_form_and_applied(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Choosing "add to the end of the inherited prompt" in the watch edit form persists,
+    and the watch's text is then appended to the global default rather than replacing it.
+    Re #4251.
+    """
+    from changedetectionio.llm.evaluator import get_effective_summary_prompt
+
+    _set_response(datastore_path, HTML_V1)
+    _configure_llm(client)
+    ds = client.application.config.get('DATASTORE')
+    _set_global_default(ds, 'Global: summarise as one sentence.')
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = ds.add_watch(url=test_url)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            "url": test_url,
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y",
+            "llm_change_summary": "Also flag anything mentioning a recall.",
+            "llm_change_summary_mode": "append",
+        },
+        follow_redirects=True,
+    )
+    assert b"Updated watch." in res.data
+
+    watch = ds.data['watching'][uuid]
+    assert watch.get('llm_change_summary_mode') == 'append'
+    assert get_effective_summary_prompt(watch, ds) == (
+        'Global: summarise as one sentence.\n\nAlso flag anything mentioning a recall.'
+    )
+
+    delete_all_watches(client)
+
+
+def test_edit_form_defaults_to_replace_preserving_old_behaviour(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    A form submitted without the mode field (the pre-#4251 shape) must still replace,
+    so upgrading does not silently change what existing watches send to the LLM.
+    """
+    from changedetectionio.llm.evaluator import get_effective_summary_prompt
+
+    _set_response(datastore_path, HTML_V1)
+    _configure_llm(client)
+    ds = client.application.config.get('DATASTORE')
+    _set_global_default(ds, 'Global: summarise as one sentence.')
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = ds.add_watch(url=test_url)
+
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+            "url": test_url,
+            "fetch_backend": "html_requests",
+            "time_between_check_use_default": "y",
+            "llm_change_summary": "Only tell me the new price.",
+        },
+        follow_redirects=True,
+    )
+    assert b"Updated watch." in res.data
+
+    watch = ds.data['watching'][uuid]
+    assert get_effective_summary_prompt(watch, ds) == 'Only tell me the new price.'
+
+    delete_all_watches(client)
+
+
+def test_edit_page_renders_the_prompt_mode_radio(
+        client, live_server, measure_memory_usage, datastore_path):
+    """Both radio options must be present on the watch edit page."""
+    _set_response(datastore_path, HTML_V1)
+    _configure_llm(client)
+    ds = client.application.config.get('DATASTORE')
+
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = ds.add_watch(url=test_url)
+
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    body = res.data.decode('utf-8', errors='replace')
+
+    assert 'name="llm_change_summary_mode"' in body
+    assert 'value="replace"' in body
+    assert 'value="append"' in body
 
     delete_all_watches(client)
 
@@ -368,10 +460,8 @@ def test_llm_summary_ajax_sets_last_viewed(
     mock_response.usage = MagicMock(total_tokens=50, prompt_tokens=40, completion_tokens=10)
 
     with patch('litellm.completion', return_value=mock_response):
-        res = client.get(
-            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
-                    from_version='4000000000', to_version='4000000001'),
-        )
+        res = fetch_llm_summary(client, url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='4000000000', to_version='4000000001'))
 
     assert res.status_code == 200
     data = res.get_json()
@@ -381,10 +471,8 @@ def test_llm_summary_ajax_sets_last_viewed(
     # Reset and verify the cached path also sets last_viewed
     watch['last_viewed'] = 0
     with patch('litellm.completion', return_value=mock_response):
-        res2 = client.get(
-            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
-                    from_version='4000000000', to_version='4000000001'),
-        )
+        res2 = fetch_llm_summary(client, url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='4000000000', to_version='4000000001'))
 
     assert res2.status_code == 200
     data2 = res2.get_json()

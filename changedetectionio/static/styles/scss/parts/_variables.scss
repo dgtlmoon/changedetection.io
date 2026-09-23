@@ -3,6 +3,7 @@
  */
 
 :root {
+  --body-main-text-size: 0.9rem;
   --color-white: #fff;
   --color-grey-50: #111;
   --color-grey-100: #262626;
@@ -26,6 +27,12 @@
   --color-background-gradient-first: #5ad8f7;
   --color-background-gradient-second: #2f50af;
   --color-background-gradient-third: #9150bf;
+  // The page's atmosphere gradient, shared so anything that needs to sit ON the
+  // page background (e.g. the left rail rolling out over content) can repaint
+  // an identical copy instead of approximating it with a flat colour. The
+  // referenced gradient stops are re-declared per theme below, so this single
+  // definition follows light/dark automatically.
+  --page-background-gradient: linear-gradient(130deg, var(--color-background-gradient-first), var(--color-background-gradient-second) 41.07%, var(--color-background-gradient-third) 84.05%);
   --color-background: var(--color-white);
   --color-text: var(--color-grey-200);
   --color-link: #1b98f8;
@@ -36,6 +43,10 @@
   --color-error-list: var(--color-light-red);
   --color-table-background: var(--color-background);
   --color-table-stripe: var(--color-grey-900);
+
+  --watchlist-row-selected: #e3f0ff; // light blue highlight for checkbox-selected rows
+  --watchlist-row-hover: #f2f2f2;     // light grey highlight on row hover
+
   --color-text-tab: var(--color-white);
   --color-background-tab: rgba(255, 255, 255, 0.2);
   --color-background-tab-hover: rgba(255, 255, 255, 0.5);
@@ -65,7 +76,7 @@
   --color-background-messages-notice: rgba(255, 255, 255, .5);
   --color-border-notification: #ccc;
 
-  --color-background-checkbox-operations: rgba(0, 0, 0, 0.05);
+  --color-background-checkbox-operations: rgba(255, 255, 255, 0.7);
   --color-warning: #ff3300;
   --color-border-warning: var(--color-warning);
   --color-text-legend: var(--color-white);
@@ -91,27 +102,35 @@
   --color-background-table-thead: var(--color-grey-800);
   --color-border-table-cell: var(--color-grey-700);
 
-  --color-text-menu-heading: var(--color-grey-350);
+  --color-text-menu-heading: var(--color-white);
   --color-text-menu-link: var(--color-grey-500);
   --color-background-menu-link-hover: var(--color-grey-850);
   --color-text-menu-link-hover: var(--color-grey-300);
 
   --color-shadow-jump: var(--color-grey-500);
   --color-icon-github: var(--color-black);
-  --color-icon-github-hover: var(--color-grey-300);
 
   --color-watch-table-error: var(--color-dark-red);
   --color-watch-table-row-text: var(--color-grey-100);
+  --color-table-line: #e7e9ee;
 
   --highlight-trigger-text-bg-color: #1b98f8;
   --highlight-ignored-text-bg-color: var(--color-grey-700);
   --highlight-blocked-text-bg-color: rgb(202, 60, 60);
+
+  // Left rail — light mode defaults
+  --color-sidebar-bg: rgba(255, 255, 255, 0.97);
+  --color-sidebar-text: var(--color-text);
+  --color-sidebar-shadow: 6px 0 28px rgba(0, 0, 0, 0.18);
+  --color-sidebar-item-hover-bg: var(--color-grey-325);
+  --color-sidebar-item-active-bg: rgba(0, 0, 0, 0.10);
+  --common-round-border: 8px;
 }
 
 html[data-darkmode="true"] {
   --color-link: #59bdfb;
   --color-text: var(--color-white);
-
+  --color-table-line: #262c37;
   --color-background-gradient-first: #3f90a5;
   --color-background-gradient-second: #1e316c;
   --color-background-gradient-third: #4d2c64;
@@ -122,6 +141,10 @@ html[data-darkmode="true"] {
   --color-background-table-thead: var(--color-grey-200);
   --color-table-background: var(--color-grey-300);
   --color-table-stripe: var(--color-grey-325);
+  --color-background-checkbox-operations: rgba(50, 50, 50, 0.7);
+  --watchlist-row-selected: #1e3a5f; // darker blue highlight for selected rows in dark mode
+  --watchlist-row-hover: #2a2a2a;     // subtle grey highlight on row hover (dark mode)
+
   --color-background: var(--color-grey-300);
   --color-text-menu-heading: var(--color-grey-850);
   --color-text-menu-link: var(--color-grey-800);
@@ -142,10 +165,15 @@ html[data-darkmode="true"] {
   --color-background-snapshot-age: var(--color-grey-200);
   --color-shadow-jump: var(--color-grey-200);
   --color-icon-github: var(--color-white);
-  --color-icon-github-hover: var(--color-grey-700);
   --color-watch-table-error: var(--color-light-red);
   --color-watch-table-row-text: var(--color-grey-800);
 
+  // Left rail — dark mode overrides
+  --color-sidebar-bg: rgba(8, 10, 14, 0.97);
+  --color-sidebar-text: var(--color-white);
+  --color-sidebar-shadow: 6px 0 28px rgba(0, 0, 0, 0.45);
+  --color-sidebar-item-hover-bg: rgba(255, 255, 255, 0.06);
+  --color-sidebar-item-active-bg: rgba(255, 255, 255, 0.10);
 
   .icon-spread {
     filter: hue-rotate(-10deg) brightness(1.5);
@@ -164,12 +192,12 @@ html[data-darkmode="true"] {
 
     .watch-controls {
       .state-off {
-        img {
+        svg {
           opacity: 0.3;
         }
       }
       .state-on {
-        img {
+        svg {
           opacity: 1.0;
         }
       }

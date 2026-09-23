@@ -16,8 +16,9 @@
         {%- endif -%}
     {%- endif -%}
     <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='pure-min.css')}}" >
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='flag-icons.min.css')}}" >
-    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}?v={{ get_css_version() }}" >
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='flag-icons.min.css')}}"  >
+    {# ?v= is appended automatically for static_content (see _fingerprint_static_urls) #}
+    <link rel="stylesheet" href="{{url_for('static_content', group='styles', filename='styles.css')}}" >
     {% if extra_stylesheets %}
       {% for m in extra_stylesheets %}
         <link rel="stylesheet" href="{{ m }}?ver={{ get_css_version() }}" >
@@ -27,7 +28,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static_content', group='favicons', filename='apple-touch-icon.png')}}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static_content', group='favicons', filename='favicon-32x32.png')}}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static_content', group='favicons', filename='favicon-16x16.png')}}">
-    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}" crossorigin="use-credentials">
+    {# Served by a route, not from static/ - see site_webmanifest() for why. No
+       crossorigin="use-credentials" needed now it's exempt from the login gate. #}
+    <link rel="manifest" href="{{url_for('pwa.site_webmanifest')}}">
     <link rel="mask-icon" href="{{url_for('static_content', group='favicons', filename='safari-pinned-tab.svg')}}" color="#5bbad5">
     <link rel="shortcut icon" href="{{url_for('static_content', group='favicons', filename='favicon.ico')}}">
     <meta name="msapplication-TileColor" content="#da532c">
@@ -87,11 +90,16 @@
         };
     </script>
     <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='feather-icons.min.js')}}"></script>
+    <script src="{{url_for('static_content', group='js', filename='sidebar.js')}}"></script>
+
     <script src="{{url_for('static_content', group='js', filename='csrf.js')}}" defer></script>
-    <script src="{{url_for('static_content', group='js', filename='feather-icons.min.js')}}" defer></script>
+    {# Render all <i data-feather="..."> icons app-wide (jQuery ready), so individual pages don't each need their own feather.replace() call. #}
+    <script>$(function () { if (window.feather) feather.replace(); });</script>
     {% if socket_io_enabled %}
     <script src="{{url_for('static_content', group='js', filename='socket.io.min.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='realtime.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='queue-sparkline.js')}}" defer></script>
     {% endif %}
     {%- set _html_head_extras = get_html_head_extras() -%}
     {%- if _html_head_extras %}
@@ -99,58 +107,49 @@
     {%- endif %}
   </head>
 
-  <body class="{{extra_classes}}">
+  <body class="{{ get_sidebar_mode_class() }} {{ get_blueprint_class() }} {{extra_classes}}">
+    <div class="app">
+      {% if current_user.is_authenticated or not has_password %}
+      <aside class="action-sidebar" aria-label="{{ _('Main navigation') }}">
+        <div class="action-sidebar-inner">
+          {# sidebar_scope keeps in-SVG ids unique across the desktop + mobile includes #}
+          {% with sidebar_scope = 'desktop' %}{% include "sidebar-nav.html" %}{% endwith %}
+        </div>
+      </aside>
+      {% endif %}
+      <div class="app-main">
     <div class="header">
-    <div {% if pure_menu_fixed != False %}class="pure-menu-fixed"{% endif %} style="width: 100%;">
+    <div>
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
+          <a id="mobile-home" style="display: none;" href="{{ url_for('watchlist.index') }}"><i data-feather="home"></i></a>
 
-        {% if has_password and not current_user.is_authenticated %}
-          <a id="cdio-logo" class="pure-menu-heading" href="https://changedetection.io" rel="noopener">
-            <strong>Change</strong>Detection.io</a>
-        {% else %}
-          <a  id="cdio-logo" class="pure-menu-heading" href="{{url_for('watchlist.index')}}">
-            <strong>Change</strong>Detection.io</a>
-        {% endif %}
-        {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
-          <a class="current-diff-url" href="{{ current_diff_url }}">
-            <span style="max-width: 30%; overflow: hidden">{{ current_diff_url }}</span></a>
-        {% else %}
-          {% if new_version_available and not(has_password and not current_user.is_authenticated) %}
-            <span id="new-version-text" class="pure-menu-heading">
-              <a href="https://changedetection.io">{{ _('A new version is available') }}</a>
-            </span>
-          {% endif %}
+          {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
+          {# The watch's own name when it has one, so the diff/preview pages do not print
+             the same URL twice. The title attribute keeps the full text reachable on hover
+             or long-press once the line truncates, and keeps the URL discoverable when a
+             title is covering it. #}
+          <a class="current-diff-url" href="{{ current_diff_url }}" title="{% if current_diff_label and current_diff_label != current_diff_url %}{{ current_diff_label }}&#10;{% endif %}{{ current_diff_url }}">
+            <span>{{ current_diff_label or current_diff_url }}</span></a>
         {% endif %}
 
-        <ul class="pure-menu-list" id="top-right-menu">
+        <ul class="top-menu-list" id="top-right-menu">
           <!-- Collapsible menu items (hidden on mobile, shown in drawer) -->
           {% include "menu.html" %}
 
-          {% if current_user.is_authenticated or not has_password %}
-            {% if not current_diff_url %}
-              <li class="pure-menu-item  menu-collapsible">
-                <button class="toggle-button" id="open-search-modal" type="button" title="{{ _('Search, or Use Alt+S Key') }}">
-                  {% include "svgs/search-icon.svg" %}
-                </button>
-              </li>
-
-            {% endif %}
-          {% endif %}
-
-          <li class="pure-menu-item" id="heart-us">
+          <li class="" id="heart-us">
                 <svg
-                   fill="#ff0000"
+                   fill="green"
                    class="bi bi-heart"
                    preserveAspectRatio="xMidYMid meet"
                    viewBox="0 0 16.9 16.1"
                    id="svg-heart"
                    xmlns="http://www.w3.org/2000/svg"
                    >
-                  <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z" style="fill:var(--color-background);fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
+                  <path id="heartpath" d="M 5.338316,0.50302766 C 0.71136983,0.50647126 -3.9576371,7.2707777 8.5004254,15.503028 23.833425,5.3700277 13.220206,-2.5384409 8.6762066,1.6475589 c -0.060791,0.054322 -0.11943,0.1110064 -0.1757812,0.1699219 -0.057,-0.059 -0.1157813,-0.116875 -0.1757812,-0.171875 C 7.4724566,0.86129334 6.4060729,0.50223298 5.338316,0.50302766 Z" style="fill:transparent;fill-opacity:1;stroke:#ff0000;stroke-opacity:1" />
                 </svg>
           </li>
           <!-- Hamburger menu button (mobile only) -->
-          <li class="pure-menu-item">
+          <li class="">
             <button class="hamburger-menu" id="hamburger-toggle" aria-label="Toggle menu">
               <div class="hamburger-icon">
                 <span></span>
@@ -165,30 +164,22 @@
       <!-- Mobile menu drawer -->
       <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
       <div class="mobile-menu-drawer" id="mobile-menu-drawer">
+        {% if current_user.is_authenticated or not has_password %}
+        <nav class="mobile-menu-section mobile-menu-section--primary" aria-label="{{ _('Main navigation') }}">
+          {% with sidebar_scope = 'mobile' %}{% include "sidebar-nav.html" %}{% endwith %}
+        </nav>
+        {% endif %}
         <ul class="mobile-menu-items">
           {% include "menu.html" %}
-            <li class="pure-menu-item menu-collapsible">
+            <li class=" menu-collapsible">
                 {%- if right_sticky -%}<div>{{ right_sticky }}</div>{%- endif -%}
-                <a href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a><br>
+                <a id="hosting-offer" href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a>
             </li>
         </ul>
       </div>
-      <div id="pure-menu-horizontal-spinner"></div>
       </div>
 
     </div>
-    {% if hosted_sticky %}
-      <div class="sticky-tab" id="hosted-sticky">
-        <a href="https://changedetection.io/?ref={{guid}}">Let us host your instance!</a>
-      </div>
-    {% endif %}
-    {% if left_sticky %}
-      <div class="sticky-tab" id="left-sticky">
-      </div>
-    {% endif %}
-    {% if right_sticky %}
-      <div class="sticky-tab" id="right-sticky">{{ right_sticky }}</div>
-    {% endif %}
     <section class="content">
         <div id="overlay">
             <div class="content">
@@ -241,36 +232,11 @@
         </div>
 
         <div class="content-wrapper">
-{#
-          {% if current_user.is_authenticated or not has_password %}
-          <aside class="action-sidebar">
-            <a href="{{ url_for('watchlist.index') }}" class="action-sidebar-item {% if request.endpoint.startswith('watchlist.') or request.endpoint.startswith('ui.') %}active{% endif %}" title="{{ _('Watch List') }}">
-              <svg class="action-icon" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
-              </svg>
-              <span class="action-label">{{ _('Watches') }}</span>
-            </a>
-            <a href="{{ url_for('queue_status') }}" class="action-sidebar-item {% if request.endpoint == 'queue_status' %}active{% endif %}" id="queue-action-item" title="{{ _('Queue Status') }}">
-              <svg class="action-icon" viewBox="0 0 24 24">
-                <line x1="8" y1="6" x2="21" y2="6"/>
-                <line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/>
-                <line x1="3" y1="18" x2="3.01" y2="18"/>
-              </svg>
-              <span class="action-label">{{ _('Queue') }}</span>
-              <span class="notification-bubble blue-bubble" id="queue-bubble" data-count="0"></span>
-            </a>
-          </aside>
-          {% endif %}
-#}
           <div class="content-main">
-            <header>
-              {% block header %}{% endblock %}
-            </header>
 
+            {% if header %}
+              <header><h3>{{ header }}</h3></header>
+            {% endif %}
             {% with messages = get_flashed_messages(with_categories = true) %}
             {% if messages %}
               <ul class="messages">
@@ -293,8 +259,13 @@
           </div>
         </div>
     </section>
+      </div><!-- /.app-main -->
+    </div><!-- /.app -->
     <script src="{{url_for('static_content', group='js', filename='toggle-theme.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='hamburger-menu.js')}}" defer></script>
+
+    <script src="{{url_for('static_content', group='js', filename='menu-pop.js')}}" defer></script>
+    <script src="{{url_for('static_content', group='js', filename='scrollable-title.js')}}" defer></script>
 
     <div id="checking-now-fixed-tab" style="display: none;"><span class="spinner"></span><span class="status-text">&nbsp;{{ _('Checking now') }}</span></div>
     <div id="realtime-conn-error" style="display:none">{{ _('Real-time updates offline') }}</div>
@@ -312,13 +283,19 @@
       <div class="modal-body">
         <div class="language-list">
           {% for locale, lang_data in available_languages.items()|sort %}
-          <a href="{{ url_for('set_language', locale=locale, redirect=request.path) }}" class="language-option" data-locale="{{ locale }}">
-            <span class="lang-option {{ lang_data.flag }}"></span> <span class="language-name">{{ lang_data.name }}</span>
-          </a>
+          <form method="POST" action="{{ url_for('set_language', locale=locale) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="language-option" data-locale="{{ locale }}">
+              <span class="lang-option {{ lang_data.flag }}"></span> <span class="language-name">{{ lang_data.name }}</span>
+            </button>
+          </form>
           {% endfor %}
         </div>
         <div>
-            <a href="{{ url_for('ui.delete_locale_language_session_var_if_it_exists', redirect=request.path) }}" >{{ _('Auto-detect from browser') }}</a>
+            <form method="POST" action="{{ url_for('ui.delete_locale_language_session_var_if_it_exists') }}" style="display: inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="bare-btn">{{ _('Auto-detect from browser') }}</button>
+            </form>
         </div>
         <div>
             {{ _('Language support is in beta, please help us improve by opening a PR on GitHub with any updates.') }}
@@ -352,11 +329,18 @@
         <h2 class="modal-title" id="search-modal-title">{{ _('Search') }}</h2>
       </div>
       <div class="modal-body">
-        <form id="search-form" method="GET">
+        {# Plain GET submit to the watchlist - url_for() carries the reverse-proxy sub-path
+           (SCRIPT_NAME), so no client-side URL building is needed. #}
+        <form id="search-form" method="GET" action="{{ url_for('watchlist.index') }}">
           <div class="pure-control-group">
-            <label for="search-modal-input">{% if active_tag_uuid %}{{ _("URL or Title in '%(title)s'", title=active_tag.title) }}{% else %}{{ _('URL or Title') }}{% endif %}</label>
+            {# Matches watch_passes_search() in blueprint/watchlist/filters.py - title, URL and last error text #}
+            <label for="search-modal-input">{{ _('URL, title or error text') }}</label>
             <input id="search-modal-input" class="m-d" name="q" placeholder="{{ _('Enter search term...') }}" required type="text" value="" autofocus>
-            <input name="tags" type="hidden" value="{% if active_tag_uuid %}{{active_tag_uuid}}{% endif %}">
+            {# 'tag' (not 'tags') - that's the arg the watchlist filters on #}
+            {% if active_tag_uuid %}
+            <input name="tag" type="hidden" value="{{ active_tag_uuid }}">
+            <span class="pure-form-message-inline">{{ _("Searching in current group '%(title)s' only", title=active_tag.title) }}</span>
+            {% endif %}
           </div>
         </form>
       </div>
@@ -367,6 +351,7 @@
     </dialog>
     {% endif %}
 
+  <div id="pure-menu-horizontal-spinner"></div>
 
   <script>
   (function() {
@@ -442,6 +427,16 @@
     <script src="{{url_for('static_content', group='js', filename='search-modal.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='toast.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='flask-toast-bridge.js')}}" defer></script>
+    {# Registers the no-op worker that makes Android build a WebAPK, which is what puts this
+       instance in the share sheet. navigator.serviceWorker is undefined outside a secure
+       context, so a plain-http instance simply skips it rather than throwing. #}
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register("{{ url_for('pwa.service_worker') }}");
+        });
+      }
+    </script>
   </body>
 
 </html>

@@ -25,7 +25,7 @@ except ImportError:
     HAS_ORJSON = False
 
 from ..html_tools import TRANSLATE_WHITESPACE_TABLE
-from ..processors.restock_diff import Restock
+from ..processors.restock_diff import Restock, get_price_from_history_str
 from ..blueprint.rss import RSS_CONTENT_FORMAT_DEFAULT
 from ..model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
@@ -826,24 +826,49 @@ class DatastoreUpdatesMixin:
             logger.info("update_32: cleaned up obsolete max_tokens_per_check / renamed max_tokens_cumulative")
 
     def update_33(self):
-        """Rename restock 'original_price' -> 'last_price'.
+        """Restock: consolidate the old price-history fields into a single 'last_price'.
 
-        The field was named 'original_price' but never held the first-seen price: it was
-        re-stamped with the current price on every check (the freshly scraped itemprop never
-        carries it, so the "set if not present" guard was always true). So it always held the
-        price from the most recent check - i.e. the previous check's price at comparison time.
-        Renamed so the stored field name matches what it actually contains. Idempotent.
+        Earlier schemas carried 'original_price' (misnamed - it was re-stamped with the current
+        price every check, so it actually held the previous check's price) and, on the UI branch,
+        'prev_price' (price before the last change, for the watch-list arrow). Both are replaced by
+        'last_price' = the price at the previous check, which now drives BOTH the % threshold and
+        the up/down arrow (get_price_change_percent), with no history reads at render time.
+
+        Backfill last_price from the second-to-last history snapshot so the arrow is correct
+        immediately; fall back to the old original_price; then drop the obsolete keys. Idempotent.
+
         """
         migrated = 0
         for uuid, watch in self.data['watching'].items():
+            if watch.get('processor') != 'restock_diff':
+                continue
             restock = watch.get('restock')
-            if isinstance(restock, dict) and 'original_price' in restock:
-                # last_price may already exist as the model default (None) after rehydration, so
-                # only copy the old value across when last_price is still empty; then drop the old key.
-                if not restock.get('last_price'):
-                    restock['last_price'] = restock.get('original_price')
-                del restock['original_price']
-                migrated += 1
-        if migrated:
-            logger.info(f"update_33: renamed restock.original_price -> restock.last_price on {migrated} watch(es)")
+            if not isinstance(restock, dict):
+                continue
+
+            # Best-effort backfill of last_price = previous price (second-to-last history snapshot)
+            try:
+                versions = list(watch.history.keys())
+            except Exception:
+                versions = []
+
+            if len(versions) >= 1 and not restock.get('price'):
+                snapshot = watch.get_history_snapshot(timestamp=versions[-1])
+                restock['price'] = get_price_from_history_str(history_str=snapshot)
+                logger.trace(f"UUID {uuid} restock current price set to '{restock['last_price']}'")
+
+            if len(versions) >= 2:
+                snapshot = watch.get_history_snapshot(timestamp=versions[-2])
+                if snapshot:
+                    restock['last_price'] = get_price_from_history_str(history_str=snapshot)
+                    logger.trace(f"UUID {uuid} restock last_price set to '{restock['last_price']}'")
+
+            # Fall back to the old preserved value if history gave us nothing
+            if not restock.get('last_price') and restock.get('original_price') is not None:
+                restock['last_price'] = restock.get('original_price')
+
+            restock.pop('original_price', None)
+            restock.pop('prev_price', None)
+            watch.commit()
+
 

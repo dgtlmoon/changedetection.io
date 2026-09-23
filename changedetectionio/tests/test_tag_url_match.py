@@ -142,3 +142,47 @@ def test_multiple_pattern_tags_all_applied(client, live_server, measure_memory_u
     assert tag_docs_uuid in resolved, "First matching tag must be included"
     assert tag_python_uuid in resolved, "Second matching tag must be included"
     assert tag_rust_uuid not in resolved, "Non-matching tag must NOT be included"
+
+
+def test_tag_url_pattern_watch_appears_under_tag_tab_filter(client, live_server, measure_memory_usage, datastore_path):
+    """A watch that only received its tag via url_match_pattern (no manual tag assignment)
+    must still appear when the watch list is filtered to that tag, same as a manually-tagged watch."""
+    set_original_response(datastore_path=datastore_path)
+
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+
+    # Auto-match tag
+    res = client.post(
+        url_for("tag"),
+        data=json.dumps({"title": "Auto Gitlab", "url_match_pattern": "*gitlab.com*"}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, res.data
+
+    # Watch that matches the pattern, tagged only via regex (no manual "tags")
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": "https://gitlab.com/someuser/repo"}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, res.data
+    auto_tagged_watch_uuid = res.json['uuid']
+
+    # Watch that does not match, must not show up under the tag's filtered view
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": "https://example.com/page"}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, res.data
+    non_matching_watch_uuid = res.json['uuid']
+
+    # Filter the watch list by the tag's title, same as clicking its tab
+    res = client.get(url_for("watchlist.index", tag="Auto Gitlab"))
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    assert auto_tagged_watch_uuid in html, \
+        "Watch auto-tagged via url_match_pattern must appear when filtering by that tag's tab"
+    assert non_matching_watch_uuid not in html, \
+        "Non-matching watch must not appear when filtering by the tag's tab"

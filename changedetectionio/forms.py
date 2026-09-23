@@ -4,9 +4,16 @@ from loguru import logger
 from wtforms.widgets.core import TimeInput
 from flask_babel import lazy_gettext as _l, gettext
 
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
-from changedetectionio.llm.evaluator import DEFAULT_CHANGE_SUMMARY_PROMPT, LLM_DEFAULT_MAX_SUMMARY_TOKENS, LLM_DEFAULT_THINKING_BUDGET
+from changedetectionio.llm.evaluator import (
+    DEFAULT_CHANGE_SUMMARY_PROMPT,
+    LLM_DEFAULT_MAX_SUMMARY_TOKENS,
+    LLM_DEFAULT_THINKING_BUDGET,
+    LLM_PROMPT_MODE_APPEND,
+    LLM_PROMPT_MODE_REPLACE,
+)
 from changedetectionio.conditions.form import ConditionFormRow
 from changedetectionio.notification_service import NotificationContextData
 from changedetectionio.strtobool import strtobool
@@ -139,6 +146,36 @@ class StringTagUUID(StringField):
 
         return 'error'
 
+class LabelAfterInputTableWidget(widgets.TableWidget):
+    """
+    Variant of WTForms' TableWidget that renders the input cell before the label cell,
+    so each row is <td>input</td><th>label</th> instead of the default <th>label</th><td>input</td>.
+    """
+
+    def __call__(self, field, **kwargs):
+        from markupsafe import Markup
+        from wtforms.widgets import html_params
+
+        html = []
+        if self.with_table_tag:
+            kwargs.setdefault("id", field.id)
+            html.append(f"<table {html_params(**kwargs)}>")
+        hidden = ""
+        for subfield in field:
+            if subfield.type in ("HiddenField", "CSRFTokenField"):
+                hidden += str(subfield)
+            else:
+                html.append(
+                    f"<tr><td>{hidden}{subfield}</td><th>{subfield.label}</th></tr>"
+                )
+                hidden = ""
+        if self.with_table_tag:
+            html.append("</table>")
+        if hidden:
+            html.append(hidden)
+        return Markup("".join(html))
+
+
 class TimeDurationForm(Form):
     hours = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 25)], default="24",  validators=[validators.Optional()])
     minutes = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 60)], default="00", validators=[validators.Optional()])
@@ -184,7 +221,7 @@ class validateTimeZoneName(object):
 class ScheduleLimitDaySubForm(Form):
     enabled = BooleanField(_l("not set"), default=True)
     start_time = TimeStringField(_l("Start At"), default="00:00", validators=[validators.Optional()])
-    duration = FormField(TimeDurationForm, label=_l("Run duration"))
+    duration = FormField(TimeDurationForm, label=_l("Run duration"), widget=LabelAfterInputTableWidget())
 
 class ScheduleLimitForm(Form):
     enabled = BooleanField(_l("Use time scheduler"), default=False)
@@ -280,36 +317,6 @@ class TimeBetweenCheckForm(Form):
         return True
 
 
-class LabelAfterInputTableWidget(widgets.TableWidget):
-    """
-    Variant of WTForms' TableWidget that renders the input cell before the label cell,
-    so each row is <td>input</td><th>label</th> instead of the default <th>label</th><td>input</td>.
-    """
-
-    def __call__(self, field, **kwargs):
-        from markupsafe import Markup
-        from wtforms.widgets import html_params
-
-        html = []
-        if self.with_table_tag:
-            kwargs.setdefault("id", field.id)
-            html.append(f"<table {html_params(**kwargs)}>")
-        hidden = ""
-        for subfield in field:
-            if subfield.type in ("HiddenField", "CSRFTokenField"):
-                hidden += str(subfield)
-            else:
-                html.append(
-                    f"<tr><td>{hidden}{subfield}</td><th>{subfield.label}</th></tr>"
-                )
-                hidden = ""
-        if self.with_table_tag:
-            html.append("</table>")
-        if hidden:
-            html.append(hidden)
-        return Markup("".join(html))
-
-
 class EnhancedFormField(FormField):
     """
     An enhanced FormField that supports conditional validation with top-level error messages.
@@ -368,6 +375,8 @@ class RequiredFormField(FormField):
     A FormField that passes require_at_least_one=True to TimeBetweenCheckForm.
     Use this when you want the sub-form to always require at least one value.
     """
+
+    widget = LabelAfterInputTableWidget()
 
     def __init__(self, form_class, label=None, validators=None, separator="-", **kwargs):
         super().__init__(form_class, label, validators, separator, **kwargs)
@@ -477,6 +486,39 @@ class ValidateContentFetcherIsReady(object):
         #     except Exception as e:
         #         message = field.gettext('Content fetcher \'%s\' did not respond properly, unable to use it.\n %s')
         #         raise ValidationError(message % (field.data, e))
+
+
+class ValidateKnownContentFetcher(object):
+    """The posted fetch_backend has to name a fetcher this install actually has.
+
+    Deliberately *not* a live-preview capability check. This validator sits on the
+    shared quick-add form, whose POST endpoint is also how the watch list (and tests,
+    and scripts) add a watch with any legal backend - 'html_requests' included. Which
+    browsers the Add-Watch page *offers* is a rendering decision (see the add_watch_ui
+    blueprint's browser_config), and whether one can render a live preview is enforced
+    where that matters, in /snapshot.
+
+    Optional: no value posted means "leave it on the system default", as before.
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        from flask import current_app
+        from changedetectionio import content_fetchers
+
+        if not field.data:
+            return
+
+        allowed = {'system'} | {name for name, _description in content_fetchers.available_fetchers()}
+        datastore = current_app.config.get('DATASTORE')
+        if datastore:
+            allowed |= {value for value, _label in datastore.extra_browsers}
+
+        if field.data not in allowed:
+            logger.warning(f"Rejected unknown fetch_backend {field.data!r} - known: {sorted(allowed)}")
+            raise ValidationError(self.message or gettext("Unknown fetch method."))
 
 
 class ValidateNotificationBodyAndTitleWhenURLisSet(object):
@@ -655,12 +697,18 @@ class ValidateCSSJSONXPATHInput(object):
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 import elementpath
-                from changedetectionio.html_tools import SafeXPath3Parser
-                tree = html.fromstring("<html></html>")
+                from changedetectionio.html_tools import get_safe_xpath3_parser, lxml_guard, lxml_html_parser, \
+                    XPATH_CODEPOINT_COLLATION
                 line = line.replace('xpath:', '')
 
                 try:
-                    elementpath.select(tree, line.strip(), parser=SafeXPath3Parser)
+                    # Runs on a Flask request thread - must share the worker's lxml lock.
+                    with lxml_guard():
+                        tree = html.fromstring("<html></html>", parser=lxml_html_parser())
+                        # Same collation the filter will actually run under, so validation
+                        # cannot accept an expression that then behaves differently at check time.
+                        elementpath.select(tree, line.strip(), parser=get_safe_xpath3_parser(),
+                                           default_collation=XPATH_CODEPOINT_COLLATION)
                 except elementpath.ElementPathError as e:
                     message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
                     raise ValidationError(message % {'expression': line, 'error': str(e)})
@@ -671,11 +719,14 @@ class ValidateCSSJSONXPATHInput(object):
                 if not self.allow_xpath:
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
-                tree = html.fromstring("<html></html>")
+                from changedetectionio.html_tools import lxml_guard, lxml_html_parser
                 line = re.sub(r'^xpath1:', '', line)
 
                 try:
-                    tree.xpath(line.strip())
+                    # Runs on a Flask request thread - must share the worker's lxml lock.
+                    with lxml_guard():
+                        tree = html.fromstring("<html></html>", parser=lxml_html_parser())
+                        tree.xpath(line.strip())
                 except etree.XPathEvalError as e:
                     message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
                     raise ValidationError(message % {'expression': line, 'error': str(e)})
@@ -771,11 +822,41 @@ class ValidateStartsWithRegex(object):
             if not self.pattern.match(stripped):
                 raise ValidationError(self.message or _l("Invalid value."))
 
+def visual_browser_choices():
+    """Browsers that can render the Add-Watch live preview, as RadioField choices.
+
+    Lazy import (the add_watch_ui blueprint imports this module) and empty outside an
+    app context, because WTForms evaluates a choices callable on field construction.
+    """
+    from flask import current_app, has_app_context
+    from changedetectionio.blueprint.add_watch_ui import browser_config
+
+    if not has_app_context():
+        return []
+    datastore = current_app.config.get('DATASTORE')
+    return browser_config.radio_choices(datastore) if datastore else []
+
+
 class quickWatchForm(Form):
     url = StringField('URL', validators=[validateURL()])
     tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
+    # Only the Add-Watch page renders this; the watch-list quick-add posts nothing, which
+    # leaves the new watch on 'system' exactly as before.
+    #
+    # A radio list rather than a dropdown: fetcher descriptions run long (they include the
+    # driver URL) and a wrapping label reads fine in a narrow pane, where a <select> would
+    # either overflow or need truncating.
+    #
+    # choices is only what the Add-Watch page *offers* (browsers that can render a live
+    # preview), so validate_choice has to stay off: this same endpoint legitimately receives
+    # any installed backend from the watch-list quick-add, and pre_validate() would reject
+    # e.g. 'html_requests' for not being in the offered list.
+    fetch_backend = RadioField(_l('Browser'),
+                               choices=visual_browser_choices,
+                               validate_choice=False,
+                               validators=[ValidateKnownContentFetcher()])
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
@@ -807,6 +888,42 @@ class commonSettingsForm(Form):
 #                    raise ValidationError('HTML Color format is not supported by Telegram and Discord. Please choose another Notification Format (Plain Text, HTML, or Markdown to HTML).')
 
 
+# Standalone form for the /settings/notifications/apprise page. Holds only the
+# global apprise-notification fields (the macro
+# `notification_part_render_common_settings_form` in _common_fields.html expects
+# these exact field names) plus base_url, which powers the {{base_url}} token
+# in notification templates.
+#
+# This is intentionally not a sub-form of globalSettingsForm — the notifications
+# page POSTs to its own route so the broader settings form's validators (worker
+# count, RSS limits, etc.) don't run when the user only wants to tweak alerts.
+#
+# Named for the backend (apprise) on purpose: future backends (simple_email,
+# webhook, etc.) will land as their own forms next to this one.
+class globalSettingsAppriseNotificationForm(Form):
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        extra = kwargs.get('extra_notification_tokens', {})
+        self.notification_body.extra_notification_tokens = extra
+        self.notification_title.extra_notification_tokens = extra
+        self.notification_urls.extra_notification_tokens = extra
+
+    notification_urls = StringListField(_l('Notification URL List'),
+                                        validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
+    notification_title = StringField(_l('Notification Title'),
+                                     default='ChangeDetection.io Notification - {{ watch_url }}',
+                                     validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_body = TextAreaField(_l('Notification Body'),
+                                      default='{{ watch_url }} had a change.',
+                                      validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_format = SelectField(_l('Notification format'),
+                                      choices=list(valid_notification_formats.items()))
+    base_url = StringField(_l('Notification base URL override'),
+                           validators=[validators.Optional()],
+                           render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))})
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
 class importForm(Form):
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     urls = TextAreaField(_l('URLs'))
@@ -827,6 +944,7 @@ class SingleBrowserStep(Form):
 class processor_text_json_diff_form(commonSettingsForm):
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
+    link_to_open = StringField(_l('Open Link Override'), validators=[validators.Optional(), validateURL()], default='')
     tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
@@ -841,12 +959,24 @@ class processor_text_json_diff_form(commonSettingsForm):
 
     time_between_check_use_default = BooleanField(_l('Use global settings for time between check and scheduler.'), default=False)
 
-    llm_intent = TextAreaField(_l('AI Change Intent'), validators=[validators.Optional(), validators.Length(max=2000)],
+    llm_intent = TextAreaField(_l('AI Change Intent - Notify me when..'), validators=[validators.Optional(), validators.Length(max=2000)],
                                render_kw={"rows": "5", "placeholder": LLM_INTENT_WATCH_PLACEHOLDER})
 
     llm_change_summary = TextAreaField(_l('AI Change Summary'), validators=[validators.Optional(), validators.Length(max=2000)],
                                render_kw={"rows": "5", "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT},
                                default='')
+
+    llm_change_summary_mode = RadioField(
+        _l('Change Summary prompt - Append or Replace the default?'),
+        choices=[
+            (LLM_PROMPT_MODE_REPLACE, _l('Replace the inherited prompt')),
+            (LLM_PROMPT_MODE_APPEND,  _l('Append to the inherited prompt')),
+        ],
+        default=LLM_PROMPT_MODE_REPLACE,
+    )
+    # @NOTE! In the near future you should be able to select which LLM profile *OR* "off"/None for this watch/group
+    #        For now we use the 'future' field naming but keep the functionality simple.
+    llm_backend_profile = BooleanField(_l('AI enabled for this watch?'), default=True)
 
     include_filters = StringListField(_l('CSS/JSONPath/JQ/XPath Filters'), [ValidateCSSJSONXPATHInput()], default='')
 
@@ -910,7 +1040,7 @@ class processor_text_json_diff_form(commonSettingsForm):
             result = False
 
         # Attempt to validate jinja2 templates in the URL
-        if JINJA2_MARKER_PATTERN.search(self.url.data):
+        if self.url.data and JINJA2_MARKER_PATTERN.search(self.url.data):
             try:
                 jinja_render(template_str=self.url.data)
             except ModuleNotFoundError as e:
@@ -922,6 +1052,20 @@ class processor_text_json_diff_form(commonSettingsForm):
                 logger.error(e)
                 self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
                 result = False
+
+        # Attempt to validate jinja2 templates in the optional "Link to Open"
+        if self.link_to_open.data and self.link_to_open.data.strip():
+            if JINJA2_MARKER_PATTERN.search(self.link_to_open.data):
+                try:
+                    jinja_render(template_str=self.link_to_open.data)
+                except ModuleNotFoundError as e:
+                    logger.error(e)
+                    self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+                    result = False
+                except Exception as e:
+                    logger.error(e)
+                    self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
+                    result = False
 
         # Attempt to validate jinja2 templates in the body
         if self.body.data and self.body.data.strip():
@@ -1039,6 +1183,13 @@ class globalSettingsApplicationUIForm(Form):
     socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
+    use_share_watch = BooleanField(_l('Enable watch "sharing"'))
+    timeago_format = SelectField(_l('Relative time format'),
+                                 choices=[('long', _l('Long (1 minute ago)')), ('short', _l('Short (1m ago)'))],
+                                 default='long', validators=[validators.Optional()])
+    sidebar_mode = SelectField(_l('Navigation sidebar'),
+                               choices=MENU_SIDEBAR_ACTIONMODES,
+                               default=MENU_SIDEBAR_ACTIONMODES_DEFAULT, validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
@@ -1118,7 +1269,23 @@ class globalSettingsLLMForm(Form):
         _l('API Key'),
         validators=[validators.Optional()],
         render_kw={
-            "autocomplete": "off",
+            # NOT "off": Chrome deliberately ignores autocomplete="off" on type=password,
+            # so the browser's saved site password was being prefilled here. This field
+            # renders blank precisely so that submitting it untouched PRESERVES the stored
+            # key - a prefilled value therefore silently overwrote a working API key on the
+            # next Save. "new-password" is the value Chrome honours; the data-* attributes
+            # ask 1Password and LastPass to keep out of it too.
+            "autocomplete": "new-password",
+            "data-1p-ignore": "true",
+            "data-lpignore": "true",
+            "data-form-type": "other",
+            # Belt and braces, for when no key is stored yet and the field is editable
+            # (once one IS stored the template disables it outright). Chrome will not
+            # autofill a readonly input, and global-settings.js drops the attribute the
+            # moment the field is focused or clicked. readonly rather than disabled here,
+            # because a disabled input is not submitted and the key could never be set.
+            "readonly": True,
+            "data-unlock-on-interact": "1",
             "style": "width: 24em;",
         },
     )
@@ -1155,7 +1322,7 @@ class globalSettingsLLMForm(Form):
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
         render_kw={
-            "rows": "5",
+            "rows": "12",
             "placeholder": DEFAULT_CHANGE_SUMMARY_PROMPT,
             "style": "width: 100%; ",
         },
@@ -1236,6 +1403,14 @@ class globalSettingsLLMForm(Form):
             ('skip_check', _l('Skip the watch check entirely')),
         ],
         default='skip_llm',
+    )
+    watchlist_overview_summary = RadioField(
+        _l('Watchlist "Summary" link compares'),
+        choices=[
+            ('second_last_version', _l('Previous version (second-last vs latest)')),
+            ('since_last_viewed',   _l('Changes since you last viewed the watch')),
+        ],
+        default='second_last_version',
     )
 
 

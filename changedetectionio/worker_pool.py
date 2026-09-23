@@ -17,7 +17,10 @@ worker_threads = []  # List of WorkerThread objects
 
 # Track currently processing UUIDs for async workers - maps {uuid: worker_id}
 currently_processing_uuids = {}
-_uuid_processing_lock = threading.Lock()  # Protects currently_processing_uuids
+# When each currently-running UUID was claimed: {uuid: epoch_seconds}
+# Lets the queue UI render "running for Ns" without reaching into worker internals.
+_uuid_started_at = {}
+_uuid_processing_lock = threading.Lock()  # Protects currently_processing_uuids + _uuid_started_at
 
 # Configuration - async workers only
 USE_ASYNC_WORKERS = True
@@ -110,6 +113,8 @@ def start_async_workers(n_workers, update_q, notification_q, app, datastore):
     """Start async workers, each with its own thread and event loop for isolation"""
     global worker_threads, currently_processing_uuids
 
+    _ensure_queue_executor()
+
     # Clear any stale state
     currently_processing_uuids.clear()
 
@@ -169,9 +174,24 @@ def start_workers(n_workers, update_q, notification_q, app, datastore):
     start_async_workers(n_workers, update_q, notification_q, app, datastore)
 
 
+def _ensure_queue_executor():
+    """Recreate queue_executor if a prior shutdown_workers() left it in the
+    shutdown state. Without this, any add_worker() / start_async_workers()
+    after a brutal shutdown spawns workers that immediately crash with
+    'cannot schedule new futures after shutdown'."""
+    global queue_executor
+    if queue_executor is None or getattr(queue_executor, '_shutdown', False):
+        queue_executor = ThreadPoolExecutor(
+            max_workers=_max_executor_workers,
+            thread_name_prefix="QueueGetter-",
+        )
+
+
 def add_worker(update_q, notification_q, app, datastore):
     """Add a new async worker (for dynamic scaling)"""
     global worker_threads
+
+    _ensure_queue_executor()
 
     # Reuse lowest available ID to prevent unbounded growth over time
     used_ids = {w.worker_id for w in worker_threads}
@@ -215,6 +235,53 @@ def get_running_uuids():
         return list(currently_processing_uuids.keys())
 
 
+def get_uuid_started_at(uuid):
+    """Return the epoch seconds when this UUID was claimed for processing, or None."""
+    with _uuid_processing_lock:
+        return _uuid_started_at.get(uuid)
+
+
+def cancel_running_uuid(uuid, update_q=None, notification_q=None, app=None, datastore=None):
+    """Brutally stop whichever worker is processing this UUID and spin up a replacement.
+
+    Returns:
+        dict with keys 'cancelled' (bool), 'worker_id' (int or None), 'replaced' (bool).
+    """
+    global worker_threads
+
+    with _uuid_processing_lock:
+        worker_id = currently_processing_uuids.get(uuid)
+        # Drop our tracking regardless — the worker is going away.
+        currently_processing_uuids.pop(uuid, None)
+        _uuid_started_at.pop(uuid, None)
+
+    if worker_id is None:
+        return {'cancelled': False, 'worker_id': None, 'replaced': False}
+
+    # Find the corresponding WorkerThread and stop it.
+    target = next((w for w in worker_threads if w.worker_id == worker_id), None)
+    if target is not None:
+        try:
+            target.stop()
+        except Exception as e:
+            logger.error(f"cancel_running_uuid: stop() raised for worker {worker_id}: {e}")
+        try:
+            worker_threads.remove(target)
+        except ValueError:
+            pass
+
+    # Spawn a replacement so concurrency stays at the configured level.
+    replaced = False
+    if all([update_q, notification_q, app, datastore]):
+        try:
+            replaced = bool(add_worker(update_q, notification_q, app, datastore))
+        except Exception as e:
+            logger.error(f"cancel_running_uuid: add_worker failed: {e}")
+
+    logger.info(f"Cancelled UUID {uuid} (was on worker {worker_id}); replacement spawned: {replaced}")
+    return {'cancelled': True, 'worker_id': worker_id, 'replaced': replaced}
+
+
 def claim_uuid_for_processing(uuid, worker_id):
     """
     Atomically check if UUID is available and claim it for processing.
@@ -236,6 +303,8 @@ def claim_uuid_for_processing(uuid, worker_id):
             return False
         # Claim it atomically
         currently_processing_uuids[uuid] = worker_id
+        import time as _t
+        _uuid_started_at[uuid] = _t.time()
         logger.debug(f"Worker {worker_id} claimed UUID: {uuid}")
         return True
 
@@ -252,6 +321,7 @@ def release_uuid_from_processing(uuid, worker_id):
         # Only remove if this worker owns it (defensive)
         if currently_processing_uuids.get(uuid) == worker_id:
             currently_processing_uuids.pop(uuid, None)
+            _uuid_started_at.pop(uuid, None)
             logger.debug(f"Worker {worker_id} released UUID: {uuid}")
         else:
             logger.warning(f"Worker {worker_id} tried to release UUID {uuid} but doesn't own it (owned by {currently_processing_uuids.get(uuid, 'nobody')})")

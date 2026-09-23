@@ -1,0 +1,49 @@
+@use "../settings" as *;
+
+// Shared base table appearance used across the app (watch list, groups/tags
+// overview, …) so the different tables look consistent even though they show
+// different data. Page-specific tables layer their own rules on top — e.g.
+// .watch-table adds favicons, status icons, the checking-now bar and selection.
+.cdio-table {
+  width: 100%;
+  font-size: var(--body-main-text-size);
+
+  thead {
+    text-transform: uppercase;
+    a {
+      color: var(--color-text);
+    }
+  }
+
+  td,
+  th {
+    vertical-align: middle;
+    border: none;
+  }
+
+  tbody tr {
+    color: var(--color-watch-table-row-text);
+    border-bottom: 1px solid var(--color-table-line);
+    background-color: var(--color-table-background);
+
+    td {
+      background-color: var(--color-table-background);
+    }
+  }
+
+  // Row hover highlight (the app's tables don't zebra-stripe).
+  tbody tr:hover > td {
+    background-color: var(--watchlist-row-hover);
+  }
+}
+
+// Rounds a table's corners. border-radius on the <table> itself doesn't work
+// with border-collapse:collapse (and the row divider lines depend on collapse),
+// so a clip wrapper rounds + overflow-clips the square corners of the thead /
+// last-row cell backgrounds instead.
+.cdio-table-clip {
+  border-radius: var(--common-round-border);
+  overflow: hidden;
+  margin-bottom: $common-gap*2;
+}
+

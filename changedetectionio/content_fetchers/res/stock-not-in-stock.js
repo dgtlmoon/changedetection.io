@@ -71,6 +71,7 @@ async () => {
             'out of stock',
             'out-of-stock',
             'plus disponible',
+            'producto sin stock',
             'prodotto esaurito',
             'produkt niedostępny',
             'rupture',
@@ -108,7 +109,14 @@ async () => {
             '品切れ',
             '已售',
             '已售完',
-            '품절'
+            '품절',
+            "товар закінчився",
+            "немає в наявності",
+            "нема в наявності",
+            "закінчився",
+            "знято з виробництва",
+            "недоступний",
+            "немає на складі"
         ];
 
 
