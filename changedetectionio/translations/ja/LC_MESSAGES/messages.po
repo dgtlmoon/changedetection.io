@@ -1660,7 +1660,7 @@ msgstr "ウォッチ {} のスナップショット履歴をクリアしまし�
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "clear"
-msgstr "clear"
+msgstr "クリア"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "History clearing started in background"
