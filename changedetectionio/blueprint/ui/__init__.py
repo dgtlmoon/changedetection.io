@@ -387,6 +387,16 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index', **wl_filters.filter_query_args(request.args)))
 
+    @ui_blueprint.route("/form/export-selected-watches", methods=['POST'])
+    @login_optionally_required
+    def export_selected_watches():
+        from changedetectionio.blueprint.watchlist.export import selected_watches_csv
+
+        uuids = list(dict.fromkeys(u.strip() for u in request.form.getlist('uuids') if u.strip()))
+        if not uuids:
+            abort(400)
+        return selected_watches_csv(datastore, uuids)
+
     @ui_blueprint.route("/form/checkbox-operations", methods=['POST'])
     @login_optionally_required
     def form_watch_list_checkbox_operations():
