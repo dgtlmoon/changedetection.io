@@ -3568,7 +3568,9 @@ msgstr "Dibisukan"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "Lampirkan tangkapan layar ke notifikasi (jika memungkinkan)"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "Pencocokan"
 
