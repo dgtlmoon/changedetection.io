@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.60.7\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-23 15:52+0900\n"
+"POT-Creation-Date: 2026-09-26 02:14+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -640,6 +640,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "This will wait <i>n</i> seconds before extracting the text."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Currently used by Playwright. Other fetchers may ignore this setting. Websites will return content in this language "
+"where supported."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -3199,6 +3205,10 @@ msgid "Invalid value."
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Invalid locale. Use BCP 47 format, e.g. 'ja' or 'ja-JP'."
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Group tag"
 msgstr ""
 
@@ -3253,6 +3263,10 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Should contain one or more seconds"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Browser locale"
 msgstr ""
 
 #: changedetectionio/forms.py

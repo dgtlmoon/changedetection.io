@@ -1,4 +1,5 @@
 import os
+import re
 from abc import abstractmethod
 from loguru import logger
 from pydantic import BaseModel
@@ -36,6 +37,32 @@ def get_playwright_bypass_csp():
     can disable the option by setting ``PLAYWRIGHT_BYPASS_CSP=false``.
     """
     return strtobool(os.getenv('PLAYWRIGHT_BYPASS_CSP', 'true'))
+
+
+# BCP 47-style language tag pattern (e.g. `ja`, `ja-JP`, `zh-Hant-TW`).
+_BROWSER_LOCALE_RE = re.compile(r'[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*')
+
+
+def validate_browser_locale(value: object) -> str | None:
+    """Check whether the value has the shape of a BCP 47 locale tag.
+
+    Unknown ASCII tags (e.g. `xx`) are accepted;
+    handling of unknown tags is left to Playwright.
+    """
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    return value if value and _BROWSER_LOCALE_RE.fullmatch(value) else None
+
+
+def resolve_browser_locale(
+    watch_value: str | None = None, global_value: str | None = None
+) -> str | None:
+    """Resolve effective browser locale: per-watch > global.
+
+    When unset, returns None; Playwright then uses its system default (legacy behaviour).
+    """
+    return validate_browser_locale(watch_value) or validate_browser_locale(global_value)
 
 
 def manage_user_agent(headers, current_ua=''):
@@ -78,6 +105,7 @@ class Fetcher():
     backend_name = None
     browser_connection_is_custom = None
     browser_connection_url = None
+    browser_locale: str | None = None
     browser_steps = None
     browser_steps_screenshot_path = None
     content = None
