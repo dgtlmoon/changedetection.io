@@ -177,6 +177,7 @@ class watch_base(dict):
             # Requires setting to None on submit if it's the same as the default
             # Should be all None by default, so we use the system default in this case.
             'body': None,
+            'browser_locale': None,  # BCP 47 tag for Playwright contexts; None falls back to the system default
             'browser_steps': [],
             'browser_steps_last_error_step': None,
             'conditions' : [],

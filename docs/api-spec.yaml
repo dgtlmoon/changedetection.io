@@ -364,6 +364,9 @@ components:
         webdriver_delay:
           type: [integer, 'null']
           description: Delay in seconds for webdriver
+        browser_locale:
+          type: [string, 'null']
+          description: BCP 47 locale for Playwright browser contexts (e.g. ja, ja-JP)
         webdriver_js_execute_code:
           type: [string, 'null']
           description: JavaScript code to execute

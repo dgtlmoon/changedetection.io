@@ -669,6 +669,12 @@ msgstr ""
 msgid "This will wait <i>n</i> seconds before extracting the text."
 msgstr "Przed wyodrębnieniem tekstu system odczeka <i>n</i> sekund."
 
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Currently used by Playwright. Other fetchers may ignore this setting. Websites will return content in this language "
+"where supported."
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr ""
@@ -3359,6 +3365,10 @@ msgid "Invalid value."
 msgstr "Nieprawidłowa wartość."
 
 #: changedetectionio/forms.py
+msgid "Invalid locale. Use BCP 47 format, e.g. 'ja' or 'ja-JP'."
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Group tag"
 msgstr "Etykieta grupy"
 
@@ -3414,6 +3424,10 @@ msgstr "Liczba sekund oczekiwania przed wyodrębnieniem tekstu"
 #: changedetectionio/forms.py
 msgid "Should contain one or more seconds"
 msgstr "Powinna zawierać jedną lub więcej sekund"
+
+#: changedetectionio/forms.py
+msgid "Browser locale"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Notification base URL override"
