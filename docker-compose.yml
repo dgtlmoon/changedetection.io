@@ -89,6 +89,10 @@ services:
   #        In Ollama: run `ollama run <model>` then `/set parameter num_ctx 8192`
   #      - LLM_RESTOCK_MAX_CONTENT_CHARS=15000
   #
+  #        Fetch the latest LLM model pricing (used for the estimated cost counter) from GitHub, default false.
+  #        When false the pricing list that ships with this version is used, so no outbound request is made. (Off by default for privacy)
+  #      - LITELLM_FETCH_PRICING_FROM_GITHUB=false
+  #
   #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   #      - TZ=America/Los_Angeles
   #
