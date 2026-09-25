@@ -43,6 +43,7 @@ class model(dict):
                     'all_muted': False,
                     'api_access_token_enabled': True,
                     'base_url' : None,
+                    'browser_locale': None,  # BCP 47 tag for Playwright contexts; None falls back to the system default
                     'empty_pages_are_a_change': False,
                     'fetch_backend': getenv("DEFAULT_FETCH_BACKEND", "html_requests"),
                     'filter_failure_notification_threshold_attempts': _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT,

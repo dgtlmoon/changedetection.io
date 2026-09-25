@@ -650,6 +650,12 @@ msgstr "ページが完全にレンダリングされるのを待つのに問題
 msgid "This will wait <i>n</i> seconds before extracting the text."
 msgstr "テキスト抽出前に <i>n</i> 秒間待機します。"
 
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Currently used by Playwright. Other fetchers may ignore this setting. Websites will return content in this language "
+"where supported."
+msgstr "現在はPlaywrightで使用されます。他の取得方式ではこの設定が無視される場合があります。対応しているウェブサイトでは、この言語のコンテンツが返されます。"
+
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "ウォッチを処理する同時ワーカー数。ワーカーが多いほど処理は速くなりますが、メモリ使用量も増えます。"
@@ -3219,6 +3225,10 @@ msgid "Invalid value."
 msgstr "無効な値です。"
 
 #: changedetectionio/forms.py
+msgid "Invalid locale. Use BCP 47 format, e.g. 'ja' or 'ja-JP'."
+msgstr "無効なロケールです。BCP 47形式で入力してください（例: 'ja'、'ja-JP'）。"
+
+#: changedetectionio/forms.py
 msgid "Group tag"
 msgstr "グループタグ"
 
@@ -3274,6 +3284,10 @@ msgstr "テキスト抽出前の待機秒数"
 #: changedetectionio/forms.py
 msgid "Should contain one or more seconds"
 msgstr "1秒以上の値を入力してください"
+
+#: changedetectionio/forms.py
+msgid "Browser locale"
+msgstr "ブラウザのロケール"
 
 #: changedetectionio/forms.py
 msgid "Notification base URL override"
@@ -5147,4 +5161,3 @@ msgstr ""
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"
 msgstr "メイン設定"
-
