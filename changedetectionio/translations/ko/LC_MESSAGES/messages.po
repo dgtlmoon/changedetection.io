@@ -3465,7 +3465,9 @@ msgstr "음소거됨"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "알림에 스크린샷 첨부(가능한 경우)"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "일치 방식"
 

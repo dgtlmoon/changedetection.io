@@ -3528,7 +3528,9 @@ msgstr "Silenciado"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "Adjunte captura de pantalla a la notificación (cuando sea posible)"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "Coincidencia"
 
