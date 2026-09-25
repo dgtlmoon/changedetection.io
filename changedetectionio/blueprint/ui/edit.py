@@ -400,6 +400,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 # And then render the code from the module
                 templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
                 env = Environment(loader=FileSystemLoader(templates_dir))
+                # These extra form panels are rendered by a bare Jinja2 environment, not the Flask one,
+                # so Flask-Babel's `_` global is not injected - make the templates translatable anyway.
+                env.globals['_'] = gettext
                 template = env.from_string(form.extra_form_content())
                 included_content = template.render(**template_args)
 
