@@ -5,8 +5,8 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: limeade23 <admin@limeade.me>\n"
@@ -4121,6 +4121,10 @@ msgstr "{}의 메타데이터를 가져오는 중 오류가 발생했습니다."
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "모니터링 프로토콜이 허용되지 않거나 URL 형식이 올바르지 않습니다."
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
