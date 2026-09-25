@@ -649,7 +649,18 @@ jobs:
       - name: Test HTTPS SSL mode
         run: |
           openssl req -x509 -newkey rsa:4096 -keyout privkey.pem -out cert.pem -days 365 -nodes -subj "/CN=localhost"
-          docker run --name test-changedetectionio-ssl --rm -e SSL_CERT_FILE=cert.pem -e SSL_PRIVKEY_FILE=privkey.pem -p 5000:5000 -v ./cert.pem:/app/cert.pem -v ./privkey.pem:/app/privkey.pem -d test-changedetectionio
+          # Keep an exited container until its startup error has been reported.
+          cleanup_ssl() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              docker logs test-changedetectionio-ssl || true
+              docker inspect --format '{{json .State}}' test-changedetectionio-ssl || true
+            fi
+            docker rm -f test-changedetectionio-ssl >/dev/null || true
+            exit "$status"
+          }
+          trap cleanup_ssl EXIT
+          docker run --name test-changedetectionio-ssl -e SSL_CERT_FILE=cert.pem -e SSL_PRIVKEY_FILE=privkey.pem -p 5000:5000 -v ./cert.pem:/app/cert.pem -v ./privkey.pem:/app/privkey.pem -d test-changedetectionio
           sleep 3
           curl --retry-connrefused --retry 6 -k https://localhost:5000 -v|grep -q checkbox-uuid
           docker kill test-changedetectionio-ssl
