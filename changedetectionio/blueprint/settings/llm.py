@@ -92,10 +92,12 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 )}), 400
 
         _PREFIXES = {'gemini': 'gemini/', 'ollama': 'ollama/', 'openrouter': 'openrouter/',
-                     'openai_compatible': 'openai/'}
+                     'openai_compatible': 'openai/', 'orcarouter': 'orcarouter/'}
         # vLLM / LM Studio / llama.cpp speak OpenAI's wire format — route through litellm's
         # 'openai' provider but keep the UI-level name distinct from cloud OpenAI.
-        _LITELLM_PROVIDER = {'openai_compatible': 'openai'}
+        # OrcaRouter (https://www.orcarouter.ai) is an OpenAI-compatible model-routing
+        # gateway too, so it also reuses litellm's 'openai' provider against api.orcarouter.ai.
+        _LITELLM_PROVIDER = {'openai_compatible': 'openai', 'orcarouter': 'openai'}
         prefix = _PREFIXES.get(provider, '')
         litellm_provider = _LITELLM_PROVIDER.get(provider, provider)
 

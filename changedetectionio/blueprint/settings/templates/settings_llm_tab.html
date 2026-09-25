@@ -126,6 +126,7 @@
         <option value="openai">OpenAI</option>
         <option value="openai_compatible">{{ _('OpenAI-compatible (vLLM, LM Studio, llama.cpp)') }}</option>
         <option value="openrouter">OpenRouter (200+ models)</option>
+        <option value="orcarouter">OrcaRouter</option>
     </select>
   </div>
 
@@ -460,8 +461,9 @@
 
 <script>
 (function () {
-  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openai_compatible', 'openrouter'];
-  const BASE_DEFAULTS  = { ollama: 'http://localhost:11434' };
+  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openai_compatible', 'openrouter', 'orcarouter'];
+  const BASE_DEFAULTS  = { ollama: 'http://localhost:11434',
+                           orcarouter: 'https://api.orcarouter.ai/v1' };
   const KEY_HINTS = {
     openai:             '{{ _("platform.openai.com → API keys") }}',
     anthropic:          '{{ _("console.anthropic.com → API keys") }}',
@@ -469,6 +471,7 @@
     ollama:             '{{ _("No API key needed for local Ollama") }}',
     openai_compatible:  '{{ _("Bearer token for your self-hosted server (vLLM, LM Studio, etc.)") }}',
     openrouter:         '{{ _("openrouter.ai → Keys") }}',
+    orcarouter:         '{{ _("orcarouter.ai → API keys") }}',
   };
 
   window.llmDisclaimerToggle = function (cb) {
@@ -490,7 +493,9 @@
     const needsBase = provider === 'ollama' || provider === 'openai_compatible';
     baseGroup.style.display = needsBase ? '' : 'none';
     if (BASE_DEFAULTS[provider] !== undefined) {
-      if (!baseField.value) baseField.value = BASE_DEFAULTS[provider];
+      // OrcaRouter always targets its gateway endpoint — refresh it when switching
+      // providers so a stale Ollama/vLLM base can't leak into the request.
+      if (!baseField.value || provider === 'orcarouter') baseField.value = BASE_DEFAULTS[provider];
     }
 
     // Persist the dropdown selection so the backend can branch on provider kind
@@ -630,6 +635,7 @@
     if (m.startsWith('gemini/'))       guessed = 'gemini';
     else if (m.startsWith('ollama/'))  guessed = 'ollama';
     else if (m.startsWith('openrouter/')) guessed = 'openrouter';
+    else if (m.startsWith('orcarouter/')) guessed = 'orcarouter';
     else if (m.startsWith('openai/')) {
       // openai/<model> + custom api_base = self-hosted OpenAI-compatible (vLLM etc.)
       const baseField = document.querySelector('[name="llm-api_base"]');
