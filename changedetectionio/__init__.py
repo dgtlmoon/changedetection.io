@@ -77,6 +77,24 @@ if 'MALLOC_ARENA_MAX' not in os.environ:
     except Exception:
         pass
 
+
+def configure_litellm_pricing_source():
+    # On first import litellm fetches its model pricing/context-window map from GitHub's 'main'
+    # branch: an outbound request nobody asked for, up to a 5s stall on offline installs, and
+    # unpinned data. Default to the map bundled with the installed litellm instead.
+    # LITELLM_FETCH_PRICING_FROM_GITHUB=true opts back in; an explicit LITELLM_LOCAL_MODEL_COST_MAP
+    # (litellm's own switch) always wins. Must run before the first 'import litellm'.
+    try:
+        fetch_from_github = strtobool(os.getenv('LITELLM_FETCH_PRICING_FROM_GITHUB', 'false'))
+    except ValueError:
+        # Runs at package import, so a typo must not stop the app from starting
+        logger.warning("LITELLM_FETCH_PRICING_FROM_GITHUB is not a valid true/false value, using false")
+        fetch_from_github = False
+    os.environ.setdefault('LITELLM_LOCAL_MODEL_COST_MAP', 'False' if fetch_from_github else 'True')
+
+
+configure_litellm_pricing_source()
+
 # Set spawn as global default (safety net - all our code uses explicit contexts anyway)
 # Skip in tests to avoid breaking pytest-flask's LiveServer fixture (uses unpicklable local functions)
 if 'pytest' not in sys.modules:
