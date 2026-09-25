@@ -1031,7 +1031,7 @@ class processor_text_json_diff_form(commonSettingsForm):
         if not super().validate():
             return False
 
-        from changedetectionio.jinja2_custom import render as jinja_render
+        from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -1040,50 +1040,54 @@ class processor_text_json_diff_form(commonSettingsForm):
             result = False
 
         # Attempt to validate jinja2 templates in the URL
-        try:
-            jinja_render(template_str=self.url.data)
-        except ModuleNotFoundError as e:
-            # incase jinja2_time or others is missing
-            logger.error(e)
-            self.url.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-            result = False
-        except Exception as e:
-            logger.error(e)
-            self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-            result = False
-
-        # Attempt to validate jinja2 templates in the optional "Link to Open"
-        if self.link_to_open.data and self.link_to_open.data.strip():
+        if self.url.data and JINJA2_MARKER_PATTERN.search(self.url.data):
             try:
-                jinja_render(template_str=self.link_to_open.data)
-            except ModuleNotFoundError as e:
-                logger.error(e)
-                self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                result = False
-            except Exception as e:
-                logger.error(e)
-                self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-                result = False
-
-        # Attempt to validate jinja2 templates in the body
-        if self.body.data and self.body.data.strip():
-            try:
-                jinja_render(template_str=self.body.data)
+                jinja_render(template_str=self.url.data)
             except ModuleNotFoundError as e:
                 # incase jinja2_time or others is missing
                 logger.error(e)
-                self.body.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+                self.url.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
                 result = False
             except Exception as e:
                 logger.error(e)
-                self.body.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
+                self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
                 result = False
+
+        # Attempt to validate jinja2 templates in the optional "Link to Open"
+        if self.link_to_open.data and self.link_to_open.data.strip():
+            if JINJA2_MARKER_PATTERN.search(self.link_to_open.data):
+                try:
+                    jinja_render(template_str=self.link_to_open.data)
+                except ModuleNotFoundError as e:
+                    logger.error(e)
+                    self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+                    result = False
+                except Exception as e:
+                    logger.error(e)
+                    self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
+                    result = False
+
+        # Attempt to validate jinja2 templates in the body
+        if self.body.data and self.body.data.strip():
+            if JINJA2_MARKER_PATTERN.search(self.body.data):
+                try:
+                    jinja_render(template_str=self.body.data)
+                except ModuleNotFoundError as e:
+                    # incase jinja2_time or others is missing
+                    logger.error(e)
+                    self.body.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+                    result = False
+                except Exception as e:
+                    logger.error(e)
+                    self.body.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
+                    result = False
 
         # Attempt to validate jinja2 templates in the headers
         if len(self.headers.data) > 0:
             try:
                 for header, value in self.headers.data.items():
-                    jinja_render(template_str=value)
+                    if JINJA2_MARKER_PATTERN.search(value):
+                        jinja_render(template_str=value)
             except ModuleNotFoundError as e:
                 # incase jinja2_time or others is missing
                 logger.error(e)

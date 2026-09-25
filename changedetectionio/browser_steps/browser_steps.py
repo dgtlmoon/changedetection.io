@@ -6,7 +6,7 @@ from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
 from changedetectionio.content_fetchers.base import get_playwright_bypass_csp, manage_user_agent
-from changedetectionio.jinja2_custom import render as jinja_render
+from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
 from changedetectionio.validate_url import validate_fetch_url_async
 
 def track_latest_navigation_response(page):
@@ -129,10 +129,10 @@ class steppable_browser_interface():
         action_handler = getattr(self, "action_" + call_action_name)
 
         # Support for Jinja2 variables in the value and selector
-        if selector and ('{%' in selector or '{{' in selector):
+        if selector and JINJA2_MARKER_PATTERN.search(selector):
             selector = jinja_render(template_str=selector)
 
-        if optional_value and ('{%' in optional_value or '{{' in optional_value):
+        if optional_value and JINJA2_MARKER_PATTERN.search(optional_value):
             optional_value = jinja_render(template_str=optional_value)
 
         # Trigger click and cautiously handle potential navigation

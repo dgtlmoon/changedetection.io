@@ -14,6 +14,9 @@ on:
         type: boolean
         default: false
 
+env:
+  FORCE_COLOR: 1
+
 jobs:
   # Build the Docker image once and share it with all test jobs
   build:
@@ -111,7 +114,7 @@ jobs:
 
       - name: Run Unit Tests
         run: |
-          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest tests/unit/ tests/llm/'
+          docker run -e FORCE_COLOR test-changedetectionio bash -c 'cd changedetectionio;pytest tests/unit/ tests/llm/'
 
   # Basic pytest tests with ancillary services
   basic-tests:
@@ -136,7 +139,7 @@ jobs:
       - name: Test built container with Pytest
         run: |
           docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
-          docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+          docker run --name test-cdio-basic-tests --network changedet-network -e FORCE_COLOR test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
       - name: Test CLI options
         run: |
@@ -219,7 +222,7 @@ jobs:
           # otherwise easy to misread as "the whole browser suite broke".
           for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py; do
             echo "::group::pytest $t"
-            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e FORCE_COLOR --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
               echo "::endgroup::"
               echo "::error::$t FAILED - stopping here. Any later test file and the remaining steps of this job were SKIPPED, not failed."
@@ -230,11 +233,11 @@ jobs:
 
       - name: Playwright - Headers and requests
         run: |
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py; pwd;find .'
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" -e FORCE_COLOR --network changedet-network test-changedetectionio bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py; pwd;find .'
 
       - name: Playwright - Restock detection
         run: |
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e FORCE_COLOR --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
 
   # Pyppeteer tests
   pyppeteer-tests:
@@ -267,7 +270,7 @@ jobs:
           # Fail fast, but name the file that failed - see the note in the playwright job above
           for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py; do
             echo "::group::pytest $t"
-            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e FORCE_COLOR --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
               echo "::endgroup::"
               echo "::error::$t FAILED - stopping here. Any later test file and the remaining steps of this job were SKIPPED, not failed."
@@ -278,11 +281,11 @@ jobs:
 
       - name: Pyppeteer - Headers and requests checks
         run: |
-          docker run --name "changedet" --hostname changedet --rm -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
+          docker run --name "changedet" --hostname changedet --rm -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" -e FORCE_COLOR --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
 
       - name: Pyppeteer - Restock detection
         run: |
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e FORCE_COLOR --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
 
   # Selenium tests
   selenium-tests:
@@ -313,11 +316,11 @@ jobs:
       - name: Specific tests for headers and requests checks with Selenium
         run: |
 
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
+          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" -e FORCE_COLOR --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
 
       - name: Specific tests in built container for Selenium
         run: |
-          docker run --rm -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
+          docker run --rm -e "WEBDRIVER_URL=http://selenium:4444/wd/hub" -e FORCE_COLOR --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/fetchers/test_content.py && pytest tests/test_errorhandling.py'
 
 
   # SMTP tests
@@ -347,7 +350,7 @@ jobs:
 
       - name: Test SMTP notification mime types
         run: |
-          docker run --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
+          docker run --rm --network changedet-network -e FORCE_COLOR test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
   nginx-reverse-proxy:
     runs-on: ubuntu-latest
@@ -610,11 +613,11 @@ jobs:
 
       - name: Basic processor plugin registration and checks
         run: |
-          docker run  -e EXTRA_PACKAGES=changedetection.io-osint-processor test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s  tests/plugins/test_processor.py::test_check_plugin_processor'
+          docker run -e EXTRA_PACKAGES=changedetection.io-osint-processor -e FORCE_COLOR test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s  tests/plugins/test_processor.py::test_check_plugin_processor'
 
       - name: Plugin get_html_head_extras hook injects into base.html
         run: |
-          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_html_head_extras.py'
+          docker run -e FORCE_COLOR test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_html_head_extras.py'
 
   # Container startup tests
   container-tests:
