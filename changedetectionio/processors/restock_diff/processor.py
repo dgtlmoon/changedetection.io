@@ -47,12 +47,14 @@ def _deduplicate_prices(data):
 
         if isinstance(datum.value, list):
             # Process each item in the list
-            normalized_value = set([float(re.sub(r'[^\d.]', '', str(item))) for item in datum.value if str(item).strip()])
-            unique_data.update(normalized_value)
+            # parse_currency() understands decimal commas ("39,99"), stripping to [^\d.] first would turn that into 3999
+            normalized_value = set([Restock().parse_currency(str(item)) for item in datum.value if str(item).strip()])
+            unique_data.update(v for v in normalized_value if v is not None)
         else:
             # Process single value
-            v = float(re.sub(r'[^\d.]', '', str(datum.value)))
-            unique_data.add(v)
+            v = Restock().parse_currency(str(datum.value))
+            if v is not None:
+                unique_data.add(v)
 
     return list(unique_data)
 
