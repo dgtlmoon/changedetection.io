@@ -438,7 +438,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             logger.info(f"AI summary generation started for {uuid} ({from_version}->{to_version}), "
                         f"{len(diff_text)} chars of diff")
             try:
-                summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text)
+                summary = summarise_change(watch, datastore, diff=diff_text, current_snapshot=to_text, retries=0)
             except LLMInputTooLargeError as e:
                 raise SummaryJobFailed(str(e), http_status=400)
             except Exception as e:
