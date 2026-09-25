@@ -587,8 +587,16 @@ class perform_site_check(difference_detection_processor):
             update_obj['restock']['last_price'] = old_restock.get('last_price')  # unchanged: keep the existing reference
 
         if not self.fetcher.instock_data and not itemprop_availability.get('availability') and not itemprop_availability.get('price'):
+            # Availability/restock checking may be turned off ('in_stock_processing' == 'off'),
+            # but there's still nothing here to track at all - that's always worth raising on.
+            # Just don't blame "restock"/stock data for it when the user turned stock checking
+            # off; the actual failure in that case is that no price could be found either.
+            if restock_settings.get('in_stock_processing') == 'off':
+                message = f"Unable to extract price data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded price information was found and nothing interesting in the text, try using this watch with Chrome."
+            else:
+                message = f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome."
             raise ProcessorException(
-                message=f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",
+                message=message,
                 url=watch.get('url'),
                 status_code=self.fetcher.get_last_status_code(),
                 screenshot=self.fetcher.screenshot,
