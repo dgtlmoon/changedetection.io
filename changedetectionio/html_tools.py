@@ -95,6 +95,10 @@ TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 TRANSLATE_WHITESPACE_TABLE = str.maketrans('', '', '\r\n\t ')
 PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 
+# 'br', 'hr', 'div' and 'p' already make Inscriptis break the line, so a filter match on one of
+# them is never suffixed with TEXT_FILTER_LIST_LINE_SUFFIX (a div becomes 4 whitespaces).
+FILTER_TAGS_WITH_OWN_NEWLINE = ('br', 'hr', 'div', 'p')
+
 # Whitespace is allowed after the tag name ("</title >") but not after "<" - "< title>" is text, not a tag
 TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title\s*>", re.I | re.S)
 # Locate the tag with pos/endpos instead of data.lower(), which copies the whole document (67MB seen
@@ -237,6 +241,30 @@ def perl_style_slash_enclosed_regex_to_options(regex):
 
     return regex
 
+def filter_match_separator(append_pretty_line_formatting, html_block, tag):
+    """What to append after a filter match so that each match gets its own line in the diff.
+
+    Always empty for the first match, so no leading separator is ever emitted.
+
+    :param append_pretty_line_formatting: True while the result still has to survive
+        html_to_text() (Inscriptis). `source:` watches pass False - see processor.py,
+        `append_pretty_line_formatting=not self.watch.is_source_type_url`.
+    :param html_block: the output accumulated so far, used to skip the first match
+    :param tag: the matched element's tag name, or None when the match is a plain string
+               (an attribute or text() node) and so is not HTML at all
+    """
+    if not append_pretty_line_formatting:
+        # A `source:` watch keeps the filtered text verbatim and never runs html_to_text(),
+        # so a literal '<br>' would reach the snapshot as visible text. A real newline is
+        # the only separator that survives there - and with no separator at all every match
+        # ran straight into the next on a single line, see #4477.
+        return "\n" if len(html_block) else ""
+
+    if not len(html_block) or tag in FILTER_TAGS_WITH_OWN_NEWLINE:
+        return ""
+
+    return TEXT_FILTER_LIST_LINE_SUFFIX
+
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
 def include_filters(include_filters, html_content, append_pretty_line_formatting=False):
     from bs4 import BeautifulSoup
@@ -249,8 +277,7 @@ def include_filters(include_filters, html_content, append_pretty_line_formatting
         # And where the matched result doesn't include something that will cause Inscriptis to add a newline
         # (This way each 'match' reliably has a new-line in the diff)
         # Divs are converted to 4 whitespaces by inscriptis
-        if append_pretty_line_formatting and len(html_block) and not element.name in (['br', 'hr', 'div', 'p']):
-            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+        html_block += filter_match_separator(append_pretty_line_formatting, html_block, getattr(element, 'name', None))
 
         html_block += str(element)
 
@@ -422,8 +449,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             # And where the matched result doesn't include something that will cause Inscriptis to add a newline
             # (This way each 'match' reliably has a new-line in the diff)
             # Divs are converted to 4 whitespaces by inscriptis
-            if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
-                html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+            html_block += filter_match_separator(append_pretty_line_formatting, html_block, getattr(element, 'tag', None))
 
             if type(element) == str:
                 html_block += element
@@ -483,8 +509,7 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
             # And where the matched result doesn't include something that will cause Inscriptis to add a newline
             # (This way each 'match' reliably has a new-line in the diff)
             # Divs are converted to 4 whitespaces by inscriptis
-            if append_pretty_line_formatting and len(html_block) and (not hasattr(element, 'tag') or not element.tag in (['br', 'hr', 'div', 'p'])):
-                html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+            html_block += filter_match_separator(append_pretty_line_formatting, html_block, getattr(element, 'tag', None))
 
             # Some kind of text, UTF-8 or other
             if isinstance(element, (str, bytes)):
