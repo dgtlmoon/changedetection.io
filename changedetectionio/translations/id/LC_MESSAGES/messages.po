@@ -1771,20 +1771,20 @@ msgid "Watch is already queued or being checked."
 msgstr "Monitor sudah berada dalam antrean atau sedang diperiksa."
 
 #: changedetectionio/blueprint/ui/__init__.py
-msgid "Queued 1 watch for rechecking."
-msgstr "1 monitor dimasukkan ke antrean untuk diperiksa ulang."
+#, python-format
+msgid "Queued %(count)s watch for rechecking"
+msgid_plural "Queued %(count)s watches for rechecking"
+msgstr[0] "%(count)s monitor dimasukkan ke antrean untuk diperiksa ulang"
+
+#. TRANSLATORS: sentence-final full stop
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "."
+msgstr "."
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
-msgstr ""
-"{count} monitor dimasukkan ke antrean untuk diperiksa ulang ({skipped_count} sudah dalam antrean atau sedang "
-"berjalan)."
-
-#: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {} watches for rechecking."
-msgstr "{} monitor dimasukkan ke antrean untuk diperiksa ulang."
+#, python-format
+msgid " (%(skipped_count)s already queued or running)"
+msgstr " (%(skipped_count)s sudah dalam antrean atau sedang berjalan)"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
@@ -3115,59 +3115,38 @@ msgstr "0 detik"
 
 #: changedetectionio/flask_app.py
 msgid "year"
-msgstr "tahun"
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr "tahun"
+msgid_plural "years"
+msgstr[0] "tahun"
 
 #: changedetectionio/flask_app.py
 msgid "month"
-msgstr "bulan"
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr "bulan"
+msgid_plural "months"
+msgstr[0] "bulan"
 
 #: changedetectionio/flask_app.py
 msgid "week"
-msgstr "minggu"
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr "minggu"
+msgid_plural "weeks"
+msgstr[0] "minggu"
 
 #: changedetectionio/flask_app.py
 msgid "day"
-msgstr "hari"
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr "hari"
+msgid_plural "days"
+msgstr[0] "hari"
 
 #: changedetectionio/flask_app.py
 msgid "hour"
-msgstr "jam"
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr "jam"
+msgid_plural "hours"
+msgstr[0] "jam"
 
 #: changedetectionio/flask_app.py
 msgid "minute"
-msgstr "menit"
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr "menit"
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr "detik"
+msgid_plural "minutes"
+msgstr[0] "menit"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "detik"
+msgid "second"
+msgid_plural "seconds"
+msgstr[0] "detik"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"

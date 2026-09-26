@@ -2,7 +2,7 @@ import time
 import threading
 from blinker import signal
 from flask import Blueprint, request, redirect, url_for, flash, render_template, session, current_app, abort
-from flask_babel import gettext
+from flask_babel import gettext, ngettext
 from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
@@ -317,7 +317,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 flash(gettext("Watch is already queued or being checked."))
             else:
                 worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-                flash(gettext("Queued 1 watch for rechecking."))
+                flash(ngettext("Queued %(count)s watch for rechecking", "Queued %(count)s watches for rechecking", 1, count=1) + gettext("."))
         else:
             # Multiple watches - operate on the SAME set the watch list is showing
             # (tag/processor/status/search) via the shared filter, skipping paused.
@@ -347,14 +347,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
                 # Provide feedback about skipped watches
                 skipped_count = len(watches_to_queue) - len(watches_to_queue_filtered)
+                queued_count = len(watches_to_queue_filtered)
+                msg = ngettext(
+                    "Queued %(count)s watch for rechecking",
+                    "Queued %(count)s watches for rechecking",
+                    queued_count, count=queued_count)
                 if skipped_count > 0:
-                    flash(gettext("Queued {count} watches for rechecking ({skipped_count} already queued or running).").format(
-                        count=len(watches_to_queue_filtered), skipped_count=skipped_count))
-                else:
-                    if len(watches_to_queue_filtered) == 1:
-                        flash(gettext("Queued 1 watch for rechecking."))
-                    else:
-                        flash(gettext("Queued {} watches for rechecking.").format(len(watches_to_queue_filtered)))
+                    msg += gettext(" (%(skipped_count)s already queued or running)",
+                                   skipped_count=skipped_count)
+                # TRANSLATORS: sentence-final full stop
+                msg += gettext(".")
+                flash(msg)
             else:
                 # 20+ watches - queue in background thread to avoid blocking HTTP response
                 # Capture queued/running state before background thread
