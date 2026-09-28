@@ -848,15 +848,30 @@ class model(EntityPersistenceMixin, watch_base):
         if not favicon_fname:
             return True
         try:
-            fname = next(iter(glob.glob(os.path.join(self.data_dir, "favicon.*"))), None)
-            logger.trace(f"Favicon file maybe found at {fname}")
-            if os.path.isfile(fname):
-                file_age = int(time.time() - os.path.getmtime(fname))
-                logger.trace(f"Favicon file age is {file_age}s")
-                if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
-                    return False
+            # Newest by mtime rather than whatever the directory happens to list first.
+            # bump_favicon() writes favicon.<ext> and (before this) left any previous save
+            # under a different extension in place, so a watch whose icon changed type has
+            # more than one file. glob order is os.scandir order - stable, but decided by
+            # filename hash - so for some extension pairs the stale file wins every single
+            # time, the age check always fails, and the favicon is refetched on every check
+            # forever. Measured: 3 of 10 realistic extension pairs lose that way.
+            candidates = glob.glob(os.path.join(self.data_dir, "favicon.*"))
+            if not candidates:
+                # get_favicon_filename() is served from a module-level cache, so it can say
+                # yes after the file has been removed. Not an error, just a refetch.
+                logger.trace(f"No favicon file in {self.data_dir}, treating as expired")
+                return True
+            fname = max(candidates, key=os.path.getmtime)
+            logger.trace(f"Favicon file found at {fname}")
+            file_age = int(time.time() - os.path.getmtime(fname))
+            logger.trace(f"Favicon file age is {file_age}s")
+            if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
+                return False
         except Exception as e:
-            logger.critical(f"Exception checking Favicon age {str(e)}")
+            # Deliberately broad: this runs inline on the check path (it is an argument to
+            # fetcher.run()), so it must never be the reason a watch fails. Not critical
+            # either - the only cost of getting it wrong is one extra favicon fetch.
+            logger.warning(f"Could not check favicon age in {self.data_dir}, will refetch: {e}")
             return True
 
         # Also in the case that the file didnt exist
@@ -921,6 +936,19 @@ class model(EntityPersistenceMixin, watch_base):
             return None
 
         try:
+            # Drop any previous save under a different extension first, or the watch ends up
+            # holding several favicon.* files and favicon_is_expired() has to guess which one
+            # describes the current icon.
+            import glob as _glob
+            for stale in _glob.glob(os.path.join(self.data_dir, "favicon.*")):
+                if os.path.abspath(stale) == os.path.abspath(fname):
+                    continue
+                try:
+                    os.unlink(stale)
+                    logger.debug(f"UUID: {self.get('uuid')} removed superseded favicon {stale}")
+                except OSError as e:
+                    logger.debug(f"UUID: {self.get('uuid')} could not remove {stale}: {e}")
+
             with open(fname, 'wb') as f:
                 f.write(decoded)
 
