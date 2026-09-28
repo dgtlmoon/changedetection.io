@@ -20,6 +20,7 @@ docker run --network changedet-network \
   -e "FLASK_SERVER_NAME=cdio" \
   --hostname cdio \
   -e "SOCKSTEST=proxiesjson" \
+  -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest --live-server-host=0.0.0.0 --live-server-port=5004  -s tests/proxy_socks5/test_socks5_proxy_sources.py  --datastore-path /tmp'
 
@@ -29,6 +30,7 @@ docker run --network changedet-network \
   -e "FLASK_SERVER_NAME=cdio" \
   --hostname cdio \
   -e "SOCKSTEST=manual" \
+  -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest --live-server-host=0.0.0.0 --live-server-port=5004  -s tests/proxy_socks5/test_socks5_proxy.py --datastore-path /tmp'
 
@@ -40,6 +42,7 @@ docker run --network changedet-network \
   -v `pwd`/tests/proxy_socks5/proxies.json-example-noauth:/tmp/proxies.json \
   -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" \
   --rm \
+  -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest --live-server-host=0.0.0.0 --live-server-port=5004  -s tests/proxy_socks5/test_socks5_proxy_sources.py --datastore-path /tmp'
 

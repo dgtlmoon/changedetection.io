@@ -22,7 +22,7 @@ docker run --network changedet-network -d \
 sleep 5
 ## 2nd test actually choose the preferred proxy from proxies.json
 # This will force a request via "proxy-two"
-docker run --network changedet-network \
+docker run --network changedet-network -e FORCE_COLOR \
   -v `pwd`/tests/proxy_list/proxies.json-example:/tmp/proxies.json \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest -s tests/proxy_list/test_multiple_proxy.py --datastore-path /tmp'
@@ -47,7 +47,7 @@ then
 fi
 
 # Test the UI configurable proxies
-docker run --network changedet-network \
+docker run --network changedet-network -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_select_custom_proxy.py --datastore-path /tmp'
 
@@ -64,7 +64,7 @@ then
 fi
 
 # Test "no-proxy" option
-docker run --network changedet-network \
+docker run --network changedet-network -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_noproxy.py --datastore-path /tmp'
 
@@ -94,21 +94,21 @@ docker kill squid-one squid-two squid-custom
 # Test that the UI is returning the correct error message when a proxy is not available
 
 # Requests
-docker run --network changedet-network \
+docker run --network changedet-network -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Playwright
-docker run --network changedet-network \
+docker run --network changedet-network -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Puppeteer fast
-docker run --network changedet-network \
+docker run --network changedet-network -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
 
 # Selenium
-docker run --network changedet-network \
+docker run --network changedet-network -e FORCE_COLOR \
   test-changedetectionio \
   bash -c 'cd changedetectionio && WEBDRIVER_URL=http://selenium:4444/wd/hub pytest tests/proxy_list/test_proxy_noconnect.py --datastore-path /tmp'
