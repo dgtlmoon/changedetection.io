@@ -258,7 +258,15 @@ def filter_match_separator(append_pretty_line_formatting, html_block, tag):
         # so a literal '<br>' would reach the snapshot as visible text. A real newline is
         # the only separator that survives there - and with no separator at all every match
         # ran straight into the next on a single line, see #4477.
-        return "\n" if len(html_block) else ""
+        if not len(html_block):
+            return ""
+
+        # xpath_filter/xpath1_filter serialise whole elements with
+        # etree.tostring(pretty_print=True), which already ends every match with a newline.
+        # Adding one here as well would double-space those matches, so only separate when
+        # the accumulated output does not already end on a line break. Attribute and
+        # text() matches return plain strings and do need the separator.
+        return "" if html_block.endswith("\n") else "\n"
 
     if not len(html_block) or tag in FILTER_TAGS_WITH_OWN_NEWLINE:
         return ""

@@ -81,6 +81,40 @@ class TestSourceTypeFilterSeparator(unittest.TestCase):
 
         self.assertEqual('', filtered)
 
+    def test_xpath_element_matches_are_not_double_spaced(self):
+        """xpath_filter serialises elements with etree.tostring(pretty_print=True), which
+        already ends each match with a newline. The separator must not add a second one,
+        which would leave every matched element separated by a blank line.
+
+        The page is written without whitespace between the <link> elements on purpose: the
+        newline between them in LINK_PAGE is the element's own tail, and tostring emits it,
+        so the output is single-spaced regardless of which separator is used."""
+        compact = '<html><head>' + ''.join(
+            f'<link rel="x" href="{href}">' for href in HREFS) + '</head></html>'
+
+        for filtered in (
+            html_tools.xpath_filter(xpath_filter='//link', html_content=compact,
+                                    append_pretty_line_formatting=False),
+            html_tools.xpath1_filter(xpath_filter='//link', html_content=compact,
+                                     append_pretty_line_formatting=False),
+        ):
+            self.assertNotIn('<br>', filtered)
+            self.assertNotIn('\n\n', filtered, 'matched elements must not be double-spaced')
+            self.assertEqual(5, len(filtered.splitlines()))
+            for href in HREFS:
+                self.assertIn(href, filtered)
+
+    def test_xpath_element_matches_match_the_pre_fix_spacing(self):
+        """Element matches must come out exactly as they did before this branch, i.e. the
+        separator is a no-op for them and only attribute/text() matches are affected."""
+        compact = '<html><head>' + ''.join(
+            f'<link rel="x" href="{href}">' for href in HREFS) + '</head></html>'
+
+        filtered = html_tools.xpath_filter(xpath_filter='//link', html_content=compact,
+                                          append_pretty_line_formatting=False)
+        self.assertEqual('\n'.join(f'<link rel="x" href="{href}">' for href in HREFS) + '\n',
+                         filtered)
+
 
 class TestFilterSeparatorHelper(unittest.TestCase):
     """The separator decision itself, including the unchanged Inscriptis path."""
@@ -103,6 +137,11 @@ class TestFilterSeparatorHelper(unittest.TestCase):
         # Even for tags that would break a line under Inscriptis - it never runs here, and a
         # '<br>' is not a newline in the verbatim text.
         self.assertEqual("\n", html_tools.filter_match_separator(False, 'something', 'div'))
+
+    def test_non_pretty_path_adds_nothing_when_output_already_ends_on_a_newline(self):
+        """xpath element matches are already newline-terminated by etree.tostring."""
+        self.assertEqual('', html_tools.filter_match_separator(False, '<link>\n', 'link'))
+        self.assertEqual('', html_tools.filter_match_separator(False, '<link>\n', None))
 
 
 if __name__ == '__main__':
