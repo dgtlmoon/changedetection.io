@@ -7,6 +7,7 @@ New tokenizers can be easily added by:
 2. Importing and registering it in the TOKENIZERS dictionary below
 """
 
+from .chars_and_html import tokenize_chars_and_html
 from .natural_text import tokenize_words
 from .words_and_html import tokenize_words_and_html
 
@@ -14,10 +15,12 @@ from .words_and_html import tokenize_words_and_html
 TOKENIZERS = {
     'words': tokenize_words,
     'words_and_html': tokenize_words_and_html,
+    'chars_and_html': tokenize_chars_and_html,
 }
 
 __all__ = [
     'tokenize_words',
     'tokenize_words_and_html',
+    'tokenize_chars_and_html',
     'TOKENIZERS',
 ]
