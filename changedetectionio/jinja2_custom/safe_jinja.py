@@ -8,7 +8,7 @@ import jinja2.sandbox
 import typing as t
 import os
 from .extensions.TimeExtension import TimeExtension
-from .plugins import regex_replace
+from .plugins import regex_replace, unixtime
 
 JINJA2_MAX_RETURN_PAYLOAD_SIZE = 1024 * int(os.getenv("JINJA2_MAX_RETURN_PAYLOAD_SIZE_KB", 1024 * 10))
 
@@ -40,6 +40,7 @@ def create_jinja_env(extensions=None, **kwargs) -> jinja2.sandbox.ImmutableSandb
 
     # Register custom filters
     jinja2_env.filters['regex_replace'] = regex_replace
+    jinja2_env.filters['unixtime'] = unixtime
 
     return jinja2_env
 
@@ -61,4 +62,3 @@ def render_fully_escaped(content):
     """
     from markupsafe import escape
     return str(escape(content))
-
