@@ -2,6 +2,7 @@ import hashlib
 
 from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.proxy_url import redact_proxy_url
 from changedetectionio.validate_url import validate_fetch_url_async
 from copy import deepcopy
 from abc import abstractmethod
@@ -196,11 +197,11 @@ class difference_detection_processor():
             # Custom browser endpoints should NOT have a proxy added
             if not prefer_fetch_backend.startswith('extra_browser_'):
                 proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
+                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{redact_proxy_url(proxy_url)}' for {url}")
             else:
                 logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
 
-        logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
+        logger.debug(f"Using proxy '{redact_proxy_url(proxy_url)}' for {self.watch['uuid']}")
 
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
