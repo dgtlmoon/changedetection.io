@@ -256,14 +256,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if proxy_id:
             proxy_url = datastore.proxy_list.get(proxy_id, {}).get('url')
             if proxy_url:
-                from urllib.parse import urlparse
-                parsed = urlparse(proxy_url)
+                from changedetectionio.proxy_url import proxy_credentials, redact_proxy_url
+                username, password = proxy_credentials(proxy_url)
                 proxy = {'server': proxy_url}
-                if parsed.username:
-                    proxy['username'] = parsed.username
-                if parsed.password:
-                    proxy['password'] = parsed.password
-                logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {proxy_url}")
+                if username:
+                    proxy['username'] = username
+                if password:
+                    proxy['password'] = password
+                logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {redact_proxy_url(proxy_url)}")
 
         # Resolve the fetcher backend for this watch so we can ask it to launch its own browser
         # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)

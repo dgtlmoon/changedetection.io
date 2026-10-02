@@ -11,6 +11,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio import gc_debounce
 from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
 
@@ -221,7 +222,8 @@ class fetcher(Fetcher):
             # Playwright needs separate username and password values
             parsed = urlparse(proxy_override)
             if parsed:
-                self.proxy = {'username': parsed.username, 'password': parsed.password}
+                username, password = proxy_credentials(proxy_override)
+                self.proxy = {'username': username, 'password': password}
                 # Add the proxy server chrome start option, the username and password never gets added here
                 # (It always goes in via await self.page.authenticate(self.proxy))
 
