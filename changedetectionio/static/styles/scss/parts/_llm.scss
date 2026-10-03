@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 // ── AI / LLM shared styles ────────────────────────────────────────────────────
 // Used by both the diff page (#llm-diff-summary-area) and the watchlist
 // inline summary row (.ai-inline-summary-row).
@@ -127,11 +129,13 @@ html[data-ai-mode="true"] body.llm-configured {
     line-height: 1.5;
   }
 
-  html[data-darkmode="true"] & td {
-    background: linear-gradient(135deg, #1c0d35, #0d1535) !important;
-    border-top: 1px solid #3b1f6e !important;
-    border-left-color: #8b5cf6 !important;
-    color: #e9d5ff !important;
+  td {
+    @include dark-mode {
+      background: linear-gradient(135deg, #1c0d35, #0d1535) !important;
+      border-top: 1px solid #3b1f6e !important;
+      border-left-color: #8b5cf6 !important;
+      color: #e9d5ff !important;
+    }
   }
 
   .ai-inline-summary-content {
