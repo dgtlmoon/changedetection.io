@@ -1,3 +1,4 @@
+@use "../settings" as *;
 
 .toggle-light-mode {
   /* default */
@@ -6,7 +7,7 @@
   }
 }
 
-html[data-darkmode="true"] {
+@include dark-mode {
   .toggle-light-mode {
     .icon-light {
       display: none;

@@ -417,11 +417,21 @@ def get_processor_badge_css():
             f"}}"
         )
 
-        # Dark mode rule
-        css_rules.append(
-            f"html[data-darkmode=\"true\"] .processor-badge.processor-badge-{sub_package_name} {{\n"
+        # Dark mode rules - explicit choice (cookie), and 'auto' following the device setting
+        dark_declarations = (
             f"  background-color: {colors['dark']['bg']};\n"
             f"  color: {colors['dark']['color']};\n"
+        )
+        css_rules.append(
+            f"html[data-darkmode=\"true\"] .processor-badge.processor-badge-{sub_package_name} {{\n"
+            f"{dark_declarations}"
+            f"}}"
+        )
+        css_rules.append(
+            f"@media (prefers-color-scheme: dark) {{\n"
+            f"html[data-darkmode=\"auto\"] .processor-badge.processor-badge-{sub_package_name} {{\n"
+            f"{dark_declarations}"
+            f"}}\n"
             f"}}"
         )
 
