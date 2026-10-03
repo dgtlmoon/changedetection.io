@@ -182,6 +182,12 @@
                         </div>
                     </div>
                     <div class="pure-control-group">
+                        {{ render_field(form.browser_locale) }}
+                        <div class="pure-form-message-inline">
+                            {{ _('Currently used by Playwright. Other fetchers may ignore this setting. Websites will return content in this language where supported.') }}
+                        </div>
+                    </div>
+                    <div class="pure-control-group">
                         <a class="pure-button button-secondary button-xsmall show-advanced">{{ _('Show advanced options') }}</a>
                     </div>
                     <div class="advanced-options"  style="display: none;">
