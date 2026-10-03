@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 /**
  * CSS custom properties (aka variables).
  */
@@ -127,7 +129,7 @@
   --common-round-border: 8px;
 }
 
-html[data-darkmode="true"] {
+@include dark-mode {
   --color-link: #59bdfb;
   --color-text: var(--color-white);
   --color-table-line: #262c37;
