@@ -37,6 +37,11 @@ MANAGE = os.path.join(OVERLAY_DIR, 'manage.py')
 OVERRIDDEN_MSGID = 'Global Filters'
 SENTINEL = 'zzOverlaySentinelFiltersZZ'
 
+# A helper text on the Restock & Price Detection (restock_diff) per-watch settings tab.
+# Wired through gettext so the overlay can reword it (see ``test_overlay_overrides_a_string_in_a_rendered_page``).
+RESTOCK_MSGID = 'Changes in price should trigger a notification'
+RESTOCK_SENTINEL = 'zzOverlaySentinelRestockZZ'
+
 
 def _write_mo(root, locale, entries):
     """Write a compiled catalog at <root>/<locale>/LC_MESSAGES/messages.mo."""
@@ -160,6 +165,54 @@ def test_overlay_overrides_a_string_in_a_rendered_page(client, live_server, tmp_
     restored = client.get(url_for('settings.settings_page'))
     assert SENTINEL.encode() not in restored.data
     assert OVERRIDDEN_MSGID.encode() in restored.data, 'base wording did not come back'
+
+
+def test_restock_diff_helper_texts_route_through_gettext(client, tmp_path):
+    """The Restock & Price Detection helper texts are translated through gettext (issue #4378).
+
+    These strings are rendered by ``processor_settings_form.extra_form_content()`` through a bare
+    Jinja2 environment, so the guard is the same one pinning the overlay merge: override an msgid
+    in a real translated locale and assert it replaces the wording on the rendered edit page.
+    """
+    app = client.application
+
+    test_url = url_for('test_endpoint', _external=True)
+    client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": '', 'processor': 'restock_diff', 'fetch_backend': 'html_requests'},
+        follow_redirects=True
+    )
+    datastore = app.config.get('DATASTORE')
+    uuid = next(iter(datastore.data['watching']))
+    edit_url = url_for('ui.ui_edit.edit_page', uuid=uuid)
+
+    baseline = client.get(edit_url)
+    assert baseline.status_code == 200
+    assert RESTOCK_MSGID.encode() in baseline.data, (
+        f"{RESTOCK_MSGID!r} no longer renders on the edit page - this test needs a new msgid"
+    )
+    assert RESTOCK_SENTINEL.encode() not in baseline.data
+
+    overlay = tmp_path / 'overlay'
+    _write_mo(str(overlay), 'en_GB', {RESTOCK_MSGID: RESTOCK_SENTINEL})
+
+    dirs = app.extensions['babel'].translation_directories
+    domain_cache = app.extensions['babel'].instance.domain_instance.cache
+    dirs.append(str(overlay))
+    domain_cache.clear()
+    try:
+        overridden = client.get(edit_url)
+        assert overridden.status_code == 200
+        assert RESTOCK_SENTINEL.encode() in overridden.data, (
+            'restock_diff helper text did not route through gettext'
+        )
+        assert RESTOCK_MSGID.encode() not in overridden.data, 'upstream wording is still rendering'
+        assert b'Maximum amount, Trigger a change/notification when the price rises' in overridden.data, (
+            'overlay replaced the catalog instead of merging into it'
+        )
+    finally:
+        dirs.remove(str(overlay))
+        domain_cache.clear()
 
 
 # ---------------------------------------------------------------------------
