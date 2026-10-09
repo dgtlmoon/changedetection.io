@@ -531,6 +531,13 @@ Line 3 with tabs and spaces"""
         result = processor._apply_diff_filtering(watch, 'Price: 12 USD\nfoo', 'Price: 12 USD\nfoo')
         self.assertEqual(result, 'Price: 10 USD\nPrice: 12 USD')
 
+        # Only the replaced filter active
+        only_replaced = {'filter_text_added': False, 'filter_text_removed': False}
+        watch.get.side_effect = lambda key, default=None: only_replaced.get(key, default)
+        result = processor._apply_diff_filtering(watch, 'Price: 12 USD\nfoo', 'Price: 12 USD\nfoo')
+        self.assertEqual(result, 'Price: 10 USD\nPrice: 12 USD')
+        self.assertNotIn('PLACEMARKER', result)
+
 
 if __name__ == '__main__':
     unittest.main()
