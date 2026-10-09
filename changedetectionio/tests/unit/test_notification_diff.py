@@ -517,10 +517,10 @@ Line 3 with tabs and spaces"""
         self.assertEqual(raw, '@changed_PLACEMARKER_OPEN73@changed_PLACEMARKER_CLOSED\n'
                                '@changed_into_PLACEMARKER_OPEN100@changed_into_PLACEMARKER_CLOSED')
 
-
     def test_diff_type_filter_keeps_old_and_new_on_separate_lines(self):
         """The added/removed/replaced line filters must not glue old+new inline word changes together."""
         from unittest.mock import MagicMock
+
         from changedetectionio.processors.text_json_diff.processor import perform_site_check
 
         watch = MagicMock()
