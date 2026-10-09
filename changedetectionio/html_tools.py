@@ -630,7 +630,7 @@ def extract_json_blob_from_html(content, ensure_is_ldjson_info_type, json_filter
         # result.text is how bs4 magically strips JSON from the body
         content_start = result.text.lstrip("\ufeff").strip()[:100] if result.text else ''
         # Skip empty tags, and things that dont even look like JSON
-        if not result.text or content_start[:1] not in ('{', '['):
+        if not result.text or not content_start.startswith(('{', '[')):
             continue
         try:
             json_data = json.loads(result.text)
@@ -682,7 +682,7 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 
     content_start = content.lstrip("\ufeff").strip()[:100]
 
-    if content_start[:1] in ('{', '['):
+    if content_start.startswith(('{', '[')):
         try:
             # .lstrip("\ufeff") strings ByteOrderMark from UTF8 and still lets the UTF work
             stripped_text_from_html = _parse_json(json.loads(content.lstrip("\ufeff")), json_filter)
