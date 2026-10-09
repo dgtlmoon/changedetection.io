@@ -121,7 +121,7 @@ and it can also be repeated
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
     # Empty or whitespace-only content must not raise IndexError
-    for empty in ('', '  \n '):
+    for empty in ('', '  \n ', '﻿'):
         with pytest.raises(html_tools.JSONNotFound):
             html_tools.extract_json_as_string(empty, "json:$.a")
 
