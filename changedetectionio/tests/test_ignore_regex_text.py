@@ -85,3 +85,16 @@ def test_strip_regex_text_func():
     content = "some text\n\nand other text\n"
     stripped_content = html_tools.strip_ignore_text(content, ignore_lines)
     assert content == stripped_content
+
+
+def test_strip_regex_text_keeps_document_order():
+    # Only a few lines surviving the strip must still come back in document order
+    content = ''.join(f"line{i}\n" for i in range(100))
+    ignore_lines = [f"/^line{i}$/" for i in range(90)]
+
+    stripped_content = html_tools.strip_ignore_text(content, ignore_lines)
+    assert stripped_content == "".join(f"line{i}\n" for i in range(90, 100))
+
+    # And the line numbers used for highlighting come back sorted too
+    stripped_content = html_tools.strip_ignore_text(content, ignore_lines, mode="line numbers")
+    assert stripped_content == list(range(1, 91))
