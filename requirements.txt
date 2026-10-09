@@ -104,7 +104,7 @@ openapi-core[flask] ~= 0.23
 # the two can never coexist. Without this pin, pip walks back through ~14 litellm
 # patch releases before finding 1.83.0 (jsonschema>=4.23.0,<5.0.0, accepts 4.24.x).
 # Pinning >=4.24.0 here lets the resolver reject incompatible litellm versions immediately.
-jsonschema>=4.24.0,<5.0.0
+jsonschema>=4.26.0,<5.0.0
 
 loguru
 
