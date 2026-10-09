@@ -460,7 +460,7 @@ $(function () {
 
             var promptUrl = url + '/prompt';
 
-            // Fire both requests simultaneously — prompt returns immediately, summary after LLM
+            // Present the built prompt to the user
             $.getJSON(promptUrl)
                 .done(function (data) {
                     if (data.prompt && $summaryRow.find('.ai-inline-summary-content:not(.loaded)').length) {
@@ -469,34 +469,31 @@ $(function () {
                         );
                     }
                 });
-
-            $.getJSON(url)
-                .done(function (data) {
+            // And at the same time start the summary: POST kicks off generation (CSRF token
+            // added by csrf.js), then llm-summary.js polls until it lands. Polling stops by
+            // itself if the user toggles the row shut.
+            window.llmSummary.fetch({
+                url: url,
+                uuid: uuid,
+                isCancelled: function () {
+                    return !$.contains(document.documentElement, $summaryRow[0]);
+                },
+                onDone: function (summary) {
                     var $content = $summaryRow.find('.ai-inline-summary-content');
-                    var historyUrl = $btn.attr('href');
-                    if (data.summary) {
-                        $content.addClass('loaded');
-                        $content.find('.ai-inline-text').html(formatSummary(data.summary));
-                        $content.find('.ai-inline-prompt').remove();
-                    } else if (data.error) {
-                        $summaryRow.find('td').html(
-                            '<span class="ai-inline-error">' + $('<span>').text(data.error).html() + '</span>'
-                        );
-                    }
+                    $content.addClass('loaded');
+                    $content.find('.ai-inline-text').html(formatSummary(summary));
+                    $content.find('.ai-inline-prompt').remove();
                     $content.find('.ai-inline-body').append(
-                        '<a href="' + historyUrl + '" class="ai-inline-history-link">' +
+                        '<a href="' + $btn.attr('href') + '" class="ai-inline-history-link">' +
                         $('<span>').text(msgHistory).html() + '</a>'
                     );
-
-                })
-                .fail(function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.error)
-                        ? xhr.responseJSON.error
-                        : 'AI summary request failed (HTTP ' + xhr.status + ').';
+                },
+                onError: function (msg) {
                     $summaryRow.find('td').html(
                         '<span class="ai-inline-error">' + $('<span>').text(msg).html() + '</span>'
                     );
-                });
+                }
+            });
         });
     }
 });

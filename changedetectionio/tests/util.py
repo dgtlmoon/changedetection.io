@@ -238,6 +238,27 @@ def wait_for_watch_history(client, min_history_count=2, timeout=10):
     return False
 
 
+def fetch_llm_summary(client, url, timeout=15):
+    """Drive the /llm-summary start-then-poll flow the way static/js/llm-summary.js does.
+
+    Generation runs on a background thread now, so a single request can only ever return
+    202 "pending". POST starts it (and answers straight away when the summary is already cached),
+    then the GET poll is read-only. Returns the final response.
+    """
+    res = client.post(url)
+    if res.status_code != 202:
+        return res
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        res = client.get(url)
+        if res.status_code != 202 and (res.get_json() or {}).get('status') != 'pending':
+            return res
+        time.sleep(0.05)
+
+    raise AssertionError(f"LLM summary at {url} still pending after {timeout}s")
+
+
 # Replaced by new_live_server_setup and calling per function scope in conftest.py
 def  live_server_setup(live_server):
     return True
@@ -248,6 +269,31 @@ def new_live_server_setup(live_server):
     def test_random_content_endpoint():
         import secrets
         return "Random content - {}\n".format(secrets.token_hex(64))
+
+    # Re-navigation gate: the first hit answers with an error status AND a client-side meta
+    # refresh, the second serves the real page. This mirrors sites that gate visitors they have
+    # not seen recently (reported against fotokoch.de, which answers 503 + meta refresh and then
+    # serves a 200). The browser follows the refresh, so the fetch has to be judged on the
+    # document we actually end up extracting rather than on the interstitial.
+    # Keyed on last-seen time rather than a hit count, so EVERY fresh check starts out gated -
+    # a counter would serve a clean 200 to the second check and let the test pass without the fix.
+    _interstitial_last_seen = {}
+
+    @live_server.app.route('/test-interstitial')
+    def test_interstitial():
+        key = request.args.get('key', 'default')
+        now = time.time()
+        seen_recently = (now - _interstitial_last_seen.get(key, 0)) < 10
+        _interstitial_last_seen[key] = now
+        if not seen_recently:
+            resp = make_response(
+                '<html><head><meta http-equiv="refresh" content="1"></head>'
+                '<body>Browser check in progress, you will be redirected</body></html>', 503)
+        else:
+            resp = make_response(
+                '<html><body><h1>The real page content is here</h1></body></html>', 200)
+        resp.headers['Content-Type'] = 'text/html'
+        return resp
 
     @live_server.app.route('/test-endpoint2')
     def test_endpoint2():

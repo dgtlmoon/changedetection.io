@@ -16,13 +16,13 @@ def test_clone_functionality(client, live_server, measure_memory_usage, datastor
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # So that we can be sure the same history doesnt carry over
     time.sleep(1)
 
-    res = client.get(
+    res = client.post(
         url_for("ui.form_clone", uuid="first"),
         follow_redirects=True
     )

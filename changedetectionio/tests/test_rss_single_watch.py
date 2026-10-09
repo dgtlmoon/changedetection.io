@@ -62,7 +62,7 @@ def test_rss_single_watch_order(client, live_server, measure_memory_usage, datas
     # Create multiple versions by triggering changes
     for version in range(2, 6):  # Create versions 2, 3, 4, 5
         set_response(datastore_path, version)
-        res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         time.sleep(0.5)  # Small delay to ensure different timestamps
 
@@ -184,7 +184,7 @@ def test_rss_categories_from_tags(client, live_server, measure_memory_usage, dat
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write(test_return_data_v2)
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Get RSS token
@@ -313,11 +313,11 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, tag="RSS-Custom")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
 

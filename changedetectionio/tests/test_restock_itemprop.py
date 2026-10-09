@@ -96,12 +96,12 @@ def test_itemprop_price_change(client, live_server, measure_memory_usage, datast
 
     # basic price change, look for notification
     set_original_response(props_markup=instock_props[0], price='180.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'180.45' in res.data
     assert b'has-unread-changes' in res.data
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(0.2)
 
 
@@ -113,7 +113,7 @@ def test_itemprop_price_change(client, live_server, measure_memory_usage, datast
         follow_redirects=True
     )
     assert b"Updated watch." in res.data
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'120.45' in res.data
@@ -153,11 +153,11 @@ def _run_test_minmax_limit(client, extra_watch_edit_form, datastore_path):
     assert b"Updated watch." in res.data
     wait_for_all_checks(client)
 
-    client.get(url_for("ui.mark_all_viewed"))
+    client.post(url_for("ui.mark_all_viewed"))
 
     # price changed to something greater than min (900), BUT less than max (1100).. should be no change
     set_original_response(props_markup=instock_props[0], price='1000.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"))
+    client.post(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
 
@@ -169,29 +169,29 @@ def _run_test_minmax_limit(client, extra_watch_edit_form, datastore_path):
     # price changed to something LESS than min (900), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='890.45', datastore_path=datastore_path)
 
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'890.45' in res.data
     assert b'has-unread-changes' in res.data
 
-    client.get(url_for("ui.mark_all_viewed"))
+    client.post(url_for("ui.mark_all_viewed"))
 
 
     # 2715 - Price detection (once it crosses the "lower" threshold) again with a lower price - should trigger again!
     set_original_response(props_markup=instock_props[0], price='820.45', datastore_path=datastore_path)
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'820.45' in res.data
     assert b'has-unread-changes' in res.data
-    client.get(url_for("ui.mark_all_viewed"))
+    client.post(url_for("ui.mark_all_viewed"))
 
     # price changed to something MORE than max (1100.10), SHOULD be a change
     set_original_response(props_markup=instock_props[0], price='1890.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     # Depending on the LOCALE it may be either of these (generally for US/default/etc)
@@ -274,7 +274,7 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
 
     # Basic change should not trigger
     set_original_response(props_markup=instock_props[0], price='960.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"))
+    client.post(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'960.45' in res.data
@@ -282,7 +282,7 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
 
     # Bigger INCREASE change than the threshold should trigger
     set_original_response(props_markup=instock_props[0], price='1960.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"))
+    client.post(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'1,960.45' in res.data or b'1960.45' in res.data #depending on locale
@@ -290,9 +290,9 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
 
 
     # Small decrease should NOT trigger
-    client.get(url_for("ui.mark_all_viewed"))
+    client.post(url_for("ui.mark_all_viewed"))
     set_original_response(props_markup=instock_props[0], price='1950.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"))
+    client.post(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'1,950.45' in res.data or b'1950.45' in res.data #depending on locale
@@ -311,7 +311,7 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
     # so any single trigger would leave has-unread-changes set.
     for creep_price in ['2000.00', '2050.00', '2100.00']:
         set_original_response(props_markup=instock_props[0], price=creep_price, datastore_path=datastore_path)
-        client.get(url_for("ui.form_watch_checknow"))
+        client.post(url_for("ui.form_watch_checknow"))
         wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
@@ -395,7 +395,7 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
 
     # A change in price, should trigger a change by default
     set_original_response(props_markup=instock_props[0], price='1950.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"))
+    client.post(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
     assert os.path.isfile(os.path.join(datastore_path, "notification.txt")), "Notification received"
@@ -412,7 +412,7 @@ def test_change_with_notification_values(client, live_server, measure_memory_usa
     # coincidence (with two entries the oldest snapshot IS the previous check).
     os.unlink(os.path.join(datastore_path, "notification.txt"))
     set_original_response(props_markup=instock_props[0], price='2500.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"))
+    client.post(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
     assert os.path.isfile(os.path.join(datastore_path, "notification.txt")), "Notification received"
@@ -445,7 +445,7 @@ def test_data_sanity(client, live_server, measure_memory_usage, datastore_path):
         follow_redirects=True
     )
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
@@ -457,7 +457,7 @@ def test_data_sanity(client, live_server, measure_memory_usage, datastore_path):
         data={"url": test_url2, "tags": 'restock tests', 'processor': 'restock_diff'},
         follow_redirects=True
     )
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert str(res.data.decode()).count("950.95") == 1, "Price should only show once (for the watch added, no other watches yet)"
@@ -534,7 +534,7 @@ def test_itemprop_as_str(client, live_server, measure_memory_usage, datastore_pa
         follow_redirects=True
     )
 
-    client.get(url_for("ui.form_watch_checknow"))
+    client.post(url_for("ui.form_watch_checknow"))
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
@@ -560,7 +560,7 @@ def test_restock_diff_price_data_ajax(client, live_server, measure_memory_usage,
 
     # Second snapshot - price changes to 180.45 (still in stock) -> a new history point
     set_original_response(props_markup=instock_props[0], price='180.45', datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # The AJAX/plugin data callback

@@ -19,6 +19,7 @@ def get_timeago_locale(flask_locale, short=False):
     - Swedish: Flask uses 'sv', timeago uses 'sv_SE'
     - Norwegian: Flask uses 'no', timeago uses 'nb_NO' or 'nn_NO'
     - Hindi: Flask uses 'hi', timeago uses 'in_HI'
+    - Indonesian: Flask uses 'id', timeago uses 'in_ID'
     - Czech: Flask uses 'cs', but timeago doesn't support Czech - fallback to English
 
     Args:
@@ -46,6 +47,7 @@ def get_timeago_locale(flask_locale, short=False):
         'sv': 'sv_SE',          # Swedish
         'no': 'nb_NO',          # Norwegian Bokmål
         'hi': 'in_HI',          # Hindi
+        'id': 'in_ID',          # Indonesian
         'cs': 'en',             # Czech not supported by timeago, fallback to English
         'ja': 'ja',             # Japanese
         'uk': 'uk',             # Ukrainian
@@ -156,6 +158,7 @@ LANGUAGE_DATA = {
     'tr': {'flag': 'fi fi-tr fis', 'name': 'Türkçe'},
     'ar': {'flag': 'fi fi-sa fis', 'name': 'العربية'},
     'hi': {'flag': 'fi fi-in fis', 'name': 'हिन्दी'},
+    'id': {'flag': 'fi fi-id fis', 'name': 'Bahasa Indonesia'},
     'uk': {'flag': 'fi fi-ua fis', 'name': 'Українська'},
 }
 

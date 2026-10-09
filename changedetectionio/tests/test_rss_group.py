@@ -94,7 +94,7 @@ def test_rss_group(client, live_server, measure_memory_usage, datastore_path):
     set_modified_response(datastore_path=datastore_path)
 
     # Recheck all watches
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Ensure all watches have sufficient history for RSS generation
@@ -148,7 +148,7 @@ def test_rss_group(client, live_server, measure_memory_usage, datastore_path):
 
     # Clean up
     delete_all_watches(client)
-    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    res = client.post(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
 
@@ -183,7 +183,7 @@ def test_rss_group_empty_tag(client, live_server, measure_memory_usage, datastor
     assert b"empty-tag" in res.data
 
     # Clean up
-    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    res = client.post(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data
 
 
@@ -226,7 +226,7 @@ def test_rss_group_only_unviewed(client, live_server, measure_memory_usage, data
 
     # Trigger changes
     set_modified_response(datastore_path=datastore_path)
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     assert wait_for_watch_history(client, min_history_count=2, timeout=10), "History not accumulated"
 
@@ -243,7 +243,7 @@ def test_rss_group_only_unviewed(client, live_server, measure_memory_usage, data
     assert b"unviewed=2" in res.data
 
     # Mark all as viewed
-    res = client.get(url_for('ui.mark_all_viewed'), follow_redirects=True)
+    res = client.post(url_for('ui.mark_all_viewed'), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Request RSS feed again - should be empty now (no unviewed watches)
@@ -258,5 +258,5 @@ def test_rss_group_only_unviewed(client, live_server, measure_memory_usage, data
 
     # Clean up
     delete_all_watches(client)
-    res = client.get(url_for("tags.delete_all"), follow_redirects=True)
+    res = client.post(url_for("tags.delete_all"), follow_redirects=True)
     assert b'All tags deleted' in res.data

@@ -12,6 +12,11 @@ $action-sidebar-content-slot: 1100px;
 // Desktop left rail — fixed positioning frame, full-height, but only the
 // inner item-list block captures hover. Empty area is pointer-events:none so
 // the top header stays clickable behind it.
+.action-sidebar-inner {
+  background-color: var(--color-background-page); // fallback under the gradient
+  background-attachment: fixed, fixed;
+}
+
 .action-sidebar {
   display: flex;
   flex-direction: column;
@@ -25,28 +30,34 @@ $action-sidebar-content-slot: 1100px;
   position: sticky;
   top: 0;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.05);
+
   z-index: 60;
   pointer-events: none; // empty space doesn't intercept clicks/hovers
   @media only screen and (max-width: $desktop-wide-breakpoint) {
     // Hidden on mobile: the mobile drawer (hamburger) carries these items
     display: none;
   }
-}
 
-body.actionside-bar-on {
-  .action-sidebar {
-/*      width: $action-sidebar-width-expanded; // reserve enough to host the expanded inner block*/
+  // MINIMAL MODE: the rail's footprint in the flex row is frozen at the
+  // collapsed width (+ the inner block's horizontal padding, which is
+  // content-box). The inner block is taken out of flow (absolute, below) so
+  // its hover expansion rolls out ON TOP of the page content instead of
+  // widening this flex item and reflowing `.app-main`.
+  body.actionsidebar-minimal & {
+    flex: 0 0 auto;
+    width: calc(#{$action-sidebar-width-collapsed} + #{$common-gap * 2});
+    overflow: visible;   // let the expanded inner block escape the frame
   }
 }
 
 // The actual interactive item block — wraps only the items, not the whole height.
 //
-// Two body-level modes drive the rail's display state:
-//   body.actionside-bar-on     → always expanded (icons + labels visible all the time)
-//   body.actionsidebar-minimal → icon-only collapsed rail; expands on hover/focus
-// `actionside-bar-on` is the default applied in templates/base.html. Both the
-// hover-to-expand width animation and the label fade-in are gated on the
+// Body-level classes drive the rail's display state (emitted by
+// flask_app.get_sidebar_mode_class() from the `sidebar_mode` setting):
+//   body.actionside-bar-on       → always expanded (icons + labels visible all the time)
+//   body.actionsidebar-minimal   → icon-only collapsed rail; expands on hover/focus
+//   body.actionsidebar-no-expand → alongside the above: stays collapsed, no hover-out
+// Both the hover-to-expand width animation and the label fade-in are gated on the
 // minimal class so that the always-expanded mode (or no mode) doesn't trigger
 // a needless layout jump when the user mouses across the rail.
 .action-sidebar-inner {
@@ -64,12 +75,35 @@ body.actionside-bar-on {
   padding-left: $common-gap;
   padding-right: $common-gap;
 
-  // Hover-to-expand only fires in minimal mode.
-  body.actionsidebar-minimal &:hover,
-  body.actionsidebar-minimal &:focus-within {
+  // MINIMAL MODE: lift the block out of the flex flow so growing it can't
+  // resize the rail (and therefore can't shift the content column). The rail
+  // is `position: sticky`, i.e. a positioned element, so top/left/bottom here
+  // anchor to it; top+bottom keep the column full-height, which the footer
+  // list's `margin-top: auto` still needs.
+  //
+  // Once it floats above the page it needs its own backdrop, or the content
+  // it rolls over would read straight through the rail's translucent 5% white.
+  // It can't just be a flat colour: the page background is a fixed, viewport-
+  // sized gradient (`body:after`), so the rail repaints that same gradient with
+  // `background-attachment: fixed` — which makes the viewport the positioning
+  // area — and lays the rail's own 5% white on top. Result: opaque, but
+  // pixel-identical to the translucent rail it replaces, at rest and rolled out.
+  body.actionsidebar-minimal & {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1;
+  }
+
+  // Hover-to-expand only fires in minimal mode, and not for 'minimal' (no-expand).
+  body.actionsidebar-minimal:not(.actionsidebar-no-expand) &:hover,
+  body.actionsidebar-minimal:not(.actionsidebar-no-expand) &:focus-within {
     width: $action-sidebar-width-expanded;
     // Enter is smoother.
     transition: width 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+    // Lift it off the page while it's rolled out over the content.
+    box-shadow: var(--color-sidebar-shadow);
   }
 
   // Always-expanded mode: no hover gate; the rail just sits open.
@@ -85,7 +119,7 @@ ul.action-sidebar-list {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.8rem;
 }
 
 // Footer list (status counters, live spark, version) sits at the bottom of the
@@ -228,7 +262,7 @@ ul.action-sidebar-list {
     letter-spacing: 0.06em;
     font-weight: 700;
     pointer-events: none;
-    opacity: 0;
+    opacity: 0.9;
     transition: opacity 0.05s ease-out;
 
     // Unread-count variant: a small accent bubble pinned to the right of the row
@@ -247,11 +281,17 @@ ul.action-sidebar-list {
   }
 }
 
+// Count badges (unread, queue) are always visible in minimal mode so users
+// can see at a glance how many items need attention without expanding the rail.
+body.actionsidebar-minimal .action-badge--count {
+  opacity: 1;
+}
+
 // When the inner block expands in MINIMAL mode, reveal every label/badge
 // together with a smooth enter. Always-expanded mode handles labels via the
 // `body.actionside-bar-on` block below — no hover gate needed there.
-body.actionsidebar-minimal .action-sidebar-inner:hover,
-body.actionsidebar-minimal .action-sidebar-inner:focus-within {
+body.actionsidebar-minimal:not(.actionsidebar-no-expand) .action-sidebar-inner:hover,
+body.actionsidebar-minimal:not(.actionsidebar-no-expand) .action-sidebar-inner:focus-within {
   .action-sidebar-item {
     .action-label {
       opacity: 1;
@@ -285,10 +325,10 @@ body.actionside-bar-on {
 
 .action-icon {
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
+  max-width: 20px;
+  height: 22px;
   stroke: currentColor;
-  stroke-width: 1.9;
+  stroke-width: 1.4;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -431,33 +471,53 @@ body.actionside-bar-on {
   padding-left: $common-gap;
 }
 
+.actionsidebar-expanded {
+  #logo-short {
+    display: none;
+  }
+}
+
 .actionsidebar-minimal {
   #checking-now-stats-sidebar {
     display: none;
   }
+
   #cdio-logo {
     #logo-expanded {
       display: none;
     }
   }
 
-  &.action-side-bar-expanded {
-    #checking-now-stats-sidebar{
+  &.actionsidebar-expanded {
+    #checking-now-stats-sidebar {
       display: block;
     }
+
     #cdio-logo {
       #logo-expanded {
         display: inline-block;
       }
+
     }
+
   }
-
-}
-
-.action-side-bar-expanded {
-  #cdio-logo {
-    #logo-short {
+  &:not(.actionsidebar-expanded) {
+    .action-label {
       display: none;
     }
+    .action-badge--count {
+      position: relative;
+      left: -8px;
+      top: -8px;
+    }
+    .action-sidebar-item.is-disabled {
+      .action-badge {
+        display: none;
+      }
+    }
+
   }
+
 }
+
+

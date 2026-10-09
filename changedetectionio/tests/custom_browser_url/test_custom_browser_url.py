@@ -30,7 +30,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     if make_test_use_extra_browser:
@@ -60,7 +60,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
         wait_for_all_checks(client)
 
     # Force recheck
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)

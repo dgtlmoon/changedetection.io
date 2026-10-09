@@ -321,3 +321,80 @@ def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path
     date_created = res.json.get('date_created')
     assert date_created != 454444444444, "ReadOnly date_created should not be updateable"
     assert date_created != "454444444444", "ReadOnly date_created should not be updateable"
+
+
+def test_api_watch_tag_field_accepts_names_and_uuids(client, live_server, measure_memory_usage, datastore_path):
+    """The `tag` field on a watch takes tag *names*, `tags` takes UUIDs.
+
+    `tag` was documented as taking a UUID for years while the code fed it to add_tag(title),
+    so a UUID silently created a junk group *titled* with that UUID and never applied the tag
+    the caller asked for. Both spellings now resolve to the same tag.
+    """
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    datastore = live_server.app.config['DATASTORE']
+    test_url = url_for('test_endpoint', _external=True)
+    hdr = {'x-api-key': api_key, 'content-type': 'application/json'}
+
+    def titles_of(watch_uuid):
+        tags = datastore.data['settings']['application']['tags']
+        return sorted(tags[t].get('title') for t in datastore.data['watching'][watch_uuid].get('tags'))
+
+    # A name creates the group
+    res = client.post(url_for("createwatch"), data=json.dumps({"url": test_url, "tag": "helloworld"}), headers=hdr)
+    assert res.status_code == 201
+    assert titles_of(res.json['uuid']) == ['helloworld']
+
+    # An existing tag's UUID links to that tag rather than making a group named after the UUID
+    res = client.post(url_for("tag"), data=json.dumps({"title": "RealTag"}), headers=hdr)
+    assert res.status_code == 201
+    real_tag_uuid = res.json['uuid']
+    tag_count_before = len(datastore.data['settings']['application']['tags'])
+
+    res = client.post(url_for("createwatch"), data=json.dumps({"url": f"{test_url}?p=2", "tag": real_tag_uuid}), headers=hdr)
+    assert res.status_code == 201
+    assert real_tag_uuid in datastore.data['watching'][res.json['uuid']].get('tags')
+    assert titles_of(res.json['uuid']) == ['RealTag']
+    assert len(datastore.data['settings']['application']['tags']) == tag_count_before, "No junk tag titled with a UUID"
+
+    # `tags` with UUIDs keeps working
+    res = client.post(url_for("createwatch"), data=json.dumps({"url": f"{test_url}?p=3", "tags": [real_tag_uuid]}), headers=hdr)
+    assert res.status_code == 201
+    assert titles_of(res.json['uuid']) == ['RealTag']
+
+    # Names and UUIDs can be mixed, and blank entries from a trailing comma are dropped -
+    # add_tag() returns False for those and a falsy entry breaks every watch['tags'] lookup
+    res = client.post(url_for("createwatch"),
+                      data=json.dumps({"url": f"{test_url}?p=4", "tag": f"Mixed,,{real_tag_uuid},"}), headers=hdr)
+    assert res.status_code == 201
+    assert titles_of(res.json['uuid']) == ['Mixed', 'RealTag']
+    assert all(datastore.data['watching'][res.json['uuid']].get('tags')), "No falsy entries in tags"
+
+    # A UUID that matches no tag is skipped rather than becoming a group named after it
+    unknown_uuid = '0be0272a-19dc-4c97-8aae-5a68df319489'
+    tag_count_before = len(datastore.data['settings']['application']['tags'])
+    res = client.post(url_for("createwatch"),
+                      data=json.dumps({"url": f"{test_url}?p=5", "tag": unknown_uuid}), headers=hdr)
+    assert res.status_code == 201
+    assert datastore.data['watching'][res.json['uuid']].get('tags') == []
+    assert len(datastore.data['settings']['application']['tags']) == tag_count_before
+
+    # Names are matched case-insensitively against existing tags, as the spec claims
+    tag_count_before = len(datastore.data['settings']['application']['tags'])
+    res = client.post(url_for("createwatch"),
+                      data=json.dumps({"url": f"{test_url}?p=6", "tag": "rEaLtAg"}), headers=hdr)
+    assert res.status_code == 201
+    assert datastore.data['watching'][res.json['uuid']].get('tags') == [real_tag_uuid]
+    assert len(datastore.data['settings']['application']['tags']) == tag_count_before, "Casing must not fork a second tag"
+
+    # `tags` is applied verbatim and never creates: an unknown UUID is stored as a dangling
+    # reference that simply resolves to no group. Documented, and harmless because the lookup
+    # is a dictfilt() over known tags - pinned here so changing it has to be deliberate.
+    bogus = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+    tag_count_before = len(datastore.data['settings']['application']['tags'])
+    res = client.post(url_for("createwatch"),
+                      data=json.dumps({"url": f"{test_url}?p=7", "tags": [bogus]}), headers=hdr)
+    assert res.status_code == 201
+    assert datastore.data['watching'][res.json['uuid']].get('tags') == [bogus]
+    assert len(datastore.data['settings']['application']['tags']) == tag_count_before
+    assert datastore.get_all_tags_for_watch(res.json['uuid']) == {}
+    assert client.get(url_for("watchlist.index")).status_code == 200, "A dangling tag ref must not break the list"

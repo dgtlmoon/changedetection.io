@@ -24,7 +24,7 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     wait_for_all_checks(client)
 
     # Launch the thread in the background to create the backup
-    res = client.get(
+    res = client.post(
         url_for("backups.request_backup"),
         follow_redirects=True
     )
@@ -72,7 +72,7 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     assert 'secret.txt' not in l, "secret.txt (Flask session key) must not be included in backup"
 
     # Get the latest one
-    res = client.get(
+    res = client.post(
         url_for("backups.remove_backups"),
         follow_redirects=True
     )
@@ -88,7 +88,7 @@ def test_watch_data_package_download(client, live_server, measure_memory_usage, 
     uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
     tag_uuid = client.application.config.get('DATASTORE').add_tag(title="Tasty backup tag")
     tag_uuid2 = client.application.config.get('DATASTORE').add_tag(title="Tasty backup tag number two")
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -132,11 +132,11 @@ def test_backup_restore(client, live_server, measure_memory_usage, datastore_pat
     tag_uuid = datastore.add_tag(title="Tasty backup tag")
     tag_uuid2 = datastore.add_tag(title="Tasty backup tag number two")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Create a full backup
-    client.get(url_for("backups.request_backup"), follow_redirects=True)
+    client.post(url_for("backups.request_backup"), follow_redirects=True)
     time.sleep(4)
 
     # Download the latest backup zip
@@ -153,7 +153,7 @@ def test_backup_restore(client, live_server, measure_memory_usage, datastore_pat
 
     # --- Wipe everything ---
     datastore.delete('all')
-    client.get(url_for("tags.delete_all"), follow_redirects=True)
+    client.post(url_for("tags.delete_all"), follow_redirects=True)
 
     assert uuid not in datastore.data['watching'], "Watch should be gone after delete"
     assert tag_uuid not in datastore.data['settings']['application']['tags'], "Tag 1 should be gone after delete"
@@ -259,3 +259,45 @@ def test_backup_restore_zip_bomb_rejected(client, live_server, measure_memory_us
             )
     finally:
         restore_mod._MAX_DECOMPRESSED_BYTES = original_limit
+
+
+def test_backup_with_extended_utf8_urls_and_tags(datastore_path):
+    """Test create_backup handles extended UTF-8 characters in URLs and tags without encoding errors (issue #1805)."""
+    import os
+    import tempfile
+    from unittest.mock import MagicMock
+
+    from changedetectionio.blueprint.backups import create_backup
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        watch_mock = MagicMock()
+        watch_mock.data_dir = tmp_dir
+        watch_mock.__getitem__.side_effect = lambda key: (
+            "https://example.com/products/café-öl-日本語-🎉?query=test#section" if key == "url" else None
+        )
+        watch_mock.get.side_effect = lambda key, default=None: (
+            "https://example.com/products/café-öl-日本語-🎉?query=test#section"
+            if key == "url"
+            else (["Größe", "日本語タグ", "🏷️special"] if key == "tags" else default)
+        )
+
+        watches = {"test-uuid-1": watch_mock}
+        # Should create backup without UnicodeEncodeError
+        create_backup(datastore_path=tmp_dir, watches=watches, tags={})
+
+        url_list_path = os.path.join(tmp_dir, "url-list.txt")
+        url_list_tags_path = os.path.join(tmp_dir, "url-list-with-tags.txt")
+
+        assert os.path.isfile(url_list_path)
+        assert os.path.isfile(url_list_tags_path)
+
+        with open(url_list_path, encoding="utf-8") as f:
+            content = f.read()
+            assert "café-öl-日本語-🎉" in content
+
+        with open(url_list_tags_path, encoding="utf-8") as f:
+            content = f.read()
+            assert "café-öl-日本語-🎉" in content
+            assert "Größe" in content
+            assert "日本語タグ" in content
+            assert "🏷️special" in content

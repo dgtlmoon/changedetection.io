@@ -53,7 +53,6 @@
   font: inherit;
   color: var(--color-text);
   text-align: left;
-  opacity: 0.65;
   transition: background 0.12s ease, opacity 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 
   &:hover {
@@ -293,9 +292,7 @@
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  opacity: 0.45;
   margin: 1.4rem 0 0.6rem;
-
   &:first-child {
     margin-top: 0;
   }
@@ -339,7 +336,6 @@
     font-weight: 700;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    opacity: 0.4;
     margin-bottom: 0.4rem;
   }
 
@@ -353,12 +349,10 @@
 
   .llm-stat-sub {
     font-size: 0.79rem;
-    opacity: 0.5;
   }
 
   .llm-stat-budget-text {
     font-size: 0.77rem;
-    opacity: 0.55;
     margin-top: 0.3rem;
   }
 }
@@ -399,7 +393,6 @@
   .llm-usage-row-label {
     font-size: 0.82rem;
     font-weight: 600;
-    opacity: 0.6;
     min-width: 12rem;
     flex-shrink: 0;
   }
@@ -415,12 +408,10 @@
 
 .llm-field-hint {
   font-size: 0.8rem;
-  opacity: 0.55;
 }
 
 .llm-env-badge {
   font-size: 0.79rem;
-  opacity: 0.6;
 }
 
 .llm-budget-alert {
@@ -431,7 +422,6 @@
 }
 
 .llm-no-usage {
-  opacity: 0.5;
   font-style: italic;
   font-size: 0.88rem;
   margin-bottom: 1rem;

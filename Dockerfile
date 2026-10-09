@@ -101,6 +101,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Actually generate the locales. Installing the `locales` package above only
+# ships /etc/locale.gen - it does not build any locale, so the image had just
+# C, C.utf8 and POSIX. That made the `ENV LC_ALL=en_US.UTF-8` below unsatisfiable:
+# locale.setlocale() in flask_app.py failed, fell back to C, and the
+# format_number_locale / format_int_locale Jinja filters silently lost their
+# thousands separators - 1234567.89 rendered as "1234567.89" rather than
+# "1,234,567.89" in the restock/price overview, which is the very thing the
+# `locales` package was added for.
+#
+# More than en_US is generated so that operators can override LC_ALL / LANG and
+# get formatting for their own region (de_DE gives 1.234.567,89, fr_FR gives
+# 1 234 567,89). Costs ~21MB and ~16s of build time.
+#
+# This list mirrors the UI translations in changedetectionio/translations - one
+# glibc locale per language we ship a translation for, so any language a user
+# can pick in the UI also has a working locale. Keep the two in sync when adding
+# a translation. The territory for each bare language code comes from CLDR's
+# likely-subtags (cs -> cs_CZ, ja -> ja_JP, ko -> ko_KR, uk -> uk_UA, zh ->
+# zh_CN, zh_Hant_TW -> zh_TW), NOT from uppercasing the language code.
+RUN for l in cs_CZ de_DE en_GB en_US es_ES fr_FR id_ID it_IT ja_JP ko_KR \
+             pl_PL pt_BR ru_RU tr_TR uk_UA zh_CN zh_TW; do \
+      sed -i "s/^# *${l}.UTF-8 UTF-8/${l}.UTF-8 UTF-8/" /etc/locale.gen; \
+    done \
+    && locale-gen
+
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1

@@ -1,11 +1,13 @@
 """
-Static analysis test: verify @login_optionally_required is always applied
-AFTER (inner to) @blueprint.route(), not before it.
+Static analysis test: verify @blueprint.route() is always the outermost
+decorator on a view, so nothing sits above it.
 
-In Flask, @route() must be the outermost decorator because it registers
-whatever function it receives. If @login_optionally_required is placed
-above @route(), the raw unprotected function gets registered and auth is
-silently bypassed (GHSA-jmrh-xmgh-x9j4).
+In Flask, @route() must be outermost because it registers whatever function
+it receives and then returns that function unchanged. Any decorator placed
+above @route() is applied only to the module-level name, never to the view
+the blueprint actually dispatches to — so it is silently dead code. When the
+dead decorator is an auth wrapper, the route is left unprotected
+(GHSA-jmrh-xmgh-x9j4).
 
 Correct order (route outermost, auth inner):
     @blueprint.route('/path')
@@ -13,9 +15,19 @@ Correct order (route outermost, auth inner):
     def view(): ...
 
 Wrong order (auth never called):
-    @login_optionally_required   ← registered by route, then discarded
+    @login_optionally_required   ← discarded; route registered the raw fn
     @blueprint.route('/path')
     def view(): ...
+
+This check is deliberately name-agnostic. An earlier version matched only
+the literal name `login_optionally_required`, which missed four routes using
+plain flask_login `login_required` (GHSA-q85w-c766-h5g8) — an allowlist of
+decorator names only ever catches the names someone remembered to add. We
+now flag *any* non-route decorator above @route, which also covers attribute
+forms (@flask_login.login_required), aliased imports, and non-auth
+decorators that are equally dead up there.
+
+Stacked @route decorators are a legitimate Flask idiom and are exempt.
 """
 
 import ast
@@ -35,11 +47,6 @@ def _is_route_decorator(node: ast.expr) -> bool:
     )
 
 
-def _is_auth_decorator(node: ast.expr) -> bool:
-    """Return True if the decorator is @login_optionally_required."""
-    return isinstance(node, ast.Name) and node.id == "login_optionally_required"
-
-
 def collect_violations() -> list[str]:
     violations = []
 
@@ -54,20 +61,22 @@ def collect_violations() -> list[str]:
                 continue
 
             decorators = node.decorator_list
-            auth_indices = [i for i, d in enumerate(decorators) if _is_auth_decorator(d)]
             route_indices = [i for i, d in enumerate(decorators) if _is_route_decorator(d)]
+            if not route_indices:
+                continue
 
-            # Bad order: auth decorator appears at a lower index (higher up) than a route decorator
-            for auth_idx in auth_indices:
-                for route_idx in route_indices:
-                    if auth_idx < route_idx:
-                        rel = path.relative_to(REPO_ROOT)
-                        violations.append(
-                            f"{rel}:{node.lineno} — `{node.name}`: "
-                            f"@login_optionally_required (line {decorators[auth_idx].lineno}) "
-                            f"is above @route (line {decorators[route_idx].lineno}); "
-                            f"auth wrapper will never be called"
-                        )
+            # Everything above the last @route is discarded by the registration.
+            # Other @route decorators up there are fine — stacking routes is normal.
+            last_route = max(route_indices)
+            for i, decorator in enumerate(decorators):
+                if i < last_route and not _is_route_decorator(decorator):
+                    rel = path.relative_to(REPO_ROOT)
+                    violations.append(
+                        f"{rel}:{node.lineno} — `{node.name}`: "
+                        f"@{ast.unparse(decorator)} (line {decorator.lineno}) is above @route "
+                        f"(line {decorators[last_route].lineno}); it will never be applied "
+                        f"to the registered view"
+                    )
 
     return violations
 
@@ -76,9 +85,10 @@ def test_auth_decorator_order():
     violations = collect_violations()
     if violations:
         msg = (
-            "\n\nFound routes where @login_optionally_required is placed ABOVE @blueprint.route().\n"
-            "This silently disables authentication — @route() registers the raw function\n"
-            "and the auth wrapper is never called.\n\n"
+            "\n\nFound decorators placed ABOVE @blueprint.route().\n"
+            "@route() registers the raw function and returns it unchanged, so anything\n"
+            "above it is never applied to the view Flask dispatches to. If the decorator\n"
+            "is an auth wrapper, the route is left completely unauthenticated.\n\n"
             "Fix: move @blueprint.route() to be the outermost (topmost) decorator.\n\n"
             + "\n".join(f"  • {v}" for v in violations)
         )

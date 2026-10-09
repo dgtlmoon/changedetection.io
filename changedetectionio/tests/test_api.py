@@ -338,6 +338,84 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     )
     assert len(res.json) == 0, "Watch list should be empty"
 
+def test_api_delete_watch_history(client, live_server, measure_memory_usage, datastore_path):
+    """DELETE /api/v1/watch/<uuid>/history should wipe the snapshots but keep the watch (#4397)"""
+
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+
+    set_original_response(datastore_path=datastore_path)
+    test_url = url_for('test_endpoint', _external=True)
+
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": test_url}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+        follow_redirects=True
+    )
+    assert res.status_code == 201
+    watch_uuid = res.json.get('uuid')
+    wait_for_all_checks(client)
+
+    # A second snapshot so we know we're clearing more than one
+    set_modified_response(datastore_path=datastore_path)
+    client.get(url_for("watch", uuid=watch_uuid, recheck='1'), headers={'x-api-key': api_key})
+    wait_for_all_checks(client)
+
+    res = client.get(
+        url_for("watchhistory", uuid=watch_uuid),
+        headers={'x-api-key': api_key},
+    )
+    assert len(res.json) == 2, "Should have two history entries before clearing"
+
+    # Unknown watch UUID should 404 and not blow up
+    res = client.delete(
+        url_for("watchhistory", uuid='4d8b5b4a-8e0b-4d4a-9f57-3f2b1c0d9e11'),
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 404
+
+    # Requires the API key
+    res = client.delete(url_for("watchhistory", uuid=watch_uuid))
+    assert res.status_code == 403
+
+    # Pause it first - clearing resets last_checked to 0 which otherwise makes the ticker
+    # queue an instant recheck, and that would race with the assertions below
+    client.get(url_for("watch", uuid=watch_uuid, paused='paused'), headers={'x-api-key': api_key})
+
+    # Now really clear it
+    res = client.delete(
+        url_for("watchhistory", uuid=watch_uuid),
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 204
+
+    res = client.get(
+        url_for("watchhistory", uuid=watch_uuid),
+        headers={'x-api-key': api_key},
+    )
+    assert res.json == {}, "History should be empty after DELETE"
+
+    # The watch itself must survive, with its state reset
+    res = client.get(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key}
+    )
+    assert res.status_code == 200
+    assert res.json.get('url') == test_url
+    assert res.json.get('history_n') == 0
+    assert res.json.get('last_checked') == 0
+    assert res.json.get('previous_md5') == False
+
+    # And a snapshot fetch now has nothing to give
+    res = client.get(
+        url_for("watchsinglehistory", uuid=watch_uuid, timestamp='latest'),
+        headers={'x-api-key': api_key},
+    )
+    assert res.status_code == 404
+
+    delete_all_watches(client)
+
+
 def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path):
     """
     Test the full round trip, this way we test the default Model fits back into OpenAPI spec

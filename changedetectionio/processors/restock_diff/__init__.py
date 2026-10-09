@@ -26,6 +26,9 @@ class Restock(dict):
                 standardized_value = standardized_value.replace(',', '')
             else:
                 standardized_value = standardized_value.replace('.', '').replace(',', '.')
+        elif re.fullmatch(r'\D*\d{1,3}(,\d{3})+\D*', standardized_value):
+            # Only thousands separators ie "1,299"
+            standardized_value = standardized_value.replace(',', '')
         else:
             standardized_value = standardized_value.replace(',', '.')
 

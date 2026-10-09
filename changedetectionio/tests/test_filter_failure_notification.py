@@ -34,7 +34,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     test_url = url_for('test_endpoint', _external=True)
 
     # cleanup for the next
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -48,7 +48,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     assert b'No web page change detection watches configured' not in res.data
 
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
@@ -113,7 +113,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     ATTEMPT_THRESHOLD_SETTING = live_server.app.config['DATASTORE'].data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
     for i in range(0, ATTEMPT_THRESHOLD_SETTING - 2):
         checked += 1
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         res = client.get(url_for("watchlist.index"))
         assert b'Warning, no filters were found' in res.data
@@ -126,7 +126,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
 
     time.sleep(2)
     # One more check should trigger the _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT threshold
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
@@ -160,7 +160,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
 
     # Try several times, it should NOT have 'filter not found'
     for i in range(0, ATTEMPT_THRESHOLD_SETTING + 2):
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
@@ -175,7 +175,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     assert uuid in notification
 
     # cleanup for the next
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )

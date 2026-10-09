@@ -18,6 +18,42 @@ from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 
 
+def validate_time_schedule_limit(json_data):
+    """
+    Validate the optional timezone inside time_schedule_limit.
+
+    The edit form runs validateTimeZoneName on this field, but the API did not -
+    the OpenAPI schema for time_schedule_limit does not declare a `timezone`
+    property at all and does not set additionalProperties:false, so any string
+    passed straight through and was stored.
+
+    That matters because the scheduler resolves it with arrow.now(tz), which
+    raises on an unknown zone. Before the ticker thread was hardened, a single
+    authenticated PUT with a bogus timezone stopped scheduling for EVERY watch
+    on the instance. It is now contained to the one watch, but that watch would
+    still silently never be checked again, so reject it at the boundary.
+
+    Returns None if valid, or an error message string if invalid.
+    """
+    schedule = json_data.get('time_schedule_limit')
+    if not isinstance(schedule, dict):
+        return None
+
+    tz_name = schedule.get('timezone')
+    if not tz_name:
+        return None
+
+    if not isinstance(tz_name, str):
+        return "time_schedule_limit.timezone must be a string IANA timezone name, e.g. 'Europe/Berlin'."
+
+    from zoneinfo import available_timezones
+    if tz_name.strip() not in available_timezones():
+        return (f"time_schedule_limit.timezone '{tz_name}' is not a valid timezone name. "
+                f"Use an IANA name such as 'Europe/Berlin' or 'UTC'.")
+
+    return None
+
+
 def validate_time_between_check_required(json_data):
     """
     Validate that at least one time interval is specified when not using default settings.
@@ -105,6 +141,7 @@ class Watch(Resource):
         watch['last_changed'] = watch_obj.last_changed
         watch['viewed'] = watch_obj.viewed
         watch['link'] = watch_obj.link
+        watch['open_link'] = watch_obj.open_link
 
         # Resolved processor config: tag override wins over watch-level config (mirrors restock processor logic)
         import json
@@ -156,6 +193,11 @@ class Watch(Resource):
 
         # Validate time_between_check when not using defaults
         validation_error = validate_time_between_check_required(request.json)
+        if validation_error:
+            return validation_error, 400
+
+        # An invalid timezone here makes the watch permanently unschedulable
+        validation_error = validate_time_schedule_limit(request.json)
         if validation_error:
             return validation_error, 400
 
@@ -251,6 +293,20 @@ class WatchHistory(Resource):
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
         return watch.history, 200
+
+    # Delete all history/snapshots for a watch, but keep the watch itself
+    # curl -X DELETE http://localhost:5000/api/v1/watch/<uuid_str:uuid>/history
+    @auth.check_token
+    @validate_openapi_request('deleteWatchHistory')
+    def delete(self, uuid):
+        """Clear all snapshot history for a watch (the watch itself is kept)."""
+        if not self.datastore.data['watching'].get(uuid):
+            abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+
+        # Same call as the UI "Clear history" button - wipes snapshots/screenshots and
+        # resets last_checked etc, while preserving the watch and its processor config
+        self.datastore.clear_watch_history(uuid)
+        return 'OK', 204
 
 
 class WatchSingleHistory(Resource):
@@ -488,6 +544,11 @@ class CreateWatch(Resource):
         if validation_error:
             return validation_error, 400
 
+        # An invalid timezone here makes the watch permanently unschedulable
+        validation_error = validate_time_schedule_limit(json_data)
+        if validation_error:
+            return validation_error, 400
+
         # Validate notification_urls if provided
         if 'notification_urls' in json_data:
             from wtforms import ValidationError
@@ -514,6 +575,12 @@ class CreateWatch(Resource):
 
         del extras['url']
 
+        # PAGE_WATCH_LIMIT - checked up front so a blocked add is reported as 429 rather than
+        # being guessed at from add_watch() returning None
+        if self.datastore.watch_limit_reached():
+            current_watch_count = len(self.datastore.data['watching'])
+            return f"Watch limit reached ({current_watch_count}/{self.datastore.watch_limit} watches). Cannot add more watches.", 429
+
         new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
 
         # Save processor config to separate JSON file
@@ -524,16 +591,6 @@ class CreateWatch(Resource):
 #            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
             return {'uuid': new_uuid}, 201
         else:
-            # Check if it was a limit issue
-            page_watch_limit = os.getenv('PAGE_WATCH_LIMIT')
-            if page_watch_limit:
-                try:
-                    page_watch_limit = int(page_watch_limit)
-                    current_watch_count = len(self.datastore.data['watching'])
-                    if current_watch_count >= page_watch_limit:
-                        return f"Watch limit reached ({current_watch_count}/{page_watch_limit} watches). Cannot add more watches.", 429
-                except ValueError:
-                    pass
             return "Invalid or unsupported URL", 400
 
     @auth.check_token
@@ -554,6 +611,7 @@ class CreateWatch(Resource):
                 'last_checked': watch['last_checked'],
                 'last_error': watch['last_error'],
                 'link': watch.link,
+                'open_link': watch.open_link,
                 'page_title': watch['page_title'],
                 'tags': [*tags],  # Unpack dict keys to list (can't use list() since variable named 'list')
                 'title': watch['title'],

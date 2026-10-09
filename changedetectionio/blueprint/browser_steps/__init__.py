@@ -17,7 +17,9 @@ from flask import Blueprint, request, make_response
 import os
 
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.blueprint import plaintext_response
 from changedetectionio.flask_app import login_optionally_required
+from changedetectionio.validate_url import validate_fetch_url_async
 from loguru import logger
 
 browsersteps_sessions = {}
@@ -266,6 +268,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Resolve the fetcher backend for this watch so we can ask it to launch its own browser
         # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)
         watch = datastore.data['watching'][watch_uuid]
+
+        # Live preview sessions also return rendered screenshots to the caller and never pass
+        # through difference_detection_processor.call_browser(), so validate before we even spend
+        # a browser on it - otherwise a watch pointed at a private address is refused at real check
+        # time but happily previewed (and exfiltrated) here.
+        await validate_fetch_url_async(watch.link)
+
         fetcher_name = watch.get_fetch_backend or 'system'
         if fetcher_name == 'system':
             fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
@@ -287,7 +296,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return browsersteps_start_session
 
 
-    @browser_steps_blueprint.route("/browsersteps_start_session", methods=['GET'])
+    @browser_steps_blueprint.route("/browsersteps_start_session", methods=['POST'])
     @login_optionally_required
     def browsersteps_start_session():
         # A new session was requested, return sessionID
@@ -392,8 +401,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         except Exception as e:
             logger.error(f"Exception when calling step operation {step_operation} {str(e)}")
-            # Try to find something of value to give back to the user
-            return make_response(str(e).splitlines()[0], 401)
+            # Try to find something of value to give back to the user.
+            # text/plain: the message can contain the user's own selectors/values, so it
+            # must not be parsed as HTML by the browser (GHSA-23mp-8222-96fr pattern).
+            return plaintext_response(str(e).splitlines()[0], 401)
 
         # Screenshots and other info only needed on requesting a step (POST)
         try:
@@ -410,7 +421,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     watch.save_xpath_data(data=xpath_data)
 
         except Exception as e:
-            return make_response(f"Error fetching screenshot and element data - {str(e)}", 401)
+            return plaintext_response(f"Error fetching screenshot and element data - {str(e)}", 401)
 
         # SEND THIS BACK TO THE BROWSER
         output = {

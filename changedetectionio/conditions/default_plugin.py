@@ -1,7 +1,6 @@
 import re
 
 import pluggy
-from price_parser import Price
 from loguru import logger
 from flask_babel import lazy_gettext as _l
 
@@ -70,6 +69,7 @@ def register_field_choices():
 @hookimpl
 def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
 
+    from price_parser import Price
     res = {}
     if 'text' in ephemeral_data:
         res['page_filtered_text'] = ephemeral_data['text']

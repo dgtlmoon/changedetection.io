@@ -34,11 +34,11 @@ def test_rss_tag_feed_ignores_security_token(client, live_server, datastore_path
 
     # Trigger a change so we have history and an unviewed change
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Logout
-    client.get(url_for("logout"), follow_redirects=True)
+    client.post(url_for("logout"), follow_redirects=True)
 
     # Request the tag RSS feed WITH the token
     res = client.get(

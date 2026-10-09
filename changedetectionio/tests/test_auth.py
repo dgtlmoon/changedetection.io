@@ -13,7 +13,7 @@ def test_basic_auth(client, live_server, measure_memory_usage, datastore_path):
     test_url = url_for('test_basicauth_method', _external=True).replace("//","//myuser:mypass@")
     time.sleep(1)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     time.sleep(1)
     # Check form validation

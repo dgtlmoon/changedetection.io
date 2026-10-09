@@ -66,6 +66,11 @@ Easily organise and monitor prices for products from the dashboard, get alerts a
 
 [<img src="docs/restock-overview.png" style="max-width:100%;" alt="Easily keep an eye on product price changes directly from the UI"  title="Easily keep an eye on product price changes directly from the UI" />](https://changedetection.io?src=github)
 
+
+#### Monitor price change and restock trends over time as a graph, identify patterns, buy at the right time!
+
+[<img src="docs/price-tracking.jpeg" style="max-width:100%;" />](https://changedetection.io?src=github)
+
 Set price change notification parameters, upper and lower price, price change percentage and more.
 Always know when a product for sale drops in price.
 

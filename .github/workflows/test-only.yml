@@ -33,7 +33,7 @@ jobs:
           done
       - name: Lint .pot template with dennis
         run: |
-          pip install "$(grep -E '^dennis ?>=' requirements.txt)"
+          pip install "$(grep -E '^dennis ?>=' requirements-dev.txt)"
           dennis-cmd lint --strict changedetectionio/translations/messages.pot
       - name: Lint .po files with dennis
         run: |
@@ -52,6 +52,19 @@ jobs:
             git diff --stat changedetectionio/translations
             exit 1
           fi
+      - name: Check translation overlay
+        # Deliberately after extract_messages above, so overrides are validated against a freshly
+        # extracted messages.pot. An overlay entry is keyed on the exact upstream msgid: when a
+        # string is reworded upstream the override stops matching and silently reverts to upstream
+        # wording. This is the only thing that makes that visible.
+        # See changedetectionio/translations_overlay/README.md
+        if: hashFiles('changedetectionio/translations_overlay/**/*.po') != ''
+        run: |
+          find changedetectionio/translations_overlay -name "*.po" | while read f; do
+            echo "Checking $f"
+            msgfmt --check-format -o /dev/null "$f"
+          done
+          python changedetectionio/translations_overlay/manage.py check
 
   lint-template-i18n:
     runs-on: ubuntu-latest
@@ -102,15 +115,6 @@ jobs:
               print("See https://github.com/dgtlmoon/changedetection.io/issues/4074 for patterns.")
               sys.exit(1)
           PYEOF
-
-  test-application-3-10:
-    # Only run on push to master (including PR merges)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [lint-code, lint-translations, lint-template-i18n]
-    uses: ./.github/workflows/test-stack-reusable-workflow.yml
-    with:
-      python-version: '3.10'
-
 
   test-application-3-11:
     # Always run

@@ -114,7 +114,7 @@ class guess_stream_type():
         # This also triggers the automatic CDATA text parser so the RSS goes back a nice content list
         elif '<rss' in test_content_normalized or '<feed' in test_content_normalized or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES) or '<rdf:' in test_content_normalized:
             self.is_rss = True
-        elif has_html_patterns or http_content_header == 'text/html':
+        elif has_html_patterns or http_content_header.split(';')[0].strip() == 'text/html':
             self.is_html = True
         elif any(s in magic_content_header for s in JSON_CONTENT_TYPES):
             self.is_json = True

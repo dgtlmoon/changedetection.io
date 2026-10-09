@@ -32,7 +32,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage, 
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -57,7 +57,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage, 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("some new noise")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # It should report nothing found (nothing should match the regex)
@@ -67,7 +67,7 @@ def test_trigger_regex_functionality(client, live_server, measure_memory_usage, 
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("regex test123<br>\nsomething 123")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data

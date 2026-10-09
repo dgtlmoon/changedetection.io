@@ -36,7 +36,7 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage,
         with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
             f.write("Now it's {} seconds since epoch, time flies!".format(last_date))
 
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
 

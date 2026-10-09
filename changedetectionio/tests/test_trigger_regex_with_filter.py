@@ -34,7 +34,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -49,7 +49,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
         follow_redirects=True
     )
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -59,7 +59,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>some new noise with cool stuff2 ok</html>")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -71,7 +71,7 @@ def test_trigger_regex_functionality_with_filter(client, live_server, measure_me
     with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
         f.write("<html>some new noise with <span id=in-here>cool stuff6</span> ok</html>")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))

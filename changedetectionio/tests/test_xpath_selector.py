@@ -115,7 +115,7 @@ def test_check_xpath_filter_utf8(client, live_server, measure_memory_usage, data
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -164,7 +164,7 @@ def test_check_xpath_text_function_utf8(client, live_server, measure_memory_usag
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True, content_type="application/rss+xml;charset=UTF-8")
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -196,7 +196,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -220,7 +220,7 @@ def test_check_markup_xpath_filter_restriction(client, live_server, measure_memo
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -233,7 +233,7 @@ def test_xpath_validation(client, live_server, measure_memory_usage, datastore_p
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -249,7 +249,7 @@ def test_xpath23_prefix_validation(client, live_server, measure_memory_usage, da
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -294,7 +294,7 @@ def test_xpath1_lxml(client, live_server, measure_memory_usage, datastore_path):
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -324,7 +324,7 @@ def test_xpath1_validation(client, live_server, measure_memory_usage, datastore_
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -345,7 +345,7 @@ def test_check_with_prefix_include_filters(client, live_server, measure_memory_u
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -391,7 +391,7 @@ def test_various_rules(client, live_server, measure_memory_usage, datastore_path
 
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     for r in ['//div', '//a', 'xpath://div', 'xpath://a']:
@@ -416,7 +416,7 @@ def test_various_rules(client, live_server, measure_memory_usage, datastore_path
 def test_xpath_20(client, live_server, measure_memory_usage, datastore_path):
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     set_original_response(datastore_path=datastore_path)
@@ -453,7 +453,7 @@ def test_xpath_20_function_count(client, live_server, measure_memory_usage, data
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -486,7 +486,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage, dat
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -501,7 +501,7 @@ def test_xpath_20_function_count2(client, live_server, measure_memory_usage, dat
     )
 
     assert b"Updated watch." in res.data
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -521,7 +521,7 @@ def test_xpath_20_function_string_join_matches(client, live_server, measure_memo
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.post(
@@ -595,11 +595,11 @@ def test_rss_xpath(client, live_server, measure_memory_usage, datastore_path):
 
 
 # GHSA-6fmw-82m7-jq6p — XPath arbitrary file read via unparsed-text() and friends
-# Unit-level: verify xpath_filter() and SafeXPath3Parser block all dangerous functions.
+# Unit-level: verify xpath_filter() and the safe XPath3 parser block all dangerous functions.
 def test_xpath_blocked_functions_unit():
     """Dangerous XPath 3.0 functions must be rejected at the parser level (no live server needed)."""
     import elementpath
-    from changedetectionio.html_tools import xpath_filter, SafeXPath3Parser
+    from changedetectionio.html_tools import xpath_filter, get_safe_xpath3_parser
     from lxml import html
 
     html_content = '<html><body><p>safe content</p></body></html>'
@@ -627,11 +627,11 @@ def test_xpath_blocked_functions_unit():
         except elementpath.ElementPathError:
             pass  # expected
 
-        # SafeXPath3Parser must reject the expression at parse time
+        # the safe parser must reject the expression at parse time
         tree = html.fromstring(html_content)
         try:
-            elementpath.select(tree, expr, parser=SafeXPath3Parser)
-            assert False, f"SafeXPath3Parser should have raised for: {expr!r}"
+            elementpath.select(tree, expr, parser=get_safe_xpath3_parser())
+            assert False, f"safe XPath3 parser should have raised for: {expr!r}"
         except elementpath.ElementPathError:
             pass  # expected
 
@@ -648,7 +648,7 @@ def test_xpath_blocked_functions_form_validation(client, live_server, measure_me
     set_original_response(datastore_path=datastore_path)
     test_url = url_for('test_endpoint', _external=True)
     client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     dangerous_expressions = [
