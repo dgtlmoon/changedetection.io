@@ -121,7 +121,7 @@ Flask-Babel>=4.0.0
 rapidfuzz
 
 # Needed for > 3.10, https://github.com/microsoft/playwright-python/issues/2096
-greenlet >= 3.0.3
+greenlet >= 3.5.6
 
 # Optional: Used for high-concurrency SocketIO mode (via SOCKETIO_MODE=gevent)
 # Note: gevent has cross-platform limitations (Windows 1024 socket limit, macOS ARM build issues)
