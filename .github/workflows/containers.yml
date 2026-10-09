@@ -24,16 +24,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Show metadata
+      # Event-derived strings go through env so they reach the shell as
+      # data, a release tag or branch name can carry shell syntax.
+      env:
+        RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        RUN_INFO: ${{ toJSON(github.event.workflow_run) }}
+        RELEASE_TAG: ${{ github.event.release.tag_name }}
+        HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
       run: |
         echo SHA ${{ github.sha }}
         echo github.ref:  ${{ github.ref }}
         echo github_ref: $GITHUB_REF
         echo Event name: ${{ github.event_name }}
         echo Ref ${{ github.ref }}
-        echo c: ${{ github.event.workflow_run.conclusion }}
-        echo r: ${{ github.event.workflow_run }}
-        echo tname: "${{ github.event.release.tag_name }}"
-        echo headbranch: -${{ github.event.workflow_run.head_branch }}-
+        echo c: "$RUN_CONCLUSION"
+        echo r: "$RUN_INFO"
+        echo tname: "$RELEASE_TAG"
+        echo headbranch: -"$HEAD_BRANCH"-
         set
 
   build-push-containers:
@@ -139,8 +146,10 @@ jobs:
       # A new tagged release is required, which builds :tag and :latest
       - name: Debug release info
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          echo "Release tag: ${{ github.event.release.tag_name }}"
+          echo "Release tag: $RELEASE_TAG"
           echo "Github ref: ${{ github.ref }}"
           echo "Github ref name: ${{ github.ref_name }}"
 
