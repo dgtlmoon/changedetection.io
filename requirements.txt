@@ -14,7 +14,7 @@ python-socketio>=5.17.0,<6
 pytz
 timeago~=1.0
 validators~=0.35
-werkzeug==3.1.6
+werkzeug==3.1.9
 
 
 # Set these versions together to avoid a RequestsDependencyWarning
