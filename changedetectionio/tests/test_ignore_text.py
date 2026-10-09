@@ -32,6 +32,15 @@ def test_strip_text_func():
     stripped_content = html_tools.strip_ignore_text(test_content, ignore)
     assert stripped_content == "Some initial text\n\nWhich is across multiple lines\n\n\n\nSo let's see what happens."
 
+    # Surviving lines must stay in document order even when only a few survive
+    test_content = ''.join(f'line{i}\n' for i in range(100))
+    ignore = [f'/^line{i}$/' for i in range(90)]
+    stripped_content = html_tools.strip_ignore_text(test_content, ignore)
+    assert stripped_content == ''.join(f'line{i}\n' for i in range(90, 100))
+
+    stripped_content = html_tools.strip_ignore_text(test_content, ignore, mode="line numbers")
+    assert stripped_content == list(range(1, 91))
+
 def set_original_ignore_response(datastore_path, ver_stamp="123"):
     test_return_data = f"""<html>
        <body>
