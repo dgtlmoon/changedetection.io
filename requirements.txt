@@ -152,7 +152,7 @@ pluggy ~= 1.6
 # Uncapped: litellm now uses jsonschema<5.0,>=4.0.0, resolving earlier openapi-spec-validator conflict.
 # Note litellm >=1.83.11 does `from typing import NotRequired`, which is 3.11+ (PEP 655) - that is
 # why 3.10 support was dropped rather than pinning everyone to the last 3.10-compatible release.
-litellm>=1.40.0
+litellm>=1.104.0
 # Used today for LLMSettings (model/LLMSettings.py); transitively pulled by litellm but pinned explicitly
 # so the validation/typing layer doesn't disappear if litellm drops it.
 pydantic>=2.13.5,<3.0
