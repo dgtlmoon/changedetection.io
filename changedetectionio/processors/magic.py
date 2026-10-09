@@ -88,7 +88,11 @@ class guess_stream_type():
                         magic_content_header = mime
 
         except Exception as e:
-            logger.warning(f"Error getting a more precise mime type from 'puremagic' library ({str(e)}), using content-based detection")
+            # puremagic raises PureError when no signature matches, which is normal for plain text and most HTML
+            if type(e).__name__ == 'PureError':
+                logger.debug(f"puremagic could not identify the content ({str(e)}), using content-based detection")
+            else:
+                logger.warning(f"Error getting a more precise mime type from 'puremagic' library ({str(e)}), using content-based detection")
 
         # Content-based detection (most reliable for text formats)
         # Check for HTML patterns first - if found, override magic's text/plain
