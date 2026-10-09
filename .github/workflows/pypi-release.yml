@@ -1,6 +1,10 @@
 name: Publish Python 🐍distribution 📦 to PyPI and TestPyPI
 
 on: push
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build distribution 📦
@@ -8,6 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
@@ -98,4 +104,4 @@ jobs:
         name: python-package-distributions
         path: dist/
     - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
