@@ -2773,6 +2773,10 @@ msgid "Mark viewed"
 msgstr "标记为已读"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark unviewed"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Use default notification"
 msgstr "使用默认通知"
 
