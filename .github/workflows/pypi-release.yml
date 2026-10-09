@@ -1,6 +1,10 @@
 name: Publish Python 🐍distribution 📦 to PyPI and TestPyPI
 
 on: push
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build distribution 📦

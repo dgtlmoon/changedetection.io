@@ -22,6 +22,10 @@ on:
 
   # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
   # @todo: some kind of path filter for requirements.txt and Dockerfile
+
+permissions:
+  contents: read
+
 jobs:
   builder:
     name: Build ${{ matrix.platform }} (${{ matrix.dockerfile == './Dockerfile' && 'main' || 'alpine' }})

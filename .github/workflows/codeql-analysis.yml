@@ -15,10 +15,18 @@ on:
   schedule:
     - cron: '27 9 * * 4'
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # CodeQL uploads its results to code scanning.
+      security-events: write
+      actions: read
 
     strategy:
       fail-fast: false

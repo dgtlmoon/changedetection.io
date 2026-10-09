@@ -16,6 +16,9 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   metadata:
     runs-on: ubuntu-latest
@@ -35,6 +38,10 @@ jobs:
 
   build-push-containers:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The ghcr push authenticates with the workflow token.
+      packages: write
     # If the testing workflow has a success, then we build to :latest
     # Or if we are in a tagged release scenario.
     if: ${{ github.event.workflow_run.conclusion == 'success' }} || ${{ github.event.release.tag_name }} != ''
