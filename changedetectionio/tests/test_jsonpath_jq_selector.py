@@ -120,6 +120,16 @@ and it can also be repeated
         with pytest.raises(html_tools.JSONNotFound) as e_info:
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
+    # Empty or whitespace-only content must not raise IndexError
+    for empty in ('', '  \n '):
+        with pytest.raises(html_tools.JSONNotFound):
+            html_tools.extract_json_as_string(empty, "json:$.a")
+
+    # A whitespace-only <script> must be skipped, not crash, so the real ld+json is still found
+    content = '<html><script>\n</script><script type="application/ld+json">{"a":1}</script></html>'
+    text = html_tools.extract_json_as_string(content, "json:$.a")
+    assert text == "1"
+
 
 def test_lone_surrogate_escapes_do_not_break_filters():
     """A \\uD800-style escape in the watched JSON must not take the whole document down.
