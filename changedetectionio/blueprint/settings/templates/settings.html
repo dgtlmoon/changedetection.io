@@ -152,6 +152,10 @@
                     </div>
                 </fieldset>
                 <div class="pure-control-group">
+                    {{ render_field(form.application.form.browser_locale) }}
+                    <span class="pure-form-message-inline">{{ _('Currently used by Playwright. Other fetchers may ignore this setting. Websites will return content in this language where supported.') }}</span>
+                </div>
+                <div class="pure-control-group">
                     {{ render_field(form.requests.form.workers) }}
                     {% set worker_info = get_worker_status_info() %}
                     <span class="pure-form-message-inline">{{ _('Number of concurrent workers to process watches. More workers = faster processing but higher memory usage.') }}<br>

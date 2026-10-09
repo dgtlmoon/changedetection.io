@@ -648,6 +648,12 @@ msgstr "如果页面渲染未完成（缺文本等），可尝试增加这里的
 msgid "This will wait <i>n</i> seconds before extracting the text."
 msgstr "这将等待 <i>n</i> 秒后再提取文本。"
 
+#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Currently used by Playwright. Other fetchers may ignore this setting. Websites will return content in this language "
+"where supported."
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "用于处理监控项的并发工作线程数。线程越多=处理更快但内存占用更高。"
@@ -3206,6 +3212,10 @@ msgid "Invalid value."
 msgstr "值无效。"
 
 #: changedetectionio/forms.py
+msgid "Invalid locale. Use BCP 47 format, e.g. 'ja' or 'ja-JP'."
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Group tag"
 msgstr "分组 / 标签"
 
@@ -3261,6 +3271,10 @@ msgstr "提取文本前等待秒数"
 #: changedetectionio/forms.py
 msgid "Should contain one or more seconds"
 msgstr "应为 1 秒或以上"
+
+#: changedetectionio/forms.py
+msgid "Browser locale"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Notification base URL override"

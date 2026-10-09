@@ -822,6 +822,21 @@ class ValidateStartsWithRegex(object):
             if not self.pattern.match(stripped):
                 raise ValidationError(self.message or _l("Invalid value."))
 
+class ValidateBrowserLocale:
+    """Check the shape of a BCP 47 locale tag for Playwright browser contexts."""
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        data = (field.data or "").strip()
+        if not data:
+            return
+        from changedetectionio.content_fetchers.base import validate_browser_locale
+        if validate_browser_locale(data) is None:
+            raise ValidationError(
+                self.message or _l("Invalid locale. Use BCP 47 format, e.g. 'ja' or 'ja-JP'.")
+            )
+
 def visual_browser_choices():
     """Browsers that can render the Add-Watch live preview, as RadioField choices.
 
@@ -878,6 +893,9 @@ class commonSettingsForm(Form):
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
+    browser_locale = StringField(_l('Browser locale'),
+                                 validators=[validators.Optional(), ValidateBrowserLocale()],
+                                 render_kw={"placeholder": "ja", "style": "width: 8em;"})
 
 # Not true anymore but keep the validate_ hook for future use, we convert color tags
 #    def validate_notification_urls(self, field):

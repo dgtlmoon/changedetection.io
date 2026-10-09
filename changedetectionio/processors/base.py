@@ -255,6 +255,12 @@ class difference_detection_processor():
         elif system_webdriver_delay is not None:
             self.fetcher.render_extract_delay = system_webdriver_delay
 
+        from changedetectionio.content_fetchers.base import resolve_browser_locale
+        self.fetcher.browser_locale = resolve_browser_locale(
+            watch_value=self.watch.get('browser_locale'),
+            global_value=self.datastore.data['settings']['application'].get('browser_locale'),
+        )
+
         if self.watch.get('webdriver_js_execute_code') is not None and self.watch.get('webdriver_js_execute_code').strip():
             self.fetcher.webdriver_js_execute_code = self.watch.get('webdriver_js_execute_code')
 
