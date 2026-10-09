@@ -678,7 +678,8 @@ class perform_site_check(difference_detection_processor):
             include_added=watch.get('filter_text_added', True),
             include_removed=watch.get('filter_text_removed', True),
             include_replaced=watch.get('filter_text_replaced', True),
-            include_change_type_prefix=False
+            include_change_type_prefix=False,
+            word_diff=False
         )
 
         watch.save_last_text_fetched_before_filters(text_before_filter.encode('utf-8'))
