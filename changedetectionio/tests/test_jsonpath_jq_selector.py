@@ -121,6 +121,31 @@ and it can also be repeated
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
 
+def test_blank_content_does_not_raise_indexerror():
+    """Empty / whitespace-only content must take the normal JSONNotFound path, not crash.
+
+    The content-sniffing peeked at content_start[0] to see if the body looked like JSON.
+    A blank body left content_start empty, so that peek raised IndexError instead of
+    letting the caller report 'no JSON found' the way any other non-JSON body does.
+    See https://github.com/dgtlmoon/changedetection.io/issues/4531
+    """
+    from .. import html_tools
+
+    # Blank bodies with a json: filter set - the same as any other non-JSON content
+    for blank in ('', '   ', '\n', '\r\n\t '):
+        with pytest.raises(html_tools.JSONNotFound):
+            html_tools.extract_json_as_string(blank, "json:$.id")
+
+    # Same on the html blob path, where a whitespace-only <script> or <body> is skipped
+    # and the real ld+json that follows it is still found
+    html = '<html><script>\n</script><script type="application/ld+json">{"a":1}</script></html>'
+    assert html_tools.extract_json_blob_from_html(html, None, "json:$.a") == "1"
+
+    # A document that is nothing but blank markup has no JSON in it at all
+    with pytest.raises(html_tools.JSONNotFound):
+        html_tools.extract_json_blob_from_html('<html><body>   </body></html>', None, "json:$.a")
+
+
 def test_lone_surrogate_escapes_do_not_break_filters():
     """A \\uD800-style escape in the watched JSON must not take the whole document down.
 
