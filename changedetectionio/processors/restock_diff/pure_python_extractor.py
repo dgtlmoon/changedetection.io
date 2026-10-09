@@ -16,6 +16,7 @@ from html.parser import HTMLParser
 import json
 import re
 from loguru import logger
+from . import Restock
 
 
 class JSONLDExtractor(HTMLParser):
@@ -135,9 +136,9 @@ class MicrodataExtractor(HTMLParser):
         if self.current_itemprop == 'price':
             # Try to extract numeric price from text
             try:
-                price_text = re.sub(r'[^\d.]', '', data.strip())
-                if price_text:
-                    self.microdata['price'] = float(price_text)
+                price = Restock().parse_currency(data.strip())
+                if price is not None:
+                    self.microdata['price'] = price
             except ValueError:
                 pass
         elif self.current_itemprop == 'priceCurrency':
@@ -241,7 +242,7 @@ def query_price_availability(extracted_data):
                 elif isinstance(price_val, str):
                     # Extract numeric value from string
                     try:
-                        result['price'] = float(re.sub(r'[^\d.]', '', price_val))
+                        result['price'] = Restock().parse_currency(price_val)
                     except ValueError:
                         pass
 

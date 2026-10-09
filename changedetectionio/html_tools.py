@@ -95,7 +95,13 @@ TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 TRANSLATE_WHITESPACE_TABLE = str.maketrans('', '', '\r\n\t ')
 PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 
-TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
+# Whitespace is allowed after the tag name ("</title >") but not after "<" - "< title>" is text, not a tag
+TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title\s*>", re.I | re.S)
+# Locate the tag with pos/endpos instead of data.lower(), which copies the whole document (67MB seen
+# for one page) and, for str, can change its length ('İ' lowers to 2 chars) so the offset is wrong.
+TITLE_TAG_STR_RE = re.compile(r"<title", re.I | re.A)
+TITLE_TAG_BYTES_RE = re.compile(rb"<title", re.I)
+TITLE_TAG_UTF32_RE = re.compile(rb"<\x00\x00\x00[tT]\x00\x00\x00")
 META_CS  = re.compile(r'<meta[^>]+charset=["\']?\s*([a-z0-9_\-:+.]+)', re.I)
 
 # jq builtins that can leak sensitive data or cause harm when user-supplied expressions are executed.
@@ -918,14 +924,18 @@ def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 
     # rare but possible.  We read up to 128 KiB from the tag onwards to handle
     # even pathological cases without scanning the whole document.
     _TITLE_WINDOW = 131072
+    # Only look for the tag in the first 1 MiB (chars, or bytes for 8-bit). Well past any real <head>,
+    # and a huge page is never scanned end to end.
+    _TITLE_SEARCH_LIMIT = 1024 * 1024
 
     try:
         match data:
             case bytes() if data.startswith((b"\xff\xfe\x00\x00", b"\x00\x00\xfe\xff")):
                 # UTF-32: locate the tag in the raw bytes, then decode the window.
-                tag_pos = data.lower().find(b"<\x00\x00\x00t\x00\x00\x00")
-                if tag_pos == -1:
+                tag_m = TITLE_TAG_UTF32_RE.search(data, 0, _TITLE_SEARCH_LIMIT * 4)
+                if not tag_m:
                     return None
+                tag_pos = tag_m.start()
                 chunk = data[tag_pos: tag_pos + _TITLE_WINDOW * 4].decode("utf-32", errors="replace")
                 prefix = chunk
             case bytes() if data.startswith((b"\xff\xfe", b"\xfe\xff")):
@@ -934,9 +944,10 @@ def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 
                 prefix = data[: max(scan_chars * 2, _TITLE_WINDOW)].decode("utf-16", errors="replace")
             case bytes():
                 # UTF-8 / legacy 8-bit: find the tag cheaply in raw bytes.
-                tag_pos = data.lower().find(b"<title")
-                if tag_pos == -1:
+                tag_m = TITLE_TAG_BYTES_RE.search(data, 0, _TITLE_SEARCH_LIMIT)
+                if not tag_m:
                     return None
+                tag_pos = tag_m.start()
                 raw_chunk = data[tag_pos: tag_pos + _TITLE_WINDOW]
                 try:
                     chunk = raw_chunk.decode("utf-8")
@@ -953,9 +964,10 @@ def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 
                         return None
                 prefix = chunk
             case str():
-                tag_pos = data.lower().find("<title")
-                if tag_pos == -1:
+                tag_m = TITLE_TAG_STR_RE.search(data, 0, _TITLE_SEARCH_LIMIT)
+                if not tag_m:
                     return None
+                tag_pos = tag_m.start()
                 prefix = data[tag_pos: tag_pos + _TITLE_WINDOW]
             case _:
                 logger.error(f"Title extraction received unsupported data type: {type(data)}")
