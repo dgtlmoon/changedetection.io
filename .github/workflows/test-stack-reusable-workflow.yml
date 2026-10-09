@@ -25,6 +25,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v7
@@ -101,6 +103,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -125,6 +129,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -197,6 +203,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -249,6 +257,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -296,6 +306,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -332,6 +344,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -360,6 +374,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -530,6 +546,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -570,6 +588,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -600,6 +620,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -628,6 +650,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -673,6 +697,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -728,6 +754,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0  # Fetch all history and tags for upgrade testing
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
