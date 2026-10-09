@@ -155,7 +155,7 @@ pluggy ~= 1.6
 litellm>=1.40.0
 # Used today for LLMSettings (model/LLMSettings.py); transitively pulled by litellm but pinned explicitly
 # so the validation/typing layer doesn't disappear if litellm drops it.
-pydantic>=2.0,<3.0
+pydantic>=2.13.5,<3.0
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 
