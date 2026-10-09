@@ -164,6 +164,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
             # Initial load - use defaults from config
             diff_prefs[key] = config['default']
 
+    diff_type = diff_prefs['type']
     content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
                                newest_version_file_contents=to_version_file_contents,
                                include_replaced=diff_prefs['replaced'],
@@ -171,7 +172,8 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
                                include_removed=diff_prefs['removed'],
                                include_equal=diff_prefs['changesOnly'],
                                ignore_junk=diff_prefs['ignoreWhitespace'],
-                               word_diff=diff_prefs['type'] == 'diffWords',
+                               word_diff=diff_type in ('diffWords', 'diffChars'),
+                               tokenizer='chars_and_html' if diff_type == 'diffChars' else 'words_and_html',
                                )
 
     # Build cell grid visualizer before applying HTML color (so we can detect placemarkers)
