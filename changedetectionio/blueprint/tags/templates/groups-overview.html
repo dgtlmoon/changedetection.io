@@ -21,6 +21,12 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
   background-color: {{ colors['dark']['bg'] }};
   color: {{ colors['dark']['color'] }};
 }
+@media (prefers-color-scheme: dark) {
+  html[data-darkmode="auto"] .watch-tag-list.tag-{{ class_name }} {
+    background-color: {{ colors['dark']['bg'] }};
+    color: {{ colors['dark']['color'] }};
+  }
+}
 {%- endif -%}
 {%- endif -%}
 {%- endfor -%}

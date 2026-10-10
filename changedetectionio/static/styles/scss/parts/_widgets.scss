@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 
 // Ternary radio button group component
 .ternary-radio-group {
@@ -82,7 +84,7 @@ input[type="radio"].pure-radio:checked {
   color: var(--color-text-button);
 }
 
-html[data-darkmode="true"] {
+@include dark-mode {
   .ternary-radio-group {
     .ternary-radio-option {
       .ternary-radio-label {
