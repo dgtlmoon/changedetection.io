@@ -66,14 +66,14 @@ class guess_stream_type():
 
         # Use puremagic for lightweight MIME detection (saves ~14MB vs python-magic)
         magic_result = None
+        import puremagic
         try:
-            import puremagic
-
             # puremagic needs bytes, so encode if we have a string
             content_bytes = content[:200].encode('utf-8') if isinstance(content, str) else content[:200]
 
             # puremagic returns a list of PureMagic objects with confidence scores
-            detections = puremagic.magic_string(content_bytes)
+            # (it raises ValueError on empty input, and there is nothing to detect then anyway)
+            detections = puremagic.magic_string(content_bytes) if content_bytes else []
             if detections:
                 # Get the highest confidence detection
                 mime = detections[0].mime_type
@@ -87,12 +87,11 @@ class guess_stream_type():
                     elif mime not in ['text/html', 'text/plain']:
                         magic_content_header = mime
 
+        except puremagic.PureError as e:
+            # No signature matched, which is normal for plain text and most HTML
+            logger.debug(f"puremagic could not identify the content ({str(e)}), using content-based detection")
         except Exception as e:
-            # puremagic raises PureError when no signature matches, which is normal for plain text and most HTML
-            if type(e).__name__ == 'PureError':
-                logger.debug(f"puremagic could not identify the content ({str(e)}), using content-based detection")
-            else:
-                logger.warning(f"Error getting a more precise mime type from 'puremagic' library ({str(e)}), using content-based detection")
+            logger.warning(f"Error getting a more precise mime type from 'puremagic' library ({str(e)}), using content-based detection")
 
         # Content-based detection (most reliable for text formats)
         # Check for HTML patterns first - if found, override magic's text/plain

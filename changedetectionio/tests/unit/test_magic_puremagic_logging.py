@@ -5,8 +5,8 @@
 # python3 -m unittest changedetectionio.tests.unit.test_magic_puremagic_logging
 
 """puremagic raises PureError when no file signature matches, which is the normal result for
-plain text and most HTML. That is not an error and should not be logged as a warning, but any
-other failure from puremagic still should be."""
+plain text and most HTML, and ValueError on empty input. Neither is an error and neither should
+be logged as a warning, but any other failure from puremagic still should be."""
 
 import unittest
 from unittest import mock
@@ -31,6 +31,10 @@ class TestPuremagicLogging(unittest.TestCase):
     def test_unidentified_content_is_not_a_warning(self):
         result = guess_stream_type(http_content_header="text/plain", content="just some plain text, no signature")
         self.assertTrue(result.is_plaintext)
+        self.assertEqual(self.warnings(), [])
+
+    def test_empty_content_is_not_a_warning(self):
+        guess_stream_type(http_content_header="text/html", content="")
         self.assertEqual(self.warnings(), [])
 
     def test_other_puremagic_failures_still_warn(self):
