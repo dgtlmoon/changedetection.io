@@ -298,6 +298,8 @@ window.watchOverviewI18n = {
         {# Hidden real operation buttons triggered by the Browser/Proxy modals once a choice is made #}
         <button type="submit" name="op" value="set-fetch-backend" id="op-set-fetch-backend" hidden></button>
         <button type="submit" name="op" value="set-proxy" id="op-set-proxy" hidden></button>
+        <button type="submit" class="pure-button button-secondary button-xsmall" id="checkbox-export"
+                formmethod="post" formaction="{{ url_for('ui.export_selected_watches') }}"><i data-feather="download"></i>&nbsp;{{ _('Download CSV') }}</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" ></i>&nbsp;{{ _('Mark viewed') }}</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" ></i>&nbsp;{{ _('Use default notification') }}</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors"><i data-feather="x-circle" ></i>&nbsp;{{ _('Clear errors') }}</button>

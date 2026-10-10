@@ -280,6 +280,30 @@ $(function () {
     // (e.g. clearing it once a delete operation removes the rows).
     sel.refreshUI = refreshSelectionUI;
 
+    // Download through a normal authenticated, CSRF-protected POST rather than
+    // Socket.IO or a fetch Blob, so the browser can stream the attachment.
+    $('#checkbox-export').on('click', function (event) {
+        event.preventDefault();
+        const uuids = sel.all();
+        if (!uuids.length) return;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = this.formAction;
+        form.hidden = true;
+        const addField = (name, value) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        };
+        addField('csrf_token', $('#watch-list-form input[name="csrf_token"]').val());
+        uuids.forEach((uuid) => addField('uuids', uuid));
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
+    });
+
     // Shift-click to (de)select a contiguous range, anchored on the last checkbox
     // clicked — the usual "select many at once" gesture. Runs on 'click' (which
     // carries shiftKey) before the 'change' handler below.
