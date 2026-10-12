@@ -480,11 +480,13 @@ def _estimate_cost_usd(model: str, input_tokens: int, output_tokens: int) -> flo
 
 def accumulate_global_tokens(datastore, tokens: int,
                               input_tokens: int = 0, output_tokens: int = 0,
-                              model: str = '') -> None:
+                              model: str = '', cost_usd: float = None) -> None:
     """
     Add *tokens* to both the all-time and this-month global counters.
     When input_tokens / output_tokens / model are supplied the estimated
     USD cost is accumulated alongside the token counts.
+    cost_usd, when given, is used as-is instead of the estimate - callers that
+    don't use litellm pass their own, as the estimate imports litellm's pricing.
     Resets monthly counters automatically on month rollover.
 
     These counters live at datastore.data['settings']['application']['llm']
@@ -495,7 +497,7 @@ def accumulate_global_tokens(datastore, tokens: int,
         return
 
     current_month = _get_month_key()
-    cost = _estimate_cost_usd(model, input_tokens, output_tokens)
+    cost = cost_usd if cost_usd is not None else _estimate_cost_usd(model, input_tokens, output_tokens)
 
     with datastore.lock:
         settings = get_llm_settings(datastore)
