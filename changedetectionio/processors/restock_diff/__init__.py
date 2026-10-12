@@ -16,6 +16,11 @@ _price_re = re.compile(r"Price:\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
 
 class Restock(dict):
 
+    # The one place price text becomes a number - keep it that way, don't strip to [^\d.] and float()
+    # at the call site, that turns "39,99" into 3999 (#4493). Used by:
+    #   processor.py _deduplicate_prices()                        (itemprop/JSON-LD prices)
+    #   pure_python_extractor.py MicrodataExtractor, query_price_availability()
+    #   plugins/llm_restock.py get_itemprop_availability_override() (price the LLM returns as a string)
     def parse_currency(self, raw_value: str) -> Union[float, None]:
         # Clean and standardize the value (ie 1,400.00 should be 1400.00), even better would be store the whole thing as an integer.
         standardized_value = raw_value

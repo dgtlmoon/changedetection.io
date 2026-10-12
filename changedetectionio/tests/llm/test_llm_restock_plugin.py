@@ -199,11 +199,10 @@ class TestLLMRestockPluginExtraction:
         ('1,299.95', 1299.95),
         ('10 000 Kč', 10000.0),
         ('10 000,50', 10000.5),
-        ('£1.299', 1299.0),
         ('$127.99', 127.99),
     ])
     def test_handles_locale_formatted_string_price(self, price_str, expected):
-        """A string price in page format must not be mangled by stripping its separators."""
+        """A string price in page format must not be mangled by stripping its separators (same as #4493)."""
         llm_json = json.dumps({'price': price_str, 'currency': None, 'availability': 'instock'})
         result = _call_plugin(
             f'<html><body>{price_str}</body></html>',

@@ -335,9 +335,10 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             try:
                 if isinstance(price, str):
                     # The model sometimes returns the price as page text ("1.299,95 €"), stripping
-                    # everything but digits and dots would turn that into 1.29995
-                    from price_parser import Price
-                    price = Price.fromstring(price).amount_float
+                    # everything but digits and dots would turn that into 1.29995. Same parser as the
+                    # structured-data extractors, see Restock.parse_currency() for every caller.
+                    from changedetectionio.processors.restock_diff import Restock
+                    price = Restock().parse_currency(price)
                 else:
                     price = float(price)
             except (ValueError, TypeError):

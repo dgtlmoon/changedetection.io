@@ -136,6 +136,7 @@ class MicrodataExtractor(HTMLParser):
         if self.current_itemprop == 'price':
             # Try to extract numeric price from text
             try:
+                # Not [^\d.] + float(), that breaks "39,99" (#4493), see Restock.parse_currency() for every caller
                 price = Restock().parse_currency(data.strip())
                 if price is not None:
                     self.microdata['price'] = price
@@ -240,7 +241,7 @@ def query_price_availability(extracted_data):
                 if isinstance(price_val, (int, float)):
                     result['price'] = float(price_val)
                 elif isinstance(price_val, str):
-                    # Extract numeric value from string
+                    # Extract numeric value from string, see Restock.parse_currency() for every caller
                     try:
                         result['price'] = Restock().parse_currency(price_val)
                     except ValueError:
