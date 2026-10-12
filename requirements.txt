@@ -3,7 +3,7 @@ feedparser~=6.0  # For parsing RSS/Atom feeds
 flask-compress
 flask-login>=0.6.3
 flask-paginate
-flask-socketio>=5.6.1,<6 # Re #3910
+flask-socketio>=5.7.0,<6 # Re #3910
 flask>=3.1,<4
 flask_cors # For the Chrome extension to operate
 flask_restful
