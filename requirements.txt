@@ -31,7 +31,7 @@ wtforms~=3.2
 jsonpath-ng~=1.9.1
 
 # Fast JSON serialization for better performance
-orjson~=3.12
+orjson~=3.13
 
 # dnspython - Used by paho-mqtt for MQTT broker resolution  
 # Version pin removed since eventlet (which required the specific 2.6.1 pin) has been eliminated
