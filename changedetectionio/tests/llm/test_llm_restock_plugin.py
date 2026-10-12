@@ -418,6 +418,11 @@ accumulate_global_tokens(ds, 10, input_tokens=8, output_tokens=2, model='gemini/
 assert result['price'] == 5.0, result
 print('litellm' in sys.modules)
 '''
-        out = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, timeout=120)
+        # CI runs pytest from inside the package dir without installing it, so the child
+        # wouldn't find 'changedetectionio' - point it at the directory that contains it.
+        import os, changedetectionio
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(changedetectionio.__file__)))
+        env = {**os.environ, 'PYTHONPATH': os.pathsep.join(filter(None, [repo_root, os.environ.get('PYTHONPATH')]))}
+        out = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, timeout=120, env=env)
         assert out.returncode == 0, out.stderr
         assert out.stdout.strip().splitlines()[-1] == 'False', "litellm was imported"
