@@ -334,7 +334,10 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         if price is not None:
             try:
                 if isinstance(price, str):
-                    price = float(re.sub(r'[^\d.]', '', price))
+                    # The model sometimes returns the price as page text ("1.299,95 €"), stripping
+                    # everything but digits and dots would turn that into 1.29995
+                    from price_parser import Price
+                    price = Price.fromstring(price).amount_float
                 else:
                     price = float(price)
             except (ValueError, TypeError):
