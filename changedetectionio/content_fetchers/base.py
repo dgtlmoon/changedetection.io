@@ -87,6 +87,8 @@ class Fetcher():
     favicon_blob = None
     instock_data = None
     instock_data_js = ""
+    # Original response bytes (needed for PDF etc), fetchers that can't provide them leave this as None
+    raw_content = None
     screenshot_format = None
     status_code = None
     webdriver_js_execute_code = None
@@ -151,8 +153,7 @@ class Fetcher():
         Call this after content has been saved to disk.
         """
         self.content = None
-        if hasattr(self, 'raw_content'):
-            self.raw_content = None
+        self.raw_content = None
         self.screenshot = None
         self.xpath_data = None
         # Keep headers and status_code as they're small

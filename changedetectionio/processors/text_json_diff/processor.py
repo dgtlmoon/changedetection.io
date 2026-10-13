@@ -43,6 +43,11 @@ class PDFToHTMLToolNotFound(ValueError):
         ValueError.__init__(self, msg)
 
 
+class PDFNotAvailableFromFetcher(ValueError):
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
+
+
 class FilterConfig:
     """Consolidates all filter and rule configurations from watch, tags, and global settings."""
 
@@ -481,6 +486,12 @@ class perform_site_check(difference_detection_processor):
 
         # PDF preprocessing
         if watch.is_pdf or stream_content_type.is_pdf:
+            # Browsers show PDFs in their built-in viewer, so a fetcher may only have the viewer's HTML
+            if not self.fetcher.raw_content or b'%PDF' not in self.fetcher.raw_content[:1024]:
+                raise PDFNotAvailableFromFetcher(
+                    "Content is a PDF but this fetcher could not provide the original PDF file, "
+                    "try the 'Basic fast Plaintext/HTTP Client' fetcher instead."
+                )
             content = content_processor.preprocess_pdf(raw_content=self.fetcher.raw_content)
             stream_content_type.is_html = True
 
