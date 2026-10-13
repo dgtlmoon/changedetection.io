@@ -12,7 +12,10 @@ One entry per content type:
 The last fetched HTML is kept the same way, see HTML_ARTIFACT.
 """
 
+import hashlib
 import os
+from dataclasses import dataclass
+from typing import Optional
 from urllib.parse import urlparse
 
 MB = 1024 * 1024
@@ -24,6 +27,11 @@ BINARY_CONTENT_TYPES = {
     'image/png': {'ext': 'png', 'use_as_screenshot': True},
     'image/gif': {'ext': 'gif', 'use_as_screenshot': True},
     'image/webp': {'ext': 'webp', 'use_as_screenshot': True},
+    'image/avif': {'ext': 'avif', 'use_as_screenshot': True},
+    'image/bmp': {'ext': 'bmp', 'use_as_screenshot': True},
+    'image/tiff': {'ext': 'tiff', 'use_as_screenshot': True},
+    'image/x-icon': {'ext': 'ico', 'use_as_screenshot': True},
+    'image/vnd.microsoft.icon': {'ext': 'ico', 'use_as_screenshot': True},
 
     'application/x-msi': {'ext': 'msi'},
     'application/x-ms-installer': {'ext': 'msi'},
@@ -79,6 +87,16 @@ def binary_rule(content_type, url=None):
     return None
 
 
+def download_rule(content_type, url=None):
+    """Rule for a file the browser downloaded - it's binary whatever it is, so an unknown type
+    still gets the checksum treatment"""
+    rule = binary_rule(content_type, url=url)
+    if rule:
+        return rule
+    content_type = (content_type or '').split(';')[0].strip().lower() or 'application/octet-stream'
+    return _with_defaults(content_type, {'ext': 'bin'})
+
+
 def kept_artifact_extensions():
     """{extension: how many to keep} for every artifact type that is kept per history entry."""
     keep = {HTML_ARTIFACT['ext']: HTML_ARTIFACT['keep_last_versions']}
@@ -86,3 +104,48 @@ def kept_artifact_extensions():
         if rule.get('keep_last_versions'):
             keep[rule['ext']] = max(keep.get(rule['ext'], 0), rule['keep_last_versions'])
     return keep
+
+
+@dataclass
+class BinaryContent:
+    """What a fetcher found when the response was a binary type (see binary_rule())"""
+    content_type: str
+    size: int
+    sha256: str
+    md5: str
+    # Only when the rule needs the bytes (kept original, text conversion, screenshot), else None
+    data: Optional[bytes] = None
+
+    def snapshot_text(self):
+        """What goes into the snapshot - only things that come from the bytes, so the same file
+        always gives the same text and any change to it is a change"""
+        return f"Binary file detected - {self.content_type} - {self.size:,} bytes - SHA256 {self.sha256}"
+
+
+def rule_needs_bytes(rule):
+    return bool(rule['keep_last_versions'] or rule['to_text'] or rule['use_as_screenshot'])
+
+
+class BinaryReader:
+    """Hash a binary response chunk by chunk, keeping the bytes only when the rule needs them"""
+
+    def __init__(self, rule):
+        self.rule = rule
+        self._sha256 = hashlib.sha256()
+        self._md5 = hashlib.md5()
+        self.size = 0
+        self._chunks = [] if rule_needs_bytes(rule) else None
+
+    def update(self, chunk):
+        self._sha256.update(chunk)
+        self._md5.update(chunk)
+        self.size += len(chunk)
+        if self._chunks is not None:
+            self._chunks.append(chunk)
+
+    def result(self):
+        return BinaryContent(content_type=self.rule['content_type'],
+                             size=self.size,
+                             sha256=self._sha256.hexdigest(),
+                             md5=self._md5.hexdigest(),
+                             data=b''.join(self._chunks) if self._chunks is not None else None)

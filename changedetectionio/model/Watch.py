@@ -439,17 +439,16 @@ class model(EntityPersistenceMixin, watch_base):
             return self._datastore.settings.fetch_backend
         """
         # Maybe also if is_image etc?
-        # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it,
-        # the others fall back to html_requests (same as resolve_content_fetcher() does at fetch time)
-        if self.is_pdf:
-            from changedetectionio import content_fetchers
-            fetcher_name = self.get('fetch_backend')
-            if not fetcher_name or fetcher_name == 'system':
-                fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
-            if fetcher_name and fetcher_name.startswith('extra_browser_'):
-                fetcher_name = 'html_webdriver'
-            if not getattr(getattr(content_fetchers, fetcher_name or '', None), 'supports_pdf', False):
-                return 'html_requests'
+        # A PDF/binary file the chosen fetcher can't supply falls back to html_requests
+        # (same as resolve_content_fetcher() does at fetch time)
+        from changedetectionio import content_fetchers
+        fetcher_name = self.get('fetch_backend')
+        if not fetcher_name or fetcher_name == 'system':
+            fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
+        if fetcher_name and fetcher_name.startswith('extra_browser_'):
+            fetcher_name = 'html_webdriver'
+        if not content_fetchers.fetcher_can_handle_watch(getattr(content_fetchers, fetcher_name or '', None), self):
+            return 'html_requests'
 
         return self.get('fetch_backend')
 
@@ -1295,7 +1294,8 @@ class model(EntityPersistenceMixin, watch_base):
 
         self.ensure_data_dir_exists()
 
-        if fetcher.content or empty_pages_are_a_change:
+        # For a binary file .content is only its checksum, nothing worth keeping
+        if not getattr(fetcher, 'binary', None) and (fetcher.content or empty_pages_are_a_change):
             self.save_last_fetched_html(timestamp=timestamp, contents=fetcher.content)
 
         raw_content = getattr(fetcher, 'raw_content', None)
