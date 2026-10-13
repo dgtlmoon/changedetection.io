@@ -1,7 +1,7 @@
 from blinker import signal
 from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
-from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
+from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse, PDFNotAvailableFromFetcher
 from changedetectionio import html_tools
 from changedetectionio import worker_pool
 from changedetectionio.queuedWatchMetaData import PrioritizedItem
@@ -211,6 +211,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         watch.save_xpath_data(data=e.xpath_data)
                         e.xpath_data = None  # Free memory immediately
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': e.message})
+                    process_changedetection_results = False
+
+                except PDFNotAvailableFromFetcher as e:
+                    # Remember it's a PDF (normally only saved on success), so next time watch.is_pdf
+                    # makes resolve_content_fetcher() pick a fetcher that can supply the PDF
+                    content_type = str(update_handler.fetcher.get_all_headers().get('content-type', '') or "").lower()
+                    datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e), 'content-type': content_type})
                     process_changedetection_results = False
 
                 except content_fetchers_exceptions.ReplyWithContentButNoText as e:

@@ -439,9 +439,17 @@ class model(EntityPersistenceMixin, watch_base):
             return self._datastore.settings.fetch_backend
         """
         # Maybe also if is_image etc?
-        # This is because chrome/playwright wont render the PDF in the browser and we will just fetch it and use pdf2html to see the text.
+        # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it,
+        # the others fall back to html_requests (same as resolve_content_fetcher() does at fetch time)
         if self.is_pdf:
-            return 'html_requests'
+            from changedetectionio import content_fetchers
+            fetcher_name = self.get('fetch_backend')
+            if not fetcher_name or fetcher_name == 'system':
+                fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
+            if fetcher_name and fetcher_name.startswith('extra_browser_'):
+                fetcher_name = 'html_webdriver'
+            if not getattr(getattr(content_fetchers, fetcher_name or '', None), 'supports_pdf', False):
+                return 'html_requests'
 
         return self.get('fetch_backend')
 
@@ -455,7 +463,7 @@ class model(EntityPersistenceMixin, watch_base):
         from changedetectionio import content_fetchers
         from changedetectionio.content_fetchers.base import FetcherCapabilities
 
-        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
+        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests when needed
         if not fetcher_name or fetcher_name == 'system':
             fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
 
