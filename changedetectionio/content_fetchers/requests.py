@@ -15,6 +15,7 @@ from changedetectionio.validate_url import is_fetch_url_allowed, is_private_host
 # "html_requests" is listed as the default fetcher in store.py!
 class fetcher(Fetcher):
     fetcher_description = _l("Basic fast Plaintext/HTTP Client")
+    supports_pdf = True
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
