@@ -77,3 +77,30 @@ def test_image_is_still_the_screenshot(client, live_server, measure_memory_usage
     with open(watch.get_screenshot(), 'rb') as f:
         assert f.read() == png
 
+
+def test_binary_fetcher_resolution(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    # A binary watch only moves to html_requests when the chosen fetcher can't supply downloads
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.puppeteer import fetcher as puppeteer_fetcher
+    from changedetectionio.content_fetchers.webdriver_selenium import fetcher as selenium_fetcher
+
+    datastore = client.application.config.get('DATASTORE')
+    uuid = datastore.add_watch(url='http://example.com/download?id=5', extras={'fetch_backend': 'html_webdriver'})
+    watch = datastore.data['watching'][uuid]
+
+    # Nothing known yet - the chosen browser is used
+    monkeypatch.setattr(content_fetchers, 'html_webdriver', selenium_fetcher)
+    assert content_fetchers.resolve_content_fetcher(watch, datastore)[1] == 'html_webdriver'
+
+    watch['content-type'] = 'application/x-msi'
+    assert content_fetchers.resolve_content_fetcher(watch, datastore)[1] == 'html_requests'
+    assert watch.get_fetch_backend == 'html_requests'
+
+    monkeypatch.setattr(content_fetchers, 'html_webdriver', puppeteer_fetcher)
+    assert content_fetchers.resolve_content_fetcher(watch, datastore)[1] == 'html_webdriver'
+    assert watch.get_fetch_backend == 'html_webdriver'
+
+    # Known by the URL alone, before any check
+    uuid = datastore.add_watch(url='http://example.com/setup.exe', extras={'fetch_backend': 'html_webdriver'})
+    monkeypatch.setattr(content_fetchers, 'html_webdriver', selenium_fetcher)
+    assert content_fetchers.resolve_content_fetcher(datastore.data['watching'][uuid], datastore)[1] == 'html_requests'

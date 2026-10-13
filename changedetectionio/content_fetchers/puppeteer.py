@@ -13,6 +13,8 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio import gc_debounce
 from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.content_fetchers.cdp_downloads import CDPDownloads, download_timeout
+from changedetectionio.content_types import BinaryContent, download_rule
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
 
@@ -193,6 +195,8 @@ class fetcher(Fetcher):
     supports_screenshots = True
     supports_xpath_element_data = True
     supports_pdf = True
+    # With sockpuppetbrowser's SockPuppet.* download methods, see cdp_downloads.py
+    supports_binary_downloads = True
 
     @classmethod
     def get_status_icon_data(cls):
@@ -552,6 +556,10 @@ class fetcher(Fetcher):
         self.page._client.on('Fetch.requestPaused', _on_request_paused)
         await self.page._client.send('Fetch.enable', {'patterns': [{'resourceType': 'Document', 'requestStage': 'Response'}]})
 
+        # A page that turns out to be a file Chrome downloads (.msi, zip, attachment), see cdp_downloads.py
+        downloads = CDPDownloads(send=self.page._client.send, on=self.page._client.on, off=self.page._client.remove_listener)
+        await downloads.setup()
+
         # pyppeteer's navigation watcher is bound to the loaderId of the navigation it started. If
         # the page replaces that document (redirect/interstitial) the 'load' it waits for never
         # arrives for that loaderId, so goto() never returns - and with timeout=0 it would block
@@ -588,11 +596,22 @@ class fetcher(Fetcher):
                         try:
                             response = goto_task.result()
                         except Exception as e:
-                            if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
+                            if 'ERR_ABORTED' in str(e) and navigation_response:
+                                # A download aborts the navigation, the download events can trail the error
+                                for _ in range(20):
+                                    if downloads.started:
+                                        break
+                                    await asyncio.sleep(0.1)
+                            if downloads.started and navigation_response:
+                                response = navigation_response['response']
+                                logger.debug(f"Navigation became a download ({response.headers.get('content-type')}), "
+                                             f"status {response.status}")
+                            elif 'ERR_HTTP_RESPONSE_CODE_FAILURE' in str(e) and navigation_response:
+                                response = navigation_response['response']
+                                logger.debug(f"Navigation was aborted by the browser (empty body on an error status), "
+                                             f"recovered status {response.status} from the response event")
+                            else:
                                 raise
-                            response = navigation_response['response']
-                            logger.debug(f"Navigation was aborted by the browser (empty body on an error status), "
-                                         f"recovered status {response.status} from the response event")
                     else:
                         # Either the replacement document loaded, or we ran out of patience
                         response = navigation_response.get('response')
@@ -617,6 +636,20 @@ class fetcher(Fetcher):
                     raise EmptyReply(url=url, status_code=None)
                 attempt+=1
 
+            if downloads.started:
+                # Nothing rendered, the file is the result
+                self.headers = response.headers
+                self.status_code = response.status
+                if self.status_code != 200 and not ignore_status_codes:
+                    raise Non200ErrorCodeReceived(url=url, status_code=self.status_code)
+                rule = download_rule(response.headers.get('content-type'), url=response.url)
+                self.binary = await downloads.result(rule, timeout=download_timeout())
+                self.content = self.binary.md5
+                self.raw_content = self.binary.data
+                logger.success(f"Fetching '{url}' complete, it was a download - {self.binary.content_type} "
+                               f"{self.binary.size} bytes, sha256 {self.binary.sha256}")
+                return
+
             # Navigation is done; now honour "wait n seconds before extracting text" and then
             # force-stop whatever is still loading, so extraction always gets what rendered.
             # Awaited inline rather than fired off as a task, so nothing can outlive the fetch.
@@ -630,6 +663,7 @@ class fetcher(Fetcher):
                              f"(status {latest.status}) instead of {response.url} (status {response.status})")
                 response = latest
         finally:
+            downloads.close()
             self.page.remove_listener('response', _keep_navigation_response)
             self.page._client.remove_listener('Fetch.requestPaused', _on_request_paused)
             try:
@@ -692,7 +726,10 @@ class fetcher(Fetcher):
         pdf_body = main_frame_pdf.get('body')
         if pdf_body and 'application/pdf' in (response.headers.get('content-type') or '').lower():
             # Same as the requests fetcher does for binary files, the processor converts raw_content
-            self.content = hashlib.md5(pdf_body).hexdigest()
+            self.binary = BinaryContent(content_type='application/pdf', size=len(pdf_body),
+                                        sha256=hashlib.sha256(pdf_body).hexdigest(),
+                                        md5=hashlib.md5(pdf_body).hexdigest(), data=pdf_body)
+            self.content = self.binary.md5
             self.raw_content = pdf_body
         else:
             self.content = await self.page.content
