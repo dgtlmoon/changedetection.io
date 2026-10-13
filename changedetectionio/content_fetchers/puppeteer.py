@@ -192,6 +192,7 @@ class fetcher(Fetcher):
     supports_browser_steps = True
     supports_screenshots = True
     supports_xpath_element_data = True
+    supports_pdf = True
 
     @classmethod
     def get_status_icon_data(cls):

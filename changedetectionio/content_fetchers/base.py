@@ -18,6 +18,7 @@ class FetcherCapabilities(BaseModel):
     supports_browser_steps: bool = False       # Can execute browser automation steps
     supports_screenshots: bool = False         # Can capture page screenshots
     supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
+    supports_pdf: bool = False                 # Can supply the original PDF bytes as raw_content
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -109,6 +110,7 @@ class Fetcher():
     supports_browser_steps = False      # Can execute browser automation steps
     supports_screenshots = False        # Can capture page screenshots
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
+    supports_pdf = False                # Can supply the original PDF bytes as raw_content
 
     # Screenshot element locking - prevents layout shifts during screenshot capture
     # Only needed for visual comparison (image_ssim_diff processor)
