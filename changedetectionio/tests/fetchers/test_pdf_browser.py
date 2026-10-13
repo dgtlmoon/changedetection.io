@@ -59,17 +59,24 @@ def test_pdf_in_browser_fetcher(client, live_server, measure_memory_usage, datas
         assert not watch.get('last_error'), watch.get('last_error')
         assert watch.get_screenshot(), "PDF should have been fetched by the browser (which gives a screenshot)"
     else:
-        # The browser could only see the PDF viewer, next check falls back to html_requests
-        assert 'could not provide the original PDF' in watch.get('last_error')
+        # The browser could only see the PDF viewer, the next check falls back to html_requests.
+        # A duplicate queue entry (scheduler + import) can run that next check straight after the
+        # first one, so by now it may have already recovered - both outcomes are correct here.
+        # (The error itself is checked without timing issues in tests/test_pdf.py)
         assert watch.is_pdf
-        assert not watch.history_n
-        _recheck(client)
+        if watch.get('last_error'):
+            assert 'could not provide the original PDF' in watch.get('last_error')
+            assert not watch.history_n
+            _recheck(client)
         assert not watch.get('last_error'), watch.get('last_error')
 
     assert watch.history_n == 1
     snapshot = watch.get_history_snapshot(timestamp=list(watch.history.keys())[-1])
     assert 'hello world' in snapshot
     assert 'html' not in snapshot.lower()
+    # The original PDF is kept, whichever fetcher got it
+    with open("tests/test.pdf", 'rb') as f:
+        assert watch.get_fetched_pdf(list(watch.history.keys())[-1]) == f.read()
 
     # Same PDF again - nothing changed, no new snapshot
     _recheck(client)
@@ -83,3 +90,9 @@ def test_pdf_in_browser_fetcher(client, live_server, measure_memory_usage, datas
     assert watch.history_n == 2
     snapshot = watch.get_history_snapshot(timestamp=list(watch.history.keys())[-1])
     assert 'here is a change' in snapshot
+    # Both versions are kept for comparing
+    first_version, second_version = list(watch.history.keys())
+    with open("tests/test.pdf", 'rb') as f:
+        assert watch.get_fetched_pdf(first_version) == f.read()
+    with open("tests/test2.pdf", 'rb') as f:
+        assert watch.get_fetched_pdf(second_version) == f.read()

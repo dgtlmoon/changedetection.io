@@ -1307,6 +1307,32 @@ class model(EntityPersistenceMixin, watch_base):
         return False
 
 
+    def save_last_fetched_pdf(self, timestamp, contents):
+        """Keep the original PDF for a snapshot (the snapshot itself is only the converted text),
+        so the newest two versions can be compared. Does nothing unless contents is a PDF."""
+        if not isinstance(contents, bytes) or b'%PDF' not in contents[:1024]:
+            return
+        self.ensure_data_dir_exists()
+        self._write_atomic(os.path.join(self.data_dir, f"{timestamp}.pdf"), contents)
+        self._prune_last_fetched_pdf_snapshots()
+
+    def get_fetched_pdf(self, timestamp):
+        filepath = os.path.join(self.data_dir, f"{timestamp}.pdf")
+        if os.path.isfile(filepath):
+            with open(filepath, 'rb') as f:
+                return f.read()
+
+        return False
+
+    def _prune_last_fetched_pdf_snapshots(self):
+        # Keep only the PDFs of the newest two history entries. Matched by filename rather than by
+        # walking the history, so PDFs of entries that history_trim() already removed go too.
+        # (Binary history snapshots are named by md5, so a digits-only name is always ours)
+        keep = set(str(k) for k in list(self.history.keys())[-2:])
+        for f in Path(self.data_dir).glob('*.pdf'):
+            if f.stem.isdigit() and f.stem not in keep:
+                f.unlink(missing_ok=True)
+
     def _prune_last_fetched_html_snapshots(self):
 
         dates = list(self.history.keys())

@@ -144,3 +144,32 @@ def test_pdf_from_fetcher_without_pdf_support(client, live_server, measure_memor
 
     assert not watch.get('last_error')
     assert 'hello world' in watch.get_history_snapshot(timestamp=list(watch.history.keys())[0])
+
+
+def test_pdf_last_two_versions_are_kept(client, live_server, measure_memory_usage, datastore_path):
+    # The snapshot is only the converted text, the original PDFs of the newest two versions must be kept
+    import shutil
+    import glob
+
+    test_url = url_for('test_pdf_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+
+    versions = ["tests/test.pdf", "tests/test2.pdf", "tests/test.pdf"]
+    for i, source in enumerate(versions):
+        shutil.copy(source, os.path.join(datastore_path, "endpoint-test.pdf"))
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+        assert watch.history_n == i + 1
+
+        newest = list(watch.history.keys())[-2:]
+        stored = sorted(os.path.basename(f) for f in glob.glob(os.path.join(watch.data_dir, "*.pdf"))
+                        if os.path.basename(f)[:-4].isdigit())
+        assert stored == sorted(f"{k}.pdf" for k in newest)
+
+        # And it's the actual PDF that was fetched for that version
+        with open(source, 'rb') as f:
+            assert watch.get_fetched_pdf(newest[-1]) == f.read()
+
+    # The oldest version was pruned
+    assert watch.get_fetched_pdf(list(watch.history.keys())[0]) is False
