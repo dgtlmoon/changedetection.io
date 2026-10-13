@@ -411,7 +411,11 @@ class difference_detection_processor():
     def get_raw_document_checksum(self):
         checksum = None
 
-        if self.fetcher.content:
+        # Prefer the original response bytes, for a PDF in a browser fetcher the content is only
+        # the PDF viewer's HTML wrapper which is the same for every version of the document
+        if isinstance(self.fetcher.raw_content, bytes) and self.fetcher.raw_content:
+            checksum = hashlib.md5(self.fetcher.raw_content).hexdigest()
+        elif self.fetcher.content:
             checksum = hashlib.md5(self.fetcher.content.encode('utf-8')).hexdigest()
 
         return checksum

@@ -428,6 +428,16 @@ class perform_site_check(difference_detection_processor):
         if not watch:
             raise Exception("Watch no longer exists.")
 
+        # Browsers show PDFs in their built-in viewer, so a fetcher may only have the viewer's HTML.
+        # Checked before the checksum skip, otherwise the unchanging viewer HTML would be "unchanged" every time
+        ctype_header = self.fetcher.get_all_headers().get('content-type', DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER).lower()
+        if watch.is_pdf or 'application/pdf' in ctype_header:
+            if not self.fetcher.raw_content or b'%PDF' not in self.fetcher.raw_content[:1024]:
+                raise PDFNotAvailableFromFetcher(
+                    "Content is a PDF but this fetcher could not provide the original PDF file, "
+                    "try the 'Basic fast Plaintext/HTTP Client' fetcher instead."
+                )
+
         current_raw_document_checksum = self.get_raw_document_checksum()
 
         # Build filter config up front so we can hash it for the skip check.
@@ -454,7 +464,6 @@ class perform_site_check(difference_detection_processor):
         rule_engine = RuleEngine()
 
         # Get content type and stream info
-        ctype_header = self.fetcher.get_all_headers().get('content-type', DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER).lower()
         stream_content_type = guess_stream_type(http_content_header=ctype_header, content=self.fetcher.content)
 
         # Unset any existing notification error
@@ -486,12 +495,6 @@ class perform_site_check(difference_detection_processor):
 
         # PDF preprocessing
         if watch.is_pdf or stream_content_type.is_pdf:
-            # Browsers show PDFs in their built-in viewer, so a fetcher may only have the viewer's HTML
-            if not self.fetcher.raw_content or b'%PDF' not in self.fetcher.raw_content[:1024]:
-                raise PDFNotAvailableFromFetcher(
-                    "Content is a PDF but this fetcher could not provide the original PDF file, "
-                    "try the 'Basic fast Plaintext/HTTP Client' fetcher instead."
-                )
             content = content_processor.preprocess_pdf(raw_content=self.fetcher.raw_content)
             stream_content_type.is_html = True
 
