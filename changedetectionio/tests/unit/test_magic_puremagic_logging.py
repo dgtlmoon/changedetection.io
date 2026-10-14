@@ -43,6 +43,13 @@ class TestPuremagicLogging(unittest.TestCase):
         self.assertTrue(result.is_plaintext)
         self.assertEqual(len(self.warnings()), 1)
 
+    def test_missing_library_falls_back(self):
+        # A None entry in sys.modules makes "import puremagic" raise ImportError
+        with mock.patch.dict("sys.modules", {"puremagic": None}):
+            result = guess_stream_type(http_content_header="text/plain", content="just some plain text")
+        self.assertTrue(result.is_plaintext)
+        self.assertEqual(len(self.warnings()), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
