@@ -401,6 +401,9 @@ def _filtered_action_url(endpoint, **overrides):
     args.pop('page', None)
     args.update(overrides)
     args = {k: v for k, v in args.items() if v not in (None, '', 0, '0')}
+    # The All tab must explicitly clear the remembered watch-list group.
+    if endpoint == 'watchlist.index' and 'tag' in overrides and overrides['tag'] is None:
+        args['tag'] = ''
     return url_for(endpoint, **args)
 
 
