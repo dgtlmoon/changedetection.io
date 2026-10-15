@@ -526,6 +526,9 @@ class fetcher(Fetcher):
 
         async def _handle_document_response(event):
             try:
+                # Request-stage pauses only exist when proxy auth is on (see the Fetch.enable below), nothing to inspect
+                if 'responseStatusCode' not in event and 'responseErrorReason' not in event:
+                    return
                 if event.get('frameId') != self.page.mainFrame._id:
                     return
                 # Any new main-frame document replaces whatever was captured before
@@ -549,8 +552,21 @@ class fetcher(Fetcher):
         def _on_request_paused(event):
             asyncio.ensure_future(_handle_document_response(event))
 
+        # Fetch.enable REPLACES any earlier Fetch.enable, including the one page.authenticate() did for
+        # proxy credentials ({'handleAuthRequests': True, 'patterns': [{'urlPattern': '*'}]}), without
+        # handleAuthRequests Chrome never asks for the credentials and the proxy answers 407.
+        proxy_auth = bool(self.proxy and self.proxy.get('username'))
+        fetch_patterns = [{'resourceType': 'Document', 'requestStage': 'Response'}]
+        if proxy_auth:
+            # Every request (not just documents) must be matched for Chrome to emit Fetch.authRequired for it
+            fetch_patterns.append({'urlPattern': '*', 'requestStage': 'Request'})
+            # pyppeteer's NetworkManager still answers Fetch.authRequired with the credentials, but stop it from
+            # blindly continuing every paused request, it would continue our paused PDF responses before we copy
+            # the body out. _handle_document_response continues everything itself.
+            self.page._frameManager.networkManager._protocolRequestInterceptionEnabled = False
+
         self.page._client.on('Fetch.requestPaused', _on_request_paused)
-        await self.page._client.send('Fetch.enable', {'patterns': [{'resourceType': 'Document', 'requestStage': 'Response'}]})
+        await self.page._client.send('Fetch.enable', {'handleAuthRequests': proxy_auth, 'patterns': fetch_patterns})
 
         # pyppeteer's navigation watcher is bound to the loaderId of the navigation it started. If
         # the page replaces that document (redirect/interstitial) the 'load' it waits for never
@@ -633,9 +649,13 @@ class fetcher(Fetcher):
             self.page.remove_listener('response', _keep_navigation_response)
             self.page._client.remove_listener('Fetch.requestPaused', _on_request_paused)
             try:
-                await self.page._client.send('Fetch.disable')
+                if proxy_auth:
+                    # Hand Fetch back to pyppeteer as page.authenticate() left it, so later requests still get the credentials
+                    await self.page.authenticate(self.proxy)
+                else:
+                    await self.page._client.send('Fetch.disable')
             except Exception as e:
-                logger.debug(f"Fetch.disable failed, page is most likely already gone: {e}")
+                logger.debug(f"Resetting Fetch failed, page is most likely already gone: {e}")
 
         self.headers = response.headers
 
