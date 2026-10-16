@@ -171,3 +171,7 @@ pytest-xdist
 # BSD-3-Clause and dependency-free. Chosen over `qrcode`, which ships both a BSD and an
 # "Other/Proprietary" trove classifier - ambiguity we don't want in an Apache-2.0 tree.
 segno==1.6.6
+
+# Optional application-layer rate limiting / IP allow list / request filtering, off unless FLASKAPI_GUARD_ENABLED=true
+# MIT licensed. See changedetectionio/guard.py
+flaskapi-guard~=4.4

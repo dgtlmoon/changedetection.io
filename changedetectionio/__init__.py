@@ -687,6 +687,11 @@ def main():
             x_port=1,     # X-Forwarded-Port (original port)
             x_prefix=1    # X-Forwarded-Prefix (URL prefix)
         )
+        # With flaskapi-guard on, only its trusted proxies may set X-Forwarded-* (ProxyFix alone trusts any peer)
+        from changedetectionio.guard import guard_enabled
+        if guard_enabled():
+            from changedetectionio.guard import restrict_forwarded_headers
+            app.wsgi_app = restrict_forwarded_headers(app.wsgi_app)
 
 
     # In batch mode, skip starting the HTTP server - just keep workers running
