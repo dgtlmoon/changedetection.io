@@ -20,7 +20,8 @@ from ..notification.handler import newline_re
 
 def validate_time_schedule_limit(json_data):
     """
-    Validate the optional timezone inside time_schedule_limit.
+    Validate time_schedule_limit, the optional timezone inside it and then the whole
+    structure against the typed model (model/TimeScheduleLimit.py).
 
     The edit form runs validateTimeZoneName on this field, but the API did not -
     the OpenAPI schema for time_schedule_limit does not declare a `timezone`
@@ -41,7 +42,7 @@ def validate_time_schedule_limit(json_data):
 
     tz_name = schedule.get('timezone')
     if not tz_name:
-        return None
+        return _validate_time_schedule_limit_model(schedule)
 
     if not isinstance(tz_name, str):
         return "time_schedule_limit.timezone must be a string IANA timezone name, e.g. 'Europe/Berlin'."
@@ -51,6 +52,18 @@ def validate_time_schedule_limit(json_data):
         return (f"time_schedule_limit.timezone '{tz_name}' is not a valid timezone name. "
                 f"Use an IANA name such as 'Europe/Berlin' or 'UTC'.")
 
+    return _validate_time_schedule_limit_model(schedule)
+
+
+def _validate_time_schedule_limit_model(schedule):
+    """Strict check against the typed model, storing it is lenient (falls back to the default)"""
+    from pydantic import ValidationError
+    from changedetectionio.model.TimeScheduleLimit import TimeScheduleLimit
+    try:
+        TimeScheduleLimit.validate(schedule)
+    except ValidationError as e:
+        problems = "; ".join(f"{'.'.join(str(p) for p in err['loc'])}: {err['msg']}" for err in e.errors())
+        return f"Invalid time_schedule_limit - {problems}"
     return None
 
 

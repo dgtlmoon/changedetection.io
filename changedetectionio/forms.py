@@ -178,8 +178,8 @@ class LabelAfterInputTableWidget(widgets.TableWidget):
 
 
 class TimeDurationForm(Form):
-    hours = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 25)], default="24",  validators=[validators.Optional()])
-    minutes = SelectField(choices=[(f"{i}", f"{i}") for i in range(0, 60)], default="00", validators=[validators.Optional()])
+    hours = SelectField(choices=[(i, f"{i}") for i in range(0, 25)], coerce=int, default=24, validators=[validators.Optional()])
+    minutes = SelectField(choices=[(i, f"{i}") for i in range(0, 60)], coerce=int, default=0, validators=[validators.Optional()])
 
 class TimeStringField(Field):
     """

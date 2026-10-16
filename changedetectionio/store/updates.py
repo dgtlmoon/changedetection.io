@@ -872,3 +872,34 @@ class DatastoreUpdatesMixin:
             watch.commit()
 
 
+
+    def update_34(self):
+        """time_schedule_limit is now a typed model (model/TimeScheduleLimit.py) with int hours/minutes.
+
+        Watches and tags were already converted in memory when they loaded, untouched schedules
+        share one default instance. Commit them so watch.json/tag.json drop the stored 7-day
+        default (only what differs from the default is written now).
+
+        The global settings copy stays a plain dict for now, only its "24"/"00" strings become ints.
+        Idempotent.
+        """
+        from pydantic import ValidationError
+        from ..model.TimeScheduleLimit import TimeScheduleLimit, DEFAULT_TIME_SCHEDULE_LIMIT
+
+        requests_settings = self.data['settings']['requests']
+        if requests_settings.get('time_schedule_limit'):
+            try:
+                requests_settings['time_schedule_limit'] = TimeScheduleLimit.validate(requests_settings['time_schedule_limit']).to_api()
+            except ValidationError as e:
+                logger.error(f"update_34: left the global time_schedule_limit as-is, it does not validate - {e}")
+
+        custom = 0
+        for watch in self.data['watching'].values():
+            if watch.get('time_schedule_limit') is not DEFAULT_TIME_SCHEDULE_LIMIT:
+                custom += 1
+            watch.commit()
+
+        for tag in self.data['settings']['application'].get('tags', {}).values():
+            tag.commit()
+
+        logger.info(f"update_34: {custom} of {len(self.data['watching'])} watches have a time_schedule_limit different from the default")

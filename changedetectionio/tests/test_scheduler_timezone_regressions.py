@@ -52,7 +52,7 @@ def _full_schedule(enabled=True, timezone=None):
     sched = {'enabled': True}
     for day in DAYS:
         sched[day] = {'enabled': enabled, 'start_time': '00:00',
-                      'duration': {'hours': '24', 'minutes': '00'}}
+                      'duration': {'hours': 24, 'minutes': 0}}
     if timezone is not None:
         sched['timezone'] = timezone
     return sched
@@ -81,7 +81,7 @@ def test_edit_page_saves_when_no_default_timezone_configured(client, live_server
     assert b"Updated watch." in res.data
 
     # and the schedule really was saved
-    assert datastore.data['watching'][uuid]['time_schedule_limit']['enabled'] is True
+    assert datastore.data['watching'][uuid]['time_schedule_limit'].enabled is True
 
 
 def test_edit_page_saves_with_unresolvable_timezone(client, live_server, measure_memory_usage, datastore_path):
@@ -168,7 +168,7 @@ def test_api_rejects_invalid_timezone_on_update(client, live_server, measure_mem
     assert b'not a valid timezone' in res.data.lower()
 
     stored = datastore.data['watching'][uuid]['time_schedule_limit']
-    assert stored.get('timezone') != 'Not/ARealZone', "invalid timezone was persisted anyway"
+    assert stored.timezone != 'Not/ARealZone', "invalid timezone was persisted anyway"
 
 
 def test_api_accepts_valid_timezone_on_update(client, live_server, measure_memory_usage, datastore_path):
@@ -189,7 +189,7 @@ def test_api_accepts_valid_timezone_on_update(client, live_server, measure_memor
             data=json.dumps({'time_schedule_limit': _full_schedule(timezone=tz)}),
         )
         assert res.status_code == 200, f"{tz} rejected: {res.data}"
-        assert datastore.data['watching'][uuid]['time_schedule_limit']['timezone'] == tz
+        assert datastore.data['watching'][uuid]['time_schedule_limit'].timezone == tz
 
     # omitting the timezone entirely stays valid
     res = client.put(

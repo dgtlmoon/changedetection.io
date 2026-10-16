@@ -69,6 +69,7 @@ from changedetectionio.languages import (
 
 from .thread_supervisor import start_supervised_thread
 from .time_handler import default_timezone_name, is_within_schedule
+from .model.TimeScheduleLimit import as_time_schedule_limit
 
 IN_PYTEST = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
 
@@ -1733,6 +1734,10 @@ def ticker_thread_check_time_launch_checks():
                 break
 
         recheck_time_system_seconds = int(datastore.threshold_seconds)
+        # Global settings still store a plain dict, convert once per pass rather than once per watch
+        global_time_schedule_limit = as_time_schedule_limit(
+            datastore.data['settings']['requests'].get('time_schedule_limit')
+        )
 
         # Check for watches outside of the time threshold to put in the thread queue.
         for watch_index, uuid in enumerate(watch_uuid_list):
@@ -1764,20 +1769,18 @@ def ticker_thread_check_time_launch_checks():
             # Time schedule limit - Decide between watch or global settings
             scheduler_source = None
             if watch.get('time_between_check_use_default'):
-                time_schedule_limit = datastore.data['settings']['requests'].get(
-                    'time_schedule_limit', {}
-                )
+                time_schedule_limit = global_time_schedule_limit
                 scheduler_source = 'system/global settings'
 
             else:
-                time_schedule_limit = watch.get('time_schedule_limit')
+                time_schedule_limit = watch['time_schedule_limit']
                 scheduler_source = 'watch'
 
             tz_name = default_timezone_name(
                 datastore.data['settings']['application'].get('scheduler_timezone_default')
             )
 
-            if time_schedule_limit and time_schedule_limit.get('enabled'):
+            if time_schedule_limit.enabled:
                 logger.trace(
                     f"{uuid} Time scheduler - Using scheduler settings from {scheduler_source}"
                 )
