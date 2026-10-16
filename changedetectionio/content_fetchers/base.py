@@ -19,6 +19,7 @@ class FetcherCapabilities(BaseModel):
     supports_screenshots: bool = False         # Can capture page screenshots
     supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
     supports_pdf: bool = False                 # Can supply the original PDF bytes as raw_content
+    supports_binary_downloads: bool = False    # Can describe a file the server sends as a download (.msi, zip...)
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -90,6 +91,8 @@ class Fetcher():
     instock_data_js = ""
     # Original response bytes (needed for PDF etc), fetchers that can't provide them leave this as None
     raw_content = None
+    # content_types.BinaryContent when the response was a binary type (size, checksums, maybe the bytes)
+    binary = None
     screenshot_format = None
     status_code = None
     webdriver_js_execute_code = None
@@ -111,6 +114,7 @@ class Fetcher():
     supports_screenshots = False        # Can capture page screenshots
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
     supports_pdf = False                # Can supply the original PDF bytes as raw_content
+    supports_binary_downloads = False   # Can describe a file the server sends as a download (.msi, zip...)
 
     # Screenshot element locking - prevents layout shifts during screenshot capture
     # Only needed for visual comparison (image_ssim_diff processor)
@@ -156,6 +160,7 @@ class Fetcher():
         """
         self.content = None
         self.raw_content = None
+        self.binary = None
         self.screenshot = None
         self.xpath_data = None
         # Keep headers and status_code as they're small

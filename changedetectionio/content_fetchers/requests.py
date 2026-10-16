@@ -1,7 +1,6 @@
 from flask_babel import lazy_gettext as _l
 from loguru import logger
 from urllib.parse import urljoin, urlparse
-import hashlib
 import os
 import re
 import asyncio
@@ -9,6 +8,7 @@ import asyncio
 from changedetectionio import strtobool
 from changedetectionio.content_fetchers.exceptions import BrowserStepsInUnsupportedFetcher, EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.content_types import BinaryReader, binary_rule
 from changedetectionio.validate_url import is_fetch_url_allowed, is_private_hostname, is_url_private_or_parser_confused
 
 
@@ -16,6 +16,7 @@ from changedetectionio.validate_url import is_fetch_url_allowed, is_private_host
 class fetcher(Fetcher):
     fetcher_description = _l("Basic fast Plaintext/HTTP Client")
     supports_pdf = True
+    supports_binary_downloads = True
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
@@ -102,7 +103,9 @@ class fetcher(Fetcher):
                                 timeout=timeout,
                                 proxies=proxies,
                                 verify=False,
-                                allow_redirects=False)
+                                allow_redirects=False,
+                                # So a binary file can be hashed as it arrives rather than held in memory
+                                stream=True)
 
             # Manually follow redirects so each hop's resolved IP can be validated,
             # preventing SSRF via an open redirect on a public host.
@@ -117,12 +120,14 @@ class fetcher(Fetcher):
                         raise Exception(f"Redirect blocked: '{redirect_url}' resolves to a private/reserved IP address "
                                         f"or contains a parser-differential payload.")
                 current_url = redirect_url
+                r.close()
                 r = session.request('GET', redirect_url,
                                     headers=request_headers,
                                     timeout=timeout,
                                     proxies=proxies,
                                     verify=False,
-                                    allow_redirects=False)
+                                    allow_redirects=False,
+                                    stream=True)
             else:
                 raise Exception("Too many redirects")
 
@@ -132,51 +137,67 @@ class fetcher(Fetcher):
                 msg = f"Proxy connection failed? {msg}"
             raise Exception(msg) from e
 
+        # Binary types (see content_types.py) are hashed as they stream in, and only kept in memory
+        # when their rule needs the bytes. No text decoding, which on a big file is slow and pointless.
+        binary_content_rule = binary_rule(r.headers.get('content-type'), url=current_url)
+        if not binary_content_rule and is_binary:
+            # Known to be a PDF from before (watch.is_pdf), whatever this server calls it
+            binary_content_rule = binary_rule('application/pdf')
+        if binary_content_rule:
+            try:
+                reader = BinaryReader(binary_content_rule)
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    reader.update(chunk)
+            finally:
+                r.close()
+            self._set_binary_result(r, reader.result(), url=url,
+                                    empty_pages_are_a_change=empty_pages_are_a_change,
+                                    ignore_status_codes=ignore_status_codes)
+            return
+
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content
         # This seems to not occur when using webdriver/selenium, it seems to detect the text encoding more reliably.
         # https://github.com/psf/requests/issues/1604 good info about requests encoding detection
-        if not is_binary:
-            # Don't run this for PDF (and requests identified as binary) takes a _long_ time
-            if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
-                # For XML/RSS feeds, check the XML declaration for encoding attribute
-                # This is more reliable than chardet which can misdetect UTF-8 as MacRoman
-                content_type = r.headers.get('content-type', '').lower()
-                if 'xml' in content_type or 'rss' in content_type:
-                    # Look for <?xml version="1.0" encoding="UTF-8"?>
-                    xml_encoding_match = re.search(rb'<\?xml[^>]+encoding=["\']([^"\']+)["\']', r.content[:200])
-                    if xml_encoding_match:
-                        r.encoding = xml_encoding_match.group(1).decode('ascii')
-                    else:
-                        # Default to UTF-8 for XML if no encoding found
-                        r.encoding = 'utf-8'
+        if not r.headers.get('content-type') or not 'charset=' in r.headers.get('content-type'):
+            # For XML/RSS feeds, check the XML declaration for encoding attribute
+            # This is more reliable than chardet which can misdetect UTF-8 as MacRoman
+            content_type = r.headers.get('content-type', '').lower()
+            if 'xml' in content_type or 'rss' in content_type:
+                # Look for <?xml version="1.0" encoding="UTF-8"?>
+                xml_encoding_match = re.search(rb'<\?xml[^>]+encoding=["\']([^"\']+)["\']', r.content[:200])
+                if xml_encoding_match:
+                    r.encoding = xml_encoding_match.group(1).decode('ascii')
                 else:
-                    # No charset in HTTP header - sniff encoding in priority order matching browsers
-                    # (WHATWG encoding sniffing algorithm):
-                    # 1. BOM - highest confidence, check before anything else
-                    # 2. <meta charset> in first 2kb
-                    # 3. chardet statistical detection - last resort
-                    # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
-                    boms = [
-                        (b'\xef\xbb\xbf', 'utf-8-sig'),
-                        (b'\xff\xfe', 'utf-16-le'),
-                        (b'\xfe\xff', 'utf-16-be'),
-                    ]
-                    bom_encoding = next((enc for bom, enc in boms if r.content.startswith(bom)), None)
-                    if bom_encoding:
-                        logger.info(f"URL: {url} Using encoding '{bom_encoding}' detected from BOM")
-                        r.encoding = bom_encoding
+                    # Default to UTF-8 for XML if no encoding found
+                    r.encoding = 'utf-8'
+            else:
+                # No charset in HTTP header - sniff encoding in priority order matching browsers
+                # (WHATWG encoding sniffing algorithm):
+                # 1. BOM - highest confidence, check before anything else
+                # 2. <meta charset> in first 2kb
+                # 3. chardet statistical detection - last resort
+                # See: https://github.com/dgtlmoon/changedetection.io/issues/3952
+                boms = [
+                    (b'\xef\xbb\xbf', 'utf-8-sig'),
+                    (b'\xff\xfe', 'utf-16-le'),
+                    (b'\xfe\xff', 'utf-16-be'),
+                ]
+                bom_encoding = next((enc for bom, enc in boms if r.content.startswith(bom)), None)
+                if bom_encoding:
+                    logger.info(f"URL: {url} Using encoding '{bom_encoding}' detected from BOM")
+                    r.encoding = bom_encoding
+                else:
+                    meta_charset_match = re.search(rb'<meta[^>]+charset\s*=\s*["\']?\s*([^"\'\s;>]+)', r.content[:2000], re.IGNORECASE)
+                    if meta_charset_match:
+                        encoding = meta_charset_match.group(1).decode('ascii', errors='ignore')
+                        logger.info(f"URL: {url} No content-type encoding in HTTP headers - Using encoding '{encoding}' from HTML meta charset tag")
+                        r.encoding = encoding
                     else:
-                        meta_charset_match = re.search(rb'<meta[^>]+charset\s*=\s*["\']?\s*([^"\'\s;>]+)', r.content[:2000], re.IGNORECASE)
-                        if meta_charset_match:
-                            encoding = meta_charset_match.group(1).decode('ascii', errors='ignore')
-                            logger.info(f"URL: {url} No content-type encoding in HTTP headers - Using encoding '{encoding}' from HTML meta charset tag")
+                        encoding = chardet.detect(r.content)['encoding']
+                        logger.warning(f"URL: {url} No charset in headers or meta tag, guessed encoding as '{encoding}' via chardet")
+                        if encoding:
                             r.encoding = encoding
-                        else:
-                            encoding = chardet.detect(r.content)['encoding']
-                            logger.warning(f"URL: {url} No charset in headers or meta tag, guessed encoding as '{encoding}' via chardet")
-                            if encoding:
-                                r.encoding = encoding
 
         self.headers = r.headers
 
@@ -194,19 +215,34 @@ class fetcher(Fetcher):
             raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html=r.text)
 
         self.status_code = r.status_code
-        if is_binary:
-            # Binary files just return their checksum until we add something smarter
-            self.content = hashlib.md5(r.content).hexdigest()
-        else:
-            self.content = r.text
-
+        self.content = r.text
         self.raw_content = r.content
 
-        # If the content is an image, set it as screenshot for SSIM/visual comparison
-        content_type = r.headers.get('content-type', '').lower()
-        if 'image/' in content_type:
-            self.screenshot = r.content
-            logger.debug(f"Image content detected ({content_type}), set as screenshot for comparison")
+    def _set_binary_result(self, r, binary, url, empty_pages_are_a_change, ignore_status_codes):
+        self.headers = r.headers
+
+        if not binary.size:
+            logger.debug(f"Requests returned empty content for '{url}'")
+            if not empty_pages_are_a_change:
+                raise EmptyReply(url=url, status_code=r.status_code)
+
+        if r.status_code != 200 and not ignore_status_codes:
+            raise Non200ErrorCodeReceived(url=url, status_code=r.status_code, page_html='')
+
+        self.status_code = r.status_code
+        self.binary = binary
+        # The checksum stands in for the content, so "unchanged since last check" compares the file itself
+        self.content = binary.md5
+        self.raw_content = binary.data
+
+        # If the content is an image, it's also the screenshot (for SSIM/visual comparison)
+        rule = binary_rule(binary.content_type)
+        if rule and rule['use_as_screenshot'] and binary.data:
+            self.screenshot = binary.data
+            # Separate from .screenshot, which clear_content() empties before quit() runs
+            self.made_screenshot = True
+            logger.debug(f"Image content detected ({binary.content_type}), set as screenshot for comparison")
+        logger.debug(f"Binary content {binary.content_type} for '{url}' - {binary.size} bytes, sha256 {binary.sha256}")
 
     async def run(self,
                   fetch_favicon=True,
@@ -248,7 +284,8 @@ class fetcher(Fetcher):
         # In case they switched to `requests` fetcher from something else
         # Then the screenshot could be old, in any case, it's not used here.
         # REMOVE_REQUESTS_OLD_SCREENSHOTS - Mainly used for testing
-        if strtobool(os.getenv("REMOVE_REQUESTS_OLD_SCREENSHOTS", 'true')):
+        # (An image is its own screenshot, that one is current)
+        if strtobool(os.getenv("REMOVE_REQUESTS_OLD_SCREENSHOTS", 'true')) and not getattr(self, 'made_screenshot', False):
             screenshot = watch.get_screenshot()
             if screenshot:
                 try:

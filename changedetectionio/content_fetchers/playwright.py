@@ -9,6 +9,8 @@ from loguru import logger
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.content_fetchers.cdp_downloads import CDPDownloads, download_timeout
+from changedetectionio.content_types import download_rule
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, \
     BrowserStepsStepException
 
@@ -170,6 +172,8 @@ class fetcher(Fetcher):
     supports_browser_steps = True
     supports_screenshots = True
     supports_xpath_element_data = True
+    # With sockpuppetbrowser's SockPuppet.* download methods, see cdp_downloads.py
+    supports_binary_downloads = True
 
     @classmethod
     def get_status_icon_data(cls):
@@ -318,7 +322,44 @@ class fetcher(Fetcher):
             browsersteps_interface = steppable_browser_interface(start_url=url)
             browsersteps_interface.page = self.page
 
-            response = await browsersteps_interface.action_goto_url(value=url)
+            # A page that turns out to be a file Chrome downloads (.msi, zip, attachment), see cdp_downloads.py
+            cdp = await context.new_cdp_session(self.page)
+            target_info = await cdp.send('Target.getTargetInfo')
+            downloads = CDPDownloads(send=cdp.send, on=cdp.on, off=cdp.remove_listener,
+                                     browser_context_id=target_info.get('targetInfo', {}).get('browserContextId'))
+            await downloads.setup()
+
+            try:
+                response = await browsersteps_interface.action_goto_url(value=url)
+            except Exception as e:
+                # A download aborts the navigation ("Download is starting"), the download events can trail the error
+                for _ in range(20):
+                    if downloads.started:
+                        break
+                    await asyncio.sleep(0.1)
+                if not downloads.started or not latest_navigation_response.get('response'):
+                    raise
+                response = latest_navigation_response['response']
+
+            if downloads.started:
+                # Nothing rendered, the file is the result
+                try:
+                    self.headers = await response.all_headers()
+                    self.status_code = response.status
+                    if self.status_code != 200 and not ignore_status_codes:
+                        raise Non200ErrorCodeReceived(url=url, status_code=self.status_code)
+                    rule = download_rule(self.headers.get('content-type'), url=response.url)
+                    self.binary = await downloads.result(rule, timeout=download_timeout())
+                    self.content = self.binary.md5
+                    self.raw_content = self.binary.data
+                    logger.success(f"Fetching '{url}' complete, it was a download - {self.binary.content_type} "
+                                   f"{self.binary.size} bytes, sha256 {self.binary.sha256}")
+                    return
+                finally:
+                    downloads.close()
+                    await context.close()
+                    await browser.close()
+            downloads.close()
 
             if response is None:
                 await context.close()
