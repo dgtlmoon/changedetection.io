@@ -3278,8 +3278,12 @@ msgid "Edit > Watch"
 msgstr "Bearbeiten"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Fetch Methode"
+msgid "Notification URL List"
+msgstr "Liste der Benachrichtigungs-URLs"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Benachrichtigungstitel"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3290,12 +3294,8 @@ msgid "Notification format"
 msgstr "Benachrichtigungsformat"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Benachrichtigungstitel"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Liste der Benachrichtigungs-URLs"
+msgid "Fetch Method"
+msgstr "Fetch Methode"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
