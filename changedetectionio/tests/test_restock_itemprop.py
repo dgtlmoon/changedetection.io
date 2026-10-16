@@ -3,6 +3,7 @@ import os
 import time
 
 from flask import url_for
+from bs4 import BeautifulSoup
 from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client, delete_all_watches
 from ..notification import default_notification_format
 
@@ -74,6 +75,51 @@ def test_restock_itemprop_basic(client, live_server, measure_memory_usage, datas
 
         assert b'has-restock-info not-in-stock' in res.data
 
+        delete_all_watches(client)
+
+
+def test_restock_badge_uses_price_when_availability_detection_is_off(
+        client, live_server, measure_memory_usage, datastore_path):
+    """The watch-list badge should describe price-only restock watches accurately."""
+    delete_all_watches(client)
+    try:
+        set_original_response(props_markup=instock_props[0], price="121.95", datastore_path=datastore_path)
+        test_url = url_for('test_endpoint', _external=True)
+
+        client.post(
+            url_for("ui.ui_views.form_quick_watch_add"),
+            data={"url": test_url, "tags": "", "processor": "restock_diff"},
+            follow_redirects=True,
+        )
+        wait_for_all_checks(client)
+
+        res = client.get(url_for("watchlist.index"))
+        assert b'class="processor-badge processor-badge-restock_diff' in res.data
+        assert b'>Restock</a>' in res.data
+
+        res = client.post(
+            url_for("ui.ui_edit.edit_page", uuid="first"),
+            data={
+                "processor_config_restock_diff-in_stock_processing": "off",
+                "processor_config_restock_diff-follow_price_changes": "y",
+                "url": test_url,
+                "tags": "",
+                "headers": "",
+                "fetch_backend": "html_requests",
+                "time_between_check_use_default": "y",
+            },
+            follow_redirects=True,
+        )
+        assert b"Updated watch." in res.data
+
+        res = client.get(url_for("watchlist.index"))
+        assert b'>Price</a>' in res.data
+        assert b'>Restock</a>' not in res.data
+        page = BeautifulSoup(res.data, 'html.parser')
+        badges = page.select('.processor-badge-restock_diff')
+        assert len(badges) == 1
+        assert page.select_one('td.watch-processor .processor-badge-restock_diff').get_text(strip=True) == 'Price'
+    finally:
         delete_all_watches(client)
 
 def test_itemprop_price_change(client, live_server, measure_memory_usage, datastore_path):
