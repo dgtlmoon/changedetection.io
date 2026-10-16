@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 // Search Modal Styles
 
 #search-modal {
@@ -44,7 +46,7 @@
 }
 
 // Dark mode adjustments
-html[data-darkmode=true] {
+@include dark-mode {
   #search-modal {
     #search-modal-input {
       &:focus {
