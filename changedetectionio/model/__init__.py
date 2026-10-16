@@ -7,6 +7,23 @@ from .persistence import EntityPersistenceMixin, _determine_entity_type
 __all__ = ['EntityPersistenceMixin', 'watch_base']
 
 from ..browser_steps.browser_steps import browser_steps_get_valid_steps
+from .shared_defaults import DefaultShared
+from .TimeScheduleLimit import DEFAULT_TIME_SCHEDULE_LIMIT, as_time_schedule_limit
+
+# Fields held as typed, frozen pydantic models instead of nested dicts, with the function
+# that converts whatever is stored/submitted into the model, called as fn(value, owner_uuid=...). Every write path (loading
+# watch.json, the edit form, the API, clone) goes through __setitem__/update below.
+TYPED_FIELDS = {
+    'time_schedule_limit': as_time_schedule_limit,
+}
+
+
+def storage_value(value):
+    """Value as written to watch.json/tag.json, typed fields only keep what differs from their defaults"""
+    import copy
+    if isinstance(value, DefaultShared):
+        return value.to_storage()
+    return copy.deepcopy(value)
 
 USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH = 'System default'
 CONDITIONS_MATCH_LOGIC_DEFAULT = 'ALL'
@@ -237,65 +254,7 @@ class watch_base(dict):
             'text_should_not_be_present': [],  # Text that should not present
             'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
             'time_between_check_use_default': True,
-            "time_schedule_limit": {
-                "enabled": False,
-                "monday": {
-                    "enabled": True,
-                    "start_time": "00:00",
-                    "duration": {
-                        "hours": "24",
-                        "minutes": "00"
-                    }
-                },
-                "tuesday": {
-                    "enabled": True,
-                    "start_time": "00:00",
-                    "duration": {
-                        "hours": "24",
-                        "minutes": "00"
-                    }
-                },
-                "wednesday": {
-                    "enabled": True,
-                    "start_time": "00:00",
-                    "duration": {
-                        "hours": "24",
-                        "minutes": "00"
-                    }
-                },
-                "thursday": {
-                    "enabled": True,
-                    "start_time": "00:00",
-                    "duration": {
-                        "hours": "24",
-                        "minutes": "00"
-                    }
-                },
-                "friday": {
-                    "enabled": True,
-                    "start_time": "00:00",
-                    "duration": {
-                        "hours": "24",
-                        "minutes": "00"
-                    }
-                },
-                "saturday": {
-                    "enabled": True,
-                    "start_time": "00:00",
-                    "duration": {
-                        "hours": "24",
-                        "minutes": "00"
-                    }
-                },
-                "sunday": {
-                    "enabled": True,
-                    "start_time": "00:00",
-                    "duration": {
-                        "hours": "24",
-                        "minutes": "00"
-                    }
-                },
-            },
+            'time_schedule_limit': DEFAULT_TIME_SCHEDULE_LIMIT,  # see model/TimeScheduleLimit.py
             'title': None, # An arbitrary field that overrides 'page_title'
             'track_ldjson_price_data': None,
             'trim_text_whitespace': False,
@@ -309,6 +268,10 @@ class watch_base(dict):
         })
 
         super(watch_base, self).__init__(*arg, **kw)
+
+        # dict.__init__ is C-level and skips __setitem__, convert anything it set
+        for k in TYPED_FIELDS.keys() & self.keys():
+            dict.__setitem__(self, k, TYPED_FIELDS[k](self[k], owner_uuid=self.get('uuid')))
 
         # Check if we're being initialized from an existing watch object
         # that has was_edited=True, so we can preserve the flag
@@ -366,6 +329,8 @@ class watch_base(dict):
 
         Only sets the edited flag when field is NOT in readonly_fields (from OpenAPI spec).
         """
+        if key in TYPED_FIELDS:
+            value = TYPED_FIELDS[key](value, owner_uuid=self.get('uuid'))
         # Set the value first (always)
         super().__setitem__(key, value)
         # Mark as edited if writable field
@@ -382,6 +347,14 @@ class watch_base(dict):
             args[0]['browser_steps'] = browser_steps_get_valid_steps(args[0].get('browser_steps'))
 
         """Override dict.update() to track modifications to writable fields."""
+        # Copy rather than mutate the caller's dict (form.data, API json etc)
+        if args and any(k in args[0] for k in TYPED_FIELDS):
+            # While loading, the real uuid arrives in the same dict
+            owner_uuid = args[0].get('uuid') or self.get('uuid')
+            args = ({k: (TYPED_FIELDS[k](v, owner_uuid=owner_uuid) if k in TYPED_FIELDS else v) for k, v in args[0].items()},) + args[1:]
+        for k in TYPED_FIELDS.keys() & kwargs.keys():
+            kwargs[k] = TYPED_FIELDS[k](kwargs[k], owner_uuid=kwargs.get('uuid') or self.get('uuid'))
+
         # Call parent update first
         super().update(*args, **kwargs)
 
@@ -627,7 +600,7 @@ class watch_base(dict):
 
         # Deep copy snapshot (slower, but done outside lock to minimize contention)
         # Subclasses can override to filter keys (e.g., Watch excludes processor_config_*)
-        return {k: copy.deepcopy(v) for k, v in snapshot.items()}
+        return {k: storage_value(v) for k, v in snapshot.items()}
 
     def _save_to_disk(self, data_dict, uuid):
         """
