@@ -12,6 +12,8 @@ Environment variables (all optional except the switch):
   FLASKAPI_GUARD_ENABLED          true/false, default false
   FLASKAPI_GUARD_RATE_LIMIT       max requests per client IP per 60 seconds, default 600
   FLASKAPI_GUARD_TRUSTED_PROXIES  comma separated IPs/CIDRs allowed to set X-Forwarded-*, default 127.0.0.1,::1
+                                  (with USE_X_SETTINGS also set, USE_X_SETTINGS_TRUSTED_PROXIES takes precedence for
+                                  the X-Forwarded-* filter, see forwarded_headers.py)
   FLASKAPI_GUARD_ALLOWED_IPS      comma separated IPs/CIDRs, when set ONLY these clients may connect (and are not rate limited)
 
 Scanning skips /api (it has its own API key check, the guard's ban list, allow list and rate limit still apply there)
@@ -21,7 +23,6 @@ Request bodies are never scanned (watch settings, filters and notification templ
 Redis, response security headers, the guard's own CORS handling and the telemetry agent are all disabled.
 """
 import os
-from ipaddress import ip_address, ip_network
 
 from loguru import logger
 
@@ -36,14 +37,6 @@ LOGIN_RATE_LIMIT = (30, 300)
 # SecurityConfig's own default exclude_paths, which setting the field replaces
 DEFAULT_EXCLUDE_PATHS = ['/docs', '/redoc', '/openapi.json', '/openapi.yaml', '/favicon.ico', '/static']
 
-_FORWARDED_ENVIRON_KEYS = (
-    'HTTP_X_FORWARDED_FOR',
-    'HTTP_X_FORWARDED_PROTO',
-    'HTTP_X_FORWARDED_HOST',
-    'HTTP_X_FORWARDED_PORT',
-    'HTTP_X_FORWARDED_PREFIX',
-)
-
 
 def guard_enabled():
     return strtobool(os.getenv('FLASKAPI_GUARD_ENABLED'))
@@ -55,40 +48,6 @@ def _csv_env(name, default=''):
 
 def trusted_proxies():
     return _csv_env('FLASKAPI_GUARD_TRUSTED_PROXIES', DEFAULT_TRUSTED_PROXIES)
-
-
-def restrict_forwarded_headers(wsgi_app):
-    """
-    WSGI middleware: drop X-Forwarded-* from requests whose TCP peer is not a trusted proxy.
-
-    Must wrap OUTSIDE werkzeug's ProxyFix (USE_X_SETTINGS), which trusts X-Forwarded-For from any peer
-    and rewrites REMOTE_ADDR before the guard runs. This makes ProxyFix and the guard trust the same proxies.
-    """
-    networks = [ip_network(p, strict=False) for p in trusted_proxies()]
-
-    def is_trusted(peer):
-        try:
-            return any(ip_address(peer) in net for net in networks)
-        except ValueError:
-            return False
-
-    warned = False
-
-    def middleware(environ, start_response):
-        nonlocal warned
-        peer = environ.get('REMOTE_ADDR', '')
-        if not is_trusted(peer):
-            dropped = [key for key in _FORWARDED_ENVIRON_KEYS if environ.pop(key, None) is not None]
-            if dropped and not warned:
-                warned = True  # once per process, no log flood
-                logger.warning(
-                    f"Ignoring X-Forwarded-* headers from {peer}, it is not a trusted proxy. If it is your reverse proxy, "
-                    f"add it to FLASKAPI_GUARD_TRUSTED_PROXIES (currently {','.join(trusted_proxies())}). "
-                    f"This warning is logged once."
-                )
-        return wsgi_app(environ, start_response)
-
-    return middleware
 
 
 def init_guard(app):

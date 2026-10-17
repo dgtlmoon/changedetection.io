@@ -15,7 +15,7 @@ import pytest
 from flask import Flask
 from loguru import logger
 
-from changedetectionio.guard import init_guard, restrict_forwarded_headers
+from changedetectionio.guard import init_guard
 
 # flaskapi-guard is optional and not in requirements.txt (EXTRA_PACKAGES=flaskapi-guard==4.4.0), tests that need it skip without it
 needs_guard = pytest.mark.skipif(importlib.util.find_spec('flaskapi_guard') is None, reason='flaskapi-guard is not installed')
@@ -228,40 +228,6 @@ def test_login_budget_counts_get_and_post_and_spares_a_normal_user(monkeypatch):
     # other paths and other clients are not affected
     assert get(app, brute, '/other').status_code == 200
     assert get(app, unique_ip(), '/login').status_code == 200
-
-
-def run_untrusted_peer_requests(count, peer='10.9.9.9'):
-    seen = []
-    middleware = restrict_forwarded_headers(lambda environ, start_response: seen.append(dict(environ)) or [])
-    for _ in range(count):
-        middleware({'REMOTE_ADDR': peer, 'HTTP_X_FORWARDED_FOR': '1.2.3.4'}, None)
-    return seen
-
-
-def test_dropping_forwarded_headers_warns_once_naming_peer_and_setting(monkeypatch):
-    monkeypatch.setenv('FLASKAPI_GUARD_TRUSTED_PROXIES', '127.0.0.1')
-    messages = []
-    sink = logger.add(lambda m: messages.append(m.record['message']), level='WARNING')
-    try:
-        seen = run_untrusted_peer_requests(5)
-    finally:
-        logger.remove(sink)
-    assert all('HTTP_X_FORWARDED_FOR' not in environ for environ in seen)
-    assert len(messages) == 1
-    assert '10.9.9.9' in messages[0] and 'FLASKAPI_GUARD_TRUSTED_PROXIES' in messages[0]
-
-
-def test_no_warning_without_forwarded_headers_or_from_trusted_proxy(monkeypatch):
-    monkeypatch.setenv('FLASKAPI_GUARD_TRUSTED_PROXIES', '127.0.0.1')
-    messages = []
-    sink = logger.add(lambda m: messages.append(m.record['message']), level='WARNING')
-    try:
-        middleware = restrict_forwarded_headers(lambda environ, start_response: [])
-        middleware({'REMOTE_ADDR': '10.9.9.9'}, None)
-        middleware({'REMOTE_ADDR': '127.0.0.1', 'HTTP_X_FORWARDED_FOR': '1.2.3.4'}, None)
-    finally:
-        logger.remove(sink)
-    assert messages == []
 
 
 def free_port():
