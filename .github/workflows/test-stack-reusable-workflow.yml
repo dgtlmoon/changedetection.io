@@ -147,6 +147,10 @@ jobs:
           docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
           docker run --name test-cdio-basic-tests --network changedet-network test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
+      - name: Test built container with Pytest, flaskapi-guard installed and enabled
+        run: |
+          docker run --name test-cdio-basic-tests-guard --network changedet-network -e EXTRA_PACKAGES=flaskapi-guard==4.4.0 -e FLASKAPI_GUARD_ENABLED=true -e FLASKAPI_GUARD_RATE_LIMIT=600 -e FLASKAPI_GUARD_TRUSTED_PROXIES=127.0.0.1,::1 test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+
       - name: Test CLI options
         run: |
           docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
@@ -639,7 +643,7 @@ jobs:
 
       - name: Optional flaskapi-guard integration (installed through EXTRA_PACKAGES, not in requirements.txt)
         run: |
-          docker run -e EXTRA_PACKAGES=flaskapi-guard==4.4.0 test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/test_guard.py'
+          docker run -e EXTRA_PACKAGES=flaskapi-guard==4.4.0 -e FLASKAPI_GUARD_ENABLED=true -e FLASKAPI_GUARD_RATE_LIMIT=600 -e FLASKAPI_GUARD_TRUSTED_PROXIES=127.0.0.1,::1 test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/test_guard.py'
 
       - name: Plugin get_html_head_extras hook injects into base.html
         run: |
