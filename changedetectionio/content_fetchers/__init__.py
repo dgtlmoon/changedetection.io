@@ -100,7 +100,8 @@ def _log_fetcher_capabilities(fetcher_class, backend_name, uuid=None):
         f"{f' for watch {uuid}' if uuid else ''} - capabilities: "
         f"browser_steps={caps.supports_browser_steps}, "
         f"screenshots={caps.supports_screenshots}, "
-        f"xpath_element_data={caps.supports_xpath_element_data}"
+        f"xpath_element_data={caps.supports_xpath_element_data}, "
+        f"pdf={caps.supports_pdf}"
     )
     return caps
 
@@ -150,10 +151,6 @@ def resolve_content_fetcher(watch, datastore):
     # which is what the old 'extra_browser_<name>' selector needed this hook for.
     custom_browser_connection_url = None
 
-    # PDF watches are already forced to 'html_requests' by Watch.get_fetch_backend (playwright
-    # can't render a PDF in-page yet - @todo https://github.com/dgtlmoon/changedetection.io/issues/2019),
-    # so no extra handling is needed here.
-
     # Grab the right kind of 'fetcher' class (playwright, requests, plugin-provided, etc)
     if prefer_fetch_backend and hasattr(this_module, prefer_fetch_backend):
         # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
@@ -173,6 +170,25 @@ def resolve_content_fetcher(watch, datastore):
         logger.warning(f"Fetcher '{prefer_fetch_backend}' is not available in this install - "
                        f"falling back to html_requests for watch {watch.get('uuid')}")
         fetcher_obj = getattr(this_module, "html_requests")
+
+    # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it
+    # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
+    #
+    # Watch.get_fetch_backend already made this call on the SELECTOR (so a PDF watch keeps a
+    # browser that can supply the PDF); this is the same question asked of the CLASS, which is the
+    # only place that sees the browser-steps playwright override applied just above.
+    if getattr(watch, 'is_pdf', False) and not getattr(fetcher_obj, 'supports_pdf', False):
+        logger.warning(
+            f"Watch {watch.get('uuid')} is_pdf detected (content-type/url) - forcing the "
+            f"'html_requests' fetcher because '{prefer_fetch_backend}' can't supply the original PDF."
+        )
+        prefer_fetch_backend = "html_requests"
+        fetcher_obj = getattr(this_module, "html_requests")
+        # Swap the injected profile too: the plain client's own browser config owns its request
+        # timeout / User-Agent, and carrying the browser's profile over would apply a browser
+        # viewport and navigation timeout to a plain HTTP fetch.
+        if store is not None:
+            _entry, _engine, browser_config = store.engine_and_config("html_requests")
 
     _log_fetcher_capabilities(fetcher_obj, prefer_fetch_backend, uuid=watch.get('uuid'))
 

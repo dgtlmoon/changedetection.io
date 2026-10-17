@@ -71,9 +71,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # settings save never renders, validates, or clobbers the default - /browsers owns it now.
         del form.application.form.fetch_backend
 
-        # Remove the last option 'System default'
-        form.application.form.notification_format.choices.pop()
-
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.requests.form.proxy
@@ -100,10 +97,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if 'password' in app_update and not app_update['password']:
                     del (app_update['password'])
 
-                # Notification fields live on the dedicated /settings/notifications page now.
-                # The application sub-form still defines them (inherited from commonSettingsForm),
-                # so an unrelated save here would clobber the stored values with empty WTForms
-                # defaults. Drop them from the merge to leave the notifications config alone.
+                # Notification fields live on the dedicated /settings/notifications page and are
+                # no longer part of this form (#4554). Defensive - never let a save here clobber
+                # the stored notification config should one get re-added to the application sub-form.
                 for nf in ('notification_urls', 'notification_title', 'notification_body',
                            'notification_format', 'base_url'):
                     app_update.pop(nf, None)
@@ -243,6 +239,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         )
         llm_config = _get_llm_cfg(datastore) or {}
         llm_env_configured = llm_configured_via_env()
+
+        # Once a key is stored, the provider and the key itself are locked and can only be
+        # cleared with "Remove provider". The key field renders blank so that an untouched
+        # save preserves it, which makes any stray value in it - a browser autofill, a bad
+        # paste - silently overwrite a working key on the next Save, with no copy kept
+        # anywhere to recover from. Disabling the input takes it out of the POST entirely;
+        # the form is seeded with data=default, so an absent field falls back to the stored
+        # value and the merge below is a no-op for it.
+        llm_provider_locked = bool(llm_config.get('api_key')) and not llm_env_configured
         llm_stored = datastore.data['settings']['application'].get('llm') or {}
         llm_token_budget_month = get_global_token_budget_month(datastore)
         llm_token_budget_month_env = get_global_token_budget_month()  # env var only, for readonly logic
@@ -268,6 +273,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 llm_config=llm_config,
                                 llm_env_configured=llm_env_configured,
+                                llm_provider_locked=llm_provider_locked,
                                 llm_stored=llm_stored,
                                 llm_token_budget_month=llm_token_budget_month,
                                 llm_token_budget_month_env=llm_token_budget_month_env,

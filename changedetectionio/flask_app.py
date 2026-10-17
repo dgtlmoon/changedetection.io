@@ -276,8 +276,15 @@ def init_app_secret(datastore_path):
 
 @app.template_global()
 def get_darkmode_state():
-    css_dark_mode = request.cookies.get('css_dark_mode', 'false')
-    return 'true' if css_dark_mode and strtobool(css_dark_mode) else 'false'
+    # No cookie means the user never toggled the theme - 'auto' lets the CSS follow
+    # the device's prefers-color-scheme. The cookie, once set, always wins.
+    css_dark_mode = request.cookies.get('css_dark_mode')
+    if not css_dark_mode:
+        return 'auto'
+    try:
+        return 'true' if strtobool(css_dark_mode) else 'false'
+    except ValueError:
+        return 'auto'
 
 
 @app.template_global()
@@ -722,27 +729,18 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
 
     return ''
 
-
-_RE_SANITIZE_TAG = re.compile(r'[^a-zA-Z0-9]')
-
-
 @app.template_filter('sanitize_tag_class')
 def _jinja2_filter_sanitize_tag_class(tag_title):
     """Sanitize a tag title to create a valid CSS class name.
-    Removes all non-alphanumeric characters and converts to lowercase.
-
     Args:
         tag_title: The tag title string
 
     Returns:
         str: A sanitized string suitable for use as a CSS class name
     """
-    # Remove all non-alphanumeric characters and convert to lowercase
-    sanitized = _RE_SANITIZE_TAG.sub('', tag_title).lower()
-    # Ensure it starts with a letter (CSS requirement)
-    if sanitized and not sanitized[0].isalpha():
-        sanitized = 'tag' + sanitized
-    return sanitized if sanitized else 'tag'
+    #
+    tag_class_name = hashlib.sha256(tag_title.encode('utf-8')).hexdigest()[:16]
+    return tag_class_name if tag_class_name else 'tag'
 
 
 # Import login_optionally_required from auth_decorator
@@ -925,6 +923,15 @@ def changedetection_app(config=None, datastore_o=None):
             # Permitted - static flag icons need to load on login page
             elif request.endpoint and request.endpoint == 'static_flags':
                 return None
+            # Permitted - the PWA manifest carries no watch data, and bouncing it to /login
+            # makes a password-protected instance silently un-installable: the browser gets
+            # an HTML login page where it expected a manifest and drops the install option.
+            # Permitted - the manifest and service worker carry no watch data, and bouncing
+            # them to /login makes a password-protected instance silently un-installable: the
+            # browser gets an HTML login page where it expected a manifest or JavaScript, the
+            # registration fails, and with it the WebAPK the Android share target needs.
+            elif request.endpoint in ('pwa.site_webmanifest', 'pwa.service_worker'):
+                return None
             # Permitted - language selection should work on login page.
             # Both halves of the language modal must be exempt: it renders for anonymous
             # users (base.html deliberately leaves it outside the is_authenticated guard),
@@ -1050,8 +1057,13 @@ def changedetection_app(config=None, datastore_o=None):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        # Pass the current request path so users are redirected back after login
-        return redirect(url_for('login', redirect=request.path))
+        # Pass the current request path so users are redirected back after login.
+        # full_path keeps the query string: a share arriving at /?pwa_preset_url=... on a
+        # logged-out instance would otherwise come back from the login page as a bare "/",
+        # silently dropping the URL the user just shared. full_path always appends "?", so
+        # only use it when there was actually a query to preserve.
+        target = request.full_path if request.query_string else request.path
+        return redirect(url_for('login', redirect=target))
 
     @app.route('/logout', methods=['POST'])
     def logout():
@@ -1417,6 +1429,11 @@ def changedetection_app(config=None, datastore_o=None):
             datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update
         )
     )
+
+    import changedetectionio.blueprint.pwa as pwa
+
+    # url_prefix='' is required, not cosmetic - see the blueprint docstring
+    app.register_blueprint(pwa.construct_blueprint(), url_prefix='')
 
     import changedetectionio.blueprint.watchlist as watchlist
 

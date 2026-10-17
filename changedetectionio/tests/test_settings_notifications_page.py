@@ -118,10 +118,8 @@ def test_main_settings_save_does_not_clobber_notification_config(
     """
     Regression — the main /settings page and the new /settings/notifications page
     write to the SAME dict (datastore.data['settings']['application']). The main
-    page's application sub-form still inherits the notification_* fields from
-    commonSettingsForm, so a naive `app.update(form.data['application'])` here
-    would wipe notification_urls / title / body / format / base_url with empty
-    WTForms defaults whenever the user saves the main settings page.
+    page must never write notification_urls / title / body / format / base_url,
+    otherwise saving it would wipe them with empty WTForms defaults.
 
     This test seeds a real notification config, then POSTs the main settings
     page WITHOUT touching the notification fields, and asserts every notification
@@ -139,7 +137,6 @@ def test_main_settings_save_does_not_clobber_notification_config(
             'application-fetch_backend': 'html_requests',
             'application-rss_diff_length': '5',
             'application-filter_failure_notification_threshold_attempts': '0',
-            'application-notification_format': 'html',  # required choice, no Optional()
             'requests-time_between_check-days': '0',
             'requests-time_between_check-hours': '0',
             'requests-time_between_check-minutes': '5',
@@ -225,3 +222,58 @@ def test_notifications_page_save_does_not_clobber_other_settings(
     # And the notification field we DID submit was actually written.
     assert ds.data['settings']['application'].get('notification_urls') == \
         ['json://example.invalid/only-this']
+
+
+def test_main_settings_save_with_global_system_default_format(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Regression for #4554 - a global notification_format of 'System default' made
+    every save of the main /settings page fail with "An error occurred" and no
+    visible field error, because the main form still carried a hidden
+    notification_format SelectField whose choices excluded that value.
+    """
+    from changedetectionio.model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+
+    ds = client.application.config.get('DATASTORE')
+    ds.data['settings']['application']['notification_format'] = USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+
+    res = client.post(
+        url_for('settings.settings_page'),
+        data={
+            'application-pager_size': '50',
+            'application-fetch_backend': 'html_requests',
+            'application-rss_diff_length': '5',
+            'application-filter_failure_notification_threshold_attempts': '0',
+            'requests-time_between_check-days': '0',
+            'requests-time_between_check-hours': '0',
+            'requests-time_between_check-minutes': '5',
+            'requests-time_between_check-seconds': '0',
+            'requests-time_between_check-weeks': '0',
+            'requests-jitter_seconds': '0',
+            'requests-workers': '10',
+            'requests-timeout': '60',
+        },
+        follow_redirects=True,
+    )
+    assert res.status_code == 200
+    assert b'Settings updated.' in res.data
+    assert b'An error occurred' not in res.data
+
+
+def test_notifications_page_rejects_system_default_format(
+        client, live_server, measure_memory_usage, datastore_path):
+    """'System default' is a per-watch choice meaning "use the global value",
+    it must not be offered or accepted as the global value itself (#4554)."""
+    from changedetectionio.model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+
+    res = client.get(url_for('settings.notifications.apprise'))
+    assert f'value="{USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH}"'.encode() not in res.data
+
+    res = client.post(
+        url_for('settings.notifications.apprise'),
+        data={'notification_format': USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH},
+        follow_redirects=True,
+    )
+    assert b'Settings updated.' not in res.data
+    ds = client.application.config.get('DATASTORE')
+    assert ds.data['settings']['application'].get('notification_format') != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH

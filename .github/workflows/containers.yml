@@ -16,30 +16,46 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   metadata:
     runs-on: ubuntu-latest
     steps:
     - name: Show metadata
+      # Event-derived strings go through env so they reach the shell as
+      # data, a release tag or branch name can carry shell syntax.
+      env:
+        RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        RUN_INFO: ${{ toJSON(github.event.workflow_run) }}
+        RELEASE_TAG: ${{ github.event.release.tag_name }}
+        HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
       run: |
         echo SHA ${{ github.sha }}
         echo github.ref:  ${{ github.ref }}
         echo github_ref: $GITHUB_REF
         echo Event name: ${{ github.event_name }}
         echo Ref ${{ github.ref }}
-        echo c: ${{ github.event.workflow_run.conclusion }}
-        echo r: ${{ github.event.workflow_run }}
-        echo tname: "${{ github.event.release.tag_name }}"
-        echo headbranch: -${{ github.event.workflow_run.head_branch }}-
+        echo c: "$RUN_CONCLUSION"
+        echo r: "$RUN_INFO"
+        echo tname: "$RELEASE_TAG"
+        echo headbranch: -"$HEAD_BRANCH"-
         set
 
   build-push-containers:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The ghcr push authenticates with the workflow token.
+      packages: write
     # If the testing workflow has a success, then we build to :latest
     # Or if we are in a tagged release scenario.
     if: ${{ github.event.workflow_run.conclusion == 'success' }} || ${{ github.event.release.tag_name }} != ''
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Set up Python 3.11
         uses: actions/setup-python@v7
         with:
@@ -66,27 +82,27 @@ jobs:
           echo ${{ github.ref }} > changedetectionio/tag.txt
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           image: tonistiigi/binfmt:latest
           platforms: all
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:
           install: true
           version: latest
@@ -95,7 +111,7 @@ jobs:
       # master branch -> :dev container tag
       - name: Docker meta :dev
         if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'release' }}
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         id: meta_dev
         with:
           images: |
@@ -115,7 +131,7 @@ jobs:
       - name: Build and push :dev
         id: docker_build
         if: ${{ github.ref == 'refs/heads/master' && github.event_name != 'release' }}
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./
           file: ./Dockerfile
@@ -132,14 +148,16 @@ jobs:
       # A new tagged release is required, which builds :tag and :latest
       - name: Debug release info
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          echo "Release tag: ${{ github.event.release.tag_name }}"
+          echo "Release tag: $RELEASE_TAG"
           echo "Github ref: ${{ github.ref }}"
           echo "Github ref name: ${{ github.ref_name }}"
 
       - name: Docker meta :tag
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         id: meta
         with:
             images: |
@@ -163,7 +181,7 @@ jobs:
       - name: Build and push :tag
         id: docker_build_tag_release
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '0.')
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./
           file: ./Dockerfile

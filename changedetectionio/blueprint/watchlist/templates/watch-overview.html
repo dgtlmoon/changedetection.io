@@ -6,6 +6,7 @@
 ] -%}
 {%- from '_helpers.html' import render_simple_field, render_field, render_nolabel_field, sort_by_title -%}
 <script src="{{url_for('static_content', group='js', filename='jquery-3.6.0.min.js')}}"></script>
+<script src="{{url_for('static_content', group='js', filename='llm-summary.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-overview.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='restock-price-graph.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
@@ -111,14 +112,18 @@ document.addEventListener('DOMContentLoaded', function() {
                   color: {{ colors['light']['color'] }};
                 }
 
-                html[data-darkmode="true"] .button-tag.tag-{{ class_name }} {
+                html[data-darkmode="true"] .button-tag.tag-{{ class_name }},
+                html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                   background-color: {{ colors['dark']['bg'] }};
                   color: {{ colors['dark']['color'] }};
                 }
 
-                html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
-                  background-color: {{ colors['dark']['bg'] }};
-                  color: {{ colors['dark']['color'] }};
+                @media (prefers-color-scheme: dark) {
+                  html[data-darkmode="auto"] .button-tag.tag-{{ class_name }},
+                  html[data-darkmode="auto"] .watch-tag-list.tag-{{ class_name }} {
+                    background-color: {{ colors['dark']['bg'] }};
+                    color: {{ colors['dark']['color'] }};
+                  }
                 }
             {%- endif -%}
         {%- endif -%}
@@ -206,7 +211,7 @@ window.watchOverviewI18n = {
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}
-    {%- set cols_required = 6 -%}
+    {%- set cols_required = 7 -%}
     {%- if any_has_restock_price_processor -%}
         {%- set cols_required = cols_required + 1 -%}
     {%- endif -%}

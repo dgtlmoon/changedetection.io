@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 from flask import url_for
 
-from changedetectionio.tests.util import wait_for_all_checks, delete_all_watches
+from changedetectionio.tests.util import fetch_llm_summary, wait_for_all_checks, delete_all_watches
 
 HTML_V1 = "<html><body><ul><li>Item A</li><li>Item B</li></ul></body></html>"
 HTML_V2 = "<html><body><ul><li>Item A</li><li>Item B</li><li>Item C — NEW</li></ul></body></html>"
@@ -183,10 +183,8 @@ def test_llm_summary_ajax_surfaces_rate_limit_error(
         rate_limit_msg, llm_provider='gemini', model='gemini/gemini-2.5-pro'
     )
     with patch('litellm.completion', side_effect=exc):
-        res = client.get(
-            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
-                    from_version='2000000000', to_version='2000000001'),
-        )
+        res = fetch_llm_summary(client, url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='2000000000', to_version='2000000001'))
 
     assert res.status_code == 500
     data = res.get_json()
@@ -224,10 +222,8 @@ def test_llm_summary_ajax_error_displayed_not_silenced(
         llm_provider='openai', model='gpt-4o-mini'
     )
     with patch('litellm.completion', side_effect=exc):
-        res = client.get(
-            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
-                    from_version='3000000000', to_version='3000000001'),
-        )
+        res = fetch_llm_summary(client, url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='3000000000', to_version='3000000001'))
 
     assert res.status_code == 500
     data = res.get_json()
@@ -464,10 +460,8 @@ def test_llm_summary_ajax_sets_last_viewed(
     mock_response.usage = MagicMock(total_tokens=50, prompt_tokens=40, completion_tokens=10)
 
     with patch('litellm.completion', return_value=mock_response):
-        res = client.get(
-            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
-                    from_version='4000000000', to_version='4000000001'),
-        )
+        res = fetch_llm_summary(client, url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='4000000000', to_version='4000000001'))
 
     assert res.status_code == 200
     data = res.get_json()
@@ -477,10 +471,8 @@ def test_llm_summary_ajax_sets_last_viewed(
     # Reset and verify the cached path also sets last_viewed
     watch['last_viewed'] = 0
     with patch('litellm.completion', return_value=mock_response):
-        res2 = client.get(
-            url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
-                    from_version='4000000000', to_version='4000000001'),
-        )
+        res2 = fetch_llm_summary(client, url_for('ui.ui_diff.diff_llm_summary', uuid=uuid,
+                    from_version='4000000000', to_version='4000000001'))
 
     assert res2.status_code == 200
     data2 = res2.get_json()

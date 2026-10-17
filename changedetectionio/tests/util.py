@@ -238,6 +238,27 @@ def wait_for_watch_history(client, min_history_count=2, timeout=10):
     return False
 
 
+def fetch_llm_summary(client, url, timeout=15):
+    """Drive the /llm-summary start-then-poll flow the way static/js/llm-summary.js does.
+
+    Generation runs on a background thread now, so a single request can only ever return
+    202 "pending". POST starts it (and answers straight away when the summary is already cached),
+    then the GET poll is read-only. Returns the final response.
+    """
+    res = client.post(url)
+    if res.status_code != 202:
+        return res
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        res = client.get(url)
+        if res.status_code != 202 and (res.get_json() or {}).get('status') != 'pending':
+            return res
+        time.sleep(0.05)
+
+    raise AssertionError(f"LLM summary at {url} still pending after {timeout}s")
+
+
 # Replaced by new_live_server_setup and calling per function scope in conftest.py
 def  live_server_setup(live_server):
     return True

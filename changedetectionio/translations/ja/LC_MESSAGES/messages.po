@@ -26,12 +26,12 @@ msgstr ""
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
-msgstr ""
+msgstr "システム設定のデフォルト（%(browser)s）"
 
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s - no live preview)"
-msgstr ""
+msgstr "システム設定のデフォルト（%(browser)s - ライブプレビューなし）"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Add a new web page change detection watch"
@@ -44,15 +44,15 @@ msgstr "移動"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Enter a URL to get started!"
-msgstr ""
+msgstr "URLを入力して始めましょう！"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Enter a URL in the input box above to get started."
-msgstr ""
+msgstr "上の入力欄にURLを入力して始めましょう。"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Fetching screenshot and element information…"
-msgstr ""
+msgstr "スクリーンショットと要素情報を取得中…"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Currently:"
@@ -60,11 +60,11 @@ msgstr "現在:"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "What do you want to achieve?"
-msgstr ""
+msgstr "何を達成したいですか？"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Select a browser"
-msgstr ""
+msgstr "ブラウザを選択"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #, python-format
@@ -386,15 +386,15 @@ msgstr "インポート"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Expand on hover"
-msgstr ""
+msgstr "ホバーで展開"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Always expanded"
-msgstr ""
+msgstr "常に展開"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Stays minimal"
-msgstr ""
+msgstr "最小表示のまま"
 
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
@@ -479,11 +479,11 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
-msgstr ""
+msgstr "デフォルト通知"
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
-msgstr ""
+msgstr "これらの通知はすべてのウェブページウォッチに適用されます。グループやウォッチごとに個別設定もできます。"
 
 # 訳注: "Base URL used for the {{base_url}} token in notification links."
 # → 「通知リンクの {{base_url}} トークンに使用するベースURL。」
@@ -508,7 +508,7 @@ msgstr "詳しくはこちら"
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Back to settings"
-msgstr ""
+msgstr "設定に戻る"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
@@ -516,6 +516,10 @@ msgstr "通知デバッグログ"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
+msgstr "セキュリティのため、このログは再起動時に消去されます。"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -600,6 +604,27 @@ msgstr "パスワードが有効な場合でもウォッチの変更履歴ペー
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
 msgstr "リクエストがコンテンツを返さない、またはHTMLにテキストが含まれていない場合、これを変更とみなしますか？"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
@@ -865,13 +890,13 @@ msgstr "ウォッチリスト横のファビコンを有効または無効にす
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
-msgstr ""
+msgstr "無効にするとfaviconの取得が不要になるため、ページ取得が高速化する場合があります。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid ""
 "This copies your watch to a temporary hosted database and returns a link to make sharing/copying the watch to other "
 "people"
-msgstr ""
+msgstr "ウォッチを一時的なホスト側データベースにコピーし、他の人と共有・コピーするためのリンクを発行します。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
@@ -879,13 +904,13 @@ msgstr "ウォッチ一覧ページの1ページあたりの表示件数（0で�
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "How \"Checked\" and \"Changed\" times are shown in the watch overview list."
-msgstr ""
+msgstr "ウォッチ一覧での「前回チェック」「前回変更」時刻の表示形式。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid ""
 "\"Collapsed icon rail\" keeps the left navigation slim and reveals labels on mouse-over; \"Always expanded\" keeps "
 "labels visible."
-msgstr ""
+msgstr "「折りたたみアイコンレール」は左ナビを細く保ち、マウスオーバーでラベルを表示します。「常に展開」はラベルを常時表示します。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Tip"
@@ -933,19 +958,19 @@ msgstr "使用量"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Overview"
-msgstr ""
+msgstr "概要"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Provider"
-msgstr ""
+msgstr "プロバイダー"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Prompts"
-msgstr ""
+msgstr "プロンプト"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Behaviour"
-msgstr ""
+msgstr "動作"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "AI-powered change monitoring"
@@ -993,6 +1018,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "AI / LLM configured:"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Edit provider"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1071,6 +1100,10 @@ msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
 msgstr ""
 
@@ -1097,7 +1130,17 @@ msgid "choose a model"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Enter API key and click 'Load available models'"
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Change model"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1118,6 +1161,10 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "キャンセル"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove provider"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Test connection"
@@ -1486,8 +1533,8 @@ msgid "Use system defaults"
 msgstr "システムデフォルトを使用"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
-msgstr "新しい組織タグを追加"
+msgid "Add a new organisational tag / group name."
+msgstr "新しいタグ / グループ名を追加。"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
@@ -1646,7 +1693,7 @@ msgstr "ウォッチ {} のスナップショット履歴をクリアしまし�
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "clear"
-msgstr "clear"
+msgstr "クリア"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "History clearing started in background"
@@ -1890,7 +1937,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/queue.py
 #, python-brace-format
 msgid "Queue cleared ({} items removed)."
-msgstr ""
+msgstr "キューをクリアしました（{}件削除）。"
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Based on browser"
@@ -1926,7 +1973,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear"
-msgstr ""
+msgstr "クリア"
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Language & timezone"
@@ -1982,7 +2029,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
 msgid "Browsers"
-msgstr ""
+msgstr "ブラウザ"
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid ""
@@ -2596,7 +2643,7 @@ msgstr "履歴の件数"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Last fetch duration"
-msgstr "最後の取得時間"
+msgstr "前回の取得時間"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Notification alert count"
@@ -2682,27 +2729,27 @@ msgstr "スクリーンショットには、スクリーンショットをサポ
 #: changedetectionio/blueprint/ui/templates/queue.html
 #, python-format
 msgid "Worker %(num)s"
-msgstr ""
+msgstr "ワーカー%(num)s"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "— idle"
-msgstr ""
+msgstr "— 待機中"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "running"
-msgstr ""
+msgstr "実行中"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "idle"
-msgstr ""
+msgstr "待機中"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "done"
-msgstr ""
+msgstr "完了"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "cancel"
-msgstr ""
+msgstr "キャンセル"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "No workers configured and queue is empty"
@@ -2718,19 +2765,19 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Check queue"
-msgstr ""
+msgstr "キューのチェック"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Live view of what the workers are doing right now and what is waiting in line."
-msgstr ""
+msgstr "ワーカーの現在の動作と待機中の内容のライブ表示。"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Workers"
-msgstr ""
+msgstr "ワーカー"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Running now"
-msgstr ""
+msgstr "実行中"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
@@ -2739,27 +2786,27 @@ msgstr "キュー済み"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear Queue?"
-msgstr ""
+msgstr "キューをクリアしますか？"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "<p>This will remove every pending check from the queue.</p><p>Running checks will continue.</p>"
-msgstr ""
+msgstr "<p>キュー内の保留中のチェックをすべて削除します。</p><p>実行中のチェックは継続します。</p>"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear Queue"
-msgstr ""
+msgstr "キューをクリア"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Workers & queue"
-msgstr ""
+msgstr "ワーカーとキュー"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Elapsed"
-msgstr ""
+msgstr "経過"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Status"
-msgstr ""
+msgstr "状態"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "No workers configured (FETCH_WORKERS=0) and queue is empty"
@@ -2767,7 +2814,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Waiting for new pages to check…"
-msgstr ""
+msgstr "新しいチェック対象のページを待機中…"
 
 #: changedetectionio/blueprint/ui/views.py
 #, python-brace-format
@@ -2781,6 +2828,10 @@ msgstr "ウォッチは一時停止状態で追加されました。保存する
 #: changedetectionio/blueprint/ui/views.py
 msgid "Watch added."
 msgstr "ウォッチを追加しました。"
+
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
@@ -2804,7 +2855,7 @@ msgstr "通知のミュートを解除"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Goto web page"
-msgstr ""
+msgstr "ウェブページへ移動"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Create a link to share watch config with others"
@@ -2861,7 +2912,7 @@ msgstr "前回変更"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Summary"
-msgstr ""
+msgstr "要約"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/processors/text_json_diff/difference.py
@@ -2960,12 +3011,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page URL"
-msgstr ""
+msgstr "ウェブページURL"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
-msgstr ""
+msgstr "%(count)s 件選択中"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
@@ -3014,15 +3065,15 @@ msgstr "'%(title)s' 内"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "RSS Feed"
-msgstr ""
+msgstr "RSSフィード"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Close"
-msgstr ""
+msgstr "閉じる"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
-msgstr ""
+msgstr "反転"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
@@ -3046,15 +3097,15 @@ msgstr "タグ"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set browser / fetch method for selected"
-msgstr ""
+msgstr "選択項目のブラウザ／取得方式を設定"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
-msgstr ""
+msgstr "適用"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set proxy for selected"
-msgstr ""
+msgstr "選択項目のプロキシを設定"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
@@ -3096,21 +3147,21 @@ msgstr "<p><strong>選択したウォッチを削除してもよいですか？<
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "All %(page)s on this page are selected."
-msgstr ""
+msgstr "このページの%(page)s件すべてを選択中。"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "Select all %(total)s matching"
-msgstr ""
+msgstr "条件に一致する%(total)s件すべてを選択"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "All %(total)s matching are selected."
-msgstr ""
+msgstr "条件に一致する%(total)s件すべてを選択中。"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"
-msgstr ""
+msgstr "ウェブページ"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Restock & Price"
@@ -3390,7 +3441,7 @@ msgstr "開始時刻"
 
 #: changedetectionio/forms.py
 msgid "Run duration"
-msgstr "実行期間"
+msgstr "実行時間"
 
 #: changedetectionio/forms.py
 msgid "Use time scheduler"
@@ -3510,15 +3561,19 @@ msgstr "プロセッサー"
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Browser"
-msgstr ""
+msgstr "ブラウザ"
 
 #: changedetectionio/forms.py
 msgid "Edit > Watch"
 msgstr "編集 > ウォッチ"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "取得方式"
+msgid "Notification URL List"
+msgstr "通知URLリスト"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "通知タイトル"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3529,12 +3584,8 @@ msgid "Notification format"
 msgstr "通知フォーマット"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "通知タイトル"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "通知URLリスト"
+msgid "Fetch Method"
+msgstr "取得方式"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3751,7 +3802,9 @@ msgstr "ミュート済み"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "通知にスクリーンショットを添付（可能な場合）"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "一致条件"
 
@@ -3841,23 +3894,23 @@ msgstr "ウォッチ一覧リストでページの <title> を使用"
 
 #: changedetectionio/forms.py
 msgid "Enable watch \"sharing\""
-msgstr ""
+msgstr "ウォッチの「共有」を有効化"
 
 #: changedetectionio/forms.py
 msgid "Relative time format"
-msgstr ""
+msgstr "相対時刻の形式"
 
 #: changedetectionio/forms.py
 msgid "Long (1 minute ago)"
-msgstr ""
+msgstr "長形式（1分前）"
 
 #: changedetectionio/forms.py
 msgid "Short (1m ago)"
-msgstr ""
+msgstr "短形式（1m前）"
 
 #: changedetectionio/forms.py
 msgid "Navigation sidebar"
-msgstr ""
+msgstr "ナビゲーションサイドバー"
 
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
@@ -4406,6 +4459,10 @@ msgstr "{} のメタデータ取得中にエラーが発生しました"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "ウォッチのプロトコルが許可されていないか、URL形式が無効です"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr "プロキシなし"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4540,7 +4597,7 @@ msgstr "フィルタからトリガーを発動させたテキスト"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "(upgraded)"
-msgstr ""
+msgstr "（アップグレード済み）"
 
 #: changedetectionio/templates/_common_fields.html
 msgid ""
@@ -4676,7 +4733,7 @@ msgstr "下記の <code>%(token)s</code> プレースホルダーを受け付け
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Customise notifications"
-msgstr ""
+msgstr "通知をカスタマイズ"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Title for all notifications"
@@ -5298,19 +5355,19 @@ msgstr "ウォッチの自動キュースケジューリングを一時停止"
 
 #: changedetectionio/templates/menu.html
 msgid "Scheduling paused — click to resume"
-msgstr ""
+msgstr "スケジューリング一時停止中 — クリックで再開"
 
 #: changedetectionio/templates/menu.html
 msgid "Scheduling active — click to pause all"
-msgstr ""
+msgstr "スケジューリング実行中 — クリックで全て一時停止"
 
 #: changedetectionio/templates/menu.html
 msgid "Paused"
-msgstr ""
+msgstr "一時停止中"
 
 #: changedetectionio/templates/menu.html
 msgid "Running"
-msgstr ""
+msgstr "実行中"
 
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
@@ -5322,15 +5379,15 @@ msgstr "通知はミュート中 - クリックして解除"
 
 #: changedetectionio/templates/menu.html
 msgid "Alerts on"
-msgstr ""
+msgstr "アラートオン"
 
 #: changedetectionio/templates/menu.html
 msgid "Log out"
-msgstr ""
+msgstr "ログアウト"
 
 #: changedetectionio/templates/menu.html
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
@@ -5342,11 +5399,11 @@ msgstr "ウェブサイト変更検知と通知。"
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle AI Mode"
-msgstr ""
+msgstr "AIモード切替"
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle AI mode"
-msgstr ""
+msgstr "AIモード切替"
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle Light/Dark Mode"
@@ -5358,23 +5415,23 @@ msgstr "ライト/ダークモードを切り替え"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Add a page watch"
-msgstr ""
+msgstr "ページウォッチを追加"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Page Watches"
-msgstr ""
+msgstr "ページウォッチ"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Unread changes"
-msgstr ""
+msgstr "未読の変更"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Watch Groups"
-msgstr ""
+msgstr "ウォッチグループ"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
-msgstr ""
+msgstr "ウェブページのリストをインポート"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Search, or Use Alt+S Key"
@@ -5382,11 +5439,11 @@ msgstr "検索、またはAlt+Sキーを使用"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
+msgstr "キュー"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Live activity"
-msgstr ""
+msgstr "ライブアクティビティ"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "A new version is available"

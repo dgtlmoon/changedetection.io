@@ -3,11 +3,16 @@ name: ChangeDetection.io App Test
 # Triggers the workflow on push or pull request events
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   lint-code:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Lint with Ruff
         run: |
           pip install ruff
@@ -24,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Check .po files with msgfmt
         run: |
           sudo apt-get install -y gettext
@@ -70,6 +77,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Check for fragmented gettext calls in templates
         run: |
           python3 << 'PYEOF'

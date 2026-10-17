@@ -74,9 +74,13 @@
   </div>
 {% endmacro %}
 
-
+{# label - false - Dont render, None - use default field.label.text #}
 {% macro render_simple_field(field, label=None) %}
-  <span class="label {% if field.errors %}error{% endif %}"><label for="{{ field.id }}">{{ (label if label is not none else field.label.text) | string | forceescape }}</label></span>
+  {%- if label is not false -%}
+  <span class="label {% if field.errors %}error{% endif %}">
+      <label for="{{ field.id }}">{{ (label if label is not none else field.label.text) | string | forceescape }}</label>
+  </span>
+  {%- endif -%}
   <span {% if field.errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
   {% if field.errors %}
     <ul class=errors>

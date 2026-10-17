@@ -35,6 +35,11 @@ class SignalHandler:
         watch_small_status_comment_signal = signal('watch_small_status_comment')
         watch_small_status_comment_signal.connect(self.handle_watch_small_status_update, weak=False)
 
+        # The AI summary generator runs on a background thread; this lets the browser skip
+        # polling for the result.
+        llm_summary_ready_signal = signal('llm_summary_ready')
+        llm_summary_ready_signal.connect(self.handle_llm_summary_ready, weak=False)
+
         # Connect to the notification_event signal
         notification_event_signal = signal('notification_event')
         notification_event_signal.connect(self.handle_notification_event, weak=False)
@@ -113,6 +118,23 @@ class SignalHandler:
                 "event_timestamp": time.time()
             })
         logger.debug(f"Watch UUID {watch_uuid} got its favicon updated")
+
+    def handle_llm_summary_ready(self, *args, **kwargs):
+        """An on-demand AI change summary finished generating (successfully or not).
+
+        Only identifiers are broadcast: the client turns this into one authenticated request to
+        the /llm-summary poll route, so the summary text itself never goes to every connected
+        browser. Clients that do not care about this watch simply ignore the event.
+        """
+        watch_uuid = kwargs.get('watch_uuid')
+        if watch_uuid:
+            self.socketio_instance.emit("llm_summary_ready", {
+                "uuid": watch_uuid,
+                "from_version": kwargs.get('from_version'),
+                "to_version": kwargs.get('to_version'),
+                "event_timestamp": time.time()
+            })
+        logger.debug(f"Watch UUID {watch_uuid} AI summary job settled")
 
     def handle_deleted_signal(self, *args, **kwargs):
         watch_uuid = kwargs.get('watch_uuid')

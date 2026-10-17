@@ -1,12 +1,12 @@
-# Chinese translations for PROJECT.
+# Chinese translations for changedetection.io.
 # Copyright (C) 2026 ORGANIZATION
-# This file is distributed under the same license as the PROJECT project.
+# This file is distributed under the same license as the changedetection.io project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-01-18 21:31+0800\n"
 "Last-Translator: 吾爱分享 <admin@wuaishare.cn>\n"
@@ -516,6 +516,10 @@ msgstr "通知调试日志"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -598,6 +602,27 @@ msgstr "启用密码时允许访问监视器更改历史页面(便于共享差�
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
 msgstr "当请求无内容返回，或 HTML 不包含任何文本时，是否视为变更？"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
@@ -994,6 +1019,10 @@ msgid "AI / LLM configured:"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Edit provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Configure AI Provider"
 msgstr ""
 
@@ -1069,6 +1098,10 @@ msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
 msgstr ""
 
@@ -1095,7 +1128,17 @@ msgid "choose a model"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Enter API key and click 'Load available models'"
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Change model"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
@@ -1116,6 +1159,10 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "取消"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove provider"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Test connection"
@@ -1483,8 +1530,8 @@ msgid "Use system defaults"
 msgstr "使用系统默认值"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
-msgstr "添加新的组织标签"
+msgid "Add a new organisational tag / group name."
+msgstr "添加新的标签 / 分组名称。"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
@@ -2770,6 +2817,10 @@ msgid "Watch added."
 msgstr "监控项已添加。"
 
 #: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "记录"
 
@@ -3504,8 +3555,12 @@ msgid "Edit > Watch"
 msgstr "编辑 > 监控项"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "抓取方式"
+msgid "Notification URL List"
+msgstr "通知 URL 列表"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "通知标题"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3516,12 +3571,8 @@ msgid "Notification format"
 msgstr "通知格式"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "通知标题"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "通知 URL 列表"
+msgid "Fetch Method"
+msgstr "抓取方式"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3738,7 +3789,9 @@ msgstr "静音"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "（如可用）在通知中附加截图"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "匹配"
 
@@ -4392,6 +4445,10 @@ msgstr "获取 {} 的元数据失败"
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "监控协议不允许或 URL 格式无效"
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

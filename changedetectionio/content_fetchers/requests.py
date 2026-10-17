@@ -18,6 +18,7 @@ class fetcher(Fetcher):
     # Only the plain client honours a per-profile request timeout (browsers use their own
     # navigation timeouts). The per-profile User-Agent is honoured by all fetchers (base class).
     supports_request_timeout = True
+    supports_pdf = True
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)

@@ -57,8 +57,13 @@
   <div class="stab-overview-cta">
     {% if llm_config and llm_config.get('model') %}
     <span class="stab-configured-badge">&#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}</span>
+    {% if not llm_env_configured %}
+    <button type="button" class="cdio-btn" data-stab-goto="provider">
+      <i data-feather="settings"></i> {{ _('Edit provider') }} &rarr;
+    </button>
+    {% endif %}
     {% else %}
-    <button type="button" class="pure-button pure-button-primary" data-stab-goto="provider">
+    <button type="button" class="cdio-btn pure-button-primary" data-stab-goto="provider">
       <i data-feather="settings"></i> {{ _('Configure AI Provider') }} &rarr;
     </button>
     {% endif %}
@@ -113,7 +118,7 @@
 
   <div class="pure-control-group">
     <label for="llm-provider">{{ _('Provider') }}</label>
-    <select id="llm-provider" onchange="llmOnProviderChange(this.value)">
+    <select id="llm-provider" onchange="llmOnProviderChange(this.value)"{% if llm_provider_locked %} disabled{% endif %}>
       <option value="">— {{ _('select a provider') }} —</option>
         <option value="anthropic">Anthropic</option>
         <option value="gemini">Google (Gemini)</option>
@@ -125,8 +130,13 @@
   </div>
 
   <div class="pure-control-group">
-    {{ render_field(form.llm.form.api_key) }}
-    <span class="pure-form-message-inline" id="llm-key-hint"></span>
+    {#- Disabled once a key is stored: a disabled input is not submitted at all, so there is
+        no way for an autofilled or mistyped value to reach the save path and overwrite a
+        working key. "Remove provider" is the only way to change it. -#}
+    {{ render_field(form.llm.form.api_key, disabled=llm_provider_locked) }}
+    <span class="pure-form-message-inline" id="llm-key-hint">
+      {%- if llm_provider_locked %}{{ _('Saved. Use "Remove provider" below to change the provider or key.') }}{% endif -%}
+    </span>
   </div>
   <div class="pure-control-group" id="llm-base-group" style="display:none">
     {{ render_field(form.llm.form.api_base) }}
@@ -148,7 +158,7 @@
 
   <div class="pure-control-group" id="llm-fetch-group" style="display:none">
     <label></label>
-    <button type="button" id="llm-fetch-btn" class="pure-button button-xsmall" onclick="llmFetchModels()"
+    <button type="button" id="llm-fetch-btn" class="cdio-btn button-xsmall" onclick="llmFetchModels()"
             style="background:#27ae60;color:#fff;border:none;">
       &#8635; {{ _('Load available models') }}
     </button>
@@ -164,7 +174,11 @@
 
   <div class="pure-control-group">
     {{ render_field(form.llm.form.model,
-                    placeholder=_("Enter API key and click 'Load available models'")) }}
+                    placeholder=_("Type a model name or choose from available models"),
+                    aria_describedby="llm-model-help") }}
+    <span class="pure-form-message-inline" id="llm-model-help">
+      {{ _('You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API key blank to keep your saved key.') }}
+    </span>
   </div>
 
   {% if llm_config and llm_config.get('model') %}
@@ -174,12 +188,17 @@
       &#10003; {{ _('AI / LLM configured:') }} {{ llm_config.get('model') }}
     </span>
     &nbsp;
+    <button type="button" class="cdio-btn button-xsmall"
+            onclick="const field = document.getElementById('{{ form.llm.form.model.id }}'); field.focus(); field.select();">
+      {{ _('Change model') }}
+    </button>
+    &nbsp;
     {# data-method="POST" tells modal.js to POST with the CSRF token instead of
        navigating — GET previously allowed <img>-based CSRF wipe (GHSA-g36r-fm2p-87xm).
        Stays as <a> because we're inside the outer settings <form> — nested forms are
        invalid HTML, so modal.js builds a body-level hidden form for the POST. #}
     <a href="{{ url_for('settings.llm.llm_clear') }}"
-       class="pure-button button-xsmall"
+       class="cdio-btn button-xsmall"
        style="background:#c0392b;color:#fff;"
        data-method="POST"
        data-requires-confirm
@@ -188,10 +207,10 @@
        data-confirm-message="<p>{{ _('This will remove your saved AI provider, model, and API key.') }}</p>"
        data-confirm-button="{{ _('Remove') }}"
        data-cancel-button="{{ _('Cancel') }}">
-      &#10005; {{ _('Remove') }}
+      &#10005; {{ _('Remove provider') }}
     </a>
     &nbsp;
-    <button type="button" id="llm-test-btn" class="pure-button button-xsmall" onclick="llmRunTest()"
+    <button type="button" id="llm-test-btn" class="cdio-btn button-xsmall" onclick="llmRunTest()"
             style="background:#2980b9;color:#fff;border:none;">
       &#9654; {{ _('Test connection') }}
     </button>
@@ -207,7 +226,7 @@
     <label style="color:#888; font-size:0.85em;">{{ _('Cache') }}</label>
     {# See comment above on data-method="POST"+modal.js (GHSA-g36r-fm2p-87xm). #}
     <a href="{{ url_for('settings.llm.llm_clear_summary_cache') }}"
-       class="pure-button button-xsmall"
+       class="cdio-btn button-xsmall"
        style="background:#7f8c8d;color:#fff;"
        data-method="POST"
        data-requires-confirm
@@ -246,7 +265,7 @@
     {{ render_field(form.llm.form.change_summary_default) }}
     <span class="pure-form-message-inline">
       {{ _('Used for all watches unless overridden by the watch or its tag/group.') }}
-      &nbsp;<a href="#" class="pure-button button-small" onclick="var t=document.getElementById('llm-change_summary_default'); if(!t.value && t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
+      &nbsp;<a href="#" class="cdio-btn button-small" onclick="var t=document.getElementById('llm-change_summary_default'); if(!t.value && t.placeholder) t.value=t.placeholder; return false;">{{ _('Modify default prompt') }}</a>
     </span>
   </div>
 

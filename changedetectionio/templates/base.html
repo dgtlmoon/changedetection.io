@@ -28,7 +28,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static_content', group='favicons', filename='apple-touch-icon.png')}}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static_content', group='favicons', filename='favicon-32x32.png')}}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static_content', group='favicons', filename='favicon-16x16.png')}}">
-    <link rel="manifest" href="{{url_for('static_content', group='favicons', filename='site.webmanifest')}}" crossorigin="use-credentials">
+    {# Served by a route, not from static/ - see site_webmanifest() for why. No
+       crossorigin="use-credentials" needed now it's exempt from the login gate. #}
+    <link rel="manifest" href="{{url_for('pwa.site_webmanifest')}}">
     <link rel="mask-icon" href="{{url_for('static_content', group='favicons', filename='safari-pinned-tab.svg')}}" color="#5bbad5">
     <link rel="shortcut icon" href="{{url_for('static_content', group='favicons', filename='favicon.ico')}}">
     <meta name="msapplication-TileColor" content="#da532c">
@@ -119,6 +121,8 @@
     <div class="header">
     <div>
       <div class="home-menu pure-menu pure-menu-horizontal" id="nav-menu">
+          <a id="mobile-home" style="display: none;" href="{{ url_for('watchlist.index') }}"><i data-feather="home"></i></a>
+
           {% if current_diff_url and is_safe_valid_url(current_diff_url) %}
           {# The watch's own name when it has one, so the diff/preview pages do not print
              the same URL twice. The title attribute keeps the full text reachable on hover
@@ -169,7 +173,7 @@
           {% include "menu.html" %}
             <li class=" menu-collapsible">
                 {%- if right_sticky -%}<div>{{ right_sticky }}</div>{%- endif -%}
-                <a href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a><br>
+                <a id="hosting-offer" href="https://changedetection.io/?ref={{ guid }}">Let us host your instance!</a>
             </li>
         </ul>
       </div>
@@ -423,6 +427,16 @@
     <script src="{{url_for('static_content', group='js', filename='search-modal.js')}}" defer></script>
     <script src="{{url_for('static_content', group='js', filename='toast.js')}}"></script>
     <script src="{{url_for('static_content', group='js', filename='flask-toast-bridge.js')}}" defer></script>
+    {# Registers the no-op worker that makes Android build a WebAPK, which is what puts this
+       instance in the share sheet. navigator.serviceWorker is undefined outside a secure
+       context, so a plain-http instance simply skips it rather than throwing. #}
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register("{{ url_for('pwa.service_worker') }}");
+        });
+      }
+    </script>
   </body>
 
 </html>

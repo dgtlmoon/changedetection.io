@@ -4,8 +4,8 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: changedetection.io 0.55.7\n"
-"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-06-23 14:19+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -522,6 +522,10 @@ msgstr "Журнал отладки уведомлений"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -606,6 +610,27 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
 msgstr "Если запрос не возвращает содержимого или HTML не содержит текста, считается ли это изменением?"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
@@ -1032,6 +1057,10 @@ msgid "AI / LLM configured:"
 msgstr "AI/LLM настроено:"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Edit provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Configure AI Provider"
 msgstr "Настройка поставщика AI"
 
@@ -1126,6 +1155,10 @@ msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
 msgstr "Совместимость с OpenAI (vLLM, LM Studio, llama.cpp)"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
 msgstr ""
 "Требуется только для Ollama или пользовательских/автономных конечных точек. Оставьте пустым для поставщиков облачных "
@@ -1160,8 +1193,18 @@ msgid "choose a model"
 msgstr "выбрать модель"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Enter API key and click 'Load available models'"
-msgstr "Введите ключ API и нажмите «Загрузить доступные модели»."
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Change model"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Remove AI / LLM configuration?"
@@ -1181,6 +1224,10 @@ msgstr "Удалять"
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "Отмена"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove provider"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Test connection"
@@ -1568,8 +1615,8 @@ msgid "Use system defaults"
 msgstr "Использовать системные настройки по умолчанию"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
-msgstr "Добавить новый организационный тег"
+msgid "Add a new organisational tag / group name."
+msgstr "Добавить новый тег / название группы."
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
@@ -2876,6 +2923,10 @@ msgid "Watch added."
 msgstr "Часы добавлены."
 
 #: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "записи"
 
@@ -3614,8 +3665,12 @@ msgid "Edit > Watch"
 msgstr "Редактировать > Смотреть"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Метод выборки"
+msgid "Notification URL List"
+msgstr "Список URL-адресов уведомлений"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Название уведомления"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3626,12 +3681,8 @@ msgid "Notification format"
 msgstr "Формат уведомления"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Название уведомления"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Список URL-адресов уведомлений"
+msgid "Fetch Method"
+msgstr "Метод выборки"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3848,7 +3899,9 @@ msgstr "Без звука"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "Прикрепите скриншот к уведомлению (где это возможно)"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "Соответствовать"
 
@@ -4502,6 +4555,10 @@ msgstr "Ошибка при получении метаданных для {}."
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Протокол просмотра не разрешен или неверный формат URL."
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

@@ -165,6 +165,12 @@ def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS
     return max(400, min(len(diff) // 4, max_cap))
 
 
+# Models that emit chain-of-thought before the answer, on any provider. Reasoning tokens are
+# billed and counted against max_tokens, so these need headroom or the answer never lands.
+# Kept in step with client._NO_TEMPERATURE_MODEL_KEYWORDS - reasoning is what drives both.
+REASONING_MODEL_KEYWORDS = ('o1', 'o3', 'o4', 'gpt-5', 'thinking-exp')
+
+
 def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
     """
     Scale max_tokens for endpoints that commonly serve reasoning models
@@ -182,10 +188,25 @@ def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
     cost change. Ollama / OpenAI-compatible users can dial the multiplier down to 1x
     in Settings → AI → Provider if they want to keep costs tight on a paid endpoint.
 
-    Activated when `llm_cfg['provider_kind']` is `'ollama'` or `'openai_compatible'`.
+    Activated when `llm_cfg['provider_kind']` is `'ollama'` or `'openai_compatible'`, OR
+    when the model itself is a known reasoning model on any provider.
+
+    That second case was missing and it broke gpt-5 completely. The "cloud providers have
+    non-reasoning defaults" assumption above held for gpt-4o and friends, but gpt-5 reasons
+    by default: with the tight 400 cap it spent all 400 tokens on reasoning
+    (`completion_tokens_details.reasoning_tokens == 400`), returned content='' with
+    finish_reason='length', and still billed for the call. Every summary was empty and every
+    summary cost money. What decides whether headroom is needed is whether the MODEL reasons,
+    not whether the ENDPOINT is local.
+
     Multiplier defaults to 5x and is user-configurable in Settings → AI → Provider.
     """
-    if (llm_cfg or {}).get('provider_kind') not in ('ollama', 'openai_compatible'):
+    llm_cfg = llm_cfg or {}
+    _model = (llm_cfg.get('model') or '').lower()
+    _is_reasoning_model = any(k in _model for k in REASONING_MODEL_KEYWORDS)
+
+    if (llm_cfg.get('provider_kind') not in ('ollama', 'openai_compatible')
+            and not _is_reasoning_model):
         return base_max_tokens
     try:
         multiplier = int(llm_cfg.get('local_token_multiplier') or 5)

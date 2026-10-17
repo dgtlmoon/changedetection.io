@@ -25,8 +25,17 @@ DEFAULT_TIMEOUT = int(os.getenv('LLM_TIMEOUT', 300))
 # longer deadline (Hermes-style, 30 min). Overridable via LLM_LOCAL_TIMEOUT; see
 # evaluator.resolve_llm_timeout() for how the endpoint is classified.
 DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
-# Models and reasoning architectures that reject explicit sampling parameters (temperature/top_p)
-_NO_TEMPERATURE_MODEL_KEYWORDS = ('flash-lite', 'thinking-exp', 'o1', 'o3', 'o4')
+# Models and reasoning architectures that reject explicit sampling parameters (temperature/top_p).
+# Substring match against the lowercased model name, so 'gpt-5' also covers gpt-5-mini, gpt-5.1 etc.
+#
+# This is only an optimisation - the BadRequestError handler below strips and retries for
+# anything not listed. Being listed just avoids paying a rejected round trip on every call.
+#
+# NOT all GPT models: gpt-4o, gpt-4-turbo and gpt-3.5-turbo take temperature normally. It is
+# reasoning that forbids it. gpt-5 reports "only temperature=1 is supported unless
+# reasoning_effort resolves to 'none'" - we never set reasoning_effort=none, so it is always
+# in that state for us.
+_NO_TEMPERATURE_MODEL_KEYWORDS = ('flash-lite', 'thinking-exp', 'o1', 'o3', 'o4', 'gpt-5')
 
 DEFAULT_RETRIES = 3
 

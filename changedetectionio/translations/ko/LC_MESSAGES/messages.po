@@ -5,8 +5,8 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-01-02 11:40+0100\n"
 "Last-Translator: limeade23 <admin@limeade.me>\n"
@@ -513,6 +513,10 @@ msgstr "알림 디버그 로그"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -595,6 +599,27 @@ msgstr "비밀번호 활성화 시 변경 기록 페이지 액세스 허용 (dif
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "When a request returns no content, or the HTML does not contain any text, is this considered a change?"
 msgstr "요청 결과에 내용이 없거나 HTML에 텍스트가 없는 경우도 변경으로 간주"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
@@ -993,6 +1018,10 @@ msgid "AI / LLM configured:"
 msgstr "AI / LLM 설정됨:"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Edit provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Configure AI Provider"
 msgstr "AI 프로바이더 설정"
 
@@ -1072,6 +1101,10 @@ msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
 msgstr "Ollama 또는 사용자 지정/자체 호스팅 엔드포인트에만 필요합니다. 클라우드 프로바이더는 비워 두세요."
 
@@ -1098,8 +1131,18 @@ msgid "choose a model"
 msgstr "모델 선택"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Enter API key and click 'Load available models'"
-msgstr "API 키를 입력하고 '사용 가능한 모델 불러오기'를 클릭하세요"
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Change model"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Remove AI / LLM configuration?"
@@ -1119,6 +1162,10 @@ msgstr "제거"
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "취소"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "Remove provider"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Test connection"
@@ -1488,8 +1535,8 @@ msgid "Use system defaults"
 msgstr "시스템 기본값 사용"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
-msgstr "새 그룹 / 태그 추가"
+msgid "Add a new organisational tag / group name."
+msgstr "새 태그 / 그룹 이름 추가."
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
@@ -2774,6 +2821,10 @@ msgid "Watch added."
 msgstr "모니터링이 추가되었습니다."
 
 #: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
 msgstr "항목"
 
@@ -3508,8 +3559,12 @@ msgid "Edit > Watch"
 msgstr "편집 > 모니터링"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "가져오기 방식"
+msgid "Notification URL List"
+msgstr "알림 URL 목록"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "알림 제목"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3520,12 +3575,8 @@ msgid "Notification format"
 msgstr "알림 형식"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "알림 제목"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "알림 URL 목록"
+msgid "Fetch Method"
+msgstr "가져오기 방식"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3742,7 +3793,9 @@ msgstr "음소거됨"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "알림에 스크린샷 첨부(가능한 경우)"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "일치 방식"
 
@@ -4396,6 +4449,10 @@ msgstr "{}의 메타데이터를 가져오는 중 오류가 발생했습니다."
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "모니터링 프로토콜이 허용되지 않거나 URL 형식이 올바르지 않습니다."
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
