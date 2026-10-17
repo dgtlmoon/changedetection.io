@@ -337,13 +337,16 @@ components:
         fetch_backend:
           type: string
           description: |
-            Backend to use for fetching content. Common values:
-            - `system` (default) - Use the system-wide default fetcher
-            - `html_requests` - Fast requests-based fetcher
-            - `html_webdriver` - Browser-based fetcher (Playwright/Puppeteer)
-            - `extra_browser_*` - Custom browser configurations (if configured)
-            - Plugin-provided fetchers (if installed)
-          pattern: '^(system|html_requests|html_webdriver|extra_browser_.+)$'
+            Which browser this watch checks with. The valid values depend on the install, so the
+            value is checked against them when you create or update a watch:
+            - `system` (default) - follow the global Default browser
+            - a built-in engine name, e.g. `html_requests` (fast plain HTTP client),
+              `html_webdriver` (Playwright/Puppeteer/Selenium, depending on configuration) or
+              `html_external_cdp` (a browser you run elsewhere, reached over CDP)
+            - a plugin-provided engine, if one is installed
+            - the id of a saved browser from the Browsers page, which is also what a pre-0.61
+              `extra_browser_<name>` endpoint becomes when it is migrated there
+          pattern: '^[^\r\n\t]{1,200}$'
           default: system
         headers:
           type: object

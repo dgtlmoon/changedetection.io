@@ -411,64 +411,148 @@ class model(EntityPersistenceMixin, watch_base):
         return self.get('url', '').startswith('source:')
 
     @property
+    def browser_config_store(self):
+        """A read-only, file-backed view of browsers.json for THIS watch.
+
+        The Watch only holds the raw settings data dict (self._datastore), not the full
+        ChangeDetectionStore, so it can't reach the shared browser_config_store directly. The
+        per-path registry hands back that same shared (mtime-cached) instance so the watch can
+        self-resolve its browser config (id -> engine, group overrides) without threading the
+        store through every call, and without re-reading browsers.json per watch per render.
+        """
+        from changedetectionio.model.browser_config import get_browser_config_store
+        if not self._datastore_path:
+            return None
+        return get_browser_config_store(self._datastore_path)
+
+    @property
+    def _global_default_fetch_backend(self):
+        """The global 'Default browser' (settings.application.fetch_backend) - the single source
+        of truth that BOTH /browsers (per-row radio) and Settings->Fetching write. May be a
+        built-in engine name or a user browser-config id."""
+        if self._datastore:
+            return self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
+        return 'html_requests'
+
+    @property
+    def browser_config_override(self):
+        """If a group/tag overrides this watch's browser config, describe it, else None.
+
+        Uses the group's dedicated enabler (browser_config_overrides_watch), NOT the coarse
+        legacy `overrides_watch` flag. Tags are checked in the watch's tag-list order; the first
+        one whose enabler is on and whose selected config still exists (a user browser OR a
+        built-in engine) wins. Returns {group_uuid, group_title, config_id, label} or None.
+        """
+        from changedetectionio.model.browser_config import list_builtin_browsers
+        if not self._datastore:
+            return None
+        tags = self._datastore['settings']['application'].get('tags', {})
+        store = self.browser_config_store
+        builtins = {b['id']: b for b in list_builtin_browsers()}
+        for tag_uuid in (self.get('tags') or []):
+            tag = tags.get(tag_uuid)
+            if not tag:
+                continue
+            if tag.get('browser_config_overrides_watch') and tag.get('browser_config'):
+                cid = tag.get('browser_config')
+                entry = store.get(cid) if store else None
+                if entry:
+                    label = entry.get('label')
+                elif cid in builtins:
+                    label = builtins[cid]['label']
+                else:
+                    continue  # dangling / unknown - don't apply, fall through
+                return {'group_uuid': tag_uuid, 'group_title': tag.get('title'),
+                        'config_id': cid, 'label': label}
+        return None
+
+    def _selected_browser_supports_pdf(self):
+        """Can the browser this watch would use hand back the original PDF bytes?
+
+        Resolves the selector chain without the PDF step - group override / watch / 'system' ->
+        global default - then maps it to its engine through the browser-config store, so a named
+        browser config is judged by the engine it is built on. Separate from get_fetch_backend()
+        rather than inlined because that is the method asking, and it must not recurse.
+        """
+        from changedetectionio import content_fetchers
+
+        override = self.browser_config_override
+        selected = override['config_id'] if override else (self.get('fetch_backend') or 'system')
+        if selected == 'system':
+            selected = self._global_default_fetch_backend
+
+        store = self.browser_config_store
+        engine = selected
+        if store is not None:
+            _entry, engine, _cfg = store.engine_and_config(selected)
+
+        return bool(getattr(getattr(content_fetchers, engine or '', None), 'supports_pdf', False))
+
+    @property
     def get_fetch_backend(self):
+        """THE fully-resolved browser/engine selector this watch fetches with.
+
+        Single source of truth for the whole app (content fetcher, watchlist status icon,
+        capability checks, browser steps). Resolution order:
+
+            1. PDF watches      -> 'html_requests', but ONLY when the browser they would
+                                    otherwise use cannot hand back the original PDF bytes
+                                    (FetcherCapabilities.supports_pdf) - a browser shows a PDF in
+                                    its built-in viewer, so for the rest we fetch it and
+                                    pdf2html the text instead
+            2. group override   -> the overriding group's browser config id
+            3. the watch's own `fetch_backend`
+            4. 'system' / unset -> the global Default browser (_global_default_fetch_backend)
+
+        Never returns 'system'. The value is a user browser-config id, a built-in engine name
+        ('html_requests'/'html_webdriver'/...). Map it to the concrete
+        engine with .resolved_fetch_engine; build the fetcher class/config via
+        content_fetchers.resolve_content_fetcher (which consumes this).
         """
-        Get the fetch backend for this watch with special case handling.
+        uuid = self.get('uuid')
+        # A browser renders a PDF in its built-in viewer, so only the fetchers that can hand back
+        # the original bytes (supports_pdf) are any use for one. Checked against the browser this
+        # watch would otherwise resolve to, not against a hardcoded list, so a PDF watch keeps its
+        # chosen browser when that browser can actually do the job.
+        if self.is_pdf and not self._selected_browser_supports_pdf():
+            logger.debug(f"fetch_backend: watch {uuid} is_pdf and its browser cannot supply the "
+                         f"original PDF -> forced 'html_requests'")
+            return 'html_requests'
 
-        CHAIN RESOLUTION OPPORTUNITY:
-        Currently returns watch.fetch_backend directly, but doesn't implement
-        Watch → Tag → Global resolution chain. With Pydantic:
+        override = self.browser_config_override
+        if override:
+            logger.debug(f"fetch_backend: watch {uuid} uses group '{override.get('group_title')}' "
+                         f"override -> '{override['config_id']}'")
+            return override['config_id']
 
-        @computed_field
-        def resolved_fetch_backend(self) -> str:
-            # Special case: PDFs always use html_requests
-            if self.is_pdf:
-                return 'html_requests'
+        selected = self.get('fetch_backend') or 'system'
+        if selected == 'system':
+            default = self._global_default_fetch_backend
+            logger.debug(f"fetch_backend: watch {uuid} 'system' -> global default '{default}'")
+            return default
 
-            # Watch override
-            if self.fetch_backend and self.fetch_backend != 'system':
-                return self.fetch_backend
+        logger.debug(f"fetch_backend: watch {uuid} -> watch-level '{selected}'")
+        return selected
 
-            # Tag override (first tag with overrides_watch=True wins)
-            for tag_uuid in self.tags:
-                tag = self._datastore.get_tag(tag_uuid)
-                if tag.overrides_watch and tag.fetch_backend:
-                    return tag.fetch_backend
-
-            # Global default
-            return self._datastore.settings.fetch_backend
-        """
-        # Maybe also if is_image etc?
-        # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it,
-        # the others fall back to html_requests (same as resolve_content_fetcher() does at fetch time)
-        if self.is_pdf:
-            from changedetectionio import content_fetchers
-            fetcher_name = self.get('fetch_backend')
-            if not fetcher_name or fetcher_name == 'system':
-                fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
-            if fetcher_name and fetcher_name.startswith('extra_browser_'):
-                fetcher_name = 'html_webdriver'
-            if not getattr(getattr(content_fetchers, fetcher_name or '', None), 'supports_pdf', False):
-                return 'html_requests'
-
-        return self.get('fetch_backend')
+    @property
+    def resolved_fetch_engine(self):
+        """The concrete engine name behind .get_fetch_backend - maps a browser-config id to its
+        base_fetcher, or passes a built-in engine name straight through. Used for capability
+        checks and the watchlist status icon so they agree with what actually fetches the page."""
+        store = self.browser_config_store
+        if store is None:
+            return self.get_fetch_backend or 'html_requests'
+        _entry, engine, _cfg = store.engine_and_config(self.get_fetch_backend)
+        return engine or 'html_requests'
 
     @property
     def fetcher_supports_screenshots(self):
-        """Return True if the fetcher configured for this watch supports screenshots.
-
-        Resolves 'system' via self._datastore, then checks supports_screenshots on
-        the actual fetcher class. Works for built-in and plugin fetchers alike.
-        """
+        """True if the fetcher this watch resolves to supports screenshots. Honours group
+        overrides + browser-config ids (via .resolved_fetch_engine). Works for built-in and
+        plugin fetchers alike."""
         from changedetectionio import content_fetchers
         from changedetectionio.content_fetchers.base import FetcherCapabilities
-
-        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests when needed
-        if not fetcher_name or fetcher_name == 'system':
-            fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
-
-        # Shared capability model - handles an unknown/None fetcher class (all-False)
-        fetcher_class = getattr(content_fetchers, fetcher_name, None)
+        fetcher_class = getattr(content_fetchers, self.resolved_fetch_engine, None)
         return FetcherCapabilities.from_fetcher(fetcher_class).supports_screenshots
 
     @property
