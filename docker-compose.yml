@@ -59,6 +59,8 @@ services:
   #
   #        Optional application-layer protection (flaskapi-guard): per client IP rate limit, IP allow list and
   #        filtering of attack patterns in the URL, query string and headers. Request bodies are not scanned.
+  #        The package is not bundled: install it with the exact pin through EXTRA_PACKAGES (also add it to any existing EXTRA_PACKAGES list).
+  #      - EXTRA_PACKAGES=flaskapi-guard==4.4.0
   #        Only FLASKAPI_GUARD_ENABLED is needed, the rest are optional (defaults shown, ALLOWED_IPS is unset by default).
   #        With USE_X_SETTINGS also set, only the TRUSTED_PROXIES addresses may set X-Forwarded-*, add your proxy's IP if it is not on 127.0.0.1.
   #      - FLASKAPI_GUARD_ENABLED=true

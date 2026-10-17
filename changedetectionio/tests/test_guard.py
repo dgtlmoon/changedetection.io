@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Optional flaskapi-guard integration (changedetectionio/guard.py), off unless FLASKAPI_GUARD_ENABLED=true
+import importlib.util
 import itertools
 import os
 import socket
@@ -12,8 +13,12 @@ import urllib.request
 
 import pytest
 from flask import Flask
+from loguru import logger
 
-from changedetectionio.guard import init_guard
+from changedetectionio.guard import init_guard, restrict_forwarded_headers
+
+# flaskapi-guard is optional and not in requirements.txt (EXTRA_PACKAGES=flaskapi-guard==4.4.0), tests that need it skip without it
+needs_guard = pytest.mark.skipif(importlib.util.find_spec('flaskapi_guard') is None, reason='flaskapi-guard is not installed')
 
 _counter = itertools.count(1)
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -37,6 +42,10 @@ def make_app(monkeypatch, **env):
 
     @app.route('/', methods=['GET', 'POST'])
     @app.route('/language/auto-detect', methods=['GET'])
+    @app.route('/language/set-language', methods=['GET'])
+    @app.route('/api/v1/watch', methods=['GET'])
+    @app.route('/login', methods=['GET', 'POST'])
+    @app.route('/other', methods=['GET'])
     def index():
         return 'ok'
 
@@ -69,6 +78,7 @@ def test_disabled_never_imports_guard(datastore_path):
     assert 'OK' in out.stdout, out.stdout + out.stderr
 
 
+@needs_guard
 def test_enabled_runs_before_authentication(datastore_path):
     code = textwrap.dedent(f"""
         import os
@@ -95,6 +105,7 @@ def test_missing_package_fails_at_startup(monkeypatch):
         init_guard(Flask(__name__))
 
 
+@needs_guard
 def test_rate_limit_burst(monkeypatch):
     app = make_app(monkeypatch, FLASKAPI_GUARD_RATE_LIMIT=5)
     ip = unique_ip()
@@ -103,6 +114,7 @@ def test_rate_limit_burst(monkeypatch):
     assert get(app, unique_ip()).status_code == 200
 
 
+@needs_guard
 def test_allowlist(monkeypatch):
     allowed, other = unique_ip(), unique_ip()
     app = make_app(monkeypatch, FLASKAPI_GUARD_ALLOWED_IPS=allowed)
@@ -110,6 +122,7 @@ def test_allowlist(monkeypatch):
     assert get(app, other).status_code == 403
 
 
+@needs_guard
 def test_spoofed_xff_ignored_from_untrusted_peer(monkeypatch):
     app = make_app(monkeypatch, FLASKAPI_GUARD_RATE_LIMIT=3)
     peer = unique_ip()
@@ -117,6 +130,7 @@ def test_spoofed_xff_ignored_from_untrusted_peer(monkeypatch):
     assert codes == [200] * 3 + [429] * 2
 
 
+@needs_guard
 def test_xff_honored_from_trusted_proxy(monkeypatch):
     app = make_app(monkeypatch, FLASKAPI_GUARD_RATE_LIMIT=2)  # default trusted proxies: loopback
     # distinct clients behind the proxy get their own budget
@@ -126,6 +140,7 @@ def test_xff_honored_from_trusted_proxy(monkeypatch):
     assert codes == [200, 200, 429, 429]
 
 
+@needs_guard
 def test_allowlist_cannot_be_spoofed_by_untrusted_peer(monkeypatch):
     allowed = unique_ip()
     app = make_app(monkeypatch, FLASKAPI_GUARD_ALLOWED_IPS=allowed)
@@ -133,6 +148,7 @@ def test_allowlist_cannot_be_spoofed_by_untrusted_peer(monkeypatch):
     assert get(app, '127.0.0.1', headers={'X-Forwarded-For': allowed}).status_code == 200
 
 
+@needs_guard
 def test_attack_in_query_blocked(monkeypatch):
     app = make_app(monkeypatch)
     assert get(app, unique_ip(), '/?q=%3Cscript%3Ealert(1)%3C/script%3E').status_code == 400
@@ -140,6 +156,7 @@ def test_attack_in_query_blocked(monkeypatch):
     assert get(app, unique_ip(), '/?tag=abc&sort=label&order=desc').status_code == 200
 
 
+@needs_guard
 def test_body_is_not_scanned(monkeypatch):
     app = make_app(monkeypatch)
     ip = unique_ip()
@@ -154,12 +171,97 @@ def test_body_is_not_scanned(monkeypatch):
     assert app.test_client().post('/', json=data, environ_overrides={'REMOTE_ADDR': ip}).status_code == 200
 
 
+@needs_guard
 def test_ui_paths_and_private_referer_not_flagged(monkeypatch):
-    # "recon" matches /language/ and "ssrf" matches a LAN/localhost Referer: both categories are off
+    # "recon" matches /language/ (excluded from scanning) and "ssrf" matches a LAN/localhost Referer (category off)
     app = make_app(monkeypatch)
     ip = unique_ip()
     assert get(app, ip, '/language/auto-detect', headers={'Referer': 'http://192.168.1.10:5000/'}).status_code == 200
     assert get(app, ip, '/?redirect=http://127.0.0.1/', headers={'Referer': 'http://localhost:5000/'}).status_code == 200
+
+
+@needs_guard
+def test_recon_category_is_on(monkeypatch):
+    app = make_app(monkeypatch)
+    assert get(app, unique_ip(), '/language/set-language').status_code == 400  # still scanned, only auto-detect is excluded
+    assert get(app, unique_ip(), '/language/auto-detect').status_code == 200
+
+
+@needs_guard
+def test_api_not_scanned_but_ban_allowlist_and_rate_limit_still_apply(monkeypatch):
+    attack = '/api/v1/watch?q=%3Cscript%3Ealert(1)%3C/script%3E'
+    app = make_app(monkeypatch, FLASKAPI_GUARD_RATE_LIMIT=3)
+    ip = unique_ip()
+    assert get(app, ip, attack).status_code == 200  # the API answers (with its own 403 for a bad key), not the guard's 400
+    assert get(app, ip, '/other?q=%3Cscript%3Ealert(1)%3C/script%3E').status_code == 400
+    burst = unique_ip()
+    assert [get(app, burst, '/api/v1/watch').status_code for _ in range(5)] == [200] * 3 + [429] * 2
+    allowed = unique_ip()
+    app = make_app(monkeypatch, FLASKAPI_GUARD_ALLOWED_IPS=allowed)
+    assert get(app, allowed, '/api/v1/watch').status_code == 200
+    assert get(app, unique_ip(), '/api/v1/watch').status_code == 403
+
+
+@needs_guard
+def test_default_exclude_paths_are_kept(monkeypatch):
+    app = make_app(monkeypatch)
+    app.add_url_rule('/static/x', 'static_x', lambda: 'ok')
+    assert get(app, unique_ip(), '/static/x?q=%3Cscript%3Ealert(1)%3C/script%3E').status_code == 200
+
+
+@needs_guard
+def test_login_budget_counts_get_and_post_and_spares_a_normal_user(monkeypatch):
+    app = make_app(monkeypatch)
+    ip = unique_ip()
+    client = app.test_client()
+    # load the form, 10 wrong passwords (each POST is followed by the GET of the redirect back to the form), then the right one
+    codes = [client.get('/login', environ_overrides={'REMOTE_ADDR': ip}).status_code]
+    for _ in range(10):
+        codes.append(client.post('/login', data={'password': 'wrong'}, environ_overrides={'REMOTE_ADDR': ip}).status_code)
+        codes.append(client.get('/login', environ_overrides={'REMOTE_ADDR': ip}).status_code)
+    codes.append(client.post('/login', data={'password': 'right'}, environ_overrides={'REMOTE_ADDR': ip}).status_code)
+    assert codes == [200] * 22
+    # a client that keeps guessing is stopped, and GET counts toward the same budget
+    brute = unique_ip()
+    codes = [get(app, brute, '/login').status_code for _ in range(32)]
+    assert codes == [200] * 30 + [429] * 2
+    # other paths and other clients are not affected
+    assert get(app, brute, '/other').status_code == 200
+    assert get(app, unique_ip(), '/login').status_code == 200
+
+
+def run_untrusted_peer_requests(count, peer='10.9.9.9'):
+    seen = []
+    middleware = restrict_forwarded_headers(lambda environ, start_response: seen.append(dict(environ)) or [])
+    for _ in range(count):
+        middleware({'REMOTE_ADDR': peer, 'HTTP_X_FORWARDED_FOR': '1.2.3.4'}, None)
+    return seen
+
+
+def test_dropping_forwarded_headers_warns_once_naming_peer_and_setting(monkeypatch):
+    monkeypatch.setenv('FLASKAPI_GUARD_TRUSTED_PROXIES', '127.0.0.1')
+    messages = []
+    sink = logger.add(lambda m: messages.append(m.record['message']), level='WARNING')
+    try:
+        seen = run_untrusted_peer_requests(5)
+    finally:
+        logger.remove(sink)
+    assert all('HTTP_X_FORWARDED_FOR' not in environ for environ in seen)
+    assert len(messages) == 1
+    assert '10.9.9.9' in messages[0] and 'FLASKAPI_GUARD_TRUSTED_PROXIES' in messages[0]
+
+
+def test_no_warning_without_forwarded_headers_or_from_trusted_proxy(monkeypatch):
+    monkeypatch.setenv('FLASKAPI_GUARD_TRUSTED_PROXIES', '127.0.0.1')
+    messages = []
+    sink = logger.add(lambda m: messages.append(m.record['message']), level='WARNING')
+    try:
+        middleware = restrict_forwarded_headers(lambda environ, start_response: [])
+        middleware({'REMOTE_ADDR': '10.9.9.9'}, None)
+        middleware({'REMOTE_ADDR': '127.0.0.1', 'HTTP_X_FORWARDED_FOR': '1.2.3.4'}, None)
+    finally:
+        logger.remove(sink)
+    assert messages == []
 
 
 def free_port():
@@ -195,6 +297,7 @@ def status(port, xff=None):
         return e.code, e.headers
 
 
+@needs_guard
 @pytest.mark.parametrize('trusted, expect_rotation_is_separate_clients', [
     ('127.0.0.1,::1', True),  # loopback is the proxy: X-Forwarded-For is the client
     ('10.255.255.1', False),  # the peer (loopback) is not a trusted proxy: X-Forwarded-For is ignored
