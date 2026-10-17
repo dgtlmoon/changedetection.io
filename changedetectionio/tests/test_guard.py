@@ -19,7 +19,8 @@ _counter = itertools.count(1)
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CHANGEDETECTION_PY = os.path.join(REPO_ROOT, 'changedetection.py')
 # close_fds=False and no cwd let subprocess use posix_spawn: fork()ing the multi-threaded xdist worker segfaulted on macOS
-SPAWN_ENV = {**os.environ, 'PYTHONPATH': REPO_ROOT}
+# Prepend, never replace: the Docker image finds its dependencies through PYTHONPATH=/usr/local
+SPAWN_ENV = {**os.environ, 'PYTHONPATH': os.pathsep.join(filter(None, [REPO_ROOT, os.environ.get('PYTHONPATH')]))}
 
 
 def unique_ip():
