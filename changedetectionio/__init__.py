@@ -687,6 +687,10 @@ def main():
             x_port=1,     # X-Forwarded-Port (original port)
             x_prefix=1    # X-Forwarded-Prefix (URL prefix)
         )
+        # Only trusted proxies may set X-Forwarded-* (ProxyFix alone trusts any peer)
+        from changedetectionio.forwarded_headers import restrict_proxy_fix_trust
+        from changedetectionio.guard import guard_enabled
+        app.wsgi_app = restrict_proxy_fix_trust(app.wsgi_app, guard_enabled())
 
 
     # In batch mode, skip starting the HTTP server - just keep workers running

@@ -637,6 +637,10 @@ jobs:
         run: |
           docker run  -e EXTRA_PACKAGES=changedetection.io-osint-processor test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s  tests/plugins/test_processor.py::test_check_plugin_processor'
 
+      - name: Optional flaskapi-guard integration (installed through EXTRA_PACKAGES, not in requirements.txt)
+        run: |
+          docker run -e EXTRA_PACKAGES=flaskapi-guard==4.4.0 test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/test_guard.py'
+
       - name: Plugin get_html_head_extras hook injects into base.html
         run: |
           docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_html_head_extras.py'

@@ -56,6 +56,20 @@ services:
   #        Respect proxy_pass type settings, `proxy_set_header Host "localhost";` and `proxy_set_header X-Forwarded-Prefix /app;`
   #        More here https://github.com/dgtlmoon/changedetection.io/wiki/Running-changedetection.io-behind-a-reverse-proxy
   #      - USE_X_SETTINGS=1
+  #        Comma separated IPs/CIDRs of your reverse proxy, only they may set X-Forwarded-* (recommended with USE_X_SETTINGS,
+  #        when unset any client can set them).
+  #      - USE_X_SETTINGS_TRUSTED_PROXIES=172.18.0.0/16
+  #
+  #        Optional application-layer protection (flaskapi-guard): per client IP rate limit, IP allow list and
+  #        filtering of attack patterns in the URL, query string and headers. Request bodies are not scanned.
+  #        The package is not bundled: install it with the exact pin through EXTRA_PACKAGES (also add it to any existing EXTRA_PACKAGES list).
+  #      - EXTRA_PACKAGES=flaskapi-guard==4.4.0
+  #        Only FLASKAPI_GUARD_ENABLED is needed, the rest are optional (defaults shown, ALLOWED_IPS is unset by default).
+  #        With USE_X_SETTINGS also set (and USE_X_SETTINGS_TRUSTED_PROXIES not), only the TRUSTED_PROXIES addresses may set X-Forwarded-*, add your proxy's IP if it is not on 127.0.0.1.
+  #      - FLASKAPI_GUARD_ENABLED=true
+  #      - FLASKAPI_GUARD_RATE_LIMIT=600
+  #      - FLASKAPI_GUARD_TRUSTED_PROXIES=127.0.0.1,::1
+  #      - FLASKAPI_GUARD_ALLOWED_IPS=192.168.1.0/24
   #
   #        Hides the `Referer` header so that monitored websites can't see the changedetection.io hostname.
   #      - HIDE_REFERER=true
