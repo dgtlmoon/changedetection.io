@@ -11,16 +11,26 @@ The module-level `datastore` variable is injected at startup by
 
 Reusable by other LLM backends: a plugin that talks to a provider some other way
 (without litellm) can reuse the prompt, page trimming, cache and reply parsing,
-and only supply the HTTP call itself:
+and only supply the HTTP call itself. Register it under the 'changedetectionio' setuptools
+entrypoint; it runs before this one (trylast), and this one is skipped once it answers:
 
-    messages = build_restock_messages(content, url, llm_intent, max_chars)
-    key = restock_cache_key(model, messages)
-    result = restock_cache_get(key)
-    if result is None:
-        raw = <POST messages to your provider>
-        result = parse_restock_reply(raw, url)
-        if result:
-            restock_cache_put(key, result)
+    from changedetectionio.pluggy_interface import hookimpl
+    from changedetectionio.processors.restock_diff.plugins.llm_restock import (
+        build_restock_messages, restock_cache_key, restock_cache_get, restock_cache_put, parse_restock_reply)
+
+    @hookimpl
+    def get_itemprop_availability_override(content, url, llm_intent, text):
+        # `content` is the fetched HTML, `text` the same page through html_to_text().
+        # No default values here, pluggy silently never passes an argument that has one.
+        messages = build_restock_messages(content, url, llm_intent)
+        key = restock_cache_key(MODEL, messages)
+        result = restock_cache_get(key)
+        if result is None:
+            raw = <POST messages to your provider with requests>
+            result = parse_restock_reply(raw, url)
+            if result:
+                restock_cache_put(key, result)
+        return result   # None lets the next plugin try
 
 None of these import litellm. Avoid evaluator._thinking_extra_body(), it does, and
 pass cost_usd= to accumulate_global_tokens() so it doesn't look the price up in litellm.
@@ -331,8 +341,10 @@ def parse_restock_reply(raw: str, url: str = None) -> dict | None:
     return {'price': price, 'currency': currency, 'availability': availability}
 
 
-@hookimpl
-def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, url, llm_intent=None):
+# trylast: plugins that talk to a provider some other way get the first go, and since the
+# hook is firstresult this one (and litellm) is skipped when one of them already answered.
+@hookimpl(trylast=True)
+def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, url, llm_intent):
     """Use an LLM as a last-resort fallback for price and restock extraction."""
     global datastore
 
