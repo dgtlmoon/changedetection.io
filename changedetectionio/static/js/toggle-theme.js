@@ -5,7 +5,10 @@
 $(document).ready(function () {
 
     $(".toggle-light-mode").on("click", function () {
-        const isDark = $("html").attr("data-darkmode") === "true";
+        // "auto" (no cookie yet) follows the device setting, so flip whatever is currently shown
+        const state = $("html").attr("data-darkmode");
+        const isDark = state === "true" ||
+            (state === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
         $("html").attr("data-darkmode", !isDark);
         setCookieValue(!isDark);
     });

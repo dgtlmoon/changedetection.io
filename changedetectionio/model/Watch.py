@@ -439,9 +439,17 @@ class model(EntityPersistenceMixin, watch_base):
             return self._datastore.settings.fetch_backend
         """
         # Maybe also if is_image etc?
-        # This is because chrome/playwright wont render the PDF in the browser and we will just fetch it and use pdf2html to see the text.
+        # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it,
+        # the others fall back to html_requests (same as resolve_content_fetcher() does at fetch time)
         if self.is_pdf:
-            return 'html_requests'
+            from changedetectionio import content_fetchers
+            fetcher_name = self.get('fetch_backend')
+            if not fetcher_name or fetcher_name == 'system':
+                fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
+            if fetcher_name and fetcher_name.startswith('extra_browser_'):
+                fetcher_name = 'html_webdriver'
+            if not getattr(getattr(content_fetchers, fetcher_name or '', None), 'supports_pdf', False):
+                return 'html_requests'
 
         return self.get('fetch_backend')
 
@@ -455,7 +463,7 @@ class model(EntityPersistenceMixin, watch_base):
         from changedetectionio import content_fetchers
         from changedetectionio.content_fetchers.base import FetcherCapabilities
 
-        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
+        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests when needed
         if not fetcher_name or fetcher_name == 'system':
             fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
 
@@ -516,24 +524,35 @@ class model(EntityPersistenceMixin, watch_base):
         fname = os.path.join(self.data_dir, self.history_index_filename)
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
+
+            # Entries restored from backup could contain absolute or traversal paths, never trust them.
+            # basename() reduces every entry to a plain name, so the only remaining way out of data_dir
+            # is a symlink. One directory listing replaces the per-line realpath() + exists() calls
+            # (~10 syscalls per snapshot); only symlinks still pay for a realpath() containment check.
+            # Note: scandir() never lists '.' or '..', so those are rejected as "not found".
+            safe_data_dir = os.path.realpath(self.data_dir)
+            with os.scandir(safe_data_dir) as it:
+                dir_entries = {e.name: e for e in it}
+
             with open(fname, "r", encoding='utf-8') as f:
                 for i in f.readlines():
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
 
-                        # Always resolve history entries to within the watch's own data directory.
-                        # Entries restored from backup could contain absolute or traversal paths —
-                        # never trust them. Use realpath to also block symlink-based escapes.
-                        safe_data_dir = os.path.realpath(self.data_dir)
                         snapshot_fname = os.path.basename(v.strip())
-                        resolved_path = os.path.realpath(os.path.join(self.data_dir, snapshot_fname))
-
-                        if not resolved_path.startswith(safe_data_dir + os.sep) and resolved_path != safe_data_dir:
-                            logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                        entry = dir_entries.get(snapshot_fname)
+                        if entry is None:
                             continue
 
-                        if not os.path.exists(resolved_path):
-                            continue
+                        resolved_path = os.path.join(safe_data_dir, snapshot_fname)
+                        if entry.is_symlink():
+                            resolved_path = os.path.realpath(resolved_path)
+                            if not resolved_path.startswith(safe_data_dir + os.sep):
+                                logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                                continue
+                            # Dangling symlink, same as the file not existing
+                            if not os.path.exists(resolved_path):
+                                continue
 
                         tmp_history[k] = resolved_path
 
@@ -1298,6 +1317,32 @@ class model(EntityPersistenceMixin, watch_base):
 
         return False
 
+
+    def save_last_fetched_pdf(self, timestamp, contents):
+        """Keep the original PDF for a snapshot (the snapshot itself is only the converted text),
+        so the newest two versions can be compared. Does nothing unless contents is a PDF."""
+        if not isinstance(contents, bytes) or b'%PDF' not in contents[:1024]:
+            return
+        self.ensure_data_dir_exists()
+        self._write_atomic(os.path.join(self.data_dir, f"{timestamp}.pdf"), contents)
+        self._prune_last_fetched_pdf_snapshots()
+
+    def get_fetched_pdf(self, timestamp):
+        filepath = os.path.join(self.data_dir, f"{timestamp}.pdf")
+        if os.path.isfile(filepath):
+            with open(filepath, 'rb') as f:
+                return f.read()
+
+        return False
+
+    def _prune_last_fetched_pdf_snapshots(self):
+        # Keep only the PDFs of the newest two history entries. Matched by filename rather than by
+        # walking the history, so PDFs of entries that history_trim() already removed go too.
+        # (Binary history snapshots are named by md5, so a digits-only name is always ours)
+        keep = set(str(k) for k in list(self.history.keys())[-2:])
+        for f in Path(self.data_dir).glob('*.pdf'):
+            if f.stem.isdigit() and f.stem not in keep:
+                f.unlink(missing_ok=True)
 
     def _prune_last_fetched_html_snapshots(self):
 

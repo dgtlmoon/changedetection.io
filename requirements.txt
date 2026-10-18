@@ -3,7 +3,7 @@ feedparser~=6.0  # For parsing RSS/Atom feeds
 flask-compress
 flask-login>=0.6.3
 flask-paginate
-flask-socketio>=5.6.1,<6 # Re #3910
+flask-socketio>=5.7.0,<6 # Re #3910
 flask>=3.1,<4
 flask_cors # For the Chrome extension to operate
 flask_restful
@@ -13,7 +13,7 @@ python-engineio>=4.14.0,<5
 python-socketio>=5.17.0,<6
 pytz
 timeago~=1.0
-validators~=0.35
+validators~=0.36
 werkzeug==3.1.9
 
 
@@ -31,7 +31,7 @@ wtforms~=3.2
 jsonpath-ng~=1.9.1
 
 # Fast JSON serialization for better performance
-orjson~=3.12
+orjson~=3.13
 
 # dnspython - Used by paho-mqtt for MQTT broker resolution  
 # Version pin removed since eventlet (which required the specific 2.6.1 pin) has been eliminated
@@ -155,7 +155,7 @@ pluggy ~= 1.6
 litellm>=1.40.0
 # Used today for LLMSettings (model/LLMSettings.py); transitively pulled by litellm but pinned explicitly
 # so the validation/typing layer doesn't disappear if litellm drops it.
-pydantic>=2.13.5,<3.0
+pydantic>=2.14.0,<3.0
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 
