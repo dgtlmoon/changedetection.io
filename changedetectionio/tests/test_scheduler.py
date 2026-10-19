@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import dataclasses
 
 import time
 from copy import copy
@@ -82,7 +83,12 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     # Enabling today in Kiritimati should work flawless
     kiritimati_time = datetime.now(timezone.utc).astimezone(ZoneInfo("Pacific/Kiritimati"))
     kiritimati_time_day_of_week = kiritimati_time.strftime("%A").lower()
-    live_server.app.config['DATASTORE'].data['watching'][uuid]["time_schedule_limit"][kiritimati_time_day_of_week]["enabled"] = True
+    # The schedule is a frozen model, replace it rather than mutating it in place
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    schedule = watch["time_schedule_limit"]
+    watch["time_schedule_limit"] = dataclasses.replace(
+        schedule, **{kiritimati_time_day_of_week: dataclasses.replace(schedule.day(kiritimati_time_day_of_week), enabled=True)}
+    )
     time.sleep(3)
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != last_check
 

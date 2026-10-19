@@ -690,13 +690,13 @@ components:
           type: object
           properties:
             hours:
-              type: string
-              pattern: '^[0-9]+$'
-              default: '24'
+              type: integer
+              minimum: 0
+              default: 24
             minutes:
-              type: string
-              pattern: '^[0-9]+$'
-              default: '00'
+              type: integer
+              minimum: 0
+              default: 0
 
     Watch:
       allOf:

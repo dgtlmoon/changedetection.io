@@ -31,7 +31,7 @@ from changedetectionio.validate_url import is_safe_valid_url
 from changedetectionio.strtobool import strtobool
 from changedetectionio.jinja2_custom import render as jinja_render
 from changedetectionio import gc_debounce
-from . import watch_base
+from . import watch_base, storage_value
 from .persistence import EntityPersistenceMixin
 import os
 import re
@@ -1144,8 +1144,6 @@ class model(EntityPersistenceMixin, watch_base):
         Excludes __-prefixed keys (transient in-memory state — must not persist to disk).
         Normalizes browser_steps to empty list if no meaningful steps.
         """
-        import copy
-
         # Get base snapshot with lock
         lock = self._datastore.lock if self._datastore and hasattr(self._datastore, 'lock') else None
 
@@ -1157,7 +1155,7 @@ class model(EntityPersistenceMixin, watch_base):
 
         # Exclude processor config keys (stored separately) and __-prefixed transient keys
         watch_dict = {
-            k: copy.deepcopy(v) for k, v in snapshot.items()
+            k: storage_value(v) for k, v in snapshot.items()
             if not k.startswith('processor_config_') and not k.startswith('__')
         }
 

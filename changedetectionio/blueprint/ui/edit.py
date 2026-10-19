@@ -9,6 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 from changedetectionio.time_handler import default_timezone_name, is_within_schedule
+from changedetectionio.model.TimeScheduleLimit import as_time_schedule_limit
 from changedetectionio import worker_pool
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
 
@@ -290,16 +291,16 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             watch = datastore.data['watching'].get(uuid)
 
             if watch.get('time_between_check_use_default'):
-                time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit') or {}
+                time_schedule_limit = as_time_schedule_limit(datastore.data['settings']['requests'].get('time_schedule_limit'))
             else:
-                time_schedule_limit = watch.get('time_schedule_limit') or {}
+                time_schedule_limit = watch['time_schedule_limit']
 
             tz_name = default_timezone_name(
-                time_schedule_limit.get('timezone')
+                time_schedule_limit.timezone
                 or datastore.data['settings']['application'].get('scheduler_timezone_default')
             )
 
-            if time_schedule_limit and time_schedule_limit.get('enabled'):
+            if time_schedule_limit.enabled:
                 try:
                     is_in_schedule = is_within_schedule(time_schedule_limit=time_schedule_limit,
                                                       default_tz=tz_name

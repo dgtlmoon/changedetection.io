@@ -164,8 +164,10 @@ def strip_internal_api_fields(data):
     if not isinstance(data, dict):
         return data
     from changedetectionio.model.schema_utils import SYSTEM_MANAGED_NON_SPEC_FIELDS
+    from changedetectionio.model.shared_defaults import DefaultShared
     return {
-        k: v for k, v in data.items()
+        # Typed fields (e.g. time_schedule_limit) go out as their full structure
+        k: (v.to_api() if isinstance(v, DefaultShared) else v) for k, v in data.items()
         if not (isinstance(k, str) and (k.startswith('__') or k in SYSTEM_MANAGED_NON_SPEC_FIELDS))
     }
 
