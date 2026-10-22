@@ -5,6 +5,7 @@ Provides regex_replace filter for pattern-based string replacements in templates
 """
 import re
 import signal
+import threading
 from loguru import logger
 
 
@@ -68,11 +69,15 @@ def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 
     def timeout_handler(signum, frame):
         raise TimeoutError("Regex operation timed out")
 
+    # signal.signal() only works in the main thread, but notifications are rendered
+    # in the notification runner threads, so only use the alarm where it can be set
+    use_alarm = hasattr(signal, 'SIGALRM') and threading.current_thread() is threading.main_thread()
+
     try:
         # Set up timeout for regex operation (Unix-like systems only)
         # This prevents ReDoS attacks
         old_handler = None
-        if hasattr(signal, 'SIGALRM'):
+        if use_alarm:
             old_handler = signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(REGEX_TIMEOUT_SECONDS)
 
@@ -80,7 +85,7 @@ def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 
             result = re.sub(pattern, replacement, value_str, count=count)
         finally:
             # Cancel the alarm
-            if hasattr(signal, 'SIGALRM'):
+            if use_alarm:
                 signal.alarm(0)
                 if old_handler is not None:
                     signal.signal(signal.SIGALRM, old_handler)
