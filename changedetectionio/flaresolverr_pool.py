@@ -217,6 +217,19 @@ class FlarePool:
         self.flaresolverr_url = (
             flaresolverr_url if flaresolverr_url is not None else get_flaresolverr_url()
         )
+        # Explicit constructor args win over env on every solve() — _ensure_url()
+        # only refreshes values that were left as None (the global pool passes
+        # all None so it keeps tracking env).
+        self._explicit = {
+            name
+            for name, value in (
+                ("max_sessions", max_sessions),
+                ("ttl_minutes", ttl_minutes),
+                ("timeout", timeout),
+                ("flaresolverr_url", flaresolverr_url),
+            )
+            if value is not None
+        }
         # host -> {session_id, cookies, userAgent, ts}
         self._lru = OrderedDict()
         self._lock = threading.RLock()
@@ -224,12 +237,15 @@ class FlarePool:
     def _ensure_url(self):
         # Re-read dynamic envs under lock? Called from within locked sections and also from get_global_pool
         with self._lock:
-            if not self.flaresolverr_url:
+            if "flaresolverr_url" not in self._explicit and not self.flaresolverr_url:
                 self.flaresolverr_url = get_flaresolverr_url()
-            # Re-read dynamic envs
-            self.max_sessions = get_flaresolverr_max_sessions()
-            self.ttl_minutes = get_flaresolverr_ttl_minutes()
-            self.timeout = get_flaresolverr_timeout()
+            # Re-read dynamic envs, unless explicitly pinned via the constructor
+            if "max_sessions" not in self._explicit:
+                self.max_sessions = get_flaresolverr_max_sessions()
+            if "ttl_minutes" not in self._explicit:
+                self.ttl_minutes = get_flaresolverr_ttl_minutes()
+            if "timeout" not in self._explicit:
+                self.timeout = get_flaresolverr_timeout()
 
     def _is_expired(self, entry):
         ts = entry.get("ts")

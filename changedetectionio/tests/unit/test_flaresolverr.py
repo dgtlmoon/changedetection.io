@@ -9,6 +9,7 @@ only way to regress it.
 """
 
 import asyncio
+import re
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -193,6 +194,23 @@ class TestNormalizeFlareSolverrCookies:
                                                 WATCH_URL)
         assert result[0]["sameSite"] == "Lax"
 
+    def test_samesite_all_valid_values(self):
+        for raw, expected in [("strict", "Strict"), ("Strict", "Strict"), ("STRICT", "Strict"),
+                              ("lax", "Lax"), ("Lax", "Lax"),
+                              ("none", "None"), ("None", "None")]:
+            result = normalize_flaresolverr_cookies([{"name": "a", "value": "1", "sameSite": raw}],
+                                                    WATCH_URL)
+            assert result[0]["sameSite"] == expected, raw
+
+    def test_existing_url_preserved(self):
+        result = normalize_flaresolverr_cookies(
+            [{"name": "a", "value": "1", "url": "https://example.com/other"}], WATCH_URL)
+        assert result[0]["url"] == "https://example.com/other"
+
+    def test_none_url_with_cookies(self):
+        result = normalize_flaresolverr_cookies([{"name": "a", "value": "1"}], None)
+        assert result == [{"name": "a", "value": "1"}]
+
     def test_invalid_samesite_dropped_but_cookie_kept(self):
         result = normalize_flaresolverr_cookies([{"name": "a", "value": "1", "sameSite": "sometimes"}],
                                                 WATCH_URL)
@@ -231,6 +249,20 @@ class TestFlarePoolSolve:
         kwargs.setdefault("timeout", 5)
         return FlarePool(**kwargs)
 
+    def _posted(self, monkeypatch, solution):
+        monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
+                            lambda url: (True, ""))
+        posted = []
+        timeouts = []
+
+        def fake_post(url, json=None, timeout=None):
+            posted.append((url, json))
+            timeouts.append(timeout)
+            return FakeResp({"status": "ok", "solution": solution})
+
+        monkeypatch.setattr("requests.post", fake_post)
+        return posted, timeouts
+
     def _ok(self, monkeypatch, solution):
         monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
                             lambda url: (True, ""))
@@ -249,8 +281,31 @@ class TestFlarePoolSolve:
         first = pool.solve(WATCH_URL)
         second = pool.solve(WATCH_URL)
         assert first["session_id"] == second["session_id"]
-        assert first["session_id"].startswith("cdio-")
+        assert re.fullmatch(r"cdio-[0-9a-f]{12}", first["session_id"])
         assert not [p for p in posted if p.get("cmd") == "sessions.destroy"]
+
+    def test_getter_defaults_and_invalid_fallback(self, monkeypatch):
+        from changedetectionio.flaresolverr_pool import (
+            get_flaresolverr_max_sessions,
+            get_flaresolverr_timeout,
+            get_flaresolverr_ttl_minutes,
+        )
+        with patch.dict("os.environ", {}, clear=True):
+            assert get_flaresolverr_max_sessions() == 10
+            assert get_flaresolverr_timeout() == 60
+            assert get_flaresolverr_ttl_minutes() == 60
+        with patch.dict("os.environ", {"FLARESOLVERR_MAX_SESSIONS": "abc",
+                                       "FLARESOLVERR_TIMEOUT": "abc",
+                                       "FLARESOLVERR_TTL_MINUTES": "abc"}):
+            assert get_flaresolverr_max_sessions() == 10
+            assert get_flaresolverr_timeout() == 60
+            assert get_flaresolverr_ttl_minutes() == 60
+        with patch.dict("os.environ", {"FLARESOLVERR_MAX_SESSIONS": "3",
+                                       "FLARESOLVERR_TIMEOUT": "42",
+                                       "FLARESOLVERR_TTL_MINUTES": "7"}):
+            assert get_flaresolverr_max_sessions() == 3
+            assert get_flaresolverr_timeout() == 42
+            assert get_flaresolverr_ttl_minutes() == 7
 
     def test_lru_evict_destroys_old_session(self, monkeypatch):
         posted = self._ok(monkeypatch, make_solution())
@@ -264,12 +319,28 @@ class TestFlarePoolSolve:
     def test_expired_entry_evicted_on_resolve(self, monkeypatch):
         posted = self._ok(monkeypatch, make_solution())
         pool = self._pool()
-        first = pool.solve(WATCH_URL)
+        pool.solve(WATCH_URL)
         pool._lru["www.example.com"]["ts"] -= 61 * 60
         assert pool.get_cached(WATCH_URL) is None
-        pool.solve(WATCH_URL)
+
+    def test_expired_entry_evicted_on_solve(self, monkeypatch):
+        posted = self._ok(monkeypatch, make_solution())
+        pool = self._pool()
+        first = pool.solve(WATCH_URL)
+        # NOTE: no get_cached() in between — solve() itself must notice the
+        # stale entry, destroy it and start fresh.
+        pool._lru["www.example.com"]["ts"] -= 61 * 60
+        second = pool.solve(WATCH_URL)
         destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
         assert [d["session"] for d in destroys] == [first["session_id"]]
+        assert second["session_id"] == first["session_id"]
+
+    def test_entry_without_timestamp_never_expires(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        pool = self._pool()
+        pool.solve(WATCH_URL)
+        del pool._lru["www.example.com"]["ts"]
+        assert pool.get_cached(WATCH_URL)["session_id"].startswith("cdio-")
 
     def test_max_zero_is_ephemeral(self, monkeypatch):
         posted = self._ok(monkeypatch, make_solution())
@@ -303,6 +374,87 @@ class TestFlarePoolSolve:
         except FlareSolverrException:
             pass
         assert called == []
+
+    def test_full_request_payload(self, monkeypatch):
+        posted, timeouts = self._posted(monkeypatch, make_solution())
+        with patch.dict("os.environ", {"FLARESOLVERR_TTL_MINUTES": "7"}):
+            pool = self._pool(timeout=42)
+            solution = pool.solve(WATCH_URL, proxy_url="http://proxy:8080")
+        assert len(posted) == 1
+        url, payload = posted[0]
+        assert url == "http://flaresolverr:8191/v1"
+        assert payload == {"cmd": "request.get",
+                           "url": WATCH_URL,
+                           "maxTimeout": 42000,
+                           "session": solution["session_id"],
+                           "session_ttl_minutes": 7,
+                           "proxy": {"url": "http://proxy:8080"}}
+        assert timeouts == [47]
+
+    def test_post_cmd_and_postdata(self, monkeypatch):
+        posted, _ = self._posted(monkeypatch, make_solution())
+        pool = self._pool()
+        pool.solve(WATCH_URL, method="POST", post_data="a=1")
+        _, payload = posted[0]
+        assert payload["cmd"] == "request.post"
+        assert payload["postData"] == "a=1"
+
+    def test_exactly_1mb_post_data_not_truncated(self, monkeypatch):
+        posted, _ = self._posted(monkeypatch, make_solution())
+        pool = self._pool()
+        body = "x" * (1024 * 1024)
+        pool.solve(WATCH_URL, method="POST", post_data=body)
+        assert len(posted[0][1]["postData"]) == 1024 * 1024
+
+    def test_over_1mb_post_data_truncated(self, monkeypatch):
+        posted, _ = self._posted(monkeypatch, make_solution())
+        pool = self._pool()
+        pool.solve(WATCH_URL, method="POST", post_data="x" * (1024 * 1024 + 1))
+        assert len(posted[0][1]["postData"]) == 1024 * 1024
+
+    def test_error_message_defaults_to_empty(self, monkeypatch):
+        monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
+                            lambda url: (True, ""))
+        monkeypatch.setattr("requests.post",
+                            lambda *a, **k: FakeResp({"status": "error"}))
+        pool = self._pool()
+        try:
+            pool.solve(WATCH_URL)
+            assert False, "expected FlareSolverrException"
+        except FlareSolverrException as e:
+            assert str(e) == "FlareSolverr error status=error msg="
+
+    def test_get_cached_returns_live_entry(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        pool = self._pool()
+        solved = pool.solve(WATCH_URL)
+        cached = pool.get_cached(WATCH_URL)
+        assert cached["session_id"] == solved["session_id"]
+        assert cached["cookies"] == solved["cookies"]
+
+    def test_destroy_posts_to_daemon_url(self, monkeypatch):
+        posted, _ = self._posted(monkeypatch, make_solution())
+        with patch.dict("os.environ", {"FLARESOLVERR_MAX_SESSIONS": "1"}):
+            pool = self._pool()
+            pool.solve("https://a.example.com/")
+            pool.solve("https://b.example.com/")
+        destroys = [(u, p) for u, p in posted if p.get("cmd") == "sessions.destroy"]
+        assert len(destroys) == 1
+        assert destroys[0][0] == "http://flaresolverr:8191/v1"
+
+    def test_explicit_constructor_args_win_over_env(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        with patch.dict("os.environ", {"FLARESOLVERR_MAX_SESSIONS": "99",
+                                       "FLARESOLVERR_TTL_MINUTES": "99",
+                                       "FLARESOLVERR_TIMEOUT": "99"}):
+            pool = FlarePool(flaresolverr_url="http://flaresolverr:8191/v1",
+                             max_sessions=1, ttl_minutes=2, timeout=3)
+            pool.solve("https://a.example.com/")
+            pool.solve("https://b.example.com/")
+            # MAX=1 from the constructor, not 99 from env: A must be evicted.
+            assert "a.example.com" not in pool._lru
+            assert pool.timeout == 3
+            assert pool.ttl_minutes == 2
 
     def test_error_status_raises_and_evicts(self, monkeypatch):
         monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
@@ -425,9 +577,11 @@ class TestUserAgent:
         assert resolve_flaresolverr_user_agent("FlareUA/1.0", headers={"User-Agent": "Other"}) == "FlareUA/1.0"
 
     def test_falls_back_to_manage_user_agent(self, monkeypatch):
-        monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent",
-                            lambda headers=None, current_ua="": "M-UA")
+        from unittest.mock import Mock
+        manage = Mock(return_value="M-UA")
+        monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent", manage)
         assert resolve_flaresolverr_user_agent(None, headers={"X-A": "b"}) == "M-UA"
+        manage.assert_called_once_with(headers={"X-A": "b"})
 
     def test_puppeteer_applies_flaresolverr_ua_and_strips_header(self):
         page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
@@ -445,11 +599,13 @@ class TestUserAgent:
         assert filtered == {"X-K": "v"}
 
     def test_puppeteer_falls_back_to_managed_ua(self, monkeypatch):
-        monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent",
-                            lambda headers=None, current_ua="": "M-UA")
+        from unittest.mock import Mock
+        manage = Mock(return_value="M-UA")
+        monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent", manage)
         page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
         filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(page, None, {"X-K": "v"}))
         page.setUserAgent.assert_called_once_with("M-UA")
+        manage.assert_called_once_with(headers={"X-K": "v"}, current_ua="NAV-UA")
         assert filtered == {"X-K": "v"}
 
 
