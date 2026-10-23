@@ -146,7 +146,7 @@ tzdata
 
 #typing_extensions ==4.8.0
 
-pluggy ~= 1.6
+pluggy ~= 1.7
 
 # LLM intent-based change evaluation (multi-provider via litellm)
 # Uncapped: litellm now uses jsonschema<5.0,>=4.0.0, resolving earlier openapi-spec-validator conflict.
