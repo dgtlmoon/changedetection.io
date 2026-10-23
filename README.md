@@ -235,6 +235,8 @@ Just some examples
 
 Now you can also customise your notification content and use <a target="_new" href="https://jinja.palletsprojects.com/en/3.0.x/templates/">Jinja2 templating</a> for their title and body!
 
+To limit repeated alerts when a page changes frequently, set **Notification cooldown (hours)** in the watch's **Notifications** tab. For example, enter `24` to queue at most one change notification per day for that watch. Set it to `0` to leave notifications unrestricted. The cooldown applies to content-change notifications and starts when a notification is queued; it does not wait for the notification service to confirm delivery.
+
 ## JSON API Monitoring
 
 Detect changes and monitor data in JSON API's by using either JSONPath or jq to filter, parse, and restructure JSON as needed.

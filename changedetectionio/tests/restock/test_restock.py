@@ -224,6 +224,12 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
         follow_redirects=True
     )
 
+    watch_uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
+    live_server.app.config['DATASTORE'].update_watch(
+        uuid=watch_uuid,
+        update_obj={'notification_cooldown_hours': 24},
+    )
+
     # Is it correctly show as NOT in stock?
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
@@ -255,3 +261,9 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
     res = client.get(url_for("watchlist.index"))
     assert b'not-in-stock' in res.data, "Correctly showing NOT IN STOCK in the list after it changed from IN STOCK"
 
+    # Becoming available again within the cooldown should not send a second alert.
+    set_back_in_stock_response(datastore_path)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    time.sleep(5)
+    assert not os.path.isfile(notification_file), "Cooldown should suppress repeated restock notifications"

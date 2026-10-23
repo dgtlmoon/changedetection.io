@@ -12,6 +12,7 @@ def test_check_watch_field_storage(client, live_server, measure_memory_usage, da
     test_url = "http://somerandomsitewewatch.com"
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    assert client.application.config['DATASTORE'].data['watching'][uuid]['notification_cooldown_hours'] == 0
     client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
 
@@ -22,6 +23,7 @@ def test_check_watch_field_storage(client, live_server, measure_memory_usage, da
                "include_filters" : ".fooclass",
                "title" : "My title",
                "ignore_text" : "ignore this",
+               "notification_cooldown_hours": 24,
                "url": test_url,
                "tags": "woohoo",
                "headers": "curl:foo",
@@ -51,4 +53,5 @@ def test_check_watch_field_storage(client, live_server, measure_memory_usage, da
     assert b"http://somerandomsitewewatch.com" in res.data
     assert b"woohoo" in res.data
     assert b"curl: foo" in res.data
-
+    assert b'value="24"' in res.data
+    assert client.application.config['DATASTORE'].data['watching']['first']['notification_cooldown_hours'] == 24

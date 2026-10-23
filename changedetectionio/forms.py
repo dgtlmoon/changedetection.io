@@ -1018,6 +1018,11 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
     filter_failure_notification_send = BooleanField(_l('Send a notification when the filter can no longer be found on the page'), default=False)
     notification_muted = TernaryNoneBooleanField(_l('Notifications'), default=None, yes_text=_l("Muted"), no_text=_l("On"))
     notification_screenshot = BooleanField(_l('Attach screenshot to notification (where possible)'), default=False)
+    notification_cooldown_hours = IntegerField(
+        _l('Notification cooldown (hours)'),
+        default=0,
+        validators=[validators.NumberRange(min=0, message=_l("Should contain zero or more hours"))]
+    )
 
     # TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
     conditions_match_logic = RadioField(lazy_pgettext('condition', 'Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')

@@ -116,6 +116,8 @@ class watch_base(dict):
         notification_body (str|None): Custom notification body template
         notification_format (str): Notification format (e.g., 'System default', 'Text', 'HTML')
         notification_muted (bool): Disable notifications for this watch
+        notification_cooldown_hours (int): Minimum hours between change notifications (0 disables)
+        last_content_notification_at (int|float): Timestamp of last admitted content-change notification
         notification_screenshot (bool): Include screenshot in notifications
         notification_alert_count (int): Number of notifications sent
         last_notification_error (str|None): Last notification error message
@@ -219,6 +221,8 @@ class watch_base(dict):
             'notification_body': None,
             'notification_format': USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
             'notification_muted': False,
+            'notification_cooldown_hours': 0,
+            'last_content_notification_at': 0,
             'notification_screenshot': False,  # Include the latest screenshot if available and supported by the apprise URL
             'notification_title': None,
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
