@@ -2,7 +2,6 @@ import asyncio
 import gc
 import json
 import os
-from urllib.parse import urlparse
 
 from loguru import logger
 
@@ -11,6 +10,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
 from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.content_fetchers.cdp_downloads import CDPDownloads, download_timeout
 from changedetectionio.content_types import download_rule
+from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, \
     BrowserStepsStepException
 
@@ -213,10 +213,10 @@ class fetcher(Fetcher):
 
         if self.proxy:
             # Playwright needs separate username and password values
-            parsed = urlparse(self.proxy.get('server'))
-            if parsed.username:
-                self.proxy['username'] = parsed.username
-                self.proxy['password'] = parsed.password
+            username, password = proxy_credentials(self.proxy.get('server'))
+            if username:
+                self.proxy['username'] = username
+                self.proxy['password'] = password
 
     async def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)
