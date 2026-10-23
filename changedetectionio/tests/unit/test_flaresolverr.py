@@ -468,6 +468,22 @@ class TestFlarePoolSolve:
             pool.solve("file:///etc/passwd")
         assert called == []
 
+    def test_gate_called_with_watch_url(self, monkeypatch):
+        # The gate is a SSRF boundary: assert we actually gate the watch URL,
+        # not a hardcoded/None value (a wrong-arg bug here would bypass it).
+        seen = []
+
+        def fake_gate(url):
+            seen.append(url)
+            return (True, "")
+
+        monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed", fake_gate)
+        monkeypatch.setattr("requests.post",
+                            lambda *a, **k: FakeResp({"status": "ok", "solution": make_solution()}))
+        pool = self._pool()
+        pool.solve(WATCH_URL)
+        assert seen == [WATCH_URL]
+
     def test_full_request_payload(self, monkeypatch):
         posted, timeouts = self._posted(monkeypatch, make_solution())
         with patch.dict("os.environ", {"FLARESOLVERR_TTL_MINUTES": "7"}):
