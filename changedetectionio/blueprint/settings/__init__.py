@@ -66,9 +66,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                         extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
-        # Remove the last option 'System default'
-        form.application.form.notification_format.choices.pop()
-
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
             del form.requests.form.proxy
@@ -95,10 +92,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 if 'password' in app_update and not app_update['password']:
                     del (app_update['password'])
 
-                # Notification fields live on the dedicated /settings/notifications page now.
-                # The application sub-form still defines them (inherited from commonSettingsForm),
-                # so an unrelated save here would clobber the stored values with empty WTForms
-                # defaults. Drop them from the merge to leave the notifications config alone.
+                # Notification fields live on the dedicated /settings/notifications page and are
+                # no longer part of this form (#4554). Defensive - never let a save here clobber
+                # the stored notification config should one get re-added to the application sub-form.
                 for nf in ('notification_urls', 'notification_title', 'notification_body',
                            'notification_format', 'base_url'):
                     app_update.pop(nf, None)

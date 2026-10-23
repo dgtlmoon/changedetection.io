@@ -244,6 +244,21 @@ def test_regex_replace_with_notification_context():
 
     assert "value1 value2 " in finalRender
 
+def test_regex_replace_outside_main_thread():
+    """Test regex_replace also works when rendered outside the main thread, like in the notification runners."""
+    import threading
+
+    results = []
+
+    def render_in_thread():
+        results.append(render("{{ 'hello world 123' | regex_replace('[0-9]+', 'no-more-numbers') }}"))
+
+    thread = threading.Thread(target=render_in_thread)
+    thread.start()
+    thread.join()
+
+    assert results == ["hello world no-more-numbers"]
+
 def test_regex_replace_security_large_input():
     """Test regex_replace handles large input safely."""
 

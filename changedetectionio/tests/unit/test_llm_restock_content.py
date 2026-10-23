@@ -59,10 +59,10 @@ class TestLLMRestockContent(unittest.TestCase):
     def test_result_cache_is_bounded_fifo(self):
         m._LLM_RESULT_CACHE.clear()
         for i in range(m._LLM_RESULT_CACHE_MAX + 25):
-            m._llm_cache_put(f'key{i}', {'price': i})
+            m.restock_cache_put(f'key{i}', {'price': i})
         self.assertEqual(len(m._LLM_RESULT_CACHE), m._LLM_RESULT_CACHE_MAX)
-        self.assertIsNone(m._llm_cache_get('key0'))                       # oldest evicted
-        self.assertIsNotNone(m._llm_cache_get(f'key{m._LLM_RESULT_CACHE_MAX + 24}'))  # newest kept
+        self.assertIsNone(m.restock_cache_get('key0'))                       # oldest evicted
+        self.assertIsNotNone(m.restock_cache_get(f'key{m._LLM_RESULT_CACHE_MAX + 24}'))  # newest kept
         m._LLM_RESULT_CACHE.clear()
 
 

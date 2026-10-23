@@ -3274,8 +3274,12 @@ msgid "Edit > Watch"
 msgstr "Düzenle > İzleyici"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Getirme Yöntemi"
+msgid "Notification URL List"
+msgstr "Bildirim URL Listesi"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Bildirim Başlığı"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3286,12 +3290,8 @@ msgid "Notification format"
 msgstr "Bildirim formatı"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Bildirim Başlığı"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Bildirim URL Listesi"
+msgid "Fetch Method"
+msgstr "Getirme Yöntemi"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"

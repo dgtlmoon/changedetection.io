@@ -523,24 +523,35 @@ class model(EntityPersistenceMixin, watch_base):
         fname = os.path.join(self.data_dir, self.history_index_filename)
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
+
+            # Entries restored from backup could contain absolute or traversal paths, never trust them.
+            # basename() reduces every entry to a plain name, so the only remaining way out of data_dir
+            # is a symlink. One directory listing replaces the per-line realpath() + exists() calls
+            # (~10 syscalls per snapshot); only symlinks still pay for a realpath() containment check.
+            # Note: scandir() never lists '.' or '..', so those are rejected as "not found".
+            safe_data_dir = os.path.realpath(self.data_dir)
+            with os.scandir(safe_data_dir) as it:
+                dir_entries = {e.name: e for e in it}
+
             with open(fname, "r", encoding='utf-8') as f:
                 for i in f.readlines():
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
 
-                        # Always resolve history entries to within the watch's own data directory.
-                        # Entries restored from backup could contain absolute or traversal paths —
-                        # never trust them. Use realpath to also block symlink-based escapes.
-                        safe_data_dir = os.path.realpath(self.data_dir)
                         snapshot_fname = os.path.basename(v.strip())
-                        resolved_path = os.path.realpath(os.path.join(self.data_dir, snapshot_fname))
-
-                        if not resolved_path.startswith(safe_data_dir + os.sep) and resolved_path != safe_data_dir:
-                            logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                        entry = dir_entries.get(snapshot_fname)
+                        if entry is None:
                             continue
 
-                        if not os.path.exists(resolved_path):
-                            continue
+                        resolved_path = os.path.join(safe_data_dir, snapshot_fname)
+                        if entry.is_symlink():
+                            resolved_path = os.path.realpath(resolved_path)
+                            if not resolved_path.startswith(safe_data_dir + os.sep):
+                                logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                                continue
+                            # Dangling symlink, same as the file not existing
+                            if not os.path.exists(resolved_path):
+                                continue
 
                         tmp_history[k] = resolved_path
 

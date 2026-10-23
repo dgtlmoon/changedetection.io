@@ -59,7 +59,7 @@ class TernaryNoneBooleanField(Field):
     Custom text can be provided for each option:
     - yes_text: Text for True option (default: "Yes")
     - no_text: Text for False option (default: "No")  
-    - none_text: Text for None option (default: "Default")
+    - none_text: Text for None option (default: "Main settings")
     """
     widget = TernaryNoneBooleanWidget()
     

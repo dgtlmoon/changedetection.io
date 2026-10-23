@@ -402,6 +402,47 @@ class TestHistoryPathTraversal(unittest.TestCase):
             "Resolved path must be inside the watch data directory"
         )
 
+    def test_symlink_pointing_outside_data_dir_is_rejected(self):
+        """A plain-named entry that is a symlink to a file outside data_dir must be rejected."""
+        watch = self._make_watch()
+        with tempfile.NamedTemporaryFile(delete=False) as outside:
+            outside.write(b'secret')
+        try:
+            os.symlink(outside.name, os.path.join(watch.data_dir, 'evil.txt'))
+            self._write_history_txt(watch, ['1000000000,evil.txt\n'])
+            self.assertEqual(watch.history, {}, "Symlink escaping data_dir must be rejected")
+        finally:
+            os.unlink(outside.name)
+
+    def test_symlink_inside_data_dir_is_accepted(self):
+        """A symlink that resolves to a file inside data_dir is fine."""
+        watch = self._make_watch()
+        target = os.path.join(watch.data_dir, 'real.txt')
+        with open(target, 'w') as f:
+            f.write('hello')
+        os.symlink(target, os.path.join(watch.data_dir, 'link.txt'))
+        self._write_history_txt(watch, ['1000000000,link.txt\n'])
+        self.assertEqual(list(watch.history.values()), [os.path.realpath(target)])
+
+    def test_dangling_symlink_is_skipped(self):
+        watch = self._make_watch()
+        os.symlink(os.path.join(watch.data_dir, 'gone.txt'), os.path.join(watch.data_dir, 'dangling.txt'))
+        self._write_history_txt(watch, ['1000000000,dangling.txt\n'])
+        self.assertEqual(watch.history, {})
+
+    def test_missing_snapshot_and_junk_lines_are_skipped(self):
+        """Entries whose snapshot file is gone, blank and whitespace-only lines don't count."""
+        import uuid as uuid_builder
+        watch = self._make_watch()
+        watch.save_history_blob(contents="one", timestamp=1000000001, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="two", timestamp=1000000002, snapshot_id=str(uuid_builder.uuid4()))
+        fname = os.path.join(watch.data_dir, watch.history_index_filename)
+        with open(fname, 'a', encoding='utf-8') as f:
+            f.write('\n   \n1000000003,does-not-exist.txt\n\n')
+        self.assertEqual(list(watch.history.keys()), ['1000000001', '1000000002'])
+        self.assertEqual(watch.history_n, 2)
+        self.assertEqual(watch.newest_history_key, '1000000002')
+
     def test_get_history_snapshot_blocks_outside_path_directly(self):
         """get_history_snapshot(filepath=...) must raise if the path escapes data_dir."""
         watch = self._make_watch()

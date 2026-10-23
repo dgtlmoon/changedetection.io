@@ -3,7 +3,7 @@ feedparser~=6.0  # For parsing RSS/Atom feeds
 flask-compress
 flask-login>=0.6.3
 flask-paginate
-flask-socketio>=5.6.1,<6 # Re #3910
+flask-socketio>=5.7.0,<6 # Re #3910
 flask>=3.1,<4
 flask_cors # For the Chrome extension to operate
 flask_restful
@@ -13,7 +13,7 @@ python-engineio>=4.14.0,<5
 python-socketio>=5.17.0,<6
 pytz
 timeago~=1.0
-validators~=0.35
+validators~=0.36
 werkzeug==3.1.9
 
 
@@ -25,7 +25,7 @@ requests-file
 
 # urllib3==1.26.19  # Unpinned - let requests decide compatible version
 # If specific version needed for security, use urllib3>=1.26.19,<3.0
-chardet>=7.6.0
+chardet>=7.7.0
 
 wtforms~=3.2
 jsonpath-ng~=1.9.1
@@ -76,7 +76,7 @@ elementpath==5.1.4
 # - Pixelmatch is used as fallback when OpenCV is unavailable
 # - To install manually: pip install opencv-python-headless>=4.8.0.76
 
-selenium~=4.50.0
+selenium~=4.51.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
@@ -146,7 +146,7 @@ tzdata
 
 #typing_extensions ==4.8.0
 
-pluggy ~= 1.6
+pluggy ~= 1.7
 
 # LLM intent-based change evaluation (multi-provider via litellm)
 # Uncapped: litellm now uses jsonschema<5.0,>=4.0.0, resolving earlier openapi-spec-validator conflict.
