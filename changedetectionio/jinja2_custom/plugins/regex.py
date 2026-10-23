@@ -4,7 +4,7 @@ Regex filter plugin for Jinja2 templates.
 Provides regex_replace filter for pattern-based string replacements in templates.
 """
 import os
-import regex
+import re
 from loguru import logger
 
 REGEX_TIMEOUT_SECONDS = int(os.getenv('REGEX_TIMEOUT_SECONDS', 10))  # Maximum time for a regex operation
@@ -62,9 +62,13 @@ def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 
     ]
 
     for dangerous in dangerous_patterns:
-        if regex.search(dangerous, pattern):
+        if re.search(dangerous, pattern):
             logger.warning(f"regex_replace: Potentially dangerous pattern detected: {pattern}")
             return value_str
+
+    # Imported here, not at module level - nothing else loads 'regex' at startup and it costs ~2MB RSS
+    # per instance, so only pay for it when a template actually uses this filter
+    import regex
 
     try:
         # The 'regex' package enforces the timeout inside the matcher itself, so unlike
