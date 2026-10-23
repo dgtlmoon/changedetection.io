@@ -242,6 +242,25 @@ class TestNormalizeFlareSolverrCookies:
         assert result[0]["expires"] == 1700000000.0
         assert isinstance(result[0]["expires"], float)
 
+    def test_expires_huge_int_popped(self):
+        # float(10**400) raises OverflowError — must not kill the whole batch.
+        result = normalize_flaresolverr_cookies([{"name": "a", "value": "1", "expires": 10 ** 1000}],
+                                                WATCH_URL)
+        assert result[0]["name"] == "a"
+        assert "expires" not in result[0]
+
+    def test_expires_infinite_or_nan_popped(self):
+        for bad in ("1e1000", "nan", float("inf")):
+            result = normalize_flaresolverr_cookies([{"name": "a", "value": "1", "expires": bad}],
+                                                    WATCH_URL)
+            assert result[0]["name"] == "a"
+            assert "expires" not in result[0], bad
+
+    def test_expires_string_number_coerced(self):
+        result = normalize_flaresolverr_cookies([{"name": "a", "value": "1", "expires": "1700000000"}],
+                                                WATCH_URL)
+        assert result[0]["expires"] == 1700000000.0
+
     def test_samesite_casefolded(self):
         result = normalize_flaresolverr_cookies([{"name": "a", "value": "1", "sameSite": "lax"}],
                                                 WATCH_URL)
@@ -390,6 +409,29 @@ class TestFlarePoolSolve:
         assert [d["session"] for d in destroys] == [first["session_id"]]
         assert second["session_id"] == first["session_id"]
 
+    def test_expired_then_failed_solve_destroys_once(self, monkeypatch):
+        posted = []
+
+        def fake_post(url, json=None, timeout=None):
+            posted.append(json)
+            if len([p for p in posted if p.get("cmd") != "sessions.destroy"]) > 1:
+                return FakeResp({"status": "error", "message": "boom"})
+            return FakeResp({"status": "ok", "solution": make_solution()})
+
+        monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
+                            lambda url: (True, ""))
+        monkeypatch.setattr("requests.post", fake_post)
+        pool = self._pool()
+        pool.solve(WATCH_URL)
+        pool._lru["www.example.com"]["ts"] -= 61 * 60
+        with pytest.raises(FlareSolverrException, match="boom"):
+            pool.solve(WATCH_URL)
+        # One destroy for the stale entry, none for the failed retry of the
+        # same deterministic session id.
+        destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
+        assert len(destroys) == 1
+        assert pool._lru == {}
+
     def test_entry_without_timestamp_is_expired(self, monkeypatch):
         posted = self._ok(monkeypatch, make_solution())
         pool = self._pool()
@@ -527,6 +569,26 @@ class TestFlarePoolSolve:
             assert "a.example.com" not in pool._lru
             assert pool.timeout == 3
             assert pool.ttl_minutes == 2
+
+    def test_explicit_url_survives_env_change(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        with patch.dict("os.environ", {"FLARESOLVERR_URL": "http://one:8191/v1"}):
+            pool = FlarePool(flaresolverr_url="http://pinned:8191/v1", timeout=5)
+            pool._ensure_url()
+            assert pool.flaresolverr_url == "http://pinned:8191/v1"
+        with patch.dict("os.environ", {"FLARESOLVERR_URL": "http://two:8191/v1"}):
+            pool._ensure_url()
+            assert pool.flaresolverr_url == "http://pinned:8191/v1"
+
+    def test_unpinned_url_tracks_env(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        with patch.dict("os.environ", {"FLARESOLVERR_URL": "http://one:8191/v1"}):
+            pool = FlarePool(timeout=5)
+            pool._ensure_url()
+            assert pool.flaresolverr_url == "http://one:8191/v1"
+        with patch.dict("os.environ", {"FLARESOLVERR_URL": "http://two:8191/v1"}):
+            pool._ensure_url()
+            assert pool.flaresolverr_url == "http://two:8191/v1"
 
     def test_error_status_raises_and_evicts(self, monkeypatch):
         monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
