@@ -3,10 +3,11 @@ Regex filter plugin for Jinja2 templates.
 
 Provides regex_replace filter for pattern-based string replacements in templates.
 """
+import os
 import regex
 from loguru import logger
 
-REGEX_TIMEOUT_SECONDS = 10  # Maximum time for a regex operation
+REGEX_TIMEOUT_SECONDS = int(os.getenv('REGEX_TIMEOUT_SECONDS', 10))  # Maximum time for a regex operation
 
 
 def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 0) -> str:
@@ -34,7 +35,7 @@ def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 
     Security limits:
         - Maximum input size: 10MB
         - Maximum pattern length: 500 characters
-        - Operation timeout: 10 seconds
+        - Operation timeout: 10 seconds (REGEX_TIMEOUT_SECONDS env var)
         - Dangerous nested quantifier patterns are rejected
     """
     # Security limits
