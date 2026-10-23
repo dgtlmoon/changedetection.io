@@ -3599,21 +3599,6 @@ msgstr "Количество сохраняемых элементов исто�
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Тело должно быть пустым, если для метода запроса установлено значение GET."
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Неверная конфигурация синтаксиса шаблона: %(error)s."
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Неверный синтаксис шаблона: %(error)s."
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Неверный синтаксис шаблона в заголовке «%(header)s»: %(error)s."
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
 msgstr "Имя"
@@ -3881,6 +3866,21 @@ msgstr "RegEx для извлечения"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Извлечь в формате CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Неверная конфигурация синтаксиса шаблона: %(error)s."
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Неверный синтаксис шаблона: %(error)s."
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Неверный синтаксис шаблона в заголовке «%(header)s»: %(error)s."
 
 #: changedetectionio/languages.py
 msgid "just now"

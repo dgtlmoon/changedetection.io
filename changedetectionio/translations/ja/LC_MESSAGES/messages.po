@@ -3500,21 +3500,6 @@ msgstr "ウォッチごとに保持する履歴の件数"
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "リクエストメソッドがGETの場合、ボディは空にしてください"
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "無効なテンプレート構文設定: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "無効なテンプレート構文: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "\"%(header)s\" ヘッダーのテンプレート構文が無効です: %(error)s"
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
 msgstr "名前"
@@ -3782,6 +3767,21 @@ msgstr "抽出する正規表現"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "CSVとして抽出"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "無効なテンプレート構文設定: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "無効なテンプレート構文: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "\"%(header)s\" ヘッダーのテンプレート構文が無効です: %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

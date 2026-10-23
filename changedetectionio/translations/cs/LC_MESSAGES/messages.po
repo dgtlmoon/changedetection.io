@@ -3489,21 +3489,6 @@ msgstr "Počet historických záznamů pro sledování"
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Když je metoda požadavku nastavena na GET, tělo musí být prázdné"
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Neplatná konfigurace syntaxe šablony: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Neplatná syntaxe šablony: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Neplatná syntax šablony v \"%(header)s\" hlavička: %(error)s"
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
 msgstr "Název"
@@ -3771,6 +3756,21 @@ msgstr "RegEx k extrahování"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Extrahujte data"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Neplatná konfigurace syntaxe šablony: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Neplatná syntaxe šablony: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Neplatná syntax šablony v hlavičce \"%(header)s\": %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

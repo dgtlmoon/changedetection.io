@@ -1036,7 +1036,6 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
         if not super().validate():
             return False
 
-        from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -1044,64 +1043,15 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
             self.body.errors.append(gettext('Body must be empty when Request Method is set to GET'))
             result = False
 
-        # Attempt to validate jinja2 templates in the URL
-        if self.url.data and JINJA2_MARKER_PATTERN.search(self.url.data):
-            try:
-                jinja_render(template_str=self.url.data)
-            except ModuleNotFoundError as e:
-                # incase jinja2_time or others is missing
-                logger.error(e)
-                self.url.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                result = False
-            except Exception as e:
-                logger.error(e)
-                self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-                result = False
-
-        # Attempt to validate jinja2 templates in the optional "Link to Open"
-        if self.link_to_open.data and self.link_to_open.data.strip():
-            if JINJA2_MARKER_PATTERN.search(self.link_to_open.data):
-                try:
-                    jinja_render(template_str=self.link_to_open.data)
-                except ModuleNotFoundError as e:
-                    logger.error(e)
-                    self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                    result = False
-                except Exception as e:
-                    logger.error(e)
-                    self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-                    result = False
-
-        # Attempt to validate jinja2 templates in the body
-        if self.body.data and self.body.data.strip():
-            if JINJA2_MARKER_PATTERN.search(self.body.data):
-                try:
-                    jinja_render(template_str=self.body.data)
-                except ModuleNotFoundError as e:
-                    # incase jinja2_time or others is missing
-                    logger.error(e)
-                    self.body.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                    result = False
-                except Exception as e:
-                    logger.error(e)
-                    self.body.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-                    result = False
-
-        # Attempt to validate jinja2 templates in the headers
-        if len(self.headers.data) > 0:
-            try:
-                for header, value in self.headers.data.items():
-                    if JINJA2_MARKER_PATTERN.search(value):
-                        jinja_render(template_str=value)
-            except ModuleNotFoundError as e:
-                # incase jinja2_time or others is missing
-                logger.error(e)
-                self.headers.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                result = False
-            except Exception as e:
-                logger.error(e)
-                self.headers.errors.append(gettext('Invalid template syntax in \"%(header)s\" header: %(error)s') % {'header': header, 'error': e})
-                result = False
+        # Jinja2 templates in the URL, "Link to Open", body and headers - shared with the API
+        from changedetectionio.jinja2_custom.validate import validate_jinja2_fields
+        jinja2_errors = validate_jinja2_fields(url=self.url.data,
+                                               link_to_open=self.link_to_open.data,
+                                               body=self.body.data,
+                                               headers=self.headers.data)
+        for field_name, error in jinja2_errors.items():
+            getattr(self, field_name).errors.append(error)
+            result = False
 
         return result
 
