@@ -270,6 +270,20 @@ class model(EntityPersistenceMixin, watch_base):
         # Be sure the cached timestamp is ready
         bump = self.history
 
+    def update(self, *args, **kwargs):
+        """Clear the saved favicon when the URL changes, so the next check fetches the new site's icon.
+
+        Both the UI edit form and the API save through update(). Only a change from a non-empty URL
+        counts - a fresh object starts with url '' and is filled from storage via update() on every
+        load, which must not wipe the favicon.
+        """
+        old_url = (self.get('url') or '').strip()
+        super().update(*args, **kwargs)
+        new_url = (self.get('url') or '').strip()
+        if old_url and new_url != old_url:
+            logger.debug(f"UUID: {self.get('uuid')} URL changed from '{old_url}' to '{new_url}', clearing favicon")
+            self.clear_favicon()
+
     # Note: __deepcopy__, __getstate__, and __setstate__ are inherited from watch_base
     # This prevents memory leaks by sharing __datastore reference instead of copying it
 
@@ -986,13 +1000,25 @@ class model(EntityPersistenceMixin, watch_base):
         # @todo - Store some checksum and only write when its different
         logger.debug(f"UUID: {self.get('uuid')} updated favicon to at {fname}")
 
+    def clear_favicon(self) -> None:
+        """Remove any saved favicon.* so favicon_is_expired() reports it missing and it gets refetched."""
+        import glob
+        if not self.data_dir:
+            return
+        for fname in glob.glob(os.path.join(self.data_dir, "favicon.*")):
+            try:
+                os.unlink(fname)
+            except OSError as e:
+                logger.warning(f"UUID: {self.get('uuid')} could not remove favicon {fname}: {e}")
+        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+
     def get_favicon_filename(self) -> str | None:
         """
         Find any favicon.* file in the watch data directory.
 
         Uses a module-level cache keyed by data_dir to survive Watch object recreation,
         deepcopy (which drops instance attrs), and concurrent request races.
-        Invalidated when a favicon is saved or the watch history is cleared.
+        Invalidated when a favicon is saved or cleared, or the watch history is cleared.
 
         Returns:
             str: Basename of the favicon file, or None if not found.
