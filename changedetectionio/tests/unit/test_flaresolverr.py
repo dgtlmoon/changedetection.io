@@ -17,6 +17,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
+from changedetectionio.content_fetchers.flaresolverr import build_flaresolverr_bare_fetcher, solve_flaresolverr
 from changedetectionio.flaresolverr_pool import (
     FlarePool,
     FlareSolverrException,
@@ -31,7 +32,6 @@ from changedetectionio.flaresolverr_pool import (
     normalize_flaresolverr_cookies,
     resolve_flaresolverr_user_agent,
 )
-from changedetectionio.processors.base import difference_detection_processor
 
 FLARESOLVERR_ENV = {"FLARESOLVERR_URL": "http://flaresolverr:8191/v1"}
 WATCH_URL = "https://www.example.com/page"
@@ -618,7 +618,7 @@ class TestUserAgent:
 
 
 def make_handler_self(watch_extra=None, empty_pages_are_a_change=False):
-    """Fake difference_detection_processor: only what the overlay helpers touch."""
+    """Fake watch+datastore bundle: only what the overlay helpers touch."""
     watch = FakeWatch({"ignore_status_codes": False})
     if watch_extra:
         watch.update(watch_extra)
@@ -639,60 +639,66 @@ def make_fetcher_obj(made):
 
 
 class TestSolveFlareSolverr:
-    def _run(self, fake_self, monkeypatch, result):
+    def _run(self, watch, datastore, monkeypatch, result, proxy_url=None):
         monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
                             AsyncMock(return_value=result))
-        return asyncio.run(difference_detection_processor._solve_flaresolverr(
-            fake_self, WATCH_URL, None))
+        return asyncio.run(solve_flaresolverr(watch, datastore, WATCH_URL, proxy_url))
+
+    def _handler(self):
+        handler = make_handler_self()
+        return handler.watch, handler.datastore
 
     def test_passthrough(self, monkeypatch):
         solution = make_solution()
-        out = self._run(make_handler_self(), monkeypatch, solution)
+        watch, datastore = self._handler()
+        out = self._run(watch, datastore, monkeypatch, solution)
         assert out is solution
 
     def test_none_when_ineffective(self, monkeypatch):
-        assert self._run(make_handler_self(), monkeypatch, None) is None
+        watch, datastore = self._handler()
+        assert self._run(watch, datastore, monkeypatch, None) is None
 
     def test_error_mapped(self, monkeypatch):
         from unittest.mock import Mock
         monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
                             Mock(side_effect=ValueError("down")))
+        watch, datastore = self._handler()
         with pytest.raises(Exception, match="FlareSolverr: .*down"):
-            asyncio.run(difference_detection_processor._solve_flaresolverr(
-                make_handler_self(), WATCH_URL, None))
+            asyncio.run(solve_flaresolverr(watch, datastore, WATCH_URL, None))
 
     def test_import_error_mapped(self, monkeypatch):
         # Regression: the import lives inside the try, so a REAL failed import
         # (not just a failing call) is wrapped as FlareSolverr:.
         monkeypatch.setitem(sys.modules, "changedetectionio.flaresolverr_pool", None)
+        watch, datastore = self._handler()
         with pytest.raises(Exception, match="FlareSolverr:"):
-            asyncio.run(difference_detection_processor._solve_flaresolverr(
-                make_handler_self(), WATCH_URL, None))
+            asyncio.run(solve_flaresolverr(watch, datastore, WATCH_URL, None))
 
 
 class TestBareResponse:
     def _run(self, solution, watch_extra=None, empty_pages=False):
-        fake_self = make_handler_self(watch_extra=watch_extra,
-                                      empty_pages_are_a_change=empty_pages)
+        handler = make_handler_self(watch_extra=watch_extra,
+                                    empty_pages_are_a_change=empty_pages)
         made = []
-        asyncio.run(difference_detection_processor._fetch_flaresolverr_bare_response(
-            fake_self, WATCH_URL, solution, "html_requests",
-            make_fetcher_obj(made), "http://proxy:8080", "ws://custom"))
-        return fake_self, made
+        fetcher = asyncio.run(build_flaresolverr_bare_fetcher(
+            solution, "html_requests", make_fetcher_obj(made),
+            "http://proxy:8080", "ws://custom", handler.screenshot_format,
+            handler.worker_id, handler.watch, handler.datastore, WATCH_URL))
+        return fetcher, made, handler
 
     def test_happy_path(self):
         solution = make_solution(response="<html>ok</html>", status=200, headers={"ct": "t"})
-        fake_self, made = self._run(solution)
+        fetcher, made, handler = self._run(solution)
         assert len(made) == 1
         assert made[0].kwargs["worker_id"] == "w1"
         assert made[0].kwargs["proxy_override"] == "http://proxy:8080"
         assert made[0].kwargs["custom_browser_connection_url"] == "ws://custom"
-        assert fake_self.fetcher is made[0]
-        assert fake_self.fetcher.backend_name == "html_requests+flaresolverr"
-        assert fake_self.fetcher.content == "<html>ok</html>"
-        assert fake_self.fetcher.status_code == 200
-        assert fake_self.fetcher.headers == {"ct": "t"}
-        fake_self.fetcher.quit.assert_awaited_once_with(watch=fake_self.watch)
+        assert fetcher is made[0]
+        assert fetcher.backend_name == "html_requests+flaresolverr"
+        assert fetcher.content == "<html>ok</html>"
+        assert fetcher.status_code == 200
+        assert fetcher.headers == {"ct": "t"}
+        fetcher.quit.assert_awaited_once_with(watch=handler.watch)
 
     def test_empty_response_raises(self):
         with pytest.raises(EmptyReply) as exc_info:
@@ -700,8 +706,8 @@ class TestBareResponse:
         assert exc_info.value.status_code == 200
 
     def test_empty_response_allowed_when_configured(self):
-        fake_self, _ = self._run(make_solution(response="  ", status=200), empty_pages=True)
-        assert fake_self.fetcher.content == "  "
+        fetcher, _, _ = self._run(make_solution(response="  ", status=200), empty_pages=True)
+        assert fetcher.content == "  "
 
     def test_non200_raises(self):
         with pytest.raises(Non200ErrorCodeReceived) as exc_info:
@@ -709,15 +715,15 @@ class TestBareResponse:
         assert exc_info.value.status_code == 500
 
     def test_non200_ignored_when_configured(self):
-        fake_self, _ = self._run(make_solution(response="<html>denied</html>", status=500),
-                                 watch_extra={"ignore_status_codes": True})
-        assert fake_self.fetcher.status_code == 500
+        fetcher, _, _ = self._run(make_solution(response="<html>denied</html>", status=500),
+                                  watch_extra={"ignore_status_codes": True})
+        assert fetcher.status_code == 500
 
     def test_status_and_headers_default(self):
-        fake_self, _ = self._run({"response": "<html>x</html>"})
-        assert fake_self.fetcher.status_code == 200
-        assert fake_self.fetcher.headers == {}
+        fetcher, _, _ = self._run({"response": "<html>x</html>"})
+        assert fetcher.status_code == 200
+        assert fetcher.headers == {}
 
     def test_non_dict_headers_coerced(self):
-        fake_self, _ = self._run({"response": "<html>x</html>", "headers": "notadict"})
-        assert fake_self.fetcher.headers == {}
+        fetcher, _, _ = self._run({"response": "<html>x</html>", "headers": "notadict"})
+        assert fetcher.headers == {}

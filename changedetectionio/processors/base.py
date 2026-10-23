@@ -171,52 +171,6 @@ class difference_detection_processor():
         logger.info(f"Using preloaded Add-Watch snapshot for {self.watch.get('uuid')} - skipping network fetch")
         return True
 
-    async def _solve_flaresolverr(self, url, proxy_url):
-        """Solve the watch URL via FlareSolverr when effective, else None.
-
-        Wraps get_flaresolverr_solution_for_watch() (env + global/per-watch
-        toggle, POST body render, 1MB guard, shared-pool executor). Raises a
-        plain Exception on solve failure so it lands in last_error like every
-        other fetch failure.
-        """
-        try:
-            from changedetectionio.flaresolverr_pool import get_flaresolverr_solution_for_watch
-
-            return await get_flaresolverr_solution_for_watch(self.watch, self.datastore, proxy_url=proxy_url)
-        except Exception as e:
-            logger.error(f"FlareSolverr solve failed for {url}: {e}")
-            raise Exception(f"FlareSolverr: {e}") from e
-
-    async def _fetch_flaresolverr_bare_response(self, url, solution, prefer_fetch_backend, fetcher_obj,
-                                               proxy_url, custom_browser_connection_url):
-        """Serve a FlareSolverr solution.response directly (html_requests, no browser steps).
-
-        Populates self.fetcher without launching a browser, applying the same
-        empty-page / non-200 semantics as the fetchers. Caller returns after this.
-        """
-        self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format, worker_id=self.worker_id)
-        self.fetcher.backend_name = prefer_fetch_backend + "+flaresolverr"
-        _resp = solution.get('response') or ''
-        _status = solution.get('status') or 200
-        _headers = solution.get('headers')
-        if not isinstance(_headers, dict):
-            _headers = {}
-        self.fetcher.content = _resp
-        self.fetcher.raw_content = _resp.encode('utf-8') if isinstance(_resp, str) else _resp
-        self.fetcher.status_code = _status
-        self.fetcher.headers = _headers
-        from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
-        _empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
-        _ignore_status_codes = self.watch.get('ignore_status_codes', False)
-        if not _resp or not len(_resp.strip()):
-            if not _empty_pages_are_a_change:
-                raise EmptyReply(url=url, status_code=_status)
-        if _status != 200 and not _ignore_status_codes:
-            raise Non200ErrorCodeReceived(url=url, status_code=_status, page_html=_resp)
-        await self.fetcher.quit(watch=self.watch)
-        if self.fetcher.content and isinstance(self.fetcher.content, str):
-            self.fetcher.content = self.fetcher.content.encode('utf-8', errors='replace').decode('utf-8')
-
     async def call_browser(self, preferred_proxy_id=None):
 
         from requests.structures import CaseInsensitiveDict
@@ -248,12 +202,18 @@ class difference_detection_processor():
 
         logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
 
-        # FlareSolverr overlay — Cloudflare/DDoS-Guard bypass via shared pool.
+        # FlareSolverr overlay — Cloudflare/DDoS-Guard bypass. Lives in
+        # content_fetchers/flaresolverr.py so it can move to a plugin later.
         # Note: worker_id is passed through to keep per-worker browser state apart (upstream 900a77e8 #4415).
-        flaresolverr_solution = await self._solve_flaresolverr(url, proxy_url)
+        from changedetectionio.content_fetchers.flaresolverr import build_flaresolverr_bare_fetcher, solve_flaresolverr
+
+        flaresolverr_solution = await solve_flaresolverr(self.watch, self.datastore, url, proxy_url)
         is_bare = flaresolverr_solution is not None and prefer_fetch_backend == 'html_requests' and not self.watch.has_browser_steps
         if is_bare:
-            await self._fetch_flaresolverr_bare_response(url, flaresolverr_solution, prefer_fetch_backend, fetcher_obj, proxy_url, custom_browser_connection_url)
+            self.fetcher = await build_flaresolverr_bare_fetcher(
+                flaresolverr_solution, prefer_fetch_backend, fetcher_obj, proxy_url,
+                custom_browser_connection_url, self.screenshot_format, self.worker_id,
+                self.watch, self.datastore, url)
             return
         if flaresolverr_solution is not None:
             self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format, flaresolverr_cookies=flaresolverr_solution.get('cookies'), flaresolverr_user_agent=flaresolverr_solution.get('userAgent'), worker_id=self.worker_id)
