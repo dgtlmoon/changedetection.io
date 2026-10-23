@@ -114,9 +114,12 @@ def is_cookie_domain_valid(cookie_domain, host):
     """Validate cookie domain matches host to prevent session fixation via evil domain.
 
     Both sides are expected as plain hostnames (see _host_from_url); comparison
-    is case-insensitive, dot-trimmed and IDNA-normalized. Single-label domains
-    (e.g. "com") never match — the daemon is trusted but Set-Cookie values are
-    attacker-influenced.
+    is case-insensitive, dot-trimmed and IDNA-normalized. An exact match always
+    wins (harmless, e.g. localhost); suffix matches require a multi-label
+    domain so a bare "com" can never scope a cookie to every .com host.
+    Multi-label public suffixes (co.uk) still match — distinguishing those
+    needs a PSL; browsers refuse to store cookies on public suffixes anyway,
+    and our contexts are single-use.
     """
     if not cookie_domain:
         return True  # No domain, will be scoped via url
@@ -129,9 +132,13 @@ def is_cookie_domain_valid(cookie_domain, host):
         host = host.encode("idna").decode("ascii")
     except Exception:
         return False
-    if not domain or "." not in domain:
+    if not domain:
         return False
-    return host == domain or host.endswith("." + domain)
+    if host == domain:
+        return True
+    if "." not in domain:
+        return False
+    return host.endswith("." + domain)
 
 
 def normalize_flaresolverr_cookies(cookies, url):
@@ -163,7 +170,7 @@ def normalize_flaresolverr_cookies(cookies, url):
         if "expires" in cc:
             try:
                 cc["expires"] = float(cc["expires"])
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, OverflowError):
                 cc.pop("expires", None)
         if "sameSite" in cc:
             v = cc.pop("sameSite")
@@ -393,11 +400,13 @@ class FlarePool:
         solution = data.get("solution") or {}
 
         if status != "ok":
-            # If session was used and challenge failed, destroy it so next try is fresh
-            if session_id and self.max_sessions > 0:
-                self._destroy_session(session_id)
+            # If session was used and challenge failed, destroy it so next try is fresh.
+            # Snapshot max_sessions under the lock; the destroy itself runs outside it.
             with self._lock:
+                max_sessions = self.max_sessions
                 self._lru.pop(host, None)
+            if session_id and max_sessions > 0:
+                self._destroy_session(session_id)
             raise FlareSolverrException(f"FlareSolverr error status={status} msg={message}")
 
         # Validate we got at least cookies or response
@@ -508,23 +517,28 @@ async def apply_flaresolverr_user_agent_puppeteer(page, flaresolverr_user_agent,
     # Plain dict copy (never mutate the caller's headers); the UA key lookup
     # is case-insensitive but all other keys keep their original casing.
     headers_copy = dict(request_headers) if request_headers else {}
-    ua_key = next((k for k in headers_copy if k.lower() == "user-agent"), None)
     try:
         from changedetectionio.content_fetchers.base import manage_user_agent
     except Exception:
         manage_user_agent = None
 
+    # All UA header spellings — a dict could carry both "User-Agent" and
+    # "user-agent"; leaving any of them would send a conflicting value.
+    ua_keys = [k for k in list(headers_copy) if isinstance(k, str) and k.lower() == "user-agent"]
     if flaresolverr_user_agent:
         try:
             await page.setUserAgent(flaresolverr_user_agent)
         except Exception:
             pass
-        if ua_key is not None:
-            headers_copy.pop(ua_key, None)
+        for k in ua_keys:
+            headers_copy.pop(k, None)
     else:
         user_agent = None
-        if ua_key is not None and headers_copy.get(ua_key):
-            user_agent = headers_copy.pop(ua_key).strip()
+        for k in ua_keys:
+            v = headers_copy.pop(k)
+            if user_agent is None and isinstance(v, str) and v.strip():
+                user_agent = v.strip()
+        if user_agent:
             try:
                 await page.setUserAgent(user_agent)
             except Exception:
@@ -577,9 +591,6 @@ async def get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=None):
         body = _check_post_data_size(url, body)
     post_data = body if method == "POST" else None
     solution = await async_flaresolverr_solve(url, proxy_url=proxy_url, method=method, post_data=post_data)
-    try:
-        host = urlparse(url).netloc
-    except Exception:
-        host = url
+    host = _host_from_url(url)
     logger.info(f"FlareSolverr solved {url} host={host} via session {solution.get('session_id')}")
     return solution

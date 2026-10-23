@@ -11,10 +11,11 @@ only way to regress it.
 import asyncio
 import re
 import sys
+import pytest
+
+from changedetectionio.flaresolverr_pool import _host_from_url
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.flaresolverr import build_flaresolverr_bare_fetcher, solve_flaresolverr
@@ -175,6 +176,53 @@ class TestCookieDomainValidation:
 
     def test_dot_only_rejected(self):
         assert is_cookie_domain_valid(".", "example.com") is False
+
+    def test_exact_single_label_match_allowed(self):
+        # Exact match is harmless (no suffix scope); only bare suffixes are rejected.
+        assert is_cookie_domain_valid("localhost", "localhost") is True
+
+    def test_bare_suffix_rejected(self):
+        # Single-label domains can never suffix-match (kills evil.com <-> .com).
+        assert is_cookie_domain_valid("com", "example.com") is False
+
+    def test_multi_label_suffix_allowed(self):
+        # Without a public-suffix list we can't tell co.uk (public) from
+        # example.com (private); multi-label suffixes match. Browsers
+        # themselves refuse to store cookies on public suffixes, and our
+        # contexts are single-use, so the residual risk is accepted.
+        assert is_cookie_domain_valid("co.uk", "example.co.uk") is True
+
+    def test_trailing_dot_ignored_both_sides(self):
+        assert is_cookie_domain_valid("example.com.", "example.com") is True
+        assert is_cookie_domain_valid("example.com", "example.com.") is True
+
+    def test_case_insensitive(self):
+        assert is_cookie_domain_valid("Example.COM", "www.EXAMPLE.com") is True
+
+    def test_idna_and_unicode_match(self):
+        assert is_cookie_domain_valid("xn--mnchen-3ya.de", "münchen.de") is True
+        assert is_cookie_domain_valid("münchen.de", "xn--mnchen-3ya.de") is True
+
+    def test_non_string_domain_rejected(self):
+        assert is_cookie_domain_valid(123, "example.com") is False
+        assert is_cookie_domain_valid(None, "example.com") is True  # scoped via url
+
+    def test_non_string_host_rejected(self):
+        assert is_cookie_domain_valid("example.com", None) is False
+
+
+class TestHostFromUrl:
+    def test_strips_userinfo_port_and_brackets(self):
+        assert _host_from_url("https://user:pass@example.com/page") == "example.com"
+        assert _host_from_url("http://example.com:8080/page") == "example.com"
+        assert _host_from_url("http://[::1]:8080/page") == "::1"
+
+    def test_lowercases(self):
+        assert _host_from_url("https://WWW.Example.COM/") == "www.example.com"
+
+    def test_garbage_returns_input(self):
+        assert _host_from_url("not a url at all") == "not a url at all"
+        assert _host_from_url("") == ""
 
 
 class TestNormalizeFlareSolverrCookies:
@@ -416,6 +464,17 @@ class TestFlarePoolSolve:
             pool.solve(WATCH_URL, method="POST", post_data="x" * (1024 * 1024 + 1))
         assert posted == []
 
+    def test_multibyte_boundary_measured_in_bytes(self, monkeypatch):
+        # "é" is 2 bytes in UTF-8: char-count would pass both, byte-count rejects one.
+        posted, _ = self._posted(monkeypatch, make_solution())
+        pool = self._pool()
+        exact = "é" * (1024 * 1024 // 2)
+        assert len(exact.encode("utf-8")) == 1024 * 1024
+        pool.solve(WATCH_URL, method="POST", post_data=exact)
+        assert len(posted) == 1
+        with pytest.raises(FlareSolverrException, match="too large"):
+            pool.solve(WATCH_URL, method="POST", post_data=exact + "é")
+
     def test_max_zero_then_nonzero(self, monkeypatch):
         self._ok(monkeypatch, make_solution())
         with patch.dict("os.environ", {"FLARESOLVERR_MAX_SESSIONS": "0"}):
@@ -495,6 +554,67 @@ class TestFlarePoolSolve:
         pool = self._pool()
         with pytest.raises(FlareSolverrException, match="empty solution"):
             pool.solve(WATCH_URL)
+        assert pool._lru == {}
+        assert pool.get_cached(WATCH_URL) is None
+
+    def test_transport_failure_evicts_placeholder(self, monkeypatch):
+        monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
+                            lambda url: (True, ""))
+        posted = []
+
+        def fake_post(url, json=None, timeout=None):
+            posted.append(json)
+            raise ConnectionError("down")
+
+        monkeypatch.setattr("requests.post", fake_post)
+        pool = self._pool()
+        with pytest.raises(FlareSolverrException, match="request failed"):
+            pool.solve(WATCH_URL)
+        # Solve was attempted once, placeholder popped, nothing destroyed
+        # (no session ever existed to destroy).
+        assert len(posted) == 1
+        assert pool._lru == {}
+        assert pool.get_cached(WATCH_URL) is None
+        assert not [p for p in posted if isinstance(p, dict) and p.get("cmd") == "sessions.destroy"]
+
+    def test_invalid_json_evicts_placeholder(self, monkeypatch):
+        monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
+                            lambda url: (True, ""))
+
+        class BadResp:
+            status_code = 500
+
+            def json(self):
+                raise ValueError("nope")
+
+        posted = []
+        monkeypatch.setattr("requests.post",
+                            lambda *a, **k: (posted.append(k.get("json")), BadResp())[1])
+        pool = self._pool()
+        with pytest.raises(FlareSolverrException, match="invalid JSON"):
+            pool.solve(WATCH_URL)
+        assert pool._lru == {}
+        assert not [p for p in posted if p.get("cmd") == "sessions.destroy"]
+
+    def test_explicit_url_survives_env_change(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        with patch.dict("os.environ", {"FLARESOLVERR_URL": "http://one:8191/v1"}):
+            pool = FlarePool(flaresolverr_url="http://pinned:8191/v1")
+            pool._ensure_url()
+            assert pool.flaresolverr_url == "http://pinned:8191/v1"
+        with patch.dict("os.environ", {"FLARESOLVERR_URL": "http://two:8191/v1"}):
+            pool._ensure_url()
+            assert pool.flaresolverr_url == "http://pinned:8191/v1"
+
+    def test_unpinned_url_tracks_env(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        with patch.dict("os.environ", {"FLARESOLVERR_URL": "http://one:8191/v1"}):
+            pool = FlarePool()
+            pool._ensure_url()
+            assert pool.flaresolverr_url == "http://one:8191/v1"
+        with patch.dict("os.environ", {"FLARESOLVERR_URL": "http://two:8191/v1"}):
+            pool._ensure_url()
+            assert pool.flaresolverr_url == "http://two:8191/v1"
 
 
 class TestGetFlareSolverrSolutionForWatch:
@@ -605,6 +725,22 @@ class TestUserAgent:
             page, None, {"user-agent": "  HeaderUA  ", "X-K": "v"}))
         page.setUserAgent.assert_called_once_with("HeaderUA")
         assert filtered == {"X-K": "v"}
+
+    def test_puppeteer_strips_all_ua_spellings(self):
+        page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
+        filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(
+            page, "FlareUA/1.0", {"User-Agent": "A", "user-agent": "B", "USER-AGENT": "C"}))
+        page.setUserAgent.assert_called_once_with("FlareUA/1.0")
+        assert filtered == {}
+
+    def test_puppeteer_ignores_non_string_ua(self, monkeypatch):
+        # A non-string UA can't be sent — drop the key, fall back to managed UA.
+        monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent",
+                            lambda headers=None, current_ua="": "M-UA")
+        page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
+        filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(page, None, {"User-Agent": 123}))
+        page.setUserAgent.assert_called_once_with("M-UA")
+        assert filtered == {}
 
     def test_puppeteer_falls_back_to_managed_ua(self, monkeypatch):
         from unittest.mock import Mock
