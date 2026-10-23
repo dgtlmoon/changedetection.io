@@ -220,7 +220,7 @@ class difference_detection_processor():
             self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
 
         # Tweak the base config with the per-watch ones
-        from changedetectionio.jinja2_custom import render as jinja_render
+        from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
         request_headers = CaseInsensitiveDict()
 
         ua = self.datastore.data['settings']['requests'].get('default_ua')
@@ -237,14 +237,18 @@ class difference_detection_processor():
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
+        # Only render values that really contain Jinja2, so a literal like {%22 (URL-encoded JSON) is sent as-is,
+        # the same rule the edit form validates with
         for header_name in request_headers:
-            request_headers.update({header_name: jinja_render(template_str=request_headers.get(header_name))})
+            value = request_headers.get(header_name)
+            if isinstance(value, str) and JINJA2_MARKER_PATTERN.search(value):
+                request_headers.update({header_name: jinja_render(template_str=value)})
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
 
         request_body = self.watch.get('body')
-        if request_body:
-            request_body = jinja_render(template_str=self.watch.get('body'))
+        if request_body and JINJA2_MARKER_PATTERN.search(request_body):
+            request_body = jinja_render(template_str=request_body)
 
         request_method = self.watch.get('method')
         ignore_status_codes = self.watch.get('ignore_status_codes', False)
