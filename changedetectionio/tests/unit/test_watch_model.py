@@ -357,6 +357,50 @@ class TestFaviconExpiry(unittest.TestCase):
             self.assertEqual(remaining, ['favicon.png'],
                              "the old favicon.ico should have been removed")
 
+    def _save_favicon(self, watch):
+        watch.bump_favicon(url='https://example.com/icon.png',
+                           favicon_base_64=base64.b64encode(b'icon').decode(),
+                           mime_type='image/png')
+        self.assertEqual(watch.get_favicon_filename(), 'favicon.png')
+
+    def test_url_change_clears_favicon(self):
+        """#4569 - the old site's icon must not outlive a URL change."""
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            self._save_favicon(watch)
+
+            watch.update({'url': 'https://another-site.com'})
+
+            self.assertEqual(glob.glob(os.path.join(watch.data_dir, 'favicon.*')), [])
+            self.assertIsNone(watch.get_favicon_filename())
+            self.assertTrue(watch.favicon_is_expired())
+
+    def test_same_url_or_other_fields_keep_favicon(self):
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            self._save_favicon(watch)
+
+            watch.update({'url': ' https://example.com '})   # same URL, only whitespace differs
+            watch.update({'title': 'Renamed'})
+
+            self.assertEqual(watch.get_favicon_filename(), 'favicon.png')
+
+    def test_loading_a_watch_from_storage_keeps_favicon(self):
+        """A fresh object starts with url '' and is filled via update(); that is not a URL change."""
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            self._save_favicon(watch)
+
+            reloaded = Watch.model(
+                datastore_path=datastore_path,
+                __datastore={'settings': {'application': {}}, 'watching': {}},
+                default=dict(watch)
+            )
+            self.assertEqual(reloaded.data_dir, watch.data_dir)
+            self.assertEqual(reloaded.get_favicon_filename(), 'favicon.png')
+            deepcopy(reloaded)
+            self.assertTrue(os.path.isfile(os.path.join(watch.data_dir, 'favicon.png')))
+
 
 class TestLLMDiffSummaryCache(unittest.TestCase):
     """Tests for get_llm_diff_summary / save_llm_diff_summary — version-pair + prompt-hash caching."""
