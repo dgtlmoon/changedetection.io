@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: changedetection.io 0.60.8\n"
+"Project-Id-Version: changedetection.io 0.60.9\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-28 09:23+0200\n"
+"POT-Creation-Date: 2026-10-16 10:41+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3242,7 +3242,11 @@ msgid "Edit > Watch"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
+msgid "Notification URL List"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -3270,11 +3274,7 @@ msgid "Notification format"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
+msgid "Fetch Method"
 msgstr ""
 
 #: changedetectionio/forms.py

@@ -3251,8 +3251,12 @@ msgid "Edit > Watch"
 msgstr "Upravit > Monitorovat"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Nastavte metodu načítání"
+msgid "Notification URL List"
+msgstr "Seznam URL oznámení"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Název oznámení"
 
 #: changedetectionio/forms.py
 msgid "FlareSolverr"
@@ -3279,12 +3283,8 @@ msgid "Notification format"
 msgstr "Formát oznámení"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Název oznámení"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Seznam URL oznámení"
+msgid "Fetch Method"
+msgstr "Nastavte metodu načítání"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"

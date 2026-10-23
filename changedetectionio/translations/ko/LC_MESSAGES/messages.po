@@ -3253,8 +3253,12 @@ msgid "Edit > Watch"
 msgstr "편집 > 모니터링"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "가져오기 방식"
+msgid "Notification URL List"
+msgstr "알림 URL 목록"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "알림 제목"
 
 #: changedetectionio/forms.py
 msgid "FlareSolverr"
@@ -3281,12 +3285,8 @@ msgid "Notification format"
 msgstr "알림 형식"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "알림 제목"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "알림 URL 목록"
+msgid "Fetch Method"
+msgstr "가져오기 방식"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"

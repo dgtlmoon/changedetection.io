@@ -18,6 +18,7 @@ class FetcherCapabilities(BaseModel):
     supports_browser_steps: bool = False       # Can execute browser automation steps
     supports_screenshots: bool = False         # Can capture page screenshots
     supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
+    supports_pdf: bool = False                 # Can supply the original PDF bytes as raw_content
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -87,6 +88,8 @@ class Fetcher():
     favicon_blob = None
     instock_data = None
     instock_data_js = ""
+    # Original response bytes (needed for PDF etc), fetchers that can't provide them leave this as None
+    raw_content = None
     screenshot_format = None
     status_code = None
     webdriver_js_execute_code = None
@@ -107,6 +110,7 @@ class Fetcher():
     supports_browser_steps = False      # Can execute browser automation steps
     supports_screenshots = False        # Can capture page screenshots
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
+    supports_pdf = False                # Can supply the original PDF bytes as raw_content
 
     # Screenshot element locking - prevents layout shifts during screenshot capture
     # Only needed for visual comparison (image_ssim_diff processor)
@@ -151,8 +155,7 @@ class Fetcher():
         Call this after content has been saved to disk.
         """
         self.content = None
-        if hasattr(self, 'raw_content'):
-            self.raw_content = None
+        self.raw_content = None
         self.screenshot = None
         self.xpath_data = None
         # Keep headers and status_code as they're small

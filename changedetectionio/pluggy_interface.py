@@ -60,20 +60,32 @@ class ChangeDetectionSpec:
         """
         pass
 
-    @hookspec
-    def get_itemprop_availability_override(self, content, fetcher_name, fetcher_instance, url, llm_intent=None):
+    @hookspec(firstresult=True)
+    def get_itemprop_availability_override(self, content, fetcher_name, fetcher_instance, url, llm_intent, text):
         """Provide custom implementation of get_itemprop_availability for a specific fetcher.
 
         This hook allows plugins to provide their own product availability detection
         when their fetcher is being used. This is called as a fallback when the built-in
         method doesn't find good data.
 
+        The first implementation to return a non-None result wins and the rest are skipped,
+        so return None (not an empty dict) when you have nothing. The built-in LLM restock
+        plugin (litellm) is registered trylast, so your own plugin, for example one that
+        POSTs to an LLM with plain `requests`, always gets the first go and the built-in
+        one is never billed when yours already answered. See plugins/llm_restock.py for
+        the prompt, cache and reply-parsing helpers you can reuse without importing litellm.
+
         Args:
-            content: The HTML/text content to parse
+            content: The HTML content that was just fetched
             fetcher_name: The name of the fetcher being used (e.g., 'html_js_zyte')
             fetcher_instance: The fetcher instance that generated the content
             url: The URL being watched/checked
             llm_intent: Optional user-supplied intent string (e.g. "alert when price drops below $300")
+            text: The same content converted with html_to_text(). Only computed when an
+                  implementation declares this argument, so leave it out if you don't need it.
+
+        Declare the arguments you want WITHOUT default values (`text`, not `text=None`),
+        pluggy silently never passes an argument that has a default.
 
         Returns:
             dict or None: Dictionary with availability data:
@@ -383,22 +395,32 @@ def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instanc
     Returns:
         dict or None: Availability data dictionary from first matching plugin, or None
     """
-    # Get availability data from plugins
-    results = plugin_manager.hook.get_itemprop_availability_override(
+    hook = plugin_manager.hook.get_itemprop_availability_override
+
+    # html_to_text() isn't free on a large product page, so only run it when some
+    # implementation actually asks for `text` (pluggy only passes the args an impl declares).
+    text = None
+    if content and any('text' in impl.argnames for impl in hook.get_hookimpls()):
+        try:
+            from changedetectionio.html_tools import html_to_text
+            text = html_to_text(content)
+        except Exception as e:
+            logger.warning(f"Could not convert {url} to text for restock plugins: {e}")
+
+    # firstresult=True, so this is the first non-None answer
+    result = hook(
         content=content,
         fetcher_name=fetcher_name,
         fetcher_instance=fetcher_instance,
         url=url,
         llm_intent=llm_intent,
+        text=text,
     )
 
-    # Return first non-None result with actual data
-    if results:
-        for result in results:
-            if result and isinstance(result, dict):
-                # Check if the result has any meaningful data
-                if result.get('price') is not None or result.get('availability'):
-                    return result
+    # Only accept it if it carries actual data
+    if result and isinstance(result, dict):
+        if result.get('price') is not None or result.get('availability'):
+            return result
 
     return None
 

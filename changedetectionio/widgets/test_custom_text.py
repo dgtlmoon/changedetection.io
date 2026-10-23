@@ -63,8 +63,8 @@ def test_custom_text():
     default_html = default_field.widget(default_field)
     print(f"Contains 'Yes': {'Yes' in default_html}")
     print(f"Contains 'No': {'No' in default_html}")
-    print(f"Contains 'Default': {'Default' in default_html}")
-    assert 'Yes' in default_html and 'No' in default_html and 'Default' in default_html
+    print(f"Contains 'Main settings': {'Main settings' in default_html}")
+    assert 'Yes' in default_html and 'No' in default_html and 'Main settings' in default_html
     
     # Test custom text field
     print("\n--- Custom Text Field with Emojis ---")

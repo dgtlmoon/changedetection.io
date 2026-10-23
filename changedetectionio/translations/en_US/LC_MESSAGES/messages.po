@@ -3243,7 +3243,11 @@ msgid "Edit > Watch"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
+msgid "Notification URL List"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -3271,11 +3275,7 @@ msgid "Notification format"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
+msgid "Fetch Method"
 msgstr ""
 
 #: changedetectionio/forms.py
