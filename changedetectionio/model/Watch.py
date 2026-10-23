@@ -849,9 +849,9 @@ class model(EntityPersistenceMixin, watch_base):
             return True
         try:
             # Newest by mtime rather than whatever the directory happens to list first.
-            # bump_favicon() writes favicon.<ext> and (before this) left any previous save
-            # under a different extension in place, so a watch whose icon changed type has
-            # more than one file. glob order is os.scandir order - stable, but decided by
+            # Older versions of bump_favicon() left any previous save under a different
+            # extension in place, so a watch whose icon changed type can have more than one
+            # favicon.* file. glob order is os.scandir order - stable, but decided by
             # filename hash - so for some extension pairs the stale file wins every single
             # time, the age check always fails, and the favicon is refetched on every check
             # forever. Measured: 3 of 10 realistic extension pairs lose that way.
@@ -936,11 +936,14 @@ class model(EntityPersistenceMixin, watch_base):
             return None
 
         try:
-            # Drop any previous save under a different extension first, or the watch ends up
+            with open(fname, 'wb') as f:
+                f.write(decoded)
+
+            # Drop any previous save under a different extension, or the watch ends up
             # holding several favicon.* files and favicon_is_expired() has to guess which one
-            # describes the current icon.
-            import glob as _glob
-            for stale in _glob.glob(os.path.join(self.data_dir, "favicon.*")):
+            # describes the current icon. Only after the write, so a failed write keeps the old icon.
+            import glob
+            for stale in glob.glob(os.path.join(self.data_dir, "favicon.*")):
                 if os.path.abspath(stale) == os.path.abspath(fname):
                     continue
                 try:
@@ -948,9 +951,6 @@ class model(EntityPersistenceMixin, watch_base):
                     logger.debug(f"UUID: {self.get('uuid')} removed superseded favicon {stale}")
                 except OSError as e:
                     logger.debug(f"UUID: {self.get('uuid')} could not remove {stale}: {e}")
-
-            with open(fname, 'wb') as f:
-                f.write(decoded)
 
             # Invalidate module-level favicon filename cache for this watch
             _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
