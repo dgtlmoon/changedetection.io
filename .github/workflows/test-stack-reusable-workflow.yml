@@ -14,7 +14,6 @@ on:
         type: boolean
         default: false
 
-env:
 
 permissions:
   contents: read
