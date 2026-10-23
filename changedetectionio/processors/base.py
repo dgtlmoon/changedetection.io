@@ -198,7 +198,9 @@ class difference_detection_processor():
         self.fetcher.backend_name = prefer_fetch_backend + "+flaresolverr"
         _resp = solution.get('response') or ''
         _status = solution.get('status') or 200
-        _headers = solution.get('headers') or {}
+        _headers = solution.get('headers')
+        if not isinstance(_headers, dict):
+            _headers = {}
         self.fetcher.content = _resp
         self.fetcher.raw_content = _resp.encode('utf-8') if isinstance(_resp, str) else _resp
         self.fetcher.status_code = _status

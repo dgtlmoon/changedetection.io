@@ -93,15 +93,18 @@ def _ensure_browser_steps_loop():
 
             logger.debug("Browser steps event loop thread started and ready")
 
-def run_async_in_browser_loop(coro):
-    """Run async coroutine using the dedicated browser steps event loop"""
+def run_async_in_browser_loop(coro, timeout=None):
+    """Run async coroutine using the dedicated browser steps event loop.
+
+    timeout=None waits forever (original behavior) — only session startup,
+    which may include a FlareSolverr solve, passes an explicit timeout.
+    """
     _ensure_browser_steps_loop()
 
     if _browser_steps_loop and not _browser_steps_loop.is_closed():
         logger.debug("Browser steps using dedicated event loop")
         future = asyncio.run_coroutine_threadsafe(coro, _browser_steps_loop)
-        # FlareSolverr solve can take up to 60s + overhead, so allow 70s for start; normal steps 30s
-        return future.result(timeout=70)
+        return future.result(timeout=timeout)
     else:
         raise RuntimeError("Browser steps event loop is not available")
 
@@ -331,9 +334,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         logger.debug("browser_steps.py connecting")
 
         try:
-            # Run the async function in the dedicated browser steps event loop
+            # Run the async function in the dedicated browser steps event loop.
+            # Session startup alone gets a timeout: a FlareSolverr solve can
+            # take up to FLARESOLVERR_TIMEOUT + overhead, other steps wait forever.
+            from changedetectionio.flaresolverr_pool import get_flaresolverr_timeout
+
             browsersteps_sessions[browsersteps_session_id] = run_async_in_browser_loop(
-                start_browsersteps_session(watch_uuid)
+                start_browsersteps_session(watch_uuid),
+                timeout=get_flaresolverr_timeout() + 15,
             )
 
             # Store the mapping of watch_uuid -> browsersteps_session_id

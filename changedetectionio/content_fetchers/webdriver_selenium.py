@@ -104,6 +104,11 @@ class fetcher(Fetcher):
             if self.proxy_url:
                 options.add_argument(f'--proxy-server={self.proxy_url}')
 
+            if self.flaresolverr_user_agent:
+                # FlareSolverr hybrid path: browse with the solved UA so the
+                # clearance cookies match the fingerprint that earned them
+                options.add_argument(f'--user-agent={self.flaresolverr_user_agent}')
+
             from selenium.webdriver.remote.remote_connection import RemoteConnection
             from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
             from selenium.webdriver.remote.client_config import ClientConfig

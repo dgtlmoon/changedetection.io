@@ -10,8 +10,11 @@ only way to regress it.
 
 import asyncio
 import re
+import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.flaresolverr_pool import (
@@ -162,8 +165,10 @@ class TestCookieDomainValidation:
         # "example.com" ends with "ample.com" but not ".ample.com"
         assert is_cookie_domain_valid("ample.com", "example.com") is False
 
-    def test_port_stripped_before_compare(self):
-        assert is_cookie_domain_valid("example.com", "example.com:8080") is True
+    def test_port_suffixed_host_rejected(self):
+        # Contract: callers pass urlparse().hostname (no port). A raw
+        # netloc fails closed instead of matching the wrong domain.
+        assert is_cookie_domain_valid("example.com", "example.com:8080") is False
 
     def test_empty_domain_scoped_via_url(self):
         assert is_cookie_domain_valid("", "example.com") is True
@@ -322,6 +327,8 @@ class TestFlarePoolSolve:
         pool.solve(WATCH_URL)
         pool._lru["www.example.com"]["ts"] -= 61 * 60
         assert pool.get_cached(WATCH_URL) is None
+        destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
+        assert len(destroys) == 1
 
     def test_expired_entry_evicted_on_solve(self, monkeypatch):
         posted = self._ok(monkeypatch, make_solution())
@@ -335,12 +342,14 @@ class TestFlarePoolSolve:
         assert [d["session"] for d in destroys] == [first["session_id"]]
         assert second["session_id"] == first["session_id"]
 
-    def test_entry_without_timestamp_never_expires(self, monkeypatch):
-        self._ok(monkeypatch, make_solution())
+    def test_entry_without_timestamp_is_expired(self, monkeypatch):
+        posted = self._ok(monkeypatch, make_solution())
         pool = self._pool()
         pool.solve(WATCH_URL)
         del pool._lru["www.example.com"]["ts"]
-        assert pool.get_cached(WATCH_URL)["session_id"].startswith("cdio-")
+        assert pool.get_cached(WATCH_URL) is None
+        destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
+        assert len(destroys) == 1
 
     def test_max_zero_is_ephemeral(self, monkeypatch):
         posted = self._ok(monkeypatch, make_solution())
@@ -357,22 +366,16 @@ class TestFlarePoolSolve:
         called = []
         monkeypatch.setattr("requests.post", lambda *a, **k: called.append((a, k)))
         pool = self._pool()
-        try:
+        with pytest.raises(FlareSolverrException, match="unit-test-block"):
             pool.solve("https://www.example.com/")
-            assert False, "expected FlareSolverrException"
-        except FlareSolverrException as e:
-            assert "unit-test-block" in str(e)
         assert called == []
 
     def test_real_gate_rejects_file_url(self, monkeypatch):
         called = []
         monkeypatch.setattr("requests.post", lambda *a, **k: called.append((a, k)))
         pool = self._pool()
-        try:
+        with pytest.raises(FlareSolverrException):
             pool.solve("file:///etc/passwd")
-            assert False, "expected FlareSolverrException"
-        except FlareSolverrException:
-            pass
         assert called == []
 
     def test_full_request_payload(self, monkeypatch):
@@ -406,11 +409,23 @@ class TestFlarePoolSolve:
         pool.solve(WATCH_URL, method="POST", post_data=body)
         assert len(posted[0][1]["postData"]) == 1024 * 1024
 
-    def test_over_1mb_post_data_truncated(self, monkeypatch):
+    def test_over_1mb_post_data_rejected(self, monkeypatch):
         posted, _ = self._posted(monkeypatch, make_solution())
         pool = self._pool()
-        pool.solve(WATCH_URL, method="POST", post_data="x" * (1024 * 1024 + 1))
-        assert len(posted[0][1]["postData"]) == 1024 * 1024
+        with pytest.raises(FlareSolverrException, match="too large"):
+            pool.solve(WATCH_URL, method="POST", post_data="x" * (1024 * 1024 + 1))
+        assert posted == []
+
+    def test_max_zero_then_nonzero(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        with patch.dict("os.environ", {"FLARESOLVERR_MAX_SESSIONS": "0"}):
+            pool = self._pool()
+            assert pool.solve(WATCH_URL)["session_id"] is None
+            assert pool._lru == {}
+        with patch.dict("os.environ", {"FLARESOLVERR_MAX_SESSIONS": "10"}):
+            solved = pool.solve(WATCH_URL)
+            assert solved["session_id"].startswith("cdio-")
+            assert pool.get_cached(WATCH_URL)["session_id"] == solved["session_id"]
 
     def test_error_message_defaults_to_empty(self, monkeypatch):
         monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
@@ -418,11 +433,9 @@ class TestFlarePoolSolve:
         monkeypatch.setattr("requests.post",
                             lambda *a, **k: FakeResp({"status": "error"}))
         pool = self._pool()
-        try:
+        with pytest.raises(FlareSolverrException) as exc_info:
             pool.solve(WATCH_URL)
-            assert False, "expected FlareSolverrException"
-        except FlareSolverrException as e:
-            assert str(e) == "FlareSolverr error status=error msg="
+        assert str(exc_info.value) == "FlareSolverr error status=error msg="
 
     def test_get_cached_returns_live_entry(self, monkeypatch):
         self._ok(monkeypatch, make_solution())
@@ -467,11 +480,8 @@ class TestFlarePoolSolve:
 
         monkeypatch.setattr("requests.post", fake_post)
         pool = self._pool()
-        try:
+        with pytest.raises(FlareSolverrException, match="boom"):
             pool.solve(WATCH_URL)
-            assert False, "expected FlareSolverrException"
-        except FlareSolverrException as e:
-            assert "boom" in str(e)
         destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
         assert len(destroys) == 1
         assert destroys[0]["session"].startswith("cdio-")
@@ -483,11 +493,8 @@ class TestFlarePoolSolve:
         monkeypatch.setattr("requests.post",
                             lambda *a, **k: FakeResp({"status": "ok", "solution": {}}))
         pool = self._pool()
-        try:
+        with pytest.raises(FlareSolverrException, match="empty solution"):
             pool.solve(WATCH_URL)
-            assert False, "expected FlareSolverrException"
-        except FlareSolverrException as e:
-            assert "empty solution" in str(e)
 
 
 class TestGetFlareSolverrSolutionForWatch:
@@ -512,13 +519,14 @@ class TestGetFlareSolverrSolutionForWatch:
         assert pool.calls[0]["method"] == "GET"
         assert pool.calls[0]["post_data"] is None
 
-    def test_large_post_body_truncated_to_1mb(self, monkeypatch):
+    def test_large_post_body_rejected(self, monkeypatch):
         pool = FakePool(make_solution())
         monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_global_pool", lambda: pool)
         watch = FakeWatch({"link": WATCH_URL, "method": "POST",
                            "body": "x" * (2 * 1024 * 1024), "flaresolverr": "enabled"})
-        self._run(watch, make_datastore(application_enabled=True))
-        assert len(pool.calls[0]["post_data"]) == 1024 * 1024
+        with pytest.raises(FlareSolverrException, match="too large"):
+            self._run(watch, make_datastore(application_enabled=True))
+        assert pool.calls == []
 
     def test_not_effective_returns_none_without_pool(self, monkeypatch):
         pool = FakePool(make_solution())
@@ -649,25 +657,17 @@ class TestSolveFlareSolverr:
         from unittest.mock import Mock
         monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
                             Mock(side_effect=ValueError("down")))
-        try:
+        with pytest.raises(Exception, match="FlareSolverr: .*down"):
             asyncio.run(difference_detection_processor._solve_flaresolverr(
                 make_handler_self(), WATCH_URL, None))
-            assert False, "expected Exception"
-        except Exception as e:
-            assert "FlareSolverr: " in str(e)
-            assert "down" in str(e)
 
     def test_import_error_mapped(self, monkeypatch):
-        # Regression: the import lives inside the try so ImportError is wrapped too.
-        from unittest.mock import Mock
-        monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
-                            Mock(side_effect=ImportError("no module")))
-        try:
+        # Regression: the import lives inside the try, so a REAL failed import
+        # (not just a failing call) is wrapped as FlareSolverr:.
+        monkeypatch.setitem(sys.modules, "changedetectionio.flaresolverr_pool", None)
+        with pytest.raises(Exception, match="FlareSolverr:"):
             asyncio.run(difference_detection_processor._solve_flaresolverr(
                 make_handler_self(), WATCH_URL, None))
-            assert False, "expected Exception"
-        except Exception as e:
-            assert "FlareSolverr: " in str(e)
 
 
 class TestBareResponse:
@@ -695,22 +695,18 @@ class TestBareResponse:
         fake_self.fetcher.quit.assert_awaited_once_with(watch=fake_self.watch)
 
     def test_empty_response_raises(self):
-        try:
+        with pytest.raises(EmptyReply) as exc_info:
             self._run(make_solution(response="", status=200))
-            assert False, "expected EmptyReply"
-        except EmptyReply as e:
-            assert e.status_code == 200
+        assert exc_info.value.status_code == 200
 
     def test_empty_response_allowed_when_configured(self):
         fake_self, _ = self._run(make_solution(response="  ", status=200), empty_pages=True)
         assert fake_self.fetcher.content == "  "
 
     def test_non200_raises(self):
-        try:
+        with pytest.raises(Non200ErrorCodeReceived) as exc_info:
             self._run(make_solution(response="<html>denied</html>", status=500))
-            assert False, "expected Non200ErrorCodeReceived"
-        except Non200ErrorCodeReceived as e:
-            assert e.status_code == 500
+        assert exc_info.value.status_code == 500
 
     def test_non200_ignored_when_configured(self):
         fake_self, _ = self._run(make_solution(response="<html>denied</html>", status=500),
@@ -720,4 +716,8 @@ class TestBareResponse:
     def test_status_and_headers_default(self):
         fake_self, _ = self._run({"response": "<html>x</html>"})
         assert fake_self.fetcher.status_code == 200
+        assert fake_self.fetcher.headers == {}
+
+    def test_non_dict_headers_coerced(self):
+        fake_self, _ = self._run({"response": "<html>x</html>", "headers": "notadict"})
         assert fake_self.fetcher.headers == {}

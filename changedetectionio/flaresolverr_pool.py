@@ -59,6 +59,22 @@ def get_flaresolverr_ttl_minutes():
         return 60
 
 
+def _check_post_data_size(url, post_data):
+    """Reject oversized POST bodies by WIRE size.
+
+    Truncating would silently corrupt form/JSON payloads and store a wrong
+    comparison baseline, so refuse loudly instead of forwarding a cut payload.
+    """
+    if not post_data:
+        return post_data
+    size = len(post_data.encode("utf-8")) if isinstance(post_data, str) else len(post_data)
+    if size > 1024 * 1024:
+        raise FlareSolverrException(
+            f"FlareSolverr POST body too large ({size} bytes) for {url} — refusing to forward a truncated payload"
+        )
+    return post_data
+
+
 def is_flaresolverr_effective(watch, datastore):
     if not is_flaresolverr_enabled():
         return False
@@ -81,8 +97,10 @@ def is_flaresolverr_effective(watch, datastore):
 
 
 def _host_from_url(url):
+    """Hostname for LRU keys and cookie checks — no userinfo/port/brackets."""
     try:
-        return urlparse(url).netloc.lower()
+        hostname = urlparse(url).hostname
+        return hostname.lower() if hostname else url
     except Exception:
         return url
 
@@ -93,13 +111,25 @@ def _session_id_for_host(host):
 
 
 def is_cookie_domain_valid(cookie_domain, host):
-    """Validate cookie domain matches host to prevent session fixation via evil domain."""
+    """Validate cookie domain matches host to prevent session fixation via evil domain.
+
+    Both sides are expected as plain hostnames (see _host_from_url); comparison
+    is case-insensitive, dot-trimmed and IDNA-normalized. Single-label domains
+    (e.g. "com") never match — the daemon is trusted but Set-Cookie values are
+    attacker-influenced.
+    """
     if not cookie_domain:
         return True  # No domain, will be scoped via url
-    # Strip port from host
-    host = host.split(":")[0].lower()
-    domain = cookie_domain.lstrip(".").lower()
-    if not domain:
+    if not isinstance(cookie_domain, str) or not isinstance(host, str):
+        return False
+    domain = cookie_domain.lstrip(".").rstrip(".").lower()
+    host = host.rstrip(".").lower()
+    try:
+        domain = domain.encode("idna").decode("ascii")
+        host = host.encode("idna").decode("ascii")
+    except Exception:
+        return False
+    if not domain or "." not in domain:
         return False
     return host == domain or host.endswith("." + domain)
 
@@ -115,7 +145,11 @@ def normalize_flaresolverr_cookies(cookies, url):
     """
     if not cookies:
         return []
-    host = urlparse(url).netloc.lower() if url else ""
+    try:
+        host = urlparse(url).hostname if url else ""
+    except Exception:
+        host = ""
+    host = (host or "").lower()
     normalized = []
     for c in cookies:
         try:
@@ -126,10 +160,10 @@ def normalize_flaresolverr_cookies(cookies, url):
         if domain and not is_cookie_domain_valid(domain, host):
             logger.warning(f"FlareSolverr cookie domain mismatch: {domain} vs host {host} — dropping")
             continue
-        if "expires" in cc and isinstance(cc["expires"], (int, float)):
+        if "expires" in cc:
             try:
                 cc["expires"] = float(cc["expires"])
-            except Exception:
+            except (TypeError, ValueError):
                 cc.pop("expires", None)
         if "sameSite" in cc:
             v = cc.pop("sameSite")
@@ -237,7 +271,7 @@ class FlarePool:
     def _ensure_url(self):
         # Re-read dynamic envs under lock? Called from within locked sections and also from get_global_pool
         with self._lock:
-            if "flaresolverr_url" not in self._explicit and not self.flaresolverr_url:
+            if "flaresolverr_url" not in self._explicit:
                 self.flaresolverr_url = get_flaresolverr_url()
             # Re-read dynamic envs, unless explicitly pinned via the constructor
             if "max_sessions" not in self._explicit:
@@ -250,29 +284,43 @@ class FlarePool:
     def _is_expired(self, entry):
         ts = entry.get("ts")
         if not ts:
-            return False
+            # No timestamp means unknown age — fail closed and treat as expired
+            return True
         return (time.time() - ts) > (self.ttl_minutes * 60)
 
-    def _evict_if_needed(self):
+    def _acquire_session(self, host):
+        """LRU bookkeeping under lock. Returns (session_id, stale_ids).
+
+        The caller destroys stale_ids OUTSIDE the lock — destroying is
+        network I/O and must never run while holding it.
+        """
+        stale = []
         with self._lock:
-            # MAX=0 means ephemeral, no LRU at all — ensure empty
             if self.max_sessions == 0:
-                # Clear any stale entries (should be empty, but defensive)
-                for _, data in list(self._lru.items()):
-                    try:
-                        self._destroy_session(data.get("session_id"))
-                    except Exception:
-                        pass
+                # Ephemeral mode — drop everything, keep no LRU at all
+                for _, data in self._lru.items():
+                    if data.get("session_id"):
+                        stale.append(data.get("session_id"))
                 self._lru.clear()
-                return
+                return None, stale
+            cached = self._lru.get(host)
+            if cached and not self._is_expired(cached):
+                self._lru.move_to_end(host)
+                return cached.get("session_id"), stale
+            if cached:
+                # Expired — drop it, destroy outside
+                if cached.get("session_id"):
+                    stale.append(cached.get("session_id"))
+                self._lru.pop(host, None)
+            session_id = _session_id_for_host(host)
             while self.max_sessions > 0 and len(self._lru) >= self.max_sessions:
                 old_host, old_data = self._lru.popitem(last=False)
-                sid = old_data.get("session_id")
-                logger.info(f"FlareSolverr LRU evict host {old_host} session {sid}")
-                try:
-                    self._destroy_session(sid)
-                except Exception as e:
-                    logger.debug(f"Failed to destroy evicted session {sid}: {e}")
+                logger.info(f"FlareSolverr LRU evict host {old_host} session {old_data.get('session_id')}")
+                if old_data.get("session_id"):
+                    stale.append(old_data.get("session_id"))
+            # Insert placeholder with ts; filled after a successful solve
+            self._lru[host] = {"session_id": session_id, "ts": time.time()}
+            return session_id, stale
 
     def _destroy_session(self, session_id):
         if not session_id:
@@ -292,29 +340,74 @@ class FlarePool:
 
     def clear(self):
         with self._lock:
-            for _, data in list(self._lru.items()):
-                try:
-                    self._destroy_session(data.get("session_id"))
-                except Exception:
-                    pass
+            stale = [d.get("session_id") for d in self._lru.values() if d.get("session_id")]
             self._lru.clear()
+        for sid in stale:
+            self._destroy_session(sid)
 
     def get_cached(self, url):
         host = _host_from_url(url)
+        stale_id = None
         with self._lock:
             data = self._lru.get(host)
             if data:
                 if self._is_expired(data):
-                    # Expired — evict
-                    try:
-                        self._destroy_session(data.get("session_id"))
-                    except Exception:
-                        pass
+                    # Expired — evict (destroyed outside the lock below)
+                    stale_id = data.get("session_id")
                     self._lru.pop(host, None)
-                    return None
-                # move to end (most recent)
-                self._lru.move_to_end(host)
-            return data
+                    data = None
+                else:
+                    # move to end (most recent)
+                    self._lru.move_to_end(host)
+        if stale_id:
+            self._destroy_session(stale_id)
+        return data
+
+    def _post_solution(self, url, host, session_id, payload):
+        """POST the payload and validate the solution dict.
+
+        Any failure pops the LRU placeholder so the next solve() starts
+        fresh instead of reusing a poisoned session. Challenge failures
+        additionally destroy the session server-side.
+        """
+        try:
+            import requests
+
+            resp = requests.post(self.flaresolverr_url, json=payload, timeout=self.timeout + 5)
+        except Exception as e:
+            with self._lock:
+                self._lru.pop(host, None)
+            raise FlareSolverrException(f"FlareSolverr request failed: {e}") from e
+
+        try:
+            data = resp.json()
+        except Exception as e:
+            with self._lock:
+                self._lru.pop(host, None)
+            raise FlareSolverrException(
+                f"FlareSolverr invalid JSON: {e} status={resp.status_code}"
+            ) from e
+
+        status = data.get("status")
+        message = data.get("message", "")
+        solution = data.get("solution") or {}
+
+        if status != "ok":
+            # If session was used and challenge failed, destroy it so next try is fresh
+            if session_id and self.max_sessions > 0:
+                self._destroy_session(session_id)
+            with self._lock:
+                self._lru.pop(host, None)
+            raise FlareSolverrException(f"FlareSolverr error status={status} msg={message}")
+
+        # Validate we got at least cookies or response
+        if not solution.get("cookies") and not solution.get("response"):
+            with self._lock:
+                self._lru.pop(host, None)
+            raise FlareSolverrException(
+                f"FlareSolverr empty solution status={status} msg={message}"
+            )
+        return solution
 
     def solve(self, url, proxy_url=None, method="GET", post_data=None):
         # SSRF gate for watch URL — defense in depth (processors/base already validates, but pool may be called from other paths)
@@ -324,36 +417,16 @@ class FlarePool:
         if not ok:
             raise FlareSolverrException(f"FlareSolverr blocked fetch URL: {reason}")
         # Guard against huge POST bodies being forwarded as amplification vector
-        if post_data and len(post_data) > 1024 * 1024:
-            logger.warning(f"FlareSolverr postData too large ({len(post_data)} bytes) for {url}, truncating to 1MB")
-            post_data = post_data[:1024*1024]
+        post_data = _check_post_data_size(url, post_data)
 
         self._ensure_url()
         if not self.flaresolverr_url:
             raise FlareSolverrException("FLARESOLVERR_URL not set")
 
         host = _host_from_url(url)
-        session_id = None
-        with self._lock:
-            if self.max_sessions == 0:
-                session_id = None
-            else:
-                cached = self._lru.get(host)
-                if cached and not self._is_expired(cached):
-                    session_id = cached.get("session_id")
-                    self._lru.move_to_end(host)
-                elif cached and self._is_expired(cached):
-                    try:
-                        self._destroy_session(cached.get("session_id"))
-                    except Exception:
-                        pass
-                    self._lru.pop(host, None)
-                    cached = None
-                if not cached:
-                    session_id = _session_id_for_host(host)
-                    self._evict_if_needed()
-                    # Insert placeholder with ts; will fill after solve
-                    self._lru[host] = {"session_id": session_id, "ts": time.time()}
+        session_id, stale = self._acquire_session(host)
+        for sid in stale:
+            self._destroy_session(sid)
 
         payload = {
             "cmd": f"request.{method.lower()}" if method.upper() == "POST" else "request.get",
@@ -370,46 +443,13 @@ class FlarePool:
 
         logger.info(f"FlareSolverr solve host={host} session={session_id} url={url}")
 
-        try:
-            import requests
-
-            resp = requests.post(self.flaresolverr_url, json=payload, timeout=self.timeout + 5)
-        except Exception as e:
-            raise FlareSolverrException(f"FlareSolverr request failed: {e}") from e
-
-        try:
-            data = resp.json()
-        except Exception as e:
-            raise FlareSolverrException(
-                f"FlareSolverr invalid JSON: {e} status={resp.status_code}"
-            ) from e
-
-        status = data.get("status")
-        message = data.get("message", "")
-        solution = data.get("solution") or {}
-
-        if status != "ok":
-            # If session was used and challenge failed, destroy it so next try is fresh
-            if session_id and self.max_sessions > 0:
-                with self._lock:
-                    try:
-                        self._destroy_session(session_id)
-                        self._lru.pop(host, None)
-                    except Exception:
-                        pass
-            raise FlareSolverrException(f"FlareSolverr error status={status} msg={message}")
+        solution = self._post_solution(url, host, session_id, payload)
 
         cookies = solution.get("cookies") or []
         ua = solution.get("userAgent")
         response_html = solution.get("response") or ""
         resp_url = solution.get("url") or url
         resp_status = solution.get("status")
-
-        # Validate we got at least cookies or response
-        if not cookies and not response_html:
-            raise FlareSolverrException(
-                f"FlareSolverr empty solution status={status} msg={message}"
-            )
 
         # Update LRU cache with ts
         if self.max_sessions > 0:
@@ -465,7 +505,10 @@ async def apply_flaresolverr_user_agent_puppeteer(page, flaresolverr_user_agent,
     the corresponding header is removed from extra_http_headers to avoid
     conflicting values. Returns (filtered_headers) dict to use for setExtraHTTPHeaders.
     """
+    # Plain dict copy (never mutate the caller's headers); the UA key lookup
+    # is case-insensitive but all other keys keep their original casing.
     headers_copy = dict(request_headers) if request_headers else {}
+    ua_key = next((k for k in headers_copy if k.lower() == "user-agent"), None)
     try:
         from changedetectionio.content_fetchers.base import manage_user_agent
     except Exception:
@@ -476,18 +519,12 @@ async def apply_flaresolverr_user_agent_puppeteer(page, flaresolverr_user_agent,
             await page.setUserAgent(flaresolverr_user_agent)
         except Exception:
             pass
-        headers_copy.pop("User-Agent", None)
-        headers_copy.pop("user-agent", None)
+        if ua_key is not None:
+            headers_copy.pop(ua_key, None)
     else:
         user_agent = None
-        if headers_copy.get("User-Agent"):
-            user_agent = headers_copy.pop("User-Agent").strip()
-            try:
-                await page.setUserAgent(user_agent)
-            except Exception:
-                pass
-        elif headers_copy.get("user-agent"):
-            user_agent = headers_copy.pop("user-agent").strip()
+        if ua_key is not None and headers_copy.get(ua_key):
+            user_agent = headers_copy.pop(ua_key).strip()
             try:
                 await page.setUserAgent(user_agent)
             except Exception:
@@ -517,17 +554,17 @@ async def async_flaresolverr_solve(url, proxy_url=None, method="GET", post_data=
     )
 
 
-async def get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=None, url_override=None):
+async def get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=None):
     """Shared helper for processors/base and browser_steps live UI.
 
     - Checks is_flaresolverr_effective(watch, datastore)
-    - Renders POST body via jinja2 (watch.get('body')), truncates to 1MB
+    - Renders POST body via jinja2 (watch.get('body')), rejects >1MB
     - Calls async_flaresolverr_solve with correct method/post_data
     Returns solution dict or None if not effective. Raises FlareSolverrException on failure.
     """
     if not is_flaresolverr_effective(watch, datastore):
         return None
-    url = url_override or watch.link
+    url = watch.link
     method = (watch.get("method") or "GET").upper()
     body = watch.get("body")
     if body:
@@ -537,9 +574,7 @@ async def get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=None, 
             body = jinja_render(template_str=body)
         except Exception:
             pass
-        if body and len(body) > 1024 * 1024:
-            logger.warning(f"FlareSolverr POST body too large ({len(body)} bytes), truncating to 1MB for {url}")
-            body = body[:1024 * 1024]
+        body = _check_post_data_size(url, body)
     post_data = body if method == "POST" else None
     solution = await async_flaresolverr_solve(url, proxy_url=proxy_url, method=method, post_data=post_data)
     try:
