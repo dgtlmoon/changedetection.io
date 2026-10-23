@@ -33,14 +33,14 @@ class SystemInfo(Resource):
                 overdue_watches.append(uuid)
         from changedetectionio import __version__ as main_version
         return {
-                   'queue_size': self.update_q.qsize(),
-                   'overdue_watches': overdue_watches,
-                   'watch_count': len(self.datastore.data.get('watching', {})),
-                   'tag_count': len(self.datastore.data['settings']['application'].get('tags', {})),
-                   'all_paused': self.datastore.data['settings']['application']['all_paused'],
-                   'all_muted': self.datastore.data['settings']['application']['all_muted'],
-                   'base_url': self.datastore.data['settings']['application']['base_url'],
-                   'uptime': round(time.time() - self.datastore.start_time, 2),
-                   'version': main_version,
-                   'new_version_available': self.new_version_available
-               }, 200
+            'all_muted': self.datastore.data['settings']['application']['all_muted'],
+            'all_paused': self.datastore.data['settings']['application']['all_paused'],
+            'base_url': self.datastore.data['settings']['application']['base_url'],
+            'new_version_available': self.new_version_available,
+            'overdue_watches': overdue_watches,
+            'queue_size': self.update_q.qsize(),
+            'tag_count': len(self.datastore.data['settings']['application'].get('tags', {})),
+            'uptime': round(time.time() - self.datastore.start_time, 2),
+            'version': main_version,
+            'watch_count': len(self.datastore.data.get('watching', {})),
+        }, 200
