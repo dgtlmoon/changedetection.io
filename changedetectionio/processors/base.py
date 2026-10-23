@@ -179,9 +179,9 @@ class difference_detection_processor():
         plain Exception on solve failure so it lands in last_error like every
         other fetch failure.
         """
-        from changedetectionio.flaresolverr_pool import get_flaresolverr_solution_for_watch
-
         try:
+            from changedetectionio.flaresolverr_pool import get_flaresolverr_solution_for_watch
+
             return await get_flaresolverr_solution_for_watch(self.watch, self.datastore, proxy_url=proxy_url)
         except Exception as e:
             logger.error(f"FlareSolverr solve failed for {url}: {e}")
@@ -194,8 +194,6 @@ class difference_detection_processor():
         Populates self.fetcher without launching a browser, applying the same
         empty-page / non-200 semantics as the fetchers. Caller returns after this.
         """
-        from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
-
         self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format, worker_id=self.worker_id)
         self.fetcher.backend_name = prefer_fetch_backend + "+flaresolverr"
         _resp = solution.get('response') or ''
@@ -205,6 +203,7 @@ class difference_detection_processor():
         self.fetcher.raw_content = _resp.encode('utf-8') if isinstance(_resp, str) else _resp
         self.fetcher.status_code = _status
         self.fetcher.headers = _headers
+        from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
         _empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         _ignore_status_codes = self.watch.get('ignore_status_codes', False)
         if not _resp or not len(_resp.strip()):
@@ -248,7 +247,7 @@ class difference_detection_processor():
         logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
 
         # FlareSolverr overlay — Cloudflare/DDoS-Guard bypass via shared pool.
-        # Note: worker_id is passed through to keep per-worker browser state apart (upstream fd7c9db2).
+        # Note: worker_id is passed through to keep per-worker browser state apart (upstream 900a77e8 #4415).
         flaresolverr_solution = await self._solve_flaresolverr(url, proxy_url)
         is_bare = flaresolverr_solution is not None and prefer_fetch_backend == 'html_requests' and not self.watch.has_browser_steps
         if is_bare:

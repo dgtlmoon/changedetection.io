@@ -12,6 +12,7 @@ import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.flaresolverr_pool import (
     FlarePool,
     FlareSolverrException,
@@ -26,13 +27,19 @@ from changedetectionio.flaresolverr_pool import (
     normalize_flaresolverr_cookies,
     resolve_flaresolverr_user_agent,
 )
+from changedetectionio.processors.base import difference_detection_processor
 
 FLARESOLVERR_ENV = {"FLARESOLVERR_URL": "http://flaresolverr:8191/v1"}
 WATCH_URL = "https://www.example.com/page"
 
 
 class FakeWatch(dict):
-    """Minimal watch stub: attribute access for .link, dict .get() for the rest."""
+    """Minimal watch stub: attribute access for .link, dict .get() for the rest.
+
+    Note: real Watch.link Jinja-renders the URL and can yield DISABLED /
+    source: handling; this stub returns the raw value, so those paths are
+    out of scope here.
+    """
 
     @property
     def link(self):
@@ -46,7 +53,8 @@ def make_datastore(application_enabled=None, requests_enabled=None):
     )
 
 
-def make_solution(cookies=None, user_agent="FlareUA/1.0", response="<html>ok</html>", status=200):
+def make_solution(cookies=None, user_agent="FlareUA/1.0", response="<html>ok</html>", status=200,
+                  headers=None):
     return {
         "cookies": cookies if cookies is not None else [{"name": "cf_clearance", "value": "abc",
                                                           "domain": "example.com", "path": "/"}],
@@ -54,7 +62,7 @@ def make_solution(cookies=None, user_agent="FlareUA/1.0", response="<html>ok</ht
         "response": response,
         "url": WATCH_URL,
         "status": status,
-        "headers": {},
+        "headers": headers if headers is not None else {},
         "session_id": "cdio-test",
     }
 
@@ -115,6 +123,28 @@ class TestIsFlareSolverrEffective:
         with patch.dict("os.environ", {"FLARESOLVERR_URL": ""}):
             assert is_flaresolverr_effective(FakeWatch({"flaresolverr": "enabled"}),
                                              make_datastore(application_enabled=True)) is False
+
+    def test_requests_location_fallback_on(self):
+        with patch.dict("os.environ", FLARESOLVERR_ENV):
+            assert is_flaresolverr_effective(FakeWatch({}),
+                                             make_datastore(application_enabled=None,
+                                                            requests_enabled=True)) is True
+
+    def test_requests_location_fallback_off(self):
+        with patch.dict("os.environ", FLARESOLVERR_ENV):
+            assert is_flaresolverr_effective(FakeWatch({}),
+                                             make_datastore(application_enabled=None,
+                                                            requests_enabled=False)) is False
+
+    def test_non_string_value_treated_as_system(self):
+        with patch.dict("os.environ", FLARESOLVERR_ENV):
+            assert is_flaresolverr_effective(FakeWatch({"flaresolverr": True}),
+                                             make_datastore(application_enabled=True)) is True
+
+    def test_missing_key_follows_global(self):
+        with patch.dict("os.environ", FLARESOLVERR_ENV):
+            assert is_flaresolverr_effective(FakeWatch({}),
+                                             make_datastore(application_enabled=False)) is False
 
 
 class TestCookieDomainValidation:
@@ -277,14 +307,22 @@ class TestFlarePoolSolve:
     def test_error_status_raises_and_evicts(self, monkeypatch):
         monkeypatch.setattr("changedetectionio.validate_url.is_fetch_url_allowed",
                             lambda url: (True, ""))
-        monkeypatch.setattr("requests.post",
-                            lambda *a, **k: FakeResp({"status": "error", "message": "boom"}))
+        posted = []
+
+        def fake_post(url, json=None, timeout=None):
+            posted.append(json)
+            return FakeResp({"status": "error", "message": "boom"})
+
+        monkeypatch.setattr("requests.post", fake_post)
         pool = self._pool()
         try:
             pool.solve(WATCH_URL)
             assert False, "expected FlareSolverrException"
         except FlareSolverrException as e:
             assert "boom" in str(e)
+        destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
+        assert len(destroys) == 1
+        assert destroys[0]["session"].startswith("cdio-")
         assert pool.get_cached(WATCH_URL) is None
 
     def test_empty_solution_raises(self, monkeypatch):
@@ -413,3 +451,117 @@ class TestUserAgent:
         filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(page, None, {"X-K": "v"}))
         page.setUserAgent.assert_called_once_with("M-UA")
         assert filtered == {"X-K": "v"}
+
+
+def make_handler_self(watch_extra=None, empty_pages_are_a_change=False):
+    """Fake difference_detection_processor: only what the overlay helpers touch."""
+    watch = FakeWatch({"ignore_status_codes": False})
+    if watch_extra:
+        watch.update(watch_extra)
+    datastore = SimpleNamespace(
+        data={"settings": {"application": {"flaresolverr_enabled": True,
+                                           "empty_pages_are_a_change": empty_pages_are_a_change},
+                           "requests": {}}})
+    return SimpleNamespace(watch=watch, datastore=datastore, fetcher=None,
+                           screenshot_format="JPEG", worker_id="w1")
+
+
+def make_fetcher_obj(made):
+    def fake_fetcher_obj(**kwargs):
+        fetcher = SimpleNamespace(quit=AsyncMock(), backend_name=None, kwargs=kwargs)
+        made.append(fetcher)
+        return fetcher
+    return fake_fetcher_obj
+
+
+class TestSolveFlareSolverr:
+    def _run(self, fake_self, monkeypatch, result):
+        monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
+                            AsyncMock(return_value=result))
+        return asyncio.run(difference_detection_processor._solve_flaresolverr(
+            fake_self, WATCH_URL, None))
+
+    def test_passthrough(self, monkeypatch):
+        solution = make_solution()
+        out = self._run(make_handler_self(), monkeypatch, solution)
+        assert out is solution
+
+    def test_none_when_ineffective(self, monkeypatch):
+        assert self._run(make_handler_self(), monkeypatch, None) is None
+
+    def test_error_mapped(self, monkeypatch):
+        from unittest.mock import Mock
+        monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
+                            Mock(side_effect=ValueError("down")))
+        try:
+            asyncio.run(difference_detection_processor._solve_flaresolverr(
+                make_handler_self(), WATCH_URL, None))
+            assert False, "expected Exception"
+        except Exception as e:
+            assert "FlareSolverr: " in str(e)
+            assert "down" in str(e)
+
+    def test_import_error_mapped(self, monkeypatch):
+        # Regression: the import lives inside the try so ImportError is wrapped too.
+        from unittest.mock import Mock
+        monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
+                            Mock(side_effect=ImportError("no module")))
+        try:
+            asyncio.run(difference_detection_processor._solve_flaresolverr(
+                make_handler_self(), WATCH_URL, None))
+            assert False, "expected Exception"
+        except Exception as e:
+            assert "FlareSolverr: " in str(e)
+
+
+class TestBareResponse:
+    def _run(self, solution, watch_extra=None, empty_pages=False):
+        fake_self = make_handler_self(watch_extra=watch_extra,
+                                      empty_pages_are_a_change=empty_pages)
+        made = []
+        asyncio.run(difference_detection_processor._fetch_flaresolverr_bare_response(
+            fake_self, WATCH_URL, solution, "html_requests",
+            make_fetcher_obj(made), "http://proxy:8080", "ws://custom"))
+        return fake_self, made
+
+    def test_happy_path(self):
+        solution = make_solution(response="<html>ok</html>", status=200, headers={"ct": "t"})
+        fake_self, made = self._run(solution)
+        assert len(made) == 1
+        assert made[0].kwargs["worker_id"] == "w1"
+        assert made[0].kwargs["proxy_override"] == "http://proxy:8080"
+        assert made[0].kwargs["custom_browser_connection_url"] == "ws://custom"
+        assert fake_self.fetcher is made[0]
+        assert fake_self.fetcher.backend_name == "html_requests+flaresolverr"
+        assert fake_self.fetcher.content == "<html>ok</html>"
+        assert fake_self.fetcher.status_code == 200
+        assert fake_self.fetcher.headers == {"ct": "t"}
+        fake_self.fetcher.quit.assert_awaited_once_with(watch=fake_self.watch)
+
+    def test_empty_response_raises(self):
+        try:
+            self._run(make_solution(response="", status=200))
+            assert False, "expected EmptyReply"
+        except EmptyReply as e:
+            assert e.status_code == 200
+
+    def test_empty_response_allowed_when_configured(self):
+        fake_self, _ = self._run(make_solution(response="  ", status=200), empty_pages=True)
+        assert fake_self.fetcher.content == "  "
+
+    def test_non200_raises(self):
+        try:
+            self._run(make_solution(response="<html>denied</html>", status=500))
+            assert False, "expected Non200ErrorCodeReceived"
+        except Non200ErrorCodeReceived as e:
+            assert e.status_code == 500
+
+    def test_non200_ignored_when_configured(self):
+        fake_self, _ = self._run(make_solution(response="<html>denied</html>", status=500),
+                                 watch_extra={"ignore_status_codes": True})
+        assert fake_self.fetcher.status_code == 500
+
+    def test_status_and_headers_default(self):
+        fake_self, _ = self._run({"response": "<html>x</html>"})
+        assert fake_self.fetcher.status_code == 200
+        assert fake_self.fetcher.headers == {}
