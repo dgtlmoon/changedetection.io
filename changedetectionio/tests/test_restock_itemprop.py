@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import os
 import time
 
@@ -339,7 +340,9 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
     # And back again
     live_server.app.config['DATASTORE'].data['watching'][uuid]['processor'] = 'restock_diff'
     res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
-    assert b'type="text" value="5.05"' in res.data
+    # Don't assert the input type: WTForms 3.3 renders FloatField as type="number", older versions as type="text"
+    threshold_input = re.search(rb'<input[^>]*name="processor_config_restock_diff-price_change_threshold_percent"[^>]*>', res.data)
+    assert threshold_input and b'value="5.05"' in threshold_input.group(0)
 
     delete_all_watches(client)
 
