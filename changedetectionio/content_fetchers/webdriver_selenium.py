@@ -192,7 +192,7 @@ class fetcher(Fetcher):
             driver.quit()
 
         # Run the selenium operations in a thread pool to avoid blocking the event loop
-        loop = asyncio.get_running_loop()
+        loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, _run_sync)
 
 
