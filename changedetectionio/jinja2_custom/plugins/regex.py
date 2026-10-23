@@ -3,10 +3,10 @@ Regex filter plugin for Jinja2 templates.
 
 Provides regex_replace filter for pattern-based string replacements in templates.
 """
-import re
-import signal
-import threading
+import regex
 from loguru import logger
+
+REGEX_TIMEOUT_SECONDS = 10  # Maximum time for a regex operation
 
 
 def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 0) -> str:
@@ -40,7 +40,6 @@ def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 
     # Security limits
     MAX_INPUT_SIZE = 1024 * 1024 * 10 # 10MB max input size
     MAX_PATTERN_LENGTH = 500  # Maximum regex pattern length
-    REGEX_TIMEOUT_SECONDS = 10  # Maximum time for regex operation
 
     # Validate input sizes
     value_str = str(value)
@@ -62,40 +61,20 @@ def regex_replace(value: str, pattern: str, replacement: str = '', count: int = 
     ]
 
     for dangerous in dangerous_patterns:
-        if re.search(dangerous, pattern):
+        if regex.search(dangerous, pattern):
             logger.warning(f"regex_replace: Potentially dangerous pattern detected: {pattern}")
             return value_str
 
-    def timeout_handler(signum, frame):
-        raise TimeoutError("Regex operation timed out")
-
-    # signal.signal() only works in the main thread, but notifications are rendered
-    # in the notification runner threads, so only use the alarm where it can be set
-    use_alarm = hasattr(signal, 'SIGALRM') and threading.current_thread() is threading.main_thread()
-
     try:
-        # Set up timeout for regex operation (Unix-like systems only)
-        # This prevents ReDoS attacks
-        old_handler = None
-        if use_alarm:
-            old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(REGEX_TIMEOUT_SECONDS)
-
-        try:
-            result = re.sub(pattern, replacement, value_str, count=count)
-        finally:
-            # Cancel the alarm
-            if use_alarm:
-                signal.alarm(0)
-                if old_handler is not None:
-                    signal.signal(signal.SIGALRM, old_handler)
-
-        return result
+        # The 'regex' package enforces the timeout inside the matcher itself, so unlike
+        # signal.alarm() it works in any thread (notifications are rendered in the
+        # notification runner threads, previews in the Flask request threads)
+        return regex.sub(pattern, replacement, value_str, count=count, timeout=REGEX_TIMEOUT_SECONDS)
 
     except TimeoutError:
         logger.error(f"regex_replace: Regex operation timed out - possible ReDoS attack. Pattern: {pattern}")
         return value_str
-    except re.error as e:
+    except regex.error as e:
         logger.warning(f"regex_replace: Invalid regex pattern: {e}")
         return value_str
     except Exception as e:

@@ -12,6 +12,7 @@ inscriptis~=2.7
 python-engineio>=4.14.0,<5
 python-socketio>=5.17.0,<6
 pytz
+regex>=2022.1.18 # regex_replace Jinja2 filter, thread-safe timeout= for ReDoS protection
 timeago~=1.0
 validators~=0.36
 werkzeug==3.1.9
