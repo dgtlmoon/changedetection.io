@@ -7,6 +7,7 @@ class SystemInfo(Resource):
         # datastore is a black box dependency
         self.datastore = kwargs['datastore']
         self.update_q = kwargs['update_q']
+        self.new_version_available=kwargs['new_version_available']
 
     @auth.check_token
     @validate_openapi_request('getSystemInfo')
@@ -34,7 +35,12 @@ class SystemInfo(Resource):
         return {
                    'queue_size': self.update_q.qsize(),
                    'overdue_watches': overdue_watches,
-                   'uptime': round(time.time() - self.datastore.start_time, 2),
                    'watch_count': len(self.datastore.data.get('watching', {})),
-                   'version': main_version
+                   'tag_count': len(self.datastore.data['settings']['application'].get('tags', {})),
+                   'all_paused': self.datastore.data['settings']['application']['all_paused'],
+                   'all_muted': self.datastore.data['settings']['application']['all_muted'],
+                   'base_url': self.datastore.data['settings']['application']['base_url'],
+                   'uptime': round(time.time() - self.datastore.start_time, 2),
+                   'version': main_version,
+                   'new_version_available': self.new_version_available
                }, 200

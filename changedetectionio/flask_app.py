@@ -974,7 +974,7 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(
         SystemInfo,
         '/api/v1/systeminfo',
-        resource_class_kwargs={'datastore': datastore, 'update_q': update_q},
+        resource_class_kwargs={'datastore': datastore, 'update_q': update_q, 'new_version_available': app.config['NEW_VERSION_AVAILABLE']},
     )
 
     watch_api.add_resource(Import, '/api/v1/import', resource_class_kwargs={'datastore': datastore})
