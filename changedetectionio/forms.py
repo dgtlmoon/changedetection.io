@@ -2,7 +2,7 @@ import os
 import re
 from loguru import logger
 from wtforms.widgets.core import TimeInput
-from flask_babel import lazy_gettext as _l, gettext
+from flask_babel import gettext, lazy_gettext as _l, lazy_pgettext
 
 from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
@@ -51,6 +51,7 @@ from changedetectionio.browser_steps.browser_steps import browser_step_ui_config
 from changedetectionio import html_tools, content_fetchers
 
 from changedetectionio.notification import (
+    USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
     valid_notification_formats,
 )
 
@@ -860,21 +861,37 @@ class quickWatchForm(Form):
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
+# Apprise notification fields, common to a single watch and the global
+# /settings/notifications page (NOT the main /settings page, which no longer
+# renders them - a hidden field there can fail validation with no visible error, see #4554)
+class commonNotificationSettingsForm(Form):
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        extra = kwargs.get('extra_notification_tokens', {})
+        self.notification_body.extra_notification_tokens = extra
+        self.notification_title.extra_notification_tokens = extra
+        self.notification_urls.extra_notification_tokens = extra
+
+    notification_urls = StringListField(_l('Notification URL List'),
+                                        validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
+    notification_title = StringField(_l('Notification Title'),
+                                     default='ChangeDetection.io Notification - {{ watch_url }}',
+                                     validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_body = TextAreaField(_l('Notification Body'),
+                                      default='{{ watch_url }} had a change.',
+                                      validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_format = SelectField(_l('Notification format'),
+                                      choices=list(valid_notification_formats.items()))
+
+
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
 
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        self.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
     fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-    notification_body = TextAreaField(_l('Notification Body'), default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
-    notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
@@ -900,24 +917,11 @@ class commonSettingsForm(Form):
 #
 # Named for the backend (apprise) on purpose: future backends (simple_email,
 # webhook, etc.) will land as their own forms next to this one.
-class globalSettingsAppriseNotificationForm(Form):
-    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
-        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        extra = kwargs.get('extra_notification_tokens', {})
-        self.notification_body.extra_notification_tokens = extra
-        self.notification_title.extra_notification_tokens = extra
-        self.notification_urls.extra_notification_tokens = extra
-
-    notification_urls = StringListField(_l('Notification URL List'),
-                                        validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
-    notification_title = StringField(_l('Notification Title'),
-                                     default='ChangeDetection.io Notification - {{ watch_url }}',
-                                     validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_body = TextAreaField(_l('Notification Body'),
-                                      default='{{ watch_url }} had a change.',
-                                      validators=[validators.Optional(), ValidateJinja2Template()])
+class globalSettingsAppriseNotificationForm(commonNotificationSettingsForm):
+    # 'System default' only makes sense per-watch (it means "use this global value")
     notification_format = SelectField(_l('Notification format'),
-                                      choices=list(valid_notification_formats.items()))
+                                      choices=[(k, v) for k, v in valid_notification_formats.items()
+                                               if k != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH])
     base_url = StringField(_l('Notification base URL override'),
                            validators=[validators.Optional()],
                            render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))})
@@ -941,7 +945,7 @@ class SingleBrowserStep(Form):
 #    remove_button = SubmitField(_l('-'), render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
 #    add_button = SubmitField(_l('+'), render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
-class processor_text_json_diff_form(commonSettingsForm):
+class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettingsForm):
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
     link_to_open = StringField(_l('Open Link Override'), validators=[validators.Optional(), validateURL()], default='')
@@ -1015,7 +1019,8 @@ class processor_text_json_diff_form(commonSettingsForm):
     notification_muted = TernaryNoneBooleanField(_l('Notifications'), default=None, yes_text=_l("Muted"), no_text=_l("On"))
     notification_screenshot = BooleanField(_l('Attach screenshot to notification (where possible)'), default=False)
 
-    conditions_match_logic = RadioField(_l('Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
+    # TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
+    conditions_match_logic = RadioField(lazy_pgettext('condition', 'Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
     use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
 
@@ -1195,10 +1200,6 @@ class globalSettingsApplicationUIForm(Form):
 class globalSettingsApplicationForm(commonSettingsForm):
 
     api_access_token_enabled = BooleanField(_l('API access token security check enabled'), default=True, validators=[validators.Optional()])
-    base_url = StringField(_l('Notification base URL override'),
-                           validators=[validators.Optional()],
-                           render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))}
-                           )
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
     fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
@@ -1420,9 +1421,6 @@ class globalSettingsForm(Form):
     # datastore.data['settings']['requests']..
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        self.application.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.application.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.application.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)

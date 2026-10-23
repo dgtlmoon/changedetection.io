@@ -439,9 +439,17 @@ class model(EntityPersistenceMixin, watch_base):
             return self._datastore.settings.fetch_backend
         """
         # Maybe also if is_image etc?
-        # This is because chrome/playwright wont render the PDF in the browser and we will just fetch it and use pdf2html to see the text.
+        # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it,
+        # the others fall back to html_requests (same as resolve_content_fetcher() does at fetch time)
         if self.is_pdf:
-            return 'html_requests'
+            from changedetectionio import content_fetchers
+            fetcher_name = self.get('fetch_backend')
+            if not fetcher_name or fetcher_name == 'system':
+                fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
+            if fetcher_name and fetcher_name.startswith('extra_browser_'):
+                fetcher_name = 'html_webdriver'
+            if not getattr(getattr(content_fetchers, fetcher_name or '', None), 'supports_pdf', False):
+                return 'html_requests'
 
         return self.get('fetch_backend')
 
@@ -455,7 +463,7 @@ class model(EntityPersistenceMixin, watch_base):
         from changedetectionio import content_fetchers
         from changedetectionio.content_fetchers.base import FetcherCapabilities
 
-        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
+        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests when needed
         if not fetcher_name or fetcher_name == 'system':
             fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
 
@@ -516,24 +524,35 @@ class model(EntityPersistenceMixin, watch_base):
         fname = os.path.join(self.data_dir, self.history_index_filename)
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
+
+            # Entries restored from backup could contain absolute or traversal paths, never trust them.
+            # basename() reduces every entry to a plain name, so the only remaining way out of data_dir
+            # is a symlink. One directory listing replaces the per-line realpath() + exists() calls
+            # (~10 syscalls per snapshot); only symlinks still pay for a realpath() containment check.
+            # Note: scandir() never lists '.' or '..', so those are rejected as "not found".
+            safe_data_dir = os.path.realpath(self.data_dir)
+            with os.scandir(safe_data_dir) as it:
+                dir_entries = {e.name: e for e in it}
+
             with open(fname, "r", encoding='utf-8') as f:
                 for i in f.readlines():
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
 
-                        # Always resolve history entries to within the watch's own data directory.
-                        # Entries restored from backup could contain absolute or traversal paths —
-                        # never trust them. Use realpath to also block symlink-based escapes.
-                        safe_data_dir = os.path.realpath(self.data_dir)
                         snapshot_fname = os.path.basename(v.strip())
-                        resolved_path = os.path.realpath(os.path.join(self.data_dir, snapshot_fname))
-
-                        if not resolved_path.startswith(safe_data_dir + os.sep) and resolved_path != safe_data_dir:
-                            logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                        entry = dir_entries.get(snapshot_fname)
+                        if entry is None:
                             continue
 
-                        if not os.path.exists(resolved_path):
-                            continue
+                        resolved_path = os.path.join(safe_data_dir, snapshot_fname)
+                        if entry.is_symlink():
+                            resolved_path = os.path.realpath(resolved_path)
+                            if not resolved_path.startswith(safe_data_dir + os.sep):
+                                logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                                continue
+                            # Dangling symlink, same as the file not existing
+                            if not os.path.exists(resolved_path):
+                                continue
 
                         tmp_history[k] = resolved_path
 
@@ -848,15 +867,30 @@ class model(EntityPersistenceMixin, watch_base):
         if not favicon_fname:
             return True
         try:
-            fname = next(iter(glob.glob(os.path.join(self.data_dir, "favicon.*"))), None)
-            logger.trace(f"Favicon file maybe found at {fname}")
-            if os.path.isfile(fname):
-                file_age = int(time.time() - os.path.getmtime(fname))
-                logger.trace(f"Favicon file age is {file_age}s")
-                if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
-                    return False
+            # Newest by mtime rather than whatever the directory happens to list first.
+            # Older versions of bump_favicon() left any previous save under a different
+            # extension in place, so a watch whose icon changed type can have more than one
+            # favicon.* file. glob order is os.scandir order - stable, but decided by
+            # filename hash - so for some extension pairs the stale file wins every single
+            # time, the age check always fails, and the favicon is refetched on every check
+            # forever. Measured: 3 of 10 realistic extension pairs lose that way.
+            candidates = glob.glob(os.path.join(self.data_dir, "favicon.*"))
+            if not candidates:
+                # get_favicon_filename() is served from a module-level cache, so it can say
+                # yes after the file has been removed. Not an error, just a refetch.
+                logger.trace(f"No favicon file in {self.data_dir}, treating as expired")
+                return True
+            fname = max(candidates, key=os.path.getmtime)
+            logger.trace(f"Favicon file found at {fname}")
+            file_age = int(time.time() - os.path.getmtime(fname))
+            logger.trace(f"Favicon file age is {file_age}s")
+            if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
+                return False
         except Exception as e:
-            logger.critical(f"Exception checking Favicon age {str(e)}")
+            # Deliberately broad: this runs inline on the check path (it is an argument to
+            # fetcher.run()), so it must never be the reason a watch fails. Not critical
+            # either - the only cost of getting it wrong is one extra favicon fetch.
+            logger.warning(f"Could not check favicon age in {self.data_dir}, will refetch: {e}")
             return True
 
         # Also in the case that the file didnt exist
@@ -923,6 +957,19 @@ class model(EntityPersistenceMixin, watch_base):
         try:
             with open(fname, 'wb') as f:
                 f.write(decoded)
+
+            # Drop any previous save under a different extension, or the watch ends up
+            # holding several favicon.* files and favicon_is_expired() has to guess which one
+            # describes the current icon. Only after the write, so a failed write keeps the old icon.
+            import glob
+            for stale in glob.glob(os.path.join(self.data_dir, "favicon.*")):
+                if os.path.abspath(stale) == os.path.abspath(fname):
+                    continue
+                try:
+                    os.unlink(stale)
+                    logger.debug(f"UUID: {self.get('uuid')} removed superseded favicon {stale}")
+                except OSError as e:
+                    logger.debug(f"UUID: {self.get('uuid')} could not remove {stale}: {e}")
 
             # Invalidate module-level favicon filename cache for this watch
             _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
@@ -1298,6 +1345,32 @@ class model(EntityPersistenceMixin, watch_base):
 
         return False
 
+
+    def save_last_fetched_pdf(self, timestamp, contents):
+        """Keep the original PDF for a snapshot (the snapshot itself is only the converted text),
+        so the newest two versions can be compared. Does nothing unless contents is a PDF."""
+        if not isinstance(contents, bytes) or b'%PDF' not in contents[:1024]:
+            return
+        self.ensure_data_dir_exists()
+        self._write_atomic(os.path.join(self.data_dir, f"{timestamp}.pdf"), contents)
+        self._prune_last_fetched_pdf_snapshots()
+
+    def get_fetched_pdf(self, timestamp):
+        filepath = os.path.join(self.data_dir, f"{timestamp}.pdf")
+        if os.path.isfile(filepath):
+            with open(filepath, 'rb') as f:
+                return f.read()
+
+        return False
+
+    def _prune_last_fetched_pdf_snapshots(self):
+        # Keep only the PDFs of the newest two history entries. Matched by filename rather than by
+        # walking the history, so PDFs of entries that history_trim() already removed go too.
+        # (Binary history snapshots are named by md5, so a digits-only name is always ours)
+        keep = set(str(k) for k in list(self.history.keys())[-2:])
+        for f in Path(self.data_dir).glob('*.pdf'):
+            if f.stem.isdigit() and f.stem not in keep:
+                f.unlink(missing_ok=True)
 
     def _prune_last_fetched_html_snapshots(self):
 

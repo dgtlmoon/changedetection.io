@@ -16,7 +16,7 @@
   border-radius: var(--common-round-border);
   border: 1px solid var(--color-border-table-cell);
   background: var(--color-background);
-  color: var(--color-text-input-description);
+  color: var(--color-text);
   // <button> does not inherit font-family from the page, and this class is used on both
   // anchors and submit buttons (toolbar actions are buttons so they can POST) - without this
   // the buttons render in the browser's UI font while the links next to them don't.
@@ -31,7 +31,7 @@
 
   &:hover {
     border-color: var(--color-border-input);
-    color: var(--color-text);
+/*    color: var(--color-text);*/
   }
 
   &:focus-visible {
@@ -93,6 +93,10 @@
   &--warning {
     color: #d68a00;
     &:hover { color: #d68a00; border-color: #d68a00; }
+  }
+
+  &.pure-button-primary {
+    color: #fff;
   }
 }
 

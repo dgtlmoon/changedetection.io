@@ -996,7 +996,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                     proxy_list[k] = {'label': proxy.get('proxy_name'), 'url': proxy.get('proxy_url')}
 
         if proxy_list and strtobool(os.getenv('ENABLE_NO_PROXY_OPTION', 'True')):
-            proxy_list["no-proxy"] = {'label': "No proxy", 'url': ''}
+            proxy_list["no-proxy"] = {'label': gettext("No proxy"), 'url': ''}
 
         return proxy_list if len(proxy_list) else None
 

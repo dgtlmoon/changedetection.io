@@ -12,6 +12,7 @@ from .safe_jinja import (
     DEFAULT_JINJA2_EXTENSIONS,
 )
 from .plugins.regex import regex_replace
+from .plugins.datetime_fmt import unixtime
 
 JINJA2_MARKER_PATTERN = re.compile(r'{%[-+]?\s*[a-zA-Z_]|{{')
 
@@ -24,4 +25,5 @@ __all__ = [
     'DEFAULT_JINJA2_EXTENSIONS',
     'regex_replace',
     'JINJA2_MARKER_PATTERN',
+    'unixtime',
 ]

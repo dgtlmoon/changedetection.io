@@ -5,6 +5,9 @@
 
 import unittest
 import os
+import time
+import glob
+import base64
 import pickle
 import tempfile
 from copy import deepcopy
@@ -279,6 +282,82 @@ class TestFaviconFilenameCache(unittest.TestCase):
             self.assertIsNone(watch.get_favicon_filename())
 
 
+class TestFaviconExpiry(unittest.TestCase):
+    """favicon_is_expired() must judge the icon the watch actually has now."""
+
+    def _watch(self, datastore_path):
+        from changedetectionio.model.Watch import _FAVICON_FILENAME_CACHE
+        watch = Watch.model(
+            datastore_path=datastore_path,
+            __datastore={'settings': {'application': {}}, 'watching': {}},
+            default={'url': 'https://example.com'}
+        )
+        watch.ensure_data_dir_exists()
+        self.addCleanup(_FAVICON_FILENAME_CACHE.pop, watch.data_dir, None)
+        return watch
+
+    def test_fresh_favicon_wins_over_a_stale_one_of_another_extension(self):
+        """A leftover favicon.<other ext> must not force a refetch on every check.
+
+        bump_favicon() names the file after the icon's type, so a watch whose icon changed
+        type could hold two. glob order is decided by filename hash, so picking the first
+        match meant some extension pairs always chose the stale file - the age check failed
+        every time and the favicon was refetched forever.
+        """
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+
+            stale = os.path.join(watch.data_dir, 'favicon.png')
+            with open(stale, 'wb') as f:
+                f.write(b'stale')
+            old = time.time() - (40 * 86400)
+            os.utime(stale, (old, old))
+
+            fresh = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(fresh, 'wb') as f:
+                f.write(b'fresh')
+
+            self.assertFalse(watch.favicon_is_expired(),
+                             "a favicon saved seconds ago must not count as expired just "
+                             "because an older one of a different extension is also present")
+
+    def test_expired_when_the_newest_favicon_is_old(self):
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            path = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(path, 'wb') as f:
+                f.write(b'old')
+            old = time.time() - (40 * 86400)
+            os.utime(path, (old, old))
+
+            self.assertTrue(watch.favicon_is_expired())
+
+    def test_no_favicon_file_is_expired_and_does_not_raise(self):
+        """The filename cache can say yes after the file is gone; that is a refetch, not an error."""
+        from changedetectionio.model.Watch import _FAVICON_FILENAME_CACHE
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            _FAVICON_FILENAME_CACHE[watch.data_dir] = 'favicon.ico'   # stale positive
+
+            self.assertTrue(watch.favicon_is_expired())
+
+    def test_bump_favicon_removes_the_superseded_file(self):
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            previous = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(previous, 'wb') as f:
+                f.write(b'previous')
+
+            watch.bump_favicon(url='https://example.com/icon.png',
+                               favicon_base_64=base64.b64encode(b'newicon').decode(),
+                               mime_type='image/png')
+
+            remaining = sorted(os.path.basename(x) for x in
+                               glob.glob(os.path.join(watch.data_dir, 'favicon.*')))
+            self.assertEqual(remaining, ['favicon.png'],
+                             "the old favicon.ico should have been removed")
+
+
 class TestLLMDiffSummaryCache(unittest.TestCase):
     """Tests for get_llm_diff_summary / save_llm_diff_summary — version-pair + prompt-hash caching."""
 
@@ -401,6 +480,47 @@ class TestHistoryPathTraversal(unittest.TestCase):
             list(history.values())[0].startswith(os.path.realpath(watch.data_dir)),
             "Resolved path must be inside the watch data directory"
         )
+
+    def test_symlink_pointing_outside_data_dir_is_rejected(self):
+        """A plain-named entry that is a symlink to a file outside data_dir must be rejected."""
+        watch = self._make_watch()
+        with tempfile.NamedTemporaryFile(delete=False) as outside:
+            outside.write(b'secret')
+        try:
+            os.symlink(outside.name, os.path.join(watch.data_dir, 'evil.txt'))
+            self._write_history_txt(watch, ['1000000000,evil.txt\n'])
+            self.assertEqual(watch.history, {}, "Symlink escaping data_dir must be rejected")
+        finally:
+            os.unlink(outside.name)
+
+    def test_symlink_inside_data_dir_is_accepted(self):
+        """A symlink that resolves to a file inside data_dir is fine."""
+        watch = self._make_watch()
+        target = os.path.join(watch.data_dir, 'real.txt')
+        with open(target, 'w') as f:
+            f.write('hello')
+        os.symlink(target, os.path.join(watch.data_dir, 'link.txt'))
+        self._write_history_txt(watch, ['1000000000,link.txt\n'])
+        self.assertEqual(list(watch.history.values()), [os.path.realpath(target)])
+
+    def test_dangling_symlink_is_skipped(self):
+        watch = self._make_watch()
+        os.symlink(os.path.join(watch.data_dir, 'gone.txt'), os.path.join(watch.data_dir, 'dangling.txt'))
+        self._write_history_txt(watch, ['1000000000,dangling.txt\n'])
+        self.assertEqual(watch.history, {})
+
+    def test_missing_snapshot_and_junk_lines_are_skipped(self):
+        """Entries whose snapshot file is gone, blank and whitespace-only lines don't count."""
+        import uuid as uuid_builder
+        watch = self._make_watch()
+        watch.save_history_blob(contents="one", timestamp=1000000001, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="two", timestamp=1000000002, snapshot_id=str(uuid_builder.uuid4()))
+        fname = os.path.join(watch.data_dir, watch.history_index_filename)
+        with open(fname, 'a', encoding='utf-8') as f:
+            f.write('\n   \n1000000003,does-not-exist.txt\n\n')
+        self.assertEqual(list(watch.history.keys()), ['1000000001', '1000000002'])
+        self.assertEqual(watch.history_n, 2)
+        self.assertEqual(watch.newest_history_key, '1000000002')
 
     def test_get_history_snapshot_blocks_outside_path_directly(self):
         """get_history_snapshot(filepath=...) must raise if the path escapes data_dir."""

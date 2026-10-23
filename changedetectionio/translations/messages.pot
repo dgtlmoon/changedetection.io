@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: changedetection.io 0.60.7\n"
+"Project-Id-Version: changedetection.io 0.60.9\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-20 19:44+0200\n"
+"POT-Creation-Date: 2026-10-16 10:41+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3220,7 +3220,11 @@ msgid "Edit > Watch"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
+msgid "Notification URL List"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -3232,11 +3236,7 @@ msgid "Notification format"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
+msgid "Fetch Method"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -3454,7 +3454,9 @@ msgstr ""
 msgid "Attach screenshot to notification (where possible)"
 msgstr ""
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr ""
 
@@ -4107,6 +4109,10 @@ msgstr ""
 
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
+msgstr ""
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
 msgstr ""
 
 #. FIXME: fragment msgids (#4074)

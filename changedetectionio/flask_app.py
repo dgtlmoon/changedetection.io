@@ -276,8 +276,15 @@ def init_app_secret(datastore_path):
 
 @app.template_global()
 def get_darkmode_state():
-    css_dark_mode = request.cookies.get('css_dark_mode', 'false')
-    return 'true' if css_dark_mode and strtobool(css_dark_mode) else 'false'
+    # No cookie means the user never toggled the theme - 'auto' lets the CSS follow
+    # the device's prefers-color-scheme. The cookie, once set, always wins.
+    css_dark_mode = request.cookies.get('css_dark_mode')
+    if not css_dark_mode:
+        return 'auto'
+    try:
+        return 'true' if strtobool(css_dark_mode) else 'false'
+    except ValueError:
+        return 'auto'
 
 
 @app.template_global()
@@ -967,7 +974,7 @@ def changedetection_app(config=None, datastore_o=None):
     watch_api.add_resource(
         SystemInfo,
         '/api/v1/systeminfo',
-        resource_class_kwargs={'datastore': datastore, 'update_q': update_q},
+        resource_class_kwargs={'datastore': datastore, 'update_q': update_q, 'new_version_available': app.config['NEW_VERSION_AVAILABLE']},
     )
 
     watch_api.add_resource(Import, '/api/v1/import', resource_class_kwargs={'datastore': datastore})

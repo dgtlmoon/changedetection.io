@@ -17,6 +17,9 @@ on:
 env:
   FORCE_COLOR: 1
 
+permissions:
+  contents: read
+
 jobs:
   # Build the Docker image once and share it with all test jobs
   build:
@@ -25,6 +28,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v7
@@ -45,10 +50,10 @@ jobs:
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build changedetection.io container for testing under Python ${{ env.PYTHON_VERSION }}
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./
           file: ./Dockerfile
@@ -101,6 +106,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -125,6 +132,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -197,6 +206,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -220,7 +231,7 @@ jobs:
           # keeps the run short. Each file is wrapped in its own log group and the failing one is
           # named explicitly, because everything after it is SKIPPED rather than run, and that is
           # otherwise easy to misread as "the whole browser suite broke".
-          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py; do
+          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py tests/fetchers/test_pdf_browser.py; do
             echo "::group::pytest $t"
             if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e FORCE_COLOR --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
@@ -249,6 +260,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -268,7 +281,7 @@ jobs:
       - name: Pyppeteer - Specific tests in built container
         run: |
           # Fail fast, but name the file that failed - see the note in the playwright job above
-          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py; do
+          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py tests/fetchers/test_pdf_browser.py; do
             echo "::group::pytest $t"
             if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e FORCE_COLOR --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
@@ -296,6 +309,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -332,6 +347,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -360,6 +377,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -530,6 +549,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -570,6 +591,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -600,6 +623,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -628,6 +653,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -673,6 +700,8 @@ jobs:
       PYTHON_VERSION: ${{ inputs.python-version }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v8
@@ -728,6 +757,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0  # Fetch all history and tags for upgrade testing
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}

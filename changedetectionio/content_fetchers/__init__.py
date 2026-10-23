@@ -100,7 +100,8 @@ def _log_fetcher_capabilities(fetcher_class, backend_name, uuid=None):
         f"{f' for watch {uuid}' if uuid else ''} - capabilities: "
         f"browser_steps={caps.supports_browser_steps}, "
         f"screenshots={caps.supports_screenshots}, "
-        f"xpath_element_data={caps.supports_xpath_element_data}"
+        f"xpath_element_data={caps.supports_xpath_element_data}, "
+        f"pdf={caps.supports_pdf}"
     )
     return caps
 
@@ -116,7 +117,7 @@ def resolve_content_fetcher(watch, datastore):
     Also collapses the special backend forms into a concrete fetcher:
       - 'system'                    -> global application default
       - 'extra_browser_<key>'       -> html_webdriver + custom connection URL
-      - is_pdf watch                -> forced html_requests (browser PDF support incomplete)
+      - is_pdf watch                -> html_requests, unless the fetcher has supports_pdf
       - html_webdriver + browser_steps -> playwright override (puppeteer steps incomplete)
 
     Returns:
@@ -144,16 +145,6 @@ def resolve_content_fetcher(watch, datastore):
             prefer_fetch_backend = 'html_webdriver'
             custom_browser_connection_url = connection[0].get('browser_connection_url')
 
-    # PDF should be html_requests because playwright will serve it up (so far) in an embedded page
-    # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
-    if getattr(watch, 'is_pdf', False):
-        logger.warning(
-            f"Watch {watch.get('uuid')} is_pdf detected (content-type/url) - forcing the "
-            f"'html_requests' fetcher because browser support isn't complete yet for "
-            f"saving/downloading the PDF. Overriding requested backend '{prefer_fetch_backend}'."
-        )
-        prefer_fetch_backend = "html_requests"
-
     # Grab the right kind of 'fetcher' class (playwright, requests, plugin-provided, etc)
     if prefer_fetch_backend and hasattr(this_module, prefer_fetch_backend):
         # @todo TEMPORARY HACK - SWITCH BACK TO PLAYWRIGHT FOR BROWSERSTEPS
@@ -168,6 +159,16 @@ def resolve_content_fetcher(watch, datastore):
             fetcher_obj = getattr(this_module, prefer_fetch_backend)
     else:
         # What it referenced doesn't exist, just use a default
+        fetcher_obj = getattr(this_module, "html_requests")
+
+    # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it
+    # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
+    if getattr(watch, 'is_pdf', False) and not getattr(fetcher_obj, 'supports_pdf', False):
+        logger.warning(
+            f"Watch {watch.get('uuid')} is_pdf detected (content-type/url) - forcing the "
+            f"'html_requests' fetcher because '{prefer_fetch_backend}' can't supply the original PDF."
+        )
+        prefer_fetch_backend = "html_requests"
         fetcher_obj = getattr(this_module, "html_requests")
 
     _log_fetcher_capabilities(fetcher_obj, prefer_fetch_backend, uuid=watch.get('uuid'))
