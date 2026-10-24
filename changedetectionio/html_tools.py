@@ -782,10 +782,9 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
     # Used for finding out what to highlight
     if mode == "line numbers":
-        return [i + 1 for i in ignored_lines]
+        return sorted(i + 1 for i in ignored_lines)
 
-    output_lines = set(range(len(lines))) - ignored_lines
-    return ''.join([lines[i] for i in output_lines])
+    return ''.join([line for i, line in enumerate(lines) if i not in ignored_lines])
 
 def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
     from xml.sax.saxutils import escape as xml_escape
