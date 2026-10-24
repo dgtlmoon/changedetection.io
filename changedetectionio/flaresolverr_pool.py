@@ -106,9 +106,48 @@ def _host_from_url(url):
         return url
 
 
-def _session_id_for_host(host):
-    h = hashlib.sha256(host.encode("utf-8")).hexdigest()[:12]
+# Daemon URLs already warned about (log-once: same message every solve is noise)
+_warned_remote_daemons = set()
+
+
+def _warn_if_remote_daemon(flaresolverr_url):
+    """Warn once when the daemon looks remote (different egress IP likely).
+
+    Cloudflare binds the clearance to the egress IP that earned it, so a
+    daemon on another host usually means 403s when replaying its cookies
+    locally. Single-label names (docker service names) and loopback are
+    assumed same-host; anything else dotted is worth a heads-up. Heuristic,
+    log-only — never blocks a working setup.
+    """
+    try:
+        from urllib.parse import urlparse
+
+        daemon_host = (urlparse(flaresolverr_url).hostname or "").lower()
+    except Exception:
+        return
+    if not daemon_host or daemon_host in ("localhost", "::1") or daemon_host.startswith("127."):
+        return
+    if "." not in daemon_host:
+        return  # single-label: probably a docker service name on this host
+    if daemon_host in _warned_remote_daemons:
+        return
+    _warned_remote_daemons.add(daemon_host)
+    logger.warning(
+        f"FlareSolverr daemon at {daemon_host} looks remote — its egress IP likely differs "
+        f"from this host, so solved cookies may still 403. Prefer a same-host daemon."
+    )
+
+
+def _session_id_for_host(host, proxy_url=None):
+    # Proxy is part of the identity: a session earned through one egress IP
+    # must never be replayed for a watch using another (Cloudflare binds the
+    # clearance to the egress), so proxied and direct solves get distinct ids.
+    h = hashlib.sha256(f"{host}\x00{proxy_url or ''}".encode("utf-8")).hexdigest()[:12]
     return f"cdio-{h}"
+
+
+def _lru_key(host, proxy_url=None):
+    return (host, proxy_url or "")
 
 
 def is_cookie_domain_valid(cookie_domain, host):
@@ -211,7 +250,7 @@ class FlarePool:
             )
             if value is not None
         }
-        # host -> {session_id, cookies, userAgent, ts}
+        # (host, proxy_url or "") -> {session_id, cookies, userAgent, ts}
         self._lru = OrderedDict()
         self._lock = threading.RLock()
 
@@ -236,14 +275,16 @@ class FlarePool:
             return True
         return (time.time() - ts) > (self.ttl_minutes * 60)
 
-    def _acquire_session(self, host):
+    def _acquire_session(self, host, proxy_url=None):
         """LRU bookkeeping under lock. Returns (session_id, stale_ids, settings).
 
         The caller destroys stale_ids OUTSIDE the lock — destroying is
         network I/O and must never run while holding it. settings is a
         snapshot of the env-driven values so one solve() stays on a
         consistent view even if another thread refreshes mid-flight.
+        Entries are keyed (host, proxy): see _session_id_for_host.
         """
+        key = _lru_key(host, proxy_url)
         stale = []
         with self._lock:
             settings = {
@@ -259,23 +300,23 @@ class FlarePool:
                         stale.append(data.get("session_id"))
                 self._lru.clear()
                 return None, stale, settings
-            cached = self._lru.get(host)
+            cached = self._lru.get(key)
             if cached and not self._is_expired(cached):
-                self._lru.move_to_end(host)
+                self._lru.move_to_end(key)
                 return cached.get("session_id"), stale, settings
             if cached:
                 # Expired — drop it, destroy outside
                 if cached.get("session_id"):
                     stale.append(cached.get("session_id"))
-                self._lru.pop(host, None)
-            session_id = _session_id_for_host(host)
+                self._lru.pop(key, None)
+            session_id = _session_id_for_host(host, proxy_url)
             while self.max_sessions > 0 and len(self._lru) >= self.max_sessions:
-                old_host, old_data = self._lru.popitem(last=False)
-                logger.info(f"FlareSolverr LRU evict host {old_host} session {old_data.get('session_id')}")
+                old_key, old_data = self._lru.popitem(last=False)
+                logger.info(f"FlareSolverr LRU evict {old_key} session {old_data.get('session_id')}")
                 if old_data.get("session_id"):
                     stale.append(old_data.get("session_id"))
             # Insert placeholder with ts; filled after a successful solve
-            self._lru[host] = {"session_id": session_id, "ts": time.time()}
+            self._lru[key] = {"session_id": session_id, "ts": time.time()}
             return session_id, stale, settings
 
     def _destroy_session(self, session_id):
@@ -300,25 +341,25 @@ class FlarePool:
         for sid in stale:
             self._destroy_session(sid)
 
-    def get_cached(self, url):
-        host = _host_from_url(url)
+    def get_cached(self, url, proxy_url=None):
+        key = _lru_key(_host_from_url(url), proxy_url)
         stale_id = None
         with self._lock:
-            data = self._lru.get(host)
+            data = self._lru.get(key)
             if data:
                 if self._is_expired(data):
                     # Expired — evict (destroyed outside the lock below)
                     stale_id = data.get("session_id")
-                    self._lru.pop(host, None)
+                    self._lru.pop(key, None)
                     data = None
                 else:
                     # move to end (most recent)
-                    self._lru.move_to_end(host)
+                    self._lru.move_to_end(key)
         if stale_id:
             self._destroy_session(stale_id)
         return data
 
-    def _post_solution(self, url, host, session_id, payload, settings, destroyed):
+    def _post_solution(self, url, key, session_id, payload, settings, destroyed):
         """POST the payload and validate the solution dict.
 
         Any failure pops the LRU placeholder so the next solve() starts
@@ -335,14 +376,14 @@ class FlarePool:
                                  timeout=settings["timeout"] + 5)
         except Exception as e:
             with self._lock:
-                self._lru.pop(host, None)
+                self._lru.pop(key, None)
             raise FlareSolverrException(f"FlareSolverr request failed: {e}") from e
 
         try:
             data = resp.json()
         except Exception as e:
             with self._lock:
-                self._lru.pop(host, None)
+                self._lru.pop(key, None)
             raise FlareSolverrException(
                 f"FlareSolverr invalid JSON: {e} status={resp.status_code}"
             ) from e
@@ -355,7 +396,7 @@ class FlarePool:
             # If session was used and challenge failed, destroy it so next try is fresh.
             # Skip ones already destroyed as stale above — same deterministic id.
             with self._lock:
-                self._lru.pop(host, None)
+                self._lru.pop(key, None)
             if session_id and session_id not in destroyed and settings["max_sessions"] > 0:
                 self._destroy_session(session_id)
                 destroyed.add(session_id)
@@ -367,7 +408,7 @@ class FlarePool:
         # the next solve() reuses the same deterministic session id.
         if not solution.get("cookies") and not solution.get("response"):
             with self._lock:
-                self._lru.pop(host, None)
+                self._lru.pop(key, None)
             raise FlareSolverrException(
                 f"FlareSolverr empty solution status={status} msg={message}"
             )
@@ -386,13 +427,15 @@ class FlarePool:
         self._ensure_url()
 
         host = _host_from_url(url)
-        session_id, stale, settings = self._acquire_session(host)
+        key = _lru_key(host, proxy_url)
+        session_id, stale, settings = self._acquire_session(host, proxy_url)
         destroyed = set()
         for sid in stale:
             self._destroy_session(sid)
             destroyed.add(sid)
         if not settings["flaresolverr_url"]:
             raise FlareSolverrException("FLARESOLVERR_URL not set")
+        _warn_if_remote_daemon(settings["flaresolverr_url"])
 
         payload = {
             "cmd": f"request.{method.lower()}" if method.upper() == "POST" else "request.get",
@@ -409,7 +452,7 @@ class FlarePool:
 
         logger.info(f"FlareSolverr solve host={host} session={session_id} url={url}")
 
-        solution = self._post_solution(url, host, session_id, payload, settings, destroyed)
+        solution = self._post_solution(url, key, session_id, payload, settings, destroyed)
 
         cookies = solution.get("cookies") or []
         ua = solution.get("userAgent")
@@ -420,9 +463,9 @@ class FlarePool:
         # Update LRU cache with ts
         if settings["max_sessions"] > 0:
             with self._lock:
-                if host in self._lru:
-                    self._lru[host].update({"cookies": cookies, "userAgent": ua, "response": response_html, "ts": time.time()})
-                    self._lru.move_to_end(host)
+                if key in self._lru:
+                    self._lru[key].update({"cookies": cookies, "userAgent": ua, "response": response_html, "ts": time.time()})
+                    self._lru.move_to_end(key)
 
         return {
             "cookies": cookies,

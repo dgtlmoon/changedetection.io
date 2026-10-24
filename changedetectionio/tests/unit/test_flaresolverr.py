@@ -25,6 +25,7 @@ from changedetectionio.content_fetchers.base import (
 from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
 from changedetectionio.content_fetchers.flaresolverr import (
     build_flaresolverr_bare_fetcher,
+    decide_challenge_route,
     solve_for_watch,
     stamp_backend_name,
 )
@@ -360,6 +361,35 @@ class TestFlarePoolSolve:
         assert re.fullmatch(r"cdio-[0-9a-f]{12}", first["session_id"])
         assert not [p for p in posted if p.get("cmd") == "sessions.destroy"]
 
+    def test_proxy_gets_own_session(self, monkeypatch):
+        # A proxied watch must never reuse the direct session (or another
+        # proxy's): Cloudflare binds the clearance to the egress IP.
+        posted = self._ok(monkeypatch, make_solution())
+        pool = self._pool()
+        direct = pool.solve(WATCH_URL)
+        via_a = pool.solve(WATCH_URL, proxy_url="http://proxy-a:8080")
+        via_a2 = pool.solve(WATCH_URL, proxy_url="http://proxy-a:8080")
+        via_b = pool.solve(WATCH_URL, proxy_url="http://proxy-b:8080")
+        assert len({direct["session_id"], via_a["session_id"], via_b["session_id"]}) == 3
+        assert via_a["session_id"] == via_a2["session_id"]
+        assert re.fullmatch(r"cdio-[0-9a-f]{12}", via_a["session_id"])
+        assert ("www.example.com", "http://proxy-a:8080") in pool._lru
+        assert ("www.example.com", "") in pool._lru
+
+    def test_proxy_forwarded_per_request(self, monkeypatch):
+        posted = self._ok(monkeypatch, make_solution())
+        pool = self._pool()
+        pool.solve(WATCH_URL, proxy_url="http://proxy-a:8080")
+        assert posted[-1]["proxy"] == {"url": "http://proxy-a:8080"}
+
+    def test_get_cached_respects_proxy(self, monkeypatch):
+        self._ok(monkeypatch, make_solution())
+        pool = self._pool()
+        pool.solve(WATCH_URL, proxy_url="http://proxy-a:8080")
+        assert pool.get_cached(WATCH_URL, proxy_url="http://proxy-a:8080") is not None
+        assert pool.get_cached(WATCH_URL) is None
+        assert pool.get_cached(WATCH_URL, proxy_url="http://proxy-b:8080") is None
+
     def test_getter_defaults_and_invalid_fallback(self, monkeypatch):
         from changedetectionio.flaresolverr_pool import (
             get_flaresolverr_max_sessions,
@@ -396,7 +426,7 @@ class TestFlarePoolSolve:
         posted = self._ok(monkeypatch, make_solution())
         pool = self._pool()
         pool.solve(WATCH_URL)
-        pool._lru["www.example.com"]["ts"] -= 61 * 60
+        pool._lru[("www.example.com", "")]["ts"] -= 61 * 60
         assert pool.get_cached(WATCH_URL) is None
         destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
         assert len(destroys) == 1
@@ -407,7 +437,7 @@ class TestFlarePoolSolve:
         first = pool.solve(WATCH_URL)
         # NOTE: no get_cached() in between — solve() itself must notice the
         # stale entry, destroy it and start fresh.
-        pool._lru["www.example.com"]["ts"] -= 61 * 60
+        pool._lru[("www.example.com", "")]["ts"] -= 61 * 60
         second = pool.solve(WATCH_URL)
         destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
         assert [d["session"] for d in destroys] == [first["session_id"]]
@@ -427,7 +457,7 @@ class TestFlarePoolSolve:
         monkeypatch.setattr("requests.post", fake_post)
         pool = self._pool()
         pool.solve(WATCH_URL)
-        pool._lru["www.example.com"]["ts"] -= 61 * 60
+        pool._lru[("www.example.com", "")]["ts"] -= 61 * 60
         with pytest.raises(FlareSolverrException, match="boom"):
             pool.solve(WATCH_URL)
         # One destroy for the stale entry, none for the failed retry of the
@@ -440,7 +470,7 @@ class TestFlarePoolSolve:
         posted = self._ok(monkeypatch, make_solution())
         pool = self._pool()
         pool.solve(WATCH_URL)
-        del pool._lru["www.example.com"]["ts"]
+        del pool._lru[("www.example.com", "")]["ts"]
         assert pool.get_cached(WATCH_URL) is None
         destroys = [p for p in posted if p.get("cmd") == "sessions.destroy"]
         assert len(destroys) == 1
@@ -586,7 +616,7 @@ class TestFlarePoolSolve:
             pool.solve("https://a.example.com/")
             pool.solve("https://b.example.com/")
             # MAX=1 from the constructor, not 99 from env: A must be evicted.
-            assert "a.example.com" not in pool._lru
+            assert ("a.example.com", "") not in pool._lru
             assert pool.timeout == 3
             assert pool.ttl_minutes == 2
 
@@ -915,6 +945,38 @@ class TestSolveForWatch:
     def test_stamp_backend_name(self):
         assert stamp_backend_name("html_requests", True) == "html_requests+flaresolverr"
         assert stamp_backend_name("html_requests", False) == "html_requests"
+
+
+class TestDecideChallengeRoute:
+    def test_bare(self):
+        assert decide_challenge_route("html_requests", False) == "bare"
+
+    def test_hybrid(self):
+        assert decide_challenge_route("html_webdriver", False) == "hybrid"
+        assert decide_challenge_route("html_webdriver", True) == "hybrid"
+
+    def test_skip(self):
+        # Browser steps on plain requests can't consume the context; unknown
+        # (e.g. plugin) backends fail closed to a normal fetch.
+        assert decide_challenge_route("html_requests", True) == "skip"
+        assert decide_challenge_route("html_js_zyte", False) == "skip"
+        assert decide_challenge_route("html_js_zyte", True) == "skip"
+
+
+class TestRemoteDaemonWarning:
+    def test_loopback_and_service_names_stay_quiet(self):
+        from changedetectionio.flaresolverr_pool import _warn_if_remote_daemon, _warned_remote_daemons
+        _warn_if_remote_daemon("http://localhost:8191/v1")
+        _warn_if_remote_daemon("http://127.0.0.1:8191/v1")
+        _warn_if_remote_daemon("http://flaresolverr:8191/v1")
+        assert _warned_remote_daemons == set()
+
+    def test_remote_warns_once(self):
+        from changedetectionio.flaresolverr_pool import _warn_if_remote_daemon, _warned_remote_daemons
+        _warned_remote_daemons.clear()
+        _warn_if_remote_daemon("http://solver.example.com:8191/v1")
+        _warn_if_remote_daemon("http://solver.example.com:8191/v1")
+        assert _warned_remote_daemons == {"solver.example.com"}
 
 
 class TestBareResponse:

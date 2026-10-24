@@ -209,20 +209,27 @@ class difference_detection_processor():
         # Note: worker_id is passed through to keep per-worker browser state apart (upstream 900a77e8 #4415).
         from changedetectionio.content_fetchers.flaresolverr import (
             build_flaresolverr_bare_fetcher,
+            decide_challenge_route,
             solve_for_watch,
             stamp_backend_name,
         )
 
         challenge = await solve_for_watch(self.watch, self.datastore, url, proxy_url)
-        is_bare = challenge is not None and prefer_fetch_backend == 'html_requests' and not self.watch.has_browser_steps
-        if is_bare:
+        route = decide_challenge_route(prefer_fetch_backend, self.watch.has_browser_steps) \
+            if challenge is not None else "skip"
+        if route == "bare":
             self.fetcher = await build_flaresolverr_bare_fetcher(
                 challenge[0], prefer_fetch_backend, fetcher_obj, proxy_url,
                 custom_browser_connection_url, self.screenshot_format, self.worker_id,
                 self.watch, self.datastore, url)
             return
-        challenge_cookies, challenge_ua = challenge[1:] if challenge is not None else ([], None)
-        if challenge is not None:
+        if route == "skip" and challenge is not None:
+            # Fail closed: backend can't consume the challenge context (e.g. a
+            # plugin fetcher), so fetch normally instead of dropping it silently.
+            logger.warning(f"Challenge-solver overlay skipped for {url}: "
+                           f"backend '{prefer_fetch_backend}' is not html_requests/html_webdriver")
+        challenge_cookies, challenge_ua = challenge[1:] if challenge is not None and route == "hybrid" else ([], None)
+        if route == "hybrid":
             self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format, cookies=challenge_cookies, worker_id=self.worker_id)
             logger.info(f"Challenge-solver hybrid inject {len(challenge_cookies)} cookies UA={challenge_ua}")
         else:
@@ -235,7 +242,8 @@ class difference_detection_processor():
                                    )
         # Stamp the resolved backend name so downstream consumers (processors, plugins)
         # can read it directly instead of re-deriving it from the fetcher class name.
-        self.fetcher.backend_name = stamp_backend_name(prefer_fetch_backend, challenge is not None)
+        self.fetcher.backend_name = stamp_backend_name(
+            prefer_fetch_backend, challenge is not None and route == "hybrid")
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

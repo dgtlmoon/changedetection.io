@@ -47,6 +47,26 @@ def stamp_backend_name(prefer_fetch_backend, solved):
     return prefer_fetch_backend + ("+flaresolverr" if solved else "")
 
 
+# Browser backends whose fetcher speaks the generic cookies=/headers= channels.
+# Anything else (e.g. a plugin fetcher that never learned them) gets a normal
+# fetch — fail closed instead of silently dropping the challenge context.
+_HYBRID_BACKENDS = frozenset(["html_webdriver"])
+
+
+def decide_challenge_route(prefer_fetch_backend, has_browser_steps):
+    """Where a solved challenge may go: "bare", "hybrid" or "skip".
+
+    Bare serves solution.response directly (html_requests, no browser steps).
+    Hybrid replays cookies/UA in the fetching browser. Unknown backends skip
+    the overlay entirely — the watch is fetched normally.
+    """
+    if prefer_fetch_backend == "html_requests" and not has_browser_steps:
+        return "bare"
+    if prefer_fetch_backend in _HYBRID_BACKENDS:
+        return "hybrid"
+    return "skip"
+
+
 async def build_flaresolverr_bare_fetcher(solution, prefer_fetch_backend, fetcher_obj,
                                           proxy_url, custom_browser_connection_url,
                                           screenshot_format, worker_id, watch, datastore, url):
