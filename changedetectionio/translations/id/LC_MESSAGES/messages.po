@@ -6,8 +6,8 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: changedetection.io 0.60.3\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-09-09 17:07+0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -3334,8 +3334,12 @@ msgid "Edit > Watch"
 msgstr "Edit > Monitor"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Metode Pengambilan"
+msgid "Notification URL List"
+msgstr "Daftar URL Notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Judul Notifikasi"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3346,12 +3350,8 @@ msgid "Notification format"
 msgstr "Format notifikasi"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Judul Notifikasi"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Daftar URL Notifikasi"
+msgid "Fetch Method"
+msgstr "Metode Pengambilan"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3568,7 +3568,9 @@ msgstr "Dibisukan"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "Lampirkan tangkapan layar ke notifikasi (jika memungkinkan)"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "Pencocokan"
 
@@ -3591,21 +3593,6 @@ msgstr "Jumlah item riwayat per monitor yang disimpan"
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Isi harus kosong saat Metode Permintaan diatur ke GET"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Konfigurasi sintaks template tidak valid: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Sintaks template tidak valid: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Sintaks template tidak valid pada header \"%(header)s\": %(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3874,6 +3861,21 @@ msgstr "RegEx untuk diekstrak"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Ekstrak sebagai CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Konfigurasi sintaks template tidak valid: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Sintaks template tidak valid: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Sintaks template tidak valid pada header \"%(header)s\": %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"
@@ -4222,6 +4224,10 @@ msgstr "Kesalahan saat mengambil metadata untuk {}"
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Protokol monitor tidak diizinkan atau format URL tidak valid"
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

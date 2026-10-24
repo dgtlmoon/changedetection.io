@@ -4,8 +4,8 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: changedetection.io 0.55.7\n"
-"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-06-23 14:19+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -3339,8 +3339,12 @@ msgid "Edit > Watch"
 msgstr "Редактировать > Смотреть"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Метод выборки"
+msgid "Notification URL List"
+msgstr "Список URL-адресов уведомлений"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Название уведомления"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3351,12 +3355,8 @@ msgid "Notification format"
 msgstr "Формат уведомления"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Название уведомления"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Список URL-адресов уведомлений"
+msgid "Fetch Method"
+msgstr "Метод выборки"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3573,7 +3573,9 @@ msgstr "Без звука"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "Прикрепите скриншот к уведомлению (где это возможно)"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "Соответствовать"
 
@@ -3596,21 +3598,6 @@ msgstr "Количество сохраняемых элементов исто�
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Тело должно быть пустым, если для метода запроса установлено значение GET."
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Неверная конфигурация синтаксиса шаблона: %(error)s."
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Неверный синтаксис шаблона: %(error)s."
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Неверный синтаксис шаблона в заголовке «%(header)s»: %(error)s."
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3879,6 +3866,21 @@ msgstr "RegEx для извлечения"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Извлечь в формате CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Неверная конфигурация синтаксиса шаблона: %(error)s."
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Неверный синтаксис шаблона: %(error)s."
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Неверный синтаксис шаблона в заголовке «%(header)s»: %(error)s."
 
 #: changedetectionio/languages.py
 msgid "just now"
@@ -4227,6 +4229,10 @@ msgstr "Ошибка при получении метаданных для {}."
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Протокол просмотра не разрешен или неверный формат URL."
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

@@ -1,12 +1,12 @@
-# Chinese (Traditional, Taiwan) translations for PROJECT.
+# Chinese (Traditional, Taiwan) translations for changedetection.io.
 # Copyright (C) 2026 ORGANIZATION
-# This file is distributed under the same license as the PROJECT project.
+# This file is distributed under the same license as the changedetection.io project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-01-15 12:00+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -3232,8 +3232,12 @@ msgid "Edit > Watch"
 msgstr "編輯 > 監測任務"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "抓取方式"
+msgid "Notification URL List"
+msgstr "通知 URL 列表"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "通知標題"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3244,12 +3248,8 @@ msgid "Notification format"
 msgstr "通知格式"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "通知標題"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "通知 URL 列表"
+msgid "Fetch Method"
+msgstr "抓取方式"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3466,7 +3466,9 @@ msgstr "已靜音"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "將截圖附加到通知中（如果支援）"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "符合"
 
@@ -3489,21 +3491,6 @@ msgstr "每個監測任務要保留的歷史項目數量"
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "當請求方法設為 GET 時，內容必須為空"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "範本語法設定無效：%(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "無效的範本語法：%(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "「%(header)s」標頭中的範本語法無效：%(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3772,6 +3759,21 @@ msgstr "要提取的 RegEx"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "提取為 CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "範本語法設定無效：%(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "無效的範本語法：%(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "「%(header)s」標頭中的範本語法無效：%(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"
@@ -4120,6 +4122,10 @@ msgstr "讀取 {} 的中繼資料時發生錯誤"
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "監測協定不被允許或 URL 格式無效"
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

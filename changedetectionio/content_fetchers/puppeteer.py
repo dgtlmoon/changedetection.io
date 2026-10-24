@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import hashlib
 import json
 import os
 import websockets.exceptions
@@ -11,6 +13,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio import gc_debounce
 from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
 
@@ -190,6 +193,7 @@ class fetcher(Fetcher):
     supports_browser_steps = True
     supports_screenshots = True
     supports_xpath_element_data = True
+    supports_pdf = True
 
     @classmethod
     def get_status_icon_data(cls):
@@ -221,7 +225,8 @@ class fetcher(Fetcher):
             # Playwright needs separate username and password values
             parsed = urlparse(proxy_override)
             if parsed:
-                self.proxy = {'username': parsed.username, 'password': parsed.password}
+                username, password = proxy_credentials(proxy_override)
+                self.proxy = {'username': username, 'password': password}
                 # Add the proxy server chrome start option, the username and password never gets added here
                 # (It always goes in via await self.page.authenticate(self.proxy))
 
@@ -515,6 +520,56 @@ class fetcher(Fetcher):
 
         self.page.on('response', _keep_navigation_response)
 
+        # Chrome hands a PDF straight to its built-in viewer, after which page.content and
+        # Network.getResponseBody both only give the viewer's HTML, never the PDF. Pause each
+        # document response once its headers arrive (we can't know beforehand that it's a PDF),
+        # and if it is a PDF copy the body out of the paused response - no second download.
+        main_frame_pdf = {}
+
+        async def _handle_document_response(event):
+            try:
+                # Request-stage pauses only exist when proxy auth is on (see the Fetch.enable below), nothing to inspect
+                if 'responseStatusCode' not in event and 'responseErrorReason' not in event:
+                    return
+                if event.get('frameId') != self.page.mainFrame._id:
+                    return
+                # Any new main-frame document replaces whatever was captured before
+                main_frame_pdf.pop('body', None)
+                content_type = next((h.get('value', '') for h in event.get('responseHeaders') or []
+                                     if h.get('name', '').lower() == 'content-type'), '')
+                if 'application/pdf' not in content_type.lower():
+                    return
+                r = await self.page._client.send('Fetch.getResponseBody', {'requestId': event['requestId']})
+                main_frame_pdf['body'] = base64.b64decode(r['body']) if r.get('base64Encoded') else r['body'].encode('utf-8')
+                logger.debug(f"Captured PDF body ({len(main_frame_pdf['body'])} bytes) for {event['request']['url']}")
+            except Exception as e:
+                logger.warning(f"Could not capture the PDF response body: {e}")
+            finally:
+                # Every paused request MUST be continued, otherwise the page hangs
+                try:
+                    await self.page._client.send('Fetch.continueRequest', {'requestId': event['requestId']})
+                except Exception as e:
+                    logger.debug(f"Fetch.continueRequest failed, page is most likely already gone: {e}")
+
+        def _on_request_paused(event):
+            asyncio.ensure_future(_handle_document_response(event))
+
+        # Fetch.enable REPLACES any earlier Fetch.enable, including the one page.authenticate() did for
+        # proxy credentials ({'handleAuthRequests': True, 'patterns': [{'urlPattern': '*'}]}), without
+        # handleAuthRequests Chrome never asks for the credentials and the proxy answers 407.
+        proxy_auth = bool(self.proxy and self.proxy.get('username'))
+        fetch_patterns = [{'resourceType': 'Document', 'requestStage': 'Response'}]
+        if proxy_auth:
+            # Every request (not just documents) must be matched for Chrome to emit Fetch.authRequired for it
+            fetch_patterns.append({'urlPattern': '*', 'requestStage': 'Request'})
+            # pyppeteer's NetworkManager still answers Fetch.authRequired with the credentials, but stop it from
+            # blindly continuing every paused request, it would continue our paused PDF responses before we copy
+            # the body out. _handle_document_response continues everything itself.
+            self.page._frameManager.networkManager._protocolRequestInterceptionEnabled = False
+
+        self.page._client.on('Fetch.requestPaused', _on_request_paused)
+        await self.page._client.send('Fetch.enable', {'handleAuthRequests': proxy_auth, 'patterns': fetch_patterns})
+
         # pyppeteer's navigation watcher is bound to the loaderId of the navigation it started. If
         # the page replaces that document (redirect/interstitial) the 'load' it waits for never
         # arrives for that loaderId, so goto() never returns - and with timeout=0 it would block
@@ -594,6 +649,15 @@ class fetcher(Fetcher):
                 response = latest
         finally:
             self.page.remove_listener('response', _keep_navigation_response)
+            self.page._client.remove_listener('Fetch.requestPaused', _on_request_paused)
+            try:
+                if proxy_auth:
+                    # Hand Fetch back to pyppeteer as page.authenticate() left it, so later requests still get the credentials
+                    await self.page.authenticate(self.proxy)
+                else:
+                    await self.page._client.send('Fetch.disable')
+            except Exception as e:
+                logger.debug(f"Resetting Fetch failed, page is most likely already gone: {e}")
 
         self.headers = response.headers
 
@@ -647,7 +711,13 @@ class fetcher(Fetcher):
 
         MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
 
-        self.content = await self.page.content
+        pdf_body = main_frame_pdf.get('body')
+        if pdf_body and 'application/pdf' in (response.headers.get('content-type') or '').lower():
+            # Same as the requests fetcher does for binary files, the processor converts raw_content
+            self.content = hashlib.md5(pdf_body).hexdigest()
+            self.raw_content = pdf_body
+        else:
+            self.content = await self.page.content
 
         # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
         logger.debug(f"Screenshot format {self.screenshot_format}")

@@ -1,9 +1,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version:  Changedetection.io\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-22 13:56+0000\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: pl\n"
@@ -3380,8 +3380,12 @@ msgid "Edit > Watch"
 msgstr "Edycja > Obserwuj"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Metoda pobierania"
+msgid "Notification URL List"
+msgstr "Lista adresów URL powiadomień"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Tytuł powiadomienia"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3392,12 +3396,8 @@ msgid "Notification format"
 msgstr "Format powiadomienia"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Tytuł powiadomienia"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Lista adresów URL powiadomień"
+msgid "Fetch Method"
+msgstr "Metoda pobierania"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3614,7 +3614,9 @@ msgstr "Wyciszone"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "Dołącz zrzut ekranu do zgłoszenia (jeśli to możliwe)"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "Mecz"
 
@@ -3637,21 +3639,6 @@ msgstr "Liczba elementów historii, które mają być zachowane dla każdej obse
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Pola danych muszą być puste, gdy metoda żądania jest ustawiona na GET"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Nieprawidłowa konfiguracja składni szablonu: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Nieprawidłowa składnia szablonu: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Nieprawidłowa składnia szablonu w nagłówku „%(header)s”: %(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3920,6 +3907,21 @@ msgstr "Wyrażenie regularne do wyodrębniania"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Wyeksportuj jako plik CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Nieprawidłowa konfiguracja składni szablonu: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Nieprawidłowa składnia szablonu: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Nieprawidłowa składnia szablonu w nagłówku „%(header)s”: %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"
@@ -4270,6 +4272,10 @@ msgstr "Wystąpił błąd podczas pobierania metadanych dla {}"
 #: changedetectionio/store/__init__.py
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "Protokół „watch” jest niedozwolony lub format adresu URL jest nieprawidłowy"
+
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

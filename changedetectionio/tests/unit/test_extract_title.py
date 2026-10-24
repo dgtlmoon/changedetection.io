@@ -130,6 +130,37 @@ class TestExtractTitle(unittest.TestCase):
         """Passing an unsupported type (e.g. int) returns None without raising."""
         self.assertIsNone(extract_title(12345))  # type: ignore[arg-type]
 
+    def test_str_with_length_changing_lowercase_chars(self):
+        """'İ'.lower() is 2 chars, the old data.lower() offset then missed the tag."""
+        page = "<html><head><meta name='x' content='" + "İ" * 20 + "'><title>İstanbul</title></head></html>"
+        self.assertEqual(extract_title(page), "İstanbul")
+        self.assertEqual(extract_title(page.encode("utf-8")), "İstanbul")
+
+    def test_uppercase_title_tag(self):
+        """Tag matching stays case-insensitive for str and bytes."""
+        page = "<HTML><HEAD><TITLE>Shouty</TITLE></HEAD></HTML>"
+        self.assertEqual(extract_title(page), "Shouty")
+        self.assertEqual(extract_title(page.encode()), "Shouty")
+
+    def test_whitespace_in_tags(self):
+        """Whitespace after the tag name is valid HTML, after '<' it is text (matches browsers/lxml)."""
+        self.assertEqual(extract_title("<head><title >A</title></head>"), "A")
+        self.assertEqual(extract_title("<head><title\n lang='en'>B</title></head>"), "B")
+        self.assertEqual(extract_title("<head><title>C</title ></head>"), "C")
+        self.assertEqual(extract_title(b"<head><title>D</title\n></head>"), "D")
+        self.assertIsNone(extract_title("<head>< title>E</title></head>"))
+
+    def test_utf32_title(self):
+        page = "<html><head><TITLE>Wide</TITLE></head></html>".encode("utf-32")
+        self.assertEqual(extract_title(page), "Wide")
+
+    def test_title_past_search_limit_is_ignored(self):
+        """A <title> beyond the first 1 MiB is not searched for."""
+        filler = "<!-- " + "A" * (1024 * 1024) + " -->"
+        page = f"<html><head>{filler}<title>Too far</title></head></html>"
+        self.assertIsNone(extract_title(page))
+        self.assertIsNone(extract_title(page.encode()))
+
 
 if __name__ == "__main__":
     unittest.main()

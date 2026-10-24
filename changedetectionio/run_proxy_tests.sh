@@ -51,6 +51,11 @@ docker run --network changedet-network \
   test-changedetectionio \
   bash -c 'cd changedetectionio && pytest tests/proxy_list/test_select_custom_proxy.py --datastore-path /tmp'
 
+# Same again via Puppeteer fast, proxy username+password goes in via page.authenticate() not the URL
+docker run --network changedet-network \
+  test-changedetectionio \
+  bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest tests/proxy_list/test_select_custom_proxy.py --datastore-path /tmp'
+
 # Give squid proxies a moment to flush their logs
 sleep 2
 

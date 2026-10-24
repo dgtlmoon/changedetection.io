@@ -30,7 +30,7 @@ def test_language_endpoints_work_for_anonymous_users(client, live_server, measur
     # Both language links are rendered on the login page, so both must be reachable
     res = client.get(url_for("login"))
     assert res.status_code == 200
-    assert b'language-selector' in res.data, "Language modal trigger should render for anonymous users"
+    assert b'menu-ui-language' in res.data, "Language modal trigger should render for anonymous users"
 
     # Picking a specific language must not redirect to the login page
     res = client.post(url_for("set_language", locale="de"), follow_redirects=False)
