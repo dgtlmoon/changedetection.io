@@ -1810,20 +1810,22 @@ msgid "Watch is already queued or being checked."
 msgstr "Obserwacja znajduje się już w kolejce lub jest właśnie sprawdzana."
 
 #: changedetectionio/blueprint/ui/__init__.py
-msgid "Queued 1 watch for rechecking."
-msgstr "Dodano 1 obserwację do kolejki ponownego sprawdzenia."
+#, python-format
+msgid "Queued %(count)s watch for rechecking"
+msgid_plural "Queued %(count)s watches for rechecking"
+msgstr[0] "Dodano %(count)s obserwację do kolejki ponownego sprawdzenia"
+msgstr[1] "Dodano %(count)s obserwacji do kolejki ponownego sprawdzenia"
+msgstr[2] "Dodano %(count)s obserwacji do kolejki ponownego sprawdzenia"
+
+#. TRANSLATORS: sentence-final full stop
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "."
+msgstr "."
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
-msgstr ""
-"Dodano {count} obserwacji do kolejki ponownego sprawdzenia ({skipped_count} już znajduje się w kolejce lub jest w "
-"trakcie przetwarzania)."
-
-#: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {} watches for rechecking."
-msgstr "Dodano {} obserwacji do kolejki ponownego sprawdzenia."
+#, python-format
+msgid " (%(skipped_count)s already queued or running)"
+msgstr " (%(skipped_count)s już znajduje się w kolejce lub jest w trakcie przetwarzania)"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
@@ -3161,59 +3163,52 @@ msgstr "0 sekund"
 
 #: changedetectionio/flask_app.py
 msgid "year"
-msgstr "rok"
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr "lata"
+msgid_plural "years"
+msgstr[0] "rok"
+msgstr[1] "lata"
+msgstr[2] "lat"
 
 #: changedetectionio/flask_app.py
 msgid "month"
-msgstr "miesiąc"
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr "miesiące"
+msgid_plural "months"
+msgstr[0] "miesiąc"
+msgstr[1] "miesiące"
+msgstr[2] "miesięcy"
 
 #: changedetectionio/flask_app.py
 msgid "week"
-msgstr "tydzień"
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr "tygodnie"
+msgid_plural "weeks"
+msgstr[0] "tydzień"
+msgstr[1] "tygodnie"
+msgstr[2] "tygodni"
 
 #: changedetectionio/flask_app.py
 msgid "day"
-msgstr "dzień"
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr "dni"
+msgid_plural "days"
+msgstr[0] "dzień"
+msgstr[1] "dni"
+msgstr[2] "dni"
 
 #: changedetectionio/flask_app.py
 msgid "hour"
-msgstr "godzina"
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr "godziny"
+msgid_plural "hours"
+msgstr[0] "godzina"
+msgstr[1] "godziny"
+msgstr[2] "godzin"
 
 #: changedetectionio/flask_app.py
 msgid "minute"
-msgstr "minuta"
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr "minuty"
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr "sekunda"
+msgid_plural "minutes"
+msgstr[0] "minuta"
+msgstr[1] "minuty"
+msgstr[2] "minut"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "sekund"
+msgid "second"
+msgid_plural "seconds"
+msgstr[0] "sekunda"
+msgstr[1] "sekundy"
+msgstr[2] "sekund"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"

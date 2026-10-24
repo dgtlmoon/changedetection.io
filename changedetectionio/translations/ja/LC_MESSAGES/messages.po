@@ -1688,18 +1688,20 @@ msgid "Watch is already queued or being checked."
 msgstr "ウォッチはすでにキュー済みまたはチェック中です。"
 
 #: changedetectionio/blueprint/ui/__init__.py
-msgid "Queued 1 watch for rechecking."
-msgstr "1件のウォッチを再チェックのためキューに追加しました。"
+#, python-format
+msgid "Queued %(count)s watch for rechecking"
+msgid_plural "Queued %(count)s watches for rechecking"
+msgstr[0] "%(count)s件のウォッチを再チェックのためキューに追加しました"
+
+#. TRANSLATORS: sentence-final full stop
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "."
+msgstr "。"
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
-msgstr "{count} 件のウォッチを再チェックのためキューに追加しました（{skipped_count} 件はすでにキュー済みまたは実行中）。"
-
-#: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {} watches for rechecking."
-msgstr "{} 件のウォッチを再チェックのためキューに追加しました。"
+#, python-format
+msgid " (%(skipped_count)s already queued or running)"
+msgstr "（%(skipped_count)s 件はすでにキュー済みまたは実行中）"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
@@ -3023,59 +3025,38 @@ msgstr "0秒"
 
 #: changedetectionio/flask_app.py
 msgid "year"
-msgstr "年"
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr "年"
+msgid_plural "years"
+msgstr[0] "年"
 
 #: changedetectionio/flask_app.py
 msgid "month"
-msgstr "ヶ月"
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr "ヶ月"
+msgid_plural "months"
+msgstr[0] "ヶ月"
 
 #: changedetectionio/flask_app.py
 msgid "week"
-msgstr "週"
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr "週"
+msgid_plural "weeks"
+msgstr[0] "週"
 
 #: changedetectionio/flask_app.py
 msgid "day"
-msgstr "日"
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr "日"
+msgid_plural "days"
+msgstr[0] "日"
 
 #: changedetectionio/flask_app.py
 msgid "hour"
-msgstr "時間"
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr "時間"
+msgid_plural "hours"
+msgstr[0] "時間"
 
 #: changedetectionio/flask_app.py
 msgid "minute"
-msgstr "分"
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr "分"
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr "秒"
+msgid_plural "minutes"
+msgstr[0] "分"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "秒"
+msgid "second"
+msgid_plural "seconds"
+msgstr[0] "秒"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
