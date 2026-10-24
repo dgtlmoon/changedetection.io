@@ -203,17 +203,33 @@ class difference_detection_processor():
 
         logger.debug(f"Using proxy '{redact_proxy_url(proxy_url)}' for {self.watch['uuid']}")
 
-        # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
-        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
-        self.fetcher = fetcher_obj(proxy_override=proxy_url,
+        # FlareSolverr overlay — Cloudflare/DDoS-Guard bypass. Lives in
+        # content_fetchers/flaresolverr.py so it can move to a plugin later.
+        # Note: worker_id is passed through to keep per-worker browser state apart (upstream 900a77e8 #4415).
+        from changedetectionio.content_fetchers.flaresolverr import build_flaresolverr_bare_fetcher, solve_flaresolverr
+
+        flaresolverr_solution = await solve_flaresolverr(self.watch, self.datastore, url, proxy_url)
+        is_bare = flaresolverr_solution is not None and prefer_fetch_backend == 'html_requests' and not self.watch.has_browser_steps
+        if is_bare:
+            self.fetcher = await build_flaresolverr_bare_fetcher(
+                flaresolverr_solution, prefer_fetch_backend, fetcher_obj, proxy_url,
+                custom_browser_connection_url, self.screenshot_format, self.worker_id,
+                self.watch, self.datastore, url)
+            return
+        if flaresolverr_solution is not None:
+            self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format, flaresolverr_cookies=flaresolverr_solution.get('cookies'), flaresolverr_user_agent=flaresolverr_solution.get('userAgent'), worker_id=self.worker_id)
+            logger.info(f"FlareSolverr hybrid inject {len(flaresolverr_solution.get('cookies') or [])} cookies UA={flaresolverr_solution.get('userAgent')}")
+        else:
+            # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
+            # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
+            self.fetcher = fetcher_obj(proxy_override=proxy_url,
                                    custom_browser_connection_url=custom_browser_connection_url,
                                    screenshot_format=self.screenshot_format,
                                    worker_id=self.worker_id
                                    )
-
         # Stamp the resolved backend name so downstream consumers (processors, plugins)
         # can read it directly instead of re-deriving it from the fetcher class name.
-        self.fetcher.backend_name = prefer_fetch_backend
+        self.fetcher.backend_name = prefer_fetch_backend + ("+flaresolverr" if flaresolverr_solution else "")
 
         if self.watch.has_browser_steps:
             self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

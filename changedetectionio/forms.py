@@ -892,6 +892,7 @@ class commonSettingsForm(Form):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
 
     fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    flaresolverr = RadioField(_l('FlareSolverr'), choices=[('system', _l('System default')), ('enabled', _l('Enabled')), ('disabled', _l('Disabled'))], default='system')
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
@@ -1152,6 +1153,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     api_access_token_enabled = BooleanField(_l('API access token security check enabled'), default=True, validators=[validators.Optional()])
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
     fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    flaresolverr_enabled = BooleanField(_l('Enable FlareSolverr'), default=False)
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
     global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField(_l('Ignore whitespace'))
