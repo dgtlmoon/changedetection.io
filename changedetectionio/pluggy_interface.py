@@ -1,14 +1,33 @@
 import pluggy
 import os
 import importlib
+import inspect
 import sys
+import threading
+import time
+from functools import wraps
 from loguru import logger
 
 # Global plugin namespace for changedetection.io
 PLUGIN_NAMESPACE = "changedetectionio"
 
+# Conditions plugins used to have their own PluginManager under this name. Their hooks now live on
+# the main manager, but implementations marked with the old namespace are still picked up (see
+# ChangeDetectionPluginManager.parse_hookimpl_opts) and the old entry-point group is still loaded.
+LEGACY_CONDITIONS_NAMESPACE = "changedetectionio_conditions"
+
 hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
 hookimpl = pluggy.HookimplMarker(PLUGIN_NAMESPACE)
+
+# A plugin that raises is logged and counted, and the hook carries on with the other plugins.
+# After this many failures in a row the plugin is reported as "errored" (it is still called).
+PLUGIN_CONSECUTIVE_FAILURES_ERRORED = int(os.getenv('PLUGIN_CONSECUTIVE_FAILURES_ERRORED', 5))
+# Upper bound for an async hook implementation, so a hung plugin can't stall a check forever.
+PLUGIN_ASYNC_HOOK_TIMEOUT = float(os.getenv('PLUGIN_ASYNC_HOOK_TIMEOUT', 120))
+
+# Hooks whose exceptions must reach the caller (after being logged and counted), for example a
+# future fetch hook that raises EmptyReply on purpose. Every other hook swallows plugin exceptions.
+HOOKS_THAT_PROPAGATE_EXCEPTIONS = set()
 
 
 class ChangeDetectionSpec:
@@ -245,15 +264,153 @@ class ChangeDetectionSpec:
         """
         pass
 
+    # --- Conditions (JSON Logic rules on the watch edit page) ---
+
+    @hookspec
+    def register_operators():
+        """Return a dict of extra JSON Logic operators, {"operator_name": callable}."""
+        pass
+
+    @hookspec
+    def register_operator_choices():
+        """Return a list of (operator_name, label) tuples to offer in the conditions UI."""
+        pass
+
+    @hookspec
+    def register_field_choices():
+        """Return a list of (field_name, label) tuples to offer in the conditions UI."""
+        pass
+
+    @hookspec
+    def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
+        """Return a dict of extra facts the conditions are evaluated against.
+
+        Each implementation is given 10 seconds, see conditions.execute_ruleset_against_all_plugins().
+        """
+        pass
+
+
+_plugin_health = {}
+_plugin_health_lock = threading.Lock()
+
+
+def _record_hook_success(plugin_name):
+    with _plugin_health_lock:
+        health = _plugin_health.get(plugin_name)
+        if health:
+            health['consecutive_failures'] = 0
+
+
+def _record_hook_failure(plugin_name, hook_name, exception):
+    with _plugin_health_lock:
+        health = _plugin_health.setdefault(plugin_name, {'consecutive_failures': 0, 'total_failures': 0})
+        health['consecutive_failures'] += 1
+        health['total_failures'] += 1
+        health['last_hook'] = hook_name
+        health['last_error'] = f"{type(exception).__name__}: {exception}"
+        health['last_error_time'] = time.time()
+    logger.opt(exception=exception).error(f"Plugin '{plugin_name}' raised in hook '{hook_name}': {exception}")
+
+
+def get_plugin_health(plugin_name=None):
+    """Failure counters per plugin, {name: {'consecutive_failures', 'total_failures', 'last_hook',
+    'last_error', 'last_error_time', 'errored'}}. Plugins that never failed are not listed."""
+    with _plugin_health_lock:
+        snapshot = {name: dict(h, errored=h['consecutive_failures'] >= PLUGIN_CONSECUTIVE_FAILURES_ERRORED)
+                    for name, h in _plugin_health.items()}
+    if plugin_name is not None:
+        return snapshot.get(plugin_name)
+    return snapshot
+
+
+def _isolate_hookimpl(function, plugin_name, hook_name):
+    """Wrap one hook implementation so its exceptions are logged and counted instead of breaking
+    the hook call (and with it the check, page or worker that made it).
+
+    pluggy calls hookimpl.function(*args) with the arguments the implementation declared, and it
+    has already read those names (HookImpl.argnames) from the original function, so the wrapper
+    only has to pass everything through.
+    """
+    propagate = hook_name in HOOKS_THAT_PROPAGATE_EXCEPTIONS
+
+    if inspect.iscoroutinefunction(function):
+        import asyncio
+
+        @wraps(function)
+        async def isolated_async(*args, **kwargs):
+            try:
+                result = await asyncio.wait_for(function(*args, **kwargs), timeout=PLUGIN_ASYNC_HOOK_TIMEOUT)
+            except Exception as e:
+                _record_hook_failure(plugin_name, hook_name, e)
+                if propagate:
+                    raise
+                return None
+            _record_hook_success(plugin_name)
+            return result
+
+        return isolated_async
+
+    @wraps(function)
+    def isolated(*args, **kwargs):
+        try:
+            result = function(*args, **kwargs)
+        except Exception as e:
+            _record_hook_failure(plugin_name, hook_name, e)
+            if propagate:
+                raise
+            return None
+        _record_hook_success(plugin_name)
+        return result
+
+    return isolated
+
+
+class ChangeDetectionPluginManager(pluggy.PluginManager):
+    """pluggy.PluginManager with failure isolation and the legacy conditions hookimpl marker."""
+
+    _warned_legacy_marker = set()
+
+    def parse_hookimpl_opts(self, plugin, name):
+        opts = super().parse_hookimpl_opts(plugin, name)
+        if opts is None:
+            method = getattr(plugin, name, None)
+            if inspect.isroutine(method):
+                legacy = getattr(method, LEGACY_CONDITIONS_NAMESPACE + "_impl", None)
+                if isinstance(legacy, dict):
+                    plugin_label = getattr(plugin, '__name__', type(plugin).__name__)
+                    if plugin_label not in self._warned_legacy_marker:
+                        self._warned_legacy_marker.add(plugin_label)
+                        logger.warning(f"Plugin '{plugin_label}' uses the deprecated "
+                                       f"HookimplMarker('{LEGACY_CONDITIONS_NAMESPACE}'), "
+                                       f"use 'from changedetectionio.plugin_api import hookimpl' instead")
+                    opts = dict(legacy)
+        return opts
+
+    def register(self, plugin, name=None):
+        plugin_name = super().register(plugin, name)
+        if plugin_name is None:
+            return None
+        for hook_caller in self.get_hookcallers(plugin) or []:
+            for impl in hook_caller.get_hookimpls():
+                # Wrappers are generators that pluggy drives itself, leave them alone
+                if impl.plugin is plugin and not (impl.wrapper or impl.hookwrapper):
+                    impl.function = _isolate_hookimpl(impl.function, plugin_name, hook_caller.name)
+        return plugin_name
+
 
 # Set up Plugin Manager
-plugin_manager = pluggy.PluginManager(PLUGIN_NAMESPACE)
+plugin_manager = ChangeDetectionPluginManager(PLUGIN_NAMESPACE)
 
 # Register hookspecs
 plugin_manager.add_hookspecs(ChangeDetectionSpec)
 
 # Load plugins from subdirectories
 def load_plugins_from_directories():
+    # The built-in conditions operators (starts_with, length_min, ...), first so its choices lead the lists
+    from changedetectionio.conditions import default_plugin
+    if not plugin_manager.is_registered(default_plugin):
+        plugin_manager.register(default_plugin, 'conditions_default_plugin')
+
     # List of (python_package_prefix, filesystem_path) pairs to scan for plugins.
     # NOTE: processors/restock_diff/plugins is intentionally excluded here — those
     # plugins are registered via register_builtin_restock_plugins() to avoid the
@@ -282,11 +439,14 @@ def load_plugins_from_directories():
                 except (ImportError, AttributeError) as e:
                     print(f"Error loading plugin {module_name}: {e}")
 
+
 # Load plugins
 load_plugins_from_directories()
 
 # Discover installed plugins from external packages (if any)
 plugin_manager.load_setuptools_entrypoints(PLUGIN_NAMESPACE)
+# Conditions plugins published before the hook namespaces were merged
+plugin_manager.load_setuptools_entrypoints(LEGACY_CONDITIONS_NAMESPACE)
 
 # Function to inject datastore into plugins that need it
 def inject_datastore_into_plugins(datastore):
