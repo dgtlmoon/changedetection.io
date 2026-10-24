@@ -31,7 +31,7 @@ requests-file
 chardet>=7.7.0
 
 wtforms~=3.2
-jsonpath-ng~=1.9.1
+jsonpath-ng~=1.12.0
 
 # Fast JSON serialization for better performance
 orjson~=3.13
