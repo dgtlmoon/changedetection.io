@@ -29,7 +29,7 @@ from blinker import signal
 from changedetectionio.validate_url import is_safe_valid_url
 
 from changedetectionio.strtobool import strtobool
-from changedetectionio.jinja2_custom import render as jinja_render
+from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
 from changedetectionio import gc_debounce
 from . import watch_base
 from .persistence import EntityPersistenceMixin
@@ -270,6 +270,20 @@ class model(EntityPersistenceMixin, watch_base):
         # Be sure the cached timestamp is ready
         bump = self.history
 
+    def update(self, *args, **kwargs):
+        """Clear the saved favicon when the URL changes, so the next check fetches the new site's icon.
+
+        Both the UI edit form and the API save through update(). Only a change from a non-empty URL
+        counts - a fresh object starts with url '' and is filled from storage via update() on every
+        load, which must not wipe the favicon.
+        """
+        old_url = (self.get('url') or '').strip()
+        super().update(*args, **kwargs)
+        new_url = (self.get('url') or '').strip()
+        if old_url and new_url != old_url:
+            logger.debug(f"UUID: {self.get('uuid')} URL changed from '{old_url}' to '{new_url}', clearing favicon")
+            self.clear_favicon()
+
     # Note: __deepcopy__, __getstate__, and __setstate__ are inherited from watch_base
     # This prevents memory leaks by sharing __datastore reference instead of copying it
 
@@ -295,7 +309,7 @@ class model(EntityPersistenceMixin, watch_base):
             return 'DISABLED'
 
         ready_url = url
-        if '{%' in url or '{{' in url:
+        if JINJA2_MARKER_PATTERN.search(url):
             # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
             try:
                 ready_url = jinja_render(template_str=url)
@@ -867,15 +881,30 @@ class model(EntityPersistenceMixin, watch_base):
         if not favicon_fname:
             return True
         try:
-            fname = next(iter(glob.glob(os.path.join(self.data_dir, "favicon.*"))), None)
-            logger.trace(f"Favicon file maybe found at {fname}")
-            if os.path.isfile(fname):
-                file_age = int(time.time() - os.path.getmtime(fname))
-                logger.trace(f"Favicon file age is {file_age}s")
-                if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
-                    return False
+            # Newest by mtime rather than whatever the directory happens to list first.
+            # Older versions of bump_favicon() left any previous save under a different
+            # extension in place, so a watch whose icon changed type can have more than one
+            # favicon.* file. glob order is os.scandir order - stable, but decided by
+            # filename hash - so for some extension pairs the stale file wins every single
+            # time, the age check always fails, and the favicon is refetched on every check
+            # forever. Measured: 3 of 10 realistic extension pairs lose that way.
+            candidates = glob.glob(os.path.join(self.data_dir, "favicon.*"))
+            if not candidates:
+                # get_favicon_filename() is served from a module-level cache, so it can say
+                # yes after the file has been removed. Not an error, just a refetch.
+                logger.trace(f"No favicon file in {self.data_dir}, treating as expired")
+                return True
+            fname = max(candidates, key=os.path.getmtime)
+            logger.trace(f"Favicon file found at {fname}")
+            file_age = int(time.time() - os.path.getmtime(fname))
+            logger.trace(f"Favicon file age is {file_age}s")
+            if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
+                return False
         except Exception as e:
-            logger.critical(f"Exception checking Favicon age {str(e)}")
+            # Deliberately broad: this runs inline on the check path (it is an argument to
+            # fetcher.run()), so it must never be the reason a watch fails. Not critical
+            # either - the only cost of getting it wrong is one extra favicon fetch.
+            logger.warning(f"Could not check favicon age in {self.data_dir}, will refetch: {e}")
             return True
 
         # Also in the case that the file didnt exist
@@ -943,6 +972,19 @@ class model(EntityPersistenceMixin, watch_base):
             with open(fname, 'wb') as f:
                 f.write(decoded)
 
+            # Drop any previous save under a different extension, or the watch ends up
+            # holding several favicon.* files and favicon_is_expired() has to guess which one
+            # describes the current icon. Only after the write, so a failed write keeps the old icon.
+            import glob
+            for stale in glob.glob(os.path.join(self.data_dir, "favicon.*")):
+                if os.path.abspath(stale) == os.path.abspath(fname):
+                    continue
+                try:
+                    os.unlink(stale)
+                    logger.debug(f"UUID: {self.get('uuid')} removed superseded favicon {stale}")
+                except OSError as e:
+                    logger.debug(f"UUID: {self.get('uuid')} could not remove {stale}: {e}")
+
             # Invalidate module-level favicon filename cache for this watch
             _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
 
@@ -958,13 +1000,25 @@ class model(EntityPersistenceMixin, watch_base):
         # @todo - Store some checksum and only write when its different
         logger.debug(f"UUID: {self.get('uuid')} updated favicon to at {fname}")
 
+    def clear_favicon(self) -> None:
+        """Remove any saved favicon.* so favicon_is_expired() reports it missing and it gets refetched."""
+        import glob
+        if not self.data_dir:
+            return
+        for fname in glob.glob(os.path.join(self.data_dir, "favicon.*")):
+            try:
+                os.unlink(fname)
+            except OSError as e:
+                logger.warning(f"UUID: {self.get('uuid')} could not remove favicon {fname}: {e}")
+        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+
     def get_favicon_filename(self) -> str | None:
         """
         Find any favicon.* file in the watch data directory.
 
         Uses a module-level cache keyed by data_dir to survive Watch object recreation,
         deepcopy (which drops instance attrs), and concurrent request races.
-        Invalidated when a favicon is saved or the watch history is cleared.
+        Invalidated when a favicon is saved or cleared, or the watch history is cleared.
 
         Returns:
             str: Basename of the favicon file, or None if not found.

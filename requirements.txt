@@ -12,6 +12,7 @@ inscriptis~=2.7
 python-engineio>=4.14.0,<5
 python-socketio>=5.17.0,<6
 pytz
+regex>=2022.1.18 # regex_replace Jinja2 filter, thread-safe timeout= for ReDoS protection
 timeago~=1.0
 validators~=0.36
 werkzeug==3.1.9
@@ -47,10 +48,9 @@ diff_match_patch
 # Lightweight URL linkifier for notifications
 linkify-it-py
 
-# - Needed for apprise/spush, and maybe others? hopefully doesnt trigger a rust compile.
-# - Requires extra wheel for rPi, adds build time for arm/v8 which is not in piwheels
-# Pinned to 44.x for ARM compatibility and sslyze compatibility (sslyze requires <45) and (45.x may not have pre-built ARM wheels)
-# Also pinned because dependabot wants specific versions
+# Requires extra wheel for rPi, adds build time for arm/v8 which is not in piwheels, (only 6/7)
+# So we will probably drop support for v8 because its not worth the extra security risk/build time
+# Was pinned to 44.x for ARM compatibility
 cryptography==50.0.2
 
 # apprise mqtt https://github.com/dgtlmoon/changedetection.io/issues/315
@@ -76,7 +76,7 @@ elementpath==5.1.4
 # - Pixelmatch is used as fallback when OpenCV is unavailable
 # - To install manually: pip install opencv-python-headless>=4.8.0.76
 
-selenium~=4.50.0
+selenium~=4.51.0
 
 # Templating, so far just in the URLs but in the future can be for the notifications also
 jinja2~=3.1
@@ -146,7 +146,7 @@ tzdata
 
 #typing_extensions ==4.8.0
 
-pluggy ~= 1.6
+pluggy ~= 1.7
 
 # LLM intent-based change evaluation (multi-provider via litellm)
 # Uncapped: litellm now uses jsonschema<5.0,>=4.0.0, resolving earlier openapi-spec-validator conflict.
