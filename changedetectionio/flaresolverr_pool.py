@@ -145,9 +145,9 @@ def is_cookie_domain_valid(cookie_domain, host):
 def normalize_flaresolverr_cookies(cookies, url):
     """Normalize and filter FlareSolverr cookies for browser injection.
 
-    Shared helper to deduplicate cookie handling across Playwright,
-    Puppeteer, Selenium and BrowserSteps. Validates domain against host,
-    normalizes expires/sameSite, and scopes url-less cookies to *url*.
+    Called once at solve time; consumers inject the result via their native
+    API. Validates domain against host, normalizes expires/sameSite, and
+    scopes url-less cookies to *url*.
 
     Returns filtered list (may be empty). Logs warnings for drops.
     """
@@ -184,70 +184,6 @@ def normalize_flaresolverr_cookies(cookies, url):
             cc["url"] = url
         normalized.append(cc)
     return normalized
-
-
-async def inject_cookies_playwright(context, cookies, url, label="Playwright"):
-    """Inject normalized FlareSolverr cookies into a Playwright context."""
-    filtered = normalize_flaresolverr_cookies(cookies, url)
-    if not filtered:
-        if cookies:
-            logger.warning(f"FlareSolverr no valid cookies to inject via {label}")
-        return 0
-    try:
-        await context.add_cookies(filtered)
-        logger.info(f"FlareSolverr injected {len(filtered)} cookies via {label}")
-        return len(filtered)
-    except Exception as e:
-        logger.warning(f"FlareSolverr cookie inject failed ({label}): {e}")
-        return 0
-
-
-async def inject_cookies_puppeteer(page, cookies, url, label="Puppeteer"):
-    """Inject normalized FlareSolverr cookies into a Puppeteer page."""
-    filtered = normalize_flaresolverr_cookies(cookies, url)
-    if not filtered:
-        if cookies:
-            logger.warning(f"FlareSolverr no valid cookies to inject via {label}")
-        return 0
-    try:
-        await page.setCookie(*filtered)
-        logger.info(f"FlareSolverr injected {len(filtered)} cookies via {label}")
-        return len(filtered)
-    except Exception as e:
-        logger.warning(f"FlareSolverr cookie inject failed ({label}): {e}")
-        return 0
-
-
-def inject_cookies_selenium(driver, cookies, url, label="Selenium"):
-    """Inject FlareSolverr cookies via Selenium WebDriver.
-
-    Selenium cannot handle expires/sameSite the same way, so they are
-    stripped and leading dots are removed from domain.
-    """
-    filtered = normalize_flaresolverr_cookies(cookies, url)
-    if not filtered:
-        if cookies:
-            logger.warning(f"FlareSolverr no valid cookies to inject via {label}")
-        return 0
-    valid = 0
-    for cc in filtered:
-        # Selenium-specific tweaks
-        cc = dict(cc)
-        cc.pop("expires", None)
-        cc.pop("sameSite", None)
-        cc.pop("url", None)
-        if cc.get("domain", "").startswith("."):
-            cc["domain"] = cc["domain"].lstrip(".")
-        try:
-            driver.add_cookie(cc)
-            valid += 1
-        except Exception:
-            pass
-    if valid:
-        logger.info(f"FlareSolverr injected {valid} cookies via {label}")
-    else:
-        logger.warning(f"FlareSolverr no valid cookies to inject via {label}")
-    return valid
 
 
 class FlarePool:
@@ -513,69 +449,6 @@ def get_global_pool():
             # Refresh env-driven settings
             _global_pool._ensure_url()
         return _global_pool
-
-
-def resolve_flaresolverr_user_agent(flaresolverr_user_agent, headers=None):
-    """Resolve UA for browser contexts — FlareSolverr UA wins, else manage_user_agent."""
-    if flaresolverr_user_agent:
-        return flaresolverr_user_agent
-    # Lazy import to avoid circular deps (base -> validate_url, content_fetchers -> flaresolverr_pool)
-    try:
-        from changedetectionio.content_fetchers.base import manage_user_agent
-
-        return manage_user_agent(headers=headers)
-    except Exception:
-        return None
-
-
-async def apply_flaresolverr_user_agent_puppeteer(page, flaresolverr_user_agent, request_headers):
-    """Apply FlareSolverr UA or header UA to a Puppeteer page, returning filtered headers.
-
-    Handles User-Agent header deduplication: when UA is set via setUserAgent,
-    the corresponding header is removed from extra_http_headers to avoid
-    conflicting values. Returns (filtered_headers) dict to use for setExtraHTTPHeaders.
-    """
-    # Plain dict copy (never mutate the caller's headers); the UA key lookup
-    # is case-insensitive but all other keys keep their original casing.
-    headers_copy = dict(request_headers) if request_headers else {}
-    try:
-        from changedetectionio.content_fetchers.base import manage_user_agent
-    except Exception:
-        manage_user_agent = None
-
-    # All UA header spellings — a dict could carry both "User-Agent" and
-    # "user-agent"; leaving any of them would send a conflicting value.
-    ua_keys = [k for k in list(headers_copy) if isinstance(k, str) and k.lower() == "user-agent"]
-    if flaresolverr_user_agent:
-        try:
-            await page.setUserAgent(flaresolverr_user_agent)
-        except Exception:
-            pass
-        for k in ua_keys:
-            headers_copy.pop(k, None)
-    else:
-        user_agent = None
-        for k in ua_keys:
-            v = headers_copy.pop(k)
-            if user_agent is None and isinstance(v, str) and v.strip():
-                user_agent = v.strip()
-        if user_agent:
-            try:
-                await page.setUserAgent(user_agent)
-            except Exception:
-                pass
-        if not user_agent and manage_user_agent:
-            try:
-                current_ua = await page.evaluate("navigator.userAgent")
-            except Exception:
-                current_ua = None
-            ua = manage_user_agent(headers=headers_copy, current_ua=current_ua)
-            if ua:
-                try:
-                    await page.setUserAgent(ua)
-                except Exception:
-                    pass
-    return headers_copy
 
 
 async def async_flaresolverr_solve(url, proxy_url=None, method="GET", post_data=None):

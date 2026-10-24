@@ -392,15 +392,16 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None, flaresolverr_cookies=None, flaresolverr_user_agent=None):
+    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None, cookies=None):
         self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
         self.start_url = start_url
         self._is_cleaned_up = False
         self.proxy = proxy
-        self.flaresolverr_cookies = flaresolverr_cookies
-        self.flaresolverr_user_agent = flaresolverr_user_agent
+        # Generic channel for challenge-solver cookies (e.g. FlareSolverr
+        # clearance) to inject into the live-UI context before connecting.
+        self.cookies = cookies
         # Note: connect() is now async and must be called separately
 
     def __del__(self):
@@ -415,9 +416,8 @@ class browsersteps_live_ui(steppable_browser_interface):
         now = time.time()
 
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
-        from changedetectionio.flaresolverr_pool import resolve_flaresolverr_user_agent
-
-        _ua = resolve_flaresolverr_user_agent(self.flaresolverr_user_agent, headers=self.headers)
+        # Solved UA arrives folded into self.headers (generic channel);
+        # manage_user_agent picks it up like any other custom UA.
         self.context = await self.playwright_browser.new_context(
             accept_downloads=False,  # Should never be needed
             bypass_csp=get_playwright_bypass_csp(),
@@ -425,13 +425,15 @@ class browsersteps_live_ui(steppable_browser_interface):
             ignore_https_errors=True,
             proxy=proxy,
             service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
-            # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-            user_agent=_ua,
+            # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data through Service Workers
+            user_agent=manage_user_agent(headers=self.headers),
         )
-        if self.flaresolverr_cookies:
-            from changedetectionio.flaresolverr_pool import inject_cookies_playwright
-
-            await inject_cookies_playwright(self.context, self.flaresolverr_cookies, self.start_url, label="BrowserSteps live UI")
+        if self.cookies:
+            try:
+                await self.context.add_cookies(self.cookies)
+                logger.info(f"Injected {len(self.cookies)} challenge-solver cookies via BrowserSteps live UI")
+            except Exception as e:
+                logger.warning(f"Challenge-solver cookie inject failed (BrowserSteps live UI): {e}")
 
         self.page = await self.context.new_page()
 

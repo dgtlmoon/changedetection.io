@@ -182,8 +182,9 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
-        self.flaresolverr_cookies = kwargs.get('flaresolverr_cookies')
-        self.flaresolverr_user_agent = kwargs.get('flaresolverr_user_agent')
+        # Generic channel for challenge-solver cookies (e.g. FlareSolverr
+        # clearance) to inject into the browser context before fetching.
+        self.cookies = kwargs.get('cookies')
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
         if custom_browser_connection_url:
@@ -281,9 +282,9 @@ class fetcher(Fetcher):
             # SOCKS5 with authentication is not supported (yet)
             # https://github.com/microsoft/playwright/issues/10567
 
-            from changedetectionio.flaresolverr_pool import resolve_flaresolverr_user_agent
-
-            _ua = resolve_flaresolverr_user_agent(self.flaresolverr_user_agent, headers=request_headers)
+            # Solved UA arrives folded into request_headers (generic channel);
+            # manage_user_agent picks it up like any other custom UA.
+            _ua = manage_user_agent(headers=request_headers)
             context = await browser.new_context(
                 accept_downloads=False,  # Should never be needed
                 # Enabled by default because sites such as GitHub need it for injected JavaScript.
@@ -295,10 +296,12 @@ class fetcher(Fetcher):
                 service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
                 user_agent=_ua,
             )
-            if self.flaresolverr_cookies:
-                from changedetectionio.flaresolverr_pool import inject_cookies_playwright
-
-                await inject_cookies_playwright(context, self.flaresolverr_cookies, url, label="Playwright")
+            if self.cookies:
+                try:
+                    await context.add_cookies(self.cookies)
+                    logger.info(f"Injected {len(self.cookies)} challenge-solver cookies via Playwright")
+                except Exception as e:
+                    logger.warning(f"Challenge-solver cookie inject failed (Playwright): {e}")
             self.page = await context.new_page()
 
             # Track the LATEST main-frame document response for the whole fetch, not just the one

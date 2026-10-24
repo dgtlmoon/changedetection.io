@@ -72,6 +72,64 @@ def manage_user_agent(headers, current_ua=''):
 
     return None
 
+
+def extract_user_agent_from_headers(request_headers):
+    """Split any User-Agent header(s) out of *request_headers*.
+
+    Generic channel helper for browser fetchers: challenge-solvers fold the
+    solved UA into the headers, fetchers pop it here for setUserAgent-style
+    APIs. Returns (user_agent_or_None, remaining_headers) without mutating
+    the input; all UA spellings ('User-Agent', 'user-agent', ...) are removed.
+    """
+    headers = dict(request_headers) if request_headers else {}
+    ua_keys = [k for k in list(headers) if isinstance(k, str) and k.lower() == "user-agent"]
+    user_agent = None
+    for k in ua_keys:
+        v = headers.pop(k)
+        if user_agent is None and isinstance(v, str) and v.strip():
+            user_agent = v.strip()
+    return user_agent, headers
+
+
+async def apply_user_agent_to_puppeteer_page(page, request_headers):
+    """Apply the header UA to a Puppeteer page, returning headers minus UA keys.
+
+    setUserAgent (unlike extra headers) also changes the navigator fingerprint,
+    so the header value must not ALSO be sent via setExtraHTTPHeaders. Falls
+    back to the managed UA (de-headlessed navigator UA) when unset.
+    """
+    user_agent, headers = extract_user_agent_from_headers(request_headers)
+    if not user_agent:
+        try:
+            current_ua = await page.evaluate("navigator.userAgent")
+        except Exception:
+            current_ua = None
+        user_agent = manage_user_agent(headers=headers, current_ua=current_ua)
+    if user_agent:
+        try:
+            await page.setUserAgent(user_agent)
+        except Exception:
+            pass
+    return headers
+
+
+def clean_cookies_for_selenium(cookies):
+    """Strip cookie fields Selenium WebDriver rejects (expires/sameSite/url, dotted domains)."""
+    cleaned = []
+    for cc in cookies or []:
+        try:
+            cc = dict(cc)
+        except Exception:
+            continue
+        cc.pop("expires", None)
+        cc.pop("sameSite", None)
+        cc.pop("url", None)
+        if cc.get("domain", "").startswith("."):
+            cc["domain"] = cc["domain"].lstrip(".")
+        cleaned.append(cc)
+    return cleaned
+
+
 class Fetcher():
     # The fully-resolved concrete backend name this fetcher was chosen as
     # (e.g. 'html_requests', 'html_webdriver'). Set by resolve_content_fetcher()

@@ -17,21 +17,25 @@ from changedetectionio.flaresolverr_pool import _host_from_url
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from changedetectionio.content_fetchers.base import (
+    apply_user_agent_to_puppeteer_page,
+    clean_cookies_for_selenium,
+    extract_user_agent_from_headers,
+)
 from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
-from changedetectionio.content_fetchers.flaresolverr import build_flaresolverr_bare_fetcher, solve_flaresolverr
+from changedetectionio.content_fetchers.flaresolverr import (
+    build_flaresolverr_bare_fetcher,
+    solve_for_watch,
+    stamp_backend_name,
+)
 from changedetectionio.flaresolverr_pool import (
     FlarePool,
     FlareSolverrException,
-    apply_flaresolverr_user_agent_puppeteer,
     get_flaresolverr_solution_for_watch,
-    inject_cookies_playwright,
-    inject_cookies_puppeteer,
-    inject_cookies_selenium,
     is_cookie_domain_valid,
     is_flaresolverr_effective,
     is_flaresolverr_enabled,
     normalize_flaresolverr_cookies,
-    resolve_flaresolverr_user_agent,
 )
 
 FLARESOLVERR_ENV = {"FLARESOLVERR_URL": "http://flaresolverr:8191/v1"}
@@ -736,99 +740,84 @@ class TestGetFlareSolverrSolutionForWatch:
         assert pool.calls == []
 
 
-class TestInjectCookies:
-    def test_playwright_filters_evil_domain(self):
-        context = SimpleNamespace(add_cookies=AsyncMock())
-        cookies = [{"name": "evil", "value": "1", "domain": "evil.com"},
-                   {"name": "cf_clearance", "value": "abc", "domain": "example.com", "expires": 1700000000}]
-        count = asyncio.run(inject_cookies_playwright(context, cookies, "https://www.example.com/"))
-        assert count == 1
-        (payload,), _ = context.add_cookies.call_args
-        assert [c["name"] for c in payload] == ["cf_clearance"]
-        assert isinstance(payload[0]["expires"], float)
-
-    def test_playwright_all_dropped_returns_zero(self):
-        context = SimpleNamespace(add_cookies=AsyncMock())
-        count = asyncio.run(inject_cookies_playwright(
-            context, [{"name": "evil", "value": "1", "domain": "evil.com"}], WATCH_URL))
-        assert count == 0
-        context.add_cookies.assert_not_called()
-
-    def test_puppeteer_set_cookie(self):
-        page = SimpleNamespace(setCookie=AsyncMock())
-        cookies = [{"name": "cf_clearance", "value": "abc", "domain": "example.com"}]
-        count = asyncio.run(inject_cookies_puppeteer(page, cookies, WATCH_URL))
-        assert count == 1
-        page.setCookie.assert_called_once_with(*cookies)
-
+class TestChallengeCookies:
     def test_selenium_strips_unsupported_keys(self):
-        driver = MagicMock()
         cookies = [{"name": "c", "value": "v", "domain": ".example.com",
                     "expires": 1700000000, "sameSite": "lax", "url": WATCH_URL, "path": "/"}]
-        count = inject_cookies_selenium(driver, cookies, WATCH_URL)
-        assert count == 1
-        driver.add_cookie.assert_called_once_with({"name": "c", "value": "v",
-                                                   "domain": "example.com", "path": "/"})
+        assert clean_cookies_for_selenium(cookies) == [{"name": "c", "value": "v",
+                                                        "domain": "example.com", "path": "/"}]
 
-    def test_selenium_all_dropped_returns_zero(self):
-        driver = MagicMock()
-        count = inject_cookies_selenium(driver, [{"name": "evil", "value": "1", "domain": "evil.com"}],
-                                        WATCH_URL)
-        assert count == 0
-        driver.add_cookie.assert_not_called()
+    def test_selenium_drops_garbage(self):
+        assert clean_cookies_for_selenium(["nope", None]) == []
+        assert clean_cookies_for_selenium(None) == []
+
+    def test_selenium_leaves_clean_cookies_alone(self):
+        cookies = [{"name": "c", "value": "v", "domain": "example.com"}]
+        assert clean_cookies_for_selenium(cookies) == cookies
 
 
-class TestUserAgent:
-    def test_flaresolverr_ua_wins(self):
-        assert resolve_flaresolverr_user_agent("FlareUA/1.0", headers={"User-Agent": "Other"}) == "FlareUA/1.0"
+class TestChallengeUserAgent:
+    def test_extract_pops_all_ua_spellings(self):
+        headers = {"User-Agent": "A", "user-agent": "B", "USER-AGENT": "C", "X-K": "v"}
+        ua, rest = extract_user_agent_from_headers(headers)
+        assert ua == "A"
+        assert rest == {"X-K": "v"}
+        assert headers == {"User-Agent": "A", "user-agent": "B", "USER-AGENT": "C", "X-K": "v"}
 
-    def test_falls_back_to_manage_user_agent(self, monkeypatch):
-        from unittest.mock import Mock
-        manage = Mock(return_value="M-UA")
-        monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent", manage)
-        assert resolve_flaresolverr_user_agent(None, headers={"X-A": "b"}) == "M-UA"
-        manage.assert_called_once_with(headers={"X-A": "b"})
+    def test_extract_strips_and_trims(self):
+        ua, rest = extract_user_agent_from_headers({"user-agent": "  HeaderUA  ", "X-K": "v"})
+        assert ua == "HeaderUA"
+        assert rest == {"X-K": "v"}
 
-    def test_puppeteer_applies_flaresolverr_ua_and_strips_header(self):
+    def test_extract_ignores_non_string_ua(self):
+        ua, rest = extract_user_agent_from_headers({"User-Agent": 123, "X-K": "v"})
+        assert ua is None
+        assert rest == {"X-K": "v"}
+
+    def test_extract_empty(self):
+        assert extract_user_agent_from_headers(None) == (None, {})
+        assert extract_user_agent_from_headers({"X-K": "v"}) == (None, {"X-K": "v"})
+
+    def test_puppeteer_applies_header_ua_and_strips_it(self):
         page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
-        headers = {"User-Agent": "Old", "X-K": "v"}
-        filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(page, "FlareUA/1.0", headers))
-        page.setUserAgent.assert_called_once_with("FlareUA/1.0")
+        headers = {"user-agent": "  SolvedUA/1.0  ", "X-K": "v"}
+        filtered = asyncio.run(apply_user_agent_to_puppeteer_page(page, headers))
+        page.setUserAgent.assert_called_once_with("SolvedUA/1.0")
         assert filtered == {"X-K": "v"}
-        assert headers == {"User-Agent": "Old", "X-K": "v"}  # caller-owned dict untouched
-
-    def test_puppeteer_uses_header_ua(self):
-        page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
-        filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(
-            page, None, {"user-agent": "  HeaderUA  ", "X-K": "v"}))
-        page.setUserAgent.assert_called_once_with("HeaderUA")
-        assert filtered == {"X-K": "v"}
-
-    def test_puppeteer_strips_all_ua_spellings(self):
-        page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
-        filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(
-            page, "FlareUA/1.0", {"User-Agent": "A", "user-agent": "B", "USER-AGENT": "C"}))
-        page.setUserAgent.assert_called_once_with("FlareUA/1.0")
-        assert filtered == {}
-
-    def test_puppeteer_ignores_non_string_ua(self, monkeypatch):
-        # A non-string UA can't be sent — drop the key, fall back to managed UA.
-        monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent",
-                            lambda headers=None, current_ua="": "M-UA")
-        page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
-        filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(page, None, {"User-Agent": 123}))
-        page.setUserAgent.assert_called_once_with("M-UA")
-        assert filtered == {}
+        assert headers == {"user-agent": "  SolvedUA/1.0  ", "X-K": "v"}  # caller-owned dict untouched
 
     def test_puppeteer_falls_back_to_managed_ua(self, monkeypatch):
         from unittest.mock import Mock
         manage = Mock(return_value="M-UA")
         monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent", manage)
         page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
-        filtered = asyncio.run(apply_flaresolverr_user_agent_puppeteer(page, None, {"X-K": "v"}))
+        filtered = asyncio.run(apply_user_agent_to_puppeteer_page(page, {"X-K": "v"}))
         page.setUserAgent.assert_called_once_with("M-UA")
         manage.assert_called_once_with(headers={"X-K": "v"}, current_ua="NAV-UA")
         assert filtered == {"X-K": "v"}
+
+
+class TestFetcherPlumbing:
+    """The generic cookies= channel reaches the fetcher instances."""
+
+    def test_playwright_stores_cookies(self):
+        from changedetectionio.content_fetchers.playwright import fetcher as PlaywrightFetcher
+        assert PlaywrightFetcher(cookies=[{"name": "c"}]).cookies == [{"name": "c"}]
+        assert PlaywrightFetcher().cookies is None
+
+    def test_puppeteer_stores_cookies(self):
+        from changedetectionio.content_fetchers.puppeteer import fetcher as PuppeteerFetcher
+        assert PuppeteerFetcher(cookies=[{"name": "c"}]).cookies == [{"name": "c"}]
+
+    def test_selenium_stores_cookies(self):
+        from changedetectionio.content_fetchers.webdriver_selenium import fetcher as SeleniumFetcher
+        assert SeleniumFetcher(cookies=[{"name": "c"}]).cookies == [{"name": "c"}]
+
+    def test_live_ui_stores_cookies(self):
+        from changedetectionio.browser_steps.browser_steps import browsersteps_live_ui
+        ui = browsersteps_live_ui(playwright_browser=MagicMock(), cookies=[{"name": "c"}])
+        assert ui.cookies == [{"name": "c"}]
+        assert ui.headers == {}
 
 
 def make_handler_self(watch_extra=None, empty_pages_are_a_change=False):
@@ -852,21 +841,35 @@ def make_fetcher_obj(made):
     return fake_fetcher_obj
 
 
-class TestSolveFlareSolverr:
-    def _run(self, watch, datastore, monkeypatch, result, proxy_url=None):
+class TestSolveForWatch:
+    def _run(self, watch, datastore, monkeypatch, result, proxy_url=None, **kwargs):
         monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
                             AsyncMock(return_value=result))
-        return asyncio.run(solve_flaresolverr(watch, datastore, WATCH_URL, proxy_url))
+        return asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, proxy_url, **kwargs))
 
     def _handler(self):
         handler = make_handler_self()
         return handler.watch, handler.datastore
 
-    def test_passthrough(self, monkeypatch):
-        solution = make_solution()
+    def test_passthrough_with_normalized_cookies_and_ua(self, monkeypatch):
+        solution = make_solution(cookies=[{"name": "evil", "value": "1", "domain": "evil.com"},
+                                          {"name": "cf_clearance", "value": "abc"}],
+                                 user_agent="SolvedUA/1.0")
         watch, datastore = self._handler()
-        out = self._run(watch, datastore, monkeypatch, solution)
-        assert out is solution
+        out_solution, cookies, ua = self._run(watch, datastore, monkeypatch, solution)
+        assert out_solution is solution
+        # Normalized once at solve time: evil domain dropped, url-less scoped
+        assert [c["name"] for c in cookies] == ["cf_clearance"]
+        assert cookies[0]["url"] == WATCH_URL
+        assert ua == "SolvedUA/1.0"
+
+    def test_no_cookies_no_ua(self, monkeypatch):
+        solution = make_solution(cookies=[], user_agent=None)
+        watch, datastore = self._handler()
+        out_solution, cookies, ua = self._run(watch, datastore, monkeypatch, solution)
+        assert out_solution is solution
+        assert cookies == []
+        assert ua is None
 
     def test_none_when_ineffective(self, monkeypatch):
         watch, datastore = self._handler()
@@ -878,7 +881,7 @@ class TestSolveFlareSolverr:
                             Mock(side_effect=ValueError("down")))
         watch, datastore = self._handler()
         with pytest.raises(Exception, match="FlareSolverr: .*down"):
-            asyncio.run(solve_flaresolverr(watch, datastore, WATCH_URL, None))
+            asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, None))
 
     def test_import_error_mapped(self, monkeypatch):
         # Regression: the import lives inside the try, so a REAL failed import
@@ -886,7 +889,19 @@ class TestSolveFlareSolverr:
         monkeypatch.setitem(sys.modules, "changedetectionio.flaresolverr_pool", None)
         watch, datastore = self._handler()
         with pytest.raises(Exception, match="FlareSolverr:"):
-            asyncio.run(solve_flaresolverr(watch, datastore, WATCH_URL, None))
+            asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, None))
+
+    def test_timeout_bounds_hanging_solve(self, monkeypatch):
+        async def hang(*a, **k):
+            await asyncio.sleep(10)
+        monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch", hang)
+        watch, datastore = self._handler()
+        with pytest.raises(Exception, match="FlareSolverr:"):
+            asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, None, timeout=0.01))
+
+    def test_stamp_backend_name(self):
+        assert stamp_backend_name("html_requests", True) == "html_requests+flaresolverr"
+        assert stamp_backend_name("html_requests", False) == "html_requests"
 
 
 class TestBareResponse:

@@ -12,7 +12,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio import gc_debounce
-from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.content_fetchers.base import Fetcher, apply_user_agent_to_puppeteer_page, get_playwright_bypass_csp
 from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
@@ -211,8 +211,9 @@ class fetcher(Fetcher):
         # Set up here so run()'s finally can always report, even if we never got as far as a page.
         self.page_errors = []
 
-        self.flaresolverr_cookies = kwargs.get('flaresolverr_cookies')
-        self.flaresolverr_user_agent = kwargs.get('flaresolverr_user_agent')
+        # Generic channel for challenge-solver cookies (e.g. FlareSolverr
+        # clearance) to inject into the page before fetching.
+        self.cookies = kwargs.get('cookies')
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
             self.browser_connection_url = custom_browser_connection_url
@@ -378,16 +379,16 @@ class fetcher(Fetcher):
             # But I could never get it to fire reliably, so we just inject it straight after
             await inject_evasions_into_page(self.page)
 
-        from changedetectionio.flaresolverr_pool import apply_flaresolverr_user_agent_puppeteer
+        # Challenge-solver UA arrives folded into request_headers (generic
+        # channel); setUserAgent also fixes the navigator fingerprint.
+        request_headers = await apply_user_agent_to_puppeteer_page(self.page, request_headers)
 
-        request_headers = await apply_flaresolverr_user_agent_puppeteer(
-            self.page, self.flaresolverr_user_agent, request_headers
-        )
-
-        if self.flaresolverr_cookies:
-            from changedetectionio.flaresolverr_pool import inject_cookies_puppeteer
-
-            await inject_cookies_puppeteer(self.page, self.flaresolverr_cookies, url, label="Puppeteer")
+        if self.cookies:
+            try:
+                await self.page.setCookie(*self.cookies)
+                logger.info(f"Injected {len(self.cookies)} challenge-solver cookies via Puppeteer")
+            except Exception as e:
+                logger.warning(f"Challenge-solver cookie inject failed (Puppeteer): {e}")
         await _configure_puppeteer_csp(self.page)
         if request_headers:
             await self.page.setExtraHTTPHeaders(request_headers)

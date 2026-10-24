@@ -2,7 +2,7 @@ import os
 import time
 
 from loguru import logger
-from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.content_fetchers.base import Fetcher, clean_cookies_for_selenium, manage_user_agent
 
 
 class fetcher(Fetcher):
@@ -30,8 +30,9 @@ class fetcher(Fetcher):
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
-        self.flaresolverr_cookies = kwargs.get('flaresolverr_cookies')
-        self.flaresolverr_user_agent = kwargs.get('flaresolverr_user_agent')
+        # Generic channel for challenge-solver cookies (e.g. FlareSolverr
+        # clearance) to inject into the driver before fetching.
+        self.cookies = kwargs.get('cookies')
         from urllib.parse import urlparse
         from selenium.webdriver.common.proxy import Proxy
 
@@ -104,10 +105,13 @@ class fetcher(Fetcher):
             if self.proxy_url:
                 options.add_argument(f'--proxy-server={self.proxy_url}')
 
-            if self.flaresolverr_user_agent:
-                # FlareSolverr hybrid path: browse with the solved UA so the
-                # clearance cookies match the fingerprint that earned them
-                options.add_argument(f'--user-agent={self.flaresolverr_user_agent}')
+            solver_ua = manage_user_agent(headers=request_headers or {})
+            if solver_ua:
+                # Challenge-solver UA arrives folded into request_headers; browse
+                # with it so the clearance cookies match the fingerprint that
+                # earned them. (Also honors a plain custom User-Agent header,
+                # which this fetcher previously ignored.)
+                options.add_argument(f'--user-agent={solver_ua}')
 
             from selenium.webdriver.remote.remote_connection import RemoteConnection
             from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
@@ -134,12 +138,14 @@ class fetcher(Fetcher):
                 raise e
 
             try:
-                if self.flaresolverr_cookies:
-                    from changedetectionio.flaresolverr_pool import inject_cookies_selenium
-
+                if self.cookies:
                     # Need to be on domain before adding cookies
                     driver.get(url)
-                    inject_cookies_selenium(driver, self.flaresolverr_cookies, url, label="Selenium")
+                    for cc in clean_cookies_for_selenium(self.cookies):
+                        try:
+                            driver.add_cookie(cc)
+                        except Exception:
+                            pass
                 driver.get(url)
 
                 if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):

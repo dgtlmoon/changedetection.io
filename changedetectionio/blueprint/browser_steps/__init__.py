@@ -96,8 +96,7 @@ def _ensure_browser_steps_loop():
 def run_async_in_browser_loop(coro, timeout=None):
     """Run async coroutine using the dedicated browser steps event loop.
 
-    timeout=None waits forever (original behavior) — only session startup,
-    which may include a FlareSolverr solve, passes an explicit timeout.
+    timeout=None waits forever (original behavior).
     """
     _ensure_browser_steps_loop()
 
@@ -279,19 +278,21 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # time but happily previewed (and exfiltrated) here.
         await validate_fetch_url_async(watch.link)
 
-        # FlareSolverr overlay for live UI — shared helper (effective check, body render, executor)
-        flaresolverr_cookies = None
-        flaresolverr_user_agent = None
+        # Challenge-solver overlay for live UI (e.g. FlareSolverr): solved
+        # cookies/UA flow through the generic cookies=/headers= channels.
+        challenge_cookies, challenge_headers = None, None
         try:
-            from changedetectionio.flaresolverr_pool import get_flaresolverr_solution_for_watch
+            from changedetectionio.content_fetchers.flaresolverr import solve_for_watch
 
             _proxy_url = proxy.get('server') if proxy else None
-            flaresolverr_solution = await get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=_proxy_url)
-            if flaresolverr_solution:
-                flaresolverr_cookies = flaresolverr_solution.get('cookies')
-                flaresolverr_user_agent = flaresolverr_solution.get('userAgent')
+            challenge = await solve_for_watch(watch, datastore, watch.link, proxy_url=_proxy_url)
+            if challenge:
+                _, challenge_cookies, challenge_ua = challenge
+                challenge_headers = dict(watch.get('headers') or {})
+                if challenge_ua:
+                    challenge_headers['User-Agent'] = challenge_ua
         except Exception as e:
-            logger.warning(f"FlareSolverr live UI solve failed for {watch.link}: {e}")
+            logger.warning(f"Challenge-solver live UI failed for {watch.link}: {e}")
 
         fetcher_name = watch.get_fetch_backend or 'system'
         if fetcher_name == 'system':
@@ -306,9 +307,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             playwright_browser=browser,
             proxy=proxy,
             start_url=watch.link,
-            headers=watch.get('headers'),
-            flaresolverr_cookies=flaresolverr_cookies,
-            flaresolverr_user_agent=flaresolverr_user_agent,
+            headers=challenge_headers or watch.get('headers'),
+            cookies=challenge_cookies,
         )
         await browserstepper.connect(proxy=proxy)
         browsersteps_start_session['browserstepper'] = browserstepper
@@ -335,13 +335,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         try:
             # Run the async function in the dedicated browser steps event loop.
-            # Session startup alone gets a timeout: a FlareSolverr solve can
-            # take up to FLARESOLVERR_TIMEOUT + overhead, other steps wait forever.
-            from changedetectionio.flaresolverr_pool import get_flaresolverr_timeout
-
+            # (Solver timeouts are owned by the solver itself: the daemon
+            # maxTimeout plus the client timeout bound every solve.)
             browsersteps_sessions[browsersteps_session_id] = run_async_in_browser_loop(
                 start_browsersteps_session(watch_uuid),
-                timeout=get_flaresolverr_timeout() + 15,
             )
 
             # Store the mapping of watch_uuid -> browsersteps_session_id

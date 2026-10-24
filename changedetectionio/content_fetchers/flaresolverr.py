@@ -7,21 +7,44 @@ in plain data (watch, datastore, fetcher bits) and get back plain data.
 from loguru import logger
 
 
-async def solve_flaresolverr(watch, datastore, url, proxy_url):
+async def solve_for_watch(watch, datastore, url, proxy_url=None, timeout=None):
     """Solve the watch URL via FlareSolverr when effective, else None.
 
-    Wraps get_flaresolverr_solution_for_watch() (env + global/per-watch
-    toggle, POST body render, 1MB guard, shared-pool executor). Raises a
-    plain Exception on solve failure so it lands in last_error like every
-    other fetch failure.
+    Returns (solution, cookies, user_agent): the raw daemon solution plus
+    cookies normalized once for browser injection (domain-checked against
+    *url*, url-scoped) and the solved UA (or None) — ready for the generic
+    cookies=/headers= fetcher channels, so callers never touch
+    flaresolverr specifics. Raises a plain Exception on solve failure so it
+    lands in last_error like every other fetch failure. *timeout* bounds the
+    whole solve when set; otherwise the daemon maxTimeout + client timeout
+    bound it.
     """
-    try:
-        from changedetectionio.flaresolverr_pool import get_flaresolverr_solution_for_watch
+    import asyncio
 
-        return await get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=proxy_url)
+    try:
+        from changedetectionio.flaresolverr_pool import (
+            get_flaresolverr_solution_for_watch,
+            normalize_flaresolverr_cookies,
+        )
+
+        async def _solve():
+            return await get_flaresolverr_solution_for_watch(watch, datastore, proxy_url=proxy_url)
+
+        solution = await asyncio.wait_for(_solve(), timeout) if timeout else await _solve()
     except Exception as e:
         logger.error(f"FlareSolverr solve failed for {url}: {e}")
         raise Exception(f"FlareSolverr: {e}") from e
+    if solution is None:
+        return None
+    cookies = normalize_flaresolverr_cookies(solution.get('cookies'), url)
+    if solution.get('cookies') and not cookies:
+        logger.warning(f"FlareSolverr no valid cookies to inject for {url}")
+    return solution, cookies, solution.get('userAgent')
+
+
+def stamp_backend_name(prefer_fetch_backend, solved):
+    """Backend stamp for the overlay (e.g. html_requests+flaresolverr)."""
+    return prefer_fetch_backend + ("+flaresolverr" if solved else "")
 
 
 async def build_flaresolverr_bare_fetcher(solution, prefer_fetch_backend, fetcher_obj,
