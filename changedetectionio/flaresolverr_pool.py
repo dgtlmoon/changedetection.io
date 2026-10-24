@@ -108,6 +108,7 @@ def _host_from_url(url):
 
 # Daemon URLs already warned about (log-once: same message every solve is noise)
 _warned_remote_daemons = set()
+_warned_remote_daemons_lock = threading.Lock()
 
 
 def _warn_if_remote_daemon(flaresolverr_url):
@@ -115,23 +116,33 @@ def _warn_if_remote_daemon(flaresolverr_url):
 
     Cloudflare binds the clearance to the egress IP that earned it, so a
     daemon on another host usually means 403s when replaying its cookies
-    locally. Single-label names (docker service names) and loopback are
-    assumed same-host; anything else dotted is worth a heads-up. Heuristic,
-    log-only — never blocks a working setup.
+    locally. Loopback (incl. *.localhost, IPv6) and single-label names
+    (docker service names, host.docker.internal) are assumed same-host;
+    anything else dotted is worth a heads-up. Heuristic, log-only — never
+    blocks a working setup.
     """
     try:
-        from urllib.parse import urlparse
-
         daemon_host = (urlparse(flaresolverr_url).hostname or "").lower()
     except Exception:
         return
-    if not daemon_host or daemon_host in ("localhost", "::1") or daemon_host.startswith("127."):
+    if not daemon_host:
+        return
+    try:
+        import ipaddress
+
+        if ipaddress.ip_address(daemon_host).is_loopback:
+            return
+    except ValueError:
+        pass
+    if (daemon_host == "localhost" or daemon_host.endswith(".localhost")
+            or daemon_host in ("host.docker.internal", "host.containers.internal")):
         return
     if "." not in daemon_host:
         return  # single-label: probably a docker service name on this host
-    if daemon_host in _warned_remote_daemons:
-        return
-    _warned_remote_daemons.add(daemon_host)
+    with _warned_remote_daemons_lock:
+        if daemon_host in _warned_remote_daemons:
+            return
+        _warned_remote_daemons.add(daemon_host)
     logger.warning(
         f"FlareSolverr daemon at {daemon_host} looks remote — its egress IP likely differs "
         f"from this host, so solved cookies may still 403. Prefer a same-host daemon."

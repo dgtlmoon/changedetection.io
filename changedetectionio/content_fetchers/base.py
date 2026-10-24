@@ -63,8 +63,8 @@ def manage_user_agent(headers, current_ua=''):
     """
     # Ask it what the user agent is, if its obviously ChromeHeadless, switch it to the default
     ua_in_custom_headers = headers.get('User-Agent')
-    if ua_in_custom_headers:
-        return ua_in_custom_headers
+    if isinstance(ua_in_custom_headers, str) and ua_in_custom_headers.strip():
+        return ua_in_custom_headers.strip()
 
     if not ua_in_custom_headers and current_ua:
         current_ua = current_ua.replace('HeadlessChrome', 'Chrome')
@@ -114,7 +114,12 @@ async def apply_user_agent_to_puppeteer_page(page, request_headers):
 
 
 def clean_cookies_for_selenium(cookies):
-    """Strip cookie fields Selenium WebDriver rejects (expires/sameSite/url, dotted domains)."""
+    """Strip cookie fields Selenium WebDriver rejects (expires/sameSite/url, dotted domains).
+
+    A null/missing domain is dropped (not nulled): with driver.get(url) done
+    first, Chromedriver scopes domain-less cookies to the current document,
+    while an explicit null is an InvalidArgument error.
+    """
     cleaned = []
     for cc in cookies or []:
         try:
@@ -124,8 +129,11 @@ def clean_cookies_for_selenium(cookies):
         cc.pop("expires", None)
         cc.pop("sameSite", None)
         cc.pop("url", None)
-        if str(cc.get("domain") or "").startswith("."):
-            cc["domain"] = cc["domain"].lstrip(".")
+        domain = cc.get("domain")
+        if not isinstance(domain, str) or not domain:
+            cc.pop("domain", None)
+        elif domain.startswith("."):
+            cc["domain"] = domain.lstrip(".")
         cleaned.append(cc)
     return cleaned
 

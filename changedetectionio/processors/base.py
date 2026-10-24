@@ -212,6 +212,7 @@ class difference_detection_processor():
             decide_challenge_route,
             solve_for_watch,
             stamp_backend_name,
+            warn_challenge_skipped,
         )
 
         challenge = await solve_for_watch(self.watch, self.datastore, url, proxy_url)
@@ -224,10 +225,7 @@ class difference_detection_processor():
                 self.watch, self.datastore, url)
             return
         if route == "skip" and challenge is not None:
-            # Fail closed: backend can't consume the challenge context (e.g. a
-            # plugin fetcher), so fetch normally instead of dropping it silently.
-            logger.warning(f"Challenge-solver overlay skipped for {url}: "
-                           f"backend '{prefer_fetch_backend}' is not html_requests/html_webdriver")
+            warn_challenge_skipped(url, prefer_fetch_backend, self.watch.has_browser_steps)
         challenge_cookies, challenge_ua = challenge[1:] if challenge is not None and route == "hybrid" else ([], None)
         if route == "hybrid":
             self.fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=self.screenshot_format, cookies=challenge_cookies, worker_id=self.worker_id)
@@ -270,6 +268,8 @@ class difference_detection_processor():
         # Only render values that really contain Jinja2, so a literal like {%22 (URL-encoded JSON) is sent as-is,
         # the same rule the edit form validates with
         for header_name in request_headers:
+            if challenge_ua and isinstance(header_name, str) and header_name.lower() == "user-agent":
+                continue  # about to be overwritten by the solved UA — don't render it
             value = request_headers.get(header_name)
             if isinstance(value, str) and JINJA2_MARKER_PATTERN.search(value):
                 request_headers.update({header_name: jinja_render(template_str=value)})

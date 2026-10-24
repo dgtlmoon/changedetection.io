@@ -288,11 +288,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             challenge = await solve_for_watch(watch, datastore, watch.link, proxy_url=_proxy_url)
             if challenge:
                 _, challenge_cookies, challenge_ua = challenge
-                # Plain dict (user casing preserved): drop every UA spelling
-                # first so the solved UA is the single User-Agent sent.
-                challenge_headers = {k: v for k, v in (watch.get('headers') or {}).items()
-                                     if not (isinstance(k, str) and k.lower() == "user-agent")}
                 if challenge_ua:
+                    # Plain dict (user casing preserved): drop every UA spelling
+                    # first so the solved UA is the single User-Agent sent.
+                    # Untouched when the daemon sent no UA — keep the user's own.
+                    challenge_headers = {k: v for k, v in (watch.get('headers') or {}).items()
+                                         if not (isinstance(k, str) and k.lower() == "user-agent")}
                     challenge_headers['User-Agent'] = challenge_ua
         except Exception as e:
             logger.warning(f"Challenge-solver live UI failed for {watch.link}: {e}")
@@ -310,7 +311,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             playwright_browser=browser,
             proxy=proxy,
             start_url=watch.link,
-            headers=challenge_headers or watch.get('headers'),
+            headers=challenge_headers if challenge_headers is not None else watch.get('headers'),
             cookies=challenge_cookies,
         )
         await browserstepper.connect(proxy=proxy)

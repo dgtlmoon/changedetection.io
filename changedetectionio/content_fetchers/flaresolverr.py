@@ -67,6 +67,25 @@ def decide_challenge_route(prefer_fetch_backend, has_browser_steps):
     return "skip"
 
 
+# Backends already warned about (log-once per backend: every check is noise)
+_warned_skip_backends = set()
+
+
+def warn_challenge_skipped(url, prefer_fetch_backend, has_browser_steps):
+    """Log-once explanation for a skipped overlay (fail-closed to normal fetch)."""
+    key = (prefer_fetch_backend, has_browser_steps)
+    if key in _warned_skip_backends:
+        return
+    _warned_skip_backends.add(key)
+    if prefer_fetch_backend == "html_requests" and has_browser_steps:
+        logger.warning(f"Challenge-solver overlay skipped for {url}: "
+                       f"browser steps need a browser backend, not html_requests — fetching normally")
+    else:
+        logger.warning(f"Challenge-solver overlay skipped for {url}: "
+                       f"backend '{prefer_fetch_backend}' can't consume challenge context "
+                       f"(only html_requests/html_webdriver supported) — fetching normally")
+
+
 async def build_flaresolverr_bare_fetcher(solution, prefer_fetch_backend, fetcher_obj,
                                           proxy_url, custom_browser_connection_url,
                                           screenshot_format, worker_id, watch, datastore, url):

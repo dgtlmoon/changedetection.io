@@ -28,6 +28,7 @@ from changedetectionio.content_fetchers.flaresolverr import (
     decide_challenge_route,
     solve_for_watch,
     stamp_backend_name,
+    warn_challenge_skipped,
 )
 from changedetectionio.flaresolverr_pool import (
     FlarePool,
@@ -389,6 +390,28 @@ class TestFlarePoolSolve:
         assert pool.get_cached(WATCH_URL, proxy_url="http://proxy-a:8080") is not None
         assert pool.get_cached(WATCH_URL) is None
         assert pool.get_cached(WATCH_URL, proxy_url="http://proxy-b:8080") is None
+
+    def test_mixed_proxy_eviction_destroys_right_session(self, monkeypatch):
+        posted = self._ok(monkeypatch, make_solution())
+        pool = self._pool(max_sessions=2)
+        pool.solve(WATCH_URL)  # ("host", "")
+        pool.solve(WATCH_URL, proxy_url="http://proxy-a:8080")
+        pool.solve("https://other.example.com/")  # evicts the oldest: direct
+        destroys = [p.get("session") for p in posted if p.get("cmd") == "sessions.destroy"]
+        assert len(destroys) == 1
+        assert ("www.example.com", "") not in pool._lru
+        assert ("www.example.com", "http://proxy-a:8080") in pool._lru
+        assert ("other.example.com", "") in pool._lru
+
+    def test_clear_destroys_all_proxy_sessions(self, monkeypatch):
+        posted = self._ok(monkeypatch, make_solution())
+        pool = self._pool()
+        pool.solve(WATCH_URL)
+        pool.solve(WATCH_URL, proxy_url="http://proxy-a:8080")
+        pool.clear()
+        assert pool._lru == {}
+        destroys = [p.get("session") for p in posted if p.get("cmd") == "sessions.destroy"]
+        assert len(destroys) == 2
 
     def test_getter_defaults_and_invalid_fallback(self, monkeypatch):
         from changedetectionio.flaresolverr_pool import (
@@ -781,9 +804,11 @@ class TestChallengeCookies:
         assert clean_cookies_for_selenium(["nope", None]) == []
         assert clean_cookies_for_selenium(None) == []
 
-    def test_selenium_tolerates_null_domain(self):
+    def test_selenium_drops_null_domain(self):
+        # Explicit null domain is an InvalidArgument error in Chromedriver;
+        # omitting it scopes the cookie to the current document instead.
         cookies = [{"name": "c", "value": "v", "domain": None, "url": WATCH_URL}]
-        assert clean_cookies_for_selenium(cookies) == [{"name": "c", "value": "v", "domain": None}]
+        assert clean_cookies_for_selenium(cookies) == [{"name": "c", "value": "v"}]
 
     def test_selenium_leaves_clean_cookies_alone(self):
         cookies = [{"name": "c", "value": "v", "domain": "example.com"}]
@@ -962,18 +987,35 @@ class TestDecideChallengeRoute:
         assert decide_challenge_route("html_js_zyte", False) == "skip"
         assert decide_challenge_route("html_js_zyte", True) == "skip"
 
+    def test_warn_skipped_once_per_backend(self):
+        from changedetectionio.content_fetchers import flaresolverr as seam
+        seam._warned_skip_backends.clear()
+        warn_challenge_skipped(WATCH_URL, "html_js_zyte", False)
+        warn_challenge_skipped(WATCH_URL, "html_js_zyte", False)
+        warn_challenge_skipped(WATCH_URL, "html_requests", True)
+        assert seam._warned_skip_backends == {("html_js_zyte", False), ("html_requests", True)}
+
 
 class TestRemoteDaemonWarning:
+    @pytest.fixture(autouse=True)
+    def _clean_warned(self):
+        from changedetectionio.flaresolverr_pool import _warned_remote_daemons
+        _warned_remote_daemons.clear()
+        yield
+        _warned_remote_daemons.clear()
+
     def test_loopback_and_service_names_stay_quiet(self):
         from changedetectionio.flaresolverr_pool import _warn_if_remote_daemon, _warned_remote_daemons
         _warn_if_remote_daemon("http://localhost:8191/v1")
+        _warn_if_remote_daemon("http://foo.localhost:8191/v1")
         _warn_if_remote_daemon("http://127.0.0.1:8191/v1")
+        _warn_if_remote_daemon("http://[::1]:8191/v1")
+        _warn_if_remote_daemon("http://host.docker.internal:8191/v1")
         _warn_if_remote_daemon("http://flaresolverr:8191/v1")
         assert _warned_remote_daemons == set()
 
     def test_remote_warns_once(self):
         from changedetectionio.flaresolverr_pool import _warn_if_remote_daemon, _warned_remote_daemons
-        _warned_remote_daemons.clear()
         _warn_if_remote_daemon("http://solver.example.com:8191/v1")
         _warn_if_remote_daemon("http://solver.example.com:8191/v1")
         assert _warned_remote_daemons == {"solver.example.com"}
