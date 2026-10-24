@@ -3283,6 +3283,18 @@ msgid "Notification Title"
 msgstr "Заголовок сповіщення"
 
 #: changedetectionio/forms.py
+msgid "Notification Body"
+msgstr "Тіло сповіщення"
+
+#: changedetectionio/forms.py
+msgid "Notification format"
+msgstr "Формат сповіщення"
+
+#: changedetectionio/forms.py
+msgid "Fetch Method"
+msgstr "Метод завантаження"
+
+#: changedetectionio/forms.py
 msgid "FlareSolverr"
 msgstr ""
 
@@ -3297,18 +3309,6 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Disabled"
 msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification Body"
-msgstr "Тіло сповіщення"
-
-#: changedetectionio/forms.py
-msgid "Notification format"
-msgstr "Формат сповіщення"
-
-#: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Метод завантаження"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.60.9\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-16 10:41+0200\n"
+"POT-Creation-Date: 2026-10-24 13:21+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3250,6 +3250,18 @@ msgid "Notification Title"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Notification Body"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Notification format"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Fetch Method"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "FlareSolverr"
 msgstr ""
 
@@ -3263,18 +3275,6 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Disabled"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification Body"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification format"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Fetch Method"
 msgstr ""
 
 #: changedetectionio/forms.py

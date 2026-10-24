@@ -3304,6 +3304,18 @@ msgid "Notification Title"
 msgstr "Bildirim Başlığı"
 
 #: changedetectionio/forms.py
+msgid "Notification Body"
+msgstr "Bildirim Gövdesi"
+
+#: changedetectionio/forms.py
+msgid "Notification format"
+msgstr "Bildirim formatı"
+
+#: changedetectionio/forms.py
+msgid "Fetch Method"
+msgstr "Getirme Yöntemi"
+
+#: changedetectionio/forms.py
 msgid "FlareSolverr"
 msgstr ""
 
@@ -3318,18 +3330,6 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Disabled"
 msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification Body"
-msgstr "Bildirim Gövdesi"
-
-#: changedetectionio/forms.py
-msgid "Notification format"
-msgstr "Bildirim formatı"
-
-#: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Getirme Yöntemi"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"

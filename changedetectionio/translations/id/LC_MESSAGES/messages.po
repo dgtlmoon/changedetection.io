@@ -3364,6 +3364,18 @@ msgid "Notification Title"
 msgstr "Judul Notifikasi"
 
 #: changedetectionio/forms.py
+msgid "Notification Body"
+msgstr "Isi Notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Notification format"
+msgstr "Format notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Fetch Method"
+msgstr "Metode Pengambilan"
+
+#: changedetectionio/forms.py
 msgid "FlareSolverr"
 msgstr ""
 
@@ -3378,18 +3390,6 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Disabled"
 msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification Body"
-msgstr "Isi Notifikasi"
-
-#: changedetectionio/forms.py
-msgid "Notification format"
-msgstr "Format notifikasi"
-
-#: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Metode Pengambilan"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
