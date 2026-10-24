@@ -1,7 +1,4 @@
-import json
-import logging
 import os
-import re
 
 from flask import Blueprint, jsonify, redirect, url_for, flash
 from flask_babel import gettext
@@ -9,44 +6,6 @@ from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
-
-
-class _LiteLLMWarningCapture(logging.Handler):
-    """Capture warnings emitted on the 'LiteLLM' stdlib logger during a single call.
-
-    litellm.get_valid_models() catches HTTP/auth errors internally, logs a warning,
-    and returns []. Without capturing that warning we can't tell the user *why*
-    no models came back (bad key vs. offline vs. genuinely empty model list).
-    """
-    def __init__(self):
-        super().__init__(level=logging.WARNING)
-        self.messages = []
-
-    def emit(self, record):
-        try:
-            self.messages.append(record.getMessage())
-        except Exception:
-            pass
-
-
-def _humanize_litellm_error(raw: str) -> str:
-    # litellm warnings typically look like:
-    #   "Error getting valid models: Failed to get models: { 'error': { 'message': '...' } }"
-    # Pull the inner provider message when present; otherwise trim the boilerplate.
-    if not raw:
-        return raw
-    m = re.search(r'\{.*\}', raw, re.DOTALL)
-    if m:
-        try:
-            body = json.loads(m.group(0))
-            inner = (body.get('error') or {}).get('message') or body.get('message')
-            if inner:
-                return inner
-        except Exception:
-            pass
-    cleaned = re.sub(r'^Error getting valid models:\s*', '', raw)
-    cleaned = re.sub(r'^Failed to get models:\s*', '', cleaned).strip()
-    return cleaned[:500]
 
 
 def construct_llm_blueprint(datastore: ChangeDetectionStore):
@@ -91,50 +50,27 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                     "Refusing to send the stored API key to a different endpoint."
                 )}), 400
 
-        _PREFIXES = {'gemini': 'gemini/', 'ollama': 'ollama/', 'openrouter': 'openrouter/',
-                     'openai_compatible': 'openai/'}
-        # vLLM / LM Studio / llama.cpp speak OpenAI's wire format — route through litellm's
-        # 'openai' provider but keep the UI-level name distinct from cloud OpenAI.
-        _LITELLM_PROVIDER = {'openai_compatible': 'openai'}
-        prefix = _PREFIXES.get(provider, '')
-        litellm_provider = _LITELLM_PROVIDER.get(provider, provider)
-
+        # Plain HTTP, not litellm.get_valid_models() - browsing the model list must not
+        # pull ~200MB of litellm into the process before AI is even configured.
+        from changedetectionio.llm.model_list import list_models, ModelListError
         try:
-            import litellm
-            logger.debug(f"LLM model list: calling litellm.get_valid_models provider={provider!r} (litellm={litellm_provider!r}) api_base={api_base!r}")
-
-            capture = _LiteLLMWarningCapture()
-            litellm_logger = logging.getLogger('LiteLLM')
-            litellm_logger.addHandler(capture)
-            try:
-                raw = litellm.get_valid_models(
-                    check_provider_endpoint=True,
-                    custom_llm_provider=litellm_provider,
-                    api_key=api_key or None,
-                    api_base=api_base or None,
-                ) or []
-            finally:
-                litellm_logger.removeHandler(capture)
-
-            models = sorted({(m if m.startswith(prefix) else prefix + m) for m in raw})
-
-            if not models and capture.messages:
-                err = _humanize_litellm_error(capture.messages[-1])
-                logger.debug(f"LLM model list: 0 models, surfacing captured litellm warning: {err!r}")
-                return jsonify({'models': [], 'error': err}), 400
-
-            logger.debug(f"LLM model list: got {len(models)} models for provider={provider!r}")
-            return jsonify({'models': models, 'error': None})
+            models = list_models(provider, api_key=api_key, api_base=api_base)
+        except ModelListError as e:
+            logger.debug(f"LLM model list: provider={provider!r} refused or unreachable: {e}")
+            return jsonify({'models': [], 'error': str(e)}), 400
         except Exception as e:
             logger.error(f"LLM model list failed for provider={provider!r}: {e}")
             logger.exception("LLM model list full traceback:")
             return jsonify({'models': [], 'error': str(e)}), 400
 
+        logger.debug(f"LLM model list: got {len(models)} models for provider={provider!r}")
+        return jsonify({'models': models, 'error': None})
+
     @llm_blueprint.route("/test", methods=['POST'])
     @login_optionally_required
     def llm_test():
         from flask import request
-        from changedetectionio.llm.client import completion
+        from changedetectionio.llm.client import completion_isolated
         from changedetectionio.validate_url import is_llm_api_base_safe
 
         # Pull stored config as the fallback, then override with anything the
@@ -195,7 +131,9 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             # a cold-starting or slow-prefilling local model doesn't falsely fail the
             # test even though the same call would succeed in production (issue #4225).
             from changedetectionio.llm.evaluator import apply_local_token_multiplier, get_llm_settings, resolve_llm_timeout
-            text, total_tokens, input_tokens, output_tokens = completion(
+            # Isolated: trying a provider from the settings page must not leave ~200MB of
+            # litellm resident in this process (it runs in-process if already loaded).
+            text, total_tokens, input_tokens, output_tokens = completion_isolated(
                 model=model,
                 messages=[{'role': 'user', 'content':
                     'Respond with just the word: ready'}],
