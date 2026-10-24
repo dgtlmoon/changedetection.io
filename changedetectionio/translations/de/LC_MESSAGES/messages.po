@@ -3577,21 +3577,6 @@ msgstr ""
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Der Textkörper muss leer sein, wenn die Anforderungsmethode auf GET gesetzt ist"
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Ungültige Vorlagensyntaxkonfiguration: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Ungültige Vorlagensyntax: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Ungültige Vorlagensyntax im Header „%(header)s“: %(error)s"
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
 msgstr "Name"
@@ -3863,6 +3848,21 @@ msgstr "RegEx zum Extrahieren"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Als CSV exportieren"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Ungültige Vorlagensyntaxkonfiguration: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Ungültige Vorlagensyntax: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Ungültige Vorlagensyntax im Header „%(header)s“: %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

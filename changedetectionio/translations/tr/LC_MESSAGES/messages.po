@@ -3572,21 +3572,6 @@ msgstr "İzleyici başına tutulacak geçmiş öğesi sayısı"
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "İstek Yöntemi GET olarak ayarlandığında gövde boş olmalıdır"
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Geçersiz şablon sözdizimi yapılandırması: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Geçersiz şablon sözdizimi: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "\"%(header)s\" başlığında geçersiz şablon sözdizimi: %(error)s"
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
 msgstr "İsim"
@@ -3858,6 +3843,21 @@ msgstr "Çıkarılacak RegEx"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "CSV olarak çıkar"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Geçersiz şablon sözdizimi yapılandırması: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Geçersiz şablon sözdizimi: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "\"%(header)s\" başlığında geçersiz şablon sözdizimi: %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"
