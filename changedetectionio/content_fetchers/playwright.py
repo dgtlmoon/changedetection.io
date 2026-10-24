@@ -156,6 +156,7 @@ class fetcher(Fetcher):
     )
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
+    fetcher_short_description = "{} (Playwright)".format(os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize())
 
     browser_type = ''
     command_executor = ''
@@ -171,6 +172,7 @@ class fetcher(Fetcher):
     supports_screenshots = True
     supports_xpath_element_data = True
     supports_request_blocking = True
+    supports_device_emulation = True
 
     # When True, _get_browser() launches a local browser instead of connecting to a remote
     # CDP endpoint (overridden by the html_playwright_builtin subclass).

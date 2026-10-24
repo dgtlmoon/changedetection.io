@@ -40,7 +40,9 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     setup_start = time.time()
     page_height = await page.evaluate("document.documentElement.scrollHeight")
     page_width = await page.evaluate("document.documentElement.scrollWidth")
-    original_viewport = page.viewport
+    # Copy the whole viewport, not just its size - setViewport() resets anything left out, and
+    # dropping isMobile / hasTouch would switch an emulated device back to the desktop layout
+    original_viewport = dict(page.viewport)
     dimensions_time = time.time() - setup_start
 
     logger.debug(f"{watch_info}Puppeteer viewport size {page.viewport} page height {page_height} page width {page_width} (got dimensions in {dimensions_time:.2f}s)")
@@ -88,7 +90,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         # captures the whole page even when SCREENSHOT_MAX_HEIGHT is set smaller
         step_size = min(step_size, SCREENSHOT_MAX_TOTAL_HEIGHT)
         viewport_start = time.time()
-        await page.setViewport({'width': page.viewport['width'], 'height': step_size})
+        await page.setViewport({**page.viewport, 'height': step_size})
         viewport_time = time.time() - viewport_start
         logger.debug(f"{watch_info}Viewport changed to {page.viewport['width']}x{step_size} (took {viewport_time:.2f}s)")
 
@@ -119,7 +121,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} captured in {chunk_time:.2f}s")
         y += step_size
 
-    await page.setViewport({'width': original_viewport['width'], 'height': original_viewport['height']})
+    await page.setViewport(original_viewport)
 
     # Unlock element dimensions if they were locked
     if elements_locked:
@@ -181,6 +183,7 @@ class fetcher(Fetcher):
     fetcher_description = "Puppeteer/direct {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
     )
+    fetcher_short_description = "{} (Puppeteer)".format(os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize())
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
 
@@ -194,6 +197,7 @@ class fetcher(Fetcher):
     supports_screenshots = True
     supports_xpath_element_data = True
     supports_request_blocking = True
+    supports_device_emulation = True
     supports_pdf = True
 
     @classmethod
@@ -367,6 +371,13 @@ class fetcher(Fetcher):
                     "height": int(match.group(2))
                 })
                 logger.debug(f"Puppeteer viewport size {self.page.viewport}")
+
+        # The browser profile's viewport / device emulation, after --window-size so the profile wins
+        _bc = getattr(self, 'browser_config', None)
+        _profile_viewport = _bc.puppeteer_viewport() if _bc is not None else None
+        if _profile_viewport:
+            await self.page.setViewport(_profile_viewport)
+            logger.debug(f"Puppeteer viewport from browser profile {self.page.viewport}")
         try:
             from pyppeteerstealth import inject_evasions_into_page
         except ImportError:

@@ -25,6 +25,7 @@ class FetcherCapabilities(BaseModel):
     supports_custom_user_agent: bool = False   # Honours a per-profile User-Agent (all fetchers)
     supports_connection_url: bool = False      # Connects to an endpoint named by the browser config
     supports_pdf: bool = False                 # Can supply the original PDF bytes as raw_content
+    supports_device_emulation: bool = False    # Can emulate a phone/tablet (viewport, touch, mobile layout)
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -130,6 +131,9 @@ class Fetcher():
     content = None
     error = None
     fetcher_description = "No description"
+    # Short name for browser lists, e.g. "Local Playwright: My firefox". None falls back to
+    # fetcher_description (see browser_config.engine_short_description()).
+    fetcher_short_description = None
     headers = {}
     favicon_blob = None
     instock_data = None

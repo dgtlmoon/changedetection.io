@@ -19,20 +19,24 @@
         </p>
 
         {# One table: each available base browser, with its user-created variations nested directly
-           beneath it as child rows (↳). No separate "Your browsers" table. #}
+           beneath it as child rows (↳). No separate "Your browsers" table.
+           Every th/td carries a column class (col-default / col-browser / col-capabilities /
+           col-actions), every row its engine (browser-engine-<name>) and every chip what it shows
+           (browser-chip--cap-<capability>, browser-chip--<setting>), so a deployment can hide any
+           of them with CSS alone. #}
         {% if base_fetchers %}
         <table class="pure-table browsers-table" style="width:100%; margin-top:1em;">
             <thead><tr>
-                <th style="width:5em; text-align:center">{{ _('Default') }}</th>
-                <th>{{ _('Browser') }}</th>
-                <th>{{ _('Capabilities') }}</th>
-                <th></th>
+                <th class="col-default" style="width:5em; text-align:center">{{ _('Default') }}</th>
+                <th class="col-browser">{{ _('Browser') }}</th>
+                <th class="col-capabilities">{{ _('Capabilities') }}</th>
+                <th class="col-actions"></th>
             </tr></thead>
             <tbody>
                 {% for f in base_fetchers %}
                 {# ---- Base browser (parent) row ---- #}
-                <tr class="browser-base-row {% if f.ready_to_use and f.name == default_browser_id %}is-default{% endif %}">
-                    <td style="text-align:center">
+                <tr class="browser-base-row browser-engine-{{ f.name }} {% if f.ready_to_use and f.name == default_browser_id %}is-default{% endif %}">
+                    <td class="col-default" style="text-align:center">
                         {# Only ready-to-use engines can be the default (base-only engines aren't usable directly) #}
                         {% if f.ready_to_use %}
                         <form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=f.name) }}">
@@ -43,18 +47,18 @@
                         </form>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="col-browser">
                         <strong>{{ f.description }}</strong>
-                        {% if not f.ready_to_use %}<span class="browser-chip">{{ _('needs setup') }}</span>{% endif %}
+                        {% if not f.ready_to_use %}<span class="browser-chip browser-chip--needs-setup">{{ _('needs setup') }}</span>{% endif %}
                         {% if f.ready_to_use and f.name == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
                     </td>
-                    <td>
+                    <td class="col-capabilities">
                         {% for cap, on in f.capabilities.items() %}
-                            {% if on %}<span class="browser-chip browser-chip--cap">{{ cap.replace('supports_', '')|replace('_', ' ') }}</span>{% endif %}
+                            {% if on %}<span class="browser-chip browser-chip--cap browser-chip--cap-{{ cap.replace('supports_', '') }}">{{ cap.replace('supports_', '')|replace('_', ' ') }}</span>{% endif %}
                         {% endfor %}
-                        {% if not f.is_browser %}<span class="browser-chip">{{ _('plain text, no JavaScript') }}</span>{% endif %}
+                        {% if not f.is_browser %}<span class="browser-chip browser-chip--plain-text">{{ _('plain text, no JavaScript') }}</span>{% endif %}
                     </td>
-                    <td style="text-align:right; white-space:nowrap">
+                    <td class="col-actions" style="text-align:right; white-space:nowrap">
                         {# When browser config is locked, only setting the default is allowed - hide edit/add. #}
                         {% if not browser_config_locked() %}
                         {# Engines with configurable behaviour can be edited (browser fields, or HTTP options). #}
@@ -71,8 +75,8 @@
                 {# ---- User variations of this base (child rows) ---- #}
                 {% for v in f.variations %}
                 {% set bc = v.get('browser_config') or {} %}
-                <tr class="browser-variation-row {% if v.id == default_browser_id %}is-default{% endif %}">
-                    <td style="text-align:center">
+                <tr class="browser-variation-row browser-engine-{{ f.name }} {% if v.id == default_browser_id %}is-default{% endif %}">
+                    <td class="col-default" style="text-align:center">
                         <form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=v.id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="radio" class="browser-default-radio" name="browser_default" value="{{ v.id }}"
@@ -80,19 +84,20 @@
                                    {% if v.id == default_browser_id %}checked{% endif %}>
                         </form>
                     </td>
-                    <td class="browser-variation-name">
+                    <td class="col-browser browser-variation-name">
                         <i data-feather="corner-down-right" class="browser-variation-arrow" title="{{ _('Variation of %(base)s', base=f.description) }}"></i>
                         <strong>{{ v.get('label') }}</strong>
                         {% if v.id == default_browser_id %}<span class="browser-chip browser-chip--default">{{ _('Default') }}</span>{% endif %}
                     </td>
-                    <td>
-                        {% if bc.get('browser_type') %}<span class="browser-chip">{{ bc.browser_type }}</span>{% endif %}
-                        {% if bc.get('viewport_width') %}<span class="browser-chip">{{ bc.viewport_width }}×{{ bc.viewport_height or '?' }}</span>{% endif %}
-                        {% if bc.get('locale') %}<span class="browser-chip">{{ bc.locale }}</span>{% endif %}
-                        {% if bc.get('timezone_id') %}<span class="browser-chip">{{ bc.timezone_id }}</span>{% endif %}
-                        {% if bc.get('block_resource_types') %}<span class="browser-chip">{{ _('no') }} {{ bc.block_resource_types|join(', ') }}</span>{% endif %}
+                    <td class="col-capabilities">
+                        {% if bc.get('browser_type') %}<span class="browser-chip browser-chip--browser-type">{{ bc.browser_type }}</span>{% endif %}
+                        {% if bc.get('device') %}<span class="browser-chip browser-chip--device">{{ bc.device }}</span>
+                        {% elif bc.get('viewport_width') %}<span class="browser-chip browser-chip--viewport">{{ bc.viewport_width }}×{{ bc.viewport_height or '?' }}</span>{% endif %}
+                        {% if bc.get('locale') %}<span class="browser-chip browser-chip--locale">{{ bc.locale }}</span>{% endif %}
+                        {% if bc.get('timezone_id') %}<span class="browser-chip browser-chip--timezone">{{ bc.timezone_id }}</span>{% endif %}
+                        {% if bc.get('block_resource_types') %}<span class="browser-chip browser-chip--blocking">{{ _('no') }} {{ bc.block_resource_types|join(', ') }}</span>{% endif %}
                     </td>
-                    <td style="text-align:right; white-space:nowrap">
+                    <td class="col-actions" style="text-align:right; white-space:nowrap">
                         {% if not browser_config_locked() %}
                         <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=v.id) }}">{{ _('Edit') }}</a>
                         <form method="POST" action="{{ url_for('ui.browser_config.browser_config_remove', config_id=v.id) }}" style="display:inline"

@@ -151,7 +151,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # The watch-level fetch selector is now a "Browser" picker: system default + the
         # user's saved browsers (browsers.json). Raw engines are chosen only as a browser's
         # base in the Add Browser form. Set choices per-request (datastore-dependent).
-        from changedetectionio.model.browser_config import list_watch_browser_choices
+        from changedetectionio.model.browser_config import list_watch_browser_choices, list_user_variation_ids
         form.fetch_backend.choices = list_watch_browser_choices(datastore)
         form.fetch_backend.label.text = gettext('Browser')
         # Only offer Default + user browsers, but still ACCEPT legacy raw-engine values
@@ -375,6 +375,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'extra_processor_config': form.extra_tab_content(),
                 'extra_title': f" - {gettext('Edit')} - {watch.label}",
                 'form': form,
+                # Browsers the user added as variations, so their names link to their edit page
+                'browser_variation_ids': list_user_variation_ids(datastore),
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
                 'has_special_tag_options': _watch_has_tag_options_set(watch=watch),

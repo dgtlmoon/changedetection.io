@@ -1884,11 +1884,36 @@ msgid "WebSockets"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Desktop / custom size"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Desktop"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Phones"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Tablets"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
 msgid "Give this browser config a name"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
 msgid "e.g. Desktop Full-HD, Mobile de-DE"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Emulate device"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Pixel density"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
@@ -1905,10 +1930,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
 msgid "Timezone"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/form_browseroptions.py
-msgid "Screenshot format"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
@@ -1974,23 +1995,21 @@ msgid "Which browser engine to launch locally."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Screen size"
+msgid "Screen & device"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Desktop"
+msgid ""
+"Load pages as this phone or tablet would: its screen size, touch, mobile layout and User-Agent. Many sites serve a "
+"simpler page to phones."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Leave empty for 1. Higher values only make screenshots sharper (and much larger), the page layout stays the same."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Laptop"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Tablet"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Mobile"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html changedetectionio/blueprint/ui/templates/queue.html
@@ -1998,15 +2017,7 @@ msgid "Clear"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Language & timezone"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Start typing to search - e.g. <code>de-DE</code>, <code>en-GB</code>."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
+msgid "Set by the emulated device above."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -2022,7 +2033,11 @@ msgid "More instructions and examples here"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "HTTP request options"
+msgid "Start typing to search - e.g. <code>de-DE</code>, <code>en-GB</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -2030,7 +2045,11 @@ msgid "Maximum seconds to wait for the response (plain HTTP client only)."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Sent as the User-Agent header for requests using this browser."
+msgid "Sent as the User-Agent header for requests using this browser, leave blank for the default."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Warning: modifying this can increase the uniqueness of your browser and may have unintended consequences."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -2047,6 +2066,14 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browser-config-form.html
 msgid "Add browser variation"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+msgid "Language & timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+msgid "Request options"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
@@ -3365,8 +3392,20 @@ msgstr ""
 msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
 msgstr ""
 
+#: changedetectionio/content_fetchers/external_cdp.py
+msgid "External browser"
+msgstr ""
+
+#: changedetectionio/content_fetchers/playwright_builtin.py
+msgid "Local Playwright"
+msgstr ""
+
 #: changedetectionio/content_fetchers/requests.py
 msgid "Basic fast Plaintext/HTTP Client"
+msgstr ""
+
+#: changedetectionio/content_fetchers/requests.py
+msgid "Plain HTTP"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
@@ -4813,6 +4852,10 @@ msgstr ""
 #: changedetectionio/templates/_helpers.html
 msgid "Entry"
 msgstr "Entrada"
+
+#: changedetectionio/templates/_helpers.html
+msgid "Edit this browser"
+msgstr ""
 
 #: changedetectionio/templates/_helpers.html
 msgid "Actions"

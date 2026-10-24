@@ -15,6 +15,7 @@ from changedetectionio.content_fetchers.base import Fetcher, FetcherCapabilities
 
 class fetcher(Fetcher):
     fetcher_description = "Debug test browser (echoes resolved browser config)"
+    fetcher_short_description = "Debug browser"
 
     # Advertise every capability so all FetcherConfig fields are exercisable through it.
     supports_browser_steps = True
@@ -23,6 +24,7 @@ class fetcher(Fetcher):
     supports_request_blocking = True
     supports_browser_type = True
     supports_delete_created_files = True
+    supports_device_emulation = True
 
     async def run(self,
                   url=None,
@@ -39,6 +41,8 @@ class fetcher(Fetcher):
             'url': url,
             # Every configurable FetcherConfig field (the full resolved config)...
             'browser_config': bc.model_dump() if (bc is not None and hasattr(bc, 'model_dump')) else bc,
+            # ...and the browser-context options a real engine would get from it (device emulation etc)
+            'browser_context_kwargs': bc.browser_context_kwargs() if hasattr(bc, 'browser_context_kwargs') else None,
             # ...and every capability (supports_*) this fetcher advertises.
             'capabilities': FetcherCapabilities.from_fetcher(type(self)).model_dump(),
             'request_headers': {k: v for k, v in (request_headers or {}).items()},

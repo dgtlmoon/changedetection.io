@@ -15,6 +15,7 @@ from changedetectionio.validate_url import is_fetch_url_allowed, is_private_host
 # "html_requests" is listed as the default fetcher in store.py!
 class fetcher(Fetcher):
     fetcher_description = _l("Basic fast Plaintext/HTTP Client")
+    fetcher_short_description = _l("Plain HTTP")
     # Only the plain client honours a per-profile request timeout (browsers use their own
     # navigation timeouts). The per-profile User-Agent is honoured by all fetchers (base class).
     supports_request_timeout = True

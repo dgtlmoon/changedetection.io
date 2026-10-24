@@ -14,6 +14,7 @@ import os
 import shutil
 import tempfile
 
+from flask_babel import lazy_gettext as _l
 from loguru import logger
 
 from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
@@ -21,6 +22,7 @@ from changedetectionio.content_fetchers.playwright import fetcher as playwright_
 
 class fetcher(playwright_fetcher):
     fetcher_description = "Playwright (local library)"
+    fetcher_short_description = _l("Local Playwright")
 
     local_launch = True
     # Base-only: not usable directly (you must create a browser config that picks a browser_type);

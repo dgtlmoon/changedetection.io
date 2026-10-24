@@ -17,6 +17,7 @@ spoken to over CDP on a Playwright install, over CDP-with-pyppeteer on a FAST_PU
 and over the W3C WebDriver HTTP protocol on a Selenium-only install - where it cannot work at all.
 Pinning the protocol to the engine, instead of inheriting it from an env var, is the point.
 """
+from flask_babel import lazy_gettext as _l
 from loguru import logger
 
 from changedetectionio.content_fetchers.exceptions import BrowserConnectError
@@ -25,6 +26,7 @@ from changedetectionio.content_fetchers.playwright import fetcher as playwright_
 
 class fetcher(playwright_fetcher):
     fetcher_description = "External CDP Browser"
+    fetcher_short_description = _l("External browser")
 
     # Base-only: an endpoint is required, and it lives on the browser config - so this is offered
     # as a base to create variations from, never as a directly-selectable browser or the default.

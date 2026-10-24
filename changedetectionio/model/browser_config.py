@@ -29,7 +29,7 @@ from os import path
 from typing import ClassVar, Dict, List, Optional
 
 from loguru import logger
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError, ValidationInfo, field_validator, model_validator
 
 try:
     import orjson
@@ -100,11 +100,19 @@ class FetcherConfig(BaseModel):
     # Rendering / device
     viewport_width: Optional[int] = _needs('supports_screenshots')   # px; None -> engine default
     viewport_height: Optional[int] = _needs('supports_screenshots')
+    # Device emulation (capability supports_device_emulation): a DEVICE_PRESETS name. Sets the
+    # viewport, User-Agent, touch and mobile layout together. The device's screen size wins over
+    # viewport_width/height (the form disables those); user_agent still overrides the device's.
+    # None = desktop.
+    device: Optional[str] = _needs('supports_device_emulation')
+    # Pixel density. None = 1, whatever the device descriptor says - layout depends on the
+    # viewport, not this, and a factor of 3 makes every screenshot 9x the pixels.
+    device_scale_factor: Optional[float] = _needs('supports_device_emulation')
     # Identity / locale
     locale: Optional[str] = _needs('supports_screenshots')           # e.g. 'de-DE' -> Accept-Language + navigator.language
     timezone_id: Optional[str] = _needs('supports_screenshots')      # e.g. 'Europe/Berlin'
-    # Screenshot
-    screenshot_format: str = _needs('supports_screenshots', default='JPEG')
+    # No screenshot_format here: the processor decides it (JPEG, or PNG for image_ssim_diff, which
+    # needs lossless images). Older browsers.json files may still carry the key; it's ignored.
     # Cost / bandwidth - block assets (capability-gated by supports_request_blocking)
     block_resource_types: List[str] = _needs('supports_request_blocking', default_factory=list)  # e.g. ['image', 'font', 'media']
     block_url_patterns: List[str] = _needs('supports_request_blocking', default_factory=list)    # globs, e.g. ['*.ttf', '*/analytics/*']
@@ -169,7 +177,10 @@ class FetcherConfig(BaseModel):
         by another version still parses (see the module docstring).
         """
         allowed = cls.applicable_fields(capabilities)
-        return cls(**{k: v for k, v in (data or {}).items() if k in allowed})
+        # The 'submitted' context turns on the checks that must not run when loading
+        # browsers.json (a failed load drops the whole profile, orphaning its watches)
+        return cls.model_validate({k: v for k, v in (data or {}).items() if k in allowed},
+                                  context={'submitted': True})
 
     @field_validator('timeout')
     @classmethod
@@ -178,16 +189,41 @@ class FetcherConfig(BaseModel):
             raise ValueError("Timeout must be between 1 and 999 seconds")
         return v
 
-    def apply_user_agent(self, request_headers):
-        """Set this profile's User-Agent on request_headers (the channel every fetcher - plain
-        client and browsers - uses), if configured. Applied early (before a watch's own headers)
-        so an explicit per-watch User-Agent still wins. Works for dict / CaseInsensitiveDict.
-        A None user_agent is a no-op. Returns request_headers for chaining."""
+    def device_preset(self):
+        """The DEVICE_PRESETS entry for `device`, or None for desktop."""
+        if not self.device:
+            return None
+        from changedetectionio.model.browser_devices import DEVICE_PRESETS
+        return DEVICE_PRESETS.get(self.device)
+
+    def effective_user_agent(self):
+        """The User-Agent this profile implies: its own user_agent, else the emulated device's."""
         if self.user_agent:
+            return self.user_agent
+        preset = self.device_preset()
+        return preset['user_agent'] if preset else None
+
+    def apply_user_agent(self, request_headers):
+        """Set this profile's User-Agent (its own, else the emulated device's) on request_headers,
+        the channel every fetcher - plain client and browsers - uses. Applied early (before a
+        watch's own headers) so an explicit per-watch User-Agent still wins. Works for dict /
+        CaseInsensitiveDict. No User-Agent configured is a no-op. Returns request_headers."""
+        user_agent = self.effective_user_agent()
+        if user_agent:
             for k in [k for k in list(request_headers.keys()) if k.lower() == 'user-agent']:
                 del request_headers[k]
-            request_headers['User-Agent'] = self.user_agent
+            request_headers['User-Agent'] = user_agent
         return request_headers
+
+    def emulated_viewport(self):
+        """The viewport this profile implies, as {'width', 'height'}, or None for the engine
+        default. An emulated device's screen size wins over viewport_width/height."""
+        preset = self.device_preset()
+        if preset:
+            return dict(preset['viewport'])
+        if self.viewport_width and self.viewport_height:
+            return {'width': self.viewport_width, 'height': self.viewport_height}
+        return None
 
     def browser_context_kwargs(self):
         """The per-profile browser-context options this config implies (viewport / locale /
@@ -201,9 +237,31 @@ class FetcherConfig(BaseModel):
             kwargs['locale'] = self.locale
         if self.timezone_id:
             kwargs['timezone_id'] = self.timezone_id
-        if self.viewport_width and self.viewport_height:
-            kwargs['viewport'] = {'width': self.viewport_width, 'height': self.viewport_height}
+        viewport = self.emulated_viewport()
+        if viewport:
+            kwargs['viewport'] = viewport
+        preset = self.device_preset()
+        if preset:
+            # The User-Agent goes through apply_user_agent() / request_headers like any other,
+            # so a per-watch User-Agent header can still override it
+            kwargs['is_mobile'] = preset['is_mobile']
+            kwargs['has_touch'] = preset['has_touch']
+        if preset or self.device_scale_factor:
+            kwargs['device_scale_factor'] = self.device_scale_factor or 1
         return kwargs
+
+    def puppeteer_viewport(self):
+        """browser_context_kwargs() as the argument for pyppeteer's page.setViewport(), or None
+        when the profile sets no viewport (the engine default stays)."""
+        kwargs = self.browser_context_kwargs()
+        if 'viewport' not in kwargs:
+            return None
+        return {
+            **kwargs['viewport'],
+            'deviceScaleFactor': kwargs.get('device_scale_factor', 1),
+            'isMobile': kwargs.get('is_mobile', False),
+            'hasTouch': kwargs.get('has_touch', False),
+        }
 
     def effective_timeout(self, default):
         """This profile's request timeout, else the caller's default (plain HTTP client only)."""
@@ -235,6 +293,40 @@ class FetcherConfig(BaseModel):
         if v and any(ord(c) < 0x20 or ord(c) == 0x7f for c in v):
             raise ValueError("User-Agent cannot contain control characters")
         return v
+
+    @field_validator('device')
+    @classmethod
+    def _validate_device(cls, v, info: ValidationInfo):
+        if not v:
+            return None
+        from changedetectionio.model.browser_devices import DEVICE_PRESETS
+        if v not in DEVICE_PRESETS:
+            if (info.context or {}).get('submitted'):
+                raise ValueError(f"Unknown device '{v}'")
+            # Loading browsers.json: a device a later release removed must not drop the profile
+            logger.warning(f"Unknown device '{v}' in browsers.json, using desktop instead")
+            return None
+        return v
+
+    @field_validator('device_scale_factor')
+    @classmethod
+    def _validate_device_scale_factor(cls, v):
+        if v is not None and not (1 <= v <= 3):
+            raise ValueError("Device scale factor must be between 1 and 3")
+        return v
+
+    @model_validator(mode='after')
+    def _firefox_cannot_emulate_mobile(self, info: ValidationInfo):
+        # Playwright refuses is_mobile on Firefox, so say so when the profile is saved rather than
+        # failing every check made with it
+        preset = self.device_preset()
+        if preset and preset['is_mobile'] and self.browser_type == 'firefox':
+            if (info.context or {}).get('submitted'):
+                raise ValueError(f"Firefox can't emulate a mobile device ('{self.device}'), "
+                                 f"choose Chromium or WebKit, or no device")
+            logger.warning(f"Firefox can't emulate mobile device '{self.device}' (browsers.json), using desktop instead")
+            self.device = None
+        return self
 
     @field_validator('browser_type')
     @classmethod
@@ -482,6 +574,16 @@ def is_valid_browser_selector(value, datastore, allow_empty=True):
     return value in {name for name, _description in content_fetchers.available_fetchers()}
 
 
+def engine_short_description(engine_name):
+    """An engine's short name for browser lists (Fetcher.fetcher_short_description), falling back
+    to its full description, then to the engine name itself."""
+    from changedetectionio import content_fetchers
+    cls = getattr(content_fetchers, engine_name, None)
+    return (getattr(cls, 'fetcher_short_description', None)
+            or getattr(cls, 'fetcher_description', None)
+            or engine_name)
+
+
 def list_watch_browser_choices(datastore):
     """(value, label) choices for the watch-level 'Browser' picker:
     system default, the always-present built-in engine browsers, then the user's saved browsers.
@@ -494,10 +596,24 @@ def list_watch_browser_choices(datastore):
     choices = {'system': _system_default_label(datastore)}
     for b in list_builtin_browsers():
         choices[b['id']] = b['label']
+    variation_ids = list_user_variation_ids(datastore)
     for cid, entry in datastore.browser_config_store.all().items():
-        choices[cid] = entry.get('label') or cid
+        label = entry.get('label') or cid
+        # A variation reads as "<engine short name>: <its name>" (e.g. "Local Playwright: firefox")
+        # so it's clear which browser it's built on
+        if cid in variation_ids:
+            label = f"{engine_short_description(entry.get('base_fetcher'))}: {label}"
+        choices[cid] = label
     # dict keeps each value's first position (built-ins stay in engine order) with its last label
     return list(choices.items())
+
+
+def list_user_variation_ids(datastore):
+    """Ids of the browsers the user added as variations - not the built-in engines, even when a
+    built-in has a saved override config under its own engine name (e.g. 'html_requests')."""
+    from changedetectionio import content_fetchers
+    engines = {name for name, _description in content_fetchers.available_fetchers()}
+    return {cid for cid in datastore.browser_config_store.all() if cid not in engines}
 
 
 def _system_default_label(datastore):

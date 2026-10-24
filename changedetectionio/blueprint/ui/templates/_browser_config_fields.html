@@ -6,9 +6,13 @@
 
    Gating on `applicable` rather than on capability flags directly is deliberate: it is the same
    set the save path allows (FetcherConfig.from_submitted), so a field can never be rendered but
-   unsaveable, or hidden but written from its widget default. #}
+   unsaveable, or hidden but written from its widget default.
+
+   Laid out as the tab panes of browser-config-form.html (#browser, #language, #request); that
+   page only shows the Language and Request tabs when this engine has a setting in them. #}
 {% from '_helpers.html' import render_field, render_checkbox_field %}
 
+<div class="tab-pane-inner" id="browser">
 <fieldset>
     <div class="pure-control-group">
         <label>{{ _('Based on browser') }}</label>
@@ -29,38 +33,33 @@
     {% endif %}
 </fieldset>
 
-{% if 'viewport_width' in applicable %}
+{% if 'device' in applicable or 'viewport_width' in applicable %}
 <fieldset>
-    <legend>{{ _('Screen size') }}</legend>
+    <legend>{{ _('Screen & device') }}</legend>
+    {% if 'device' in applicable %}
+    <div class="pure-control-group">
+        {{ render_field(form.device) }}
+        <span class="pure-form-message-inline">{{ _('Load pages as this phone or tablet would: its screen size, touch, mobile layout and User-Agent. Many sites serve a simpler page to phones.') }}</span>
+    </div>
+    <div class="pure-control-group" id="device-scale-factor-group">
+        {{ render_field(form.device_scale_factor) }}
+        <span class="pure-form-message-inline">{{ _('Leave empty for 1. Higher values only make screenshots sharper (and much larger), the page layout stays the same.') }}</span>
+    </div>
+    {% endif %}
+    {% if 'viewport_width' in applicable %}
     <div class="pure-control-group">
         <div class="viewport-presets">
             <button type="button" class="pure-button button-small" data-w="1920" data-h="1080">{{ _('Desktop') }}</button>
             <button type="button" class="pure-button button-small" data-w="1366" data-h="768">{{ _('Laptop') }}</button>
-            <button type="button" class="pure-button button-small" data-w="768" data-h="1024">{{ _('Tablet') }}</button>
-            <button type="button" class="pure-button button-small" data-w="390" data-h="844">{{ _('Mobile') }}</button>
             <button type="button" class="pure-button button-small" data-w="" data-h="">{{ _('Clear') }}</button>
         </div>
     </div>
     <div class="pure-control-group">{{ render_field(form.viewport_width) }}</div>
     <div class="pure-control-group">{{ render_field(form.viewport_height) }}</div>
-</fieldset>
-
-<fieldset>
-    <legend>{{ _('Language & timezone') }}</legend>
     <div class="pure-control-group">
-        {{ render_field(form.locale) }}
-        <datalist id="locale-datalist">
-            {% for l in locale_choices or [] %}<option value="{{ l }}"></option>{% endfor %}
-        </datalist>
-        <span class="pure-form-message-inline">{{ _('Start typing to search - e.g. <code>de-DE</code>, <code>en-GB</code>.')|safe }}</span>
+        <span class="pure-form-message-inline" id="viewport-set-by-device" style="display: none;">{{ _('Set by the emulated device above.') }}</span>
     </div>
-    <div class="pure-control-group">
-        {{ render_field(form.timezone_id) }}
-        <datalist id="timezone-datalist">
-            {% for tz in timezone_choices or [] %}<option value="{{ tz }}"></option>{% endfor %}
-        </datalist>
-        <span class="pure-form-message-inline">{{ _('Start typing to search - e.g. <code>Europe/Berlin</code>.')|safe }}</span>
-    </div>
+    {% endif %}
 </fieldset>
 {% endif %}
 
@@ -77,9 +76,33 @@
 </fieldset>
 {% endif %}
 
+</div>
+
+{% if show_language_tab %}
+<div class="tab-pane-inner" id="language">
+<fieldset>
+    <div class="pure-control-group">
+        {{ render_field(form.locale) }}
+        <datalist id="locale-datalist">
+            {% for l in locale_choices or [] %}<option value="{{ l }}"></option>{% endfor %}
+        </datalist>
+        <span class="pure-form-message-inline">{{ _('Start typing to search - e.g. <code>de-DE</code>, <code>en-GB</code>.')|safe }}</span>
+    </div>
+    <div class="pure-control-group">
+        {{ render_field(form.timezone_id) }}
+        <datalist id="timezone-datalist">
+            {% for tz in timezone_choices or [] %}<option value="{{ tz }}"></option>{% endfor %}
+        </datalist>
+        <span class="pure-form-message-inline">{{ _('Start typing to search - e.g. <code>Europe/Berlin</code>.')|safe }}</span>
+    </div>
+</fieldset>
+</div>
+{% endif %}
+
+{% if show_request_tab %}
+<div class="tab-pane-inner" id="request">
 {% if 'timeout' in applicable or 'user_agent' in applicable %}
 <fieldset>
-    <legend>{{ _('HTTP request options') }}</legend>
     {% if 'timeout' in applicable %}
     <div class="pure-control-group">
         {{ render_field(form.timeout) }}
@@ -89,7 +112,8 @@
     {% if 'user_agent' in applicable %}
     <div class="pure-control-group">
         {{ render_field(form.user_agent) }}
-        <span class="pure-form-message-inline">{{ _('Sent as the User-Agent header for requests using this browser.') }}</span>
+        <span class="pure-form-message-inline">{{ _('Sent as the User-Agent header for requests using this browser, leave blank for the default.') }}<br>
+            {{ _('Warning: modifying this can increase the uniqueness of your browser and may have unintended consequences.') }}</span>
     </div>
     {% endif %}
 </fieldset>
@@ -113,22 +137,50 @@
 </fieldset>
 {% endif %}
 
-{% if 'screenshot_format' in applicable %}
-<fieldset>
-    <div class="pure-control-group">{{ render_field(form.screenshot_format) }}</div>
-</fieldset>
+
+</div>
 {% endif %}
 
 <script>
 (function () {
     var w = document.getElementById('{{ form.viewport_width.id }}');
     var h = document.getElementById('{{ form.viewport_height.id }}');
-    document.querySelectorAll('.viewport-presets button').forEach(function (btn) {
+    var presetButtons = document.querySelectorAll('.viewport-presets button');
+    presetButtons.forEach(function (btn) {
         btn.addEventListener('click', function () {
             if (w) w.value = this.getAttribute('data-w');
             if (h) h.value = this.getAttribute('data-h');
         });
     });
+
+    // An emulated device sets the screen size: show its size in the viewport fields and disable
+    // them (disabled inputs aren't submitted, and the save path clears them anyway)
+    var device = document.getElementById('{{ form.device.id }}');
+    if (!device) return;
+    var deviceViewports = {{ form.device_summaries()|tojson }};
+    var scaleGroup = document.getElementById('device-scale-factor-group');
+    var setByDevice = document.getElementById('viewport-set-by-device');
+    var ownSize = {w: w ? w.value : '', h: h ? h.value : ''};
+
+    function sync() {
+        var vp = deviceViewports[device.value];
+        if (w && h) {
+            if (vp) {
+                if (!w.disabled) { ownSize = {w: w.value, h: h.value}; }
+                w.value = vp.width;
+                h.value = vp.height;
+            } else if (w.disabled) {
+                w.value = ownSize.w;
+                h.value = ownSize.h;
+            }
+            w.disabled = h.disabled = !!vp;
+        }
+        presetButtons.forEach(function (btn) { btn.disabled = !!vp; });
+        if (setByDevice) setByDevice.style.display = vp ? '' : 'none';
+        if (scaleGroup) scaleGroup.style.display = vp ? '' : 'none';
+    }
+    device.addEventListener('change', sync);
+    sync();
 })();
 </script>
 <style>

@@ -9,10 +9,30 @@ from .util import live_server_setup, wait_for_all_checks
 
 def _add_browser(client, label="Mobile de-DE", base_fetcher="html_webdriver", **cfg):
     # Add via the per-base "Add variation" route (base is in the URL, not the form).
-    data = {'label': label, 'screenshot_format': 'JPEG'}
+    data = {'label': label}
     data.update(cfg)
     return client.post(url_for("ui.browser_config.browser_config_add", base_fetcher=base_fetcher),
                        data=data, follow_redirects=True)
+
+
+def _wait_for_debug_snapshot(client, datastore, uuid, timeout=15):
+    """Check the watch and return its latest snapshot once the debug fetcher has written one.
+
+    Waits for the debug fetcher's own marker rather than just "has a snapshot", so a snapshot from
+    some other fetch can't satisfy it. Re-requests the check while waiting in case the first
+    request was skipped because the scheduler already had the watch queued.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+        watch = datastore.data['watching'][uuid]
+        if watch.history_n:
+            snapshot = watch.get_history_snapshot(timestamp=watch.newest_history_key)
+            if 'debug_test_browser' in snapshot:
+                return snapshot
+        time.sleep(0.2)
+    raise AssertionError(f"No snapshot from the debug fetcher within {timeout}s")
 
 
 @pytest.mark.skipif(not os.getenv('ENABLE_DEBUG_CONTENT_FETCHER'),
@@ -33,16 +53,11 @@ def test_debug_content_fetcher_pipeline(client, live_server, measure_memory_usag
     assert b"Debug pipeline" in res.data
     cid = list(datastore.browser_config_store.all())[0]
 
-    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True))
-    datastore.data['watching'][uuid]['fetch_backend'] = cid
-
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
-    wait_for_all_checks(client)
-    # The debug fetcher is instant; make sure the snapshot is committed before previewing.
-    for _ in range(30):
-        if datastore.data['watching'][uuid].history_n:
-            break
-        time.sleep(0.2)
+    # Set the browser when the watch is created: the scheduler can check a brand-new watch straight
+    # away, and setting fetch_backend afterwards raced it (fetched with the default browser, and the
+    # "check now" below was skipped because the watch was already queued)
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'fetch_backend': cid})
+    _wait_for_debug_snapshot(client, datastore, uuid)
 
     res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
     # The debug fetcher echoed the resolved browser_config + capabilities into the snapshot
@@ -1038,3 +1053,197 @@ def test_browser_picker_lists_each_browser_once(client, live_server, measure_mem
     # A renamed config wins the label, since it is the same browser under a name the user chose
     datastore.browser_config_store.update('html_requests', label='Fast plain client')
     assert dict(list_watch_browser_choices(datastore))['html_requests'] == 'Fast plain client'
+
+
+# --- Device emulation (#1346) ---
+
+def test_device_emulation_context_kwargs():
+    """A device sets viewport, touch and mobile layout together, at pixel density 1 by default."""
+    from changedetectionio.model.browser_config import FetcherConfig
+    from changedetectionio.model.browser_devices import DEVICE_PRESETS
+
+    pixel = DEVICE_PRESETS['Pixel 7']
+    kwargs = FetcherConfig(device='Pixel 7').browser_context_kwargs()
+    assert kwargs['viewport'] == pixel['viewport']
+    assert kwargs['is_mobile'] is True and kwargs['has_touch'] is True
+    assert kwargs['device_scale_factor'] == 1, "the descriptor's factor of 2.625 must not apply by default"
+
+    # The device's screen size wins over a leftover viewport
+    kwargs = FetcherConfig(device='Pixel 7', viewport_width=768, viewport_height=1024,
+                           device_scale_factor=2).browser_context_kwargs()
+    assert kwargs['viewport'] == pixel['viewport']
+    assert kwargs['device_scale_factor'] == 2
+
+    # Desktop profiles get none of the mobile options, so their behaviour is unchanged
+    kwargs = FetcherConfig(viewport_width=1920, viewport_height=1080).browser_context_kwargs()
+    assert kwargs == {'viewport': {'width': 1920, 'height': 1080}}
+    assert FetcherConfig().browser_context_kwargs() == {}
+
+    # pyppeteer's setViewport() dialect
+    assert FetcherConfig(device='Pixel 7').puppeteer_viewport() == {
+        **pixel['viewport'], 'deviceScaleFactor': 1, 'isMobile': True, 'hasTouch': True}
+    assert FetcherConfig().puppeteer_viewport() is None
+
+
+def test_device_user_agent_precedence():
+    """Device User-Agent < the profile's own user_agent < a per-watch User-Agent header."""
+    from requests.structures import CaseInsensitiveDict
+    from changedetectionio.model.browser_config import FetcherConfig
+    from changedetectionio.model.browser_devices import DEVICE_PRESETS
+
+    headers = FetcherConfig(device='iPhone 15 Pro').apply_user_agent(CaseInsensitiveDict())
+    assert headers['User-Agent'] == DEVICE_PRESETS['iPhone 15 Pro']['user_agent']
+
+    headers = FetcherConfig(device='iPhone 15 Pro', user_agent='MyAgent/1.0').apply_user_agent(CaseInsensitiveDict())
+    assert headers['User-Agent'] == 'MyAgent/1.0'
+
+    # call_browser() applies the profile first and then the watch's headers on top
+    headers = FetcherConfig(device='iPhone 15 Pro').apply_user_agent(CaseInsensitiveDict())
+    headers.update({'user-agent': 'WatchAgent/2.0'})
+    assert headers['User-Agent'] == 'WatchAgent/2.0'
+
+
+def test_device_is_tolerant_on_load_and_strict_on_submit():
+    """Loading browsers.json must never drop a profile over a device (that orphans its watches),
+    but a submitted profile with a bad device is refused."""
+    from pydantic import ValidationError
+    from changedetectionio.model.browser_config import FetcherConfig
+
+    # Loading: fall back to desktop
+    assert FetcherConfig(device='Nokia 3310').device is None
+    assert FetcherConfig(device='Pixel 7', browser_type='firefox').device is None
+
+    caps = {'supports_device_emulation': True, 'supports_browser_type': True, 'supports_screenshots': True}
+    with pytest.raises(ValidationError):
+        FetcherConfig.from_submitted({'device': 'Nokia 3310'}, caps)
+    with pytest.raises(ValidationError, match="Firefox can't emulate"):
+        FetcherConfig.from_submitted({'device': 'Pixel 7', 'browser_type': 'firefox'}, caps)
+    with pytest.raises(ValidationError):
+        FetcherConfig.from_submitted({'device': 'Pixel 7', 'device_scale_factor': 5}, caps)
+    # WebKit and Chromium can emulate phones
+    assert FetcherConfig.from_submitted({'device': 'Pixel 7', 'browser_type': 'webkit'}, caps).device == 'Pixel 7'
+
+
+def test_device_field_only_for_engines_that_emulate(client, live_server, measure_memory_usage, datastore_path):
+    # html_playwright_builtin rather than html_webdriver, which is Selenium when no Playwright
+    # driver is configured (Selenium doesn't emulate devices)
+    res = client.get(url_for("ui.browser_config.browser_config_add", base_fetcher="html_playwright_builtin"))
+    assert b'name="device"' in res.data
+    assert b'Screen &amp; device' in res.data
+    # Grouped, with desktop/custom size first
+    assert b'<optgroup label="Phones">' in res.data and b'<optgroup label="Tablets">' in res.data
+    assert b'Desktop / custom size' in res.data
+    assert res.data.index(b'Desktop / custom size') < res.data.index(b'Pixel 7') < res.data.index(b'iPad Pro 11')
+
+    # The plain HTTP client renders no pages, there is nothing to emulate
+    res = client.get(url_for("ui.browser_config.browser_config_edit", config_id="html_requests"))
+    assert b'name="device"' not in res.data
+
+
+def test_device_profile_saved_through_the_form(client, live_server, measure_memory_usage, datastore_path):
+    datastore = client.application.config.get('DATASTORE')
+
+    # A leftover viewport is cleared when a device is picked
+    res = _add_browser(client, label="Phone", base_fetcher="html_playwright_builtin", browser_type='chromium',
+                       device='Pixel 7', viewport_width=768, viewport_height=1024)
+    assert b"Phone" in res.data
+    cid = next(c for c, e in datastore.browser_config_store.all().items() if e.get('label') == "Phone")
+    stored = datastore.browser_config_store.get(cid)['browser_config']
+    assert stored.get('device') == 'Pixel 7'
+    assert stored.get('viewport_width') is None and stored.get('viewport_height') is None
+
+    # The edit page shows it selected
+    res = client.get(url_for("ui.browser_config.browser_config_edit", config_id=cid))
+    assert b'<option selected value="Pixel 7">' in res.data
+
+    # A device that doesn't exist, or Firefox emulating a phone, is refused by the form
+    before = len(datastore.browser_config_store.all())
+    _add_browser(client, label="Bogus device", base_fetcher="html_playwright_builtin", browser_type='chromium',
+                 device='Nokia 3310')
+    res = _add_browser(client, label="Firefox phone", base_fetcher="html_playwright_builtin", browser_type='firefox',
+                       device='Pixel 7')
+    assert b"Firefox can" in res.data
+    assert len(datastore.browser_config_store.all()) == before
+
+
+def test_live_browser_steps_session_uses_device_and_user_agent():
+    """The Browser Steps / preview session must emulate the same device as a real check,
+    including the device's User-Agent, while a per-watch User-Agent still wins."""
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock
+    from changedetectionio.browser_steps.browser_steps import browsersteps_live_ui
+    from changedetectionio.model.browser_config import FetcherConfig
+    from changedetectionio.model.browser_devices import DEVICE_PRESETS
+
+    def connect(headers):
+        page = MagicMock()
+        page.wait_for_timeout = AsyncMock()
+        context = MagicMock()
+        context.new_page = AsyncMock(return_value=page)
+        browser = MagicMock()
+        browser.new_context = AsyncMock(return_value=context)
+        ui = browsersteps_live_ui(playwright_browser=browser, headers=headers,
+                                  browser_config=FetcherConfig(device='iPhone 15 Pro'))
+        asyncio.run(ui.connect())
+        return browser.new_context.call_args.kwargs
+
+    kwargs = connect(headers={})
+    assert kwargs['user_agent'] == DEVICE_PRESETS['iPhone 15 Pro']['user_agent']
+    assert kwargs['is_mobile'] is True and kwargs['viewport'] == DEVICE_PRESETS['iPhone 15 Pro']['viewport']
+
+    kwargs = connect(headers={'User-Agent': 'WatchAgent/2.0'})
+    assert kwargs['user_agent'] == 'WatchAgent/2.0'
+
+
+@pytest.mark.skipif(not os.getenv('ENABLE_DEBUG_CONTENT_FETCHER'),
+                    reason="Needs ENABLE_DEBUG_CONTENT_FETCHER (set in the test-browser-config CI step)")
+def test_device_reaches_the_fetcher(client, live_server, measure_memory_usage, datastore_path):
+    """End-to-end through a real check: the device's context options and User-Agent arrive at
+    the fetcher (the debug fetcher echoes them into the snapshot)."""
+    from changedetectionio.model.browser_devices import DEVICE_PRESETS
+    datastore = client.application.config.get('DATASTORE')
+
+    _add_browser(client, label="Debug phone", base_fetcher="html_debug_test_browser", device='Pixel 7')
+    cid = next(c for c, e in datastore.browser_config_store.all().items() if e.get('label') == "Debug phone")
+
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'fetch_backend': cid})
+    # Read the snapshot itself, the preview page HTML-escapes the JSON
+    snapshot = _wait_for_debug_snapshot(client, datastore, uuid)
+    assert '"is_mobile": true' in snapshot
+    assert '"has_touch": true' in snapshot
+    assert '"device_scale_factor": 1' in snapshot
+    assert DEVICE_PRESETS['Pixel 7']['user_agent'] in snapshot
+
+
+def test_browsers_table_has_css_hooks(client, live_server, measure_memory_usage, datastore_path):
+    """Deployments hide parts of the browsers table with CSS alone, so every cell, row and chip
+    must stay addressable by class."""
+    _add_browser(client, label="Phone", base_fetcher="html_playwright_builtin", browser_type='chromium',
+                 device='Pixel 7', locale='de-DE')
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    for column in (b'col-default', b'col-browser', b'col-capabilities', b'col-actions'):
+        assert b'<th class="' + column in res.data
+        assert b'<td class="' + column in res.data
+    assert b'browser-engine-html_requests' in res.data
+    assert b'browser-engine-html_playwright_builtin' in res.data
+    assert b'browser-chip--cap-screenshots' in res.data
+    assert b'browser-chip--plain-text' in res.data
+    assert b'browser-chip--device">Pixel 7<' in res.data
+    assert b'browser-chip--locale">de-DE<' in res.data
+
+
+def test_watch_browser_picker_links_user_variations(client, live_server, measure_memory_usage, datastore_path):
+    """On the watch edit page a browser the user added links to its edit page; built-ins don't."""
+    datastore = client.application.config.get('DATASTORE')
+    _add_browser(client, label="My firefox", base_fetcher="html_playwright_builtin", browser_type='firefox')
+    cid = next(c for c, e in datastore.browser_config_store.all().items() if e.get('label') == "My firefox")
+    uuid = datastore.add_watch(url='https://example.com', extras={'paused': True})
+
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+    edit_url = url_for("ui.browser_config.browser_config_edit", config_id=cid).encode()
+    assert b'<a href="' + edit_url + b'" title="Edit this browser">Local Playwright: My firefox</a>' in res.data
+    # Still a normal radio choice, same markup WTForms would produce
+    assert f'type="radio" value="{cid}"'.encode() in res.data
+    assert b'<ul id="fetch_backend" class="fetch-backend">' in res.data
+    # Built-in engines aren't linked
+    assert url_for("ui.browser_config.browser_config_edit", config_id="html_requests").encode() not in res.data

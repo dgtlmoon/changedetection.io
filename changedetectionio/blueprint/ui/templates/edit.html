@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, only_playwright_type_watches_warning, highlight_trigger_ignored_explainer, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, only_playwright_type_watches_warning, highlight_trigger_ignored_explainer, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field, render_browser_choice_field %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -166,7 +166,7 @@
                     </div>
                     {% else %}
                     <div class="pure-control-group inline-radio">
-                        {{ render_field(form.fetch_backend, class="fetch-backend") }}
+                        {{ render_browser_choice_field(form.fetch_backend, browser_variation_ids, class="fetch-backend") }}
                         <span class="pure-form-message-inline">
                             <p>{{ _('Use the <strong>Basic</strong> method (default) where your watched sites don\'t need Javascript to render.')|safe }}</p>
                             <p>{{ _('The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.')|safe }}</p>
