@@ -183,6 +183,24 @@ class difference_detection_processor():
         logger.info(f"Using preloaded Add-Watch snapshot for {self.watch.get('uuid')} - skipping network fetch")
         return True
 
+    def _use_plugin_response(self, browser_request, empty_pages_are_a_change, ignore_status_codes):
+        """Fill the fetcher from a page a plugin supplied (BrowserRequest.response), with the same
+        empty-page and status-code rules the fetchers apply."""
+        from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
+        response = browser_request.response
+        content = response.content or ''
+        status_code = response.status_code or 200
+        self.fetcher.content = content
+        self.fetcher.raw_content = content.encode('utf-8') if isinstance(content, str) else content
+        self.fetcher.status_code = status_code
+        self.fetcher.headers = dict(response.headers or {})
+        logger.debug(f"Watch {self.watch_uuid}: using the page a plugin supplied (status {status_code}), "
+                     f"'{browser_request.fetcher_name}' was not run")
+        if not content.strip() and not empty_pages_are_a_change:
+            raise EmptyReply(url=browser_request.url, status_code=status_code)
+        if status_code != 200 and not ignore_status_codes:
+            raise Non200ErrorCodeReceived(url=browser_request.url, status_code=status_code, page_html=content)
+
     async def call_browser(self, preferred_proxy_id=None):
 
         from requests.structures import CaseInsensitiveDict
@@ -205,42 +223,8 @@ class difference_detection_processor():
 
         proxy_url = None
         if preferred_proxy_id:
-            # An engine that reaches the web through someone else's browser service handles its
-            # own egress, so our proxy must not be layered on top (Fetcher.ignores_proxy_setting).
-            if not getattr(fetcher_obj, 'ignores_proxy_setting', False):
-                proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{redact_proxy_url(proxy_url)}' for {url}")
-            else:
-                logger.debug(f"Skipping proxy data - '{prefer_fetch_backend}' connects to an "
-                             f"external browser service that handles its own egress.")
-
-        logger.debug(f"Using proxy '{redact_proxy_url(proxy_url)}' for {self.watch['uuid']}")
-
-        # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
-        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
-        self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   custom_browser_connection_url=custom_browser_connection_url,
-                                   screenshot_format=self.screenshot_format,
-                                   worker_id=self.worker_id
-                                   )
-
-        # Stamp the resolved backend name so downstream consumers (processors, plugins)
-        # can read it directly instead of re-deriving it from the fetcher class name.
-        self.fetcher.backend_name = prefer_fetch_backend
-        # Inject the resolved per-watch browser behaviour; fetchers that read it apply what
-        # they can, others ignore it. Never None so consumers can read attributes freely.
-        self.fetcher.browser_config = browser_config
-        try:
-            logger.debug(
-                f"Watch {self.watch.get('uuid')} fetch: backend='{prefer_fetch_backend}' "
-                f"browser_config={browser_config.model_dump() if browser_config else None}"
-            )
-        except Exception as e:
-            logger.debug(f"Could not log browser_config: {e}")
-
-        if self.watch.has_browser_steps:
-            self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
-            self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
+            proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
+            logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{redact_proxy_url(proxy_url)}' for {url}")
 
         # Tweak the base config with the per-watch ones
         from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
@@ -249,8 +233,8 @@ class difference_detection_processor():
         # Profile-level User-Agent from the selected browser config (migrated from the old
         # per-backend settings.requests.default_ua). Applied before the watch's own headers so an
         # explicit per-watch User-Agent still overrides it. Honoured by every engine.
-        if self.fetcher.browser_config:
-            self.fetcher.browser_config.apply_user_agent(request_headers)
+        if browser_config:
+            browser_config.apply_user_agent(request_headers)
 
         request_headers.update(self.watch.get('headers', {}))
         request_headers.update(self.datastore.get_all_base_headers())
@@ -269,6 +253,71 @@ class difference_detection_processor():
             if isinstance(value, str) and JINJA2_MARKER_PATTERN.search(value):
                 request_headers.update({header_name: jinja_render(template_str=value)})
 
+        request_body = self.watch.get('body')
+        if request_body and JINJA2_MARKER_PATTERN.search(request_body):
+            request_body = jinja_render(template_str=request_body)
+
+        # Everything about to go to the browser, in one place, so plugins can change any of it
+        # (headers, cookies, proxy, method, body) - see changedetectionio/browser_lifecycle.py
+        from changedetectionio.browser_lifecycle import (BrowserRequest, apply_browser_request_alter,
+                                                         apply_browser_request_finished)
+        browser_request = BrowserRequest(
+            url=url,
+            fetcher_name=prefer_fetch_backend,
+            fetcher_class=fetcher_obj,
+            browser_config=browser_config,
+            headers=request_headers,
+            proxy_url=proxy_url,
+            method=self.watch.get('method'),
+            body=request_body,
+            watch_uuid=self.watch_uuid,
+            purpose='check',
+        )
+        # Raises to stop the fetch, the plugin's message becomes the watch's error
+        await apply_browser_request_alter(browser_request, watch=self.watch, datastore=self.datastore)
+
+        # Applied after the plugins so none of them can undo it: an engine that reaches the web
+        # through someone else's browser service handles its own egress, so our proxy must not be
+        # layered on top (Fetcher.ignores_proxy_setting).
+        proxy_url = browser_request.proxy_url
+        if proxy_url and getattr(fetcher_obj, 'ignores_proxy_setting', False):
+            logger.debug(f"Skipping proxy data - '{prefer_fetch_backend}' connects to an "
+                         f"external browser service that handles its own egress.")
+            proxy_url = None
+
+        logger.debug(f"Using proxy '{redact_proxy_url(proxy_url)}' for {self.watch['uuid']}")
+
+        # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
+        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
+        self.fetcher = fetcher_obj(proxy_override=proxy_url,
+                                   custom_browser_connection_url=custom_browser_connection_url,
+                                   screenshot_format=self.screenshot_format,
+                                   worker_id=self.worker_id
+                                   )
+
+        # Stamp the resolved backend name so downstream consumers (processors, plugins)
+        # can read it directly instead of re-deriving it from the fetcher class name.
+        self.fetcher.backend_name = prefer_fetch_backend
+        # Inject the resolved per-watch browser behaviour; fetchers that read it apply what
+        # they can, others ignore it. Never None so consumers can read attributes freely.
+        self.fetcher.browser_config = browser_config
+        # Cookies from plugins, scoped to the watched URL unless they name their own domain/url
+        self.fetcher.cookies = browser_request.cookies_for_browser()
+        if self.fetcher.cookies and not getattr(fetcher_obj, 'supports_cookies', False):
+            logger.warning(f"'{prefer_fetch_backend}' can't set cookies, ignoring {len(self.fetcher.cookies)} "
+                           f"cookie(s) for watch {self.watch_uuid}")
+        try:
+            logger.debug(
+                f"Watch {self.watch.get('uuid')} fetch: backend='{prefer_fetch_backend}' "
+                f"browser_config={browser_config.model_dump() if browser_config else None}"
+            )
+        except Exception as e:
+            logger.debug(f"Could not log browser_config: {e}")
+
+        if self.watch.has_browser_steps:
+            self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
+            self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
+
         # Requests timeout now lives on the plain client's browser config (FetcherConfig.timeout,
         # default DEFAULT_REQUEST_TIMEOUT_SECONDS; existing installs migrated by update_35), and the
         # requests fetcher applies that via effective_timeout(). This is only a defensive base value
@@ -277,11 +326,6 @@ class difference_detection_processor():
         timeout = self.datastore.data['settings']['requests'].get('timeout') \
             or int(os.getenv('DEFAULT_SETTINGS_REQUESTS_TIMEOUT', 45))
 
-        request_body = self.watch.get('body')
-        if request_body and JINJA2_MARKER_PATTERN.search(request_body):
-            request_body = jinja_render(template_str=request_body)
-
-        request_method = self.watch.get('method')
         ignore_status_codes = self.watch.get('ignore_status_codes', False)
 
         # Configurable per-watch or global extra delay before extracting text (for webDriver types)
@@ -299,24 +343,37 @@ class difference_detection_processor():
 
         # And here we go! call the right browser with browser-specific settings
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
-        # All fetchers are now async
-        await self.fetcher.run(
-            current_include_filters=self.watch.get('include_filters'),
-            empty_pages_are_a_change=empty_pages_are_a_change,
-            fetch_favicon=self.watch.favicon_is_expired() and self.datastore.data['settings']['application'].get('ui', {}).get('favicons_enabled', True),
-            ignore_status_codes=ignore_status_codes,
-            is_binary=is_binary,
-            request_body=request_body,
-            request_headers=request_headers,
-            request_method=request_method,
-            screenshot_format=self.screenshot_format,
-            timeout=timeout,
-            url=url,
-            watch_uuid=self.watch_uuid,
-        )
+        fetch_error = None
+        try:
+            if browser_request.response is not None:
+                # A plugin already has the page, use it instead of running the browser
+                self._use_plugin_response(browser_request, empty_pages_are_a_change, ignore_status_codes)
+            else:
+                # All fetchers are now async
+                await self.fetcher.run(
+                    current_include_filters=self.watch.get('include_filters'),
+                    empty_pages_are_a_change=empty_pages_are_a_change,
+                    fetch_favicon=self.watch.favicon_is_expired() and self.datastore.data['settings']['application'].get('ui', {}).get('favicons_enabled', True),
+                    ignore_status_codes=ignore_status_codes,
+                    is_binary=is_binary,
+                    request_body=browser_request.body,
+                    request_headers=browser_request.headers,
+                    request_method=browser_request.method,
+                    screenshot_format=self.screenshot_format,
+                    timeout=timeout,
+                    url=url,
+                    watch_uuid=self.watch_uuid,
+                )
 
-        # @todo .quit here could go on close object, so we can run JS if change-detected
-        await self.fetcher.quit(watch=self.watch)
+                # @todo .quit here could go on close object, so we can run JS if change-detected
+                await self.fetcher.quit(watch=self.watch)
+        except BaseException as e:
+            fetch_error = e
+            raise
+        finally:
+            # Always, so plugins can clean up whatever they set up in browser_request_alter()
+            await apply_browser_request_finished(browser_request, fetcher=self.fetcher, error=fetch_error,
+                                                 watch=self.watch, datastore=self.datastore)
 
         # Sanitize lone surrogates - these can appear when servers return malformed/mixed-encoding
         # content that gets decoded into surrogate characters (e.g. \udcad). Without this,

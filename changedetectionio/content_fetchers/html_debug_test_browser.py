@@ -25,6 +25,12 @@ class fetcher(Fetcher):
     supports_browser_type = True
     supports_delete_created_files = True
     supports_device_emulation = True
+    supports_page_settings = True
+    supports_cookies = True
+
+    def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
+        super().__init__(**kwargs)
+        self.proxy_override = proxy_override
 
     async def run(self,
                   url=None,
@@ -46,6 +52,10 @@ class fetcher(Fetcher):
             # ...and every capability (supports_*) this fetcher advertises.
             'capabilities': FetcherCapabilities.from_fetcher(type(self)).model_dump(),
             'request_headers': {k: v for k, v in (request_headers or {}).items()},
+            'request_method': request_method,
+            'request_body': request_body,
+            'cookies': getattr(self, 'cookies', None) or [],
+            'proxy': getattr(self, 'proxy_override', None),
         }
         self.content = json.dumps(payload, indent=2, sort_keys=True, default=str)
         self.raw_content = self.content.encode('utf-8')

@@ -173,6 +173,8 @@ class fetcher(Fetcher):
     supports_xpath_element_data = True
     supports_request_blocking = True
     supports_device_emulation = True
+    supports_page_settings = True
+    supports_cookies = True
 
     # When True, _get_browser() launches a local browser instead of connecting to a remote
     # CDP endpoint (overridden by the html_playwright_builtin subclass).
@@ -326,6 +328,10 @@ class fetcher(Fetcher):
             # Set user agent to prevent Cloudflare from blocking the browser
             # Use the default one configured in the App.py model that's passed from fetch_site_status.py
             context = await browser.new_context(**context_kwargs)
+            if self.cookies:
+                await context.add_cookies(self.cookies)
+                logger.debug(f"Added {len(self.cookies)} cookie(s) to the browser context: "
+                             f"{', '.join(c['name'] for c in self.cookies)}")
 
             self.page = await context.new_page()
 

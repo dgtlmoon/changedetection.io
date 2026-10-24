@@ -243,20 +243,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         browsersteps_start_session = {'start_time': time.time()}
 
-        # Build proxy dict first — needed by both the CDP path and fetcher-specific launchers
         proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
-        proxy = None
-        if proxy_id:
-            proxy_url = datastore.proxy_list.get(proxy_id, {}).get('url')
-            if proxy_url:
-                from changedetectionio.proxy_url import proxy_credentials, redact_proxy_url
-                username, password = proxy_credentials(proxy_url)
-                proxy = {'server': proxy_url}
-                if username:
-                    proxy['username'] = username
-                if password:
-                    proxy['password'] = password
-                logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {redact_proxy_url(proxy_url)}")
+        proxy_url = datastore.proxy_list.get(proxy_id, {}).get('url') if proxy_id else None
 
         # Resolve the fetcher backend for this watch so we can ask it to launch its own browser
         # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP).
@@ -274,6 +262,40 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # live browser-steps session matches what the watch actually fetches with.
         _entry, fetcher_name, browser_config = datastore.browser_config_store.engine_and_config(watch.get_fetch_backend)
 
+        # The same plugin hook a real check gets (purpose='browser_steps'), so a plugin's headers,
+        # cookies and proxy apply to the live session too - see changedetectionio/browser_lifecycle.py
+        from requests.structures import CaseInsensitiveDict
+        from changedetectionio import content_fetchers
+        from changedetectionio.browser_lifecycle import BrowserRequest, apply_browser_request_alter
+        fetcher_class = getattr(content_fetchers, fetcher_name, None)
+        browser_request = BrowserRequest(
+            url=watch.link,
+            fetcher_name=fetcher_name,
+            fetcher_class=fetcher_class,
+            browser_config=browser_config,
+            headers=CaseInsensitiveDict(watch.get('headers') or {}),
+            proxy_url=proxy_url,
+            method=watch.get('method'),
+            body=watch.get('body'),
+            watch_uuid=watch_uuid,
+            purpose='browser_steps',
+        )
+        await apply_browser_request_alter(browser_request, watch=watch, datastore=datastore)
+
+        # Proxy dict for both the CDP path and fetcher-specific launchers. Same rule as a check: an
+        # engine that uses someone else's browser service handles its own egress.
+        proxy = None
+        proxy_url = browser_request.proxy_url
+        if proxy_url and not getattr(fetcher_class, 'ignores_proxy_setting', False):
+            from changedetectionio.proxy_url import proxy_credentials, redact_proxy_url
+            username, password = proxy_credentials(proxy_url)
+            proxy = {'server': proxy_url}
+            if username:
+                proxy['username'] = username
+            if password:
+                proxy['password'] = password
+            logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {redact_proxy_url(proxy_url)}")
+
         browser, playwright_context = await acquire_browser_for_fetcher(
             fetcher_name, proxy=proxy, keepalive_ms=keepalive_ms, browser_config=browser_config)
 
@@ -284,8 +306,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             playwright_browser=browser,
             proxy=proxy,
             start_url=watch.link,
-            headers=watch.get('headers'),
+            headers=dict(browser_request.headers),
             browser_config=browser_config,
+            cookies=browser_request.cookies_for_browser(),
+            browser_request=browser_request,
+            watch=watch,
+            datastore=datastore,
         )
         await browserstepper.connect(proxy=proxy)
         browsersteps_start_session['browserstepper'] = browserstepper

@@ -87,11 +87,23 @@ def _applicable_fields_for(capabilities):
     return FetcherConfig.applicable_fields(capabilities)
 
 
-def _entry_to_formdata(entry):
-    """Flatten a browsers.json entry into flat form field values (base is contextual, not a field)."""
+def _entry_to_formdata(entry, sections=()):
+    """Flatten a browsers.json entry into flat form field values (base is contextual, not a field).
+    Each plugin section's saved settings go to its sub-form (plugin_<id>)."""
     data = {'label': entry.get('label')}
     data.update(entry.get('browser_config') or {})
+    saved = data.pop('plugin_settings', None) or {}
+    for section in sections:
+        data[section.field_name] = saved.get(section.plugin_id) or {}
     return data
+
+
+def _plugin_sections_and_form(base_fetcher, capabilities):
+    """Plugin sections for this engine, and BrowserOptionsForm with their sub-forms attached."""
+    from .form_browseroptions import BrowserOptionsForm
+    from changedetectionio.browser_lifecycle import form_class_with_sections, get_browser_config_sections
+    sections = get_browser_config_sections(base_fetcher, capabilities)
+    return sections, form_class_with_sections(BrowserOptionsForm, sections)
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -134,8 +146,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 return True
         return False
 
-    def _validate_and_build_config(form, capabilities):
+    def _validate_and_build_config(form, capabilities, sections=(), saved_plugin_settings=None):
         """Return a validated FetcherConfig, or None (with errors attached to form).
+
+        Each plugin section's sub-form becomes plugin_settings[<plugin_id>]. Settings of plugins
+        that aren't offering a section right now (uninstalled, or unavailable here) are kept as
+        they were, so saving the page never wipes them.
 
         `capabilities` is the base engine's capability set and acts as the allowlist: only fields
         that engine can honour are taken from the submitted form (FetcherConfig.from_submitted),
@@ -143,7 +159,20 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         """
         from changedetectionio.model.browser_config import FetcherConfig
         try:
-            cfg = FetcherConfig.from_submitted(form.to_fetcher_config_dict(), capabilities)
+            data = form.to_fetcher_config_dict()
+            from changedetectionio.browser_lifecycle import section_settings_error
+            plugin_settings = dict(saved_plugin_settings or {})
+            for section in sections:
+                section_data = getattr(form, section.field_name).data
+                problem = section_settings_error(section_data)
+                if problem:
+                    logger.error(f"Refusing settings from plugin '{section.plugin_id}': {problem}")
+                    flash(f"{section.label}: {problem}", 'error')
+                    return None
+                plugin_settings[section.plugin_id] = section_data
+            if plugin_settings:
+                data['plugin_settings'] = plugin_settings
+            cfg = FetcherConfig.from_submitted(data, capabilities)
             # Fields this engine cannot work without (an external browser with no endpoint has
             # nowhere to connect) - declared on the field via _needs(required=True).
             for name in FetcherConfig.required_fields(capabilities):
@@ -174,7 +203,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if _browser_config_locked():
             flash(gettext("Browser configuration is locked on this instance"), 'error')
             return redirect(url_for('ui.browser_config.browsers_overview'))
-        from .form_browseroptions import BrowserOptionsForm
         from changedetectionio import content_fetchers
         from changedetectionio.content_fetchers.base import FetcherCapabilities
 
@@ -186,12 +214,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return redirect(url_for('ui.browser_config.browsers_overview'))
         base_label = dict(content_fetchers.available_fetchers()).get(base_fetcher, base_fetcher)
 
-        form = BrowserOptionsForm(request.form if request.method == 'POST' else None)
+        sections, form_class = _plugin_sections_and_form(base_fetcher, caps.model_dump())
+        form = form_class(request.form if request.method == 'POST' else None)
         if request.method == 'POST' and form.validate():
             if _label_is_taken(form.label.data):
                 form.label.errors.append(gettext("A browser with this name already exists"))
             else:
-                cfg = _validate_and_build_config(form, caps)
+                cfg = _validate_and_build_config(form, caps, sections)
                 if cfg is not None:
                     datastore.browser_config_store.add(
                         label=form.label.data,
@@ -203,7 +232,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         locale_choices, timezone_choices = _autocomplete_choices()
         return render_template("browser-config-form.html", form=form, mode='add',
-                               base_fetcher=base_fetcher, base_label=base_label,
+                               base_fetcher=base_fetcher, base_label=base_label, plugin_sections=sections,
                                applicable=_applicable_fields_for(caps),
                                locale_choices=locale_choices, timezone_choices=timezone_choices,
                                form_action=url_for('ui.browser_config.browser_config_add', base_fetcher=base_fetcher))
@@ -214,7 +243,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if _browser_config_locked():
             flash(gettext("Browser configuration is locked on this instance"), 'error')
             return redirect(url_for('ui.browser_config.browsers_overview'))
-        from .form_browseroptions import BrowserOptionsForm
         from changedetectionio.model.browser_config import list_builtin_browsers
 
         # Built-in engine browsers are editable too: their config is stored in browsers.json
@@ -229,14 +257,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         base = config_id if is_builtin else (entry or {}).get('base_fetcher')
         base_label = str(builtins[config_id]['label']) if is_builtin else base
+        sections, form_class = _plugin_sections_and_form(base, _caps_for(base) if base else None)
+        saved_plugin_settings = ((entry or {}).get('browser_config') or {}).get('plugin_settings') or {}
 
         if request.method == 'POST':
-            form = BrowserOptionsForm(request.form)
+            form = form_class(request.form)
             if form.validate():
                 if (not is_builtin) and _label_is_taken(form.label.data, exclude_id=config_id):
                     form.label.errors.append(gettext("A browser with this name already exists"))
                 else:
-                    cfg = _validate_and_build_config(form, _caps_for(base) if base else None)
+                    cfg = _validate_and_build_config(form, _caps_for(base) if base else None,
+                                                     sections, saved_plugin_settings)
                     if cfg is not None:
                         datastore.browser_config_store.upsert(
                             config_id,
@@ -247,12 +278,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                         flash(gettext("Browser config updated"))
                         return redirect(url_for('ui.browser_config.browsers_overview'))
         else:
-            form = BrowserOptionsForm(data=_entry_to_formdata(entry) if entry else {'label': base_label})
+            form = form_class(data=_entry_to_formdata(entry, sections) if entry else {'label': base_label})
 
         locale_choices, timezone_choices = _autocomplete_choices()
         return render_template("browser-config-form.html", form=form, mode='edit',
                                config_id=config_id, is_builtin=is_builtin,
-                               base_fetcher=base, base_label=base_label,
+                               base_fetcher=base, base_label=base_label, plugin_sections=sections,
                                applicable=_applicable_fields_for(_caps_for(base) if base else None),
                                locale_choices=locale_choices, timezone_choices=timezone_choices,
                                form_action=url_for('ui.browser_config.browser_config_edit', config_id=config_id))

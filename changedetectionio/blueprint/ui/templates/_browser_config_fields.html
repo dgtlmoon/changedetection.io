@@ -12,6 +12,34 @@
    page only shows the Language and Request tabs when this engine has a setting in them. #}
 {% from '_helpers.html' import render_field, render_checkbox_field %}
 
+{# A plugin's section (hook browser_config_form_section): its own template if it gave one,
+   otherwise each field of its sub-form in the usual layout #}
+{% macro render_plugin_section(section) %}
+{% set subform = form[section.field_name] %}
+<fieldset class="browser-plugin-section browser-plugin-{{ section.plugin_id }}">
+    <legend>{{ section.label }}</legend>
+    {% if section.description %}<p class="pure-form-message-inline">{{ section.description }}</p>{% endif %}
+    {% if section.template %}
+        {% include section.template %}
+    {% else %}
+        {% for field in subform %}
+            {% if field.type in ('CSRFTokenField', 'HiddenField') %}
+                {{ field() }}
+            {% else %}
+            <div class="pure-control-group{% if field.type == 'RadioField' %} inline-radio{% endif %}">
+                {% if field.type == 'BooleanField' %}{{ render_checkbox_field(field) }}{% else %}{{ render_field(field) }}{% endif %}
+                {% if field.description %}<span class="pure-form-message-inline">{{ field.description }}</span>{% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</fieldset>
+{% endmacro %}
+
+{% macro render_plugin_sections_for_tab(tab) %}
+{% for section in plugin_sections or [] if section.tab == tab %}{{ render_plugin_section(section) }}{% endfor %}
+{% endmacro %}
+
 <div class="tab-pane-inner" id="browser">
 <fieldset>
     <div class="pure-control-group">
@@ -54,8 +82,8 @@
             <button type="button" class="pure-button button-small" data-w="" data-h="">{{ _('Clear') }}</button>
         </div>
     </div>
-    <div class="pure-control-group">{{ render_field(form.viewport_width) }}</div>
-    <div class="pure-control-group">{{ render_field(form.viewport_height) }}</div>
+    <div class="pure-control-group browser-viewport">{{ render_field(form.viewport_width) }} {{ render_field(form.viewport_height) }}</div>
+
     <div class="pure-control-group">
         <span class="pure-form-message-inline" id="viewport-set-by-device" style="display: none;">{{ _('Set by the emulated device above.') }}</span>
     </div>
@@ -76,6 +104,7 @@
 </fieldset>
 {% endif %}
 
+{{ render_plugin_sections_for_tab('browser') }}
 </div>
 
 {% if show_language_tab %}
@@ -96,6 +125,7 @@
         <span class="pure-form-message-inline">{{ _('Start typing to search - e.g. <code>Europe/Berlin</code>.')|safe }}</span>
     </div>
 </fieldset>
+{{ render_plugin_sections_for_tab('language') }}
 </div>
 {% endif %}
 
@@ -138,8 +168,15 @@
 {% endif %}
 
 
+{{ render_plugin_sections_for_tab('request') }}
 </div>
 {% endif %}
+
+{% for section in plugin_sections or [] if section.has_own_tab %}
+<div class="tab-pane-inner" id="plugin-tab-{{ section.plugin_id }}">
+{{ render_plugin_section(section) }}
+</div>
+{% endfor %}
 
 <script>
 (function () {

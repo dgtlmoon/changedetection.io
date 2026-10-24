@@ -483,6 +483,13 @@ def _is_safe_valid_url(test_url):
     return is_safe_valid_url(test_url)
 
 
+@app.template_global('watch_list_extra_text')
+def _watch_list_extra_text(watch):
+    from .plugin_settings import collect_watch_list_extra_text
+
+    return collect_watch_list_extra_text(watch)
+
+
 @app.template_global('get_html_head_extras')
 def _get_html_head_extras():
     from .pluggy_interface import collect_html_head_extras

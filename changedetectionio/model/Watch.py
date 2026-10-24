@@ -555,9 +555,13 @@ class model(EntityPersistenceMixin, watch_base):
         checks and the watchlist status icon so they agree with what actually fetches the page."""
         store = self.browser_config_store
         if store is None:
-            return self.get_fetch_backend or 'html_requests'
-        _entry, engine, _cfg = store.engine_and_config(self.get_fetch_backend)
-        return engine or 'html_requests'
+            engine = self.get_fetch_backend or 'html_requests'
+        else:
+            _entry, engine, _cfg = store.engine_and_config(self.get_fetch_backend)
+            engine = engine or 'html_requests'
+        # Same plugin override the fetch applies, so capability checks agree with what will fetch
+        from changedetectionio.plugin_settings import apply_fetch_engine_override
+        return apply_fetch_engine_override(self, engine)
 
     @property
     def fetcher_supports_screenshots(self):

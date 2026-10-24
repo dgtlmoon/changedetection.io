@@ -7,6 +7,16 @@ from flask import url_for
 from .util import live_server_setup, wait_for_all_checks
 
 
+@pytest.fixture(autouse=True)
+def html_webdriver_is_playwright(monkeypatch):
+    """These tests use html_webdriver as "a full browser". Without a Playwright driver URL it
+    resolves to Selenium, which doesn't apply a profile's screen size / locale / timezone
+    (supports_page_settings), so pin it to the Playwright engine. Nothing here connects to it."""
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
+    monkeypatch.setattr(content_fetchers, 'html_webdriver', playwright_fetcher)
+
+
 def _add_browser(client, label="Mobile de-DE", base_fetcher="html_webdriver", **cfg):
     # Add via the per-base "Add variation" route (base is in the URL, not the form).
     data = {'label': label}
@@ -24,7 +34,7 @@ def _wait_for_debug_snapshot(client, datastore, uuid, timeout=15):
     """
     deadline = time.time() + timeout
     while time.time() < deadline:
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         watch = datastore.data['watching'][uuid]
         if watch.history_n:
@@ -795,6 +805,7 @@ def acme_browser_plugin():
         supports_xpath_element_data = True
         supports_custom_user_agent = True
         supports_request_blocking = True
+        supports_page_settings = True
 
         def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
             super().__init__(**kwargs)
@@ -1241,9 +1252,69 @@ def test_watch_browser_picker_links_user_variations(client, live_server, measure
 
     res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
     edit_url = url_for("ui.browser_config.browser_config_edit", config_id=cid).encode()
-    assert b'<a href="' + edit_url + b'" title="Edit this browser">Local Playwright: My firefox</a>' in res.data
+    # Only the browser's own name is the link, the engine name in front of it is plain text
+    assert b'Local Playwright: <a href="' + edit_url + b'" title="Edit this browser">My firefox</a>' in res.data
     # Still a normal radio choice, same markup WTForms would produce
     assert f'type="radio" value="{cid}"'.encode() in res.data
     assert b'<ul id="fetch_backend" class="fetch-backend">' in res.data
     # Built-in engines aren't linked
     assert url_for("ui.browser_config.browser_config_edit", config_id="html_requests").encode() not in res.data
+
+
+def test_page_settings_only_for_engines_that_apply_them():
+    """Screen size, locale and timezone need supports_page_settings, not just screenshots: an engine
+    that takes screenshots but can't set those (Selenium today, or a plugin engine such as a remote
+    solver) mustn't show or store them."""
+    from changedetectionio.content_fetchers.base import FetcherCapabilities
+    from changedetectionio.content_fetchers.playwright import fetcher as playwright_fetcher
+    from changedetectionio.content_fetchers.webdriver_selenium import fetcher as selenium_fetcher
+    from changedetectionio.model.browser_config import FetcherConfig
+
+    page_fields = {'viewport_width', 'viewport_height', 'locale', 'timezone_id'}
+    selenium = FetcherConfig.applicable_fields(FetcherCapabilities.from_fetcher(selenium_fetcher))
+    assert FetcherCapabilities.from_fetcher(selenium_fetcher).supports_screenshots
+    assert not page_fields & selenium
+    assert page_fields <= FetcherConfig.applicable_fields(FetcherCapabilities.from_fetcher(playwright_fetcher))
+
+
+def test_visual_selector_tab_only_when_the_browser_supports_it(client, live_server, measure_memory_usage, datastore_path):
+    """The Visual Selector needs element positions, which only a real browser provides."""
+    datastore = client.application.config.get('DATASTORE')
+    plain = datastore.add_watch(url='https://example.com/plain', extras={'paused': True, 'fetch_backend': 'html_requests'})
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=plain))
+    assert b'id="visualselector-tab"' not in res.data and b'id="visualselector"' not in res.data
+
+    _add_browser(client, label="Full browser", base_fetcher="html_playwright_builtin", browser_type='chromium')
+    cid = next(c for c, e in datastore.browser_config_store.all().items() if e.get('label') == "Full browser")
+    browser = datastore.add_watch(url='https://example.com/browser', extras={'paused': True, 'fetch_backend': cid})
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=browser))
+    assert b'id="visualselector-tab"' in res.data
+
+
+def test_visual_selector_tab_follows_group_override_and_system_default(client, live_server, measure_memory_usage, datastore_path):
+    """The tab follows the browser the watch really uses: its own choice, else its group's
+    override, else the system default browser."""
+    datastore = client.application.config.get('DATASTORE')
+    _add_browser(client, label="Full browser", base_fetcher="html_playwright_builtin", browser_type='chromium')
+    full = next(c for c, e in datastore.browser_config_store.all().items() if e.get('label') == "Full browser")
+
+    def has_tab(uuid):
+        return b'id="visualselector-tab"' in client.get(url_for("ui.ui_edit.edit_page", uuid=uuid)).data
+
+    # Watch on 'system', system default is the plain HTTP client
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+    uuid = datastore.add_watch(url='https://example.com/x', extras={'paused': True, 'fetch_backend': 'system'})
+    assert not has_tab(uuid)
+
+    # System default becomes a real browser
+    datastore.data['settings']['application']['fetch_backend'] = full
+    assert has_tab(uuid)
+
+    # A group overriding its watches' browser with the plain client wins over the system default
+    datastore.data['settings']['application']['fetch_backend'] = full
+    tag_uuid = datastore.add_tag(title='Plain group')
+    tag = datastore.data['settings']['application']['tags'][tag_uuid]
+    tag['browser_config_overrides_watch'] = True
+    tag['browser_config'] = 'html_requests'
+    datastore.data['watching'][uuid]['tags'] = [tag_uuid]
+    assert not has_tab(uuid)

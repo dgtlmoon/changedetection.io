@@ -198,6 +198,8 @@ class fetcher(Fetcher):
     supports_xpath_element_data = True
     supports_request_blocking = True
     supports_device_emulation = True
+    supports_page_settings = True
+    supports_cookies = True
     supports_pdf = True
 
     @classmethod
@@ -401,6 +403,10 @@ class fetcher(Fetcher):
             await self.page.setUserAgent(manage_user_agent(headers=request_headers, current_ua=await self.page.evaluate('navigator.userAgent')))
 
         await _configure_puppeteer_csp(self.page)
+        if self.cookies:
+            await self.page.setCookie(*self.cookies)
+            logger.debug(f"[{watch_uuid}] Added {len(self.cookies)} cookie(s) to the page: "
+                         f"{', '.join(c['name'] for c in self.cookies)}")
         if request_headers:
             await self.page.setExtraHTTPHeaders(request_headers)
 

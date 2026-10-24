@@ -26,7 +26,7 @@ orphans the watches that reference it.
 import os
 import uuid as uuid_builder
 from os import path
-from typing import ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 from loguru import logger
 from pydantic import BaseModel, Field, ValidationError, ValidationInfo, field_validator, model_validator
@@ -98,8 +98,8 @@ class FetcherConfig(BaseModel):
     Keep every field optional with a sensible default.
     """
     # Rendering / device
-    viewport_width: Optional[int] = _needs('supports_screenshots')   # px; None -> engine default
-    viewport_height: Optional[int] = _needs('supports_screenshots')
+    viewport_width: Optional[int] = _needs('supports_page_settings')   # px; None -> engine default
+    viewport_height: Optional[int] = _needs('supports_page_settings')
     # Device emulation (capability supports_device_emulation): a DEVICE_PRESETS name. Sets the
     # viewport, User-Agent, touch and mobile layout together. The device's screen size wins over
     # viewport_width/height (the form disables those); user_agent still overrides the device's.
@@ -109,8 +109,8 @@ class FetcherConfig(BaseModel):
     # viewport, not this, and a factor of 3 makes every screenshot 9x the pixels.
     device_scale_factor: Optional[float] = _needs('supports_device_emulation')
     # Identity / locale
-    locale: Optional[str] = _needs('supports_screenshots')           # e.g. 'de-DE' -> Accept-Language + navigator.language
-    timezone_id: Optional[str] = _needs('supports_screenshots')      # e.g. 'Europe/Berlin'
+    locale: Optional[str] = _needs('supports_page_settings')           # e.g. 'de-DE' -> Accept-Language + navigator.language
+    timezone_id: Optional[str] = _needs('supports_page_settings')      # e.g. 'Europe/Berlin'
     # No screenshot_format here: the processor decides it (JPEG, or PNG for image_ssim_diff, which
     # needs lossless images). Older browsers.json files may still carry the key; it's ignored.
     # Cost / bandwidth - block assets (capability-gated by supports_request_blocking)
@@ -133,6 +133,9 @@ class FetcherConfig(BaseModel):
     # user_agent: honoured by every engine (capability supports_custom_user_agent) via the
     # request_headers User-Agent channel.
     user_agent: Optional[str] = _needs('supports_custom_user_agent') # overrides the User-Agent header for this profile
+    # Settings plugins added to this browser's edit page (hook browser_config_form_section),
+    # {plugin_id: {field: value}}. Applies to every engine; each plugin decides where it shows.
+    plugin_settings: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
 
     @classmethod
     def applicable_fields(cls, capabilities):
@@ -293,6 +296,34 @@ class FetcherConfig(BaseModel):
         if v and any(ord(c) < 0x20 or ord(c) == 0x7f for c in v):
             raise ValueError("User-Agent cannot contain control characters")
         return v
+
+    def plugin_config(self, plugin_id):
+        """This browser's saved settings for `plugin_id` (a copy), {} when it has none."""
+        return dict((self.plugin_settings or {}).get(plugin_id) or {})
+
+    @field_validator('plugin_settings', mode='before')
+    @classmethod
+    def _validate_plugin_settings(cls, v, info: ValidationInfo):
+        # Loading browsers.json must not drop the whole browser over one plugin's bad entry (that
+        # orphans its watches), so on load bad entries are skipped; a submitted form is refused
+        from changedetectionio.browser_lifecycle import PLUGIN_ID_PATTERN
+        submitted = (info.context or {}).get('submitted')
+        if v is None:
+            return {}
+        if not isinstance(v, dict):
+            if submitted:
+                raise ValueError("plugin_settings must be a mapping of plugin id to settings")
+            logger.warning(f"Ignoring malformed plugin_settings in browsers.json: {v!r}")
+            return {}
+        clean = {}
+        for plugin_id, settings in v.items():
+            if not (isinstance(plugin_id, str) and PLUGIN_ID_PATTERN.match(plugin_id) and isinstance(settings, dict)):
+                if submitted:
+                    raise ValueError(f"Invalid settings for plugin {plugin_id!r}")
+                logger.warning(f"Ignoring malformed plugin settings for {plugin_id!r} in browsers.json")
+                continue
+            clean[plugin_id] = settings
+        return clean
 
     @field_validator('device')
     @classmethod
@@ -602,18 +633,21 @@ def list_watch_browser_choices(datastore):
         # A variation reads as "<engine short name>: <its name>" (e.g. "Local Playwright: firefox")
         # so it's clear which browser it's built on
         if cid in variation_ids:
-            label = f"{engine_short_description(entry.get('base_fetcher'))}: {label}"
+            label = f"{variation_ids[cid]}: {label}"
         choices[cid] = label
     # dict keeps each value's first position (built-ins stay in engine order) with its last label
     return list(choices.items())
 
 
 def list_user_variation_ids(datastore):
-    """Ids of the browsers the user added as variations - not the built-in engines, even when a
-    built-in has a saved override config under its own engine name (e.g. 'html_requests')."""
+    """{id: short name of the engine it's built on} for the browsers the user added as variations -
+    not the built-in engines, even when a built-in has a saved override config under its own
+    engine name (e.g. 'html_requests'). The short name is the "Local Playwright" in "Local
+    Playwright: My firefox"."""
     from changedetectionio import content_fetchers
     engines = {name for name, _description in content_fetchers.available_fetchers()}
-    return {cid for cid in datastore.browser_config_store.all() if cid not in engines}
+    return {cid: engine_short_description(entry.get('base_fetcher'))
+            for cid, entry in datastore.browser_config_store.all().items() if cid not in engines}
 
 
 def _system_default_label(datastore):

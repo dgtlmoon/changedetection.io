@@ -61,7 +61,15 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             default['proxy_list'] = available_proxies[0]
 
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
-        form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
+        # Plugin sections (hook settings_form_section, scope 'global'), saved in
+        # settings.application.plugin_settings
+        from changedetectionio.plugin_settings import form_class_with_sections, get_settings_sections, save_sections
+        plugin_sections = get_settings_sections('global')
+        stored_plugin_settings = datastore.data['settings']['application'].get('plugin_settings') or {}
+        for section in plugin_sections:
+            default[section.field_name] = dict(stored_plugin_settings.get(section.plugin_id) or {})
+        form = form_class_with_sections(forms.globalSettingsForm, plugin_sections)(
+                                        formdata=request.form if request.method == 'POST' else None,
                                         data=default,
                                         extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
@@ -105,6 +113,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     app_update.pop(nf, None)
 
                 datastore.data['settings']['application'].update(app_update)
+                problem = save_sections(form, plugin_sections, datastore.data['settings']['application'])
+                if problem:
+                    flash(problem, 'error')
 
                 # LLM config lives under settings.application.llm.* (post update_31).
                 # Hydrate the stored dict into LLMSettings, then merge form input over it.
@@ -268,6 +279,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             default_browser_label = dict((b['id'], b['label']) for b in list_builtin_browsers()).get(_default_id, _default_id)
 
         output = render_template("settings.html",
+                                plugin_settings_sections=plugin_sections,
                                 active_plugins=active_plugins,
                                 default_browser_label=default_browser_label,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),

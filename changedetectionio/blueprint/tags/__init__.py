@@ -171,9 +171,13 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("Tag not found"), "error")
             return redirect(url_for('watchlist.index'))
 
-        form = group_restock_settings_form(
+        # Plugin sections (hook settings_form_section, scope 'tag'), saved in plugin_settings
+        from changedetectionio.plugin_settings import form_class_with_sections, form_data_with_sections, get_settings_sections
+        plugin_sections = get_settings_sections('tag')
+        form = form_class_with_sections(group_restock_settings_form, plugin_sections)(
                                        formdata=request.form if request.method == 'POST' else None,
-                                       data=default,
+                                       data=form_data_with_sections(default, plugin_sections, default.get('plugin_settings'))
+                                            if plugin_sections else default,
                                        extra_notification_tokens=datastore.get_unique_notification_tokens_available(),
                                        default_system_settings = datastore.data['settings'],
                                        )
@@ -244,6 +248,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  llm_features_disabled=is_llm_features_disabled(),
                                  matching_watches=matching_watches,
                                  settings_application=datastore.data['settings']['application'],
+                                 plugin_settings_sections=plugin_sections,
                                  **template_args
                                  )
 
@@ -259,7 +264,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         tag = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = group_restock_settings_form(formdata=request.form if request.method == 'POST' else None,
+        from changedetectionio.plugin_settings import form_class_with_sections, get_settings_sections, save_sections
+        plugin_sections = get_settings_sections('tag')
+        form = form_class_with_sections(group_restock_settings_form, plugin_sections)(
+                               formdata=request.form if request.method == 'POST' else None,
                                data=tag,
                                extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                )
@@ -278,6 +286,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return redirect(url_for('tags.form_tag_edit', uuid=uuid))
 
         tag.update(form.data)
+        # Plugin sections go into plugin_settings, not next to the group's own fields
+        problem = save_sections(form, plugin_sections, tag)
+        if problem:
+            flash(problem, 'error')
         tag['processor'] = 'restock_diff'
         tag.commit()
 

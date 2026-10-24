@@ -48,12 +48,14 @@ def available_fetchers():
             # In this case, make sure to edit the default one in store.py and fetch_site_status.py
             if name.startswith('html_'):
                 # Skip plugin fetchers that were already registered
-                if name not in _plugin_fetchers:
+                if name not in _plugin_fetchers and getattr(obj, 'offered_as_browser', True):
                     t = tuple([name, obj.fetcher_description])
                     p.append(t)
 
     # Get plugin fetchers from cache (already loaded at module init)
     for name, fetcher_class in _plugin_fetchers.items():
+        if not getattr(fetcher_class, 'offered_as_browser', True):
+            continue
         if hasattr(fetcher_class, 'fetcher_description'):
             t = tuple([name, fetcher_class.fetcher_description])
             p.append(t)
@@ -145,6 +147,15 @@ def resolve_content_fetcher(watch, datastore):
         if selected and selected != 'system' and not hasattr(this_module, selected):
             raise BrowserConfigDoesntExist(config_id=selected, uuid=watch.get('uuid'))
         prefer_fetch_backend = selected
+
+    # A plugin may fetch this watch with another engine (e.g. a challenge solver after a block);
+    # that engine runs with its defaults, not the settings of the browser it replaces
+    from changedetectionio.plugin_settings import apply_fetch_engine_override
+    overridden = apply_fetch_engine_override(watch, prefer_fetch_backend)
+    if overridden != prefer_fetch_backend:
+        logger.info(f"Watch {watch.get('uuid')}: a plugin switched the engine '{prefer_fetch_backend}' -> '{overridden}'")
+        prefer_fetch_backend = overridden
+        browser_config = FetcherConfig()
 
     # An external browser's endpoint lives on its browser config (FetcherConfig.connection_url,
     # read at connect time by html_external_cdp), not in a per-fetcher constructor argument -

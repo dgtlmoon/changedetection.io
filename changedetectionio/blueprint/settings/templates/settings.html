@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field, render_fieldlist_with_inline_errors %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field, render_fieldlist_with_inline_errors, render_plugin_settings_sections %}
 {% from '_common_fields.html' import show_token_placeholders %}
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
@@ -182,6 +182,7 @@
                 <br>
                     {{ _('Tip:') }} <a href="{{ url_for('settings.settings_page')}}#proxies">{{ _('Connect using Bright Data proxies, find out more here.') }}</a>
                 </div>
+                {{ render_plugin_settings_sections(form, plugin_settings_sections) }}
             </div>
 
             <div class="tab-pane-inner" id="filters">

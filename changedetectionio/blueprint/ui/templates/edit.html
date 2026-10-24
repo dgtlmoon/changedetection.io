@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, only_playwright_type_watches_warning, highlight_trigger_ignored_explainer, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field, render_browser_choice_field %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, only_playwright_type_watches_warning, highlight_trigger_ignored_explainer, render_conditions_fieldlist_of_formfields_as_table, render_ternary_field, render_browser_choice_field, render_plugin_settings_sections %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
@@ -54,7 +54,8 @@
             {% if capabilities.supports_browser_steps %}
             <li class="tab"><a id="browsersteps-tab" href="#browser-steps">{{ _('Browser Steps') }}</a></li>
             {% endif %}
-            {% if capabilities.supports_visual_selector %}
+            {# Both the processor and the watch's browser must support it: element positions only come from a real browser #}
+            {% if capabilities.supports_visual_selector and capabilities.supports_xpath_element_data %}
             <li class="tab"><a id="visualselector-tab" href="#visualselector">{{ _('Visual Filter Selector') }}</a></li>
             {% endif %}
             {% if not llm_features_disabled %}
@@ -174,6 +175,7 @@
                         </span>
                     </div>
                     {% endif %}
+                    {{ render_plugin_settings_sections(form, plugin_settings_sections) }}
                 {% if form.proxy %}
                     <div class="pure-control-group inline-radio">
                           <div>{{ form.proxy.label }} <a href="" id="check-all-proxies" class="pure-button button-secondary button-xsmall" >{{ _('Check/Scan all') }}</a></div>
@@ -456,7 +458,7 @@ Math: {{ 1 + 1 }}") }}
             {{ extra_form_content|safe }}
             </div>
         {% endif %}
-            {% if capabilities.supports_visual_selector %}
+            {% if capabilities.supports_visual_selector and capabilities.supports_xpath_element_data %}
             <div class="tab-pane-inner visual-selector-ui" id="visualselector">
                 <img class="beta-logo" src="{{url_for('static_content', group='images', filename='beta-logo.png')}}" alt="New beta functionality">
 

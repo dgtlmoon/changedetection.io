@@ -142,6 +142,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # .forms exists but no useful form
             form_class = forms.processor_text_json_diff_form
 
+        # Plugin sections (hook settings_form_section, scope 'watch'), saved in plugin_settings
+        from changedetectionio.plugin_settings import form_class_with_sections, get_settings_sections, save_sections
+        plugin_sections = get_settings_sections('watch')
+        form_class = form_class_with_sections(form_class, plugin_sections)
+        if plugin_sections:
+            for section in plugin_sections:
+                default[section.field_name] = dict(((default.get('plugin_settings') or {}).get(section.plugin_id)) or {})
+
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                           data=default,
                           extra_notification_tokens=default.extra_notification_token_values(),
@@ -267,6 +275,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     extra_update_obj['tags'] = tag_uuids
 
             datastore.data['watching'][uuid].update(form.data)
+            # Plugin sections go into plugin_settings, not next to the watch's own fields
+            problem = save_sections(form, plugin_sections, datastore.data['watching'][uuid])
+            if problem:
+                flash(problem, 'error')
             datastore.data['watching'][uuid].update(extra_update_obj)
 
             if not datastore.data['watching'][uuid].get('tags'):
@@ -375,6 +387,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'extra_processor_config': form.extra_tab_content(),
                 'extra_title': f" - {gettext('Edit')} - {watch.label}",
                 'form': form,
+                'plugin_settings_sections': plugin_sections,
                 # Browsers the user added as variations, so their names link to their edit page
                 'browser_variation_ids': list_user_variation_ids(datastore),
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,

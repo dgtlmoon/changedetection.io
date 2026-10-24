@@ -392,7 +392,8 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None, browser_config=None):
+    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None, browser_config=None,
+                 cookies=None, browser_request=None, watch=None, datastore=None):
         self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
@@ -402,6 +403,13 @@ class browsersteps_live_ui(steppable_browser_interface):
         # Optional resolved FetcherConfig (viewport / locale / timezone ...) so the live session
         # matches the browser profile the user picked; None = engine defaults. Applied in connect().
         self.browser_config = browser_config
+        # Plugin lifecycle (changedetectionio/browser_lifecycle.py): cookies from
+        # browser_request_alter(), and the request handed to browser_request_finished() on cleanup
+        self.cookies = cookies or []
+        self.browser_request = browser_request
+        self.watch = watch
+        self.datastore = datastore
+        self._lifecycle_finished = False
         # Note: connect() is now async and must be called separately
 
     def __del__(self):
@@ -440,6 +448,9 @@ class browsersteps_live_ui(steppable_browser_interface):
             context_kwargs.update(self.browser_config.browser_context_kwargs())
 
         self.context = await self.playwright_browser.new_context(**context_kwargs)
+        if self.cookies:
+            await self.context.add_cookies(self.cookies)
+            logger.debug(f"Browser Steps: added {len(self.cookies)} cookie(s) to the live session")
 
         self.page = await self.context.new_page()
 
@@ -461,6 +472,13 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     async def cleanup(self):
         """Properly clean up all resources to prevent memory leaks"""
+        # Before the early return: closing the page marks the session cleaned up already, and
+        # plugins must still hear that it ended
+        if self.browser_request is not None and not self._lifecycle_finished:
+            self._lifecycle_finished = True
+            from changedetectionio.browser_lifecycle import apply_browser_request_finished
+            await apply_browser_request_finished(self.browser_request, fetcher=None, error=None,
+                                                 watch=self.watch, datastore=self.datastore)
         if self._is_cleaned_up:
             return
             

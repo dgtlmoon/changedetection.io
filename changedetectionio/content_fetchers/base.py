@@ -26,6 +26,8 @@ class FetcherCapabilities(BaseModel):
     supports_connection_url: bool = False      # Connects to an endpoint named by the browser config
     supports_pdf: bool = False                 # Can supply the original PDF bytes as raw_content
     supports_device_emulation: bool = False    # Can emulate a phone/tablet (viewport, touch, mobile layout)
+    supports_cookies: bool = False             # Applies cookies set by plugins (BrowserRequest.cookies)
+    supports_page_settings: bool = False       # Honours a profile's screen size, locale and timezone
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -134,6 +136,12 @@ class Fetcher():
     # Short name for browser lists, e.g. "Local Playwright: My firefox". None falls back to
     # fetcher_description (see browser_config.engine_short_description()).
     fetcher_short_description = None
+    # False keeps a registered engine out of the browser lists (/browsers, pickers) while it stays
+    # usable, e.g. one that's only switched to by a plugin's fetch_engine_override()
+    offered_as_browser = True
+    # Cookies to send, set by core from BrowserRequest.cookies_for_browser() (Playwright-style
+    # dicts, each with a url or a domain); only fetchers with supports_cookies apply them
+    cookies = None
     headers = {}
     favicon_blob = None
     instock_data = None
