@@ -266,8 +266,9 @@ def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path)
     client.post(url_for('ui.mark_all_viewed', tag=tag_uuid), follow_redirects=True)
     wait_for_all_checks(client)
 
-    # Should be only 1 unviewed
-    res = client.get(url_for("watchlist.index"))
+    # Explicitly select All: returning home now remembers the selected tag.
+    # Only the untagged watch should remain unviewed.
+    res = client.get(url_for("watchlist.index", tag=""))
     assert res.data.count(b' unviewed ') == 1
 
 
