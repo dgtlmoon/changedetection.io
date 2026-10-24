@@ -855,6 +855,12 @@ def changedetection_app(config=None, datastore_o=None):
 
         return dict(has_visual_browser=browser_config.has_visual_browser(datastore))
 
+    # Registered before check_authentication so rate limiting/filtering also covers /login and the API
+    from changedetectionio.guard import guard_enabled
+    if guard_enabled():
+        from changedetectionio.guard import init_guard
+        init_guard(app)
+
     # Set up a request hook to check authentication for all routes
     @app.before_request
     def check_authentication():
