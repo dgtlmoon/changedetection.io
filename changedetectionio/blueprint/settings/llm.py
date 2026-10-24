@@ -70,7 +70,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def llm_test():
         from flask import request
-        from changedetectionio.llm.client import completion
+        from changedetectionio.llm.client import completion_isolated
         from changedetectionio.validate_url import is_llm_api_base_safe
 
         # Pull stored config as the fallback, then override with anything the
@@ -131,7 +131,9 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             # a cold-starting or slow-prefilling local model doesn't falsely fail the
             # test even though the same call would succeed in production (issue #4225).
             from changedetectionio.llm.evaluator import apply_local_token_multiplier, get_llm_settings, resolve_llm_timeout
-            text, total_tokens, input_tokens, output_tokens = completion(
+            # Isolated: trying a provider from the settings page must not leave ~200MB of
+            # litellm resident in this process (it runs in-process if already loaded).
+            text, total_tokens, input_tokens, output_tokens = completion_isolated(
                 model=model,
                 messages=[{'role': 'user', 'content':
                     'Respond with just the word: ready'}],

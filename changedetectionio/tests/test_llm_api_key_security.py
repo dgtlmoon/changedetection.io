@@ -663,7 +663,7 @@ def test_llm_test_refuses_to_leak_stored_key_to_different_api_base(
     calls = []
     # Patch the completion wrapper so we'd notice if litellm were invoked.
     import changedetectionio.llm.client as llm_client
-    monkeypatch.setattr(llm_client, 'completion',
+    monkeypatch.setattr(llm_client, 'completion_isolated',
                         lambda **kw: calls.append(kw) or ('', 0, 0, 0))
 
     res = client.post(
