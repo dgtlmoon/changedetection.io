@@ -909,11 +909,35 @@ def make_fetcher_obj(made):
     return fake_fetcher_obj
 
 
+class FakeSeamLogger:
+    """Records loguru-style calls so tests pin warning/error behavior, not text."""
+
+    def __init__(self):
+        self.calls = []
+
+    def _record(self, level, *a, **k):
+        self.calls.append((level, a, k))
+
+    def __getattr__(self, level):
+        return lambda *a, **k: self._record(level, *a, **k)
+
+    def warned(self, fragment):
+        return [c for c in self.calls if c[0] == "warning" and fragment in str(c[1])]
+
+
 class TestSolveForWatch:
     def _run(self, watch, datastore, monkeypatch, result, proxy_url=None, **kwargs):
-        monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
-                            AsyncMock(return_value=result))
-        return asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, proxy_url, **kwargs))
+        inner = AsyncMock(return_value=result)
+        monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch", inner)
+        logs = FakeSeamLogger()
+        monkeypatch.setattr("changedetectionio.content_fetchers.flaresolverr.logger", logs)
+        out = asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, proxy_url, **kwargs))
+        assert inner.call_count <= 1
+        if inner.call_count:
+            # The seam must forward the exact watch/datastore/proxy — a wrong
+            # arg here solves the wrong watch or bypasses the proxy silently.
+            assert inner.call_args == ((watch, datastore), {"proxy_url": proxy_url})
+        return out, logs
 
     def _handler(self):
         handler = make_handler_self()
@@ -924,32 +948,46 @@ class TestSolveForWatch:
                                           {"name": "cf_clearance", "value": "abc"}],
                                  user_agent="SolvedUA/1.0")
         watch, datastore = self._handler()
-        out_solution, cookies, ua = self._run(watch, datastore, monkeypatch, solution)
+        (out_solution, cookies, ua), logs = self._run(watch, datastore, monkeypatch, solution,
+                                                      proxy_url="http://proxy:8080")
         assert out_solution is solution
         # Normalized once at solve time: evil domain dropped, url-less scoped
         assert [c["name"] for c in cookies] == ["cf_clearance"]
         assert cookies[0]["url"] == WATCH_URL
         assert ua == "SolvedUA/1.0"
+        assert logs.warned("no valid cookies") == []
+
+    def test_all_evil_cookies_warns(self, monkeypatch):
+        solution = make_solution(cookies=[{"name": "evil", "value": "1", "domain": "evil.com"}])
+        watch, datastore = self._handler()
+        (_, cookies, _), logs = self._run(watch, datastore, monkeypatch, solution)
+        assert cookies == []
+        assert len(logs.warned("no valid cookies")) == 1
 
     def test_no_cookies_no_ua(self, monkeypatch):
         solution = make_solution(cookies=[], user_agent=None)
         watch, datastore = self._handler()
-        out_solution, cookies, ua = self._run(watch, datastore, monkeypatch, solution)
+        (out_solution, cookies, ua), logs = self._run(watch, datastore, monkeypatch, solution)
         assert out_solution is solution
         assert cookies == []
         assert ua is None
+        assert logs.warned("no valid cookies") == []
 
     def test_none_when_ineffective(self, monkeypatch):
         watch, datastore = self._handler()
-        assert self._run(watch, datastore, monkeypatch, None) is None
+        out, _ = self._run(watch, datastore, monkeypatch, None)
+        assert out is None
 
     def test_error_mapped(self, monkeypatch):
         from unittest.mock import Mock
         monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch",
                             Mock(side_effect=ValueError("down")))
+        logs = FakeSeamLogger()
+        monkeypatch.setattr("changedetectionio.content_fetchers.flaresolverr.logger", logs)
         watch, datastore = self._handler()
         with pytest.raises(Exception, match="FlareSolverr: .*down"):
             asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, None))
+        assert any("FlareSolverr solve failed" in str(c[1]) for c in logs.calls if c[0] == "error")
 
     def test_import_error_mapped(self, monkeypatch):
         # Regression: the import lives inside the try, so a REAL failed import
@@ -960,12 +998,19 @@ class TestSolveForWatch:
             asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, None))
 
     def test_timeout_bounds_hanging_solve(self, monkeypatch):
+        started = []
+
         async def hang(*a, **k):
+            started.append(True)
             await asyncio.sleep(10)
         monkeypatch.setattr("changedetectionio.flaresolverr_pool.get_flaresolverr_solution_for_watch", hang)
         watch, datastore = self._handler()
+        import time
+        begin = time.monotonic()
         with pytest.raises(Exception, match="FlareSolverr:"):
             asyncio.run(solve_for_watch(watch, datastore, WATCH_URL, None, timeout=0.01))
+        assert started == [True]  # the inner solve really ran (not a stubbed error)
+        assert time.monotonic() - begin < 5
 
     def test_stamp_backend_name(self):
         assert stamp_backend_name("html_requests", True) == "html_requests+flaresolverr"
@@ -987,13 +1032,22 @@ class TestDecideChallengeRoute:
         assert decide_challenge_route("html_js_zyte", False) == "skip"
         assert decide_challenge_route("html_js_zyte", True) == "skip"
 
-    def test_warn_skipped_once_per_backend(self):
+    def test_warn_skipped_once_per_backend(self, monkeypatch):
         from changedetectionio.content_fetchers import flaresolverr as seam
+        logs = FakeSeamLogger()
+        monkeypatch.setattr(seam, "logger", logs)
         seam._warned_skip_backends.clear()
         warn_challenge_skipped(WATCH_URL, "html_js_zyte", False)
         warn_challenge_skipped(WATCH_URL, "html_js_zyte", False)
         warn_challenge_skipped(WATCH_URL, "html_requests", True)
-        assert seam._warned_skip_backends == {("html_js_zyte", False), ("html_requests", True)}
+        warn_challenge_skipped(WATCH_URL, "html_requests", False)
+        warn_challenge_skipped(WATCH_URL, "html_js_zyte", True)
+        assert seam._warned_skip_backends == {("html_js_zyte", False), ("html_requests", True),
+                                              ("html_requests", False), ("html_js_zyte", True)}
+        warnings = [str(c[1]) for c in logs.calls if c[0] == "warning"]
+        assert len(warnings) == 4
+        assert any("html_js_zyte" in w and "only html_requests/html_webdriver" in w for w in warnings)
+        assert any("browser steps" in w and "html_requests" in w for w in warnings)
 
 
 class TestRemoteDaemonWarning:
@@ -1033,23 +1087,34 @@ class TestBareResponse:
         return fetcher, made, handler
 
     def test_happy_path(self):
-        solution = make_solution(response="<html>ok</html>", status=200, headers={"ct": "t"})
+        solution = make_solution(response="<html>ok rëstôck ✓</html>", status=200, headers={"ct": "t"})
         fetcher, made, handler = self._run(solution)
         assert len(made) == 1
         assert made[0].kwargs["worker_id"] == "w1"
         assert made[0].kwargs["proxy_override"] == "http://proxy:8080"
         assert made[0].kwargs["custom_browser_connection_url"] == "ws://custom"
+        assert made[0].kwargs["screenshot_format"] == "JPEG"
         assert fetcher is made[0]
         assert fetcher.backend_name == "html_requests+flaresolverr"
-        assert fetcher.content == "<html>ok</html>"
+        assert fetcher.content == "<html>ok rëstôck ✓</html>"
+        assert fetcher.raw_content == "<html>ok rëstôck ✓</html>".encode("utf-8")
         assert fetcher.status_code == 200
         assert fetcher.headers == {"ct": "t"}
         fetcher.quit.assert_awaited_once_with(watch=handler.watch)
 
+    def test_surrogate_response_sanitized(self):
+        # Lone surrogates (strict-encode killers) are replaced, not fatal
+        # (encode-errors=replace yields "?", decode-errors=replace yields U+FFFD)
+        fetcher, _, _ = self._run(make_solution(response="a\ud800b", status=200))
+        assert fetcher.content == "a?b"
+        assert fetcher.raw_content == b"a?b"
+
     def test_empty_response_raises(self):
-        with pytest.raises(EmptyReply) as exc_info:
-            self._run(make_solution(response="", status=200))
-        assert exc_info.value.status_code == 200
+        for response in ("", "   "):
+            with pytest.raises(EmptyReply) as exc_info:
+                self._run(make_solution(response=response, status=200))
+            assert exc_info.value.status_code == 200
+            assert exc_info.value.url == WATCH_URL
 
     def test_empty_response_allowed_when_configured(self):
         fetcher, _, _ = self._run(make_solution(response="  ", status=200), empty_pages=True)
@@ -1059,6 +1124,28 @@ class TestBareResponse:
         with pytest.raises(Non200ErrorCodeReceived) as exc_info:
             self._run(make_solution(response="<html>denied</html>", status=500))
         assert exc_info.value.status_code == 500
+        assert exc_info.value.url == WATCH_URL
+        # page_html itself isn't stored — only the extracted text is
+        assert exc_info.value.page_text is not None and "denied" in exc_info.value.page_text
+
+    def test_missing_config_keys_use_defaults(self):
+        # datastore/watch without the keys behave as False (not None/True)
+        handler = make_handler_self()
+        del handler.watch["ignore_status_codes"]
+        del handler.datastore.data["settings"]["application"]["empty_pages_are_a_change"]
+
+        def run(solution):
+            made = []
+            return asyncio.run(build_flaresolverr_bare_fetcher(
+                solution, "html_requests", make_fetcher_obj(made),
+                "http://proxy:8080", "ws://custom", handler.screenshot_format,
+                handler.worker_id, handler.watch, handler.datastore, WATCH_URL))
+
+        assert run(make_solution()).status_code == 200
+        with pytest.raises(Non200ErrorCodeReceived):
+            run(make_solution(response="<html>denied</html>", status=500))
+        with pytest.raises(EmptyReply):
+            run(make_solution(response="", status=200))
 
     def test_non200_ignored_when_configured(self):
         fetcher, _, _ = self._run(make_solution(response="<html>denied</html>", status=500),

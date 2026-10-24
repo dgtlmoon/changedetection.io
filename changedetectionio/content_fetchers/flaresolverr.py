@@ -104,7 +104,9 @@ async def build_flaresolverr_bare_fetcher(solution, prefer_fetch_backend, fetche
     if not isinstance(_headers, dict):
         _headers = {}
     fetcher.content = _resp
-    fetcher.raw_content = _resp.encode('utf-8') if isinstance(_resp, str) else _resp
+    # replace (not strict): a lone surrogate can't encode at all, and the
+    # content sanitizer below already normalizes to replacement chars
+    fetcher.raw_content = _resp.encode('utf-8', errors='replace') if isinstance(_resp, str) else _resp
     fetcher.status_code = _status
     fetcher.headers = _headers
     _empty_pages_are_a_change = datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
