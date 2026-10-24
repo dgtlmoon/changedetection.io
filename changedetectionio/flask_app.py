@@ -38,11 +38,12 @@ from changedetectionio.strtobool import strtobool
 # Create specific signals for application events
 # Make this a global singleton to avoid multiple signal objects
 watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
-from flask_babel import Babel, get_locale, gettext, ngettext
+from flask_babel import get_locale, gettext, ngettext
 from flask_wtf import CSRFProtect
 from loguru import logger
 
 from changedetectionio import __version__, queuedWatchMetaData
+from changedetectionio.flask_babel_backport import BabelWithPluralBackport
 from changedetectionio.api import (
     CreateWatch,
     Import,
@@ -830,7 +831,9 @@ def changedetection_app(config=None, datastore_o=None):
         return _locale_aliases.get(browser_locale, browser_locale)
 
     # Initialize Babel with locale selector
-    babel = Babel(app, locale_selector=get_locale)
+    # NOTE: uses the backported Flask-Babel plural fix; see
+    # changedetectionio/flask_babel_backport.py.
+    babel = BabelWithPluralBackport(app, locale_selector=get_locale)
 
     # Make i18n functions available to templates
     app.jinja_env.globals.update(
