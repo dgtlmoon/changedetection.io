@@ -3892,21 +3892,6 @@ msgstr "Número de elementos del historial por monitor que se deben conservar"
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "El cuerpo debe estar vacío cuando el método de solicitud está configurado en GET"
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Configuración de sintaxis de plantilla no válida:%(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Sintaxis de plantilla no válida:%(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Sintaxis de plantilla no válida en \"%(header)s\"encabezado:%(error)s"
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
 #: changedetectionio/forms.py
 msgid "Name"
@@ -4147,6 +4132,21 @@ msgstr "RegEx para extraer"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Extraer como CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Configuración de sintaxis de plantilla no válida:%(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Sintaxis de plantilla no válida:%(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Sintaxis de plantilla no válida en \"%(header)s\"encabezado:%(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

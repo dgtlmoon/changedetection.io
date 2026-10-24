@@ -3815,21 +3815,6 @@ msgstr ""
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "当请求方法为 GET 时，请求正文必须为空"
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "模板语法配置无效：%(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "模板语法无效：%(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "“%(header)s”请求头中的模板语法无效：%(error)s"
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
 #: changedetectionio/forms.py
 msgid "Name"
@@ -4070,6 +4055,21 @@ msgstr "用于提取的正则表达式"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "提取为 CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "模板语法配置无效：%(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "模板语法无效：%(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "“%(header)s”请求头中的模板语法无效：%(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

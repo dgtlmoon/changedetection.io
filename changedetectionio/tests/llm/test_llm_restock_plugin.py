@@ -83,6 +83,7 @@ class TestLLMRestockPluginDisabled:
             fetcher_name='html_requests',
             fetcher_instance=None,
             url='https://example.com/product',
+            llm_intent=None,
         )
         assert result is None
 
@@ -298,6 +299,7 @@ class TestLLMRestockPluginErrorHandling:
                 fetcher_name='html_requests',
                 fetcher_instance=None,
                 url='https://example.com',
+                llm_intent=None,
             )
         assert result is None
 
@@ -313,6 +315,7 @@ class TestLLMRestockPluginErrorHandling:
                 fetcher_name='html_requests',
                 fetcher_instance=None,
                 url='https://example.com',
+                llm_intent=None,
             )
         assert result is None
 
@@ -343,3 +346,174 @@ class TestLLMRestockPluginHTMLStripping:
         long_html = '<p>' + 'x' * (_MAX_CONTENT_CHARS * 2) + '</p>'
         result = _strip_html(long_html)
         assert len(result) <= _MAX_CONTENT_CHARS
+
+
+class TestLLMRestockReusableHelpers:
+    """The pieces another LLM backend (a plugin not using litellm) reuses."""
+
+    def test_build_restock_messages(self):
+        from changedetectionio.processors.restock_diff.plugins import llm_restock
+        messages = llm_restock.build_restock_messages(
+            '<html><body><h1>Widget</h1>$19.99 Add to cart</body></html>',
+            'https://example.com/widget', llm_intent='tell me when it is cheaper')
+        assert [m['role'] for m in messages] == ['system', 'user']
+        assert messages[0]['content'] == llm_restock.SYSTEM_PROMPT
+        assert 'URL: https://example.com/widget' in messages[1]['content']
+        assert '$19.99' in messages[1]['content']
+        assert 'User notification intent: tell me when it is cheaper' in messages[1]['content']
+
+    def test_build_restock_messages_nothing_to_send(self):
+        from changedetectionio.processors.restock_diff.plugins import llm_restock
+        assert llm_restock.build_restock_messages('', 'https://example.com') is None
+        assert llm_restock.build_restock_messages('<html><body>  </body></html>', 'https://example.com') is None
+
+    def test_cache_key_follows_model_and_prompt(self):
+        from changedetectionio.processors.restock_diff.plugins import llm_restock
+        a = llm_restock.build_restock_messages('<p>$1</p>', 'https://example.com/a')
+        b = llm_restock.build_restock_messages('<p>$2</p>', 'https://example.com/a')
+        assert llm_restock.restock_cache_key('m1', a) == llm_restock.restock_cache_key('m1', a)
+        assert llm_restock.restock_cache_key('m1', a) != llm_restock.restock_cache_key('m2', a)
+        assert llm_restock.restock_cache_key('m1', a) != llm_restock.restock_cache_key('m1', b)
+
+    @pytest.mark.parametrize('raw, expected', [
+        ('{"price": 19.99, "currency": "USD", "availability": "instock"}',
+         {'price': 19.99, 'currency': 'USD', 'availability': 'instock'}),
+        ('```json\n{"price": "1.299,95 €", "currency": "EUR", "availability": null}\n```',
+         {'price': 1299.95, 'currency': 'EUR', 'availability': None}),
+        ('{"price": null, "currency": null, "availability": "outofstock"}',
+         {'price': None, 'currency': None, 'availability': 'outofstock'}),
+        ('{"price": null, "currency": null, "availability": null}', None),
+        ('Sure! The price is $19.99', None),
+        ('[19.99]', None),
+        ('', None),
+    ])
+    def test_parse_restock_reply(self, raw, expected):
+        from changedetectionio.processors.restock_diff.plugins import llm_restock
+        assert llm_restock.parse_restock_reply(raw, 'https://example.com') == expected
+
+    def test_accumulate_global_tokens_uses_given_cost(self):
+        from changedetectionio.llm import evaluator
+        ds = _make_datastore()
+        with patch.object(evaluator, '_estimate_cost_usd', side_effect=AssertionError('should not estimate')):
+            evaluator.accumulate_global_tokens(ds, 100, input_tokens=90, output_tokens=10,
+                                               model='some-model', cost_usd=0.25)
+        llm = ds.data['settings']['application']['llm']
+        assert llm['tokens_total_cumulative'] == 100
+        assert llm['cost_usd_total_cumulative'] == 0.25
+
+    def test_alternative_backend_path_does_not_import_litellm(self):
+        """litellm costs ~200MB once imported and is never released, the whole point of reusing
+        these helpers from another backend is to not pay that. Fresh interpreter, since other
+        tests in this process may already have imported it."""
+        import subprocess, sys
+        code = '''
+import sys
+from unittest.mock import MagicMock
+from changedetectionio.processors.restock_diff.plugins import llm_restock
+from changedetectionio.llm.evaluator import accumulate_global_tokens
+messages = llm_restock.build_restock_messages('<p>Widget $5 Add to cart</p>', 'https://example.com')
+key = llm_restock.restock_cache_key('gemini/gemini-flash-lite', messages)
+result = llm_restock.parse_restock_reply('{"price": 5, "currency": "USD", "availability": "instock"}')
+llm_restock.restock_cache_put(key, result)
+ds = MagicMock()
+ds.data = {'settings': {'application': {'llm': {}}}}
+accumulate_global_tokens(ds, 10, input_tokens=8, output_tokens=2, model='gemini/gemini-flash-lite', cost_usd=0.0001)
+assert result['price'] == 5.0, result
+print('litellm' in sys.modules)
+'''
+        # CI runs pytest from inside the package dir without installing it, so the child
+        # wouldn't find 'changedetectionio' - point it at the directory that contains it.
+        import os, changedetectionio
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(changedetectionio.__file__)))
+        env = {**os.environ, 'PYTHONPATH': os.pathsep.join(filter(None, [repo_root, os.environ.get('PYTHONPATH')]))}
+        out = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, timeout=120, env=env)
+        assert out.returncode == 0, out.stderr
+        assert out.stdout.strip().splitlines()[-1] == 'False', "litellm was imported"
+
+
+class TestRestockHookDispatch:
+    """get_itemprop_availability_from_plugin(): a third-party plugin (e.g. plain `requests` to an
+    LLM, no litellm) gets the HTML and the html_to_text() version, and goes before the built-in."""
+
+    HTML = '<html><body><h1>Widget</h1><p>Price: $12.50</p><button>Add to cart</button></body></html>'
+
+    @pytest.fixture
+    def registered(self):
+        from changedetectionio.pluggy_interface import plugin_manager, register_builtin_restock_plugins
+        register_builtin_restock_plugins()
+        added = []
+
+        def register(plugin):
+            plugin_manager.register(plugin)
+            added.append(plugin)
+
+        yield register
+        for plugin in added:
+            plugin_manager.unregister(plugin)
+
+    def _dispatch(self):
+        from changedetectionio.pluggy_interface import get_itemprop_availability_from_plugin
+        return get_itemprop_availability_from_plugin(self.HTML, 'html_requests', None, 'https://example.com/widget')
+
+    def test_custom_plugin_gets_html_and_text_and_wins(self, registered):
+        from changedetectionio.pluggy_interface import hookimpl
+        from changedetectionio.processors.restock_diff.plugins import llm_restock
+        seen = {}
+
+        class MyPlugin:
+            @hookimpl
+            def get_itemprop_availability_override(self, content, url, text):
+                seen.update(content=content, text=text, url=url)
+                return {'price': 12.5, 'currency': 'USD', 'availability': 'instock'}
+
+        registered(MyPlugin())
+        llm_restock.datastore = _make_datastore()
+        with patch('changedetectionio.llm.client.completion') as litellm_completion:
+            result = self._dispatch()
+
+        assert result == {'price': 12.5, 'currency': 'USD', 'availability': 'instock'}
+        assert seen['content'] == self.HTML
+        assert 'Price: $12.50' in seen['text'] and '<p>' not in seen['text']
+        # The built-in LLM plugin must not have been billed as well
+        litellm_completion.assert_not_called()
+
+    def test_custom_plugin_returning_none_falls_through_to_builtin(self, registered):
+        from changedetectionio.pluggy_interface import hookimpl
+        from changedetectionio.processors.restock_diff.plugins import llm_restock
+
+        class NotMine:
+            @hookimpl
+            def get_itemprop_availability_override(self, content):
+                return None
+
+        registered(NotMine())
+        llm_restock.datastore = _make_datastore()
+        with patch('changedetectionio.llm.client.completion',
+                   return_value=('{"price": 12.5, "currency": "USD", "availability": "instock"}', 50, 40, 10)):
+            result = self._dispatch()
+        assert result['price'] == 12.5
+
+    def test_text_not_computed_when_nobody_asks_for_it(self, registered):
+        from changedetectionio.pluggy_interface import hookimpl
+
+        class HtmlOnly:
+            @hookimpl
+            def get_itemprop_availability_override(self, content):
+                return {'price': 1.0, 'currency': None, 'availability': None}
+
+        registered(HtmlOnly())
+        with patch('changedetectionio.html_tools.html_to_text') as html_to_text:
+            assert self._dispatch()['price'] == 1.0
+        html_to_text.assert_not_called()
+
+    def test_builtin_receives_llm_intent_through_pluggy(self, registered):
+        """The built-in impl used to declare llm_intent=None, and pluggy never passes an argument
+        that has a default, so the user's intent silently never reached the restock prompt."""
+        from changedetectionio.pluggy_interface import get_itemprop_availability_from_plugin
+        from changedetectionio.processors.restock_diff.plugins import llm_restock
+        llm_restock.datastore = _make_datastore()
+        with patch('changedetectionio.llm.client.completion',
+                   return_value=('{"price": 12.5, "currency": "USD", "availability": "instock"}', 50, 40, 10)) as completion:
+            get_itemprop_availability_from_plugin(self.HTML, 'html_requests', None, 'https://example.com/widget',
+                                                  llm_intent='alert below $10')
+        assert 'alert below $10' in completion.call_args.kwargs['messages'][-1]['content']

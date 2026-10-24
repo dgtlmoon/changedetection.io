@@ -3922,21 +3922,6 @@ msgstr "Jumlah item riwayat per monitor yang disimpan"
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Isi harus kosong saat Metode Permintaan diatur ke GET"
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Konfigurasi sintaks template tidak valid: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Sintaks template tidak valid: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Sintaks template tidak valid pada header \"%(header)s\": %(error)s"
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
 #: changedetectionio/forms.py
 msgid "Name"
@@ -4177,6 +4162,21 @@ msgstr "RegEx untuk diekstrak"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Ekstrak sebagai CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Konfigurasi sintaks template tidak valid: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Sintaks template tidak valid: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Sintaks template tidak valid pada header \"%(header)s\": %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

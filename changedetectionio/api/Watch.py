@@ -54,6 +54,26 @@ def validate_time_schedule_limit(json_data):
     return None
 
 
+def validate_jinja2_templates(json_data):
+    """
+    Reject broken Jinja2 in url, link_to_open, body and headers, the same check the edit form runs.
+
+    Without it a broken template saved through the API is only noticed at fetch time, and the watch
+    then fails on every check. Values that are not Jinja2 (e.g. URL-encoded JSON {%22) are not rendered.
+
+    Returns None if valid, or an error message string if invalid.
+    """
+    from changedetectionio.jinja2_custom.validate import validate_jinja2_fields
+    headers = json_data.get('headers')
+    errors = validate_jinja2_fields(url=json_data.get('url'),
+                                    link_to_open=json_data.get('link_to_open'),
+                                    body=json_data.get('body'),
+                                    headers=headers if isinstance(headers, dict) else None)
+    if errors:
+        return '; '.join(f"{field}: {error}" for field, error in errors.items())
+    return None
+
+
 def validate_time_between_check_required(json_data):
     """
     Validate that at least one time interval is specified when not using default settings.
@@ -219,6 +239,10 @@ class Watch(Resource):
                 validate_notification_urls(notification_urls)
             except ValidationError as e:
                 return str(e), 400
+
+        validation_error = validate_jinja2_templates(request.json)
+        if validation_error:
+            return validation_error, 400
 
         # XSS etc protection - validate URL if it's being updated
         if 'url' in request.json:
@@ -538,6 +562,10 @@ class CreateWatch(Resource):
         # Silently discard `__`-prefixed transient/internal keys (not part of the public schema).
         json_data = strip_internal_api_fields(request.get_json())
         url = json_data['url'].strip()
+
+        validation_error = validate_jinja2_templates(json_data)
+        if validation_error:
+            return validation_error, 400
 
         if not is_safe_valid_url(url):
             return "Invalid or unsupported URL", 400

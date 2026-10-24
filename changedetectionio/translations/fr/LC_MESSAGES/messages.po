@@ -3822,21 +3822,6 @@ msgstr ""
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Le corps doit être vide lorsque la méthode de requête est définie sur GET"
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Configuration de syntaxe de modèle non valide : %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Syntaxe de modèle non valide : %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr ""
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
 #: changedetectionio/forms.py
 msgid "Name"
@@ -4077,6 +4062,21 @@ msgstr "RegEx à extraire"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Extraire des données"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Configuration de syntaxe de modèle non valide : %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Syntaxe de modèle non valide : %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr ""
 
 #: changedetectionio/languages.py
 msgid "just now"

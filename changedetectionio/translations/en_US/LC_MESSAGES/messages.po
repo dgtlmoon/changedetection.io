@@ -3809,21 +3809,6 @@ msgstr ""
 msgid "Body must be empty when Request Method is set to GET"
 msgstr ""
 
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr ""
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr ""
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr ""
-
 #: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
 #: changedetectionio/forms.py
 msgid "Name"
@@ -4063,6 +4048,21 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
+msgstr ""
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr ""
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr ""
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
 #: changedetectionio/languages.py
