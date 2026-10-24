@@ -2876,6 +2876,10 @@ msgid "Mark viewed"
 msgstr "Tandai telah dilihat"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark unviewed"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Use default notification"
 msgstr "Gunakan notifikasi default"
 
