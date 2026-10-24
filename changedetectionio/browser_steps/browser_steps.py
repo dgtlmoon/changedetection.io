@@ -401,6 +401,7 @@ class browsersteps_live_ui(steppable_browser_interface):
         self.proxy = proxy
         # Generic channel for challenge-solver cookies (e.g. FlareSolverr
         # clearance) to inject into the live-UI context before connecting.
+        # Must arrive pre-normalized (solve_for_watch normalizes once).
         self.cookies = cookies
         # Note: connect() is now async and must be called separately
 

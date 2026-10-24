@@ -124,7 +124,7 @@ def clean_cookies_for_selenium(cookies):
         cc.pop("expires", None)
         cc.pop("sameSite", None)
         cc.pop("url", None)
-        if cc.get("domain", "").startswith("."):
+        if str(cc.get("domain") or "").startswith("."):
             cc["domain"] = cc["domain"].lstrip(".")
         cleaned.append(cc)
     return cleaned

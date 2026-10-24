@@ -184,6 +184,7 @@ class fetcher(Fetcher):
         super().__init__(**kwargs)
         # Generic channel for challenge-solver cookies (e.g. FlareSolverr
         # clearance) to inject into the browser context before fetching.
+        # Must arrive pre-normalized (solve_for_watch normalizes once).
         self.cookies = kwargs.get('cookies')
         self.browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
@@ -284,7 +285,7 @@ class fetcher(Fetcher):
 
             # Solved UA arrives folded into request_headers (generic channel);
             # manage_user_agent picks it up like any other custom UA.
-            _ua = manage_user_agent(headers=request_headers)
+            _ua = manage_user_agent(headers=request_headers or {})
             context = await browser.new_context(
                 accept_downloads=False,  # Should never be needed
                 # Enabled by default because sites such as GitHub need it for injected JavaScript.

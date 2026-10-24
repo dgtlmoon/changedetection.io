@@ -58,7 +58,7 @@ async def build_flaresolverr_bare_fetcher(solution, prefer_fetch_backend, fetche
     from changedetectionio.content_fetchers.exceptions import EmptyReply, Non200ErrorCodeReceived
 
     fetcher = fetcher_obj(proxy_override=proxy_url, custom_browser_connection_url=custom_browser_connection_url, screenshot_format=screenshot_format, worker_id=worker_id)
-    fetcher.backend_name = prefer_fetch_backend + "+flaresolverr"
+    fetcher.backend_name = stamp_backend_name(prefer_fetch_backend, True)
     _resp = solution.get('response') or ''
     _status = solution.get('status') or 200
     _headers = solution.get('headers')

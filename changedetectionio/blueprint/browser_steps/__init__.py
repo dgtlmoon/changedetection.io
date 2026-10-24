@@ -288,7 +288,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             challenge = await solve_for_watch(watch, datastore, watch.link, proxy_url=_proxy_url)
             if challenge:
                 _, challenge_cookies, challenge_ua = challenge
-                challenge_headers = dict(watch.get('headers') or {})
+                # Plain dict (user casing preserved): drop every UA spelling
+                # first so the solved UA is the single User-Agent sent.
+                challenge_headers = {k: v for k, v in (watch.get('headers') or {}).items()
+                                     if not (isinstance(k, str) and k.lower() == "user-agent")}
                 if challenge_ua:
                     challenge_headers['User-Agent'] = challenge_ua
         except Exception as e:

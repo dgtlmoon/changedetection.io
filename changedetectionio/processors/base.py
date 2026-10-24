@@ -252,9 +252,6 @@ class difference_detection_processor():
         request_headers.update(self.watch.get('headers', {}))
         request_headers.update(self.datastore.get_all_base_headers())
         request_headers.update(self.datastore.get_all_headers_in_textfile_for_watch(uuid=self.watch.get('uuid')))
-        if challenge_ua:
-            # Solved UA wins so the fingerprint matches the clearance cookies
-            request_headers['User-Agent'] = challenge_ua
 
         # https://github.com/psf/requests/issues/4525
         # Requests doesnt yet support brotli encoding, so don't put 'br' here, be totally sure that the user cannot
@@ -268,6 +265,10 @@ class difference_detection_processor():
             value = request_headers.get(header_name)
             if isinstance(value, str) and JINJA2_MARKER_PATTERN.search(value):
                 request_headers.update({header_name: jinja_render(template_str=value)})
+        if challenge_ua:
+            # Solved UA wins so the fingerprint matches the clearance cookies.
+            # Folded after Jinja rendering: the solved value is final, never a template.
+            request_headers['User-Agent'] = challenge_ua
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
 

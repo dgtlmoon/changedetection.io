@@ -751,6 +751,10 @@ class TestChallengeCookies:
         assert clean_cookies_for_selenium(["nope", None]) == []
         assert clean_cookies_for_selenium(None) == []
 
+    def test_selenium_tolerates_null_domain(self):
+        cookies = [{"name": "c", "value": "v", "domain": None, "url": WATCH_URL}]
+        assert clean_cookies_for_selenium(cookies) == [{"name": "c", "value": "v", "domain": None}]
+
     def test_selenium_leaves_clean_cookies_alone(self):
         cookies = [{"name": "c", "value": "v", "domain": "example.com"}]
         assert clean_cookies_for_selenium(cookies) == cookies
@@ -785,6 +789,15 @@ class TestChallengeUserAgent:
         page.setUserAgent.assert_called_once_with("SolvedUA/1.0")
         assert filtered == {"X-K": "v"}
         assert headers == {"user-agent": "  SolvedUA/1.0  ", "X-K": "v"}  # caller-owned dict untouched
+
+    def test_puppeteer_ignores_non_string_ua(self, monkeypatch):
+        # A non-string UA can't be sent — drop the key, fall back to managed UA.
+        monkeypatch.setattr("changedetectionio.content_fetchers.base.manage_user_agent",
+                            lambda headers=None, current_ua="": "M-UA")
+        page = SimpleNamespace(setUserAgent=AsyncMock(), evaluate=AsyncMock(return_value="NAV-UA"))
+        filtered = asyncio.run(apply_user_agent_to_puppeteer_page(page, {"User-Agent": 123}))
+        page.setUserAgent.assert_called_once_with("M-UA")
+        assert filtered == {}
 
     def test_puppeteer_falls_back_to_managed_ua(self, monkeypatch):
         from unittest.mock import Mock

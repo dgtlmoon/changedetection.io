@@ -213,6 +213,7 @@ class fetcher(Fetcher):
 
         # Generic channel for challenge-solver cookies (e.g. FlareSolverr
         # clearance) to inject into the page before fetching.
+        # Must arrive pre-normalized (solve_for_watch normalizes once).
         self.cookies = kwargs.get('cookies')
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True

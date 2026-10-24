@@ -32,6 +32,7 @@ class fetcher(Fetcher):
         super().__init__(**kwargs)
         # Generic channel for challenge-solver cookies (e.g. FlareSolverr
         # clearance) to inject into the driver before fetching.
+        # Must arrive pre-normalized (solve_for_watch normalizes once).
         self.cookies = kwargs.get('cookies')
         from urllib.parse import urlparse
         from selenium.webdriver.common.proxy import Proxy
