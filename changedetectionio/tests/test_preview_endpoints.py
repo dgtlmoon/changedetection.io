@@ -66,3 +66,21 @@ def test_fetch_pdf(client, live_server, measure_memory_usage, datastore_path):
     assert changed_md5.encode('utf-8') in res.data
 
     assert b'here is a change' in res.data
+
+
+def test_preview_of_a_watch_with_no_history(client, live_server, measure_memory_usage, datastore_path):
+    """/preview must not 500 on a watch that has never completed a check.
+
+    The page is linked from the watch list, so it is reachable for a freshly added or paused
+    watch. The old guard only skipped the history lookup when history_n == 0 AND an error had
+    been recorded, so a clean never-checked watch asked for the newest of no versions and the
+    request died with IndexError.
+    """
+    datastore = client.application.config.get('DATASTORE')
+    uuid = datastore.add_watch(url="https://example.com", extras={'paused': True})
+    assert datastore.data['watching'][uuid].history_n == 0
+    assert not datastore.data['watching'][uuid].get_error_text()
+
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+    assert res.status_code == 200
+    assert b'Preview unavailable' in res.data

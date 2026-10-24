@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
+
+{# Same tab/anchor setup as the watch edit page. A tab is only shown when this engine has a
+   setting in it (`applicable` is the set the save path allows, see _browser_config_fields.html). #}
+{% set show_language_tab = 'locale' in applicable or 'timezone_id' in applicable %}
+{% set show_request_tab = applicable | select('in', ['timeout', 'user_agent', 'block_resource_types', 'block_url_patterns']) | list | length > 0 %}
+
+<div class="edit-form">
+    <div class="tabs collapsable">
+        <ul>
+            <li class="tab"><a href="#browser">{% if mode == 'edit' %}{{ _('Edit browser') }}{% else %}{{ _('Add browser variation') }}{% endif %}</a></li>
+            {% if show_language_tab %}
+            <li class="tab"><a href="#language">{{ _('Language & timezone') }}</a></li>
+            {% endif %}
+            {% if show_request_tab %}
+            <li class="tab"><a href="#request">{{ _('Request options') }}</a></li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <div class="box-wrap inner">
+        <form class="pure-form pure-form-stacked" method="POST" action="{{ form_action }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            {% include "_browser_config_fields.html" %}
+
+            <div id="actions">
+                <div class="pure-control-group">
+                    {{ form.save(class="pure-button pure-button-primary") }}
+                    <a class="pure-button button-cancel" href="{{ url_for('ui.browser_config.browsers_overview') }}">{{ _('Cancel') }}</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
