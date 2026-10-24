@@ -24,6 +24,18 @@ _GEMINI_BASE = 'https://generativelanguage.googleapis.com'
 _OLLAMA_BASE = 'http://localhost:11434'
 _OPENROUTER_BASE = 'https://openrouter.ai'
 
+# Hosted providers that serve OpenAI's GET {base}/models, all routed by litellm on their own
+# prefix. ui value -> (default base including the version path, litellm model prefix)
+_OPENAI_STYLE_PROVIDERS = {
+    'deepseek': ('https://api.deepseek.com/v1', 'deepseek/'),
+    'groq': ('https://api.groq.com/openai/v1', 'groq/'),
+    'mistral': ('https://api.mistral.ai/v1', 'mistral/'),
+    'together_ai': ('https://api.together.xyz/v1', 'together_ai/'),
+    'xai': ('https://api.x.ai/v1', 'xai/'),
+}
+# Together lists image/embedding/rerank models alongside chat ones and labels each with a type
+_NON_CHAT_MODEL_TYPES = ('embedding', 'image', 'moderation', 'rerank', 'audio', 'transcribe', 'video')
+
 # Endpoint suffixes people paste into the Ollama base URL, stripped back to the server root
 _OLLAMA_SUFFIXES = ('/api/generate', '/api/chat', '/api/embed', '/api/embeddings', '/api/show', '/api/tags', '/api')
 
@@ -34,7 +46,7 @@ class ModelListError(Exception):
 
 def _provider_error_message(response) -> str:
     # Providers wrap the reason differently: OpenAI/Anthropic/Gemini use
-    # {"error": {"message": ...}}, Ollama and some proxies {"error": "..."} or {"message": ...}
+    # {"error": {"message": ...}}, Ollama and xAI {"error": "..."}, Mistral {"detail": ...}
     try:
         body = response.json()
     except (ValueError, json.JSONDecodeError):
@@ -45,8 +57,9 @@ def _provider_error_message(response) -> str:
             return str(err['message'])
         if isinstance(err, str) and err:
             return err
-        if body.get('message'):
-            return str(body['message'])
+        for key in ('message', 'detail'):
+            if isinstance(body.get(key), str) and body[key]:
+                return body[key]
     text = (response.text or '').strip()
     return f"HTTP {response.status_code}" + (f": {text[:300]}" if text else '')
 
@@ -133,6 +146,16 @@ def list_models(provider, api_key=None, api_base=None, timeout=DEFAULT_TIMEOUT):
         url = f"{base}/models" if base.endswith('/api/v1') else f"{base}/api/v1/models"
         data = _get_json(url, headers, timeout)
         names = ['openrouter/' + m['id'] for m in (data.get('data') or []) if m.get('id')]
+
+    elif provider in _OPENAI_STYLE_PROVIDERS:
+        default_base, prefix = _OPENAI_STYLE_PROVIDERS[provider]
+        if not api_key:
+            raise ModelListError(f"An API key is required to list {provider} models.")
+        base = (api_base or default_base).rstrip('/')
+        data = _get_json(f"{base}/models", {'Authorization': f'Bearer {api_key}'}, timeout)
+        entries = data.get('data') if isinstance(data, dict) else data
+        names = [prefix + m['id'] for m in (entries or [])
+                 if isinstance(m, dict) and m.get('id') and m.get('type') not in _NON_CHAT_MODEL_TYPES]
 
     else:
         raise ModelListError(f"Unknown provider '{provider}'")

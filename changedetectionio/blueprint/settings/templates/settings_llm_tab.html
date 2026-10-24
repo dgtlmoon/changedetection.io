@@ -121,11 +121,16 @@
     <select id="llm-provider" onchange="llmOnProviderChange(this.value)"{% if llm_provider_locked %} disabled{% endif %}>
       <option value="">— {{ _('select a provider') }} —</option>
         <option value="anthropic">Anthropic</option>
+        <option value="deepseek">DeepSeek</option>
         <option value="gemini">Google (Gemini)</option>
+        <option value="groq">Groq</option>
+        <option value="mistral">Mistral</option>
         <option value="ollama">Ollama</option>
         <option value="openai">OpenAI</option>
         <option value="openai_compatible">{{ _('OpenAI-compatible (vLLM, LM Studio, llama.cpp)') }}</option>
         <option value="openrouter">OpenRouter (200+ models)</option>
+        <option value="together_ai">Together AI</option>
+        <option value="xai">xAI (Grok)</option>
     </select>
   </div>
 
@@ -460,7 +465,8 @@
 
 <script>
 (function () {
-  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openai_compatible', 'openrouter'];
+  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openai_compatible', 'openrouter',
+                          'deepseek', 'groq', 'mistral', 'together_ai', 'xai'];
   const BASE_DEFAULTS  = { ollama: 'http://localhost:11434' };
   const KEY_HINTS = {
     openai:             '{{ _("platform.openai.com → API keys") }}',
@@ -469,6 +475,11 @@
     ollama:             '{{ _("No API key needed for local Ollama") }}',
     openai_compatible:  '{{ _("Bearer token for your self-hosted server (vLLM, LM Studio, etc.)") }}',
     openrouter:         '{{ _("openrouter.ai → Keys") }}',
+    deepseek:           '{{ _("platform.deepseek.com → API keys") }}',
+    groq:               '{{ _("console.groq.com → API keys") }}',
+    mistral:            '{{ _("console.mistral.ai → API keys") }}',
+    together_ai:        '{{ _("api.together.ai → API keys") }}',
+    xai:                '{{ _("console.x.ai → API keys") }}',
   };
 
   window.llmDisclaimerToggle = function (cb) {
@@ -630,12 +641,17 @@
     if (m.startsWith('gemini/'))       guessed = 'gemini';
     else if (m.startsWith('ollama/'))  guessed = 'ollama';
     else if (m.startsWith('openrouter/')) guessed = 'openrouter';
+    else if (m.startsWith('deepseek/'))    guessed = 'deepseek';
+    else if (m.startsWith('groq/'))        guessed = 'groq';
+    else if (m.startsWith('mistral/'))     guessed = 'mistral';
+    else if (m.startsWith('together_ai/')) guessed = 'together_ai';
+    else if (m.startsWith('xai/'))         guessed = 'xai';
     else if (m.startsWith('openai/')) {
       // openai/<model> + custom api_base = self-hosted OpenAI-compatible (vLLM etc.)
       const baseField = document.querySelector('[name="llm-api_base"]');
       guessed = (baseField && baseField.value.trim()) ? 'openai_compatible' : 'openai';
     }
-    else if (m.startsWith('claude'))   guessed = 'anthropic';
+    else if (m.startsWith('claude') || m.startsWith('anthropic/')) guessed = 'anthropic';
     else if (m.startsWith('gpt') || m.startsWith('o1') || m.startsWith('o3')) guessed = 'openai';
 
     if (guessed) {

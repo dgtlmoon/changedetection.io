@@ -96,9 +96,42 @@ def test_openrouter(fake_get):
     assert fake_get['calls'][0]['url'] == 'https://openrouter.ai/api/v1/models'
 
 
+@pytest.mark.parametrize('provider, url, prefix', [
+    ('deepseek', 'https://api.deepseek.com/v1/models', 'deepseek/'),
+    ('groq', 'https://api.groq.com/openai/v1/models', 'groq/'),
+    ('mistral', 'https://api.mistral.ai/v1/models', 'mistral/'),
+    ('together_ai', 'https://api.together.xyz/v1/models', 'together_ai/'),
+    ('xai', 'https://api.x.ai/v1/models', 'xai/'),
+])
+def test_openai_style_hosted_providers(fake_get, provider, url, prefix):
+    fake_get['response'] = _FakeResponse(payload={'data': [{'id': 'model-a'}]})
+    assert list_models(provider, api_key='k') == [prefix + 'model-a']
+    call = fake_get['calls'][0]
+    assert call['url'] == url
+    assert call['headers']['Authorization'] == 'Bearer k'
+
+
+@pytest.mark.parametrize('provider', ['deepseek', 'groq', 'mistral', 'together_ai', 'xai'])
+def test_openai_style_hosted_providers_need_key(fake_get, provider):
+    with pytest.raises(ModelListError):
+        list_models(provider)
+    assert fake_get['calls'] == []
+
+
+def test_together_bare_list_and_non_chat_filtered(fake_get):
+    # Together returns a bare list and mixes in image/embedding models
+    fake_get['response'] = _FakeResponse(payload=[
+        {'id': 'meta-llama/Llama-3.3-70B-Instruct-Turbo', 'type': 'chat'},
+        {'id': 'black-forest-labs/FLUX.1-schnell', 'type': 'image'},
+        {'id': 'BAAI/bge-large-en-v1.5', 'type': 'embedding'},
+    ])
+    assert list_models('together_ai', api_key='k') == ['together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo']
+
+
 @pytest.mark.parametrize('payload, text, expected', [
     ({'error': {'message': 'Incorrect API key provided'}}, '', 'Incorrect API key provided'),
     ({'error': 'model runner offline'}, '', 'model runner offline'),
+    ({'detail': 'Invalid API Key'}, '', 'Invalid API Key'),
     (None, 'Bad Gateway', 'HTTP 502: Bad Gateway'),
 ])
 def test_provider_error_is_surfaced(fake_get, payload, text, expected):
