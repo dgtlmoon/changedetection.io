@@ -453,17 +453,16 @@ class model(EntityPersistenceMixin, watch_base):
             return self._datastore.settings.fetch_backend
         """
         # Maybe also if is_image etc?
-        # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it,
-        # the others fall back to html_requests (same as resolve_content_fetcher() does at fetch time)
-        if self.is_pdf:
-            from changedetectionio import content_fetchers
-            fetcher_name = self.get('fetch_backend')
-            if not fetcher_name or fetcher_name == 'system':
-                fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
-            if fetcher_name and fetcher_name.startswith('extra_browser_'):
-                fetcher_name = 'html_webdriver'
-            if not getattr(getattr(content_fetchers, fetcher_name or '', None), 'supports_pdf', False):
-                return 'html_requests'
+        # A PDF/binary file the chosen fetcher can't supply falls back to html_requests
+        # (same as resolve_content_fetcher() does at fetch time)
+        from changedetectionio import content_fetchers
+        fetcher_name = self.get('fetch_backend')
+        if not fetcher_name or fetcher_name == 'system':
+            fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
+        if fetcher_name and fetcher_name.startswith('extra_browser_'):
+            fetcher_name = 'html_webdriver'
+        if not content_fetchers.fetcher_can_handle_watch(getattr(content_fetchers, fetcher_name or '', None), self):
+            return 'html_requests'
 
         return self.get('fetch_backend')
 
@@ -1353,64 +1352,68 @@ class model(EntityPersistenceMixin, watch_base):
         filepath = os.path.join(self.data_dir, 'last-fetched.br')
         _brotli_save(contents, filepath, mode=brotli.MODE_TEXT, fallback_uncompressed=False)
 
+    def save_historical_artifacts(self, timestamp, fetcher, empty_pages_are_a_change=False):
+        """Keep what changedetectionio/content_types.py says to keep from this fetch, next to its
+        history entry ({timestamp}.html.br, {timestamp}.pdf etc), then prune the older ones."""
+        from changedetectionio.content_types import binary_rule
+
+        self.ensure_data_dir_exists()
+
+        # For a binary file .content is only its checksum, nothing worth keeping
+        if not getattr(fetcher, 'binary', None) and (fetcher.content or empty_pages_are_a_change):
+            self.save_last_fetched_html(timestamp=timestamp, contents=fetcher.content)
+
+        raw_content = getattr(fetcher, 'raw_content', None)
+        rule = binary_rule(fetcher.get_all_headers().get('content-type', ''), url=self.link)
+        if rule and rule['keep_last_versions'] and isinstance(raw_content, bytes) and raw_content:
+            if rule['max_keep_bytes'] and len(raw_content) > rule['max_keep_bytes']:
+                logger.debug(f"{self.get('uuid')} - Not keeping the original {rule['ext']}, "
+                             f"{len(raw_content)} bytes is over {rule['max_keep_bytes']}")
+            else:
+                self._write_atomic(os.path.join(self.data_dir, f"{timestamp}.{rule['ext']}"), raw_content)
+
+        self._prune_historical_artifacts()
+
     def save_last_fetched_html(self, timestamp, contents):
         self.ensure_data_dir_exists()
-        snapshot_fname = f"{timestamp}.html.br"
-        filepath = os.path.join(self.data_dir, snapshot_fname)
-        _brotli_save(contents, filepath, mode=None, fallback_uncompressed=True)
-        self._prune_last_fetched_html_snapshots()
+        _brotli_save(contents, os.path.join(self.data_dir, f"{timestamp}.html.br"), mode=None, fallback_uncompressed=True)
 
-    def get_fetched_html(self, timestamp):
-        import brotli
-
-        snapshot_fname = f"{timestamp}.html.br"
-        filepath = os.path.join(self.data_dir, snapshot_fname)
-        if os.path.isfile(filepath):
-            with open(filepath, 'rb') as f:
-                return (brotli.decompress(f.read()).decode('utf-8'))
-
-        return False
-
-
-    def save_last_fetched_pdf(self, timestamp, contents):
-        """Keep the original PDF for a snapshot (the snapshot itself is only the converted text),
-        so the newest two versions can be compared. Does nothing unless contents is a PDF."""
-        if not isinstance(contents, bytes) or b'%PDF' not in contents[:1024]:
-            return
-        self.ensure_data_dir_exists()
-        self._write_atomic(os.path.join(self.data_dir, f"{timestamp}.pdf"), contents)
-        self._prune_last_fetched_pdf_snapshots()
-
-    def get_fetched_pdf(self, timestamp):
-        filepath = os.path.join(self.data_dir, f"{timestamp}.pdf")
+    def get_historical_artifact(self, timestamp, ext):
+        """The kept original for a history entry (bytes), or False"""
+        filepath = os.path.join(self.data_dir, f"{timestamp}.{ext}")
         if os.path.isfile(filepath):
             with open(filepath, 'rb') as f:
                 return f.read()
 
         return False
 
-    def _prune_last_fetched_pdf_snapshots(self):
-        # Keep only the PDFs of the newest two history entries. Matched by filename rather than by
-        # walking the history, so PDFs of entries that history_trim() already removed go too.
-        # (Binary history snapshots are named by md5, so a digits-only name is always ours)
-        keep = set(str(k) for k in list(self.history.keys())[-2:])
-        for f in Path(self.data_dir).glob('*.pdf'):
-            if f.stem.isdigit() and f.stem not in keep:
-                f.unlink(missing_ok=True)
+    def get_fetched_html(self, timestamp):
+        import brotli
 
-    def _prune_last_fetched_html_snapshots(self):
+        data = self.get_historical_artifact(timestamp, 'html.br')
+        if data is False:
+            return False
+        return brotli.decompress(data).decode('utf-8')
 
-        dates = list(self.history.keys())
-        dates.reverse()
+    def get_fetched_pdf(self, timestamp):
+        return self.get_historical_artifact(timestamp, 'pdf')
 
-        for index, timestamp in enumerate(dates):
-            snapshot_fname = f"{timestamp}.html.br"
-            filepath = os.path.join(self.data_dir, snapshot_fname)
+    def _prune_historical_artifacts(self):
+        # Keep each artifact type for only its newest N history entries. Matched by filename rather
+        # than by walking the history, so ones belonging to entries history_trim() already removed go
+        # too. (Binary history snapshots are named by md5, so a digits-only name is always ours)
+        from changedetectionio.content_types import BINARY_CONTENT_TYPES, kept_artifact_extensions
 
-            # Keep only the first 2
-            if index > 1 and os.path.isfile(filepath):
-                os.remove(filepath)
+        history_keys = [str(k) for k in self.history.keys()]
+        keep = {rule['ext']: 0 for rule in BINARY_CONTENT_TYPES.values()}
+        keep.update(kept_artifact_extensions())
 
+        for ext, keep_n in keep.items():
+            keep_timestamps = set(history_keys[-keep_n:]) if keep_n else set()
+            for f in Path(self.data_dir).glob(f'*.{ext}'):
+                timestamp = f.name[:-len(ext) - 1]
+                if timestamp.isdigit() and timestamp not in keep_timestamps:
+                    f.unlink(missing_ok=True)
 
     @property
     def get_browsersteps_available_screenshots(self):
