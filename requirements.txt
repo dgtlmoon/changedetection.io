@@ -163,7 +163,7 @@ litellm>=1.106.2; platform_machine != "armv7l"
 litellm>=1.91.5; platform_machine == "armv7l"
 # Used today for LLMSettings (model/LLMSettings.py); transitively pulled by litellm but pinned explicitly
 # so the validation/typing layer doesn't disappear if litellm drops it.
-pydantic>=2.14.0,<3.0
+pydantic>=2.14.1,<3.0
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 
