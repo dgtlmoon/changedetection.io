@@ -35,9 +35,12 @@ ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
+# --only-binary=litellm: never compile litellm's Rust extension from the sdist. Under QEMU that takes
+# hours and then fails, this makes a platform without a wheel fail in seconds instead (see requirements.txt)
 RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
   pip install \
   --prefer-binary \
+  --only-binary=litellm \
   --extra-index-url https://www.piwheels.org/simple \
   --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
   --cache-dir=/tmp/pip-cache \

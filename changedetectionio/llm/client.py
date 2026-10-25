@@ -246,3 +246,73 @@ def completion(  # noqa: C901
         except Exception as e:
             logger.warning(f"LLM call failed: model={model!r} error={e}")
             raise
+
+
+def _completion_worker(conn, log_level):
+    # Runs in a spawned child: litellm is imported here, and all of it (~200MB RSS) goes
+    # back to the OS when the process exits.
+    import json
+    import sys
+    logger.remove()
+    logger.add(sys.stderr, level=log_level)
+    try:
+        kwargs = json.loads(conn.recv_bytes().decode('utf-8'))
+        result = {'ok': True, 'result': list(completion(**kwargs))}
+    except Exception as e:
+        result = {'ok': False, 'error': str(e), 'error_type': type(e).__name__}
+    try:
+        conn.send_bytes(json.dumps(result).encode('utf-8'))
+    finally:
+        conn.close()
+
+
+def completion_isolated(**kwargs):
+    """Same as completion(), but runs it in a short-lived subprocess when litellm isn't loaded yet.
+
+    For one-off calls like the settings "Test connection" button, so trying out a provider
+    doesn't leave litellm resident for the life of the process. If litellm is already
+    imported (AI is configured and in use) that memory is spent anyway, so just call
+    completion() directly. Linux only, same as the extruct isolation in restock_diff.
+
+    Errors from the child are re-raised as RuntimeError carrying the original message.
+    """
+    import json
+    import platform
+    import sys
+
+    if 'litellm' in sys.modules or platform.system() != 'Linux':
+        return completion(**kwargs)
+
+    import multiprocessing
+    try:
+        log_level = logger._core.min_level
+    except AttributeError:
+        log_level = 'DEBUG'
+
+    ctx = multiprocessing.get_context('spawn')
+    parent_conn, child_conn = ctx.Pipe()
+    p = ctx.Process(target=_completion_worker, args=(child_conn, log_level), daemon=True)
+    p.start()
+    child_conn.close()
+    try:
+        parent_conn.send_bytes(json.dumps(kwargs).encode('utf-8'))
+        # completion() retries timeouts/connection errors, so allow for every attempt
+        # plus the child's start-up (importing litellm takes a few seconds)
+        _timeout = kwargs.get('timeout') or DEFAULT_TIMEOUT
+        deadline = _timeout * (DEFAULT_RETRIES + 1) + 60
+        if not parent_conn.poll(deadline):
+            raise TimeoutError(f"LLM call did not finish within {deadline}s")
+        try:
+            result = json.loads(parent_conn.recv_bytes().decode('utf-8'))
+        except EOFError:
+            raise RuntimeError("LLM subprocess exited without a result, check the logs") from None
+    finally:
+        parent_conn.close()
+        p.join(timeout=5)
+        if p.is_alive():
+            p.kill()
+            p.join()
+
+    if not result['ok']:
+        raise RuntimeError(result['error'])
+    return tuple(result['result'])

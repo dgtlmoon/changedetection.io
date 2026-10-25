@@ -10,11 +10,11 @@ flask_restful
 flask_wtf~=1.3
 # 2.7.6 changed block indentation in its text output, which would show up as a whitespace-only change
 # in every snapshot taken with include filters. Upgrade deliberately, with a release note.
-inscriptis>=2.7,<2.7.6
+inscriptis>=2.7.5,<2.7.6
 python-engineio>=4.14.0,<5
 python-socketio>=5.17.0,<6
 pytz
-regex>=2022.1.18 # regex_replace Jinja2 filter, thread-safe timeout= for ReDoS protection
+regex>=2026.9.29 # regex_replace Jinja2 filter, thread-safe timeout= for ReDoS protection
 timeago~=1.0
 validators~=0.36
 werkzeug==3.1.9
@@ -22,7 +22,7 @@ werkzeug==3.1.9
 
 # Set these versions together to avoid a RequestsDependencyWarning
 # >= 2.26 also adds Brotli support if brotli is installed
-brotli~=1.2
+brotli>=1.2.1,<2
 requests[socks]
 requests-file
 
@@ -31,7 +31,7 @@ requests-file
 chardet>=7.7.0
 
 wtforms~=3.2
-jsonpath-ng~=1.9.1
+jsonpath-ng~=1.12.0
 
 # Fast JSON serialization for better performance
 orjson~=3.13
@@ -97,7 +97,7 @@ pyppeteerstealth>=0.0.5
 # Include pytest, so if theres a support issue we can ask them to run these tests on their setup
 pytest ~=9.1
 pytest-flask ~=1.3
-pytest-mock ~=3.16
+pytest-mock ~=3.17
 
 # OpenAPI validation support
 openapi-core[flask] ~= 0.23
@@ -154,7 +154,13 @@ pluggy ~= 1.7
 # Uncapped: litellm now uses jsonschema<5.0,>=4.0.0, resolving earlier openapi-spec-validator conflict.
 # Note litellm >=1.83.11 does `from typing import NotRequired`, which is 3.11+ (PEP 655) - that is
 # why 3.10 support was dropped rather than pinning everyone to the last 3.10-compatible release.
-litellm>=1.40.0
+# armv7: litellm ships a Rust extension with PyPI wheels for x86_64/aarch64 only. armv7 wheels come from
+# piwheels, which lags (or fails) on new releases, and compiling the sdist under QEMU takes 3+ hours then
+# runs out of memory. So armv7 keeps a loose floor and the Dockerfile passes --only-binary=litellm, pip then
+# picks the newest version that has an armv7 wheel. Don't raise the armv7 floor (Dependabot will try)
+# above what https://www.piwheels.org/project/litellm/ has built.
+litellm>=1.106.2; platform_machine != "armv7l"
+litellm>=1.91.5; platform_machine == "armv7l"
 # Used today for LLMSettings (model/LLMSettings.py); transitively pulled by litellm but pinned explicitly
 # so the validation/typing layer doesn't disappear if litellm drops it.
 pydantic>=2.14.0,<3.0
