@@ -154,11 +154,13 @@ pluggy ~= 1.7
 # Uncapped: litellm now uses jsonschema<5.0,>=4.0.0, resolving earlier openapi-spec-validator conflict.
 # Note litellm >=1.83.11 does `from typing import NotRequired`, which is 3.11+ (PEP 655) - that is
 # why 3.10 support was dropped rather than pinning everyone to the last 3.10-compatible release.
-# armv7 is pinned to 1.91.5, the last pure-Python release. From 1.92.0 litellm ships a Rust extension
-# with wheels for x86_64/aarch64 only, so on armv7 pip compiles it from the sdist under QEMU - 3+ hours,
-# then rustc runs out of memory. Do not bump the armv7 line (Dependabot will try).
+# armv7: litellm ships a Rust extension with PyPI wheels for x86_64/aarch64 only. armv7 wheels come from
+# piwheels, which lags (or fails) on new releases, and compiling the sdist under QEMU takes 3+ hours then
+# runs out of memory. So armv7 keeps a loose floor and the Dockerfile passes --only-binary=litellm, pip then
+# picks the newest version that has an armv7 wheel. Don't raise the armv7 floor (Dependabot will try)
+# above what https://www.piwheels.org/project/litellm/ has built.
 litellm>=1.106.2; platform_machine != "armv7l"
-litellm==1.91.5; platform_machine == "armv7l"
+litellm>=1.91.5; platform_machine == "armv7l"
 # Used today for LLMSettings (model/LLMSettings.py); transitively pulled by litellm but pinned explicitly
 # so the validation/typing layer doesn't disappear if litellm drops it.
 pydantic>=2.14.0,<3.0
