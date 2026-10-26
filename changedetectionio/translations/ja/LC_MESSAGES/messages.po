@@ -1649,7 +1649,7 @@ msgstr "{} 件のウォッチをデフォルト通知設定に変更しました
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "Browser / fetch method updated on {} watches"
-msgstr ""
+msgstr "{} 件のウォッチのブラウザ / 取得方式を更新しました"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Invalid browser / fetch method selected"
@@ -1951,7 +1951,7 @@ msgid "Error Screenshot"
 msgstr "エラースクリーンショット"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/processors/templates/extract.html
+#: changedetectionio/processors/templates/extract.html changedetectionio/processors/text_json_diff/processor.py
 msgid "Text"
 msgstr "テキスト"
 
@@ -1994,7 +1994,7 @@ msgstr "テキストをハイライトして共有したり、無視リストに
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Download difference patch"
-msgstr ""
+msgstr "差分パッチをダウンロード"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "For now, Differences are performed on text, not graphically, only the latest screenshot is available."
@@ -2343,11 +2343,15 @@ msgstr "通知アラート回数"
 msgid "Server type reply"
 msgstr "サーバーの応答タイプ"
 
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "Yes"
 msgstr "はい"
 
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "No"
 msgstr "いいえ"
 
@@ -2552,12 +2556,16 @@ msgid "Goto web page"
 msgstr "ウェブページへ移動"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Switch to Restock & Price watch mode?"
+msgstr "再入荷＆価格のウォッチモードに切り替えますか？"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Create a link to share watch config with others"
 msgstr "ウォッチ設定を他の人と共有するリンクを作成"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Detecting restock and price"
-msgstr "在庫補充と価格を検知中"
+msgstr "再入荷と価格を検知中"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Not in stock"
@@ -2579,7 +2587,7 @@ msgstr "価格"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #, python-format
 msgid "Price change since previous price (%(prev)s)"
-msgstr ""
+msgstr "前回価格からの変動（%(prev)s）"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "No information"
@@ -2636,24 +2644,25 @@ msgstr ""
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Loading price history…"
-msgstr ""
+msgstr "価格履歴を読み込み中…"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/difference.py
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Out of stock"
-msgstr ""
+msgstr "在庫切れ"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "No price data available to graph yet."
-msgstr ""
+msgstr "グラフ化できる価格データがまだありません。"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Could not load price history."
-msgstr ""
+msgstr "価格履歴を読み込めませんでした。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Changes"
@@ -2662,46 +2671,46 @@ msgstr ""
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Average price"
-msgstr ""
+msgstr "平均価格"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Currently low"
-msgstr ""
+msgstr "現在低い"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Currently typical"
-msgstr ""
+msgstr "現在平均的"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Currently high"
-msgstr ""
+msgstr "現在高い"
 
 #. {pct} is a percentage including the % sign, e.g. "80%"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 #, python-brace-format
 msgid "cheaper than {pct} of tracked prices"
-msgstr ""
+msgstr "追跡中の価格の{pct}より安い"
 
 #. {pct} is a percentage including the % sign, e.g. "80%"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 #, python-brace-format
 msgid "more expensive than {pct} of tracked prices"
-msgstr ""
+msgstr "追跡中の価格の{pct}より高い"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "around the usual price"
-msgstr ""
+msgstr "通常価格の前後"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "avg"
-msgstr ""
+msgstr "平均"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page URL"
@@ -2730,7 +2739,7 @@ msgstr "未読"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Deals"
-msgstr ""
+msgstr "値下がり"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "With errors"
@@ -2738,11 +2747,11 @@ msgstr "エラーあり"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Filter by type"
-msgstr ""
+msgstr "種類で絞り込む"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "All types"
-msgstr ""
+msgstr "全種類"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark all viewed"
@@ -2807,7 +2816,7 @@ msgstr "既読にする"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark unviewed"
-msgstr ""
+msgstr "未読にする"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Use default notification"
@@ -2863,7 +2872,7 @@ msgstr "ウェブページ"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Restock & Price"
-msgstr "在庫補充＆価格"
+msgstr "再入荷＆価格"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -4011,38 +4020,42 @@ msgstr "ビジュアル / 画像スクリーンショット変更検知"
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
 msgstr "高速OpenCVアルゴリズムを使用してスクリーンショットを比較します。SSIMより10〜100倍高速です。"
 
+#: changedetectionio/processors/image_ssim_diff/processor.py
+msgid "Visual"
+msgstr "ビジュアル"
+
 #: changedetectionio/processors/restock_diff/difference.py
 msgid "Date"
-msgstr ""
+msgstr "日付"
 
 #: changedetectionio/processors/restock_diff/difference.py
 msgid "Stock status"
-msgstr ""
+msgstr "在庫状況"
 
 #: changedetectionio/processors/restock_diff/difference.py
 msgid "Currency"
-msgstr ""
+msgstr "通貨"
 
 #: changedetectionio/processors/restock_diff/difference.py
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price history"
-msgstr ""
+msgstr "価格履歴"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
-msgstr "在庫補充検知"
+msgstr "再入荷検知"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "In Stock only (Out Of Stock -> In Stock only)"
-msgstr "在庫あり時のみ（在庫切れ → 在庫ありの変化のみ）"
+msgstr "在庫あり時のみ（在庫切れ → 在庫ありへの変化のみ）"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Any availability changes"
-msgstr "在庫状態のいかなる変化も"
+msgstr "在庫状況の変化なら何でも"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Off, don't follow availability/restock"
-msgstr "オフ：在庫状態を追跡しない"
+msgstr "オフ：在庫状況・再入荷を追跡しない"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Below price to trigger notification"
@@ -4070,35 +4083,41 @@ msgstr "価格変動を追跡"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Restock & Price Detection"
-msgstr "在庫補充＆価格検知"
+msgstr "再入荷＆価格検知"
 
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Re-stock & Price detection for pages with a SINGLE product"
-msgstr "単一製品ページの在庫補充＆価格検知"
+msgstr "単一製品ページの再入荷＆価格検知"
 
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Detects if the product goes back to in-stock"
-msgstr "製品が在庫ありに戻ったかどうかを検知します"
+msgstr "商品が再入荷したかどうかを検知します"
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "Restock"
+msgstr "再入荷"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
-msgstr ""
+msgstr "価格・在庫履歴"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Download as XLSX"
-msgstr ""
+msgstr "XLSXでダウンロード"
 
+#. 'When' is a date/time column header, not the question word
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgctxt "datetime"
 msgid "When"
-msgstr ""
+msgstr "日時"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Stock"
-msgstr ""
+msgstr "在庫"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here."
-msgstr ""
+msgstr "グラフを描くにはまだ価格データが足りません。監視を続けると、ここに価格履歴が表示されます。"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "This tool will extract text data from all of the watch history."
@@ -4632,11 +4651,11 @@ msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Fetching element data.."
-msgstr ""
+msgstr "要素データを取得中…"
 
 #: changedetectionio/templates/base.html
 msgid "Rendering.."
-msgstr ""
+msgstr "レンダリング中…"
 
 #: changedetectionio/templates/base.html
 msgid "Draw mode - click and drag to select an area"
@@ -4689,11 +4708,11 @@ msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Content after filters"
-msgstr ""
+msgstr "フィルタ後の内容"
 
 #: changedetectionio/templates/base.html
 msgid "Content raw/before filters"
-msgstr ""
+msgstr "フィルタ前の生の内容"
 
 #: changedetectionio/templates/base.html
 msgid "Main navigation"
@@ -5055,7 +5074,7 @@ msgstr "スケジューリング一時停止中 — クリックで再開"
 
 #: changedetectionio/templates/menu.html
 msgid "Scheduling active — click to pause all"
-msgstr "スケジューリング実行中 — クリックで全て一時停止"
+msgstr "スケジューリング実行中 — クリックですべて一時停止"
 
 #: changedetectionio/templates/menu.html
 msgid "Paused"
