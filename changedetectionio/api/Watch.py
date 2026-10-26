@@ -628,10 +628,13 @@ class CreateWatch(Resource):
         list = {}
 
         tag_limit = request.args.get('tag', '').lower()
+        with_errors = request.args.get('with_errors') == '1'
         for uuid, watch in self.datastore.data['watching'].items():
             # Watch tags by name (replace the other calls?)
             tags = self.datastore.get_all_tags_for_watch(uuid=uuid)
             if tag_limit and not any(v.get('title').lower() == tag_limit for k, v in tags.items()):
+                continue
+            if with_errors and not watch.get('last_error'):
                 continue
 
             list[uuid] = {
@@ -648,8 +651,8 @@ class CreateWatch(Resource):
             }
 
         if request.args.get('recheck_all'):
-            # Collect all watches to queue
-            watches_to_queue = self.datastore.data['watching'].keys()
+            # Recheck the same set that was listed (tag/with_errors filters), but never paused watches
+            watches_to_queue = [uuid for uuid in list.keys() if not self.datastore.data['watching'][uuid].get('paused')]
 
             # If less than 20 watches, queue synchronously for immediate feedback
             if len(watches_to_queue) < 20:

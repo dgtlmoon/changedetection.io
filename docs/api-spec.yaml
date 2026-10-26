@@ -988,7 +988,13 @@ paths:
       parameters:
         - name: recheck_all
           in: query
-          description: Set to 1 to force recheck of all watches
+          description: Set to 1 to force recheck of all watches matching the other filters (`tag`, `with_errors`). Paused watches are never rechecked.
+          schema:
+            type: string
+            enum: ["1"]
+        - name: with_errors
+          in: query
+          description: Set to 1 to only return watches whose last check ended in an error, combine with `recheck_all=1` to recheck only those
           schema:
             type: string
             enum: ["1"]
