@@ -1332,6 +1332,26 @@ msgid "openrouter.ai → Keys"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Select a provider first."
 msgstr ""
 
@@ -3233,8 +3253,12 @@ msgid "Edit > Watch"
 msgstr "Upravit > Monitorovat"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Nastavte metodu načítání"
+msgid "Notification URL List"
+msgstr "Seznam URL oznámení"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Název oznámení"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3245,12 +3269,8 @@ msgid "Notification format"
 msgstr "Formát oznámení"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Název oznámení"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Seznam URL oznámení"
+msgid "Fetch Method"
+msgstr "Nastavte metodu načítání"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3492,21 +3512,6 @@ msgstr "Počet historických záznamů pro sledování"
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Když je metoda požadavku nastavena na GET, tělo musí být prázdné"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Neplatná konfigurace syntaxe šablony: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Neplatná syntaxe šablony: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Neplatná syntax šablony v \"%(header)s\" hlavička: %(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3775,6 +3780,21 @@ msgstr "RegEx k extrahování"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Extrahujte data"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Neplatná konfigurace syntaxe šablony: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Neplatná syntaxe šablony: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Neplatná syntax šablony v hlavičce \"%(header)s\": %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

@@ -1451,6 +1451,26 @@ msgid "openrouter.ai → Keys"
 msgstr "openrouter.ai → Klucze"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Select a provider first."
 msgstr "Najpierw wybierz dostawcę."
 
@@ -3384,8 +3404,12 @@ msgid "Edit > Watch"
 msgstr "Edycja > Obserwuj"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Metoda pobierania"
+msgid "Notification URL List"
+msgstr "Lista adresów URL powiadomień"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Tytuł powiadomienia"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3396,12 +3420,8 @@ msgid "Notification format"
 msgstr "Format powiadomienia"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Tytuł powiadomienia"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Lista adresów URL powiadomień"
+msgid "Fetch Method"
+msgstr "Metoda pobierania"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3643,21 +3663,6 @@ msgstr "Liczba elementów historii, które mają być zachowane dla każdej obse
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Pola danych muszą być puste, gdy metoda żądania jest ustawiona na GET"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Nieprawidłowa konfiguracja składni szablonu: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Nieprawidłowa składnia szablonu: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Nieprawidłowa składnia szablonu w nagłówku „%(header)s”: %(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3926,6 +3931,21 @@ msgstr "Wyrażenie regularne do wyodrębniania"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Wyeksportuj jako plik CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Nieprawidłowa konfiguracja składni szablonu: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Nieprawidłowa składnia szablonu: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Nieprawidłowa składnia szablonu w nagłówku „%(header)s”: %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

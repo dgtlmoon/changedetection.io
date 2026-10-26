@@ -1348,6 +1348,26 @@ msgid "openrouter.ai → Keys"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Select a provider first."
 msgstr ""
 
@@ -3282,8 +3302,12 @@ msgid "Edit > Watch"
 msgstr "Bearbeiten"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Fetch Methode"
+msgid "Notification URL List"
+msgstr "Liste der Benachrichtigungs-URLs"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Benachrichtigungstitel"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3294,12 +3318,8 @@ msgid "Notification format"
 msgstr "Benachrichtigungsformat"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Benachrichtigungstitel"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Liste der Benachrichtigungs-URLs"
+msgid "Fetch Method"
+msgstr "Fetch Methode"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3542,21 +3562,6 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Der Textkörper muss leer sein, wenn die Anforderungsmethode auf GET gesetzt ist"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Ungültige Vorlagensyntaxkonfiguration: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Ungültige Vorlagensyntax: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Ungültige Vorlagensyntax im Header „%(header)s“: %(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3825,6 +3830,21 @@ msgstr "RegEx zum Extrahieren"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Als CSV exportieren"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Ungültige Vorlagensyntaxkonfiguration: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Ungültige Vorlagensyntax: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Ungültige Vorlagensyntax im Header „%(header)s“: %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

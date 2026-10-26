@@ -43,6 +43,9 @@
     <li class="pure-menu-item menu-collapsible">
         <a class="pure-menu-link" href="https://changedetection.io">{{ _('Website Change Detection and Notification.') }}</a>
     </li>
+    <li class="pure-menu-item " id="menu-ui-language">
+        <a class="language-selector"><span class="{{ get_flag_for_locale(get_locale()) }}" id="language-selector-flag"></span></a>
+    </li>
 {% endif %}
     <li class="pure-menu-item menu-collapsible" id="inline-menu-extras-group">
 {% if current_user.is_authenticated or not has_password %}

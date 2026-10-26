@@ -1330,6 +1330,26 @@ msgid "openrouter.ai → Keys"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Select a provider first."
 msgstr ""
 
@@ -3225,7 +3245,11 @@ msgid "Edit > Watch"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
+msgid "Notification URL List"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -3237,11 +3261,7 @@ msgid "Notification format"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
+msgid "Fetch Method"
 msgstr ""
 
 #: changedetectionio/forms.py
@@ -3483,21 +3503,6 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
-msgstr ""
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr ""
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr ""
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
@@ -3766,6 +3771,21 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
+msgstr ""
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr ""
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr ""
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
 msgstr ""
 
 #: changedetectionio/languages.py

@@ -1,10 +1,9 @@
 import re
 
-import pluggy
 from loguru import logger
 from flask_babel import lazy_gettext as _l
 
-hookimpl = pluggy.HookimplMarker("changedetectionio_conditions")
+from changedetectionio.plugin_api import hookimpl
 
 
 @hookimpl

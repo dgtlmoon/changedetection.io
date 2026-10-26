@@ -1415,6 +1415,26 @@ msgid "openrouter.ai → Keys"
 msgstr "openrouter.ai → Kunci"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Select a provider first."
 msgstr "Pilih penyedia terlebih dahulu."
 
@@ -3338,8 +3358,12 @@ msgid "Edit > Watch"
 msgstr "Edit > Monitor"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Metode Pengambilan"
+msgid "Notification URL List"
+msgstr "Daftar URL Notifikasi"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Judul Notifikasi"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3350,12 +3374,8 @@ msgid "Notification format"
 msgstr "Format notifikasi"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Judul Notifikasi"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Daftar URL Notifikasi"
+msgid "Fetch Method"
+msgstr "Metode Pengambilan"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3597,21 +3617,6 @@ msgstr "Jumlah item riwayat per monitor yang disimpan"
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Isi harus kosong saat Metode Permintaan diatur ke GET"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Konfigurasi sintaks template tidak valid: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Sintaks template tidak valid: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "Sintaks template tidak valid pada header \"%(header)s\": %(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3880,6 +3885,21 @@ msgstr "RegEx untuk diekstrak"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Ekstrak sebagai CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Konfigurasi sintaks template tidak valid: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Sintaks template tidak valid: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Sintaks template tidak valid pada header \"%(header)s\": %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

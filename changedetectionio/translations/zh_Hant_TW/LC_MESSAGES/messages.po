@@ -1339,6 +1339,26 @@ msgid "openrouter.ai → Keys"
 msgstr "openrouter.ai → 金鑰"
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.deepseek.com → API keys"
+msgstr "platform.deepseek.com → API 金鑰"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.groq.com → API keys"
+msgstr "console.groq.com → API 金鑰"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.mistral.ai → API keys"
+msgstr "console.mistral.ai → API 金鑰"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "api.together.ai → API keys"
+msgstr "api.together.ai → API 金鑰"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.x.ai → API keys"
+msgstr "console.x.ai → API 金鑰"
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Select a provider first."
 msgstr "請先選擇供應商。"
 
@@ -3236,8 +3256,12 @@ msgid "Edit > Watch"
 msgstr "編輯 > 監測任務"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "抓取方式"
+msgid "Notification URL List"
+msgstr "通知 URL 列表"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "通知標題"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3248,12 +3272,8 @@ msgid "Notification format"
 msgstr "通知格式"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "通知標題"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "通知 URL 列表"
+msgid "Fetch Method"
+msgstr "抓取方式"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3495,21 +3515,6 @@ msgstr "每個監測任務要保留的歷史項目數量"
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "當請求方法設為 GET 時，內容必須為空"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "範本語法設定無效：%(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "無效的範本語法：%(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "「%(header)s」標頭中的範本語法無效：%(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3778,6 +3783,21 @@ msgstr "要提取的 RegEx"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "提取為 CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "範本語法設定無效：%(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "無效的範本語法：%(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "「%(header)s」標頭中的範本語法無效：%(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

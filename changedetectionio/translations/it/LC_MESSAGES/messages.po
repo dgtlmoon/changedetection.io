@@ -1332,6 +1332,26 @@ msgid "openrouter.ai → Keys"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Select a provider first."
 msgstr ""
 
@@ -3227,8 +3247,12 @@ msgid "Edit > Watch"
 msgstr "Modifica > Monitora"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "Metodo di recupero"
+msgid "Notification URL List"
+msgstr "Lista URL notifiche"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "Titolo notifica"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3239,12 +3263,8 @@ msgid "Notification format"
 msgstr "Formato notifica"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "Titolo notifica"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "Lista URL notifiche"
+msgid "Fetch Method"
+msgstr "Metodo di recupero"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3486,21 +3506,6 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Il corpo deve essere vuoto quando il metodo è impostato su GET"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "Configurazione sintassi template non valida: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "Sintassi template non valida: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3769,6 +3774,21 @@ msgstr "RegEx da estrarre"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "Estrai come CSV"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "Configurazione sintassi template non valida: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "Sintassi template non valida: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "Sintassi template non valida nell'header \"%(header)s\": %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"

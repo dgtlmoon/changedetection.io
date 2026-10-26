@@ -1337,6 +1337,26 @@ msgid "openrouter.ai → Keys"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
 msgid "Select a provider first."
 msgstr ""
 
@@ -3244,8 +3264,12 @@ msgid "Edit > Watch"
 msgstr "編集 > ウォッチ"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "取得方式"
+msgid "Notification URL List"
+msgstr "通知URLリスト"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "通知タイトル"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3256,12 +3280,8 @@ msgid "Notification format"
 msgstr "通知フォーマット"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "通知タイトル"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "通知URLリスト"
+msgid "Fetch Method"
+msgstr "取得方式"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3503,21 +3523,6 @@ msgstr "ウォッチごとに保持する履歴の件数"
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "リクエストメソッドがGETの場合、ボディは空にしてください"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "無効なテンプレート構文設定: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "無効なテンプレート構文: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "\"%(header)s\" ヘッダーのテンプレート構文が無効です: %(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3786,6 +3791,21 @@ msgstr "抽出する正規表現"
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "CSVとして抽出"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "無効なテンプレート構文設定: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "無効なテンプレート構文: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "\"%(header)s\" ヘッダーのテンプレート構文が無効です: %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"
