@@ -38,7 +38,7 @@ class TestRestockOffSetting(unittest.TestCase):
 
     def tearDown(self):
         self.store.stop_thread = True
-        time.sleep(0.5)
+        
         shutil.rmtree(self.test_datastore_path, ignore_errors=True)
 
     def test_off_with_nothing_extractable_still_raises_with_price_specific_message(self):
