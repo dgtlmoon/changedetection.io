@@ -266,7 +266,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     if e.page_text:
                         watch.save_error_text(contents=e.page_text)
 
-                    datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                    datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                'last_check_status': e.status_code})
                     process_changedetection_results = False
 
                 except FilterNotFoundInResponse as e:
