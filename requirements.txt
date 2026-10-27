@@ -30,7 +30,7 @@ requests-file
 # If specific version needed for security, use urllib3>=1.26.19,<3.0
 chardet>=7.7.0
 
-wtforms~=3.2
+wtforms~=3.3
 jsonpath-ng~=1.13.0
 
 # Fast JSON serialization for better performance
