@@ -116,7 +116,9 @@ extruct
 # For cleaning up unknown currency formats
 babel==2.18.0
 # For internationalization (i18n) support
-Flask-Babel>=4.0.0
+# Pinned <4.1.0; the 4.1.0 plural fix is backported in
+# changedetectionio/flask_babel_backport.py.
+Flask-Babel>=4.0.0,<4.1.0
 
 # rapidfuzz (MIT) - do NOT swap back to `levenshtein`, which is GPL-2.0-or-later
 # and would force the combined work to be GPL. See the license-compliance CI step.
