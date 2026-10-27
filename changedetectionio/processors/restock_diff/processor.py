@@ -13,9 +13,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 def _(x): return x  # Translation marker for extraction only
 name = _('Re-stock & Price detection for pages with a SINGLE product')
 description = _('Detects if the product goes back to in-stock')
+list_badge_text = _('Restock')
 del _  # Remove marker function
 processor_weight = 1
-list_badge_text = "Restock"  # _()
 
 class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):

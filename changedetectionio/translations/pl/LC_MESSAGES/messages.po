@@ -2074,7 +2074,7 @@ msgid "Error Screenshot"
 msgstr "Zrzut ekranu z błędem"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/processors/templates/extract.html
+#: changedetectionio/processors/templates/extract.html changedetectionio/processors/text_json_diff/processor.py
 msgid "Text"
 msgstr "Tekst"
 
@@ -2477,11 +2477,15 @@ msgstr "Liczba powiadomień"
 msgid "Server type reply"
 msgstr "Odpowiedź dotycząca typu serwera"
 
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "Yes"
 msgstr "Tak"
 
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "No"
 msgstr "Nie"
 
@@ -2688,6 +2692,10 @@ msgid "Goto web page"
 msgstr "Przejdź do strony internetowej"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Switch to Restock & Price watch mode?"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Create a link to share watch config with others"
 msgstr "Utwórz link, aby udostępnić innym konfigurację obserwacji"
 
@@ -2790,6 +2798,7 @@ msgstr "Nie ma jeszcze danych dotyczących cen, które można by przedstawić na
 msgid "Could not load price history."
 msgstr "Nie udało się załadować historii cen."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Changes"
@@ -4151,6 +4160,10 @@ msgstr "Wykrywanie zmian na obrazach / zrzutach ekranu"
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
 msgstr "Porównuje zrzuty ekranu przy użyciu szybkiego algorytmu OpenCV, który działa 10–100 razy szybciej niż SSIM"
 
+#: changedetectionio/processors/image_ssim_diff/processor.py
+msgid "Visual"
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/difference.py
 msgid "Date"
 msgstr "Data"
@@ -4220,6 +4233,10 @@ msgstr "Wykrywanie uzupełnienia zapasów i zmian cen na stronach zawierających
 msgid "Detects if the product goes back to in-stock"
 msgstr "Wykrywa, czy produkt ponownie pojawił się w magazynie"
 
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "Restock"
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
 msgstr "Historia cen i stanów magazynowych"
@@ -4228,7 +4245,9 @@ msgstr "Historia cen i stanów magazynowych"
 msgid "Download as XLSX"
 msgstr "Pobierz jako plik XLSX"
 
+#. 'When' is a date/time column header, not the question word
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgctxt "datetime"
 msgid "When"
 msgstr "Kiedy"
 
