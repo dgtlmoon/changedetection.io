@@ -2059,6 +2059,10 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "Tangkapan layar kesalahan saat ini dari permintaan terbaru"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Where in the document the differences are, not when they happened"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr "Kiat pro: Anda dapat mengaktifkan <strong>\"bagikan akses saat kata sandi diaktifkan\"</strong> dari pengaturan."
 

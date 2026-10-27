@@ -2025,6 +2025,10 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "Captura de pantalla con error actual de la solicitud más reciente"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Where in the document the differences are, not when they happened"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr ""
 "Consejo profesional: puedes habilitar <strong>«compartir acceso cuando la contraseña está habilitada»</strong> desde "

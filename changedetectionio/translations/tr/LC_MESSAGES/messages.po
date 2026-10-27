@@ -2005,6 +2005,10 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "En son istekten kaynaklanan mevcut hatalı ekran görüntüsü"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Where in the document the differences are, not when they happened"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr "Uzman ipucu: Ayarlardan <strong>\"parola etkinken erişimi paylaş\"</strong> seçeneğini etkinleştirebilirsiniz."
 
