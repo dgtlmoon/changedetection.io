@@ -133,6 +133,25 @@ def test_diff_version_arrows_are_named(client):
         assert link.get('aria-label') == label.get_text(strip=True)
 
 
+def test_diff_minimap_is_named_as_a_map(client):
+    """The bar above the difference is a map of where in the document the changes
+    are, not a timeline: unnamed, the cells read as timestamps and people hover it
+    expecting a date (#4550). It only renders for diffs over 100 lines."""
+    datastore = client.application.config['DATASTORE']
+    uuid = datastore.add_watch(url='https://example.com/long', extras={'paused': True})
+    watch = datastore.data['watching'][uuid]
+    watch.save_history_blob('\n'.join(f'line {i}' for i in range(150)), 1700000000, 'first')
+    watch.save_history_blob('\n'.join(f'line {i}' for i in range(149)) + '\nlast', 1700000060, 'second')
+
+    page = BeautifulSoup(client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid)).data, 'html.parser')
+    minimap = page.select_one('#cell-diff-jump-visualiser')
+    assert minimap is not None
+    assert minimap.get('role') == 'img'
+    assert minimap.get('aria-label')
+    # Same wording in the tooltip and the accessible name, as on the arrows.
+    assert minimap.get('title') == minimap.get('aria-label')
+
+
 def test_difference_page_class_scopes_sticky_header(client):
     """The sticky top menu is styled off body.difference-page, so only the diff
     page may carry that class - the extract page shares the same blueprint."""

@@ -1975,6 +1975,10 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "最近請求的目前錯誤截圖"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Where in the document the differences are, not when they happened"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr "專業提示：您可以於設定中啟用 <strong>「啟用密碼時分享存取權限」</strong>。"
 

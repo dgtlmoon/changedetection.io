@@ -2100,6 +2100,10 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "Aktualny zrzut ekranu przedstawiający błąd z ostatniego żądania"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Where in the document the differences are, not when they happened"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr "Wskazówka: W ustawieniach możesz włączyć opcję <strong>„udostępnianie przy włączonym haśle”</strong>."
 

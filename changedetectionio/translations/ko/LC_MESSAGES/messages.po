@@ -1976,6 +1976,10 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "가장 최근 요청에서 발생한 오류 스크린샷"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Where in the document the differences are, not when they happened"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr "팁: 설정에서 <strong>\"비밀번호 사용 시 공유 접근 허용\"</strong>을 활성화할 수 있습니다."
 
