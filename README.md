@@ -1,15 +1,13 @@
+[<img src="./docs/banner-wide.png" style="max-width:100%;" alt="AI LLM Web site page change monitoring"  title="AI LLM Web site page change monitoring"  />](https://changedetection.io?src=github)
+
 # Detect Website Changes Automatically — Monitor Web Page Changes in Real Time
 
-Monitor websites for updates — get notified via Discord, Email, Slack, Telegram, Webhook and many more.
+Monitor websites for updates — get notified via Discord, Email, Slack, Telegram, Webhook and many more — Ideal for monitoring price changes, content edits, conditional changes, LLM Change summaries and triggers just to name few features.
 
-**Detect web page content changes and get instant alerts.**  
-
-Ideal for monitoring price changes, content edits, conditional changes and more.
+[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
 
 
 [<img src="./docs/screenshot.png" style="max-width:100%;" alt="Web site page change monitoring"  title="Web site page change monitoring"  />](https://changedetection.io?src=github)
-
-[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
