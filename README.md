@@ -4,14 +4,14 @@
 
 Monitor websites for updates — get notified via Discord, Email, Slack, Telegram, Webhook and many more — Ideal for monitoring price changes, content edits, conditional changes, LLM Change summaries and triggers just to name few features.
 
-[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
+[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE)
 
 
 [<img src="./docs/screenshot.png" style="max-width:100%;" alt="Web site page change monitoring"  title="Web site page change monitoring"  />](https://changedetection.io?src=github)
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
-[**Get started with website page change monitoring straight away. Don't have time? Try our $8.99/month subscription, use our proxies and support!**](https://changedetection.io) , _half the price of other website change monitoring services!_
+[**Get started with website page change monitoring straight away. Don't have time? Try our $8.99/month subscription, use our proxies and support!**](https://changedetection.io) , _Same open-source changedetection.io, minus the hard parts, No infrastructure to baby-sit._
 
 
 - Chrome browser included.
@@ -33,8 +33,6 @@ Works with any model you already pay for — GPT-4o-mini and Gemini Flash handle
 We've got a quick tutorial here - [Bring your own LLM/AI Key to changedetection.io for change summaries and triggers.](https://changedetection.io/tutorial/ai-summary-and-change-detection-bring-your-own-key)
 
 [<img src="./docs/LLM-change-summary.jpeg" style="max-width:100%;" alt="AI-powered website change detection — plain language change summaries and smart alert rules"  title="AI website change detection with LLM change summaries and intelligent alert filtering" />](https://changedetection.io?src=github)
-
-_Note: Available in our subscription/hosted service from June 2026_
 
 ### Target specific parts of the webpage using the Visual Selector tool.
 
@@ -306,13 +304,6 @@ Full REST API for programmatic management of watches, tags, notifications and mo
 
 - **[Interactive API Documentation](https://changedetection.io/docs/api_v1/index.html)** - Complete API reference with live testing
 - **[OpenAPI Specification](docs/api-spec.yaml)** - Generate SDKs for any programming language
-
-## Support us
-
-Do you use changedetection.io to make money? does it save you time or money? Does it make your life easier? less stressful? Remember, we write this software when we should be doing actual paid work, we have to buy food and pay rent just like you.
-
-
-Consider taking out an officially supported [website change detection subscription](https://changedetection.io?src=github) , even if you don't use it, you still get the warm fuzzy feeling of helping out the project. (And who knows, you might just use it!)
 
 ## Commercial Support
 
