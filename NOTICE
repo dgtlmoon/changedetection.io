@@ -1,0 +1,17 @@
+changedetection.io
+Copyright (c) Leigh Morresi and the changedetection.io contributors
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+Contributors retain copyright in their own contributions. There is no
+Contributor Licence Agreement and no copyright has been assigned.
+
+The changedetection.io name, logo and other brand assets are not licensed under
+Apache-2.0. Trade mark rights are not granted by that licence in any case
+(section 6), and copyright in the brand assets is reserved.
+
+Third-party components are listed in THIRD-PARTY-LICENSES.md. Where a
+dependency offers a choice of licence, we use it under:
+
+  feedgen    - BSD          (offered as BSD or LGPLv3+)
+  paho-mqtt  - BSD-3-Clause (offered as EPL-2.0 or BSD-3-Clause)
