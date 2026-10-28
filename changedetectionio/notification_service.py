@@ -67,7 +67,25 @@ def watch_will_send_content_changed_notification(datastore, watch):
     """
     if not watch or watch.get('notification_muted'):
         return False
+    if _content_notification_cooldown_active(watch):
+        return False
     return bool(_check_cascading_vars(datastore, 'notification_urls', watch))
+
+
+def _content_notification_cooldown_active(watch, now=None):
+    cooldown_hours = watch.get('notification_cooldown_hours', 0) or 0
+    if not isinstance(cooldown_hours, int) or isinstance(cooldown_hours, bool) or cooldown_hours < 0:
+        raise ValueError(f"Invalid notification_cooldown_hours value: {cooldown_hours!r}")
+
+    last_notification_at = watch.get('last_content_notification_at', 0) or 0
+    if not isinstance(last_notification_at, (int, float)) or isinstance(last_notification_at, bool):
+        raise ValueError(f"Invalid last_content_notification_at value: {last_notification_at!r}")
+
+    if cooldown_hours == 0 or last_notification_at == 0:
+        return False
+
+    now = time.time() if now is None else now
+    return now - last_notification_at < cooldown_hours * 60 * 60
 
 
 class FormattableTimestamp(str):
@@ -465,12 +483,18 @@ class NotificationService:
         # (Individual watch) Only prepare to notify if the rules above matched
         queued = False
         if n_object and n_object.get('notification_urls'):
-            queued = True
+            with self.datastore.lock:
+                watch = self.datastore.data['watching'].get(watch_uuid)
+                if not watch:
+                    return False
+                if _content_notification_cooldown_active(watch):
+                    return False
+                count = watch.get('notification_alert_count', 0) + 1
+                self.queue_notification_for_watch(n_object=n_object, watch=watch)
+                watch['last_content_notification_at'] = time.time()
 
-            count = watch.get('notification_alert_count', 0) + 1
             self.datastore.update_watch(uuid=watch_uuid, update_obj={'notification_alert_count': count})
-
-            self.queue_notification_for_watch(n_object=n_object, watch=watch)
+            queued = True
 
         return queued
 

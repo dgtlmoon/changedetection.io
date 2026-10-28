@@ -297,6 +297,12 @@ Math: {{ 1 + 1 }}") }}
                     <div  class="pure-control-group inline-radio">
                       {{ render_ternary_field(form.notification_muted, BooleanField=true) }}
                     </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.notification_cooldown_hours, class="notification-cooldown-hours", min=0) }}
+                        <span class="pure-form-message-inline">
+                            {{ _('Minimum time between change notifications for this watch. Set to 0 to disable the cooldown.') }}
+                        </span>
+                    </div>
                     {% if capabilities.supports_screenshots %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
