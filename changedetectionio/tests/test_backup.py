@@ -202,6 +202,96 @@ def test_backup_restore(client, live_server, measure_memory_usage, datastore_pat
         f"Tag 2 not properly rehydrated, got {type(restored_tag2)}"
 
 
+def test_backup_restore_multiple_zips(client, live_server, measure_memory_usage, datastore_path):
+    """Several backup zips can be uploaded and restored in a single request."""
+
+    set_original_response(datastore_path=datastore_path)
+
+    datastore = live_server.app.config['DATASTORE']
+    watch_url = url_for('test_endpoint', _external=True)
+
+    uuid = datastore.add_watch(url=watch_url)
+    tag_uuid = datastore.add_tag(title="Tasty multi-zip tag")
+
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    client.post(url_for("backups.request_backup"), follow_redirects=True)
+    time.sleep(4)
+
+    res = client.get(url_for("backups.download_backup", filename="latest"), follow_redirects=True)
+    assert res.content_type == "application/zip"
+
+    # Split the backup into two zips, one holding the watch and one holding the group
+    watch_zip = io.BytesIO()
+    tag_zip = io.BytesIO()
+    with ZipFile(io.BytesIO(res.data)) as original, \
+            ZipFile(watch_zip, 'w') as wz, \
+            ZipFile(tag_zip, 'w') as tz:
+        for item in original.infolist():
+            if item.filename.startswith(f"{uuid}/"):
+                wz.writestr(item, original.read(item.filename))
+            elif item.filename.startswith(f"{tag_uuid}/"):
+                tz.writestr(item, original.read(item.filename))
+
+    datastore.delete('all')
+    client.post(url_for("tags.delete_all"), follow_redirects=True)
+    assert uuid not in datastore.data['watching']
+    assert tag_uuid not in datastore.data['settings']['application']['tags']
+
+    # The form field should allow selecting more than one file
+    res = client.get(url_for("backups.restore.restore"))
+    assert b'multiple' in res.data
+    assert b'Backup .ZIP file(s)' in res.data
+
+    res = client.post(
+        url_for("backups.restore.backups_restore_start"),
+        data={
+            'zip_file': [
+                (io.BytesIO(watch_zip.getvalue()), 'watches.zip'),
+                (io.BytesIO(tag_zip.getvalue()), 'groups.zip'),
+            ],
+            'include_groups': 'y',
+            'include_groups_replace_existing': 'y',
+            'include_watches': 'y',
+            'include_watches_replace_existing': 'y',
+        },
+        content_type='multipart/form-data',
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b'Restore started in background' in res.data
+
+    time.sleep(2)
+
+    restored_watch = datastore.data['watching'].get(uuid)
+    assert restored_watch is not None, f"Watch {uuid} from the first zip not found after restore"
+    assert restored_watch['url'] == watch_url
+
+    restored_tag = datastore.data['settings']['application']['tags'].get(tag_uuid)
+    assert restored_tag is not None, f"Tag {tag_uuid} from the second zip not found after restore"
+    assert restored_tag['title'] == "Tasty multi-zip tag"
+
+
+def test_backup_restore_multiple_zips_rejects_non_zip(client, live_server, measure_memory_usage, datastore_path):
+    """If any of the uploaded files is not a .zip, nothing is restored."""
+
+    res = client.post(
+        url_for("backups.restore.backups_restore_start"),
+        data={
+            'zip_file': [
+                (io.BytesIO(b'PK'), 'good.zip'),
+                (io.BytesIO(b'not a zip'), 'evil.txt'),
+            ],
+            'include_watches': 'y',
+        },
+        content_type='multipart/form-data',
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+    assert b'File must be a .zip backup file' in res.data
+
+
 def test_backup_restore_zip_slip_rejected(client, live_server, measure_memory_usage, datastore_path):
     """Zip Slip path traversal entries in a restore zip must be rejected."""
     import pytest

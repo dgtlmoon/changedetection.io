@@ -121,8 +121,8 @@ msgid "Backups were deleted."
 msgstr "Zálohy byly smazány"
 
 #: changedetectionio/blueprint/backups/restore.py
-msgid "Backup zip file"
-msgstr "Záložní zip soubor"
+msgid "Backup .ZIP file(s)"
+msgstr "Záložní .ZIP soubor(y)"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Must be a .zip backup file!"
