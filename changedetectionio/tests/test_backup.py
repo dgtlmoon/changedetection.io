@@ -202,6 +202,36 @@ def test_backup_restore(client, live_server, measure_memory_usage, datastore_pat
         f"Tag 2 not properly rehydrated, got {type(restored_tag2)}"
 
 
+def test_backup_restore_watch_without_interval_uses_default(client, live_server, measure_memory_usage, datastore_path):
+    """A restored watch with time_between_check_use_default=False but no interval of its own falls back to the default."""
+    import json
+    import uuid as uuid_builder
+    from changedetectionio.blueprint.backups.restore import import_from_zip
+
+    datastore = live_server.app.config['DATASTORE']
+    uuid = str(uuid_builder.uuid4())
+
+    backup_zip = io.BytesIO()
+    with ZipFile(backup_zip, 'w') as zf:
+        zf.writestr(f"{uuid}/watch.json", json.dumps({
+            'url': 'https://example.com',
+            'time_between_check_use_default': False,
+            'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+        }))
+    backup_zip.seek(0)
+
+    import_from_zip(
+        zip_stream=backup_zip,
+        datastore=datastore,
+        include_groups=True,
+        include_groups_replace=True,
+        include_watches=True,
+        include_watches_replace=True,
+    )
+
+    assert datastore.data['watching'][uuid]['time_between_check_use_default'] is True
+
+
 def test_backup_restore_multiple_zips(client, live_server, measure_memory_usage, datastore_path):
     """Several backup zips can be uploaded and restored in a single request."""
 

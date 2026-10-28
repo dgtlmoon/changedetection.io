@@ -149,6 +149,7 @@ def import_from_zip(zip_stream, datastore, include_groups, include_groups_replac
                 # Mirror _load_watches / rehydrate_entity
                 watch_data['uuid'] = uuid
                 watch_obj = datastore.rehydrate_entity(uuid, watch_data)
+                watch_obj.ensure_valid_time_between_check()
                 current_watches[uuid] = watch_obj
                 watch_obj.commit()
                 restored_watches += 1
