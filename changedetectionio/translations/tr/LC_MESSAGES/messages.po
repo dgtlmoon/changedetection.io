@@ -122,8 +122,8 @@ msgid "Backups were deleted."
 msgstr "Yedeklemeler silindi."
 
 #: changedetectionio/blueprint/backups/restore.py
-msgid "Backup zip file"
-msgstr "Yedek zip dosyası"
+msgid "Backup .ZIP file(s)"
+msgstr "Yedek .ZIP dosya(lar)ı"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Must be a .zip backup file!"

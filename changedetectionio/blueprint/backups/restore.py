@@ -10,12 +10,12 @@ import zipfile
 from flask import Blueprint, render_template, flash, url_for, redirect, request
 from flask_babel import gettext, lazy_gettext as _l
 from wtforms import Form, BooleanField, SubmitField
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import MultipleFileField, FileAllowed
 from loguru import logger
 
 from changedetectionio.flask_app import login_optionally_required
 
-# Maximum size of the uploaded zip file. Override via env var MAX_RESTORE_UPLOAD_MB.
+# Maximum total size of the uploaded zip file(s). Override via env var MAX_RESTORE_UPLOAD_MB.
 _MAX_UPLOAD_BYTES = int(os.getenv("MAX_RESTORE_UPLOAD_MB", 256)) * 1024 * 1024
 # Maximum total uncompressed size of all entries (zip-bomb guard). Override via MAX_RESTORE_DECOMPRESSED_MB.
 _MAX_DECOMPRESSED_BYTES = int(os.getenv("MAX_RESTORE_DECOMPRESSED_MB", 1024)) * 1024 * 1024
@@ -27,9 +27,9 @@ _UUID_RE = re.compile(
 
 
 class RestoreForm(Form):
-    zip_file = FileField(_l('Backup zip file'), validators=[
+    zip_file = MultipleFileField(_l('Backup .ZIP file(s)'), validators=[
         FileAllowed(['zip'], _l('Must be a .zip backup file!'))
-    ])
+    ], render_kw={'accept': '.zip'})
     include_groups = BooleanField(_l('Include groups'), default=True)
     include_groups_replace_existing = BooleanField(_l('Replace existing groups of the same UUID'), default=True)
     include_watches = BooleanField(_l('Include watches'), default=True)
@@ -170,6 +170,20 @@ def import_from_zip(zip_stream, datastore, include_groups, include_groups_replac
     }
 
 
+def import_from_zips(zip_streams, **kwargs):
+    """
+    Import several backup zips one after another, in upload order (a later zip wins for a shared UUID
+    when replace is requested). A failure in one zip is logged and does not stop the rest.
+
+    zip_streams is a list of (filename, stream) tuples, remaining kwargs are passed to import_from_zip().
+    """
+    for filename, zip_stream in zip_streams:
+        logger.info(f"Restore: importing {filename!r}")
+        try:
+            import_from_zip(zip_stream=zip_stream, **kwargs)
+        except Exception as e:
+            logger.error(f"Restore: failed to import {filename!r}: {e}")
+
 
 def construct_restore_blueprint(datastore):
     restore_blueprint = Blueprint('restore', __name__, template_folder="templates")
@@ -192,12 +206,12 @@ def construct_restore_blueprint(datastore):
             flash(gettext("A restore is already running, check back in a few minutes"), "error")
             return redirect(url_for('backups.restore.restore'))
 
-        zip_file = request.files.get('zip_file')
-        if not zip_file or not zip_file.filename:
+        zip_files = [f for f in request.files.getlist('zip_file') if f and f.filename]
+        if not zip_files:
             flash(gettext("No file uploaded"), "error")
             return redirect(url_for('backups.restore.restore'))
 
-        if not zip_file.filename.lower().endswith('.zip'):
+        if any(not f.filename.lower().endswith('.zip') for f in zip_files):
             flash(gettext("File must be a .zip backup file"), "error")
             return redirect(url_for('backups.restore.restore'))
 
@@ -208,19 +222,25 @@ def construct_restore_blueprint(datastore):
             return redirect(url_for('backups.restore.restore'))
 
         # Read into memory now — the request stream is gone once we return.
-        # Read one byte beyond the limit so we can detect truncated-but-still-oversized streams.
-        try:
-            raw = zip_file.read(_MAX_UPLOAD_BYTES + 1)
-            if len(raw) > _MAX_UPLOAD_BYTES:
-                flash(gettext("Backup file is too large (max %(mb)s MB)", mb=_MAX_UPLOAD_BYTES // (1024 * 1024)), "error")
+        # The size limit applies to all files combined; read one byte beyond what is left
+        # so we can detect truncated-but-still-oversized streams.
+        zip_streams = []
+        remaining = _MAX_UPLOAD_BYTES
+        for zip_file in zip_files:
+            try:
+                raw = zip_file.read(remaining + 1)
+                if len(raw) > remaining:
+                    flash(gettext("Backup file is too large (max %(mb)s MB)", mb=_MAX_UPLOAD_BYTES // (1024 * 1024)), "error")
+                    return redirect(url_for('backups.restore.restore'))
+                remaining -= len(raw)
+                zip_bytes = io.BytesIO(raw)
+                with zipfile.ZipFile(zip_bytes):  # quick validity check before spawning
+                    pass
+                zip_bytes.seek(0)
+            except zipfile.BadZipFile:
+                flash(gettext("Invalid or corrupted zip file"), "error")
                 return redirect(url_for('backups.restore.restore'))
-            zip_bytes = io.BytesIO(raw)
-            with zipfile.ZipFile(zip_bytes):  # quick validity check before spawning
-                pass
-            zip_bytes.seek(0)
-        except zipfile.BadZipFile:
-            flash(gettext("Invalid or corrupted zip file"), "error")
-            return redirect(url_for('backups.restore.restore'))
+            zip_streams.append((zip_file.filename, zip_bytes))
 
         include_groups = request.form.get('include_groups') == 'y'
         include_groups_replace = request.form.get('include_groups_replace_existing') == 'y'
@@ -228,9 +248,9 @@ def construct_restore_blueprint(datastore):
         include_watches_replace = request.form.get('include_watches_replace_existing') == 'y'
 
         restore_thread = threading.Thread(
-            target=import_from_zip,
+            target=import_from_zips,
             kwargs={
-                'zip_stream': zip_bytes,
+                'zip_streams': zip_streams,
                 'datastore': datastore,
                 'include_groups': include_groups,
                 'include_groups_replace': include_groups_replace,

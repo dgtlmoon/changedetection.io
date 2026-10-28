@@ -7,7 +7,7 @@ Monitor websites for updates — get notified via Discord, Email, Slack, Telegra
 Ideal for monitoring price changes, content edits, conditional changes and more.
 
 
-[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Web site page change monitoring"  title="Web site page change monitoring"  />](https://changedetection.io?src=github)
+[<img src="./docs/screenshot.png" style="max-width:100%;" alt="Web site page change monitoring"  title="Web site page change monitoring"  />](https://changedetection.io?src=github)
 
 [![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
 
@@ -31,6 +31,8 @@ Stop drowning in noise. Connect any LLM (OpenAI, Gemini, Anthropic, Ollama and m
 **AI change summaries** — instead of staring at a raw diff, your notification reads _"Price dropped from $89.99 to $67.00"_ or _"3 new products added to the listing"_. Works globally or per-watch, with full control over the prompt.
 
 Works with any model you already pay for — GPT-4o-mini and Gemini Flash handle this well at fractions of a cent per check. Or run it entirely locally with **Ollama**, **vLLM**, **LM Studio**, or any **OpenAI-compatible self-hosted endpoint** — pick the *OpenAI-compatible (vLLM, LM Studio, llama.cpp)* option in the provider dropdown and point it at your server's `/v1` URL. Powered by [LiteLLM](https://github.com/BerriAI/litellm), giving you seamless access to [100+ supported providers and models](https://docs.litellm.ai/docs/providers).
+
+We've got a quick tutorial here - [Bring your own LLM/AI Key to changedetection.io for change summaries and triggers.](https://changedetection.io/tutorial/ai-summary-and-change-detection-bring-your-own-key)
 
 [<img src="./docs/LLM-change-summary.jpeg" style="max-width:100%;" alt="AI-powered website change detection — plain language change summaries and smart alert rules"  title="AI website change detection with LLM change summaries and intelligent alert filtering" />](https://changedetection.io?src=github)
 
