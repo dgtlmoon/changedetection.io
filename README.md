@@ -351,7 +351,7 @@ By using this software, and in particular any AI / LLM features, you personally 
 
 ## Third-party licenses
 
-changedetectionio.html_tools.elementpath_tostring: Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati), Licensed under [MIT license](https://github.com/sissaschool/elementpath/blob/master/LICENSE)
+See [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) for every bundled package and its licence, and [NOTICE](NOTICE) for attribution and licence elections.
 
 ## Contributors
 

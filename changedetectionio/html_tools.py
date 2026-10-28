@@ -364,46 +364,25 @@ def element_removal(selectors: List[str], html_content):
 
     return modified_html
 
+@lru_cache(maxsize=1)
+def _xpath3_string_token():
+    from elementpath.xpath3 import XPath3Parser
+    return XPath3Parser().parse('.')
+
+
 def elementpath_tostring(obj):
     """
-    change elementpath.select results to string type
-    # The MIT License (MIT), Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati)
-    # https://github.com/sissaschool/elementpath/blob/dfcc2fd3d6011b16e02bf30459a7924f547b47d0/elementpath/xpath_tokens.py#L1038
+    Convert an elementpath.select() result item to its XPath fn:string() value
+    (booleans as 'true'/'false', 1.0 as '1', NaN/INF etc), using elementpath's own
+    XPathToken.string_value() rather than a copy of it.
     """
+    from elementpath import ElementPathError
 
-    import elementpath
-    from decimal import Decimal
-    import math
-
-    if obj is None:
-        return ''
-    # https://elementpath.readthedocs.io/en/latest/xpath_api.html#elementpath.select
-    elif isinstance(obj, elementpath.XPathNode):
-        return obj.string_value
-    elif isinstance(obj, bool):
-        return 'true' if obj else 'false'
-    elif isinstance(obj, Decimal):
-        value = format(obj, 'f')
-        if '.' in value:
-            return value.rstrip('0').rstrip('.')
-        return value
-
-    elif isinstance(obj, float):
-        if math.isnan(obj):
-            return 'NaN'
-        elif math.isinf(obj):
-            return str(obj).upper()
-
-        value = str(obj)
-        if '.' in value:
-            value = value.rstrip('0').rstrip('.')
-        if '+' in value:
-            value = value.replace('+', '')
-        if 'e' in value:
-            return value.upper()
-        return value
-
-    return str(obj)
+    try:
+        return _xpath3_string_token().string_value(obj)
+    except ElementPathError:
+        # Maps, arrays and functions have no XPath string value, keep the old repr fallback
+        return str(obj)
 
 # Return str Utf-8 of matched rules
 @lxml_guarded
