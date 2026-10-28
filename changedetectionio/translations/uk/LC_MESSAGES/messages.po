@@ -120,7 +120,7 @@ msgid "Backups were deleted."
 msgstr "Резервні копії було видалено."
 
 #: changedetectionio/blueprint/backups/restore.py
-msgid "Backup zip file"
+msgid "Backup .ZIP file(s)"
 msgstr ""
 
 #: changedetectionio/blueprint/backups/restore.py

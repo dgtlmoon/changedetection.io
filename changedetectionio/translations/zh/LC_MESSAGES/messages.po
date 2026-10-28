@@ -121,7 +121,7 @@ msgid "Backups were deleted."
 msgstr "备份已删除。"
 
 #: changedetectionio/blueprint/backups/restore.py
-msgid "Backup zip file"
+msgid "Backup .ZIP file(s)"
 msgstr ""
 
 #: changedetectionio/blueprint/backups/restore.py
