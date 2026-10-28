@@ -351,7 +351,7 @@ By using this software, and in particular any AI / LLM features, you personally 
 
 ## Third-party licenses
 
-See [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) for every bundled package and its licence, and [NOTICE](NOTICE) for attribution and licence elections.
+See [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) for every bundled package and its licence, and [NOTICE](NOTICE) for attribution and licence elections.
 
 ## Contributors
 

@@ -72,7 +72,7 @@ jobs:
               --fail-on="GPL-2.0;GPL-3.0;AGPL;GNU General Public License;GNU Affero General Public License"
           '
 
-      - name: License compliance - THIRD-PARTY-LICENSES.md is up to date
+      - name: License compliance - docs/THIRD-PARTY-LICENSES.md is up to date
         run: |
           # Only the image built with the Dockerfile's default Python is the one that ships;
           # other matrix versions pull in different backports and would always differ.
@@ -82,8 +82,8 @@ jobs:
             exit 0
           fi
 
-          if ! git ls-files --error-unmatch THIRD-PARTY-LICENSES.md >/dev/null 2>&1; then
-            echo "::error file=THIRD-PARTY-LICENSES.md::THIRD-PARTY-LICENSES.md is missing from the repository. Generate it with ./.github/scripts/generate-third-party-licenses.sh and commit it."
+          if ! git ls-files --error-unmatch docs/THIRD-PARTY-LICENSES.md >/dev/null 2>&1; then
+            echo "::error file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md is missing from the repository. Generate it with ./.github/scripts/generate-third-party-licenses.sh and commit it."
             exit 1
           fi
 
@@ -96,12 +96,12 @@ jobs:
               | awk -F' [|] ' '{print $1 " | " $3}' | sort
           }
 
-          cp THIRD-PARTY-LICENSES.md /tmp/THIRD-PARTY-LICENSES.committed.md
+          cp docs/THIRD-PARTY-LICENSES.md /tmp/THIRD-PARTY-LICENSES.committed.md
           ./.github/scripts/generate-third-party-licenses.sh test-changedetectionio
 
-          if ! diff -u <(normalise /tmp/THIRD-PARTY-LICENSES.committed.md) <(normalise THIRD-PARTY-LICENSES.md); then
+          if ! diff -u <(normalise /tmp/THIRD-PARTY-LICENSES.committed.md) <(normalise docs/THIRD-PARTY-LICENSES.md); then
             echo ""
-            echo "::error file=THIRD-PARTY-LICENSES.md::THIRD-PARTY-LICENSES.md is out of date - a bundled package was added, removed, or changed its licence (see the diff above, '-' is committed, '+' is what the image actually ships)."
+            echo "::error file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md is out of date - a bundled package was added, removed, or changed its licence (see the diff above, '-' is committed, '+' is what the image actually ships)."
             echo ""
             echo "To fix, rebuild the image and regenerate the file, then commit it:"
             echo "    docker build . -t test-changedetectionio"
@@ -110,7 +110,7 @@ jobs:
             echo "If a new package is multi-licensed, also record which licence we elect in NOTICE."
             exit 1
           fi
-          echo "THIRD-PARTY-LICENSES.md matches the packages and licences in the shipped image"
+          echo "docs/THIRD-PARTY-LICENSES.md matches the packages and licences in the shipped image"
 
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
         run: |
