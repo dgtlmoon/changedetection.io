@@ -355,8 +355,6 @@ See [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) for every bundled package
 
 ## Contributors
 
-Recognition of fantastic contributors to the project
-
-<sub>Developer note: see [translation guide](changedetectionio/translations/README.md) for i18n template patterns and workflow.</sub>
-
-- Constantin Hong https://github.com/Constantin1489
+<a href="https://github.com/dgtlmoon/changedetection.io/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=dgtlmoon/changedetection.io&max=300&columns=20" alt="changedetection.io contributors" />
+</a>
