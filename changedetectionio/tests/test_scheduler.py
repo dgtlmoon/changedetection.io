@@ -190,6 +190,8 @@ def test_validation_time_interval_field(client, live_server, measure_memory_usag
     )
 
     assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') in res.data
+    # The rejected submission must not have been saved, otherwise the watch has no interval at all
+    assert client.application.config.get('DATASTORE').data['watching'][uuid].get('time_between_check_use_default') is True
 
     # Now set atleast something
 
@@ -207,3 +209,95 @@ def test_validation_time_interval_field(client, live_server, measure_memory_usag
     assert REQUIRE_ATLEAST_ONE_TIME_PART_WHEN_NOT_GLOBAL_DEFAULT.encode('utf-8') not in res.data
 
 
+
+
+import pytest
+
+@pytest.mark.parametrize("time_between_check", [
+    {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+    {'weeks': 0, 'days': 0, 'hours': 0, 'minutes': 0, 'seconds': 0},
+    None,
+    'missing',
+])
+def test_watch_without_own_interval_falls_back_to_system_default(client, live_server, measure_memory_usage, datastore_path, time_between_check):
+    """
+    A watch with time_between_check_use_default=False but no interval of its own (all null/0, null or missing,
+    e.g. from an import, restore or hand-edited watch.json) must use the system default interval,
+    not a threshold of 0 which rechecks it on every scheduler pass.
+    """
+    datastore = live_server.app.config['DATASTORE']
+    datastore.data['settings']['requests']['time_between_check'] = {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None}
+
+    test_url = url_for('test_random_content_endpoint', _external=True)
+    uuid = datastore.add_watch(url=test_url)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][uuid]
+    last_check = watch['last_checked']
+    assert last_check, "Watch should have been checked once"
+
+    watch['time_between_check_use_default'] = False
+    if time_between_check == 'missing':
+        watch.pop('time_between_check', None)
+    else:
+        watch['time_between_check'] = time_between_check
+
+    # MINIMUM_SECONDS_RECHECK_TIME is 0 in tests, so with a 0 threshold this would have been rechecked by now
+    time.sleep(3)
+    assert datastore.data['watching'][uuid]['last_checked'] == last_check, \
+        "Watch with no interval of its own should use the 3 hour system default, not be rechecked constantly"
+
+    delete_all_watches(client)
+
+
+def test_add_watch_without_own_interval_uses_default(client, live_server, measure_memory_usage, datastore_path):
+    """add_watch() given use_default=False but no interval of its own must fall back to the system default."""
+    datastore = live_server.app.config['DATASTORE']
+    test_url = url_for('test_endpoint', _external=True)
+
+    uuid = datastore.add_watch(url=test_url, extras={
+        'time_between_check_use_default': False,
+        'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None},
+    })
+    assert datastore.data['watching'][uuid]['time_between_check_use_default'] is True
+
+    uuid = datastore.add_watch(url=test_url, extras={'time_between_check_use_default': False})
+    assert datastore.data['watching'][uuid]['time_between_check_use_default'] is True
+
+    # A real interval of its own is kept
+    uuid = datastore.add_watch(url=test_url, extras={
+        'time_between_check_use_default': False,
+        'time_between_check': {'hours': 2},
+    })
+    assert datastore.data['watching'][uuid]['time_between_check_use_default'] is False
+    assert datastore.data['watching'][uuid].threshold_seconds() == 7200
+
+    delete_all_watches(client)
+
+
+def test_api_put_cannot_leave_watch_without_interval(client, live_server, measure_memory_usage, datastore_path):
+    """
+    PUT validates only the request body, so nulling the interval of a watch that already has
+    time_between_check_use_default=False passed validation - the merged watch must fall back to the default.
+    """
+    import json
+    datastore = live_server.app.config['DATASTORE']
+    api_key = datastore.data['settings']['application'].get('api_access_token')
+    test_url = url_for('test_endpoint', _external=True)
+
+    uuid = datastore.add_watch(url=test_url, extras={
+        'time_between_check_use_default': False,
+        'time_between_check': {'hours': 2},
+    })
+    assert datastore.data['watching'][uuid]['time_between_check_use_default'] is False
+
+    res = client.put(
+        url_for("watch", uuid=uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({'time_between_check': {'weeks': None, 'days': None, 'hours': None, 'minutes': None, 'seconds': None}}),
+    )
+    assert res.status_code == 200, res.data
+    assert datastore.data['watching'][uuid]['time_between_check_use_default'] is True
+
+    delete_all_watches(client)
