@@ -32,6 +32,8 @@ Stop drowning in noise. Connect any LLM (OpenAI, Gemini, Anthropic, Ollama and m
 
 Works with any model you already pay for — GPT-4o-mini and Gemini Flash handle this well at fractions of a cent per check. Or run it entirely locally with **Ollama**, **vLLM**, **LM Studio**, or any **OpenAI-compatible self-hosted endpoint** — pick the *OpenAI-compatible (vLLM, LM Studio, llama.cpp)* option in the provider dropdown and point it at your server's `/v1` URL. Powered by [LiteLLM](https://github.com/BerriAI/litellm), giving you seamless access to [100+ supported providers and models](https://docs.litellm.ai/docs/providers).
 
+We've got a quick tutorial here - [Bring your own LLM/AI Key to changedetection.io for change summaries and triggers.](https://changedetection.io/tutorial/ai-summary-and-change-detection-bring-your-own-key)
+
 [<img src="./docs/LLM-change-summary.jpeg" style="max-width:100%;" alt="AI-powered website change detection — plain language change summaries and smart alert rules"  title="AI website change detection with LLM change summaries and intelligent alert filtering" />](https://changedetection.io?src=github)
 
 _Note: Available in our subscription/hosted service from June 2026_
