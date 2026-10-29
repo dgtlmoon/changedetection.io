@@ -22,9 +22,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 def _(x): return x
 name = _('Webpage Text/HTML, JSON and PDF changes')
 description = _('Detects all text changes where possible')
+list_badge_text = _('Text')
 del _  # Remove marker
 processor_weight = -100
-list_badge_text = "Text"
 
 JSON_FILTER_PREFIXES = ['json:', 'jq:', 'jqraw:']
 

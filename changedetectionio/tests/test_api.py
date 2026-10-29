@@ -1530,3 +1530,57 @@ def test_api_time_between_check_validation(client, live_server, measure_memory_u
             url_for("watch", uuid=uuid),
             headers={'x-api-key': api_key},
         )
+
+
+def test_api_recheck_with_errors_skips_paused(client, live_server, measure_memory_usage, datastore_path):
+    """#4506 - ?with_errors=1 filters the list, ?recheck_all=1 only rechecks what was listed and never paused watches."""
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    datastore = live_server.app.config['DATASTORE']
+    set_original_response(datastore_path=datastore_path)
+    headers = {'content-type': 'application/json', 'x-api-key': api_key}
+
+    def create(url, **extra):
+        res = client.post(url_for("createwatch"), data=json.dumps({"url": url, **extra}), headers=headers)
+        assert res.status_code == 201
+        return res.json.get('uuid')
+
+    ok_uuid = create(url_for('test_endpoint', _external=True))
+    error_uuid = create(url_for('test_endpoint', status_code=403, _external=True))
+    paused_uuid = create(url_for('test_endpoint', status_code=403, _external=True), paused=True)
+    wait_for_all_checks(client)
+
+    # Paused never got checked, give it an error so it would match with_errors=1
+    datastore.data['watching'][paused_uuid]['last_error'] = "Something went wrong"
+    assert not datastore.data['watching'][ok_uuid].get('last_error')
+    assert datastore.data['watching'][error_uuid].get('last_error')
+
+    res = client.get(url_for("createwatch", with_errors='1'), headers=headers)
+    assert res.status_code == 200
+    assert set(res.json.keys()) == {error_uuid, paused_uuid}
+
+    def last_checked():
+        return {u: datastore.data['watching'][u]['last_checked'] for u in (ok_uuid, error_uuid, paused_uuid)}
+
+    # Only the erroring, non-paused watch should be rechecked
+    before = last_checked()
+    time.sleep(1.1)
+    res = client.get(url_for("createwatch", with_errors='1', recheck_all='1'), headers=headers)
+    assert res.status_code == 200
+    assert 'queued 1 watches' in res.json['status']
+    wait_for_all_checks(client)
+    after = last_checked()
+    assert after[error_uuid] != before[error_uuid]
+    assert after[ok_uuid] == before[ok_uuid]
+    assert after[paused_uuid] == before[paused_uuid]
+
+    # Plain recheck_all still skips the paused watch
+    time.sleep(1.1)
+    res = client.get(url_for("createwatch", recheck_all='1'), headers=headers)
+    assert 'queued 2 watches' in res.json['status']
+    wait_for_all_checks(client)
+    final = last_checked()
+    assert final[ok_uuid] != after[ok_uuid]
+    assert final[error_uuid] != after[error_uuid]
+    assert final[paused_uuid] == before[paused_uuid]
+
+    delete_all_watches(client)

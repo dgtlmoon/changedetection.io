@@ -51,6 +51,19 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
                 datastore.set_last_viewed(uuid, int(time.time()))
         result_message = gettext("{} watches updated").format(len(uuids))
 
+    elif (op == 'mark-unviewed'):
+        # Re #4382 - wind last_viewed back to the second-newest snapshot, so the row is unviewed
+        # again and [diff] still opens on the latest change (see get_from_version_based_on_last_viewed).
+        # With fewer than two snapshots there is no change to un-view, so those are skipped.
+        updated = 0
+        for uuid in uuids:
+            watch = datastore.data['watching'].get(uuid)
+            if watch and watch.history_n >= 2:
+                sorted_keys = sorted(watch.history.keys(), key=lambda x: int(x))
+                datastore.set_last_viewed(uuid, int(sorted_keys[-2]))
+                updated += 1
+        result_message = gettext("{} watches updated").format(updated)
+
     elif (op == 'mute'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):

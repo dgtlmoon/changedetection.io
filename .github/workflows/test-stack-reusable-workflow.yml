@@ -28,21 +28,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      # No setup-python / host pip cache here, everything is installed inside the Docker build
 
-      - name: Cache pip packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-pip-
-
-      - name: Get current date for cache key
+      - name: Get current date for the daily dependency refresh
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
@@ -57,10 +45,15 @@ jobs:
           build-args: |
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             LOGGER_LEVEL=TRACE
+            DEPS_REFRESH_DATE=${{ steps.date.outputs.date }}
           tags: test-changedetectionio
           load: true
-          cache-from: type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
-          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+          # The date is a build-arg rather than part of the scope, so only the deps layer refreshes daily.
+          # A PR's first push (and anything with changed requirements/Dockerfile) falls back to master's cache.
+          cache-from: |
+            type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}
+            type=gha,scope=build-master-py${{ env.PYTHON_VERSION }}
+          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}
 
       - name: Verify build
         run: |

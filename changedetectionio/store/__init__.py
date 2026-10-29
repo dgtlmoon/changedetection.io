@@ -876,6 +876,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         new_watch.update(apply_extras)
 
+        # Import, share-link and API callers can hand over "don't use the default" with no interval of its own
+        new_watch.ensure_valid_time_between_check()
+
         # Promote a pre-seeded directory into this watch's data_dir via a single rename()
         # (cheap: same filesystem, no copy). The seed must already be in final on-disk format.
         if seed_data_dir and os.path.isdir(seed_data_dir):

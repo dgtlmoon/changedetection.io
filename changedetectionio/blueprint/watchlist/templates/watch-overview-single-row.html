@@ -92,7 +92,7 @@
                             {%- endfor %}
                             {%- if watch['processor'] == 'text_json_diff'  -%}
                                 {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
-                                <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</button> <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="bare-btn bare-btn--link">No</button></div>
+                                <div class="ldjson-price-track-offer">{{ _('Switch to Restock & Price watch mode?') }} <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">{{ _('Yes') }}</button> <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="bare-btn bare-btn--link">{{ _('No') }}</button></div>
                                 {%- endif -%}
                             {%- endif -%}
 

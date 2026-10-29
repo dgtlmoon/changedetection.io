@@ -24,8 +24,15 @@ WORKDIR /install
 
 COPY requirements.txt /requirements.txt
 
-# Use cache mounts and multiple wheel sources for faster ARM builds
-ENV PIP_CACHE_DIR=/tmp/pip-cache
+# uv resolves and downloads in parallel, pip did ~170 serial index round-trips (~130s cold on amd64).
+# Installed via pip rather than the ghcr.io/astral-sh/uv image because that image doesn't cover arm/v7.
+RUN pip install --no-cache-dir uv~=0.9
+# UV_LINK_MODE=copy: the cache mount is a different filesystem from /dependencies, hardlinking would fail
+# UV_COMPILE_BYTECODE=1: pip writes .pyc at install time and uv doesn't, otherwise every container pays at startup
+ENV UV_CACHE_DIR=/tmp/uv-cache \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON=/usr/local/bin/python3
 # Help Rust find OpenSSL for cryptography package compilation on ARM
 ENV PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/arm-linux-gnueabihf/pkgconfig:/usr/lib/aarch64-linux-gnu/pkgconfig"
 ENV PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
@@ -35,44 +42,47 @@ ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
-# --only-binary=litellm: never compile litellm's Rust extension from the sdist. Under QEMU that takes
+# Changing this re-resolves the unpinned requirements without invalidating the apt layers above (CI passes the date)
+ARG DEPS_REFRESH_DATE=''
+ARG TARGETPLATFORM
+
+# --only-binary litellm: never compile litellm's Rust extension from the sdist. Under QEMU that takes
 # hours and then fails, this makes a platform without a wheel fail in seconds instead (see requirements.txt)
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
-  pip install \
-  --prefer-binary \
-  --only-binary=litellm \
-  --extra-index-url https://www.piwheels.org/simple \
-  --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
-  --cache-dir=/tmp/pip-cache \
+# piwheels / ARM-software only carry ARM wheels, on amd64 they're just an extra lookup per package.
+# unsafe-best-match keeps pip's behaviour of picking the best version across all indexes,
+# uv's default is to stop at the first index that has the package at all.
+RUN --mount=type=cache,id=uv,sharing=locked,target=/tmp/uv-cache \
+  case "$TARGETPLATFORM" in \
+    linux/arm*) EXTRA_INDEXES="--extra-index-url https://www.piwheels.org/simple --extra-index-url https://pypi.anaconda.org/ARM-software/simple" ;; \
+    *) EXTRA_INDEXES="" ;; \
+  esac && \
+  uv pip install \
+  --index-strategy unsafe-best-match \
+  $EXTRA_INDEXES \
+  --only-binary litellm \
   --target=/dependencies \
   -r /requirements.txt
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
-  pip install \
-  --prefer-binary \
-  --cache-dir=/tmp/pip-cache \
+RUN --mount=type=cache,id=uv,sharing=locked,target=/tmp/uv-cache \
+  uv pip install \
   --target=/dependencies \
   playwright~=1.56.0 \
   || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # OpenCV is optional for fast image comparison (pixelmatch is the fallback)
 # Skip on arm/v7 and arm/v8 where builds take weeks - excluded from requirements.txt
-ARG TARGETPLATFORM
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+RUN --mount=type=cache,id=uv,sharing=locked,target=/tmp/uv-cache \
   case "$TARGETPLATFORM" in \
     linux/arm/v7|linux/arm/v8) \
       echo "INFO: Skipping OpenCV on $TARGETPLATFORM (build takes too long), using pixelmatch fallback" \
       ;; \
     *) \
-      pip install \
-        --prefer-binary \
-        --extra-index-url https://www.piwheels.org/simple \
-        --cache-dir=/tmp/pip-cache \
+      uv pip install \
         --target=/dependencies \
-        opencv-python-headless>=4.8.0.76 \
+        "opencv-python-headless>=4.8.0.76" \
         || echo "WARN: OpenCV install failed, will use pixelmatch fallback" \
       ;; \
   esac

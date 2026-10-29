@@ -122,8 +122,8 @@ msgid "Backups were deleted."
 msgstr "Os backups foram excluídos."
 
 #: changedetectionio/blueprint/backups/restore.py
-msgid "Backup zip file"
-msgstr "Arquivo ZIP de backup"
+msgid "Backup .ZIP file(s)"
+msgstr "Arquivo(s) .ZIP de backup"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Must be a .zip backup file!"
@@ -2303,7 +2303,7 @@ msgid "Error Screenshot"
 msgstr "Screenshot de Erro"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/processors/templates/extract.html
+#: changedetectionio/processors/templates/extract.html changedetectionio/processors/text_json_diff/processor.py
 msgid "Text"
 msgstr "Texto"
 
@@ -2327,6 +2327,10 @@ msgstr "segundos atrás"
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Current error-ing screenshot from most recent request"
 msgstr "Screenshot com erro atual da solicitação mais recente"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Where in the document the differences are, not when they happened"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
@@ -2729,11 +2733,15 @@ msgstr "Contagem de alertas de notificação"
 msgid "Server type reply"
 msgstr "Resposta do tipo de servidor"
 
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "Yes"
 msgstr "Sim"
 
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/widgets/ternary_boolean.py
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/widgets/ternary_boolean.py
 msgid "No"
 msgstr "Não"
 
@@ -2934,6 +2942,10 @@ msgid "Goto web page"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Switch to Restock & Price watch mode?"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Create a link to share watch config with others"
 msgstr ""
 
@@ -3036,6 +3048,7 @@ msgstr ""
 msgid "Could not load price history."
 msgstr ""
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Changes"
@@ -3186,6 +3199,10 @@ msgstr ""
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
 msgstr "Marcar como visualizado"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark unviewed"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Use default notification"
@@ -4382,6 +4399,10 @@ msgstr "Detecção de mudança visual / imagem por screenshot"
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
 msgstr "Compara screenshots usando algoritmo OpenCV rápido, 10-100x mais rápido que SSIM"
 
+#: changedetectionio/processors/image_ssim_diff/processor.py
+msgid "Visual"
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/difference.py
 msgid "Date"
 msgstr ""
@@ -4452,6 +4473,10 @@ msgid "Detects if the product goes back to in-stock"
 msgstr "Detecta se o produto volta ao estoque"
 
 #: changedetectionio/processors/restock_diff/processor.py
+msgid "Restock"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
 msgid "More than one price detected on this page - restock/price detection needs a single-product page."
 msgstr ""
 
@@ -4482,7 +4507,9 @@ msgstr ""
 msgid "Download as XLSX"
 msgstr ""
 
+#. 'When' is a date/time column header, not the question word
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgctxt "datetime"
 msgid "When"
 msgstr ""
 

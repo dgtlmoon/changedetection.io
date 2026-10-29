@@ -16,6 +16,7 @@ import copy
 from . import validate_openapi_request, get_readonly_watch_fields, strip_internal_api_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
+from ..model.Watch import validate_time_between_check_required
 
 
 def validate_time_schedule_limit(json_data):
@@ -72,39 +73,6 @@ def validate_jinja2_templates(json_data):
     if errors:
         return '; '.join(f"{field}: {error}" for field, error in errors.items())
     return None
-
-
-def validate_time_between_check_required(json_data):
-    """
-    Validate that at least one time interval is specified when not using default settings.
-    Returns None if valid, or error message string if invalid.
-    Defaults to using global settings if time_between_check_use_default is not provided.
-    """
-    # Default to using global settings if not specified
-    use_default = json_data.get('time_between_check_use_default', True)
-
-    # If using default settings, no validation needed
-    if use_default:
-        return None
-
-    # If not using defaults, check if time_between_check exists and has at least one non-zero value
-    time_check = json_data.get('time_between_check')
-    if not time_check:
-        # No time_between_check provided and not using defaults - this is an error
-        return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
-
-    # time_between_check exists, check if it has at least one non-zero value
-    if any([
-        (time_check.get('weeks') or 0) > 0,
-        (time_check.get('days') or 0) > 0,
-        (time_check.get('hours') or 0) > 0,
-        (time_check.get('minutes') or 0) > 0,
-        (time_check.get('seconds') or 0) > 0
-    ]):
-        return None
-
-    # time_between_check exists but all values are 0 or empty - this is an error
-    return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
 
 
 class Watch(Resource):
@@ -303,6 +271,9 @@ class Watch(Resource):
 
         # Update watch with regular (non-processor-config) fields
         watch.update(json_data)
+        # The request alone can be valid but leave no interval once merged, e.g. nulling the
+        # interval of a watch that already has time_between_check_use_default=False
+        watch.ensure_valid_time_between_check()
         watch.commit()
 
         # Save processor config to JSON file
@@ -646,10 +617,13 @@ class CreateWatch(Resource):
         list = {}
 
         tag_limit = request.args.get('tag', '').lower()
+        with_errors = request.args.get('with_errors') == '1'
         for uuid, watch in self.datastore.data['watching'].items():
             # Watch tags by name (replace the other calls?)
             tags = self.datastore.get_all_tags_for_watch(uuid=uuid)
             if tag_limit and not any(v.get('title').lower() == tag_limit for k, v in tags.items()):
+                continue
+            if with_errors and not watch.get('last_error'):
                 continue
 
             list[uuid] = {
@@ -666,8 +640,8 @@ class CreateWatch(Resource):
             }
 
         if request.args.get('recheck_all'):
-            # Collect all watches to queue
-            watches_to_queue = self.datastore.data['watching'].keys()
+            # Recheck the same set that was listed (tag/with_errors filters), but never paused watches
+            watches_to_queue = [uuid for uuid in list.keys() if not self.datastore.data['watching'][uuid].get('paused')]
 
             # If less than 20 watches, queue synchronously for immediate feedback
             if len(watches_to_queue) < 20:

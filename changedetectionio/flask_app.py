@@ -1859,10 +1859,13 @@ def ticker_thread_check_time_launch_checks():
                     continue
 
             # If they supplied an individual entry minutes to threshold.
+            # A watch that opted out of the defaults but has no interval of its own (all None/0, e.g. from
+            # an import, restore or hand-edited watch.json) must fall back to the system default,
+            # otherwise threshold is 0 and it is rechecked on every scheduler pass.
             threshold = (
                 recheck_time_system_seconds
                 if watch.get('time_between_check_use_default')
-                else watch.threshold_seconds()
+                else watch.threshold_seconds() or recheck_time_system_seconds
             )
 
             # #580 - Jitter plus/minus amount of time to make the check seem more random to the server

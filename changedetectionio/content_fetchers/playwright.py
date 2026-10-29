@@ -39,7 +39,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     if lock_viewport_elements and page_height > page.viewport_size['height']:
         lock_start = time.time()
         lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
-        with open(lock_elements_js_path, 'r') as f:
+        with open(lock_elements_js_path, 'r', encoding='utf-8') as f:
             lock_elements_js = f.read()
         await page.evaluate(lock_elements_js)
         elements_locked = True
@@ -96,7 +96,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     # Unlock element dimensions if they were locked
     if elements_locked:
         unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
-        with open(unlock_elements_js_path, 'r') as f:
+        with open(unlock_elements_js_path, 'r', encoding='utf-8') as f:
             unlock_elements_js = f.read()
         await page.evaluate(unlock_elements_js)
         logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
