@@ -58,6 +58,11 @@ def enable_password_protected_sharing(client):
     assert b"Password protection enabled." in res.data
 
 
+def saved_diff_prefs(watch):
+    """What the watch remembers for the history page: watch['ui_prefs']['diff_display']."""
+    return (watch.get('ui_prefs') or {}).get('diff_display')
+
+
 def get_diff_page(test_client, uuid, query_string=None):
     url = url_for('ui.ui_diff.diff_history_page', uuid=uuid)
     if query_string:
@@ -96,7 +101,7 @@ def assert_renders_submitted_prefs(page):
 def test_diff_page_renders_defaults_when_nothing_is_saved(client):
     """Control for every test below: a watch nobody has set filters on."""
     uuid, watch = add_watch_with_history(client)
-    assert watch.get('diff_display_prefs') is None
+    assert watch.get('ui_prefs') is None
     assert_renders_defaults(get_diff_page(client, uuid))
 
 
@@ -105,7 +110,7 @@ def test_submitted_prefs_are_applied_to_the_next_plain_visit(client):
 
     assert_renders_submitted_prefs(get_diff_page(client, uuid, SUBMITTED_PREFS))
 
-    saved = watch.get('diff_display_prefs')
+    saved = saved_diff_prefs(watch)
     assert saved == {
         'changesOnly': False,
         'ignoreWhitespace': True,
@@ -138,7 +143,7 @@ def test_saved_prefs_are_per_watch(client):
 
     get_diff_page(client, configured_uuid, SUBMITTED_PREFS)
 
-    assert untouched.get('diff_display_prefs') is None
+    assert untouched.get('ui_prefs') is None
     assert_renders_defaults(get_diff_page(client, untouched_uuid))
 
 
@@ -147,10 +152,10 @@ def test_unchanged_prefs_are_not_rewritten(client):
     uuid, watch = add_watch_with_history(client)
 
     get_diff_page(client, uuid, SUBMITTED_PREFS)
-    saved = watch.get('diff_display_prefs')
+    saved = saved_diff_prefs(watch)
 
     get_diff_page(client, uuid, SUBMITTED_PREFS)
-    assert watch.get('diff_display_prefs') is saved, \
+    assert saved_diff_prefs(watch) is saved, \
         "Re-submitting identical preferences should not replace the stored dict"
 
 
@@ -158,12 +163,12 @@ def test_corrupt_saved_prefs_fall_back_to_defaults(client):
     """Saved values are data on disk, so a wrong type must degrade, never 500."""
     uuid, watch = add_watch_with_history(client)
 
-    watch['diff_display_prefs'] = {
+    watch['ui_prefs'] = {'diff_display': {
         'type': 'junk',            # not a diff type we know
         'changesOnly': 'yes',      # a string, not a bool
         'added': 1,                # truthy, but not a bool
         'ignoreWhitespace': True,  # valid, and must still be honoured
-    }
+    }}
     page = get_diff_page(client, uuid)
     assert is_checked(page, 'diffLines')
     assert is_checked(page, 'changesOnly')
@@ -173,7 +178,9 @@ def test_corrupt_saved_prefs_fall_back_to_defaults(client):
     assert 'alpha' in page.select_one('#difference').get_text()
 
     # Not a dict at all - e.g. hand-edited watch.json
-    watch['diff_display_prefs'] = 'not-a-dict'
+    watch['ui_prefs'] = {'diff_display': 'not-a-dict'}
+    assert_renders_defaults(get_diff_page(client, uuid))
+    watch['ui_prefs'] = 'not-a-dict'
     assert_renders_defaults(get_diff_page(client, uuid))
 
 
@@ -188,7 +195,7 @@ def test_saving_prefs_does_not_mark_the_watch_as_edited(client):
     assert watch.was_edited is False
 
     get_diff_page(client, uuid, SUBMITTED_PREFS)
-    assert watch.get('diff_display_prefs'), "precondition: the submission was saved"
+    assert saved_diff_prefs(watch), "precondition: the submission was saved"
     assert watch.was_edited is False
 
     # Control: the flag is reachable and does still fire for an ordinary field, so the
@@ -208,7 +215,7 @@ def test_the_ai_checkbox_is_not_remembered(client):
 
     page = get_diff_page(client, uuid, f"{SUBMITTED_PREFS}&llm_all_changes=on")
     assert is_checked(page, 'llm_all_changes'),         "precondition: the submission itself still honours the tick"
-    assert 'llm_all_changes' not in watch.get('diff_display_prefs')
+    assert 'llm_all_changes' not in saved_diff_prefs(watch)
 
     page = get_diff_page(client, uuid)
     assert not is_checked(page, 'llm_all_changes')
@@ -218,7 +225,7 @@ def test_the_ai_checkbox_is_not_remembered(client):
     assert is_checked(page, 'ignoreWhitespace')
 
     # Nor can a stored value resurrect it - the read side skips it too.
-    watch['diff_display_prefs'] = {'llm_all_changes': True, 'ignoreWhitespace': True}
+    watch['ui_prefs'] = {'diff_display': {'llm_all_changes': True, 'ignoreWhitespace': True}}
     page = get_diff_page(client, uuid)
     assert not is_checked(page, 'llm_all_changes')
     assert is_checked(page, 'ignoreWhitespace')
@@ -233,7 +240,7 @@ def test_an_anonymous_shared_diff_viewer_cannot_change_what_the_watch_remembers(
     """
     uuid, watch = add_watch_with_history(client)
     get_diff_page(client, uuid, SUBMITTED_PREFS)
-    operators_prefs = watch.get('diff_display_prefs')
+    operators_prefs = saved_diff_prefs(watch)
     assert operators_prefs, "precondition: a submission from the operator is saved"
 
     enable_password_protected_sharing(client)
@@ -245,7 +252,7 @@ def test_an_anonymous_shared_diff_viewer_cannot_change_what_the_watch_remembers(
     assert is_checked(page, 'diffLines')
     assert is_checked(page, 'changesOnly')
 
-    assert watch.get('diff_display_prefs') == operators_prefs, \
+    assert saved_diff_prefs(watch) == operators_prefs, \
         "An anonymous shared-diff viewer must not write preferences onto the watch"
     # Reading stays shared: their plain visit still shows the operator's choices.
     assert_renders_submitted_prefs(get_diff_page(stranger, uuid))
@@ -259,15 +266,15 @@ def test_an_anonymous_shared_diff_viewer_cannot_change_what_the_watch_remembers(
     assert b"/logout" in res.data, "precondition: the control client really is logged in"
 
     get_diff_page(operator, uuid, OTHER_PREFS)
-    assert watch.get('diff_display_prefs') != operators_prefs
-    assert watch.get('diff_display_prefs')['type'] == 'diffLines'
+    assert saved_diff_prefs(watch) != operators_prefs
+    assert saved_diff_prefs(watch)['type'] == 'diffLines'
 
 
 def test_saved_prefs_stay_off_the_api(client):
     """The key is internal: stripped from GET, discarded on PUT, so GET -> PUT still works."""
     uuid, watch = add_watch_with_history(client)
     get_diff_page(client, uuid, SUBMITTED_PREFS)
-    saved = watch.get('diff_display_prefs')
+    saved = saved_diff_prefs(watch)
     assert saved
 
     datastore = client.application.config['DATASTORE']
@@ -275,10 +282,10 @@ def test_saved_prefs_stay_off_the_api(client):
 
     res = client.get(url_for("watch", uuid=uuid), headers={'x-api-key': api_key})
     assert res.status_code == 200
-    assert 'diff_display_prefs' not in res.json
+    assert 'ui_prefs' not in res.json
 
     payload = dict(res.json)
-    payload['diff_display_prefs'] = {'type': 'diffLines'}  # a client could still send it
+    payload['ui_prefs'] = {'diff_display': {'type': 'diffLines'}}  # a client could still send it
     res = client.put(
         url_for("watch", uuid=uuid),
         headers={'x-api-key': api_key, 'content-type': 'application/json'},
@@ -286,5 +293,25 @@ def test_saved_prefs_stay_off_the_api(client):
     )
     assert res.status_code == 200, \
         f"PUT round-tripping the GET response should succeed (got {res.status_code}: {res.data!r})"
-    assert watch.get('diff_display_prefs') == saved, \
+    assert saved_diff_prefs(watch) == saved, \
         "The API must not be able to overwrite the saved preferences"
+
+
+def test_saving_prefs_keeps_other_ui_prefs(client):
+    """'ui_prefs' is shared by UI-only settings, so saving the diff filters must not drop a neighbour."""
+    uuid, watch = add_watch_with_history(client)
+    watch['ui_prefs'] = {'some_other_page': {'collapsed': True}}
+
+    get_diff_page(client, uuid, SUBMITTED_PREFS)
+    assert watch['ui_prefs']['some_other_page'] == {'collapsed': True}
+    assert saved_diff_prefs(watch)['type'] == 'diffWords'
+
+
+def test_saving_prefs_replaces_a_corrupt_ui_prefs(client):
+    """A non-dict 'ui_prefs' (hand-edited watch.json) is replaced on the next save, not a 500."""
+    uuid, watch = add_watch_with_history(client)
+    watch['ui_prefs'] = 'not-a-dict'
+
+    assert_renders_submitted_prefs(get_diff_page(client, uuid, SUBMITTED_PREFS))
+    assert saved_diff_prefs(watch)['type'] == 'diffWords'
+    assert_renders_submitted_prefs(get_diff_page(client, uuid))

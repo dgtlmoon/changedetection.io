@@ -58,7 +58,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         watch = list(app.config['DATASTORE'].data['watching'].values())[0]
         res = c.get(url_for("ui.ui_diff.diff_history_page", uuid="first") + "?type=diffWords&ignoreWhitespace=on")
         assert res.status_code == 200, "precondition: the shared diff page is reachable while logged out"
-        assert not watch.get('diff_display_prefs'), \
+        assert not watch.get('ui_prefs'), \
             "Anonymous shared-diff viewers must not write display preferences onto the watch"
 
         # GHSA-vwgh-2hvh-4xm5: shared_diff_access only covers the read-only

@@ -104,12 +104,20 @@ DIFF_PREFERENCES_CONFIG = {
     'llm_all_changes': {'default': False, 'type': 'bool', 'persist': False},
 }
 
-# Where a watch's last submitted display preferences are kept. Stored on the watch itself
-# (not in a cookie) so the setting follows the watch rather than the browser it was set in.
-# Listed in SYSTEM_MANAGED_NON_SPEC_FIELDS so writing it does not flag the watch as edited -
-# an edited watch skips the unchanged-content shortcut on its next check, and merely looking
-# at a diff must not cost a reprocess.
-DIFF_PREFERENCES_WATCH_KEY = 'diff_display_prefs'
+# Where a watch's last submitted display preferences are kept: watch['ui_prefs']['diff_display'].
+# Stored on the watch itself (not in a cookie) so the setting follows the watch rather than the
+# browser it was set in. UI-only settings share the one 'ui_prefs' key rather than each adding a
+# top-level key, since every extra key on every watch costs memory. 'ui_prefs' is listed in
+# SYSTEM_MANAGED_NON_SPEC_FIELDS so writing it does not flag the watch as edited - an edited
+# watch skips the unchanged-content shortcut on its next check, and merely looking at a diff
+# must not cost a reprocess.
+UI_PREFERENCES_WATCH_KEY = 'ui_prefs'
+DIFF_PREFERENCES_UI_KEY = 'diff_display'
+
+
+def _watch_ui_preferences(watch):
+    ui_prefs = watch.get(UI_PREFERENCES_WATCH_KEY)
+    return ui_prefs if isinstance(ui_prefs, dict) else {}
 
 
 def read_saved_diff_preferences(watch):
@@ -120,7 +128,7 @@ def read_saved_diff_preferences(watch):
     type, hand-edited watch.json, a key we no longer use) is dropped so that key falls back
     to its default, and a malformed value can never break the page.
     """
-    saved = watch.get(DIFF_PREFERENCES_WATCH_KEY)
+    saved = _watch_ui_preferences(watch).get(DIFF_PREFERENCES_UI_KEY)
     if not isinstance(saved, dict):
         return {}
 
@@ -239,8 +247,11 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
     if user_submitted and request_may_save_diff_preferences(datastore):
         prefs_to_save = {key: value for key, value in diff_prefs.items()
                          if DIFF_PREFERENCES_CONFIG[key].get('persist', True)}
-        if watch.get(DIFF_PREFERENCES_WATCH_KEY) != prefs_to_save:
-            watch.update({DIFF_PREFERENCES_WATCH_KEY: prefs_to_save})
+        ui_prefs = _watch_ui_preferences(watch)
+        if ui_prefs.get(DIFF_PREFERENCES_UI_KEY) != prefs_to_save:
+            # Assign a new dict rather than editing the stored one in place, keeping any
+            # other UI preferences alongside.
+            watch.update({UI_PREFERENCES_WATCH_KEY: {**ui_prefs, DIFF_PREFERENCES_UI_KEY: prefs_to_save}})
             watch.commit()
 
     content = diff.render_diff(previous_version_file_contents=from_version_file_contents,
