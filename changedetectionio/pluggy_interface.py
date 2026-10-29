@@ -60,14 +60,20 @@ class ChangeDetectionSpec:
 
     @hookspec
     def fetcher_status_icon(fetcher_name):
-        """Return status icon HTML attributes for a content fetcher.
+        """Return the status icon shown in the watch list for a content fetcher.
 
         Args:
             fetcher_name: The name of the fetcher (e.g., 'html_webdriver', 'html_js_zyte')
 
         Returns:
-            str: HTML string containing <img> tags or other status icon elements
-                 Empty string if no custom status icon is needed
+            dict or None: None if fetcher_name isn't yours, otherwise
+                {
+                    'filename': 'my-icon.svg',  # served from the static 'group' below
+                    'alt': 'Alt text',
+                    'title': 'Tooltip text',
+                    'group': 'plugin',          # optional, 'plugin' = your plugin_static_path() directory
+                    'style': 'height: 1em;',    # optional inline CSS
+                }
         """
         pass
 
@@ -262,6 +268,21 @@ class ChangeDetectionSpec:
 
         Returns:
             str or None: Raw HTML string to inject inside <head>, or None
+        """
+        pass
+
+    @hookspec
+    def watch_list_extra_text(watch):
+        """Short plain-text notes shown under the watch in the watch list (class extra-watch-text).
+
+        This runs for every watch on every watch list render, so stay in memory: no disk,
+        network or other slow work.
+
+        Args:
+            watch: The Watch model instance
+
+        Returns:
+            str, a list of str, or None. Escaped when rendered, so HTML shows as text.
         """
         pass
 
@@ -556,6 +577,19 @@ def register_builtin_api_plugins():
     if not plugin_manager.is_registered(api_state):
         # 'builtin_' names are hidden from the active plugins list, see get_active_plugins()
         plugin_manager.register(api_state, 'builtin_restock_api_state')
+
+def collect_watch_list_extra_text(watch):
+    """All plugins' notes for this watch in the watch list, as a list of strings."""
+    notes = []
+    try:
+        for result in reversed(plugin_manager.hook.watch_list_extra_text(watch=watch)):
+            if not result:
+                continue
+            notes.extend([result] if isinstance(result, str) else [str(r) for r in result if r])
+    except Exception as e:
+        logger.error(f"watch_list_extra_text failed: {e}")
+    return notes
+
 
 # Helper function to collect UI stats extras from all plugins
 def collect_ui_edit_stats_extras(watch):

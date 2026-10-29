@@ -627,6 +627,13 @@ def _jinja2_filter_format_duration(seconds):
     return ", ".join(parts)
 
 
+@app.template_global('watch_list_extra_text')
+def _watch_list_extra_text(watch):
+    from changedetectionio.pluggy_interface import collect_watch_list_extra_text
+
+    return collect_watch_list_extra_text(watch)
+
+
 @app.template_filter('fetcher_status_icons')
 def _jinja2_filter_fetcher_status_icons(fetcher_name):
     """Get status icon HTML for a given fetcher.

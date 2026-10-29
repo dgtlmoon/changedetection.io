@@ -26,6 +26,15 @@ def register_processor():
 
 
 @hookimpl
+def watch_list_extra_text(watch):
+    """A note under the watch in the watch list. Called for every row, so in memory only."""
+    if watch.get('processor') != PROCESSOR_NAME:
+        return None
+    word_count = (watch.get(f'processor_state_{PROCESSOR_NAME}') or {}).get('word_count')
+    return f"Found: {word_count} words" if word_count is not None else None
+
+
+@hookimpl
 def get_api_watch_processor_state(watch, processor_name, context):
     """processor_state_word_counter in GET /api/v1/watch/<uuid> and GET /api/v1/watch, see api.yaml"""
     if processor_name != PROCESSOR_NAME:

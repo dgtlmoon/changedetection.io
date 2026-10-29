@@ -5,7 +5,7 @@ active until you install it.
 
 To install one, run `pip install .` from its directory, in the same Python environment that runs
 changedetection.io, then restart changedetection.io. Plugins are picked up through the `changedetectionio`
-entry point in their `pyproject.toml`. They need plugin API 0.2.0 or newer
+entry point in their `pyproject.toml`. They need plugin API 0.3.0 or newer
 (`changedetectionio.plugin_api.PLUGIN_API_VERSION`).
 
 Plugins import only from `changedetectionio.plugin_api`, everything else in the package is internal and
@@ -21,6 +21,7 @@ the page and reports a change when the count changes. The `min_word_length` sett
 **Hooks**
 - `register_processor` - adds `word_counter` as a processor
 - `get_api_watch_processor_state` - shows the count as `processor_state_word_counter` in the API
+- `watch_list_extra_text` - "Found: 5 words" under the watch in the watch list
 
 **Also shows** `processor.py` (the check itself) and `api.yaml` (documents `processor_config_word_counter`
 and `processor_state_word_counter` in the API spec).
@@ -43,10 +44,60 @@ curl "http://localhost:5000/api/v1/watch/YOUR-UUID" -H "x-api-key: YOUR_API_KEY"
 
 ---
 
+## Example browser fetcher - `fetcher/example_browser_fetcher`
+
+A new fetch method, "Example browser fetcher", that gets pages through its own API instead of fetching
+them directly, for example a remote browser or rendering service.
+
+**Hooks**
+- `register_content_fetcher` - adds the `html_example_browser_fetcher` fetch method
+- `plugin_settings_tab` - an "Example browser fetcher" tab in Settings for the API URL and key
+- `fetcher_status_icon` - the icon next to watches using it in the watch list
+- `plugin_static_path` - serves that icon
+
+**Also shows** `fetcher.py`, a `Fetcher` subclass, reading its settings with `load_plugin_settings` and
+returning a screenshot (random noise here, a real browser service would send its own).
+
+**Install**
+```bash
+cd changedetectionio/example_plugins/fetcher/example_browser_fetcher
+pip install .
+```
+
+**Try it:** in Settings > "Example browser fetcher", set the API URL with `{url}` where the page URL goes,
+for example `https://api.example.com/fetch?url={url}`, and your key (sent as `X-Api-Key`). Then pick
+"Example browser fetcher" as a watch's fetch method, or `"fetch_backend": "html_example_browser_fetcher"`
+in the API.
+
+---
+
+## Check stats - `lifecycle/check_stats`
+
+Times every check. Shows "Last check took 1.23s" under each watch in the watch list, and a small table on
+the edit page's Stats tab. Stats are kept in memory, so they start again after a restart.
+
+**Hooks**
+- `update_handler_alter` - runs as a check starts, notes the time
+- `update_finalize` - runs when the check is over (worked or not), records how long it took
+- `watch_list_extra_text` - the note under the watch in the watch list
+- `ui_edit_stats_extras` - the table on the edit page's Stats tab
+- `get_html_head_extras` - links its CSS on every page
+- `plugin_static_path` - serves that CSS
+
+**Install**
+```bash
+cd changedetectionio/example_plugins/lifecycle/check_stats
+pip install .
+```
+
+**Try it:** open the watch list after the next checks have run.
+
+---
+
 ## Writing your own
 
 Copy an example's directory, then rename the package directory and its `name` / entry point in
-`pyproject.toml`. For a processor, also change `PROCESSOR_NAME` and the two schema names in `api.yaml`.
+`pyproject.toml`. Once installed, it's listed under Settings > Info with the first line of its docstring. For a processor, also change `PROCESSOR_NAME` and the two schema names in `api.yaml`.
 Every hook and its arguments are documented on `ChangeDetectionSpec` in
 [`pluggy_interface.py`](../pluggy_interface.py).
 

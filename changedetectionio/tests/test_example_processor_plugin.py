@@ -8,39 +8,22 @@ import os
 import pytest
 from flask import url_for
 
-from .util import wait_for_all_checks, delete_all_watches
-
-
-def _clear_processor_and_spec_caches():
-    # Processor discovery and the merged API spec are cached at first use, a plugin registered
-    # afterwards (like here) is only seen once these are cleared
-    from changedetectionio import processors, api
-    for f in (processors.find_processors, processors.get_plugin_processor_metadata, processors._available_processors_cached,
-              api.build_merged_spec_dict, api.get_openapi_spec, api.get_openapi_schema_dict,
-              api._resolve_schema_properties, api.get_watch_schema_properties, api.get_tag_schema_properties):
-        f.cache_clear()
+from .util import wait_for_all_checks, delete_all_watches, import_example_plugin, clear_plugin_discovery_caches
 
 
 @pytest.fixture
 def wordcounter_plugin():
     """What `pip install .` + the entry point would do: import cdio_example_wordcounter as its own
     top-level package and register it."""
-    import importlib
-    import sys
     from changedetectionio.pluggy_interface import plugin_manager
 
-    example_dir = os.path.join(os.path.dirname(__file__), '..', 'example_plugins', 'processor', 'wordcounter')
-    sys.path.insert(0, os.path.abspath(example_dir))
-    try:
-        wordcounter = importlib.import_module('cdio_example_wordcounter')
-    finally:
-        sys.path.pop(0)
+    wordcounter = import_example_plugin('processor/wordcounter', 'cdio_example_wordcounter')
 
     plugin_manager.register(wordcounter, 'cdio_example_wordcounter')
-    _clear_processor_and_spec_caches()
+    clear_plugin_discovery_caches()
     yield wordcounter
     plugin_manager.unregister(wordcounter)
-    _clear_processor_and_spec_caches()
+    clear_plugin_discovery_caches()
 
 
 def test_example_wordcounter_processor_plugin(client, live_server, measure_memory_usage, datastore_path, wordcounter_plugin):
@@ -71,10 +54,18 @@ def test_example_wordcounter_processor_plugin(client, live_server, measure_memor
     assert res.json.get('processor_config_word_counter_source') == 'watch'
     assert 'processor_state_restock_diff' not in res.json
 
+    # Listed under Settings > Info as an active plugin, with its docstring's first line
+    res = client.get(url_for("settings.settings_page"))
+    assert b'<li><strong>cdio_example_wordcounter</strong> - Example processor plugin - counts the words' in res.data
+
     res = client.get(url_for("createwatch"), headers=headers)
     assert res.json[uuid].get('processor') == 'word_counter'
     assert res.json[uuid].get('processor_state_word_counter') == {'word_count': 5}
     assert 'processor_config_word_counter' not in res.json[uuid]
+
+    # The note under the watch in the watch list
+    res = client.get(url_for("watchlist.index"))
+    assert res.data.count(b'<div class="extra-watch-text">Found: 5 words</div>') == 1
 
     # The snapshot is what the processor returned
     res = client.get(url_for("watchsinglehistory", uuid=uuid, timestamp='latest'), headers=headers)

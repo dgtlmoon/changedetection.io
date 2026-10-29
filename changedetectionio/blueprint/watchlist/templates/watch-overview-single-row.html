@@ -87,6 +87,9 @@
                               <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
                             {%- endfor -%}
                             <div class="error-text" style="display:none;">{{ error_texts|safe }}</div>
+                            {%- for note in watch_list_extra_text(watch) %}
+                            <div class="extra-watch-text">{{ note }}</div>
+                            {%- endfor %}
                             {%- if watch['processor'] == 'text_json_diff'  -%}
                                 {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
                                 <div class="ldjson-price-track-offer">{{ _('Switch to Restock & Price watch mode?') }} <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">{{ _('Yes') }}</button> <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="bare-btn bare-btn--link">{{ _('No') }}</button></div>
