@@ -1007,6 +1007,10 @@ def changedetection_app(config=None, datastore_o=None):
     from changedetectionio.pluggy_interface import register_builtin_api_plugins
     register_builtin_api_plugins()
 
+    # Processors' own plugin hooks and their built-in implementations (e.g. the restock charts)
+    from changedetectionio.processors import register_processor_plugin_hooks
+    register_processor_plugin_hooks()
+
     @login_manager.user_loader
     def user_loader(email):
         user = User()

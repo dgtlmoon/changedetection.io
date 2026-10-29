@@ -83,6 +83,20 @@ def get_parent_module(module):
 
 
 
+def register_processor_plugin_hooks():
+    """Let every installed processor add its own plugin hooks: a processor package can define
+    register_plugin_hooks(plugin_manager) in its __init__.py, e.g. restock_diff adds its chart hooks and
+    their built-in implementations. Called once at startup from flask_app.changedetection_app()."""
+    from changedetectionio.pluggy_interface import plugin_manager
+    for module, processor_name in find_processors():
+        parent = get_parent_module(module)
+        if parent and hasattr(parent, 'register_plugin_hooks'):
+            try:
+                parent.register_plugin_hooks(plugin_manager)
+            except Exception as e:
+                logger.error(f"Processor '{processor_name}' failed to register its plugin hooks: {e}")
+
+
 def get_custom_watch_obj_for_processor(processor_name):
     from changedetectionio.model import Watch
     watch_class = Watch.model

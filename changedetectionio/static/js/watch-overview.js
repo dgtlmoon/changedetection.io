@@ -82,7 +82,7 @@ $(function () {
         var i18n       = window.watchOverviewI18n || {};
         var $btn       = $(this);
         var uuid       = $btn.data('uuid');
-        var dataUrl    = $btn.data('processor-data-url');
+        var chartUrl   = $btn.data('processor-chart-url');
         var historyUrl = $btn.attr('href');
         var $row       = $btn.closest('tr');
         var rowId      = 'restock-graph-row-' + uuid;
@@ -125,21 +125,15 @@ $(function () {
             );
         }
 
-        if (!dataUrl) { showError(); return; }
+        if (!chartUrl) { showError(); return; }
 
-        $.getJSON(dataUrl).done(function (data) {
-            var series = (data && data.series) || [];
-            var graphI18n = {
-                in_stock: i18n.inStock, out_of_stock: i18n.outOfStock,
-                no_data: i18n.noPriceData, load_error: i18n.priceHistoryError,
-                changes: i18n.changes, avg_price: i18n.avgPrice,
-                price_low: i18n.priceLow, price_typical: i18n.priceTypical, price_high: i18n.priceHigh,
-                cheaper_than: i18n.cheaperThan, pricier_than: i18n.pricierThan,
-                typical_note: i18n.typicalNote, avg_label: i18n.avgLabel
-            };
-            if (window.renderRestockGraph) {
-                // Shorter graph inline in the watchlist roll-down than on the full /diff page.
-                window.renderRestockGraph($r.find('.restock-inline-graph')[0], series, (data && data.currency) || '', graphI18n, (data && data.summary) || null, 230);
+        // The chart HTML is the built-in chart or a plugin's (restock_diff hook
+        // restock_diff_watchlist_overview_chart), the built-in one is drawn by initRestockGraphs()
+        $.get(chartUrl).done(function (html) {
+            var $graph = $r.find('.restock-inline-graph');
+            $graph.html(html);
+            if (window.initRestockGraphs) {
+                window.initRestockGraphs($graph);
             }
         }).fail(showError);
     });
