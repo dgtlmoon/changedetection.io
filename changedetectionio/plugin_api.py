@@ -27,6 +27,7 @@ A plugin that raises is logged and counted, and the hook carries on with the oth
 so one broken plugin can't stop checks from running.
 """
 import inspect
+from typing import TYPE_CHECKING
 
 import pluggy
 
@@ -66,6 +67,12 @@ async def gather_hook_results(results):
 #   difference_detection_processor - base class of a processor plugin's perform_site_check
 #   get_resolved_processor_config  - (config, source) for a watch's processor, tag override wins
 #   html_to_text                   - HTML to plain text, the same conversion the built-in processors use
+if TYPE_CHECKING:
+    # Never runs, only tells linters/IDEs/type checkers what the lazy exports below are
+    from changedetectionio.html_tools import html_to_text
+    from changedetectionio.processors import get_resolved_processor_config
+    from changedetectionio.processors.base import difference_detection_processor
+
 _LAZY_EXPORTS = {
     'difference_detection_processor': 'changedetectionio.processors.base',
     'get_resolved_processor_config': 'changedetectionio.processors',
