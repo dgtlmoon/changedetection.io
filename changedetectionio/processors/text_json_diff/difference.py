@@ -110,7 +110,8 @@ DIFF_PREFERENCES_CONFIG = {
 # top-level key, since every extra key on every watch costs memory. 'ui_prefs' is listed in
 # SYSTEM_MANAGED_NON_SPEC_FIELDS so writing it does not flag the watch as edited - an edited
 # watch skips the unchanged-content shortcut on its next check, and merely looking at a diff
-# must not cost a reprocess.
+# must not cost a reprocess. 'ui_prefs' is also in model.frozen.INTERNED_WATCH_KEYS, so watches
+# that saved the same filters share one read-only copy - never modify it in place.
 UI_PREFERENCES_WATCH_KEY = 'ui_prefs'
 DIFF_PREFERENCES_UI_KEY = 'diff_display'
 
@@ -249,8 +250,8 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
                          if DIFF_PREFERENCES_CONFIG[key].get('persist', True)}
         ui_prefs = _watch_ui_preferences(watch)
         if ui_prefs.get(DIFF_PREFERENCES_UI_KEY) != prefs_to_save:
-            # Assign a new dict rather than editing the stored one in place, keeping any
-            # other UI preferences alongside.
+            # Assign a new dict - the stored one is a shared read-only copy (see
+            # model/frozen.py) - keeping any other UI preferences alongside.
             watch.update({UI_PREFERENCES_WATCH_KEY: {**ui_prefs, DIFF_PREFERENCES_UI_KEY: prefs_to_save}})
             watch.commit()
 

@@ -6,6 +6,7 @@ desktop is honoured when the same watch's history is opened on a phone. See #338
 
 import json
 from flask import url_for
+from changedetectionio.model.frozen import FrozenDict
 from bs4 import BeautifulSoup
 
 
@@ -315,3 +316,20 @@ def test_saving_prefs_replaces_a_corrupt_ui_prefs(client):
     assert_renders_submitted_prefs(get_diff_page(client, uuid, SUBMITTED_PREFS))
     assert saved_diff_prefs(watch)['type'] == 'diffWords'
     assert_renders_submitted_prefs(get_diff_page(client, uuid))
+
+
+def test_identical_saved_prefs_share_one_read_only_copy(client):
+    """Most watches that save filters save the same ones, so they share one object (see #4602)."""
+    uuid_a, watch_a = add_watch_with_history(client)
+    uuid_b, watch_b = add_watch_with_history(client, url='https://example.com/other')
+
+    get_diff_page(client, uuid_a, SUBMITTED_PREFS)
+    get_diff_page(client, uuid_b, SUBMITTED_PREFS)
+    assert isinstance(watch_a['ui_prefs'], FrozenDict)
+    assert watch_a['ui_prefs'] is watch_b['ui_prefs']
+
+    # Changing one watch's filters assigns it a new value and leaves the other alone
+    get_diff_page(client, uuid_a, OTHER_PREFS)
+    assert saved_diff_prefs(watch_a)['type'] == 'diffLines'
+    assert saved_diff_prefs(watch_b)['type'] == 'diffWords'
+    assert_renders_submitted_prefs(get_diff_page(client, uuid_b))

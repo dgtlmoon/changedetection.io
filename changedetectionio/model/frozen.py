@@ -25,7 +25,7 @@ import orjson
 
 # Keys whose values are interned when set on a watch_base. Only add a key after confirming
 # nothing mutates its value in place (grep for watch['key'][...] = / .update( / .append( etc.)
-INTERNED_WATCH_KEYS = ('time_schedule_limit',)
+INTERNED_WATCH_KEYS = ('time_schedule_limit', 'ui_prefs')
 
 
 class FrozenDict(dict):
