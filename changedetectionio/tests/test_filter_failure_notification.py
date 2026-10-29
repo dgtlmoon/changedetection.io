@@ -203,3 +203,46 @@ def test_basic_markup_from_text(client, live_server, measure_memory_usage, datas
     x = markup_text_links_to_html("hello https://google.com")
     assert 'a href' in x
     delete_all_watches(client)
+
+
+def test_filter_failure_count_resets_with_ignore_status_codes(client, live_server, measure_memory_usage, datastore_path):
+    # Re #4620 - With "Ignore status codes" on, a successful check must still reset the failure streak,
+    # otherwise isolated failures hours apart add up and send a false "not found in N consecutive checks" alert
+    datastore = live_server.app.config['DATASTORE']
+    datastore.data['settings']['application']['filter_failure_notification_threshold_attempts'] = 2
+
+    notification_file = os.path.join(datastore_path, "notification.txt")
+    if os.path.isfile(notification_file):
+        os.unlink(notification_file)
+
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={
+        'include_filters': ['#nope-doesnt-exist'],
+        'ignore_status_codes': True,
+        'filter_failure_notification_send': True,
+        'notification_urls': [url_for('test_notification_endpoint', _external=True).replace('http', 'post')],
+    })
+
+    # Fail - filter not in the page
+    set_original_response(datastore_path=datastore_path)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert datastore.data['watching'][uuid]['consecutive_filter_failures'] == 1
+
+    # Succeed - filter is in the page, the streak is broken
+    set_response_with_filter(datastore_path)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert datastore.data['watching'][uuid]['consecutive_filter_failures'] == 0
+
+    # Fail again - this is the first of a new streak, not the second consecutive
+    set_original_response(datastore_path=datastore_path)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert datastore.data['watching'][uuid]['consecutive_filter_failures'] == 1
+
+    time.sleep(1)
+    if os.path.isfile(notification_file):
+        with open(notification_file, 'r') as f:
+            assert 'Your configured CSS/xPath filters' not in f.read()
+
+    delete_all_watches(client)

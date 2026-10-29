@@ -235,7 +235,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             extra_help = ", it's possible that the filters were found, but contained no usable text."
 
                     datastore.update_watch(uuid=uuid, update_obj={
-                        'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}"
+                        'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}",
+                        'last_check_status': e.status_code
                     })
 
                     if e.screenshot:
@@ -270,7 +271,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     if e.page_text:
                         watch.save_error_text(contents=e.page_text)
 
-                    datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                    datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                'last_check_status': e.status_code})
                     process_changedetection_results = False
 
                 except FilterNotFoundInResponse as e:
@@ -426,8 +428,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     update_obj['content-type'] = str(update_handler.fetcher.get_all_headers().get('content-type', '') or "").lower()
 
-                    if not watch.get('ignore_status_codes'):
-                        update_obj['consecutive_filter_failures'] = 0
+                    # Any successful check breaks the failure streak, "Ignore status codes" only affects HTTP status handling
+                    update_obj['consecutive_filter_failures'] = 0
 
                     update_obj['last_error'] = False
                     cleanup_error_artifacts(uuid, datastore)
