@@ -63,11 +63,18 @@ def test_plugin_api_exports():
 def test_plugin_api_import_stays_cheap():
     """Plugins import plugin_api at startup in every instance, it must not drag in the processor base
     class, the fetchers or lxml until a lazy export is actually used."""
+    import os
     import subprocess
     import sys
+    import changedetectionio
     code = ("import sys, changedetectionio.plugin_api; "
             "print(','.join(m for m in ('changedetectionio.processors.base', 'changedetectionio.html_tools') if m in sys.modules))")
-    out = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, check=True).stdout.strip()
+    # Run from the directory containing the package, CI runs pytest from inside changedetectionio/
+    # where a fresh interpreter can't import it
+    package_parent = os.path.dirname(os.path.dirname(os.path.abspath(changedetectionio.__file__)))
+    result = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, cwd=package_parent)
+    assert result.returncode == 0, f"Importing plugin_api in a fresh interpreter failed:\n{result.stderr}"
+    out = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ''
     assert out == '', f"Importing plugin_api eagerly imported: {out}"
 
 
