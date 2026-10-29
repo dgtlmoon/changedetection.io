@@ -133,5 +133,17 @@ class TestFrozenSharedValues(unittest.TestCase):
         self.assertTrue(time_handler.is_within_schedule(time_schedule_limit=watch['time_schedule_limit']))
 
 
+    def test_loaded_identical_ui_prefs_are_shared(self):
+        # ui_prefs is absent by default, and identical saved values collapse to one copy on load
+        self.assertNotIn('ui_prefs', _new_watch())
+        prefs = {'diff_display': {'type': 'diffWords', 'ignoreWhitespace': True}}
+        a = _new_watch(ui_prefs=json.loads(json.dumps(prefs)))
+        b = _new_watch(ui_prefs=json.loads(json.dumps(prefs)))
+        self.assertIsInstance(a['ui_prefs'], FrozenDict)
+        self.assertIs(a['ui_prefs'], b['ui_prefs'])
+        with self.assertRaises(TypeError):
+            a['ui_prefs']['diff_display']['type'] = 'diffLines'
+
+
 if __name__ == '__main__':
     unittest.main()
