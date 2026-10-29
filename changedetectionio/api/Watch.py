@@ -132,6 +132,9 @@ class Watch(Resource):
         # Never expose `__`-prefixed transient/internal fields (e.g. __check_status)
         watch = strip_internal_api_fields(watch)
 
+        # The OAuth client secret is write-only, like a password field
+        watch.pop('oauth2_client_secret', None)
+
         # Resolved processor config (tag override wins) and processor state, keyed by processor name
         watch.update(get_processor_api_fields(watch_obj, self.datastore, context='get'))
         return watch

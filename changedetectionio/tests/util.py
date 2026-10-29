@@ -299,6 +299,52 @@ def  live_server_setup(live_server):
 
 def new_live_server_setup(live_server):
 
+    # An OAuth 2.0 token endpoint and an API that wants its tokens, for test_oauth2.py (#375). The live server runs in
+    # its own process, so what they saw is kept in a file the test can read, and revoke tokens in.
+    def oauth_state_path():
+        return os.path.join(current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore'), 'oauth-state.json')
+
+    def oauth_state():
+        import json
+        try:
+            with open(oauth_state_path()) as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return {'requests': [], 'valid': []}
+
+    def save_oauth_state(state):
+        import json
+        with open(oauth_state_path(), 'w') as f:
+            json.dump(state, f)
+
+    @live_server.app.route('/test-oauth-token', methods=['POST'])
+    def test_oauth_token():
+        state = oauth_state()
+        if request.authorization and request.authorization.type == 'basic':
+            client_id, client_secret = request.authorization.username, request.authorization.password
+        else:
+            client_id, client_secret = request.form.get('client_id'), request.form.get('client_secret')
+        state['requests'].append({'client_id': client_id, 'form': request.form.to_dict(),
+                                  'basic': bool(request.authorization)})
+        if request.form.get('grant_type') != 'client_credentials':
+            save_oauth_state(state)
+            return {'error': 'unsupported_grant_type'}, 400
+        if (client_id, client_secret) != ('cd-client', 'cd-secret'):
+            save_oauth_state(state)
+            return {'error': 'invalid_client', 'error_description': 'Client authentication failed'}, 401
+        token = f"tok-{len(state['requests'])}"
+        state['valid'].append(token)
+        save_oauth_state(state)
+        return {'access_token': token, 'token_type': 'Bearer', 'expires_in': 3600,
+                'scope': request.form.get('scope', '')}
+
+    @live_server.app.route('/test-oauth-protected')
+    def test_oauth_protected():
+        auth = request.headers.get('Authorization', '')
+        if not auth.startswith('Bearer ') or auth[len('Bearer '):] not in oauth_state()['valid']:
+            return {'error': 'invalid_token'}, 401
+        return f"Price list for subscribers: 42 EUR (with {auth[len('Bearer '):]})"
+
     @live_server.app.route('/test-random-content-endpoint')
     def test_random_content_endpoint():
         import secrets

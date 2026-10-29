@@ -99,6 +99,12 @@ def _validate_common(datastore, data):
     if error:
         raise ApiError(error)
 
+    # The OAuth token URL is fetched by the server, so it is held to the same rules as the watch URL (#375)
+    from changedetectionio.validate_url import is_safe_valid_url
+    token_url = data.get('oauth2_token_url')
+    if token_url and (not isinstance(token_url, str) or not is_safe_valid_url(token_url.strip())):
+        raise ApiError("Invalid or unsupported oauth2_token_url")
+
 
 def validate_notification_urls(notification_urls):
     """Raises ApiError when an Apprise URL isn't valid."""

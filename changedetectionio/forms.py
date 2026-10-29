@@ -996,6 +996,19 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
     headers = StringDictKeyValue('Request headers')
     body = TextAreaField(_l('Request body'), [validators.Optional()])
     method = SelectField(_l('Request method'), choices=valid_method, default=default_method)
+
+    # OAuth 2.0 client credentials, for APIs that want a bearer token (#375)
+    oauth2_token_url = StringField(_l('OAuth 2.0 token URL'), [validators.Optional(), validateURL()], default='')
+    oauth2_client_id = StringField(_l('Client ID'), [validators.Optional(), validators.Length(max=1000)], default='')
+    # Left empty on save, the stored secret is kept; the page never shows it
+    oauth2_client_secret = PasswordField(_l('Client secret'), [validators.Optional(), validators.Length(max=1000)], default='')
+    oauth2_scope = StringField(_l('Scope'), [validators.Optional(), validators.Length(max=1000)], default='')
+    oauth2_audience = StringField(_l('Audience'), [validators.Optional(), validators.Length(max=1000)], default='')
+    oauth2_client_auth = SelectField(_l('Send the client credentials'),
+                                     choices=[('basic', _l('As HTTP Basic authentication')),
+                                              ('body', _l('In the request body'))],
+                                     default='basic')
+
     ignore_status_codes = BooleanField(_l('Ignore status codes (process non-2xx status codes as normal)'), default=False)
     check_unique_lines = BooleanField(_l('Only trigger when unique lines appear in all history'), default=False)
     remove_duplicate_lines = BooleanField(_l('Remove duplicate lines of text'), default=False)
@@ -1045,6 +1058,10 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
             return False
 
         result = True
+
+        if self.oauth2_token_url.data and not (self.oauth2_client_id.data or '').strip():
+            self.oauth2_client_id.errors.append(gettext('A client ID is needed with an OAuth 2.0 token URL'))
+            result = False
 
         # Fail form validation when a body is set for a GET
         if self.method.data == 'GET' and self.body.data:
