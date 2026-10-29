@@ -1178,6 +1178,32 @@ def test_api_watch_get_returns_resolved_restock_processor_config(client, live_se
     delete_all_watches(client)
 
 
+def test_api_processor_enum_lists_installed_processors(client, live_server, measure_memory_usage, datastore_path):
+    """The static spec only lists the built-in processors, the merged spec must accept every installed
+    processor (image_ssim_diff isn't in the static enum, neither is any plugin processor), and still
+    reject unknown ones."""
+    from changedetectionio.api import build_merged_spec_dict
+    from changedetectionio.processors import find_processors
+
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    headers = {'content-type': 'application/json', 'x-api-key': api_key}
+    test_url = url_for('test_endpoint', _external=True)
+
+    installed = {proc_name for _module, proc_name in find_processors()}
+    spec_enum = build_merged_spec_dict()['components']['schemas']['WatchBase']['properties']['processor']['enum']
+    assert set(spec_enum) == installed
+
+    res = client.post(url_for("createwatch"), headers=headers,
+                      data=json.dumps({"url": test_url, "processor": "image_ssim_diff", "paused": True}))
+    assert res.status_code == 201, res.data
+
+    res = client.post(url_for("createwatch"), headers=headers,
+                      data=json.dumps({"url": test_url, "processor": "no_such_processor"}))
+    assert res.status_code == 400
+
+    delete_all_watches(client)
+
+
 def test_api_conflict_UI_password(client, live_server, measure_memory_usage, datastore_path):
 
 

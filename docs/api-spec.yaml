@@ -463,7 +463,9 @@ components:
           type: string
           enum: [restock_diff, text_json_diff]
           default: text_json_diff
-          description: Optional processor mode to use for change detection. Defaults to `text_json_diff` if not specified.
+          description: |
+            Optional processor mode to use for change detection. Defaults to `text_json_diff` if not specified.
+            This static list only shows the built-ins, the live spec at `/api/v1/full-spec` lists every installed processor (including plugin processors).
 
         # Content Filtering
         include_filters:

@@ -30,6 +30,10 @@ def build_merged_spec_dict():
 
     try:
         from changedetectionio.processors import find_processors, get_parent_module
+        # The static spec only lists the built-ins, accept every installed processor (plugins too)
+        processor_names = sorted({proc_name for _module, proc_name in find_processors()})
+        if processor_names:
+            spec_dict['components']['schemas']['WatchBase']['properties']['processor']['enum'] = processor_names
         for module, proc_name in find_processors():
             parent = get_parent_module(module)
             if not parent or not hasattr(parent, '__file__'):

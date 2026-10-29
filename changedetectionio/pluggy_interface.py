@@ -526,8 +526,8 @@ def register_builtin_fetchers():
 def register_builtin_restock_plugins():
     """Register built-in restock processor plugins after all imports are complete.
 
-    Called from content_fetchers/__init__.py alongside register_builtin_fetchers()
-    to avoid the circular import that occurs when loading via load_plugins_from_directories()
+    Only called from changedetectionio.main() (so not when the app is built directly, e.g. in tests),
+    deferred to avoid the circular import that occurs when loading via load_plugins_from_directories()
     (restock_diff/__init__.py → model.Watch → content_fetchers → pluggy_interface).
     """
     import importlib
