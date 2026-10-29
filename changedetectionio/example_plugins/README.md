@@ -44,14 +44,14 @@ curl "http://localhost:5000/api/v1/watch/YOUR-UUID" -H "x-api-key: YOUR_API_KEY"
 
 ---
 
-## Scraping API fetcher - `fetcher/api_fetcher`
+## Example browser fetcher - `fetcher/example_browser_fetcher`
 
-A new fetch method, "Scraping API (example plugin)", that gets pages through a scraping API service
-(the kind that handles proxies and bot checks for you) instead of fetching them directly.
+A new fetch method, "Example browser fetcher", that gets pages through its own API instead of fetching
+them directly, for example a remote browser or rendering service.
 
 **Hooks**
-- `register_content_fetcher` - adds the `html_example_api_fetcher` fetch method
-- `plugin_settings_tab` - a "Scraping API (example)" tab in Settings for the API URL and key
+- `register_content_fetcher` - adds the `html_example_browser_fetcher` fetch method
+- `plugin_settings_tab` - an "Example browser fetcher" tab in Settings for the API URL and key
 - `fetcher_status_icon` - the icon next to watches using it in the watch list
 - `plugin_static_path` - serves that icon
 
@@ -59,13 +59,13 @@ A new fetch method, "Scraping API (example plugin)", that gets pages through a s
 
 **Install**
 ```bash
-cd changedetectionio/example_plugins/fetcher/api_fetcher
+cd changedetectionio/example_plugins/fetcher/example_browser_fetcher
 pip install .
 ```
 
-**Try it:** in Settings > "Scraping API (example)", set the API URL with `{url}` where the page URL goes,
+**Try it:** in Settings > "Example browser fetcher", set the API URL with `{url}` where the page URL goes,
 for example `https://api.example.com/fetch?url={url}`, and your key (sent as `X-Api-Key`). Then pick
-"Scraping API (example plugin)" as a watch's fetch method, or `"fetch_backend": "html_example_api_fetcher"`
+"Example browser fetcher" as a watch's fetch method, or `"fetch_backend": "html_example_browser_fetcher"`
 in the API.
 
 ---

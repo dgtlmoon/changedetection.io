@@ -5,7 +5,7 @@ from changedetectionio.plugin_api import Fetcher, load_plugin_settings
 
 
 class fetcher(Fetcher):
-    fetcher_description = 'Scraping API (example plugin)'
+    fetcher_description = 'Example browser fetcher'
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
@@ -19,17 +19,17 @@ class fetcher(Fetcher):
         from . import PLUGIN_ID, datastore
 
         settings = load_plugin_settings(datastore.datastore_path, PLUGIN_ID) if datastore else {}
-        api_url = (settings.get('example_api_fetcher_url') or '').strip()
+        api_url = (settings.get('example_browser_fetcher_url') or '').strip()
         if '{url}' not in api_url:
-            raise Exception("Scraping API (example plugin) isn't set up, add an API URL with {url} in Settings")
+            raise Exception("Example browser fetcher isn't set up, add an API URL with {url} in Settings")
 
         headers = dict(request_headers or {})
-        if settings.get('example_api_fetcher_key'):
-            headers['X-Api-Key'] = settings['example_api_fetcher_key']
+        if settings.get('example_browser_fetcher_key'):
+            headers['X-Api-Key'] = settings['example_browser_fetcher_key']
 
         r = requests.get(api_url.replace('{url}', quote(url, safe='')), headers=headers, timeout=timeout or 60)
         if not r.ok:
-            raise Exception(f"Scraping API returned HTTP {r.status_code}")
+            raise Exception(f"Example browser fetcher API returned HTTP {r.status_code}")
 
         # What a fetcher must set for the processor
         self.status_code = r.status_code

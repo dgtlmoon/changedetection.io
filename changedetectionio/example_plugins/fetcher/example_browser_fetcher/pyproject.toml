@@ -3,9 +3,9 @@ requires = ["setuptools>=77"]  # 77+ for the SPDX license string
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cdio-example-api-fetcher"
+name = "cdio-example-browser-fetcher"
 version = "0.1.0"
-description = "Example changedetection.io plugin: a content fetcher that gets pages through a scraping API"
+description = "Example changedetection.io plugin: an extra browser fetcher that gets pages through its own API"
 license = "Apache-2.0"
 requires-python = ">=3.11"
 # No dependency on changedetection.io itself: install this into the same environment that runs it
@@ -14,10 +14,10 @@ dependencies = []
 
 # This is what makes changedetection.io load the plugin at startup
 [project.entry-points.changedetectionio]
-cdio_example_api_fetcher = "cdio_example_api_fetcher"
+cdio_example_browser_fetcher = "cdio_example_browser_fetcher"
 
 [tool.setuptools]
-packages = ["cdio_example_api_fetcher"]
+packages = ["cdio_example_browser_fetcher"]
 
 [tool.setuptools.package-data]
-cdio_example_api_fetcher = ["static/*"]
+cdio_example_browser_fetcher = ["static/*"]

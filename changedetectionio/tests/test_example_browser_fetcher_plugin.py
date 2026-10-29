@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The api_fetcher example plugin (example_plugins/fetcher/api_fetcher): register_content_fetcher adds a
-fetcher that gets pages through a "scraping API" (here the test server), plugin_settings_tab gives it a
+"""The example_browser_fetcher example plugin (example_plugins/fetcher/example_browser_fetcher): register_content_fetcher
+adds a fetcher that gets pages through its own API (here the test server), plugin_settings_tab gives it a
 settings tab for the API URL and key, and fetcher_status_icon + plugin_static_path give it an icon."""
 import json
 import os
@@ -13,12 +13,12 @@ from .util import wait_for_all_checks, delete_all_watches, import_example_plugin
 
 
 @pytest.fixture
-def api_fetcher_plugin(live_server):
+def example_browser_fetcher_plugin(live_server):
     from changedetectionio import content_fetchers
     from changedetectionio.pluggy_interface import plugin_manager
 
-    plugin = import_example_plugin('fetcher/api_fetcher', 'cdio_example_api_fetcher')
-    plugin_manager.register(plugin, 'cdio_example_api_fetcher')
+    plugin = import_example_plugin('fetcher/example_browser_fetcher', 'cdio_example_browser_fetcher')
+    plugin_manager.register(plugin, 'cdio_example_browser_fetcher')
     # What changedetection.io does at startup: collect plugin fetchers, inject the datastore
     content_fetchers._plugin_fetchers.update(content_fetchers.get_plugin_fetchers())
     plugin.datastore = live_server.app.config['DATASTORE']
@@ -31,30 +31,30 @@ def api_fetcher_plugin(live_server):
     clear_plugin_discovery_caches()
 
 
-def test_example_api_fetcher_plugin(client, live_server, measure_memory_usage, datastore_path, api_fetcher_plugin):
+def test_example_browser_fetcher_plugin(client, live_server, measure_memory_usage, datastore_path, example_browser_fetcher_plugin):
     api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
     headers = {'content-type': 'application/json', 'x-api-key': api_key}
 
     # The settings tab, and the plugin listed under Settings > Info
     res = client.get(url_for("settings.settings_page"))
-    assert b'Scraping API (example)' in res.data
-    assert b'name="example_api_fetcher_url"' in res.data
-    assert b'<li><strong>cdio_example_api_fetcher</strong> - Example plugin - a content fetcher' in res.data
+    assert b'Example browser fetcher' in res.data
+    assert b'name="example_browser_fetcher_url"' in res.data
+    assert b'<li><strong>cdio_example_browser_fetcher</strong> - Example plugin - an extra browser fetcher' in res.data
 
-    # Save the settings through the settings page, the "scraping API" echoes the request headers back
+    # Save the settings through the settings page, the "API" echoes the request headers back
     res = client.post(url_for("settings.settings_page"), data={
         "requests-time_between_check-minutes": 180,
         "application-fetch_backend": "html_requests",
-        "example_api_fetcher_url": url_for('test_headers', _external=True) + '?url={url}',
-        "example_api_fetcher_key": "secret-key-123",
+        "example_browser_fetcher_url": url_for('test_headers', _external=True) + '?url={url}',
+        "example_browser_fetcher_key": "secret-key-123",
     }, follow_redirects=True)
     assert b"Settings updated." in res.data
-    with open(os.path.join(datastore_path, 'cdio_example_api_fetcher.json')) as f:
-        assert json.load(f)['example_api_fetcher_key'] == 'secret-key-123'
+    with open(os.path.join(datastore_path, 'cdio_example_browser_fetcher.json')) as f:
+        assert json.load(f)['example_browser_fetcher_key'] == 'secret-key-123'
 
     watch_url = 'https://example.com/product?id=1'
     res = client.post(url_for("createwatch"), headers=headers,
-                      data=json.dumps({"url": watch_url, "fetch_backend": "html_example_api_fetcher"}))
+                      data=json.dumps({"url": watch_url, "fetch_backend": "html_example_browser_fetcher"}))
     assert res.status_code == 201, res.data
     uuid = res.json.get('uuid')
     wait_for_all_checks(client)
@@ -71,13 +71,13 @@ def test_example_api_fetcher_plugin(client, live_server, measure_memory_usage, d
 
     # The status icon in the watch list, served from the plugin's static directory
     res = client.get(url_for("watchlist.index"))
-    assert b'/static/plugin/cdio_example_api_fetcher.svg' in res.data
-    assert client.get('/static/plugin/cdio_example_api_fetcher.svg').status_code == 200
+    assert b'/static/plugin/cdio_example_browser_fetcher.svg' in res.data
+    assert client.get('/static/plugin/cdio_example_browser_fetcher.svg').status_code == 200
 
     # The watch URL is passed to the API URL-encoded
     from changedetectionio.pluggy_interface import save_plugin_settings
-    save_plugin_settings(datastore_path, 'cdio_example_api_fetcher',
-                         {"example_api_fetcher_url": url_for('test_return_query', _external=True) + '?url={url}'})
+    save_plugin_settings(datastore_path, 'cdio_example_browser_fetcher',
+                         {"example_browser_fetcher_url": url_for('test_return_query', _external=True) + '?url={url}'})
     client.get(url_for("watch", uuid=uuid, recheck=1), headers=headers)
     wait_for_all_checks(client)
     res = client.get(url_for("watchsinglehistory", uuid=uuid, timestamp='latest'), headers=headers)
