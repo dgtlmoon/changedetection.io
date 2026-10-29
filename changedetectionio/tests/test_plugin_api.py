@@ -45,6 +45,37 @@ def test_plugin_api_exports():
     assert PLUGIN_API_VERSION
     # The public marker is the same one core uses, so either import path registers hooks
     assert hookimpl is pluggy_interface.hookimpl
+    assert hookimpl.project_name == pluggy_interface.PLUGIN_NAMESPACE
+
+    # What a processor plugin needs, exported lazily so they're the very same objects as core's
+    from changedetectionio import plugin_api
+    from changedetectionio.processors.base import difference_detection_processor
+    from changedetectionio.processors import get_resolved_processor_config
+    from changedetectionio.html_tools import html_to_text
+    assert plugin_api.difference_detection_processor is difference_detection_processor
+    assert plugin_api.get_resolved_processor_config is get_resolved_processor_config
+    assert plugin_api.html_to_text is html_to_text
+    assert set(plugin_api.__all__) >= {'difference_detection_processor', 'get_resolved_processor_config', 'html_to_text'}
+    with pytest.raises(AttributeError):
+        plugin_api.no_such_export
+
+
+def test_plugin_api_import_stays_cheap():
+    """Plugins import plugin_api at startup in every instance, it must not drag in the processor base
+    class, the fetchers or lxml until a lazy export is actually used."""
+    import os
+    import subprocess
+    import sys
+    import changedetectionio
+    code = ("import sys, changedetectionio.plugin_api; "
+            "print(','.join(m for m in ('changedetectionio.processors.base', 'changedetectionio.html_tools') if m in sys.modules))")
+    # Run from the directory containing the package, CI runs pytest from inside changedetectionio/
+    # where a fresh interpreter can't import it
+    package_parent = os.path.dirname(os.path.dirname(os.path.abspath(changedetectionio.__file__)))
+    result = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, cwd=package_parent)
+    assert result.returncode == 0, f"Importing plugin_api in a fresh interpreter failed:\n{result.stderr}"
+    out = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ''
+    assert out == '', f"Importing plugin_api eagerly imported: {out}"
 
 
 def test_raising_plugin_does_not_break_the_hook(register_plugin, watch):

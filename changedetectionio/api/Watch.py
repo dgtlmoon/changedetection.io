@@ -13,7 +13,8 @@ from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-from . import validate_openapi_request, get_readonly_watch_fields, strip_internal_api_fields
+from . import validate_openapi_request, get_readonly_watch_fields, strip_internal_api_fields, \
+    get_processor_api_fields, strip_readonly_processor_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 from ..model.Watch import validate_time_between_check_required
@@ -131,29 +132,12 @@ class Watch(Resource):
         watch['link'] = watch_obj.link
         watch['open_link'] = watch_obj.open_link
 
-        # Resolved processor config: tag override wins over watch-level config (mirrors restock processor logic)
-        import json
-        _restock_path = os.path.join(watch_obj.data_dir, 'restock_diff.json') if watch_obj.data_dir else None
-        restock_config = {}
-        if _restock_path and os.path.isfile(_restock_path):
-            try:
-                with open(_restock_path, 'r', encoding='utf-8') as _f:
-                    restock_config = json.load(_f).get('restock_diff') or {}
-            except (json.JSONDecodeError, IOError) as e:
-                logger.warning(f"Failed to read restock_diff.json for watch {uuid}: {e}")
-        restock_source = 'watch'
-        tags = self.datastore.data['settings']['application'].get('tags', {})
-        for tag_uuid in (watch_obj.get('tags') or []):
-            tag = tags.get(tag_uuid, {})
-            if tag.get('overrides_watch'):
-                restock_config = dict(tag.get('processor_config_restock_diff') or {})
-                restock_source = f'tag:{tag_uuid}'
-                break
-        watch['processor_config_restock_diff'] = restock_config
-        watch['processor_config_restock_diff_source'] = restock_source
-
         # Never expose `__`-prefixed transient/internal fields (e.g. __check_status)
-        return strip_internal_api_fields(watch)
+        watch = strip_internal_api_fields(watch)
+
+        # Resolved processor config (tag override wins) and processor state, keyed by processor name
+        watch.update(get_processor_api_fields(watch_obj, self.datastore, context='get'))
+        return watch
 
     @auth.check_token
     @validate_openapi_request('deleteWatch')
@@ -227,6 +211,8 @@ class Watch(Resource):
         # Silently discard `__`-prefixed transient/internal keys — they are not part of the
         # public schema and must never be writable (e.g. clients that round-trip GET → PUT).
         json_data = strip_internal_api_fields(dict(request.json))
+        # Same for the read-only processor_state_* / processor_config_*_source fields GET adds
+        json_data = strip_readonly_processor_fields(json_data)
 
         # Extract and remove processor config fields from json_data
         processor_config_data = processors.extract_processor_config_from_form_data(json_data)
@@ -615,11 +601,14 @@ class CreateWatch(Resource):
                 'link': watch.link,
                 'open_link': watch.open_link,
                 'page_title': watch['page_title'],
+                'processor': watch.get('processor') or 'text_json_diff',
                 'tags': [*tags],  # Unpack dict keys to list (can't use list() since variable named 'list')
                 'title': watch['title'],
                 'url': watch['url'],
                 'viewed': watch.viewed
             }
+            # processor_state_{name} only, the processor config is a disk read so it stays on the single watch GET
+            list[uuid].update(get_processor_api_fields(watch, self.datastore, context='list'))
 
         if request.args.get('recheck_all'):
             # Recheck the same set that was listed (tag/with_errors filters), but never paused watches

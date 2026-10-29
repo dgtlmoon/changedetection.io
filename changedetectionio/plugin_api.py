@@ -27,12 +27,18 @@ A plugin that raises is logged and counted, and the hook carries on with the oth
 so one broken plugin can't stop checks from running.
 """
 import inspect
+from typing import TYPE_CHECKING
 
-from changedetectionio.pluggy_interface import hookimpl
+import pluggy
+
+# Defined here, not imported from pluggy_interface: that module loads the built-in plugins at import
+# time, and they import hookimpl from here, so importing plugin_api first would be a circular import.
+# pluggy_interface imports it from here instead. Must stay the same namespace as PLUGIN_NAMESPACE there.
+hookimpl = pluggy.HookimplMarker("changedetectionio")
 
 # Version of this public API, not of changedetection.io. Below 1.0 it can still change between
 # minor versions; from 1.0 on, breaking changes mean a major version bump.
-PLUGIN_API_VERSION = "0.1.0"
+PLUGIN_API_VERSION = "0.2.0"
 
 
 async def await_me_maybe(value):
@@ -56,9 +62,39 @@ async def gather_hook_results(results):
     return resolved
 
 
+# Exported lazily (see __getattr__ below) so importing plugin_api stays cheap: these pull in the
+# fetchers, lxml etc, and pluggy_interface imports would otherwise go circular.
+#   difference_detection_processor - base class of a processor plugin's perform_site_check
+#   get_resolved_processor_config  - (config, source) for a watch's processor, tag override wins
+#   html_to_text                   - HTML to plain text, the same conversion the built-in processors use
+if TYPE_CHECKING:
+    # Never runs, only tells linters/IDEs/type checkers what the lazy exports below are
+    from changedetectionio.html_tools import html_to_text
+    from changedetectionio.processors import get_resolved_processor_config
+    from changedetectionio.processors.base import difference_detection_processor
+
+_LAZY_EXPORTS = {
+    'difference_detection_processor': 'changedetectionio.processors.base',
+    'get_resolved_processor_config': 'changedetectionio.processors',
+    'html_to_text': 'changedetectionio.html_tools',
+}
+
+
+def __getattr__(name):
+    if name in _LAZY_EXPORTS:
+        import importlib
+        value = getattr(importlib.import_module(_LAZY_EXPORTS[name]), name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 __all__ = [
     'PLUGIN_API_VERSION',
     'await_me_maybe',
+    'difference_detection_processor',
     'gather_hook_results',
+    'get_resolved_processor_config',
     'hookimpl',
+    'html_to_text',
 ]

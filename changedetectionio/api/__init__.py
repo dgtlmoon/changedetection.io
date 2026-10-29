@@ -10,6 +10,8 @@ def build_merged_spec_dict():
     Each processor can provide an api.yaml file alongside its __init__.py that defines
     additional schemas (e.g., processor_config_restock_diff). These are merged into
     WatchBase.properties so the spec accurately reflects what the API accepts.
+    A processor_state_{name} schema is merged into Watch.properties as read-only, it
+    documents what the get_api_watch_processor_state hook returns.
 
     Plugin processors (via pluggy) are also supported - they just need an api.yaml
     next to their processor module.
@@ -28,6 +30,10 @@ def build_merged_spec_dict():
 
     try:
         from changedetectionio.processors import find_processors, get_parent_module
+        # The static spec only lists the built-ins, accept every installed processor (plugins too)
+        processor_names = sorted({proc_name for _module, proc_name in find_processors()})
+        if processor_names:
+            spec_dict['components']['schemas']['WatchBase']['properties']['processor']['enum'] = processor_names
         for module, proc_name in find_processors():
             parent = get_parent_module(module)
             if not parent or not hasattr(parent, '__file__'):
@@ -45,6 +51,15 @@ def build_merged_spec_dict():
             if schema_key in proc_schemas:
                 spec_dict['components']['schemas']['WatchBase']['properties'][schema_key] = {
                     '$ref': f'#/components/schemas/{schema_key}'
+                }
+            # Inject processor_state_{name} into the Watch (response) schema, read-only, see get_processor_api_fields()
+            state_key = f'processor_state_{proc_name}'
+            if state_key in proc_schemas:
+                watch_schema = spec_dict['components']['schemas']['Watch']
+                watch_props = next(s for s in watch_schema['allOf'] if 'properties' in s)['properties']
+                watch_props[state_key] = {
+                    'allOf': [{'$ref': f'#/components/schemas/{state_key}'}],
+                    'readOnly': True,
                 }
             # Append x-code-samples from processor paths into existing path operations
             for path, path_item in proc_spec.get('paths', {}).items():
@@ -167,6 +182,58 @@ def strip_internal_api_fields(data):
     return {
         k: v for k, v in data.items()
         if not (isinstance(k, str) and (k.startswith('__') or k in SYSTEM_MANAGED_NON_SPEC_FIELDS))
+    }
+
+
+def get_processor_api_fields(watch, datastore, context):
+    """
+    Read-only processor fields for a watch in an API response, keyed by the watch's processor name.
+
+    - processor_config_{name} + processor_config_{name}_source: the resolved config (tag override
+      wins), only for context='get' since it reads from disk, and only when the processor documents
+      that schema in its api.yaml.
+    - processor_state_{name}: whatever the processor returns from the get_api_watch_processor_state
+      hook, for both context='get' and context='list'. Core picks the key, the plugin never does.
+
+    Args:
+        watch: Watch model instance
+        datastore: The application datastore
+        context: 'get' (single watch) or 'list' (called once per watch in the listing)
+
+    Returns:
+        dict: Fields to merge into the response
+    """
+    processor_name = watch.get('processor') or 'text_json_diff'
+    fields = {}
+
+    if context == 'get':
+        config_key = f'processor_config_{processor_name}'
+        if config_key in get_openapi_schema_dict()['components']['schemas']:
+            from changedetectionio.processors import get_resolved_processor_config
+            config, source = get_resolved_processor_config(datastore, watch)
+            fields[config_key] = config
+            fields[f'{config_key}_source'] = source
+
+    from changedetectionio.pluggy_interface import plugin_manager
+    state = plugin_manager.hook.get_api_watch_processor_state(watch=watch, processor_name=processor_name, context=context)
+    if state is not None:
+        fields[f'processor_state_{processor_name}'] = state
+
+    return fields
+
+
+def strip_readonly_processor_fields(data):
+    """
+    Drop the read-only processor fields that get_processor_api_fields() adds to GET responses,
+    so a client that round-trips GET -> PUT doesn't write them back (processor_config_{name}_source
+    would otherwise be saved into the config file as if it were a setting).
+
+    Returns a new dict; the input is not mutated.
+    """
+    return {
+        k: v for k, v in data.items()
+        if not (isinstance(k, str) and (k.startswith('processor_state_') or
+                                        (k.startswith('processor_config_') and k.endswith('_source'))))
     }
 
 

@@ -17,7 +17,8 @@ PLUGIN_NAMESPACE = "changedetectionio"
 LEGACY_CONDITIONS_NAMESPACE = "changedetectionio_conditions"
 
 hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
-hookimpl = pluggy.HookimplMarker(PLUGIN_NAMESPACE)
+# The marker lives in plugin_api (the public plugin module), see the comment there
+from changedetectionio.plugin_api import hookimpl
 
 # A plugin that raises is logged and counted, and the hook carries on with the other plugins.
 # After this many failures in a row the plugin is reported as "errored" (it is still called).
@@ -264,6 +265,45 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec(firstresult=True)
+    def get_api_watch_processor_state(watch, processor_name, context):
+        """Return the current processor state of a watch for the REST API.
+
+        Core calls this with the watch's own processor name and adds your dict to the response
+        as `processor_state_{processor_name}` on:
+        - GET /api/v1/watch/<uuid>  (context='get')
+        - GET /api/v1/watch         (context='list', called once per watch in the listing)
+
+        You never pick the key, core does, so a plugin can't overwrite other watch fields.
+        Return None when processor_name isn't yours, the first non-None result wins.
+
+        Document the shape as components.schemas.processor_state_{processor_name} in your
+        processor's api.yaml, it is merged into the Watch schema as read-only.
+
+        With context='list' this runs for every watch on every listing, so stay in memory:
+        no disk, network or other slow work.
+
+        @IMPORTANT-TODO: where a processor keeps this state on the watch has no convention yet,
+        see store update_watch().
+
+        Example (the built-in restock_diff processor):
+            @hookimpl
+            def get_api_watch_processor_state(watch, processor_name, context):
+                if processor_name != 'restock_diff':
+                    return None
+                restock = watch.get('restock') or {}
+                return {'in_stock': restock.get('in_stock'), 'price': restock.get('price')}
+
+        Args:
+            watch: The Watch model instance
+            processor_name: The watch's processor, e.g. 'restock_diff'
+            context: 'get' or 'list'
+
+        Returns:
+            dict or None: JSON-serialisable state for this watch, or None
+        """
+        pass
+
     # --- Conditions (JSON Logic rules on the watch edit page) ---
 
     @hookspec
@@ -490,8 +530,8 @@ def register_builtin_fetchers():
 def register_builtin_restock_plugins():
     """Register built-in restock processor plugins after all imports are complete.
 
-    Called from content_fetchers/__init__.py alongside register_builtin_fetchers()
-    to avoid the circular import that occurs when loading via load_plugins_from_directories()
+    Only called from changedetectionio.main() (so not when the app is built directly, e.g. in tests),
+    deferred to avoid the circular import that occurs when loading via load_plugins_from_directories()
     (restock_diff/__init__.py → model.Watch → content_fetchers → pluggy_interface).
     """
     import importlib
@@ -503,6 +543,19 @@ def register_builtin_restock_plugins():
             logger.debug("Registered built-in restock plugin: llm_restock")
     except Exception as e:
         logger.error(f"Failed to register llm_restock plugin: {e}")
+
+
+def register_builtin_api_plugins():
+    """Register the built-in get_api_watch_processor_state implementations.
+
+    Called from flask_app.changedetection_app() where the API resources are set up, so it runs
+    however the app is started. Can't happen at module load for the same circular import reason
+    as register_builtin_restock_plugins().
+    """
+    from changedetectionio.processors.restock_diff.plugins import api_state
+    if not plugin_manager.is_registered(api_state):
+        # 'builtin_' names are hidden from the active plugins list, see get_active_plugins()
+        plugin_manager.register(api_state, 'builtin_restock_api_state')
 
 # Helper function to collect UI stats extras from all plugins
 def collect_ui_edit_stats_extras(watch):

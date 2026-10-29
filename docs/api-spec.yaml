@@ -173,6 +173,18 @@ tags:
       The `paths` section in `api.yaml` is used only for injecting additional `x-code-samples` into
       existing endpoints — you cannot define new routes via plugin.
 
+      #### Processor state: `processor_state_<processor_name>`
+
+      A processor can also report what its most recent check found (for example the current price),
+      as a read-only `processor_state_<processor_name>` field on `GET /watch/{uuid}` and on each item
+      of `GET /watch`. Implement the `get_api_watch_processor_state(watch, processor_name, context)`
+      pluggy hook and return a dict (or `None` when `processor_name` isn't yours) - core always picks
+      the field name. Document its shape as a `processor_state_<processor_name>` schema in the same
+      `api.yaml`, it is merged into the Watch schema as read-only.
+
+      `processor_config_<processor_name>` (and `processor_config_<processor_name>_source`) is only
+      returned on `GET /watch/{uuid}`, not in the watch list.
+
       ---
 
       ### Built-in plugin: `restock_diff`
@@ -210,7 +222,9 @@ tags:
 
       #### READ — Retrieve the monitor
 
-      The response JSON includes `processor_config_restock_diff` alongside all standard watch fields:
+      The response JSON includes the resolved `processor_config_restock_diff` and the current
+      `processor_state_restock_diff` (stock and price from the most recent check) alongside all
+      standard watch fields. `GET /watch` includes `processor_state_restock_diff` for each restock watch too.
 
       ```bash
       curl -X GET "http://localhost:5000/api/v1/watch/cc0cfffa-f449-477b-83ea-0caafd1dc091" \
@@ -228,6 +242,13 @@ tags:
           "price_change_threshold_percent": 5,
           "price_change_min": null,
           "price_change_max": null
+        },
+        "processor_config_restock_diff_source": "watch",
+        "processor_state_restock_diff": {
+          "in_stock": true,
+          "price": 19.99,
+          "currency": "USD",
+          "last_price": 24.99
         }
       }
       ```
@@ -442,7 +463,9 @@ components:
           type: string
           enum: [restock_diff, text_json_diff]
           default: text_json_diff
-          description: Optional processor mode to use for change detection. Defaults to `text_json_diff` if not specified.
+          description: |
+            Optional processor mode to use for change detection. Defaults to `text_json_diff` if not specified.
+            This static list only shows the built-ins, the live spec at `/api/v1/full-spec` lists every installed processor (including plugin processors).
 
         # Content Filtering
         include_filters:
