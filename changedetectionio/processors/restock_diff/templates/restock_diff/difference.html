@@ -74,26 +74,15 @@
 
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script>
-    // The graph data (full timeline) is fetched from this endpoint to keep it out of the HTML.
+    // The chart (built-in or a plugin's, see restock_diff/hookspecs.py) and the table data are loaded
+    // from these, to keep the full timeline out of this page.
+    window.restock_chart_url = {{ processor_chart_url|tojson }};
     window.restock_data_url = {{ processor_data_url|tojson }};
-    // i18n strings for the JS-built table + states.
+    // i18n strings for the JS-built table + states (the chart carries its own, see chart_default.html)
     window.restock_i18n = {
         in_stock: {{ _('In stock')|tojson }},
         out_of_stock: {{ _('Out of stock')|tojson }},
-        no_data: {{ _('No price data available to graph yet.')|tojson }},
-        load_error: {{ _('Could not load price history.')|tojson }},
-        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
-        changes: {{ _('Changes')|tojson }},
-        avg_price: {{ _('Average price')|tojson }},
-        price_low: {{ _('Currently low')|tojson }},
-        price_typical: {{ _('Currently typical')|tojson }},
-        price_high: {{ _('Currently high')|tojson }},
-        {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
-        cheaper_than: {{ _('cheaper than {pct} of tracked prices')|tojson }},
-        {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
-        pricier_than: {{ _('more expensive than {pct} of tracked prices')|tojson }},
-        typical_note: {{ _('around the usual price')|tojson }},
-        avg_label: {{ _('avg')|tojson }}
+        load_error: {{ _('Could not load price history.')|tojson }}
     };
 </script>
 <script src="{{ url_for('static_content', group='js', filename='restock-price-graph.js') }}" defer></script>
