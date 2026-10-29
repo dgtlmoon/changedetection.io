@@ -23,10 +23,20 @@ def _clear_processor_and_spec_caches():
 
 @pytest.fixture
 def wordcounter_plugin():
+    """What `pip install .` + the entry point would do: import cdio_example_wordcounter as its own
+    top-level package and register it."""
+    import importlib
+    import sys
     from changedetectionio.pluggy_interface import plugin_manager
-    from changedetectionio.example_plugins.processor import wordcounter
 
-    plugin_manager.register(wordcounter, 'example_wordcounter')
+    example_dir = os.path.join(os.path.dirname(__file__), '..', 'example_plugins', 'processor', 'wordcounter')
+    sys.path.insert(0, os.path.abspath(example_dir))
+    try:
+        wordcounter = importlib.import_module('cdio_example_wordcounter')
+    finally:
+        sys.path.pop(0)
+
+    plugin_manager.register(wordcounter, 'cdio_example_wordcounter')
     _clear_processor_and_spec_caches()
     yield wordcounter
     plugin_manager.unregister(wordcounter)

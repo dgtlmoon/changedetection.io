@@ -1,8 +1,8 @@
 """
 Example processor plugin - counts the words on a page, a change is when the count changes.
 
-Copy this directory into your own pip package to start a processor plugin, see ../../README.md.
-It is not active unless registered, nothing scans example_plugins/ for plugins.
+Install it with `pip install .` from the directory above this one, see example_plugins/README.md.
+It is not active until installed (or registered), nothing scans example_plugins/ for plugins.
 """
 from changedetectionio.plugin_api import hookimpl
 

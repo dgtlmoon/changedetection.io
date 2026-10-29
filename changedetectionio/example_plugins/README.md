@@ -1,32 +1,54 @@
 # Example plugins
 
-Working examples to copy when writing your own changedetection.io plugin. They ship with the package
-but are **not active**: nothing scans `example_plugins/`, a plugin only runs once it is registered.
-The tests register them to check the plugin hooks keep working.
+Small, working plugins to learn from or copy. Each one is its own installable package, nothing here is
+active until you install it.
 
-Like any plugin they import only from `changedetectionio.plugin_api`, everything else in the package is
-internal and may change between releases. If you need something that isn't exported there, ask for it.
+To install one, run `pip install .` from its directory, in the same Python environment that runs
+changedetection.io, then restart changedetection.io. Plugins are picked up through the `changedetectionio`
+entry point in their `pyproject.toml`. They need plugin API 0.2.0 or newer
+(`changedetectionio.plugin_api.PLUGIN_API_VERSION`).
 
-## `processor/wordcounter` - a processor plugin
+Plugins import only from `changedetectionio.plugin_api`, everything else in the package is internal and
+may change between releases. If you need something that isn't exported there, ask for it.
 
-Counts the words on a page, a change is detected when the count changes. It shows:
+---
 
-- `register_processor` - adds `word_counter` to the processor list (and the API `processor` field)
-- `processor.py` - the check itself, returns the snapshot text and an `update_obj` for the watch
-- `api.yaml` - `processor_config_word_counter` (settings, accepted on watch create/update) and
-  `processor_state_word_counter` (read-only, what the last check found)
-- `get_api_watch_processor_state` - publishes the word count as `processor_state_word_counter` on
-  `GET /api/v1/watch/<uuid>` and in `GET /api/v1/watch`
+## Word counter - `processor/wordcounter`
 
-### Making it your own package
+A new processor, "Word counter (example plugin)", in the watch's processor list. It counts the words on
+the page and reports a change when the count changes. The `min_word_length` setting skips short words.
 
-1. Copy `processor/wordcounter/` into a new project, e.g. `my_cdio_processor/`, and rename
-   `PROCESSOR_NAME` plus the two schema names in `api.yaml` to match.
-2. Register it through the `changedetectionio` entry point in your `pyproject.toml`:
+**Hooks**
+- `register_processor` - adds `word_counter` as a processor
+- `get_api_watch_processor_state` - shows the count as `processor_state_word_counter` in the API
 
-   ```toml
-   [project.entry-points.changedetectionio]
-   my_processor = "my_cdio_processor"
-   ```
+**Also shows** `processor.py` (the check itself) and `api.yaml` (documents `processor_config_word_counter`
+and `processor_state_word_counter` in the API spec).
 
-3. `pip install -e .` next to changedetection.io (or add it to `EXTRA_PACKAGES` in Docker) and restart.
+**Install**
+```bash
+cd changedetectionio/example_plugins/processor/wordcounter
+pip install .
+```
+
+**Try it**
+```bash
+curl -X POST "http://localhost:5000/api/v1/watch" -H "x-api-key: YOUR_API_KEY" -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "processor": "word_counter", "processor_config_word_counter": {"min_word_length": 3}}'
+
+# After the first check:
+curl "http://localhost:5000/api/v1/watch/YOUR-UUID" -H "x-api-key: YOUR_API_KEY"
+#   "processor_state_word_counter": {"word_count": 25}
+```
+
+---
+
+## Writing your own
+
+Copy an example's directory, then rename the package directory and its `name` / entry point in
+`pyproject.toml`. For a processor, also change `PROCESSOR_NAME` and the two schema names in `api.yaml`.
+Every hook and its arguments are documented on `ChangeDetectionSpec` in
+[`pluggy_interface.py`](../pluggy_interface.py).
+
+In Docker, add your published package to the `EXTRA_PACKAGES` environment variable instead of
+running `pip install` yourself.
