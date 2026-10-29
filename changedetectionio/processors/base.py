@@ -2,6 +2,7 @@ import hashlib
 
 from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
 from changedetectionio.content_fetchers.base import Fetcher
+from changedetectionio.proxy_url import redact_proxy_url
 from changedetectionio.validate_url import validate_fetch_url_async
 from copy import deepcopy
 from abc import abstractmethod
@@ -196,11 +197,11 @@ class difference_detection_processor():
             # Custom browser endpoints should NOT have a proxy added
             if not prefer_fetch_backend.startswith('extra_browser_'):
                 proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
-                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{proxy_url}' for {url}")
+                logger.debug(f"Selected proxy key '{preferred_proxy_id}' as proxy URL '{redact_proxy_url(proxy_url)}' for {url}")
             else:
                 logger.debug("Skipping adding proxy data when custom Browser endpoint is specified. ")
 
-        logger.debug(f"Using proxy '{proxy_url}' for {self.watch['uuid']}")
+        logger.debug(f"Using proxy '{redact_proxy_url(proxy_url)}' for {self.watch['uuid']}")
 
         # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
         # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
@@ -219,7 +220,7 @@ class difference_detection_processor():
             self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
 
         # Tweak the base config with the per-watch ones
-        from changedetectionio.jinja2_custom import render as jinja_render
+        from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
         request_headers = CaseInsensitiveDict()
 
         ua = self.datastore.data['settings']['requests'].get('default_ua')
@@ -236,14 +237,18 @@ class difference_detection_processor():
         if 'Accept-Encoding' in request_headers and "br" in request_headers['Accept-Encoding']:
             request_headers['Accept-Encoding'] = request_headers['Accept-Encoding'].replace(', br', '')
 
+        # Only render values that really contain Jinja2, so a literal like {%22 (URL-encoded JSON) is sent as-is,
+        # the same rule the edit form validates with
         for header_name in request_headers:
-            request_headers.update({header_name: jinja_render(template_str=request_headers.get(header_name))})
+            value = request_headers.get(header_name)
+            if isinstance(value, str) and JINJA2_MARKER_PATTERN.search(value):
+                request_headers.update({header_name: jinja_render(template_str=value)})
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
 
         request_body = self.watch.get('body')
-        if request_body:
-            request_body = jinja_render(template_str=self.watch.get('body'))
+        if request_body and JINJA2_MARKER_PATTERN.search(request_body):
+            request_body = jinja_render(template_str=request_body)
 
         request_method = self.watch.get('method')
         ignore_status_codes = self.watch.get('ignore_status_codes', False)

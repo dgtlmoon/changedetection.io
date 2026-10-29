@@ -2,13 +2,13 @@ import asyncio
 import gc
 import json
 import os
-from urllib.parse import urlparse
 
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, \
     BrowserStepsStepException
 
@@ -39,7 +39,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     if lock_viewport_elements and page_height > page.viewport_size['height']:
         lock_start = time.time()
         lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
-        with open(lock_elements_js_path, 'r') as f:
+        with open(lock_elements_js_path, 'r', encoding='utf-8') as f:
             lock_elements_js = f.read()
         await page.evaluate(lock_elements_js)
         elements_locked = True
@@ -96,7 +96,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     # Unlock element dimensions if they were locked
     if elements_locked:
         unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
-        with open(unlock_elements_js_path, 'r') as f:
+        with open(unlock_elements_js_path, 'r', encoding='utf-8') as f:
             unlock_elements_js = f.read()
         await page.evaluate(unlock_elements_js)
         logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
@@ -209,10 +209,10 @@ class fetcher(Fetcher):
 
         if self.proxy:
             # Playwright needs separate username and password values
-            parsed = urlparse(self.proxy.get('server'))
-            if parsed.username:
-                self.proxy['username'] = parsed.username
-                self.proxy['password'] = parsed.password
+            username, password = proxy_credentials(self.proxy.get('server'))
+            if username:
+                self.proxy['username'] = username
+                self.proxy['password'] = password
 
     async def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)

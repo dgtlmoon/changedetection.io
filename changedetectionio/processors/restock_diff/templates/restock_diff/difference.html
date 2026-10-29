@@ -44,7 +44,8 @@
                 <table class="pure-table" id="restock-history-table">
                     <thead>
                         <tr>
-                            <th>{{ _('When') }}</th>
+                            {# TRANSLATORS: 'When' is a date/time column header, not the question word #}
+                            <th>{{ pgettext('datetime', 'When') }}</th>
                             <th>{{ _('Stock') }}</th>
                             <th>{{ _('Price') }}</th>
                         </tr>
@@ -81,6 +82,7 @@
         out_of_stock: {{ _('Out of stock')|tojson }},
         no_data: {{ _('No price data available to graph yet.')|tojson }},
         load_error: {{ _('Could not load price history.')|tojson }},
+        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
         changes: {{ _('Changes')|tojson }},
         avg_price: {{ _('Average price')|tojson }},
         price_low: {{ _('Currently low')|tojson }},

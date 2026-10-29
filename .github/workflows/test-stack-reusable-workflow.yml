@@ -28,21 +28,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      # No setup-python / host pip cache here, everything is installed inside the Docker build
 
-      - name: Cache pip packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-pip-
-
-      - name: Get current date for cache key
+      - name: Get current date for the daily dependency refresh
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
@@ -57,10 +45,15 @@ jobs:
           build-args: |
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             LOGGER_LEVEL=TRACE
+            DEPS_REFRESH_DATE=${{ steps.date.outputs.date }}
           tags: test-changedetectionio
           load: true
-          cache-from: type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
-          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+          # The date is a build-arg rather than part of the scope, so only the deps layer refreshes daily.
+          # A PR's first push (and anything with changed requirements/Dockerfile) falls back to master's cache.
+          cache-from: |
+            type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}
+            type=gha,scope=build-master-py${{ env.PYTHON_VERSION }}
+          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}
 
       - name: Verify build
         run: |
@@ -78,6 +71,46 @@ jobs:
             pip-licenses --partial-match \
               --fail-on="GPL-2.0;GPL-3.0;AGPL;GNU General Public License;GNU Affero General Public License"
           '
+
+      - name: License compliance - docs/THIRD-PARTY-LICENSES.md is up to date
+        run: |
+          # Only the image built with the Dockerfile's default Python is the one that ships;
+          # other matrix versions pull in different backports and would always differ.
+          SHIPPED_PYTHON=$(sed -n 's/^ARG PYTHON_VERSION=//p' Dockerfile | head -n1)
+          if [ "${{ env.PYTHON_VERSION }}" != "$SHIPPED_PYTHON" ]; then
+            echo "Skipping, the shipped image is built with Python $SHIPPED_PYTHON"
+            exit 0
+          fi
+
+          if ! git ls-files --error-unmatch docs/THIRD-PARTY-LICENSES.md >/dev/null 2>&1; then
+            echo "::error file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md is missing from the repository. Generate it with ./.github/scripts/generate-third-party-licenses.sh and commit it."
+            exit 1
+          fi
+
+          # Compare package names and licences only. Most requirements are unpinned and the
+          # deps layer refreshes daily, so comparing versions (or the "Generated" date) would
+          # fail unrelated PRs whenever an upstream package publishes a release.
+          normalise() {
+            grep '^| ' "$1" | grep -v -e '^| Package |' -e '^|---' \
+              | sed 's/\[\([^]]*\)\]([^)]*)/\1/' \
+              | awk -F' [|] ' '{print $1 " | " $3}' | sort
+          }
+
+          cp docs/THIRD-PARTY-LICENSES.md /tmp/THIRD-PARTY-LICENSES.committed.md
+          ./.github/scripts/generate-third-party-licenses.sh test-changedetectionio
+
+          if ! diff -u <(normalise /tmp/THIRD-PARTY-LICENSES.committed.md) <(normalise docs/THIRD-PARTY-LICENSES.md); then
+            echo ""
+            echo "::error file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md is out of date - a bundled package was added, removed, or changed its licence (see the diff above, '-' is committed, '+' is what the image actually ships)."
+            echo ""
+            echo "To fix, rebuild the image and regenerate the file, then commit it:"
+            echo "    docker build . -t test-changedetectionio"
+            echo "    ./.github/scripts/generate-third-party-licenses.sh"
+            echo ""
+            echo "If a new package is multi-licensed, also record which licence we elect in NOTICE."
+            exit 1
+          fi
+          echo "docs/THIRD-PARTY-LICENSES.md matches the packages and licences in the shipped image"
 
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
         run: |

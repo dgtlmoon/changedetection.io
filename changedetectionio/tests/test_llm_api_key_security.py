@@ -550,14 +550,14 @@ def test_llm_endpoints_allow_api_base_when_iana_bypass_enabled(
         client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """When ALLOW_IANA_RESTRICTED_ADDRESSES=true the SSRF guard is bypassed so
     operators can intentionally point at a local Ollama / vLLM endpoint.
-    We patch litellm so the test doesn't actually need a live model server —
+    We patch the model lister so the test doesn't actually need a live model server —
     we only need to confirm the guard didn't short-circuit."""
     monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')
 
-    # Stub get_valid_models so the call returns successfully without network.
-    import litellm
-    monkeypatch.setattr(litellm, 'get_valid_models',
-                        lambda **kwargs: ['llama3.2'])
+    # Stub list_models so the call returns successfully without network.
+    import changedetectionio.llm.model_list as model_list
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: ['openai/llama3.2'])
 
     # Supply api_key explicitly so we aren't tripped by the credential-exfil
     # guard (which refuses to substitute the stored key for a non-stored api_base).
@@ -629,12 +629,12 @@ def test_llm_models_refuses_to_leak_stored_key_to_different_api_base(
     ds = client.application.config.get('DATASTORE')
     _configure_llm(ds)   # stores CANARY_KEY, leaves api_base unset
 
-    # Patch litellm.get_valid_models so that if the guard ever lets us through
+    # Patch list_models so that if the guard ever lets us through
     # we'd see it called — and we can assert it wasn't.
-    import litellm
+    import changedetectionio.llm.model_list as model_list
     calls = []
-    monkeypatch.setattr(litellm, 'get_valid_models',
-                        lambda **kwargs: calls.append(kwargs) or [])
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: calls.append(kwargs) or [])
 
     res = client.get(
         url_for('settings.llm.llm_get_models'),
@@ -649,7 +649,7 @@ def test_llm_models_refuses_to_leak_stored_key_to_different_api_base(
     body = res.get_json()
     assert 'api_key' in body['error'], \
         f"Error should call out that api_key is required: {body['error']!r}"
-    assert calls == [], "litellm must not have been invoked at all"
+    assert calls == [], "The provider must not have been contacted at all"
 
 
 def test_llm_test_refuses_to_leak_stored_key_to_different_api_base(
@@ -663,7 +663,7 @@ def test_llm_test_refuses_to_leak_stored_key_to_different_api_base(
     calls = []
     # Patch the completion wrapper so we'd notice if litellm were invoked.
     import changedetectionio.llm.client as llm_client
-    monkeypatch.setattr(llm_client, 'completion',
+    monkeypatch.setattr(llm_client, 'completion_isolated',
                         lambda **kw: calls.append(kw) or ('', 0, 0, 0))
 
     res = client.post(
@@ -693,9 +693,9 @@ def test_llm_models_allows_stored_key_when_api_base_matches_saved(
     ds.data['settings']['application']['llm']['api_base'] = 'http://localhost:11434'
 
     received = []
-    import litellm
-    monkeypatch.setattr(litellm, 'get_valid_models',
-                        lambda **kwargs: (received.append(kwargs), ['llama3.2'])[1])
+    import changedetectionio.llm.model_list as model_list
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: (received.append(kwargs), ['openai/llama3.2'])[1])
 
     res = client.get(
         url_for('settings.llm.llm_get_models'),

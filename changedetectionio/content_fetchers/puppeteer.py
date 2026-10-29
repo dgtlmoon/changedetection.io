@@ -13,6 +13,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio import gc_debounce
 from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
 
@@ -68,7 +69,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         lock_start = time.time()
         lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
         file_read_start = time.time()
-        with open(lock_elements_js_path, 'r') as f:
+        with open(lock_elements_js_path, 'r', encoding='utf-8') as f:
             lock_elements_js = f.read()
         file_read_time = time.time() - file_read_start
 
@@ -123,7 +124,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     # Unlock element dimensions if they were locked
     if elements_locked:
         unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
-        with open(unlock_elements_js_path, 'r') as f:
+        with open(unlock_elements_js_path, 'r', encoding='utf-8') as f:
             unlock_elements_js = f.read()
         await page.evaluate(unlock_elements_js)
         logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
@@ -224,7 +225,8 @@ class fetcher(Fetcher):
             # Playwright needs separate username and password values
             parsed = urlparse(proxy_override)
             if parsed:
-                self.proxy = {'username': parsed.username, 'password': parsed.password}
+                username, password = proxy_credentials(proxy_override)
+                self.proxy = {'username': username, 'password': password}
                 # Add the proxy server chrome start option, the username and password never gets added here
                 # (It always goes in via await self.page.authenticate(self.proxy))
 

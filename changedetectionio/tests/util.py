@@ -159,6 +159,17 @@ def extract_UUID_from_client(client):
     uuid = m.group(1)
     return uuid.strip()
 
+
+def get_form_field(html, name):
+    """Return the <input>, <select> or <textarea> named `name` in the page, or None.
+
+    Use this to assert a field's value (field['value'], field.has_attr('checked')) instead of matching raw
+    bytes like b'type="text" value="5"', which breaks on attribute order, quoting or a changed input type
+    (WTForms 3.3 renders FloatField as type="number"). Keep raw byte checks where the escaping is the point.
+    """
+    from bs4 import BeautifulSoup
+    return BeautifulSoup(html, 'html.parser').find(['input', 'select', 'textarea'], attrs={'name': name})
+
 def delete_all_watches(client=None):
     wait_for_all_checks(client)
 

@@ -1,19 +1,17 @@
+[<img src="./docs/banner-wide.png" style="max-width:100%;" alt="AI LLM Web site page change monitoring"  title="AI LLM Web site page change monitoring"  />](https://changedetection.io?src=github)
+
 # Detect Website Changes Automatically — Monitor Web Page Changes in Real Time
 
-Monitor websites for updates — get notified via Discord, Email, Slack, Telegram, Webhook and many more.
+Monitor websites for updates — get notified via Discord, Email, Slack, Telegram, Webhook and many more — Ideal for monitoring price changes, content edits, conditional changes, LLM Change summaries and triggers just to name few features.
 
-**Detect web page content changes and get instant alerts.**  
-
-Ideal for monitoring price changes, content edits, conditional changes and more.
+[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE)
 
 
-[<img src="https://raw.githubusercontent.com/dgtlmoon/changedetection.io/master/docs/screenshot.png" style="max-width:100%;" alt="Web site page change monitoring"  title="Web site page change monitoring"  />](https://changedetection.io?src=github)
-
-[![Release Version][release-shield]][release-link] [![Docker Pulls][docker-pulls]][docker-link] [![License][license-shield]](LICENSE.md)
+[<img src="./docs/screenshot.png" style="max-width:100%;" alt="Web site page change monitoring"  title="Web site page change monitoring"  />](https://changedetection.io?src=github)
 
 ![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
 
-[**Get started with website page change monitoring straight away. Don't have time? Try our $8.99/month subscription, use our proxies and support!**](https://changedetection.io) , _half the price of other website change monitoring services!_
+[**Get started with website page change monitoring straight away. Don't have time? Try our $8.99/month subscription, use our proxies and support!**](https://changedetection.io) , _Same open-source changedetection.io, minus the hard parts, No infrastructure to baby-sit._
 
 
 - Chrome browser included.
@@ -32,9 +30,9 @@ Stop drowning in noise. Connect any LLM (OpenAI, Gemini, Anthropic, Ollama and m
 
 Works with any model you already pay for — GPT-4o-mini and Gemini Flash handle this well at fractions of a cent per check. Or run it entirely locally with **Ollama**, **vLLM**, **LM Studio**, or any **OpenAI-compatible self-hosted endpoint** — pick the *OpenAI-compatible (vLLM, LM Studio, llama.cpp)* option in the provider dropdown and point it at your server's `/v1` URL. Powered by [LiteLLM](https://github.com/BerriAI/litellm), giving you seamless access to [100+ supported providers and models](https://docs.litellm.ai/docs/providers).
 
-[<img src="./docs/LLM-change-summary.jpeg" style="max-width:100%;" alt="AI-powered website change detection — plain language change summaries and smart alert rules"  title="AI website change detection with LLM change summaries and intelligent alert filtering" />](https://changedetection.io?src=github)
+We've got a quick tutorial here - [Bring your own LLM/AI Key to changedetection.io for change summaries and triggers.](https://changedetection.io/tutorial/ai-summary-and-change-detection-bring-your-own-key)
 
-_Note: Available in our subscription/hosted service from June 2026_
+[<img src="./docs/LLM-change-summary.jpeg" style="max-width:100%;" alt="AI-powered website change detection — plain language change summaries and smart alert rules"  title="AI website change detection with LLM change summaries and intelligent alert filtering" />](https://changedetection.io?src=github)
 
 ### Target specific parts of the webpage using the Visual Selector tool.
 
@@ -307,13 +305,6 @@ Full REST API for programmatic management of watches, tags, notifications and mo
 - **[Interactive API Documentation](https://changedetection.io/docs/api_v1/index.html)** - Complete API reference with live testing
 - **[OpenAPI Specification](docs/api-spec.yaml)** - Generate SDKs for any programming language
 
-## Support us
-
-Do you use changedetection.io to make money? does it save you time or money? Does it make your life easier? less stressful? Remember, we write this software when we should be doing actual paid work, we have to buy food and pay rent just like you.
-
-
-Consider taking out an officially supported [website change detection subscription](https://changedetection.io?src=github) , even if you don't use it, you still get the warm fuzzy feeling of helping out the project. (And who knows, you might just use it!)
-
 ## Commercial Support
 
 I offer commercial support, this software is depended on by network security, aerospace , data-science and data-journalist professionals just to name a few, please reach out at dgtlmoon@gmail.com for any enquiries, I am more than glad to work with your organisation to further the possibilities of what can be done with changedetection.io
@@ -351,12 +342,10 @@ By using this software, and in particular any AI / LLM features, you personally 
 
 ## Third-party licenses
 
-changedetectionio.html_tools.elementpath_tostring: Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati), Licensed under [MIT license](https://github.com/sissaschool/elementpath/blob/master/LICENSE)
+See [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) for every bundled package and its licence, and [NOTICE](NOTICE) for attribution and licence elections.
 
 ## Contributors
 
-Recognition of fantastic contributors to the project
-
-<sub>Developer note: see [translation guide](changedetectionio/translations/README.md) for i18n template patterns and workflow.</sub>
-
-- Constantin Hong https://github.com/Constantin1489
+<a href="https://github.com/dgtlmoon/changedetection.io/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=dgtlmoon/changedetection.io&max=300&columns=20" alt="changedetection.io contributors" />
+</a>

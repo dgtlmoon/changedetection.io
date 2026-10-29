@@ -140,7 +140,10 @@
 
     <div class="tab-pane-inner" id="text">
     {%- if (content | default('')).split('\n') | length > 100 -%}
-        <div id="cell-diff-jump-visualiser"  style="user-select: none;">
+        {# A minimap of where the differences are, not a timeline: without a name the
+           coloured cells read as timestamps and people expect a date on hover
+           (issue #4550). #}
+        <div id="cell-diff-jump-visualiser"  style="user-select: none;" role="img" title="{{ _('Where in the document the differences are, not when they happened') }}" aria-label="{{ _('Where in the document the differences are, not when they happened') }}">
             {%- for cell in diff_cell_grid -%}
             <div{% if cell.class %} class="{{ cell.class }}"{% endif %}></div>
             {%- endfor -%}

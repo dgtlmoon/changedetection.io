@@ -16,6 +16,7 @@ import copy
 from . import validate_openapi_request, get_readonly_watch_fields, strip_internal_api_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
+from ..model.Watch import validate_time_between_check_required
 
 
 def validate_time_schedule_limit(json_data):
@@ -54,37 +55,24 @@ def validate_time_schedule_limit(json_data):
     return None
 
 
-def validate_time_between_check_required(json_data):
+def validate_jinja2_templates(json_data):
     """
-    Validate that at least one time interval is specified when not using default settings.
-    Returns None if valid, or error message string if invalid.
-    Defaults to using global settings if time_between_check_use_default is not provided.
+    Reject broken Jinja2 in url, link_to_open, body and headers, the same check the edit form runs.
+
+    Without it a broken template saved through the API is only noticed at fetch time, and the watch
+    then fails on every check. Values that are not Jinja2 (e.g. URL-encoded JSON {%22) are not rendered.
+
+    Returns None if valid, or an error message string if invalid.
     """
-    # Default to using global settings if not specified
-    use_default = json_data.get('time_between_check_use_default', True)
-
-    # If using default settings, no validation needed
-    if use_default:
-        return None
-
-    # If not using defaults, check if time_between_check exists and has at least one non-zero value
-    time_check = json_data.get('time_between_check')
-    if not time_check:
-        # No time_between_check provided and not using defaults - this is an error
-        return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
-
-    # time_between_check exists, check if it has at least one non-zero value
-    if any([
-        (time_check.get('weeks') or 0) > 0,
-        (time_check.get('days') or 0) > 0,
-        (time_check.get('hours') or 0) > 0,
-        (time_check.get('minutes') or 0) > 0,
-        (time_check.get('seconds') or 0) > 0
-    ]):
-        return None
-
-    # time_between_check exists but all values are 0 or empty - this is an error
-    return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+    from changedetectionio.jinja2_custom.validate import validate_jinja2_fields
+    headers = json_data.get('headers')
+    errors = validate_jinja2_fields(url=json_data.get('url'),
+                                    link_to_open=json_data.get('link_to_open'),
+                                    body=json_data.get('body'),
+                                    headers=headers if isinstance(headers, dict) else None)
+    if errors:
+        return '; '.join(f"{field}: {error}" for field, error in errors.items())
+    return None
 
 
 class Watch(Resource):
@@ -211,6 +199,10 @@ class Watch(Resource):
             except ValidationError as e:
                 return str(e), 400
 
+        validation_error = validate_jinja2_templates(request.json)
+        if validation_error:
+            return validation_error, 400
+
         # XSS etc protection - validate URL if it's being updated
         if 'url' in request.json:
             new_url = request.json.get('url')
@@ -270,6 +262,9 @@ class Watch(Resource):
 
         # Update watch with regular (non-processor-config) fields
         watch.update(json_data)
+        # The request alone can be valid but leave no interval once merged, e.g. nulling the
+        # interval of a watch that already has time_between_check_use_default=False
+        watch.ensure_valid_time_between_check()
         watch.commit()
 
         # Save processor config to JSON file
@@ -530,6 +525,10 @@ class CreateWatch(Resource):
         json_data = strip_internal_api_fields(request.get_json())
         url = json_data['url'].strip()
 
+        validation_error = validate_jinja2_templates(json_data)
+        if validation_error:
+            return validation_error, 400
+
         if not is_safe_valid_url(url):
             return "Invalid or unsupported URL", 400
 
@@ -600,10 +599,13 @@ class CreateWatch(Resource):
         list = {}
 
         tag_limit = request.args.get('tag', '').lower()
+        with_errors = request.args.get('with_errors') == '1'
         for uuid, watch in self.datastore.data['watching'].items():
             # Watch tags by name (replace the other calls?)
             tags = self.datastore.get_all_tags_for_watch(uuid=uuid)
             if tag_limit and not any(v.get('title').lower() == tag_limit for k, v in tags.items()):
+                continue
+            if with_errors and not watch.get('last_error'):
                 continue
 
             list[uuid] = {
@@ -620,8 +622,8 @@ class CreateWatch(Resource):
             }
 
         if request.args.get('recheck_all'):
-            # Collect all watches to queue
-            watches_to_queue = self.datastore.data['watching'].keys()
+            # Recheck the same set that was listed (tag/with_errors filters), but never paused watches
+            watches_to_queue = [uuid for uuid in list.keys() if not self.datastore.data['watching'][uuid].get('paused')]
 
             # If less than 20 watches, queue synchronously for immediate feedback
             if len(watches_to_queue) < 20:
