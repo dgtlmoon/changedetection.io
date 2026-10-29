@@ -28,11 +28,20 @@ so one broken plugin can't stop checks from running.
 """
 import inspect
 
-from changedetectionio.pluggy_interface import hookimpl
+import pluggy
+
+from changedetectionio.browser_lifecycle import BrowserConfigSection, BrowserRequest, BrowserResponse
+from changedetectionio.plugin_settings import (SettingsSection, clear_plugin_state, get_plugin_state, queue_recheck,
+                                               resolved_plugin_settings, set_plugin_state)
+
+# Defined here rather than imported from pluggy_interface: importing that loads the built-in
+# plugins, which import this module, so this module must not need it to finish importing.
+# pluggy_interface uses this same marker.
+hookimpl = pluggy.HookimplMarker("changedetectionio")
 
 # Version of this public API, not of changedetection.io. Below 1.0 it can still change between
 # minor versions; from 1.0 on, breaking changes mean a major version bump.
-PLUGIN_API_VERSION = "0.1.0"
+PLUGIN_API_VERSION = "0.3.0"
 
 
 async def await_me_maybe(value):
@@ -57,7 +66,16 @@ async def gather_hook_results(results):
 
 
 __all__ = [
+    'BrowserConfigSection',
+    'BrowserRequest',
+    'BrowserResponse',
     'PLUGIN_API_VERSION',
+    'SettingsSection',
+    'clear_plugin_state',
+    'get_plugin_state',
+    'queue_recheck',
+    'resolved_plugin_settings',
+    'set_plugin_state',
     'await_me_maybe',
     'gather_hook_results',
     'hookimpl',

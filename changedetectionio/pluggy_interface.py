@@ -17,7 +17,8 @@ PLUGIN_NAMESPACE = "changedetectionio"
 LEGACY_CONDITIONS_NAMESPACE = "changedetectionio_conditions"
 
 hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
-hookimpl = pluggy.HookimplMarker(PLUGIN_NAMESPACE)
+# The public marker, see plugin_api for why it's defined there
+from changedetectionio.plugin_api import hookimpl  # noqa: E402
 
 # A plugin that raises is logged and counted, and the hook carries on with the other plugins.
 # After this many failures in a row the plugin is reported as "errored" (it is still called).
@@ -27,7 +28,11 @@ PLUGIN_ASYNC_HOOK_TIMEOUT = float(os.getenv('PLUGIN_ASYNC_HOOK_TIMEOUT', 120))
 
 # Hooks whose exceptions must reach the caller (after being logged and counted), for example a
 # future fetch hook that raises EmptyReply on purpose. Every other hook swallows plugin exceptions.
-HOOKS_THAT_PROPAGATE_EXCEPTIONS = set()
+HOOKS_THAT_PROPAGATE_EXCEPTIONS = {
+    # A plugin that can't prepare the request (e.g. a challenge solver failing) must stop the
+    # fetch with its message as the watch's error, rather than fetching without what it needed
+    'browser_request_alter',
+}
 
 
 class ChangeDetectionSpec:
@@ -264,6 +269,92 @@ class ChangeDetectionSpec:
         """
         pass
 
+    # --- Browser lifecycle (see changedetectionio/browser_lifecycle.py for the whole picture) ---
+
+    @hookspec
+    def browser_config_form_section(base_fetcher, capabilities):
+        """Add a section to the edit page of a browser built on `base_fetcher`.
+
+        Args:
+            base_fetcher: the engine the browser is built on, e.g. 'html_webdriver', 'html_requests'
+            capabilities: that engine's FetcherCapabilities as a dict ('supports_screenshots' etc)
+
+        Returns:
+            changedetectionio.plugin_api.BrowserConfigSection, or None to add nothing for this
+            engine. What the user saves is stored with the browser and comes back at fetch time as
+            request.plugin_settings(plugin_id) / browser_config.plugin_config(plugin_id).
+        """
+        pass
+
+    @hookspec
+    def browser_request_alter(request, watch, datastore):
+        """Change what is about to be handed to the browser, in place.
+
+        Called before every check, and before a live Browser Steps session starts
+        (request.purpose == 'browser_steps'). `request` is a BrowserRequest: change
+        request.headers, request.cookies, request.proxy_url, request.method, request.body, or keep
+        state for browser_request_finished() in request.extra. May be `async def`.
+
+        Raising stops the fetch and the exception message becomes the watch's error.
+        """
+        pass
+
+    @hookspec
+    def browser_request_finished(request, fetcher, error, watch, datastore):
+        """Called after the browser has run, also when it failed, and when a live Browser Steps
+        session is cleaned up. For cleanup: request.fetcher_name says which engine ran.
+
+        Args:
+            request: the BrowserRequest as it was after browser_request_alter()
+            fetcher: the content fetcher instance (status_code, content, ...), None for a live session
+            error:   the exception the fetch raised, or None
+        May be `async def`. Exceptions are logged and never reach the caller.
+        """
+        pass
+
+    # --- Watch / group / system settings and engine overrides (see changedetectionio/plugin_settings.py) ---
+
+    @hookspec
+    def settings_form_section(scope):
+        """Add a section to a settings page.
+
+        Args:
+            scope: 'watch' (watch edit page, Request tab), 'tag' (group edit page, Browser tab) or
+                   'global' (Settings, Fetching tab)
+
+        Returns:
+            changedetectionio.plugin_api.SettingsSection, or None. What the user saves is stored as
+            plugin_settings[plugin_id] on the watch, the group, or in the system settings; read the
+            combined value with plugin_api.resolved_plugin_settings(watch, plugin_id).
+        """
+        pass
+
+    @hookspec(firstresult=True)
+    def fetch_engine_override(watch, engine):
+        """Fetch this watch with a different engine than the one its browser resolves to.
+
+        Called both when fetching and when working out what the watch's browser can do (so the edit
+        page hides the Visual Selector etc. for an engine that can't), so keep it cheap: read the
+        watch and settings, no network or disk.
+
+        Args:
+            watch:  the watch
+            engine: the engine name its browser resolves to, e.g. 'html_webdriver'
+
+        Returns:
+            Another registered engine name (e.g. 'html_flaresolverr'), or None to leave it.
+        """
+        pass
+
+    @hookspec
+    def watch_list_extra_text(watch):
+        """Short plain-text notes shown under the watch in the watch list (class extra-watch-text).
+
+        Returns:
+            str, a list of str, or None. Escaped when rendered.
+        """
+        pass
+
     # --- Conditions (JSON Logic rules on the watch edit page) ---
 
     @hookspec
@@ -471,11 +562,53 @@ def register_builtin_fetchers():
     This is called from content_fetchers/__init__.py after all fetchers are imported
     to avoid circular import issues.
     """
-    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers import requests, playwright, puppeteer, webdriver_selenium, html_debug_test_browser
+
+    # These builtin plugins are registered AFTER content_fetchers finished importing (and after
+    # get_plugin_fetchers() ran its setattr pass), so their classes aren't module attributes yet.
+    # resolve_content_fetcher() resolves engines via getattr(content_fetchers, name), so expose
+    # them explicitly here.
+    def _register_fetcher(plugin, plugin_name, fetcher_key, fetcher_cls):
+        plugin_manager.register(plugin, plugin_name)
+        setattr(content_fetchers, fetcher_key, fetcher_cls)
 
     # Register each built-in fetcher plugin
     if hasattr(requests, 'requests_plugin'):
         plugin_manager.register(requests.requests_plugin, 'builtin_requests')
+
+    # Debug/test fetcher - echoes the resolved browser config as JSON content. Opt-in only via
+    # ENABLE_DEBUG_CONTENT_FETCHER (never registered in production).
+    # Enables strong end-to-end pipeline tests without a real browser.
+    import os
+    from changedetectionio.strtobool import strtobool
+    if strtobool(os.getenv('ENABLE_DEBUG_CONTENT_FETCHER', 'False')) \
+            and hasattr(html_debug_test_browser, 'debug_test_browser_plugin'):
+        _register_fetcher(html_debug_test_browser.debug_test_browser_plugin, 'builtin_debug_test_browser',
+                          'html_debug_test_browser', html_debug_test_browser.fetcher)
+        logger.info("Registered debug content fetcher (ENABLE_DEBUG_CONTENT_FETCHER)")
+
+    # html_playwright_builtin - local Playwright launch, only when the playwright library is
+    # importable (no env default; opt-in via a browser config).
+    try:
+        import playwright as _playwright_lib  # noqa: F401
+        from changedetectionio.content_fetchers import playwright_builtin
+        if hasattr(playwright_builtin, 'playwright_builtin_plugin'):
+            _register_fetcher(playwright_builtin.playwright_builtin_plugin, 'builtin_playwright_builtin',
+                              'html_playwright_builtin', playwright_builtin.fetcher)
+    except ImportError:
+        logger.debug("playwright library not installed - html_playwright_builtin fetcher not offered")
+
+    # html_external_cdp - an external CDP-over-WebSocket browser named by each browser config.
+    # Registered UNCONDITIONALLY, unlike html_playwright_builtin: saved browser configs (including
+    # every extra browser migrated by update_36) name this engine, so it has to resolve even where
+    # the playwright library is absent - resolve_content_fetcher() would otherwise fall through to
+    # the plain HTTP client and silently fetch those watches with the wrong thing. The library is
+    # imported lazily inside run(), so a missing install surfaces as a clear error at fetch time.
+    from changedetectionio.content_fetchers import external_cdp
+    if hasattr(external_cdp, 'external_cdp_plugin'):
+        _register_fetcher(external_cdp.external_cdp_plugin, 'builtin_external_cdp',
+                          'html_external_cdp', external_cdp.fetcher)
 
     if hasattr(playwright, 'playwright_plugin'):
         plugin_manager.register(playwright.playwright_plugin, 'builtin_playwright')
@@ -638,12 +771,10 @@ def get_fetcher_capabilities(watch, datastore):
                 'supports_xpath_element_data': bool
             }
     """
-    # Get the fetcher name from watch
-    fetcher_name = watch.get('fetch_backend', 'system')
-
-    # Resolve 'system' to actual fetcher
-    if fetcher_name == 'system':
-        fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+    # The effective engine that will fetch this watch (honours a group override + browser-config
+    # id + 'system'), so capability checks (Visual Selector etc.) reflect reality.
+    from changedetectionio.model.browser_config import resolve_watch_fetcher_engine
+    fetcher_name = resolve_watch_fetcher_engine(watch, datastore)
 
     # Get the fetcher class
     from changedetectionio import content_fetchers

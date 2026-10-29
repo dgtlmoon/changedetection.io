@@ -61,10 +61,23 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             default['proxy_list'] = available_proxies[0]
 
         # Don't use form.data on POST so that it doesnt overrid the checkbox status from the POST status
-        form = forms.globalSettingsForm(formdata=request.form if request.method == 'POST' else None,
+        # Plugin sections (hook settings_form_section, scope 'global'), saved in
+        # settings.application.plugin_settings
+        from changedetectionio.plugin_settings import form_class_with_sections, get_settings_sections, save_sections
+        plugin_sections = get_settings_sections('global')
+        stored_plugin_settings = datastore.data['settings']['application'].get('plugin_settings') or {}
+        for section in plugin_sections:
+            default[section.field_name] = dict(stored_plugin_settings.get(section.plugin_id) or {})
+        form = form_class_with_sections(forms.globalSettingsForm, plugin_sections)(
+                                        formdata=request.form if request.method == 'POST' else None,
                                         data=default,
                                         extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
+
+        # The global "Default browser" was migrated to the /browsers tab (its per-row radio
+        # writes settings.application.fetch_backend). Drop the inherited fetch_backend field so a
+        # settings save never renders, validates, or clobbers the default - /browsers owns it now.
+        del form.application.form.fetch_backend
 
         if datastore.proxy_list is None:
             # @todo - Couldn't get setattr() etc dynamic addition working, so remove it instead
@@ -100,6 +113,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     app_update.pop(nf, None)
 
                 datastore.data['settings']['application'].update(app_update)
+                problem = save_sections(form, plugin_sections, datastore.data['settings']['application'])
+                if problem:
+                    flash(problem, 'error')
 
                 # LLM config lives under settings.application.llm.* (post update_31).
                 # Hydrate the stored dict into LLMSettings, then merge form input over it.
@@ -253,8 +269,19 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Cost display: only when user configured their own key (not hosted/operator-managed)
         llm_show_costs = not llm_env_configured
 
+        # Read-only label for the global "Default browser" (managed on the /browsers tab).
+        from changedetectionio.model.browser_config import list_builtin_browsers
+        _default_id = datastore.get_default_backend()
+        _default_entry = datastore.browser_config_store.get(_default_id)
+        if _default_entry:
+            default_browser_label = _default_entry.get('label') or _default_id
+        else:
+            default_browser_label = dict((b['id'], b['label']) for b in list_builtin_browsers()).get(_default_id, _default_id)
+
         output = render_template("settings.html",
+                                plugin_settings_sections=plugin_sections,
                                 active_plugins=active_plugins,
+                                default_browser_label=default_browser_label,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 llm_config=llm_config,
                                 llm_env_configured=llm_env_configured,
