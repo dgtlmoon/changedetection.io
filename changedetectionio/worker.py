@@ -78,6 +78,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
     while not app.config.exit.is_set():
         update_handler = None
+        finalize_handler = None  # The handler update_finalize gets, see below
         watch = None
         processing_exception = None  # Reset at start of each iteration to prevent state bleeding
 
@@ -183,6 +184,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
+                    # Kept for the update_finalize hook: on success update_handler is deleted before the
+                    # finally block below, so capturing it there would hand plugins None
+                    finalize_handler = update_handler
 
                     set_watch_minitext_status(watch, "Fetching...")
 
@@ -683,7 +687,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             if uuid:
                 # Capture references for plugin finalize hook BEFORE cleanup
                 # (cleanup may delete these variables, but plugins need the original references)
-                finalize_handler = update_handler  # Capture now, before cleanup deletes it
                 finalize_watch = watch              # Capture now, before any modifications
 
                 # Call quit() as backup (Puppeteer/Playwright have internal cleanup, but this acts as safety net)

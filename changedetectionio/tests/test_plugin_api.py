@@ -55,6 +55,10 @@ def test_plugin_api_exports():
     assert plugin_api.difference_detection_processor is difference_detection_processor
     assert plugin_api.get_resolved_processor_config is get_resolved_processor_config
     assert plugin_api.html_to_text is html_to_text
+    from changedetectionio.content_fetchers.base import Fetcher
+    from changedetectionio.pluggy_interface import load_plugin_settings
+    assert plugin_api.Fetcher is Fetcher
+    assert plugin_api.load_plugin_settings is load_plugin_settings
     assert set(plugin_api.__all__) >= {'difference_detection_processor', 'get_resolved_processor_config', 'html_to_text'}
     with pytest.raises(AttributeError):
         plugin_api.no_such_export
@@ -68,7 +72,8 @@ def test_plugin_api_import_stays_cheap():
     import sys
     import changedetectionio
     code = ("import sys, changedetectionio.plugin_api; "
-            "print(','.join(m for m in ('changedetectionio.processors.base', 'changedetectionio.html_tools') if m in sys.modules))")
+            "print(','.join(m for m in ('changedetectionio.processors.base', 'changedetectionio.html_tools', "
+            "'changedetectionio.content_fetchers.base') if m in sys.modules))")
     # Run from the directory containing the package, CI runs pytest from inside changedetectionio/
     # where a fresh interpreter can't import it
     package_parent = os.path.dirname(os.path.dirname(os.path.abspath(changedetectionio.__file__)))
