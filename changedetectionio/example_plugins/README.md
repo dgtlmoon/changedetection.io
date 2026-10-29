@@ -94,6 +94,28 @@ pip install .
 
 ---
 
+## Simple SVG chart - `restock/simple_svg_chart`
+
+Replaces the price charts of restock & price watches (the one that rolls down from the History button in
+the watch list, and the one on the history page) with a plain SVG line drawn on the server, no JavaScript.
+
+**Hooks** (added by the `restock_diff` processor, see `processors/restock_diff/hookspecs.py`)
+- `restock_diff_watchlist_overview_chart` - the chart under the watch in the watch list
+- `restock_diff_watch_history_page_chart` - the chart on the history page
+
+Each gets the price/stock history as `series` (plus `currency`, `summary`, `watch` if you want them)
+and returns the chart's HTML. Implement just one to replace just that chart.
+
+**Install**
+```bash
+cd changedetectionio/example_plugins/restock/simple_svg_chart
+pip install .
+```
+
+**Try it:** open a restock & price watch's history page, or click its History button in the watch list.
+
+---
+
 ## Writing your own
 
 Copy an example's directory, then rename the package directory and its `name` / entry point in
