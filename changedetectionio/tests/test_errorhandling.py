@@ -136,3 +136,28 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
     assert not found_name_resolution_error
 
     delete_all_watches(client)
+
+
+def test_non200_records_last_check_status(client, live_server, measure_memory_usage, datastore_path):
+    # A watch that was fine (200) and then starts getting 403 must not keep reporting the old 200
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write("<html><body>Hello world</body></html>")
+
+    datastore = client.application.config.get('DATASTORE')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True))
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][uuid]
+    assert watch.get('last_check_status') == 200
+    assert not watch.get('last_error')
+
+    datastore.update_watch(uuid=uuid, update_obj={'url': url_for('test_endpoint', status_code=403, _external=True)})
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][uuid]
+    assert watch.get('last_check_status') == 403
+    assert 'Access denied' in watch.get('last_error')
+
+    delete_all_watches(client)
