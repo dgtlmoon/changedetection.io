@@ -1,0 +1,19 @@
+components:
+  schemas:
+    processor_config_word_counter:
+      type: object
+      description: Configuration for the word_counter example processor plugin
+      properties:
+        min_word_length:
+          type: [integer, 'null']
+          minimum: 1
+          default: 1
+          description: Only count words with at least this many characters
+
+    processor_state_word_counter:
+      type: object
+      description: What the most recent word_counter check found
+      properties:
+        word_count:
+          type: [integer, 'null']
+          description: Number of words on the page, `null` until the first check

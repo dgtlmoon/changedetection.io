@@ -282,6 +282,9 @@ class ChangeDetectionSpec:
         With context='list' this runs for every watch on every listing, so stay in memory:
         no disk, network or other slow work.
 
+        @IMPORTANT-TODO: where a processor keeps this state on the watch has no convention yet,
+        see store update_watch().
+
         Example (the built-in restock_diff processor):
             @hookimpl
             def get_api_watch_processor_state(watch, processor_name, context):
