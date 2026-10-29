@@ -1,5 +1,5 @@
 """Restock and price state of restock_diff watches in the REST API (processor_state_restock_diff)."""
-from changedetectionio.pluggy_interface import hookimpl
+from changedetectionio.plugin_api import hookimpl
 
 # What the API exposes from watch['restock'], documented in ../api.yaml processor_state_restock_diff
 API_STATE_FIELDS = ('in_stock', 'price', 'currency', 'last_price')

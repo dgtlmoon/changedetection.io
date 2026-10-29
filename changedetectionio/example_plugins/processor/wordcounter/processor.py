@@ -1,6 +1,7 @@
 import hashlib
 
-from changedetectionio.processors.base import difference_detection_processor
+# Plugins import only from changedetectionio.plugin_api, everything else is internal and may change
+from changedetectionio.plugin_api import difference_detection_processor
 
 name = 'Word counter (example plugin)'
 description = 'Counts the words on the page, a change is when the count changes'
@@ -9,8 +10,7 @@ description = 'Counts the words on the page, a change is when the count changes'
 class perform_site_check(difference_detection_processor):
 
     def run_changedetection(self, watch, force_reprocess=False):
-        from changedetectionio.html_tools import html_to_text
-        from changedetectionio.processors import get_resolved_processor_config
+        from changedetectionio.plugin_api import html_to_text, get_resolved_processor_config
         from . import PROCESSOR_NAME
 
         # Same resolution as the API shows in processor_config_word_counter (a tag with 'overrides_watch' wins)

@@ -17,7 +17,8 @@ PLUGIN_NAMESPACE = "changedetectionio"
 LEGACY_CONDITIONS_NAMESPACE = "changedetectionio_conditions"
 
 hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
-hookimpl = pluggy.HookimplMarker(PLUGIN_NAMESPACE)
+# The marker lives in plugin_api (the public plugin module), see the comment there
+from changedetectionio.plugin_api import hookimpl
 
 # A plugin that raises is logged and counted, and the hook carries on with the other plugins.
 # After this many failures in a row the plugin is reported as "errored" (it is still called).

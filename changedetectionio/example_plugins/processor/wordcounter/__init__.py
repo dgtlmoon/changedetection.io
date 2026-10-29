@@ -4,7 +4,7 @@ Example processor plugin - counts the words on a page, a change is when the coun
 Copy this directory into your own pip package to start a processor plugin, see ../../README.md.
 It is not active unless registered, nothing scans example_plugins/ for plugins.
 """
-from changedetectionio.pluggy_interface import hookimpl
+from changedetectionio.plugin_api import hookimpl
 
 # The machine name, also used for processor_config_word_counter / processor_state_word_counter in the API
 PROCESSOR_NAME = 'word_counter'
