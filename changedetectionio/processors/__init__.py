@@ -491,6 +491,40 @@ def save_processor_config(datastore, watch_uuid, config_data):
         return False
 
 
+def get_resolved_processor_config(datastore, watch):
+    """
+    Return (config, source) for the watch's own processor, the same way the processor resolves it.
+
+    The first tag with 'overrides_watch' wins (its processor_config_{processor_name}), otherwise the
+    watch's own {data_dir}/{processor_name}.json written by save_processor_config().
+
+    Returns:
+        tuple: (dict config, str source) - source is 'watch' or 'tag:<uuid>'
+    """
+    import json
+
+    processor_name = watch.get('processor') or 'text_json_diff'
+
+    tags = datastore.data['settings']['application'].get('tags', {})
+    for tag_uuid in (watch.get('tags') or []):
+        tag = tags.get(tag_uuid, {})
+        if tag.get('overrides_watch'):
+            return dict(tag.get(f'processor_config_{processor_name}') or {}), f'tag:{tag_uuid}'
+
+    config = {}
+    # Same untrusted-name guard as save_processor_config(), the name becomes a filename
+    if watch.data_dir and re.fullmatch(r'[A-Za-z0-9_-]+', processor_name):
+        config_path = os.path.join(watch.data_dir, f'{processor_name}.json')
+        if os.path.isfile(config_path):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f).get(processor_name) or {}
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning(f"Failed to read {processor_name}.json for watch {watch.get('uuid')}: {e}")
+
+    return config, 'watch'
+
+
 def extract_processor_config_from_form_data(form_data):
     """
     Extract processor_config_* fields from form data and return separate dicts.

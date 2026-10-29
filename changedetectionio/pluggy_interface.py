@@ -264,6 +264,42 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec(firstresult=True)
+    def get_api_watch_processor_state(watch, processor_name, context):
+        """Return the current processor state of a watch for the REST API.
+
+        Core calls this with the watch's own processor name and adds your dict to the response
+        as `processor_state_{processor_name}` on:
+        - GET /api/v1/watch/<uuid>  (context='get')
+        - GET /api/v1/watch         (context='list', called once per watch in the listing)
+
+        You never pick the key, core does, so a plugin can't overwrite other watch fields.
+        Return None when processor_name isn't yours, the first non-None result wins.
+
+        Document the shape as components.schemas.processor_state_{processor_name} in your
+        processor's api.yaml, it is merged into the Watch schema as read-only.
+
+        With context='list' this runs for every watch on every listing, so stay in memory:
+        no disk, network or other slow work.
+
+        Example (the built-in restock_diff processor):
+            @hookimpl
+            def get_api_watch_processor_state(watch, processor_name, context):
+                if processor_name != 'restock_diff':
+                    return None
+                restock = watch.get('restock') or {}
+                return {'in_stock': restock.get('in_stock'), 'price': restock.get('price')}
+
+        Args:
+            watch: The Watch model instance
+            processor_name: The watch's processor, e.g. 'restock_diff'
+            context: 'get' or 'list'
+
+        Returns:
+            dict or None: JSON-serialisable state for this watch, or None
+        """
+        pass
+
     # --- Conditions (JSON Logic rules on the watch edit page) ---
 
     @hookspec
@@ -503,6 +539,19 @@ def register_builtin_restock_plugins():
             logger.debug("Registered built-in restock plugin: llm_restock")
     except Exception as e:
         logger.error(f"Failed to register llm_restock plugin: {e}")
+
+
+def register_builtin_api_plugins():
+    """Register the built-in get_api_watch_processor_state implementations.
+
+    Called from flask_app.changedetection_app() where the API resources are set up, so it runs
+    however the app is started. Can't happen at module load for the same circular import reason
+    as register_builtin_restock_plugins().
+    """
+    from changedetectionio.processors.restock_diff.plugins import api_state
+    if not plugin_manager.is_registered(api_state):
+        # 'builtin_' names are hidden from the active plugins list, see get_active_plugins()
+        plugin_manager.register(api_state, 'builtin_restock_api_state')
 
 # Helper function to collect UI stats extras from all plugins
 def collect_ui_edit_stats_extras(watch):

@@ -996,6 +996,10 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(Spec, '/api/v1/full-spec')
 
+    # processor_state_{name} providers for the watch API GET/list
+    from changedetectionio.pluggy_interface import register_builtin_api_plugins
+    register_builtin_api_plugins()
+
     @login_manager.user_loader
     def user_loader(email):
         user = User()
