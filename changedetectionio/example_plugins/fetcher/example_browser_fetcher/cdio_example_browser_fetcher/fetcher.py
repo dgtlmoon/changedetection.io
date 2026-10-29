@@ -4,8 +4,27 @@ from urllib.parse import quote
 from changedetectionio.plugin_api import Fetcher, load_plugin_settings
 
 
+def noise_png(width=240, height=160):
+    """A PNG of random noise, standing in for a real page screenshot. Standard library only."""
+    import os
+    import struct
+    import zlib
+
+    def chunk(kind, data):
+        return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff)
+
+    # Each row: filter type 0, then width RGB pixels
+    pixels = b''.join(b'\x00' + os.urandom(width * 3) for _ in range(height))
+    return (b'\x89PNG\r\n\x1a\n'
+            + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0))  # 8 bit RGB
+            + chunk(b'IDAT', zlib.compress(pixels))
+            + chunk(b'IEND', b''))
+
+
 class fetcher(Fetcher):
     fetcher_description = 'Example browser fetcher'
+    # Tells changedetection.io this fetcher returns a screenshot (see _fetch), so it's shown and saved
+    supports_screenshots = True
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
@@ -36,6 +55,9 @@ class fetcher(Fetcher):
         self.headers = dict(r.headers)
         self.content = r.text
         self.raw_content = r.content
+        # A real browser service would return its screenshot of the page, saved as last-screenshot.png
+        # (so return PNG bytes). This example just makes some noise.
+        self.screenshot = noise_png()
 
     async def quit(self, watch=None):
         pass

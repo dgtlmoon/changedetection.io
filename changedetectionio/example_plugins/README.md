@@ -55,7 +55,8 @@ them directly, for example a remote browser or rendering service.
 - `fetcher_status_icon` - the icon next to watches using it in the watch list
 - `plugin_static_path` - serves that icon
 
-**Also shows** `fetcher.py`, a `Fetcher` subclass, reading its settings with `load_plugin_settings`.
+**Also shows** `fetcher.py`, a `Fetcher` subclass, reading its settings with `load_plugin_settings` and
+returning a screenshot (random noise here, a real browser service would send its own).
 
 **Install**
 ```bash

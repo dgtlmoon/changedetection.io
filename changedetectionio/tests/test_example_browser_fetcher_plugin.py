@@ -69,6 +69,13 @@ def test_example_browser_fetcher_plugin(client, live_server, measure_memory_usag
     assert res.status_code == 200, "The check should have fetched through the plugin's API"
     assert b'X-Api-Key:secret-key-123' in res.data
 
+    # The fetcher's screenshot (random noise) is saved and served as a valid PNG
+    import struct
+    res = client.get(url_for('static_content', group='screenshot', filename=uuid))
+    assert res.status_code == 200
+    assert res.data.startswith(b'\x89PNG\r\n\x1a\n') and res.data[12:16] == b'IHDR'
+    assert struct.unpack('>II', res.data[16:24]) == (240, 160)
+
     # The status icon in the watch list, served from the plugin's static directory
     res = client.get(url_for("watchlist.index"))
     assert b'/static/plugin/cdio_example_browser_fetcher.svg' in res.data
