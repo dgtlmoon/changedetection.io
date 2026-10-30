@@ -9,7 +9,7 @@ description = "Example changedetection.io plugin: its own page at /hello-world, 
 license = "Apache-2.0"
 requires-python = ">=3.11"
 # No dependency on changedetection.io itself: install this into the same environment that runs it
-# (it needs plugin API 0.4.0 or newer, changedetectionio.plugin_api.PLUGIN_API_VERSION)
+# (it needs plugin API 0.5.0 or newer, changedetectionio.plugin_api.PLUGIN_API_VERSION)
 dependencies = []
 
 # This is what makes changedetection.io load the plugin at startup

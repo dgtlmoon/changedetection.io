@@ -165,7 +165,7 @@ def test_settings_form_preserves_token_counters(
 
     # Submit settings form with a different model — simulates a normal settings save
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             # LLM sub-form fields
             'llm-model': 'gpt-4o',
@@ -219,7 +219,7 @@ def test_settings_form_blank_llm_integer_fields_preserve_stored_values(
     }
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             'llm-api_key': '',
@@ -282,7 +282,7 @@ def test_settings_form_cannot_inject_fake_token_counts(
 
     # Attempt to inject inflated or zeroed counters via form POST
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o-mini',
             'llm-api_key': 'sk-test',
@@ -544,7 +544,7 @@ def test_cost_fields_are_tamper_proof_via_settings_form(
     }
 
     client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             'llm-api_key': 'sk-test',

@@ -201,10 +201,10 @@
     <p>
        {% if not llm_group_mode %}
            {{ _('Configure an AI / LLM provider in <a href="%(url)s">Settings → AI / LLM</a> to enable AI Change Intent and AI Change Summary.',
-                url=url_for('settings.settings_page') + '#ai') | safe }}
+                url=url_for('settings.llm.llm_settings_page')) | safe }}
        {% else %}
            {{ _('Configure an AI / LLM provider in <a href="%(url)s">Settings → AI / LLM</a> to enable AI features for this group.',
-                url=url_for('settings.settings_page') + '#ai') | safe }}
+                url=url_for('settings.llm.llm_settings_page')) | safe }}
        {% endif %}
     </p>
 </div>

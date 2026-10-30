@@ -6,7 +6,7 @@ active until you install it.
 To install one, run `pip install .` from its directory, in the same Python environment that runs
 changedetection.io, then restart changedetection.io. Plugins are picked up through the `changedetectionio`
 entry point in their `pyproject.toml`. They need plugin API 0.3.0 or newer
-(`changedetectionio.plugin_api.PLUGIN_API_VERSION`), the hello world example 0.4.0 or newer.
+(`changedetectionio.plugin_api.PLUGIN_API_VERSION`), the hello world example 0.5.0 or newer.
 
 Plugins import only from `changedetectionio.plugin_api`, everything else in the package is internal and
 may change between releases. If you need something that isn't exported there, ask for it.
@@ -97,10 +97,11 @@ pip install .
 ## Hello world - `ui/hello_world`
 
 Its own page at `/hello-world`, shown inside the normal app layout (header, menu, styles), with a
-"Hello world!" box and how many monitors you have.
+"Hello world!" box and how many monitors you have, and a link to it in the left sidebar.
 
 **Hooks**
 - `register_blueprints` - mounts the plugin's Flask blueprint at `/hello-world`
+- `register_sidebar_items` - the "Hello world" link in the left sidebar, highlighted while on the page
 
 **Also shows** a template that extends `base.html`, kept under `templates/cdio_example_hello_world/` so
 its path can't clash with a core template. The page needs the same login as the rest of the UI.

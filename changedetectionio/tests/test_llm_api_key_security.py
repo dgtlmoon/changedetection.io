@@ -324,7 +324,7 @@ def test_settings_page_does_not_render_llm_api_key_in_plaintext(
     ds = client.application.config.get('DATASTORE')
     _configure_llm(ds)
 
-    res = client.get(url_for('settings.settings_page'))
+    res = client.get(url_for('settings.llm.llm_settings_page'))
     assert res.status_code == 200
     body = res.data.decode('utf-8', errors='replace')
     assert CANARY_KEY not in body, \
@@ -343,7 +343,7 @@ def test_settings_form_preserves_api_key_when_submitted_blank(
     _configure_llm(ds, api_key='sk-should-be-kept')
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             'llm-api_key': '',           # blank — PasswordField behaviour
@@ -384,7 +384,7 @@ def test_settings_form_preserves_api_key_when_field_is_absent(
     _configure_llm(ds, api_key='sk-should-survive-absence')
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             # no 'llm-api_key' at all — this is what a disabled input submits
@@ -436,7 +436,7 @@ def test_datastore_never_ends_up_with_a_blank_key(
     for label, extra in (('absent', {}), ('empty', {'llm-api_key': ''}),
                          ('whitespace', {'llm-api_key': '   '})):
         _configure_llm(ds, api_key='sk-original')
-        client.post(url_for('settings.settings_page'), data={**base, **extra},
+        client.post(url_for('settings.llm.llm_settings_page'), data={**base, **extra},
                     follow_redirects=True)
         saved = ds.data['settings']['application'].get('llm', {}).get('api_key', '')
         assert saved == 'sk-original', f"{label} submission blanked the stored key (got '{saved}')"
@@ -451,7 +451,7 @@ def test_provider_and_key_are_locked_once_a_key_is_stored(
     ds = client.application.config.get('DATASTORE')
     _configure_llm(ds, api_key='sk-locked')
 
-    page = client.get(url_for('settings.settings_page')).data
+    page = client.get(url_for('settings.llm.llm_settings_page')).data
     key_field = _element(page, b'id="llm-api_key"')
     assert b'disabled' in key_field, "stored key must render the field disabled"
 
@@ -466,7 +466,7 @@ def test_provider_and_key_are_locked_once_a_key_is_stored(
 def test_provider_and_key_are_editable_when_nothing_is_stored(
         client, live_server, measure_memory_usage, datastore_path):
     """The lock must not strand a fresh install with fields it can never fill in."""
-    page = client.get(url_for('settings.settings_page')).data
+    page = client.get(url_for('settings.llm.llm_settings_page')).data
 
     key_field = _element(page, b'id="llm-api_key"')
     assert b'disabled' not in key_field, "no stored key - the field has to be usable"
@@ -586,7 +586,7 @@ def test_settings_form_rejects_private_api_base(
     ds.data['settings']['application'].pop('llm', None)
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model':    'gpt-4o',
             'llm-api_key':  '',

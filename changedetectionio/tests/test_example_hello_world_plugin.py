@@ -37,3 +37,12 @@ def test_example_hello_world_plugin(client, live_server, measure_memory_usage, d
     # Rendered inside base.html, not as a bare page
     assert b'<html' in res.data and b'</head>' in res.data
     assert url_for('watchlist.index').encode() in res.data
+
+    # Its link in the left sidebar (register_sidebar_items), highlighted while on the page
+    page = url_for('cdio_example_hello_world.hello')
+    html = res.get_data(as_text=True)
+    assert f'<a href="{page}"\n           class="action-sidebar-item active"\n           title="Hello world (example plugin)">' in html
+    assert '<!-- blueprint:cdio_example_hello_world -->' in html
+    # and on other pages, not highlighted
+    other = client.get(url_for('watchlist.index')).get_data(as_text=True)
+    assert f'<a href="{page}"\n           class="action-sidebar-item "\n           title="Hello world (example plugin)">' in other
