@@ -44,3 +44,16 @@ def test_existing_datastore_gets_startup_housekeeping(tmp_path):
     ds = _store(tmp_path, version='2.0.0')
     app = ds.data['settings']['application']
     assert (app['rss_access_token'], app['api_access_token']) == tokens
+
+
+def test_removepassword_lockfile_removes_password(tmp_path):
+    """The documented way back in after a forgotten password: put removepassword.lock in the datastore, restart."""
+    ds = _store(tmp_path)
+    ds.data['settings']['application']['password'] = 'some-hashed-password'
+    ds._save_settings()
+    lockfile = os.path.join(tmp_path, 'removepassword.lock')
+    open(lockfile, 'w').close()
+
+    ds = _store(tmp_path)
+    assert not ds.data['settings']['application'].get('password')
+    assert not os.path.exists(lockfile), "used once, then removed"
