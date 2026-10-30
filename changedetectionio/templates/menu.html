@@ -51,7 +51,7 @@
 {% if current_user.is_authenticated or not has_password %}
     {% if not current_diff_url %}
         {% if not llm_features_disabled %}
-        <button class="toggle-button toggle-ai-mode" type="button" title="{{ _('Toggle AI Mode') }}" data-llm-configured="{{ 'true' if llm_configured else 'false' }}" data-llm-settings-url="{{ url_for('settings.settings_page') }}#ai">
+        <button class="toggle-button toggle-ai-mode" type="button" title="{{ _('Toggle AI Mode') }}" data-llm-configured="{{ 'true' if llm_configured else 'false' }}" data-llm-settings-url="{{ url_for('settings.llm.llm_settings_page') }}">
             <span class="visually-hidden">{{ _('Toggle AI mode') }}</span>
             {% include "svgs/ai-mode-icon.svg" %}<span class="ai-mode-label">LLM</span>
         </button>

@@ -113,6 +113,18 @@
             <span class="action-label">{{ _('Notifications') }}</span>
         </a>
     </li>
+    {# Links added by plugins and built-in plugins (register_sidebar_items hook) #}
+    {%- for item in plugin_sidebar_items|default([]) %}
+    <!-- blueprint:{{ item.source }} -->
+    <li class="action-sidebar-li">
+        <a href="{{ item.url }}"
+           class="action-sidebar-item {% if item.active %}active{% endif %}"
+           title="{{ item.title }}">
+            <i data-feather="{{ item.icon }}" class="action-icon"></i>
+            <span class="action-label">{{ item.label }}</span>
+        </a>
+    </li>
+    {%- endfor %}
 </ul>
 
 {# Footer group — pushed to the bottom of the rail via `margin-top: auto`

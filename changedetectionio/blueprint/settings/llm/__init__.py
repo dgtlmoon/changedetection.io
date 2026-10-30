@@ -1,6 +1,6 @@
 import os
 
-from flask import Blueprint, jsonify, redirect, url_for, flash
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext
 from loguru import logger
 
@@ -8,8 +8,120 @@ from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
 
+def save_llm_form(datastore, llm_form_data):
+    """Merge the submitted AI / LLM form over the stored settings (settings.application.llm)."""
+    from changedetectionio.model.LLMSettings import LLMSettings
+
+    # LLM config lives under settings.application.llm.* (post update_31).
+    # Hydrate the stored dict into LLMSettings, then merge form input over it.
+    # WTForms field names match LLMSettings field names exactly, so both sides
+    # of the merge use the same key shape.
+    existing_llm = LLMSettings.model_validate(
+        datastore.data['settings']['application'].get('llm') or {}
+    )
+
+    llm_form_input = dict(llm_form_data or {})
+
+    # Empty IntegerField submissions come back as None from WTForms;
+    # the schema declares those fields as strict `int`, so passing
+    # them through would fail validation. Treat None like the
+    # absent-key case: keep the stored value, don't merge.
+    llm_form_input = {k: v for k, v in llm_form_input.items() if v is not None}
+
+    # PasswordField never re-renders, so a blank submitted value means
+    # "keep stored key" — drop it from the merge.
+    if not (llm_form_input.get('api_key') or '').strip():
+        llm_form_input.pop('api_key', None)
+
+    # Env-var overrides make these fields read-only in the UI — ignore form input.
+    if os.getenv('LLM_TOKEN_BUDGET_MONTH', '').strip():
+        llm_form_input.pop('token_budget_month', None)
+    if os.getenv('LLM_MAX_INPUT_CHARS', '').strip():
+        llm_form_input.pop('max_input_chars', None)
+
+    # System-managed counters must never come from the form.
+    for protected in LLMSettings.PROTECTED_FIELDS:
+        llm_form_input.pop(protected, None)
+
+    merged = LLMSettings.model_validate({**existing_llm.model_dump(), **llm_form_input})
+
+    # Clearing the model field strips only the provider-connection fields.
+    # User toggles, budgets, prompts and system counters survive (matches /llm/clear).
+    exclude = set(LLMSettings.CONNECTION_FIELDS) if not merged.model.strip() else None
+    datastore.data['settings']['application']['llm'] = merged.model_dump(exclude=exclude)
+
+
+def llm_template_context(datastore):
+    """What llm-settings.html needs, besides the form."""
+    from changedetectionio.llm.evaluator import (
+        _get_max_input_chars,
+        get_global_token_budget_month,
+        get_llm_config,
+        llm_configured_via_env,
+    )
+    llm_config = get_llm_config(datastore) or {}
+    llm_env_configured = llm_configured_via_env()
+    _max_input_chars_env_str = os.getenv('LLM_MAX_INPUT_CHARS', '').strip()
+    return dict(
+        llm_config=llm_config,
+        llm_env_configured=llm_env_configured,
+        # Once a key is stored, the provider and the key itself are locked and can only be
+        # cleared with "Remove provider". The key field renders blank so that an untouched
+        # save preserves it, which makes any stray value in it - a browser autofill, a bad
+        # paste - silently overwrite a working key on the next Save, with no copy kept
+        # anywhere to recover from. Disabling the input takes it out of the POST entirely;
+        # the form is seeded with data=default, so an absent field falls back to the stored
+        # value and the merge is a no-op for it.
+        llm_provider_locked=bool(llm_config.get('api_key')) and not llm_env_configured,
+        llm_stored=datastore.data['settings']['application'].get('llm') or {},
+        llm_token_budget_month=get_global_token_budget_month(datastore),
+        llm_token_budget_month_env=get_global_token_budget_month(),  # env var only, for readonly logic
+        llm_max_input_chars_env=int(_max_input_chars_env_str) if _max_input_chars_env_str.isdigit() else 0,
+        llm_effective_max_input_chars=_get_max_input_chars(datastore),
+        # Cost display: only when user configured their own key (not hosted/operator-managed)
+        llm_show_costs=not llm_env_configured,
+    )
+
+
 def construct_llm_blueprint(datastore: ChangeDetectionStore):
-    llm_blueprint = Blueprint('llm', __name__)
+    llm_blueprint = Blueprint('llm', __name__, template_folder="templates")
+
+    # Its link in the left sidebar, only when this page exists ('builtin_' plugins aren't listed as active plugins)
+    from changedetectionio.pluggy_interface import plugin_manager
+    from changedetectionio.blueprint.settings.llm import sidebar
+    if not plugin_manager.is_registered(sidebar):
+        plugin_manager.register(sidebar, 'builtin_llm_sidebar')
+
+    @llm_blueprint.route("", methods=['GET', 'POST'], strict_slashes=False)
+    @login_optionally_required
+    def llm_settings_page():
+        """The AI / LLM settings page, moved out of /settings. Stored in settings.application.llm as before."""
+        from changedetectionio import forms
+        from changedetectionio.llm.evaluator import is_llm_features_disabled
+        from changedetectionio.model.LLMSettings import LLMSettings
+
+        # Not registered at all when LLM_FEATURES_DISABLED is set at startup, and refused if it's set later
+        if is_llm_features_disabled():
+            abort(404)
+
+        # api_key is intentionally blanked on GET — PasswordField never re-renders
+        # its value, and a blank submission preserves the stored key.
+        default_llm = LLMSettings.model_validate(datastore.data['settings']['application'].get('llm') or {}).model_dump()
+        default_llm['api_key'] = ''
+        form = forms.globalLLMSettingsPageForm(formdata=request.form if request.method == 'POST' else None,
+                                               data={'llm': default_llm})
+
+        if request.method == 'POST':
+            if form.validate():
+                save_llm_form(datastore, form.data.get('llm'))
+                datastore.commit()
+                # AI settings change how checks are evaluated, so reprocess everything (as a /settings save does)
+                datastore.clear_all_last_checksums()
+                flash(gettext("Settings updated."))
+                return redirect(url_for('settings.llm.llm_settings_page'))
+            flash(gettext("An error occurred, please see below."), "error")
+
+        return render_template("llm-settings.html", form=form, **llm_template_context(datastore))
 
     @llm_blueprint.route("/models", methods=['GET'])
     @login_optionally_required
@@ -185,7 +297,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         )
         datastore.commit()
         flash(gettext("AI / LLM configuration removed."), 'notice')
-        return redirect(url_for('settings.settings_page') + '#ai')
+        return redirect(url_for('settings.llm.llm_settings_page'))
 
     @llm_blueprint.route("/clear-summary-cache", methods=['POST'])
     @login_optionally_required
@@ -204,6 +316,6 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                     logger.warning(f"Could not remove LLM summary cache file {f}: {e}")
         logger.info(f"LLM summary cache cleared: {count} file(s) removed")
         flash(gettext("AI summary cache cleared ({} file(s) removed).").format(count), 'notice')
-        return redirect(url_for('settings.settings_page') + '#ai')
+        return redirect(url_for('settings.llm.llm_settings_page'))
 
     return llm_blueprint

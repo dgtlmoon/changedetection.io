@@ -441,12 +441,14 @@ msgstr "Błąd podczas dostosowywania liczby procesów roboczych: {}"
 msgid "Password protection enabled."
 msgstr "Włączono ochronę hasłem."
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Settings updated."
 msgstr "Ustawienia zostały zaktualizowane."
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "Wystąpił błąd – proszę zapoznać się z poniższą informacją."
 
@@ -470,7 +472,7 @@ msgstr "Wszystkie powiadomienia wyciszone."
 msgid "All notifications unmuted."
 msgstr "Wyłączono wyciszenie wszystkich powiadomień."
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -478,14 +480,540 @@ msgstr ""
 "Parametru `api_key` wymaga się, gdy wartość `api_base` różni się od tej zapisanej w konfiguracji. Odmowa wysłania "
 "zapisanego klucza API do innego punktu końcowego."
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "AI / LLM configuration removed."
 msgstr "Usunięto konfigurację AI / LLM."
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Pamięć podręczna podsumowań AI została wyczyszczona (usunięto {} plików)."
+
+#: changedetectionio/blueprint/settings/llm/sidebar.py changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr "Sztuczna inteligencja / Wielkie modele językowe"
+
+#: changedetectionio/blueprint/settings/llm/sidebar.py
+msgid "AI / LLM settings"
+msgstr "Ustawienia AI / LLM"
+
+#. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgctxt "AI usage stats"
+msgid "Usage"
+msgstr "Sposób użycia"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Overview"
+msgstr "Przegląd"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Provider"
+msgstr "Dostawca"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Prompts"
+msgstr "Podpowiedzi"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Behaviour"
+msgstr "Zachowanie"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "AI-powered change monitoring"
+msgstr "Monitorowanie zmian z wykorzystaniem sztucznej inteligencji"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Connect an LLM to move from \"something changed\" to \"only the thing you care about changed\"."
+msgstr "Podłącz model LLM, aby przejść od stwierdzenia „coś się zmieniło” do „zmieniło się tylko to, na czym ci zależy”."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Intent filtering"
+msgstr "Filtrowanie intencji"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
+"diff against it and suppresses irrelevant noise."
+msgstr ""
+"Każda obserwacja lub tag może zawierać intencję w postaci zwykłego tekstu — %(ex1)s lub %(ex2)s. Przy każdej wykrytej"
+" zmianie sztuczna inteligencja porównuje różnice z tą intencją i odfiltrowuje nieistotne zmiany."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
+"small models (≤3B) may misjudge numeric comparisons."
+msgstr ""
+"Wskazówka: ocena intencji przebiega lepiej przy użyciu wydajnego modelu — zalecane są modele %(local)s w środowisku "
+"lokalnym lub %(gpt)s / %(gemini)s. Bardzo małe modele (≤3B) mogą błędnie interpretować porównania liczbowe."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
+"prompt here, or override per watch or tag."
+msgstr ""
+"Zamiast surowych różnic otrzymuj w powiadomieniach podsumowania napisane prostym językiem — %(ex1)s lub %(ex2)s. "
+"Ustaw tutaj globalny prompt domyślny lub nadpisz go dla poszczególnych obserwacji albo tagów."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Minimal cost"
+msgstr "Minimalny koszt"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
+"handle this well, typically fractions of a cent per check."
+msgstr ""
+"Sztuczna inteligencja widzi jedynie ujednoliconą różnicę pokazującą, co uległo zmianie — nigdy pełnego kodu HTML "
+"strony. Niedrogie modele, takie jak %(gpt)s czy %(gemini)s, radzą sobie z tym dobrze, a koszt jednej weryfikacji "
+"wynosi zazwyczaj ułamki centa."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "AI / LLM configured:"
+msgstr "Skonfigurowana sztuczna inteligencja / model językowy o dużej skali (LLM):"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Edit provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Configure AI Provider"
+msgstr "Skonfiguruj dostawcę usług AI"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "AI Provider"
+msgstr "Dostawca rozwiązań AI"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
+msgstr ""
+"Przełącznik główny — gdy jest wyłączony, wszystkie zapytania do sztucznej inteligencji są pomijane, nawet jeśli "
+"poniżej skonfigurowano dostawcę."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Third-party data transfer — please read"
+msgstr "Przekazywanie danych stronom trzecim — prosimy o zapoznanie się z poniższą informacją"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
+" sent to an external AI provider of your choice."
+msgstr ""
+"Gdy funkcje AI są aktywne, dane dotyczące zmian na monitorowanych stronach internetowych — w tym różnice między "
+"wersjami stron i wyodrębniony tekst — są przesyłane do wybranego przez Ciebie zewnętrznego dostawcy usług AI."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
+msgstr ""
+"Użytkownik ponosi wyłączną odpowiedzialność za zapewnienie zgodności z warunkami korzystania z każdej monitorowanej "
+"witryny internetowej."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
+"data that may appear in monitored content."
+msgstr ""
+"Użytkownik ponosi wyłączną odpowiedzialność za przestrzeganie obowiązujących przepisów dotyczących ochrony danych "
+"(np. RODO) w odniesieniu do wszelkich danych osobowych, które mogą pojawić się w monitorowanych treściach."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
+"control over those charges."
+msgstr ""
+"Użytkownik ponosi odpowiedzialność za opłaty związane z API naliczane przez wybranego dostawcę; niniejsze "
+"oprogramowanie nie ma wglądu w te opłaty ani kontroli nad nimi."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
+"fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
+"AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any "
+"kind."
+msgstr ""
+"Wiadomo, że modele AI / LLM mają skłonność do „halucynacji” — generują brzmiące wiarygodnie, ale niezgodne z faktami "
+"lub całkowicie zmyślone wyniki, prezentując przy tym pozorną pewność — a ze względu na swoją konstrukcję mogą pomijać"
+" lub skracać istotne dane podczas tworzenia streszczeń. Nigdy nie należy traktować wyników generowanych przez AI jako"
+" kompletnych ani dokładnych. Niniejsze oprogramowanie jest dostarczane w stanie, w jakim jest, bez jakiejkolwiek "
+"gwarancji."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
+" from any claims, damages, or liability arising from this data transfer or your use of AI features."
+msgstr ""
+"Włączając funkcje sztucznej inteligencji, użytkownik osobiście zwalnia twórców i współtwórców niniejszego "
+"oprogramowania z odpowiedzialności za wszelkie roszczenia, szkody lub zobowiązania wynikające z tego transferu danych"
+" lub korzystania przez użytkownika z funkcji sztucznej inteligencji."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
+msgstr ""
+"Zapoznałem się z powyższym tekstem i go zrozumiałem. Przyjmuję na siebie pełną odpowiedzialność i zwalniam twórcę "
+"(twórców) tego oprogramowania z wszelkiej odpowiedzialności."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/templates/_common_fields.html
+msgid "Note"
+msgstr "Uwaga"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
+"<code>LLM_MODEL</code> environment variable to configure via this form instead."
+msgstr ""
+"Sztuczna inteligencja / LLM jest konfigurowana za pomocą zmiennych środowiskowych "
+"(<code>LLM_MODEL=%(model)s</code>%(api_base)s). Aby zamiast tego skonfigurować system za pomocą tego formularza, "
+"należy usunąć zmienną środowiskową <code>LLM_MODEL</code>."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "select a provider"
+msgstr "wybierz dostawcę"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
+msgstr "Zgodność z OpenAI (vLLM, LM Studio, llama.cpp)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
+msgstr ""
+"Wymagane wyłącznie w przypadku Ollamy lub niestandardowych/własnych punktów końcowych. W przypadku dostawców usług w "
+"chmurze pozostaw to pole puste."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
+"scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it"
+" if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
+"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
+"original tight caps."
+msgstr ""
+"Modele rozumowania (Qwen3, DeepSeek-R1, Gemma 3 itp.) generują łańcuch rozumowania przed podaniem ostatecznej "
+"odpowiedzi. Ten mnożnik skaluje każdy limit <code>max_tokens</code> dla tego punktu końcowego, aby zapewnić miejsce "
+"na proces rozumowania. Wartość domyślna to %(default)s; zwiększ ją, jeśli odpowiedzi są ucięte lub puste, zmniejsz "
+"(do 1x), jeśli chcesz zastosować bardziej restrykcyjne limity w przypadku płatnego punktu końcowego. Dotyczy to "
+"punktów końcowych zgodnych z Ollama i OpenAI — inni dostawcy usług w chmurze (OpenAI, Anthropic, Gemini) zachowują "
+"swoje pierwotne, wąskie limity."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Load available models"
+msgstr "Załaduj dostępne modele"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Available models"
+msgstr "Dostępne modele"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "choose a model"
+msgstr "wybierz model"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Change model"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Remove AI / LLM configuration?"
+msgstr "Usunąć konfigurację AI / LLM?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "This will remove your saved AI provider, model, and API key."
+msgstr "Spowoduje to usunięcie zapisanego dostawcy AI, modelu oraz klucza API."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Remove"
+msgstr "Usuń"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Remove provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Test connection"
+msgstr "Sprawdź połączenie"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
+"extracted text are sent to the LLM — no full page HTML."
+msgstr ""
+"Twój klucz API jest przechowywany lokalnie i przesyłany wyłącznie do wybranego przez Ciebie dostawcy. Przy każdej "
+"wykrytej zmianie do modelu LLM przesyłane są różnice w treści oraz wyodrębniony tekst — nie jest przesyłany pełny kod"
+" HTML strony."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Cache"
+msgstr "Pamięć podręczna"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Clear all summary cache?"
+msgstr "Wyczyścić całą pamięć podręczną podsumowań?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "This will remove all cached AI change summaries across all watches."
+msgstr "Spowoduje to usunięcie wszystkich zapisanych w pamięci podręcznej podsumowań zmian AI ze wszystkich obserwacji."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "They will be regenerated on the next check."
+msgstr "Zostaną odnowione przy następnym sprawdzeniu."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Clear cache"
+msgstr "Wyczyść pamięć podręczną"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Clear all summary cache"
+msgstr "Wyczyść całą pamięć podręczną podsumowań"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
+msgstr ""
+"Usuwa wszystkie zapisane w pamięci podręcznej podsumowania zmian AI ze wszystkich obserwacji. Zostaną one ponownie "
+"wygenerowane przy następnym sprawdzeniu."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
+"Leave off in production — generates a lot of log volume."
+msgstr ""
+"Włącza szczegółowe wyjście litellm (przekierowywane przez loguru). Przydatne podczas diagnozowania błędów dostawcy "
+"lub pustych odpowiedzi. Należy wyłączyć tę opcję w środowisku produkcyjnym — generuje dużą ilość danych dziennika."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Default AI Change Summary"
+msgstr "Domyślne podsumowanie zmian AI"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Used for all watches unless overridden by the watch or its tag/group."
+msgstr "Stosowane w przypadku wszystkich obserwacji, o ile nie zostanie nadpisane przez samą obserwację lub jej tag/grupę."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Modify default prompt"
+msgstr "Modyfikuj domyślny prompt"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use "
+"<code>%(raw_diff)s</code> to always get the original."
+msgstr ""
+"Po włączeniu tej opcji token powiadomień <code>%(diff)s</code> wyświetla podsumowanie generowane przez sztuczną "
+"inteligencję zamiast surowego pliku różnicowego. Aby zawsze otrzymywać oryginalny plik, należy użyć "
+"<code>%(raw_diff)s</code>."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
+"structured metadata (JSON-LD, microdata, OpenGraph) is found."
+msgstr ""
+"Po włączeniu tej funkcji sztuczna inteligencja będzie wykorzystywana w ostateczności do pozyskiwania informacji o "
+"cenie i stanie zapasów ze stron produktów, na których nie znaleziono ustrukturyzowanych metadanych (JSON-LD, "
+"mikrodane, OpenGraph)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
+"Off if summaries are being cut short."
+msgstr ""
+"Tylko dla modeli Gemini 2.5+. Tokeny myślowe poprawiają jakość rozumowania, ale są wliczane do limitu wyjściowego. "
+"Ustaw opcję na „Wyłączone”, jeśli streszczenia są skracane."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
+"more."
+msgstr ""
+"Górna granica liczby tokenów, jaką sztuczna inteligencja może wykorzystać podczas tworzenia podsumowania zmian. "
+"Wyższe wartości pozwalają na tworzenie dłuższych podsumowań, ale wiążą się z większym kosztem."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
+msgstr "Z jaką wersją bazową domyślnie porównuje najnowszą wersję link „Podsumowanie” na liście obserwacji."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Configure a provider first to unlock behaviour settings."
+msgstr "Najpierw skonfiguruj dostawcę, aby odblokować ustawienia zachowania."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Token & Cost Tracking"
+msgstr "Śledzenie tokenów i kosztów"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "This month"
+msgstr "W tym miesiącu"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "tokens"
+msgstr "tokeny"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid "%(percent)s%% of %(budget)s"
+msgstr "%(percent)s%% z %(budget)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "All-time total"
+msgstr "Łączna liczba od początku istnienia"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Monthly token budget reached. AI summarisation is paused until next month."
+msgstr ""
+"Osiągnięto miesięczny limit tokenów. Funkcja tworzenia streszczeń przez sztuczną inteligencję zostanie wstrzymana do "
+"następnego miesiąca."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Token budget this period"
+msgstr "Budżet na tokeny w tym okresie"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+msgstr "(ustawiane za pomocą <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "0 = unlimited"
+msgstr "0 = bez ograniczeń"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "tokens (0 = unlimited)"
+msgstr "tokeny (0 = bez ograniczeń)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Current billing period"
+msgstr "Bieżący okres rozliczeniowy"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
+msgstr "(ustawiane za pomocą <code>LLM_MAX_INPUT_CHARS</code>)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid "characters — currently enforcing: %(limit)s"
+msgstr "znaki — obecnie obowiązuje ograniczenie: %(limit)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
+"unlimited)"
+msgstr ""
+"tokeny — pomija ocenę AI dla obserwacji, gdy ich wykorzystanie w bieżącym okresie (miesięcznym) osiągnie ten limit (0"
+" = bez ograniczeń)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "No AI usage recorded yet."
+msgstr "Nie odnotowano jeszcze żadnego wykorzystania sztucznej inteligencji."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Token budget"
+msgstr "Budżet na tokeny"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "tokens per month (0 = unlimited)"
+msgstr "liczba tokenów miesięcznie (0 = nieograniczona)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "platform.openai.com → API keys"
+msgstr "platform.openai.com → Klucze API"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "console.anthropic.com → API keys"
+msgstr "console.anthropic.com → Klucze API"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "aistudio.google.com → Get API key"
+msgstr "aistudio.google.com → Pobierz klucz API"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "No API key needed for local Ollama"
+msgstr "W przypadku lokalnej wersji Ollama klucz API nie jest wymagany"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
+msgstr "Token Bearer dla własnego serwera (vLLM, LM Studio itp.)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "openrouter.ai → Keys"
+msgstr "openrouter.ai → Klucze"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Select a provider first."
+msgstr "Najpierw wybierz dostawcę."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Loading…"
+msgstr "Ładowanie…"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "No models returned by the provider."
+msgstr "Dostawca nie zwrócił żadnych modeli."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "— choose a model —"
+msgstr "— wybierz model —"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "models available with your key"
+msgstr "modele dostępne przy użyciu Twojego klucza"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Request failed"
+msgstr "Wystąpił błąd podczas wysyłania żądania"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Testing…"
+msgstr "Testowanie…"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Connected"
+msgstr "Połączone"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Failed"
+msgstr "Nie powiodło się"
 
 #: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Unknown notification service"
@@ -563,11 +1091,6 @@ msgstr "Godzina i data"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "CAPTCHA & Proxies"
 msgstr "CAPTCHA i serwery proxy"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr "Sztuczna inteligencja / Wielkie modele językowe"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Info"
@@ -992,523 +1515,6 @@ msgstr "Aktywne wtyczki:"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "Żadne wtyczki nie są aktywne"
-
-#. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgctxt "AI usage stats"
-msgid "Usage"
-msgstr "Sposób użycia"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Overview"
-msgstr "Przegląd"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Provider"
-msgstr "Dostawca"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Prompts"
-msgstr "Podpowiedzi"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Behaviour"
-msgstr "Zachowanie"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI-powered change monitoring"
-msgstr "Monitorowanie zmian z wykorzystaniem sztucznej inteligencji"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Connect an LLM to move from \"something changed\" to \"only the thing you care about changed\"."
-msgstr "Podłącz model LLM, aby przejść od stwierdzenia „coś się zmieniło” do „zmieniło się tylko to, na czym ci zależy”."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Intent filtering"
-msgstr "Filtrowanie intencji"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
-"diff against it and suppresses irrelevant noise."
-msgstr ""
-"Każda obserwacja lub tag może zawierać intencję w postaci zwykłego tekstu — %(ex1)s lub %(ex2)s. Przy każdej wykrytej"
-" zmianie sztuczna inteligencja porównuje różnice z tą intencją i odfiltrowuje nieistotne zmiany."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
-"small models (≤3B) may misjudge numeric comparisons."
-msgstr ""
-"Wskazówka: ocena intencji przebiega lepiej przy użyciu wydajnego modelu — zalecane są modele %(local)s w środowisku "
-"lokalnym lub %(gpt)s / %(gemini)s. Bardzo małe modele (≤3B) mogą błędnie interpretować porównania liczbowe."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
-"prompt here, or override per watch or tag."
-msgstr ""
-"Zamiast surowych różnic otrzymuj w powiadomieniach podsumowania napisane prostym językiem — %(ex1)s lub %(ex2)s. "
-"Ustaw tutaj globalny prompt domyślny lub nadpisz go dla poszczególnych obserwacji albo tagów."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Minimal cost"
-msgstr "Minimalny koszt"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
-"handle this well, typically fractions of a cent per check."
-msgstr ""
-"Sztuczna inteligencja widzi jedynie ujednoliconą różnicę pokazującą, co uległo zmianie — nigdy pełnego kodu HTML "
-"strony. Niedrogie modele, takie jak %(gpt)s czy %(gemini)s, radzą sobie z tym dobrze, a koszt jednej weryfikacji "
-"wynosi zazwyczaj ułamki centa."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI / LLM configured:"
-msgstr "Skonfigurowana sztuczna inteligencja / model językowy o dużej skali (LLM):"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Edit provider"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Configure AI Provider"
-msgstr "Skonfiguruj dostawcę usług AI"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI Provider"
-msgstr "Dostawca rozwiązań AI"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
-msgstr ""
-"Przełącznik główny — gdy jest wyłączony, wszystkie zapytania do sztucznej inteligencji są pomijane, nawet jeśli "
-"poniżej skonfigurowano dostawcę."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Third-party data transfer — please read"
-msgstr "Przekazywanie danych stronom trzecim — prosimy o zapoznanie się z poniższą informacją"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
-" sent to an external AI provider of your choice."
-msgstr ""
-"Gdy funkcje AI są aktywne, dane dotyczące zmian na monitorowanych stronach internetowych — w tym różnice między "
-"wersjami stron i wyodrębniony tekst — są przesyłane do wybranego przez Ciebie zewnętrznego dostawcy usług AI."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
-msgstr ""
-"Użytkownik ponosi wyłączną odpowiedzialność za zapewnienie zgodności z warunkami korzystania z każdej monitorowanej "
-"witryny internetowej."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
-"data that may appear in monitored content."
-msgstr ""
-"Użytkownik ponosi wyłączną odpowiedzialność za przestrzeganie obowiązujących przepisów dotyczących ochrony danych "
-"(np. RODO) w odniesieniu do wszelkich danych osobowych, które mogą pojawić się w monitorowanych treściach."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
-"control over those charges."
-msgstr ""
-"Użytkownik ponosi odpowiedzialność za opłaty związane z API naliczane przez wybranego dostawcę; niniejsze "
-"oprogramowanie nie ma wglądu w te opłaty ani kontroli nad nimi."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
-"fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
-"AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any "
-"kind."
-msgstr ""
-"Wiadomo, że modele AI / LLM mają skłonność do „halucynacji” — generują brzmiące wiarygodnie, ale niezgodne z faktami "
-"lub całkowicie zmyślone wyniki, prezentując przy tym pozorną pewność — a ze względu na swoją konstrukcję mogą pomijać"
-" lub skracać istotne dane podczas tworzenia streszczeń. Nigdy nie należy traktować wyników generowanych przez AI jako"
-" kompletnych ani dokładnych. Niniejsze oprogramowanie jest dostarczane w stanie, w jakim jest, bez jakiejkolwiek "
-"gwarancji."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
-" from any claims, damages, or liability arising from this data transfer or your use of AI features."
-msgstr ""
-"Włączając funkcje sztucznej inteligencji, użytkownik osobiście zwalnia twórców i współtwórców niniejszego "
-"oprogramowania z odpowiedzialności za wszelkie roszczenia, szkody lub zobowiązania wynikające z tego transferu danych"
-" lub korzystania przez użytkownika z funkcji sztucznej inteligencji."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
-msgstr ""
-"Zapoznałem się z powyższym tekstem i go zrozumiałem. Przyjmuję na siebie pełną odpowiedzialność i zwalniam twórcę "
-"(twórców) tego oprogramowania z wszelkiej odpowiedzialności."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/templates/_common_fields.html
-msgid "Note"
-msgstr "Uwaga"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
-"<code>LLM_MODEL</code> environment variable to configure via this form instead."
-msgstr ""
-"Sztuczna inteligencja / LLM jest konfigurowana za pomocą zmiennych środowiskowych "
-"(<code>LLM_MODEL=%(model)s</code>%(api_base)s). Aby zamiast tego skonfigurować system za pomocą tego formularza, "
-"należy usunąć zmienną środowiskową <code>LLM_MODEL</code>."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "select a provider"
-msgstr "wybierz dostawcę"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
-msgstr "Zgodność z OpenAI (vLLM, LM Studio, llama.cpp)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Saved. Use \"Remove provider\" below to change the provider or key."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
-msgstr ""
-"Wymagane wyłącznie w przypadku Ollamy lub niestandardowych/własnych punktów końcowych. W przypadku dostawców usług w "
-"chmurze pozostaw to pole puste."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
-"scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it"
-" if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
-"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
-"original tight caps."
-msgstr ""
-"Modele rozumowania (Qwen3, DeepSeek-R1, Gemma 3 itp.) generują łańcuch rozumowania przed podaniem ostatecznej "
-"odpowiedzi. Ten mnożnik skaluje każdy limit <code>max_tokens</code> dla tego punktu końcowego, aby zapewnić miejsce "
-"na proces rozumowania. Wartość domyślna to %(default)s; zwiększ ją, jeśli odpowiedzi są ucięte lub puste, zmniejsz "
-"(do 1x), jeśli chcesz zastosować bardziej restrykcyjne limity w przypadku płatnego punktu końcowego. Dotyczy to "
-"punktów końcowych zgodnych z Ollama i OpenAI — inni dostawcy usług w chmurze (OpenAI, Anthropic, Gemini) zachowują "
-"swoje pierwotne, wąskie limity."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Load available models"
-msgstr "Załaduj dostępne modele"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Available models"
-msgstr "Dostępne modele"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "choose a model"
-msgstr "wybierz model"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Type a model name or choose from available models"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
-"key blank to keep your saved key."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Change model"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Remove AI / LLM configuration?"
-msgstr "Usunąć konfigurację AI / LLM?"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This will remove your saved AI provider, model, and API key."
-msgstr "Spowoduje to usunięcie zapisanego dostawcy AI, modelu oraz klucza API."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Remove"
-msgstr "Usuń"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "Anuluj"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Remove provider"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Test connection"
-msgstr "Sprawdź połączenie"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
-"extracted text are sent to the LLM — no full page HTML."
-msgstr ""
-"Twój klucz API jest przechowywany lokalnie i przesyłany wyłącznie do wybranego przez Ciebie dostawcy. Przy każdej "
-"wykrytej zmianie do modelu LLM przesyłane są różnice w treści oraz wyodrębniony tekst — nie jest przesyłany pełny kod"
-" HTML strony."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Cache"
-msgstr "Pamięć podręczna"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear all summary cache?"
-msgstr "Wyczyścić całą pamięć podręczną podsumowań?"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This will remove all cached AI change summaries across all watches."
-msgstr "Spowoduje to usunięcie wszystkich zapisanych w pamięci podręcznej podsumowań zmian AI ze wszystkich obserwacji."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "They will be regenerated on the next check."
-msgstr "Zostaną odnowione przy następnym sprawdzeniu."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear cache"
-msgstr "Wyczyść pamięć podręczną"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear all summary cache"
-msgstr "Wyczyść całą pamięć podręczną podsumowań"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
-msgstr ""
-"Usuwa wszystkie zapisane w pamięci podręcznej podsumowania zmian AI ze wszystkich obserwacji. Zostaną one ponownie "
-"wygenerowane przy następnym sprawdzeniu."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
-"Leave off in production — generates a lot of log volume."
-msgstr ""
-"Włącza szczegółowe wyjście litellm (przekierowywane przez loguru). Przydatne podczas diagnozowania błędów dostawcy "
-"lub pustych odpowiedzi. Należy wyłączyć tę opcję w środowisku produkcyjnym — generuje dużą ilość danych dziennika."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Default AI Change Summary"
-msgstr "Domyślne podsumowanie zmian AI"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Used for all watches unless overridden by the watch or its tag/group."
-msgstr "Stosowane w przypadku wszystkich obserwacji, o ile nie zostanie nadpisane przez samą obserwację lub jej tag/grupę."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/templates/edit/include_llm_intent.html
-msgid "Modify default prompt"
-msgstr "Modyfikuj domyślny prompt"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use "
-"<code>%(raw_diff)s</code> to always get the original."
-msgstr ""
-"Po włączeniu tej opcji token powiadomień <code>%(diff)s</code> wyświetla podsumowanie generowane przez sztuczną "
-"inteligencję zamiast surowego pliku różnicowego. Aby zawsze otrzymywać oryginalny plik, należy użyć "
-"<code>%(raw_diff)s</code>."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
-"structured metadata (JSON-LD, microdata, OpenGraph) is found."
-msgstr ""
-"Po włączeniu tej funkcji sztuczna inteligencja będzie wykorzystywana w ostateczności do pozyskiwania informacji o "
-"cenie i stanie zapasów ze stron produktów, na których nie znaleziono ustrukturyzowanych metadanych (JSON-LD, "
-"mikrodane, OpenGraph)."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
-"Off if summaries are being cut short."
-msgstr ""
-"Tylko dla modeli Gemini 2.5+. Tokeny myślowe poprawiają jakość rozumowania, ale są wliczane do limitu wyjściowego. "
-"Ustaw opcję na „Wyłączone”, jeśli streszczenia są skracane."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
-"more."
-msgstr ""
-"Górna granica liczby tokenów, jaką sztuczna inteligencja może wykorzystać podczas tworzenia podsumowania zmian. "
-"Wyższe wartości pozwalają na tworzenie dłuższych podsumowań, ale wiążą się z większym kosztem."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
-msgstr "Z jaką wersją bazową domyślnie porównuje najnowszą wersję link „Podsumowanie” na liście obserwacji."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Configure a provider first to unlock behaviour settings."
-msgstr "Najpierw skonfiguruj dostawcę, aby odblokować ustawienia zachowania."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token & Cost Tracking"
-msgstr "Śledzenie tokenów i kosztów"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This month"
-msgstr "W tym miesiącu"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens"
-msgstr "tokeny"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid "%(percent)s%% of %(budget)s"
-msgstr "%(percent)s%% z %(budget)s"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "All-time total"
-msgstr "Łączna liczba od początku istnienia"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Monthly token budget reached. AI summarisation is paused until next month."
-msgstr ""
-"Osiągnięto miesięczny limit tokenów. Funkcja tworzenia streszczeń przez sztuczną inteligencję zostanie wstrzymana do "
-"następnego miesiąca."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token budget this period"
-msgstr "Budżet na tokeny w tym okresie"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
-msgstr "(ustawiane za pomocą <code>LLM_TOKEN_BUDGET_MONTH</code>)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "0 = unlimited"
-msgstr "0 = bez ograniczeń"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens (0 = unlimited)"
-msgstr "tokeny (0 = bez ograniczeń)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Current billing period"
-msgstr "Bieżący okres rozliczeniowy"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
-msgstr "(ustawiane za pomocą <code>LLM_MAX_INPUT_CHARS</code>)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid "characters — currently enforcing: %(limit)s"
-msgstr "znaki — obecnie obowiązuje ograniczenie: %(limit)s"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
-"unlimited)"
-msgstr ""
-"tokeny — pomija ocenę AI dla obserwacji, gdy ich wykorzystanie w bieżącym okresie (miesięcznym) osiągnie ten limit (0"
-" = bez ograniczeń)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No AI usage recorded yet."
-msgstr "Nie odnotowano jeszcze żadnego wykorzystania sztucznej inteligencji."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token budget"
-msgstr "Budżet na tokeny"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens per month (0 = unlimited)"
-msgstr "liczba tokenów miesięcznie (0 = nieograniczona)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "platform.openai.com → API keys"
-msgstr "platform.openai.com → Klucze API"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.anthropic.com → API keys"
-msgstr "console.anthropic.com → Klucze API"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "aistudio.google.com → Get API key"
-msgstr "aistudio.google.com → Pobierz klucz API"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No API key needed for local Ollama"
-msgstr "W przypadku lokalnej wersji Ollama klucz API nie jest wymagany"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
-msgstr "Token Bearer dla własnego serwera (vLLM, LM Studio itp.)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "openrouter.ai → Keys"
-msgstr "openrouter.ai → Klucze"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "platform.deepseek.com → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.groq.com → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.mistral.ai → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "api.together.ai → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.x.ai → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Select a provider first."
-msgstr "Najpierw wybierz dostawcę."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Loading…"
-msgstr "Ładowanie…"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No models returned by the provider."
-msgstr "Dostawca nie zwrócił żadnych modeli."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "— choose a model —"
-msgstr "— wybierz model —"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "models available with your key"
-msgstr "modele dostępne przy użyciu Twojego klucza"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Request failed"
-msgstr "Wystąpił błąd podczas wysyłania żądania"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Testing…"
-msgstr "Testowanie…"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Connected"
-msgstr "Połączone"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Failed"
-msgstr "Nie powiodło się"
 
 #: changedetectionio/blueprint/tags/__init__.py
 #, python-brace-format
@@ -3470,7 +3476,7 @@ msgstr "W przypadku funkcji sprawdzania i harmonogramu należy stosować ustawie
 msgid "AI Change Intent - Notify me when.."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/blueprint/ui/templates/diff.html
 #: changedetectionio/forms.py
 msgid "AI Change Summary"
 msgstr "Podsumowanie zmian AI"
@@ -3818,7 +3824,7 @@ msgstr "Mnożnik tokenów dla modeli wnioskowania lokalnego"
 msgid "Default AI Change Summary prompt"
 msgstr "Domyślny prompt podsumowania zmian AI"
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/forms.py
 msgid "Max tokens per watch per period"
 msgstr "Maksymalna liczba tokenów na obserwację w danym okresie"
 
@@ -3826,7 +3832,7 @@ msgstr "Maksymalna liczba tokenów na obserwację w danym okresie"
 msgid "Monthly token budget"
 msgstr "Miesięczny budżet na tokeny"
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/forms.py
 msgid "Max input characters"
 msgstr "Maksymalna liczba znaków w polu wprowadzania danych"
 

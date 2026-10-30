@@ -46,6 +46,10 @@ def test_llm_features_disabled_hides_ui(client, live_server, monkeypatch):
     assert res.status_code == 200
     _llm_markers_absent(res.data, where='settings')
 
+    # 2b. The AI / LLM settings page is refused (and not registered at all when the env var is set at
+    # startup), and the sidebar has no link to it - the watch list check above also covers the sidebar
+    assert client.get(url_for('settings.llm.llm_settings_page')).status_code == 404
+
     # 3. Edit page for a watch (should not have an AI / LLM tab or include_llm_intent body)
     uuid = datastore.add_watch(url='http://example.com', extras={'title': 'Disabled LLM watch'}, tag="LLMgroup")
     tag_uuid = live_server.app.config['DATASTORE'].data['watching'][uuid]['tags'][0]
@@ -79,10 +83,19 @@ def test_llm_features_enabled_by_default(client, live_server, monkeypatch):
     from changedetectionio.llm.evaluator import is_llm_features_disabled
     assert is_llm_features_disabled() is False
 
+    # The AI / LLM settings have their own page now, /settings/llm, linked from the left sidebar
+    llm_page = url_for('settings.llm.llm_settings_page')
     res = client.get(url_for('settings.settings_page'))
     assert res.status_code == 200
-    # The AI / LLM settings tab anchor should be present when not disabled
-    assert b'href="#ai"' in res.data
+    assert b'href="#ai"' not in res.data, "the AI / LLM tab moved off /settings"
+    assert f'href="{llm_page}"'.encode() in res.data, "sidebar link to the AI / LLM page"
+
+    res = client.get(llm_page)
+    assert res.status_code == 200
+    assert b'href="#ai"' in res.data and b'id="ai"' in res.data
+    assert b'name="llm-model"' in res.data
+    # Highlighted in the sidebar while on it
+    assert b'class="action-sidebar-item active"' in res.data
 
     # With an LLM configured, the Add-watch page offers both ways of narrowing a watch,
     # so "Select by element" goes back to being an opt-in checkbox.

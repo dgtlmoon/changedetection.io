@@ -854,6 +854,13 @@ def changedetection_app(config=None, datastore_o=None):
         return dict(llm_features_disabled=is_llm_features_disabled())
 
     @app.context_processor
+    def inject_sidebar_items():
+        # Links plugins add to the left sidebar (register_sidebar_items hook), see sidebar-nav.html
+        from changedetectionio.pluggy_interface import collect_sidebar_items
+
+        return dict(plugin_sidebar_items=collect_sidebar_items(datastore))
+
+    @app.context_processor
     def inject_has_visual_browser():
         # Whether any installed content fetcher can render the Add-Watch live preview -
         # sidebar-nav.html hides the Add-Watch link without one. Same capability lookup the
