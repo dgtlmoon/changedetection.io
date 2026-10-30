@@ -475,6 +475,10 @@ msgstr "AI / LLM 설정이 제거되었습니다."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 요약 캐시가 지워졌습니다({}개 파일 제거됨)."
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "알 수 없는 알림 서비스"
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr ""
@@ -692,7 +696,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr "Bright Data 프록시로 연결합니다. 자세한 내용은 여기에서 확인해 보세요."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "팁:"
 
@@ -2705,7 +2709,8 @@ msgstr "'%(title)s'에서"
 msgid "RSS Feed"
 msgstr ""
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
 msgstr "닫기"
 
@@ -3588,7 +3593,7 @@ msgstr "스크린샷: 최소 변경 비율"
 msgid "Must be between 0 and 100"
 msgstr "0에서 100 사이여야 합니다."
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr "비밀번호"
 
@@ -3877,6 +3882,42 @@ msgstr "%s년 전"
 msgid "in %syr"
 msgstr "%s년 후"
 
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "사용자 지정 이메일"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr "사용자 지정 POST/GET/PUT/DELETE…"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr "URL"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr "메서드"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr "사용자 이름"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr "HTTP 헤더"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr "쿼리 매개변수"
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "필수"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
+msgstr "URL은 http:// 또는 https://로 시작해야 합니다"
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "해당 정규식으로 모든 모니터링 기록을 검사했지만 일치하는 항목을 찾지 못했습니다."
@@ -4164,6 +4205,58 @@ msgstr "모니터링 프로토콜이 허용되지 않거나 URL 형식이 올바
 msgid "No proxy"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "일치하는 서비스 없음"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "여러 개는 쉼표로 구분"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "보안 연결 (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "한 줄에 하나씩, 이름=값"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "필드를 채우면 URL이 만들어집니다"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "아래 목록에 추가됨"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "처리 중..."
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "알림 서비스 추가:"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr "Discord, Telegram, ntfy, Slack, 이메일…"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "어떻게 얻나요?"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "옵션"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "테스트 알림 보내기"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "목록에 추가"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4341,38 +4434,21 @@ msgid "Add email notification:"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
 msgstr "이메일 주소 추가"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "테스트 알림 보내기"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "알림 디버그 로그"
 
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "처리 중..."
-
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr "거의 모든 서비스에 알림을 보내려면 <a target=\"newwindow\" href=\"%(url)s\">AppRise 알림 URL</a>을 사용하세요."
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "고급 도움말 표시"
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<i>중요한 설정 참고 사항은 여기의 알림 서비스 위키를 읽어 주세요</i>"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "고급 도움말 표시"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

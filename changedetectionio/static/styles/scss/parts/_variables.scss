@@ -77,6 +77,7 @@
   --color-background-messages-error: rgba(255, 1, 1, .5);
   --color-background-messages-notice: rgba(255, 255, 255, .5);
   --color-border-notification: #ccc;
+  --color-text-notification-setup-error: var(--color-error);
 
   --color-background-checkbox-operations: rgba(255, 255, 255, 0.7);
   --color-warning: #ff3300;
@@ -168,6 +169,7 @@
   --color-shadow-jump: var(--color-grey-200);
   --color-icon-github: var(--color-white);
   --color-watch-table-error: var(--color-light-red);
+  --color-text-notification-setup-error: #ff7b7b;
   --color-watch-table-row-text: var(--color-grey-800);
 
   // Left rail — dark mode overrides

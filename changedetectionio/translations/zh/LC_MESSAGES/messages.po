@@ -478,6 +478,10 @@ msgstr ""
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "未知的通知服务"
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr ""
@@ -695,7 +699,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "提示："
 
@@ -2701,9 +2705,10 @@ msgstr "（“%(title)s”中）"
 msgid "RSS Feed"
 msgstr ""
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
-msgstr ""
+msgstr "关闭"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
@@ -3584,7 +3589,7 @@ msgstr ""
 msgid "Must be between 0 and 100"
 msgstr "必须介于 0 到 100 之间"
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr "密码"
 
@@ -3873,6 +3878,42 @@ msgstr "%s年前"
 msgid "in %syr"
 msgstr "%s年后"
 
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "自定义邮件"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr "自定义 POST/GET/PUT/DELETE…"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr "URL"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr "方法"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr "用户名"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr "HTTP 标头"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr "查询参数"
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "必填"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
+msgstr "URL 必须以 http:// 或 https:// 开头"
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "扫描全部监控历史未找到匹配该正则的内容。"
@@ -4160,6 +4201,58 @@ msgstr "监控协议不允许或 URL 格式无效"
 msgid "No proxy"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "没有匹配的服务"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "多个值用逗号分隔"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "安全连接 (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "每行一个，名称=值"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "填写字段以生成 URL"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "已添加到下方列表"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "处理中.."
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "添加通知服务："
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr "Discord、Telegram、ntfy、Slack、邮件…"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "如何获取？"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "选项"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "发送测试通知"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "添加到列表"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4337,29 +4430,16 @@ msgid "Add email notification:"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
 msgstr "添加邮箱地址"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "发送测试通知"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "通知调试日志"
 
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "处理中.."
-
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr "使用 <a target=\"newwindow\" href=\"%(url)s\">AppRise通知URL</a>，向几乎任何服务发送通知！"
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "显示高级帮助和提示"
 
 # TN: CJK scripts degrade when italicized; emphasis is rendered with <strong>
 # instead.
@@ -4367,10 +4447,6 @@ msgstr "使用 <a target=\"newwindow\" href=\"%(url)s\">AppRise通知URL</a>，�
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<strong>请阅读通知服务 Wiki 以了解重要配置说明</strong>"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "显示高级帮助和提示"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

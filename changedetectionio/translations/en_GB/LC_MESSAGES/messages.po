@@ -473,6 +473,10 @@ msgstr ""
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr ""
@@ -690,7 +694,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr ""
 
@@ -2695,7 +2699,8 @@ msgstr ""
 msgid "RSS Feed"
 msgstr ""
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
 msgstr ""
 
@@ -3578,7 +3583,7 @@ msgstr ""
 msgid "Must be between 0 and 100"
 msgstr ""
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr ""
 
@@ -3865,6 +3870,42 @@ msgstr ""
 #: changedetectionio/languages.py
 #, python-format
 msgid "in %syr"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
 msgstr ""
 
 #: changedetectionio/processors/extract.py
@@ -4154,6 +4195,58 @@ msgstr ""
 msgid "No proxy"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr ""
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4331,37 +4424,20 @@ msgid "Add email notification:"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr ""
 
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
 msgstr ""
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
 msgstr ""
 
 #. FIXME: fragment msgids (#4074)

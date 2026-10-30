@@ -487,6 +487,10 @@ msgstr "Usunięto konfigurację AI / LLM."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Pamięć podręczna podsumowań AI została wyczyszczona (usunięto {} plików)."
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "Nieznana usługa powiadomień"
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr "Powiadomienia domyślne"
@@ -724,7 +728,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr "Połącz się za pomocą serwerów proxy Bright Data – więcej informacji znajdziesz tutaj."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "Wskazówka:"
 
@@ -2850,7 +2854,8 @@ msgstr "w „%(title)s”"
 msgid "RSS Feed"
 msgstr "Kanał RSS"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
 msgstr "Zamknij"
 
@@ -3737,7 +3742,7 @@ msgstr "Zrzut ekranu: Minimalna wartość procentowa zmiany"
 msgid "Must be between 0 and 100"
 msgstr "Wartość musi mieścić się w przedziale od 0 do 100"
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr "Hasło"
 
@@ -4025,6 +4030,42 @@ msgstr "%syr temu"
 #, python-format
 msgid "in %syr"
 msgstr "w %syr"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "Własny e-mail"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr "Własny POST/GET/PUT/DELETE…"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr "URL"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr "Metoda"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr "Nazwa użytkownika"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr "Nagłówki HTTP"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr "Parametry zapytania"
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "Wymagane"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
+msgstr "URL musi zaczynać się od http:// lub https://"
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
@@ -4315,6 +4356,58 @@ msgstr "Protokół „watch” jest niedozwolony lub format adresu URL jest niep
 msgid "No proxy"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "Brak pasującej usługi"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "Kilka wartości oddziel przecinkami"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "Bezpieczne połączenie (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "Jedna na wiersz, Nazwa=Wartość"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "Wypełnij pola, aby utworzyć URL"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "Dodano do listy poniżej"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "Przetwarzanie..."
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "Dodaj usługę powiadomień:"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr "Discord, Telegram, ntfy, Slack, e-mail…"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "Skąd je wziąć?"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "Opcje"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "Wyślij powiadomienie testowe"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "Dodaj do listy"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4499,31 +4592,16 @@ msgid "Add email notification:"
 msgstr "Dodaj powiadomienie e-mailowe:"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr "Dodaj do listy"
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
 msgstr "Dodaj adres e-mail"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "Wyślij powiadomienie testowe"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "Dzienniki debugowania powiadomień"
 
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "Przetwarzanie..."
-
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr ""
-"Skorzystaj z <a target=\"newwindow\" href=\"%(url)s\">adresów URL powiadomień AppRise</a>, aby wysyłać powiadomienia "
-"do niemal każdej usługi!"
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "Pokaż zaawansowaną pomoc i wskazówki"
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
@@ -4531,10 +4609,6 @@ msgid "<i>Please read the notification services wiki here for important configur
 msgstr ""
 "<i>Prosimy o zapoznanie się z wiki poświęconą usługom powiadomień, gdzie znajdują się ważne uwagi dotyczące "
 "konfiguracji</i>"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "Pokaż zaawansowaną pomoc i wskazówki"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

@@ -482,6 +482,10 @@ msgstr ""
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "Bilinmeyen bildirim hizmeti"
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr ""
@@ -709,7 +713,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "İpucu:"
 
@@ -2748,9 +2752,10 @@ msgstr "'%(title)s' içinde"
 msgid "RSS Feed"
 msgstr ""
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
-msgstr ""
+msgstr "Kapat"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
@@ -3631,7 +3636,7 @@ msgstr ""
 msgid "Must be between 0 and 100"
 msgstr "0 ile 100 arasında olmalıdır"
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr "Parola"
 
@@ -3920,6 +3925,42 @@ msgstr ""
 msgid "in %syr"
 msgstr ""
 
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "Özel e-posta"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr "Özel POST/GET/PUT/DELETE…"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr "URL"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr "Yöntem"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr "Kullanıcı adı"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr "HTTP başlıkları"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr "Sorgu parametreleri"
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "Zorunlu"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
+msgstr "URL http:// veya https:// ile başlamalıdır"
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "Tüm izleme geçmişi o RegEx için taranırken hiçbir eşleşme bulunamadı."
@@ -4207,6 +4248,58 @@ msgstr "İzleyici protokolüne izin verilmiyor veya geçersiz URL formatı"
 msgid "No proxy"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "Eşleşen hizmet yok"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "Birden fazlasını virgülle ayırın"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "Güvenli bağlantı (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "Her satıra bir tane, Ad=Değer"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "URL oluşturmak için alanları doldurun"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "Aşağıdaki listeye eklendi"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "İşleniyor.."
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "Bildirim hizmeti ekle:"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr "Discord, Telegram, ntfy, Slack, e-posta…"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "Bunları nasıl alırım?"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "Seçenekler"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "Test bildirimi gönder"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "Listeye ekle"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4384,40 +4477,21 @@ msgid "Add email notification:"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
 msgstr "Bir e-posta adresi ekle"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "Test bildirimi gönder"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "Bildirim hata ayıklama günlükleri"
 
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "İşleniyor.."
-
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr ""
-"<a target=\"newwindow\" href=\"%(url)s\">AppRise Bildirim URL'leri</a> ile hemen hemen her hizmete bildirim "
-"gönderebilirsiniz!"
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "Gelişmiş yardım ve ipuçlarını göster"
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<i>Önemli yapılandırma notları için lütfen buradaki bildirim hizmetleri wiki'sini okuyun</i>"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "Gelişmiş yardım ve ipuçlarını göster"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
