@@ -343,3 +343,10 @@
     }
   }
 }
+
+// One notification URL per line: keep each URL on its own line and scroll sideways instead of wrapping
+textarea.notification-urls {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
