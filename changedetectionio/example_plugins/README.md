@@ -6,7 +6,7 @@ active until you install it.
 To install one, run `pip install .` from its directory, in the same Python environment that runs
 changedetection.io, then restart changedetection.io. Plugins are picked up through the `changedetectionio`
 entry point in their `pyproject.toml`. They need plugin API 0.3.0 or newer
-(`changedetectionio.plugin_api.PLUGIN_API_VERSION`).
+(`changedetectionio.plugin_api.PLUGIN_API_VERSION`), the hello world example 0.4.0 or newer.
 
 Plugins import only from `changedetectionio.plugin_api`, everything else in the package is internal and
 may change between releases. If you need something that isn't exported there, ask for it.

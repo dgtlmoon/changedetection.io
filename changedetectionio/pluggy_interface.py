@@ -273,7 +273,7 @@ class ChangeDetectionSpec:
 
     @hookspec
     def register_blueprints(datastore):
-        """Return Flask blueprints to mount in the app, called once at startup.
+        """Return Flask blueprints to mount in the app, called once at startup. Plugin API 0.4.0+.
 
         Return a Blueprint, a dict, or a list of either. The dict form sets the options:
             {'blueprint': bp, 'url_prefix': '/my-plugin', 'login_required': True}
