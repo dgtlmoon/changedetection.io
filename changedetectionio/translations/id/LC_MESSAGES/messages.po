@@ -715,7 +715,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr "Hubungkan menggunakan proksi Bright Data, cari tahu selengkapnya di sini."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "Kiat:"
 
@@ -4550,19 +4550,14 @@ msgstr "Tambahkan alamat email"
 msgid "Notification debug logs"
 msgstr "Log debug notifikasi"
 
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr "Gunakan <a target=\"newwindow\" href=\"%(url)s\">URL Notifikasi AppRise</a> untuk notifikasi ke hampir semua layanan!"
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "Tampilkan bantuan dan kiat lanjutan"
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<i>Harap baca wiki layanan notifikasi di sini untuk catatan konfigurasi penting</i>"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "Tampilkan bantuan dan kiat lanjutan"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

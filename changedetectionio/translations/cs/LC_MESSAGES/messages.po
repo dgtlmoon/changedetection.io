@@ -696,7 +696,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr "Připojit pomocí Bright Data proxy, více se lze dozvědět zde."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "Tip:"
 
@@ -4439,19 +4439,14 @@ msgstr "Přidat emailovou adresu"
 msgid "Notification debug logs"
 msgstr "Protokoly ladění oznámení"
 
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr ""
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "Zobrazit pokročilou nápovědu a tipy"
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr ""
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "Zobrazit pokročilou nápovědu a tipy"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

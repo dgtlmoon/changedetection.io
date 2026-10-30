@@ -698,7 +698,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr "使用 Bright Data 代理伺服器進行連線，在此處了解更多資訊。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "提示："
 
@@ -4442,19 +4442,14 @@ msgstr "新增電子郵件地址"
 msgid "Notification debug logs"
 msgstr "通知除錯記錄"
 
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr "使用 <a target=\"newwindow\" href=\"%(url)s\">AppRise 通知 URL</a> 可向幾乎任何服務發送通知！"
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "顯示進階說明與提示"
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<i>請在此處閱讀通知服務 Wiki 以獲取重要的設定注意事項</i>"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "顯示進階說明與提示"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html

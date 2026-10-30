@@ -728,7 +728,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr "Połącz się za pomocą serwerów proxy Bright Data – więcej informacji znajdziesz tutaj."
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "Wskazówka:"
 
@@ -4599,12 +4599,9 @@ msgstr "Dodaj adres e-mail"
 msgid "Notification debug logs"
 msgstr "Dzienniki debugowania powiadomień"
 
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr ""
-"Skorzystaj z <a target=\"newwindow\" href=\"%(url)s\">adresów URL powiadomień AppRise</a>, aby wysyłać powiadomienia "
-"do niemal każdej usługi!"
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "Pokaż zaawansowaną pomoc i wskazówki"
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/templates/_common_fields.html
@@ -4612,10 +4609,6 @@ msgid "<i>Please read the notification services wiki here for important configur
 msgstr ""
 "<i>Prosimy o zapoznanie się z wiki poświęconą usługom powiadomień, gdzie znajdują się ważne uwagi dotyczące "
 "konfiguracji</i>"
-
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "Pokaż zaawansowaną pomoc i wskazówki"
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
