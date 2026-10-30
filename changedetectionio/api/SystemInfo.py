@@ -16,9 +16,13 @@ class SystemInfo(Resource):
         import time
         overdue_watches = []
 
-        # Check all watches and report which have not been checked but should have been
+        # Check all watches and report which have not been checked but should have been.
+        # Paused watches (one by one, or all of them with "pause all") aren't supposed to be checked, so never overdue.
+        all_paused = self.datastore.data['settings']['application'].get('all_paused')
 
         for uuid, watch in self.datastore.data.get('watching', {}).items():
+            if all_paused or watch.get('paused'):
+                continue
             # see if now - last_checked is greater than the time that should have been
             # this is not super accurate (maybe they just edited it) but better than nothing
             t = watch.threshold_seconds()
