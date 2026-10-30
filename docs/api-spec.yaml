@@ -101,6 +101,11 @@ tags:
       Search and filter your watches by URL patterns, titles, or tags. Useful for quickly finding specific 
       monitors in large collections or identifying watches that match certain criteria.
       
+  - name: Changes
+    description: |
+      Every change across a group of watches (or all of them) between two dates, in one call, as unified diffs.
+      Made for periodic digests, scripts and AI assistants: "what changed on these 40 pages this month?"
+
   - name: Import
     description: |
       Bulk import multiple URLs for monitoring. Accepts plain text lists of URLs and can automatically 
@@ -938,6 +943,27 @@ components:
             type: string
             format: uuid
           description: All watches which have not been checked but should have been
+        fetch_workers:
+          type: integer
+          description: How many fetch workers check watches at the same time
+        checking_now:
+          type: array
+          description: |
+            The watches being checked right now, longest running first. Together with `queue_size` and `fetch_workers`
+            this shows why checks are slow: a long queue, or workers stuck on the same slow checks.
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+                format: uuid
+              title:
+                type: string
+              url:
+                type: string
+              running_seconds:
+                type: integer
+                description: How long this check has been running
         watch_count:
           type: integer
           description: Total number of web page change monitors (watches)
@@ -965,6 +991,68 @@ components:
           type: boolean
           default: false
           description: A newer version of changedetection.io is available for update
+
+    ChangesReport:
+      type: object
+      properties:
+        from:
+          type: integer
+          description: Start of the period, unix seconds
+        to:
+          type: integer
+          description: End of the period, unix seconds
+        mode:
+          type: string
+          enum: [net_change, each]
+        total:
+          type: integer
+          description: Watches that changed in the period
+        changes_total:
+          type: integer
+          description: Changes across all of them
+        monitors_checked:
+          type: integer
+          description: Watches looked at (in the group, the list, or all)
+        incomplete:
+          type: boolean
+          description: |
+            True when the request reached its time limit (`CHANGES_TIME_BUDGET_SECONDS`, default 20) before every watch
+            was looked at. Narrow it down with `tag`, `uuids` or a shorter period.
+        offset:
+          type: integer
+        limit:
+          type: integer
+        watches:
+          type: array
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+              title:
+                type: string
+              url:
+                type: string
+              changes:
+                type: integer
+                description: Snapshots inside the period
+              new_in_period:
+                type: boolean
+              no_net_difference:
+                type: boolean
+              error:
+                type: string
+                nullable: true
+                description: The watch's last error, if its last check failed
+              from_timestamp:
+                type: integer
+              to_timestamp:
+                type: integer
+              diff:
+                type: string
+                description: Unified diff, empty when there's no net difference
+              truncated:
+                type: boolean
 
     SearchResult:
       type: object
@@ -2149,6 +2237,140 @@ paths:
                     paused: false
                     notification_muted: false
 
+  /changes:
+    get:
+      operationId: getChanges
+      tags: [Changes]
+      summary: Get every change across a group of watches between two dates
+      description: |
+        Returns the changes of every watch in a group (or a list of watches, or all of them) between `from` and `to`,
+        as standard unified diffs under a short header per watch. Watches with no change in the period are left out,
+        and the most recently changed come first.
+
+        Works for any kind of watch, plain text or restock/price, since the diff is of the stored text snapshots.
+
+        **Modes**
+        - `net_change` (default): the latest snapshot at or before `from` against the latest at or before `to`.
+          A watch that changed and then changed back is still listed, as `N changes, no net difference`, with no diff.
+        - `each`: one diff per snapshot inside the period, against the one before it.
+
+        A watch first seen inside the period is compared from its first snapshot and marked `new in period`.
+        A watch whose last check failed is marked with its error.
+
+        Example output (`format=unified`):
+        ```
+        # 2 of 3 monitors changed (3 changes), 2026-10-01T00:00:00Z -> 2026-10-31T00:00:00Z, mode=net_change, showing 1-2
+
+        ### Pro Blender - https://example.com/blender
+        uuid: 91bc... | 2026-10-01T00:00:00Z -> 2026-10-20T08:00:00Z | 2 changes, no net difference
+
+        ### Privacy Policy - https://example.com/privacy
+        uuid: 3f2a... | 2026-10-01T00:00:00Z -> 2026-10-05T10:02:11Z | 1 change
+        --- 2026-10-01T00:00:00Z
+        +++ 2026-10-05T10:02:11Z
+        @@ -2,3 +2,3 @@
+         We may share data with
+        -our payment processor.
+        +our payment processor and advertising partners.
+         Outro
+        ```
+      x-code-samples:
+        - lang: 'curl'
+          source: |
+            curl -X GET "http://localhost:5000/api/v1/changes?tag=competitors&from=2026-10-01&to=2026-11-01" \
+              -H "x-api-key: YOUR_API_KEY"
+        - lang: 'Python'
+          source: |
+            import requests
+
+            headers = {'x-api-key': 'YOUR_API_KEY'}
+            params = {'tag': 'competitors', 'from': '2026-10-01', 'to': '2026-11-01', 'format': 'json'}
+            response = requests.get('http://localhost:5000/api/v1/changes', headers=headers, params=params)
+            for watch in response.json()['watches']:
+                print(watch['title'], watch['changes'])
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start of the period (not included), as unix seconds or an ISO 8601 date/datetime (UTC unless it says otherwise)
+          schema:
+            type: string
+          example: '2026-10-01'
+        - name: to
+          in: query
+          description: End of the period (included), as unix seconds or an ISO 8601 date/datetime. Defaults to now.
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: Only watches in this tag/group, by UUID or name
+          schema:
+            type: string
+        - name: uuids
+          in: query
+          description: Only these watches, comma separated UUIDs (used when `tag` isn't given)
+          schema:
+            type: string
+        - name: mode
+          in: query
+          description: '`net_change` (default) or `each`, see above'
+          schema:
+            type: string
+            enum: [net_change, each]
+            default: net_change
+        - name: context
+          in: query
+          description: Unchanged lines shown around each change
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10
+            default: 1
+        - name: max_lines_per_watch
+          in: query
+          description: Cut a watch's diff after this many lines, with a pointer to its full per-watch difference. 0 for no limit.
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 5000
+            default: 200
+        - name: limit
+          in: query
+          description: How many changed watches to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 50
+        - name: offset
+          in: query
+          description: Skip this many changed watches, for paging
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: format
+          in: query
+          description: '`unified` (plain text, default) or `json`'
+          schema:
+            type: string
+            enum: [unified, json]
+            default: unified
+      responses:
+        '200':
+          description: The changes, as plain text (`format=unified`) or JSON (`format=json`)
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangesReport'
+        '400':
+          description: Missing or invalid parameter
+        '404':
+          description: No tag/group or watch with the given UUID or name
+
   /import:
     post:
       operationId: importWatches
@@ -2304,6 +2526,12 @@ paths:
               example:
                 queue_size: 0
                 overdue_watches: ["cc0cfffa-f449-477b-83ea-0caafd1dc091", "14a10ae3-65b5-5cfc-ab6a-97c331f1c30f", "e980dbd0-f825-4002-b82f-3925b3221188"]
+                fetch_workers: 10
+                checking_now:
+                  - uuid: "095be615-a8ad-4c33-8e9c-c7612fbf6c9f"
+                    title: "Example product page"
+                    url: "https://example.com/product"
+                    running_seconds: 12
                 watch_count: 42
                 tag_count: 5
                 all_paused: false

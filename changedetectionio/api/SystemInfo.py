@@ -31,8 +31,11 @@ class SystemInfo(Resource):
             # Allow 5 minutes of grace time before we decide it's overdue
             if time_since_check - (5 * 60) > t:
                 overdue_watches.append(uuid)
-        from changedetectionio import __version__ as main_version
+        from changedetectionio import __version__ as main_version, worker_pool
+        from changedetectionio.api.operations import checking_now
         return {
+            'checking_now': checking_now(self.datastore),
+            'fetch_workers': worker_pool.get_worker_count(),
             'all_muted': self.datastore.data['settings']['application']['all_muted'],
             'all_paused': self.datastore.data['settings']['application']['all_paused'],
             'base_url': self.datastore.data['settings']['application']['base_url'],
