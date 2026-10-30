@@ -3701,7 +3701,7 @@ msgstr "Снимок экрана: Минимальный процент изм�
 msgid "Must be between 0 and 100"
 msgstr "Должно быть от 0 до 100"
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr "Пароль"
 
@@ -3993,6 +3993,38 @@ msgstr ""
 #: changedetectionio/notification/apprise_form.py
 msgid "Custom e-mail"
 msgstr "Свой e-mail"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr "Свой POST/GET/PUT/DELETE…"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr "URL"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr "Метод"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr "HTTP-заголовки"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr "Параметры запроса"
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "Обязательно"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
+msgstr "URL должен начинаться с http:// или https://"
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
@@ -4286,10 +4318,6 @@ msgid "No matching service"
 msgstr "Нет подходящих служб"
 
 #: changedetectionio/templates/_common_fields-notification.html
-msgid "Required"
-msgstr "Обязательно"
-
-#: changedetectionio/templates/_common_fields-notification.html
 msgid "Separate several with commas"
 msgstr "Несколько значений — через запятую"
 
@@ -4309,6 +4337,10 @@ msgstr "Заполните поля, чтобы создать URL"
 msgid "Added to the list below"
 msgstr "Добавлено в список ниже"
 
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "Обработка.."
+
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Add a notification service:"
 msgstr "Добавить службу уведомлений:"
@@ -4324,6 +4356,10 @@ msgstr "Где их взять?"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Options"
 msgstr "Параметры"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "Отправить тестовое уведомление"
 
 #: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
 msgid "Add to list"
@@ -4516,16 +4552,8 @@ msgid "Add an email address"
 msgstr "Добавить адрес электронной почты"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "Отправить тестовое уведомление"
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "Журналы отладки уведомлений"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "Обработка.."
 
 #: changedetectionio/templates/_common_fields.html
 #, python-format

@@ -3583,7 +3583,7 @@ msgstr ""
 msgid "Must be between 0 and 100"
 msgstr ""
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr ""
 
@@ -3874,6 +3874,38 @@ msgstr ""
 
 #: changedetectionio/notification/apprise_form.py
 msgid "Custom e-mail"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr ""
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
 msgstr ""
 
 #: changedetectionio/processors/extract.py
@@ -4168,10 +4200,6 @@ msgid "No matching service"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
-msgid "Required"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields-notification.html
 msgid "Separate several with commas"
 msgstr ""
 
@@ -4191,6 +4219,10 @@ msgstr ""
 msgid "Added to the list below"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr ""
+
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Add a notification service:"
 msgstr ""
@@ -4205,6 +4237,10 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Options"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
@@ -4392,15 +4428,7 @@ msgid "Add an email address"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html

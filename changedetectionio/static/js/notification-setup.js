@@ -30,6 +30,7 @@ $(function () {
     function rank(s, q) {
         var name = s.name.toLowerCase();
         if (name.indexOf(q) === 0) return 0;
+        if ($.grep(s.keywords || [], function (k) { return k.indexOf(q) === 0; }).length) return 0;
         var bare = q.replace(/[^a-z0-9]+/g, '');
         var words = name.split(/\s+/);
         if (s.schema.indexOf(q) === 0 || (' ' + name.replace(/[^a-z0-9]+/g, ' ')).indexOf(' ' + q) !== -1 ||
@@ -56,7 +57,7 @@ $(function () {
         }
         $.each(matches, function (i, s) {
             $('<li role="option"></li>').attr('data-schema', s.schema)
-                .append($('<span></span>').text(s.name), $('<code></code>').text(s.schema + '://'))
+                .append($('<span></span>').text(s.name), $('<code></code>').text(s.hint || s.schema + '://'))
                 .appendTo($results);
         });
         active = matches.length ? 0 : -1;
@@ -107,7 +108,8 @@ $(function () {
     }
 
     function fieldInput(f) {
-        var $wrap = $('<div class="ns-field"></div>').attr('data-key', f.key).attr('data-type', f.type);
+        var $wrap = $('<div class="ns-field"></div>').attr('data-key', f.key).attr('data-type', f.type)
+            .toggleClass('ns-new-row', !!f.new_row);
         var id = 'ns-f-' + f.key;
 
         if (f.type === 'checkbox') {
@@ -128,6 +130,7 @@ $(function () {
             var type = {password: 'password', number: 'number', email: 'email'}[f.type] || 'text';
             $input = $('<input>').attr({type: type, autocomplete: type === 'password' ? 'new-password' : 'off'});
             if (f.type === 'list') $input.attr('placeholder', t.commaSeparated || 'Separate several with commas');
+            if (f.placeholder) $input.attr('placeholder', f.placeholder);
             if (f.min !== undefined) $input.attr('min', f.min);
             if (f.max !== undefined) $input.attr('max', f.max);
         }
@@ -138,7 +141,7 @@ $(function () {
         current = form;
         builtUrl = null;
         $card.find('.ns-name').text(form.name);
-        $card.find('.ns-schema').text(form.schema + '://');
+        $card.find('.ns-schema').text(form.schema === 'custom-http' ? '' : form.schema + '://');
         $card.find('.ns-help').attr('href', form.setup_url || '#').toggle(!!form.setup_url);
 
         var $fields = $card.find('.ns-fields').first().empty();
@@ -194,9 +197,10 @@ $(function () {
             if (seq !== buildSeq) return;  // a newer build is on its way
             var res = (data && data.responseJSON) || data || {};
             if (res.url) {
+                // Keep a "Send test" result while the URL is the same (leaving a field fires a rebuild)
+                if (res.url !== builtUrl) $msg.removeClass('error ok').text('');
                 builtUrl = res.url;
                 $url.text(res.url_masked).attr('title', res.url_masked);
-                $msg.removeClass('error ok').text('');
             } else {
                 builtUrl = null;
                 $url.text('').attr('title', '');

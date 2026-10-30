@@ -3602,7 +3602,7 @@ msgstr "スクリーンショット: 最小変化率"
 msgid "Must be between 0 and 100"
 msgstr "0から100の間で指定してください"
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr "パスワード"
 
@@ -3894,6 +3894,38 @@ msgstr ""
 #: changedetectionio/notification/apprise_form.py
 msgid "Custom e-mail"
 msgstr "カスタムメール"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr "カスタム POST/GET/PUT/DELETE…"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr "URL"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr "メソッド"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr "ユーザー名"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr "HTTPヘッダー"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr "クエリパラメータ"
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "必須"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
+msgstr "URLは http:// または https:// で始まる必要があります"
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
@@ -4187,10 +4219,6 @@ msgid "No matching service"
 msgstr "一致するサービスがありません"
 
 #: changedetectionio/templates/_common_fields-notification.html
-msgid "Required"
-msgstr "必須"
-
-#: changedetectionio/templates/_common_fields-notification.html
 msgid "Separate several with commas"
 msgstr "複数ある場合はカンマで区切ります"
 
@@ -4210,6 +4238,10 @@ msgstr "フィールドを入力するとURLが作成されます"
 msgid "Added to the list below"
 msgstr "下のリストに追加しました"
 
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "処理中.."
+
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Add a notification service:"
 msgstr "通知サービスを追加:"
@@ -4225,6 +4257,10 @@ msgstr "入手方法"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Options"
 msgstr "オプション"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "テスト通知を送信"
 
 #: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
 msgid "Add to list"
@@ -4417,16 +4453,8 @@ msgid "Add an email address"
 msgstr "メールアドレスを追加"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "テスト通知を送信"
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "通知デバッグログ"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "処理中.."
 
 #: changedetectionio/templates/_common_fields.html
 #, python-format

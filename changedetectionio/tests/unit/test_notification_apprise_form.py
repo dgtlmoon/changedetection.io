@@ -105,3 +105,40 @@ def test_build_keeps_non_default_port_and_headers():
     url = build_url('jsons', {'host': 'hooks.example.com'}, secure=False, extra={'headers': {'X-Token': 'abc'}})['url']
     assert url.startswith('json://')
     assert apprise.Apprise.instantiate(url).headers == {'X-Token': 'abc'}
+
+
+def test_custom_http_entry():
+    """One "Custom POST/GET/PUT/DELETE…" entry for our own get:// post:// ... handlers, never a POST and a POSTS."""
+    services = list_services()
+    names = [s['name'] for s in services]
+    assert names.count('Custom POST/GET/PUT/DELETE…') == 1
+    assert not any(n.startswith('Custom HTTP - ') for n in names)
+    assert [s['schema'] for s in list_services('webhook')] == ['custom-http']
+
+    form = describe_service('custom-http')
+    assert [f['key'] for f in form['fields']] == ['url', 'method', 'user', 'password']
+    assert {k['key'] for k in form['kwargs']} == {'headers', 'params'}
+
+
+def test_custom_http_build():
+    from apprise.utils.parse import parse_url
+    from changedetectionio.notification.apprise_plugin.custom_handlers import _get_headers, _get_params
+
+    # https:// picks the "s" handler, the method picks which one
+    result = build_url('custom-http', {'url': 'https://api.example.com/hook', 'method': 'POST'},
+                       extra={'headers': {'X-Key': 'abc', 'Authorization': 'Bearer t'}, 'params': {'k': 'v'}})
+    assert result['url'].startswith('posts://api.example.com/hook?')
+    assert 'abc' not in result['url_masked'] and 'Bearer' not in result['url_masked']
+
+    # Read back the way custom_handlers.py does at send time: headers only as headers
+    parsed = parse_url(result['url'])
+    assert dict(_get_headers(parsed, '')) == {'X-Key': 'abc', 'Authorization': 'Bearer t'}
+    assert dict(_get_params(parsed)) == {'k': 'v'}
+
+    result = build_url('custom-http', {'url': 'http://h.example.com:8080/p', 'method': 'put',
+                                       'user': 'me', 'password': 'p@ss'})
+    assert result['url'] == 'put://me:p%40ss@h.example.com:8080/p'
+    assert result['url_masked'] == 'put://me:****@h.example.com:8080/p'
+
+    assert 'http://' in build_url('custom-http', {'url': 'ftp://example.com', 'method': 'GET'})['error']
+    assert build_url('custom-http', {'method': 'GET'})['missing'] == ['URL']

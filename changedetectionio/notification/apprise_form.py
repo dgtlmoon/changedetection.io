@@ -11,6 +11,11 @@ actually fills in.
 The URL itself is always written by Apprise: build_url() hands the values to the service's own
 class and asks it for .url(), so we never assemble Apprise URL syntax ourselves.
 
+The one exception is "Custom POST/GET/PUT/DELETE…", changedetection.io's own plain HTTP request
+handlers (apprise_plugin/custom_handlers.py, get:// post:// put:// ... with an https "s" variant of each).
+Apprise can't describe those (they're just "{schema}://"), so that entry is written here by hand: a
+normal http(s):// URL plus a method, turned into post:// posts:// etc.
+
 Nothing is cached: one service's details cost well under a millisecond, and keeping all of them
 would hold ~1.4MB per instance.
 """
@@ -20,6 +25,10 @@ import re
 # is chosen by changedetection.io's own notification format setting.
 GENERIC_ARGS = {'verify', 'redirect', 'rto', 'cto', 'overflow', 'format', 'emojis', 'store', 'tz',
                 'retry', 'wait', 'optional'}
+
+# The hand-written entry for our own HTTP request handlers, see _describe_custom_http()
+CUSTOM_HTTP = 'custom-http'
+CUSTOM_HTTP_METHODS = ('POST', 'GET', 'PUT', 'PATCH', 'DELETE', 'HEAD')
 
 # A list field typed into one input box, "a@x.com, b@y.com" or one per line
 _LIST_SPLIT = re.compile(r'[,\n]+')
@@ -79,6 +88,10 @@ def list_services(q=None):
         if q and q not in name.lower() and not any(q in p for p in plain + secure):
             continue
         services.append({'schema': schema, 'name': name, 'setup_url': getattr(plugin, 'setup_url', None)})
+
+    custom = _custom_http_entry()
+    if not q or q in custom['name'].lower() or any(k.startswith(q) for k in custom['keywords']):
+        services.append(custom)
     return sorted(services, key=lambda s: s['name'].lower())
 
 
@@ -133,6 +146,8 @@ def describe_service(schema, lang=None):
     {'schema', 'name', 'setup_url', 'secure_toggle': bool,
      'fields': [...], 'options': [...], 'kwargs': [{'key', 'label', 'prefix'}]}
     """
+    if schema == CUSTOM_HTTP:
+        return _describe_custom_http()
     plugin = _plugin_for(schema)
     if not plugin:
         return None
@@ -247,6 +262,8 @@ def build_url(schema, values=None, secure=True, extra=None):
     Returns:
         {'url': str, 'url_masked': str} or {'error': str}
     """
+    if schema == CUSTOM_HTTP:
+        return _build_custom_http(values or {}, extra or {})
     plugin = _plugin_for(schema)
     if not plugin:
         return {'error': f"Unknown notification service '{schema}'"}
@@ -300,3 +317,96 @@ def build_url(schema, values=None, secure=True, extra=None):
         return {'error': f"{form['name']}: some required values are missing or invalid"}
 
     return {'url': url, 'url_masked': masked}
+
+
+# ---- "Custom POST/GET/PUT/DELETE…", changedetection.io's own HTTP request handlers ----
+
+def _custom_http_entry():
+    from flask_babel import gettext
+    return {
+        'schema': CUSTOM_HTTP,
+        'name': gettext('Custom POST/GET/PUT/DELETE…'),
+        'setup_url': 'https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes',
+        # Shown instead of a scheme in the service list
+        'hint': 'webhook / API',
+        # Searching any of these finds this entry first
+        'keywords': [m.lower() for m in CUSTOM_HTTP_METHODS] + ['webhook', 'api', 'http'],
+    }
+
+
+def _describe_custom_http():
+    from flask_babel import gettext
+    entry = _custom_http_entry()
+    return {
+        'schema': CUSTOM_HTTP,
+        'name': entry['name'],
+        'setup_url': entry['setup_url'],
+        'secure_toggle': False,  # follows the URL's own http:// or https://
+        'fields': [
+            {'key': 'url', 'label': gettext('URL'), 'type': 'text', 'required': True,
+             'placeholder': 'https://api.example.com/hook'},
+            {'key': 'method', 'label': gettext('Method'), 'type': 'select', 'required': True,
+             'values': list(CUSTOM_HTTP_METHODS), 'default': 'POST'},
+            # Username and password on a line of their own
+            {'key': 'user', 'label': gettext('Username'), 'type': 'text', 'required': False, 'new_row': True},
+            {'key': 'password', 'label': gettext('Password'), 'type': 'password', 'required': False},
+        ],
+        'options': [],
+        'kwargs': [
+            {'key': 'headers', 'label': gettext('HTTP headers'), 'prefix': '+'},
+            {'key': 'params', 'label': gettext('Query parameters'), 'prefix': ''},
+        ],
+    }
+
+
+def _build_custom_http(values, extra):
+    """https://api.example.com/hook + POST -> posts://api.example.com/hook, headers as ?+Name=Value
+    and query parameters as plain ?name=value, the way custom_handlers.py reads them back."""
+    from urllib.parse import quote, urlencode, urlsplit
+    from flask_babel import gettext
+
+    url = str(values.get('url') or '').strip()
+    method = str(values.get('method') or 'POST').strip().upper()
+    if not url:
+        return {'error': f"{gettext('Required')}: {gettext('URL')}", 'missing': [gettext('URL')]}
+    if method not in CUSTOM_HTTP_METHODS:
+        return {'error': f"Unknown method '{method}'"}
+
+    parts = urlsplit(url)
+    if parts.scheme.lower() not in ('http', 'https') or not parts.hostname:
+        return {'error': gettext('The URL must start with http:// or https://')}
+
+    schema = method.lower() + ('s' if parts.scheme.lower() == 'https' else '')
+    host = parts.hostname + (f':{parts.port}' if parts.port else '')
+
+    def assemble(password_shown):
+        user = str(values.get('user') or '').strip() or parts.username
+        password = str(values.get('password') or '') or parts.password
+        auth = ''
+        if user:
+            auth = quote(user, safe='')
+            if password:
+                auth += ':' + (quote(password, safe='') if password_shown else '****')
+            auth += '@'
+        query = [parts.query] if parts.query else []
+        headers = {k: v for k, v in (extra.get('headers') or {}).items() if str(k).strip()}
+        params = {k: v for k, v in (extra.get('params') or {}).items() if str(k).strip()}
+        if params:
+            query.append(urlencode(params))
+        if headers:
+            # Lowercase names: custom_handlers._get_params() only recognises a lowercase "+name" as a header and
+            # would otherwise also send it as a query parameter. It title-cases them again before sending.
+            # Values are often credentials (Authorization: Bearer ...), hidden in the preview.
+            query.append('&'.join(f"+{quote(str(k).strip().lower(), safe='')}="
+                                  f"{quote(str(v), safe='') if password_shown else '****'}"
+                                  for k, v in headers.items()))
+        return f"{schema}://{auth}{host}{parts.path or '/'}" + ('?' + '&'.join(query) if query else '')
+
+    full = assemble(True)
+
+    # Registers get:// post:// ... with Apprise, they're otherwise only added on first use
+    import apprise
+    import changedetectionio.notification.apprise_plugin.custom_handlers  # noqa: F401
+    if not apprise.Apprise.instantiate(full):
+        return {'error': gettext('The URL must start with http:// or https://')}
+    return {'url': full, 'url_masked': assemble(False)}

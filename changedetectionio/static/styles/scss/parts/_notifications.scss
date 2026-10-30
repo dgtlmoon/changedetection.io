@@ -227,6 +227,9 @@
     }
 
     &[data-type="headers"] { grid-column: 1 / -1; }
+
+    // Starts a new line in the grid, e.g. username/password after the URL and method
+    &.ns-new-row { grid-column-start: 1; }
   }
 
   .ns-options {
