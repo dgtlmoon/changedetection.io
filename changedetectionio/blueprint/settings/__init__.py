@@ -15,10 +15,17 @@ from changedetectionio.auth_decorator import login_optionally_required
 def construct_blueprint(datastore: ChangeDetectionStore):
     from changedetectionio.llm.evaluator import is_llm_features_disabled
     settings_blueprint = Blueprint('settings', __name__, template_folder="templates")
-    # The AI / LLM settings page and its helpers (/settings/llm), not registered at all with LLM_FEATURES_DISABLED
+    # The AI settings pages and their helpers, /settings/ai/llm and /settings/ai/mcp (blueprint/settings/llm),
+    # not registered at all with LLM_FEATURES_DISABLED
     if not is_llm_features_disabled():
         from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
-        settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
+        settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/ai')
+
+        @settings_blueprint.route("/llm", methods=['GET'], strict_slashes=False)
+        @login_optionally_required
+        def old_llm_settings_url():
+            # The AI / LLM page was at /settings/llm before (#4637), keep old bookmarks and links working
+            return redirect(url_for('settings.llm.llm_settings_page'))
 
     # Notification settings live in their own child blueprint so future backends
     # (simple_email, webhooks, etc.) slot in as /settings/notifications/<backend>

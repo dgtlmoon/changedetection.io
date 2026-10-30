@@ -1,25 +1,20 @@
 {% extends 'base.html' %}
 {#
-  The AI / LLM settings page, /settings/llm (blueprint/settings/llm). Stored in settings.application.llm.
-  Only registered when LLM_FEATURES_DISABLED isn't set. One tab for now, an MCP tab will join it.
+  The "AI / LLM" tab, /settings/ai/llm (blueprint/settings/llm). Stored in settings.application.llm.
+  Only registered when LLM_FEATURES_DISABLED isn't set. The "MCP Server" tab is its own page, mcp-settings.html.
   Requires template context: form, llm_config, llm_env_configured (see llm_template_context())
 #}
 {% block content %}
 {% from '_helpers.html' import render_field, render_button %}
 {% from '_stab.html' import stab_shell, stab_pane %}
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
-<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 
 <div class="edit-form">
-    <div class="tabs collapsable">
-        <ul>
-            <li class="tab"><a href="#ai">{{ _('AI / LLM') }}</a></li>
-        </ul>
-    </div>
+    {% include 'settings-ai-tabs.html' %}
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.llm_settings_page') }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<div class="tab-pane-inner" id="ai">
+<div class="tab-pane-inner tab-pane-current" id="ai">
 <script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
 
 {# TRANSLATORS: 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide #}
@@ -476,6 +471,11 @@
   {% endcall %}
 
 {% endcall %}{# stab_shell #}
+<div id="actions">
+    <div class="pure-control-group">
+        {{ render_button(form.save_button) }}
+    </div>
+</div>
 </div>
 
 <script>
@@ -677,11 +677,6 @@
 }());
 </script>
 
-            <div id="actions">
-                <div class="pure-control-group">
-                    {{ render_button(form.save_button) }}
-                </div>
-            </div>
         </form>
     </div>
 </div>

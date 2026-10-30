@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{#
+  The "MCP Server" tab, /settings/ai/mcp (blueprint/settings/llm). Its own page and route, see settings-ai-tabs.html.
+  Requires template context: mcp_disabled, mcp_url, mcp_token (see mcp_template_context())
+#}
+{% block content %}
+<div class="edit-form">
+    {% include 'settings-ai-tabs.html' %}
+    <div class="box-wrap inner">
+<div class="tab-pane-inner tab-pane-current" id="mcp">
+<script src="{{ url_for('static_content', group='js', filename='click-to-copy.js') }}" defer></script>
+{% macro copyable(text, id, block=False) -%}
+    {%- if block -%}
+    <div class="mcp-snippet"><pre><code id="{{ id }}" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code></pre></div>
+    {%- else -%}
+    <code id="{{ id }}" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code>
+    {%- endif -%}
+{%- endmacro %}
+
+    <h4>{{ _('Connect AI assistants with MCP') }}</h4>
+    <p>{{ _('MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code use other applications as tools.') }}</p>
+    <p>{{ _('Connect one to changedetection.io and you can ask it things like "what changed on my competitor pages this month?" or "why is this monitor failing?", or have it add, tag and recheck monitors for you.') }}</p>
+
+    {% if mcp_disabled %}
+    <p class="pure-form-message-inline"><strong>{{ _('The MCP server is switched off on this installation.') }}</strong></p>
+    {% else %}
+
+    <div class="pure-control-group">
+        <h4>{{ _('Server address') }}</h4>
+        {{ copyable(mcp_url, 'mcp-url') }}
+    </div>
+
+    <div class="pure-control-group">
+        <h4>{{ _('MCP access token') }}</h4>
+        {{ copyable(mcp_token, 'mcp-token') }}
+        <form method="POST" action="{{ url_for('settings.llm.mcp_reset_token') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <p><button type="submit" class="cdio-btn button-small button-cancel">{{ _('Regenerate MCP token') }}</button></p>
+        </form>
+        <p class="pure-form-message-inline">{{ _('Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one.') }}</p>
+    </div>
+
+    <div class="pure-control-group">
+        <h4>Claude Code</h4>
+        <p>{{ _('Run this in a terminal, then start a new Claude Code session and ask, for example, "Which of my monitors have errors?"') }}</p>
+        {{ copyable('claude mcp add --transport http changedetection ' ~ mcp_url ~ ' --header "Authorization: Bearer ' ~ mcp_token ~ '"', 'mcp-claude-code', block=True) }}
+        <p class="pure-form-message-inline">{{ _('To remove it again:') }} <code>claude mcp remove changedetection</code></p>
+    </div>
+
+    <div class="pure-control-group">
+        <h4>{{ _('Read-only') }}</h4>
+        <p>{{ _('To let an assistant look but never change anything, use this address instead:') }}</p>
+        {{ copyable(mcp_url ~ '?readonly=1', 'mcp-url-readonly') }}
+    </div>
+
+    <details class="mcp-other-clients">
+        <summary>{{ _('Other AI assistants') }}</summary>
+
+        <h4>Cursor <span class="mcp-where">~/.cursor/mcp.json</span></h4>
+        {{ copyable('{"mcpServers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-cursor', block=True) }}
+
+        <h4>VS Code / GitHub Copilot <span class="mcp-where">.vscode/mcp.json</span></h4>
+        {{ copyable('{"servers": {"changedetection": {"type": "http", "url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-vscode', block=True) }}
+
+        <h4>Claude Desktop <span class="mcp-where">claude_desktop_config.json</span></h4>
+        <p class="pure-form-message-inline">{{ _('Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access token.') }}</p>
+        {{ copyable('{"mcpServers": {"changedetection": {"command": "npx", "args": ["mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-claude-desktop', block=True) }}
+
+        <p class="pure-form-message-inline">{{ _('ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not offer yet.') }}</p>
+    </details>
+
+    <div class="pure-control-group">
+        <h4>{{ _('What an assistant can do') }}</h4>
+        <ul>
+            <li>{{ _('Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked right now.') }}</li>
+            <li>{{ _('Change: add monitors, change their settings, tag them, recheck them and add notification URLs.') }}</li>
+            <li>{{ _('Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these.') }}</li>
+        </ul>
+        <p class="pure-form-message-inline">{{ _('Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full.') }}</p>
+    </div>
+    {% endif %}
+</div>
+    </div>
+</div>
+{% endblock %}

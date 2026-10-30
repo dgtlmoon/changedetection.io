@@ -1,0 +1,56 @@
+// The AI settings pages, /settings/ai/llm and /settings/ai/mcp (blueprint/settings/llm/templates)
+
+// Each tab there is its own page (settings-ai-tabs.html), so its pane shows without being the #anchor target.
+// More specific than styles.scss's `.tab-pane-inner:not(:target) { display: none }`.
+.box-wrap .tab-pane-inner.tab-pane-current {
+  display: block;
+}
+
+// Click to copy, same look as the API key on /settings (static/js/click-to-copy.js)
+.click-to-copy {
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.click-to-copy-hint {
+  color: var(--color-api-key);
+  margin-left: 0.5em;
+  font-size: 0.9em;
+}
+
+#mcp {
+  .mcp-snippet {
+    max-width: 60rem;
+
+    pre {
+      margin: 0.4em 0;
+      padding: 0.7em 0.9em;
+      background: var(--color-background-code);
+      border-radius: 5px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      background: none;
+      font-size: 0.9em;
+    }
+  }
+
+  .mcp-where {
+    font-weight: normal;
+    font-family: monospace;
+    font-size: 0.85em;
+    opacity: 0.7;
+    margin-left: 0.4em;
+  }
+
+  .mcp-other-clients {
+    margin: 1em 0 1.5em;
+
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+    }
+  }
+}

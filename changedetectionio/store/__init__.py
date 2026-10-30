@@ -250,6 +250,12 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             # Maybe they copied a bunch of watch subdirs across too
             self._load_state()
 
+        # The MCP server's own access token (separate from the API key), created at startup for any datastore that
+        # doesn't have one yet: new, existing or migrated. The "MCP Server" tab on /settings/llm can rotate it.
+        if not self.__data['settings']['application'].get('mcp_access_token'):
+            self.__data['settings']['application']['mcp_access_token'] = secrets.token_hex(16)
+            self.commit()
+
     def init_fresh_install(self, include_default_watches, version_tag):
       # Generate app_guid FIRST (required for all operations)
         if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
@@ -262,6 +268,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # Generate API access token
         self.__data['settings']['application']['api_access_token'] = secrets.token_hex(16)
+
+        # Generate the MCP server's own access token (separate from the API key)
+        self.__data['settings']['application']['mcp_access_token'] = secrets.token_hex(16)
         logger.warning(f"No datastore found, creating new datastore at {self.datastore_path}")
 
         # Set schema version to latest (no updates needed)

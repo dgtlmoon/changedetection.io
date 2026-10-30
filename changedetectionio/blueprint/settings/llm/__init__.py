@@ -83,6 +83,25 @@ def llm_template_context(datastore):
     )
 
 
+def mcp_template_context(datastore):
+    """What the "MCP Server" tab (mcp-server-tab.html) needs."""
+    from changedetectionio.blueprint.mcp import is_mcp_disabled
+
+    app_settings = datastore.data['settings']['application']
+    mcp_disabled = is_mcp_disabled()
+    mcp_url = None
+    if not mcp_disabled:
+        # The configured Base URL is the instance's public address when set; otherwise build it from this request,
+        # which already includes the X-Forwarded-Prefix/Host/Proto of a reverse proxy (USE_X_SETTINGS)
+        base_url = (app_settings.get('base_url') or os.getenv('BASE_URL') or '').strip()
+        mcp_url = base_url.rstrip('/') + '/mcp' if base_url else url_for('mcp.endpoint', _external=True)
+    return dict(
+        mcp_disabled=mcp_disabled,
+        mcp_url=mcp_url,
+        mcp_token=app_settings.get('mcp_access_token') or '',
+    )
+
+
 def construct_llm_blueprint(datastore: ChangeDetectionStore):
     llm_blueprint = Blueprint('llm', __name__, template_folder="templates")
 
@@ -92,7 +111,14 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     if not plugin_manager.is_registered(sidebar):
         plugin_manager.register(sidebar, 'builtin_llm_sidebar')
 
-    @llm_blueprint.route("", methods=['GET', 'POST'], strict_slashes=False)
+    # Two tabs, each its own page and route (not #anchors), so each tab's form stands alone:
+    #   /settings/ai/llm - the "AI / LLM" tab (the default), /settings/ai/mcp - the "MCP Server" tab
+    @llm_blueprint.route("", methods=['GET'], strict_slashes=False)
+    @login_optionally_required
+    def ai_settings_index():
+        return redirect(url_for('settings.llm.llm_settings_page'))
+
+    @llm_blueprint.route("/llm", methods=['GET', 'POST'])
     @login_optionally_required
     def llm_settings_page():
         """The AI / LLM settings page, moved out of /settings. Stored in settings.application.llm as before."""
@@ -121,9 +147,28 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 return redirect(url_for('settings.llm.llm_settings_page'))
             flash(gettext("An error occurred, please see below."), "error")
 
-        return render_template("llm-settings.html", form=form, **llm_template_context(datastore))
+        return render_template("llm-settings.html", form=form, active_tab='llm', **llm_template_context(datastore))
 
-    @llm_blueprint.route("/models", methods=['GET'])
+    @llm_blueprint.route("/mcp", methods=['GET'])
+    @login_optionally_required
+    def mcp_settings_page():
+        """The "MCP Server" tab: the address, the access token and how to connect assistants."""
+        from changedetectionio.llm.evaluator import is_llm_features_disabled
+        if is_llm_features_disabled():
+            abort(404)
+        return render_template("mcp-settings.html", active_tab='mcp', **mcp_template_context(datastore))
+
+    @llm_blueprint.route("/mcp/token/reset", methods=['POST'])
+    @login_optionally_required
+    def mcp_reset_token():
+        """A new MCP access token; every assistant using the old one has to be given the new one."""
+        import secrets
+        datastore.data['settings']['application']['mcp_access_token'] = secrets.token_hex(16)
+        datastore.commit()
+        flash(gettext("MCP access token regenerated, update it in your AI assistants."), 'notice')
+        return redirect(url_for('settings.llm.mcp_settings_page'))
+
+    @llm_blueprint.route("/llm/models", methods=['GET'])
     @login_optionally_required
     def llm_get_models():
         from flask import request
@@ -178,7 +223,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         logger.debug(f"LLM model list: got {len(models)} models for provider={provider!r}")
         return jsonify({'models': models, 'error': None})
 
-    @llm_blueprint.route("/test", methods=['POST'])
+    @llm_blueprint.route("/llm/test", methods=['POST'])
     @login_optionally_required
     def llm_test():
         from flask import request
@@ -187,7 +232,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
 
         # Pull stored config as the fallback, then override with anything the
         # form-driven JS sent as query params. Lets users test config changes
-        # without first hitting Save (matching how /settings/llm/models works).
+        # without first hitting Save (matching how /settings/ai/llm/models works).
         stored = datastore.data['settings']['application'].get('llm') or {}
         # Keep the raw request-supplied values around so we can detect whether
         # the caller explicitly steered api_base / api_key (credential-exfil guard below).
@@ -281,7 +326,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     # operator's browser (GHSA-g36r-fm2p-87xm). Flask-WTF CSRFProtect enforces a
     # CSRF token on POST automatically; the template renders csrf_token() inside the
     # surrounding <form>.
-    @llm_blueprint.route("/clear", methods=['POST'])
+    @llm_blueprint.route("/llm/clear", methods=['POST'])
     @login_optionally_required
     def llm_clear():
         from changedetectionio.model.LLMSettings import LLMSettings
@@ -299,7 +344,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("AI / LLM configuration removed."), 'notice')
         return redirect(url_for('settings.llm.llm_settings_page'))
 
-    @llm_blueprint.route("/clear-summary-cache", methods=['POST'])
+    @llm_blueprint.route("/llm/clear-summary-cache", methods=['POST'])
     @login_optionally_required
     def llm_clear_summary_cache():
         import glob

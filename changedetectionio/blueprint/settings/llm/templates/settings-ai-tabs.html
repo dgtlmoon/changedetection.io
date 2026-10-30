@@ -1,0 +1,10 @@
+{#
+  The tabs of the AI settings pages. Each tab is its own page and route, not an #anchor, so each tab's form
+  stands alone; the current one is marked by the server (active_tab), tabs.js isn't used here.
+#}
+<div class="tabs collapsable">
+    <ul>
+        <li class="tab {% if active_tab == 'llm' %}active{% endif %}"><a href="{{ url_for('settings.llm.llm_settings_page') }}">{{ _('AI / LLM') }}</a></li>
+        <li class="tab {% if active_tab == 'mcp' %}active{% endif %}"><a href="{{ url_for('settings.llm.mcp_settings_page') }}">{{ _('MCP Server') }}</a></li>
+    </ul>
+</div>

@@ -465,6 +465,10 @@ msgid "All notifications unmuted."
 msgstr "所有通知已取消靜音。"
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP access token regenerated, update it in your AI assistants."
+msgstr "MCP 存取權杖已重新產生，請在你的 AI 助理中更新。"
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -479,7 +483,8 @@ msgstr "AI / LLM 設定已移除。"
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 摘要快取已清除（已移除 {} 個檔案）。"
 
-#: changedetectionio/blueprint/settings/llm/sidebar.py changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/sidebar.py
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr "AI / LLM"
@@ -949,6 +954,111 @@ msgstr "已連線"
 msgid "Failed"
 msgstr "失敗"
 
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "copied"
+msgstr "已複製"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copy"
+msgstr "複製"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect AI assistants with MCP"
+msgstr "透過 MCP 連接 AI 助理"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
+"use other applications as tools."
+msgstr "MCP（Model Context Protocol）是一個開放標準，讓 Claude、ChatGPT、Cursor 和 VS Code 等 AI 助理可以把其他應用程式當作工具使用。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Connect one to changedetection.io and you can ask it things like \"what changed on my competitor pages this month?\" "
+"or \"why is this monitor failing?\", or have it add, tag and recheck monitors for you."
+msgstr "把一個助理連接到 changedetection.io，就可以問它「這個月競爭對手的頁面有什麼變化？」或「這個監控為什麼失敗？」，或讓它新增、標記和重新檢查監控。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The MCP server is switched off on this installation."
+msgstr "此安裝已關閉 MCP 伺服器。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Server address"
+msgstr "伺服器位址"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "MCP access token"
+msgstr "MCP 存取權杖"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Regenerate MCP token"
+msgstr "重新產生 MCP 權杖"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one."
+msgstr "僅用於 MCP，與 API 金鑰分開。重新產生後，使用舊權杖的所有助理都會中斷連線。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Run this in a terminal, then start a new Claude Code session and ask, for example, \"Which of my monitors have "
+"errors?\""
+msgstr "在終端機中執行此指令，然後開始新的 Claude Code 工作階段並提問，例如「我的哪些監控有錯誤？」"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To remove it again:"
+msgstr "如需移除："
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read-only"
+msgstr "唯讀"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To let an assistant look but never change anything, use this address instead:"
+msgstr "如果只想讓助理查看而不更改任何內容，請改用此位址："
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Other AI assistants"
+msgstr "其他 AI 助理"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access "
+"token."
+msgstr "透過 mcp-remote 橋接（需要 Node.js），因為 Claude Desktop 連接器只支援登入，不支援存取權杖。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not "
+"offer yet."
+msgstr "瀏覽器中的 ChatGPT 和 claude.ai 只能連接支援登入（OAuth）的伺服器，此 MCP 伺服器暫不提供。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "What an assistant can do"
+msgstr "助理可以做什麼"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being "
+"checked right now."
+msgstr "查看：列出監控和群組、兩個日期之間的變化、差異、頁面快照、錯誤以及正在檢查的項目。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Change: add monitors, change their settings, tag them, recheck them and add notification URLs."
+msgstr "更改：新增監控、更改設定、加上標籤、重新檢查以及新增通知 URL。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these."
+msgstr "刪除：監控及其歷史、群組和通知 URL。助理會在執行前先詢問你。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
+msgstr "被監控頁面的文字會作為資料傳給助理。通知 URL 絕不會完整地顯示給它。"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "MCP Server"
+msgstr "MCP 伺服器"
+
 #: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Unknown notification service"
 msgstr "未知的通知服務"
@@ -1245,10 +1355,6 @@ msgstr "透過使用以下項目來限制 API 存取限制"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "header - required for the Chrome Extension to work"
 msgstr "標頭 - 這是 Chrome 擴充功能運作所必需的"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "copy"
-msgstr "複製"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"

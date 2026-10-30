@@ -9,11 +9,12 @@ connected assistant would hold a thread or greenlet for as long as the assistant
 is a normal short request, and every tool is bounded (see tools.py). It also needs no extra dependency: the official
 `mcp` SDK is ASGI (Starlette/uvicorn) and would add ~8 packages to every instance.
 
-Auth uses the REST API's key, sent as `x-api-key` or `Authorization: Bearer <key>`. It's required when "API access
-requires key" is on, and also whenever the UI is password protected.
+Auth is MCP's own access token (settings.application.mcp_access_token, on the "MCP Server" tab of /settings/llm), not
+the REST API key, sent as `Authorization: Bearer <token>` or `x-api-key`. It is always required. Off with
+LLM_FEATURES_DISABLED, or on its own with DISABLE_MCP=true.
 
 Connect, for example:
-    claude mcp add --transport http changedetection http://localhost:5000/mcp --header "x-api-key: YOUR_KEY"
+    claude mcp add --transport http changedetection http://localhost:5000/mcp --header "Authorization: Bearer YOUR_MCP_TOKEN"
 Use http://localhost:5000/mcp?readonly=1 for a connector that may only look, never change anything.
 """
 import hmac
@@ -35,6 +36,13 @@ INSTRUCTIONS = (
 )
 
 PARSE_ERROR, INVALID_REQUEST, METHOD_NOT_FOUND, INVALID_PARAMS, INTERNAL_ERROR = -32700, -32600, -32601, -32602, -32603
+
+
+def is_mcp_disabled():
+    """MCP is an AI feature: off with LLM_FEATURES_DISABLED, or on its own with DISABLE_MCP=true."""
+    from changedetectionio.llm.evaluator import is_llm_features_disabled
+    from changedetectionio.strtobool import strtobool
+    return is_llm_features_disabled() or bool(strtobool(os.getenv('DISABLE_MCP', 'false')))
 
 
 def _error(msg_id, code, message):
@@ -64,20 +72,15 @@ def construct_blueprint(datastore, update_q=None):
         if origin and urlsplit(origin).netloc != request.host:
             return make_response(jsonify({'error': 'Origin not allowed'}), 403)
 
-        settings = datastore.data['settings']['application']
-        # Same as the REST API, except that a password-protected UI always means the key is required too,
-        # so an assistant connector is never an unauthenticated way into a password-protected instance
-        key_required = settings.get('api_access_token_enabled') or settings.get('password') or os.getenv('SALTED_PASS')
-        if not key_required:
-            return None
-        expected = settings.get('api_access_token') or ''
-        given = request.headers.get('x-api-key') or ''
+        # Always its own token (settings.application.mcp_access_token, shown on the /settings/llm "MCP Server" tab),
+        # never the REST API key: MCP can create and delete monitors, so there is no "open" mode
+        expected = datastore.data['settings']['application'].get('mcp_access_token') or ''
         authorization = request.headers.get('Authorization', '')
-        if not given and authorization.lower().startswith('bearer '):
-            given = authorization[7:].strip()
+        given = authorization[7:].strip() if authorization.lower().startswith('bearer ') else ''
+        given = given or request.headers.get('x-api-key') or ''
         if expected and given and hmac.compare_digest(given.encode(), expected.encode()):
             return None
-        return make_response(jsonify({'error': 'Invalid access - API key invalid.'}), 403)
+        return make_response(jsonify({'error': 'Invalid access - MCP access token invalid.'}), 403)
 
     def handle(message):
         """Answer one JSON-RPC message. None for notifications, which get no answer."""
@@ -109,8 +112,13 @@ def construct_blueprint(datastore, update_q=None):
             arguments = params.get('arguments') or {}
             if not isinstance(arguments, dict):
                 return _error(msg_id, INVALID_PARAMS, "'arguments' must be an object")
+            import time
+            started = time.monotonic()
             try:
-                return _result(msg_id, tools.call(ctx, name, arguments))
+                result = tools.call(ctx, name, arguments)
+                logger.debug(f"MCP tool '{name}' took {time.monotonic() - started:.2f}s"
+                             + (" (tool error)" if result.get('isError') else ''))
+                return _result(msg_id, result)
             except Exception as e:
                 logger.exception(f"MCP tool '{name}' failed")
                 return _error(msg_id, INTERNAL_ERROR, f"Tool '{name}' failed: {type(e).__name__}")
@@ -118,6 +126,9 @@ def construct_blueprint(datastore, update_q=None):
 
     @mcp_blueprint.route('', methods=['POST', 'GET', 'DELETE'], strict_slashes=False)
     def endpoint():
+        # Not registered at all when disabled at startup, refused if it's switched off later
+        if is_mcp_disabled():
+            return make_response(jsonify({'error': 'Not found'}), 404)
         if request.method != 'POST':
             # Stateless: no SSE stream to open (GET) and no session to end (DELETE)
             response = make_response(jsonify({'error': 'Method not allowed, POST JSON-RPC messages'}), 405)

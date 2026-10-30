@@ -40,7 +40,7 @@ def _setup(datastore):
 
 def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path):
     datastore = client.application.config['DATASTORE']
-    api_key = datastore.data['settings']['application'].get('api_access_token')
+    api_key = datastore.data['settings']['application'].get('mcp_access_token')
 
     res = _rpc(client, 'initialize', {'protocolVersion': '2025-06-18', 'capabilities': {},
                                        'clientInfo': {'name': 'test', 'version': '1'}}, api_key=api_key)
@@ -105,30 +105,34 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
 
 
 def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
+    """MCP has its own access token, separate from the REST API key, and it is always required."""
     datastore = client.application.config['DATASTORE']
     settings = datastore.data['settings']['application']
-    api_key = settings.get('api_access_token')
-    assert settings.get('api_access_token_enabled')
+    token = settings.get('mcp_access_token')
+    assert token and token != settings.get('api_access_token')
 
     assert _rpc(client, 'ping').status_code == 403
     assert _rpc(client, 'ping', api_key='wrong').status_code == 403
-    assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {api_key}'}).status_code == 200
+    # The REST API key is not an MCP token
+    assert _rpc(client, 'ping', api_key=settings.get('api_access_token')).status_code == 403
+    assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {settings.get("api_access_token")}'}).status_code == 403
+    # Bearer (what the copyable configs use) or x-api-key
+    assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {token}'}).status_code == 200
+    assert _rpc(client, 'ping', api_key=token).status_code == 200
     # A web page in someone's browser must not reach it (DNS rebinding), the assistant itself sends no Origin
-    assert _rpc(client, 'ping', api_key=api_key, headers={'Origin': 'https://evil.example'}).status_code == 403
+    assert _rpc(client, 'ping', api_key=token, headers={'Origin': 'https://evil.example'}).status_code == 403
     from urllib.parse import urlsplit
     from flask import url_for
     own = urlsplit(url_for('mcp.endpoint', _external=True))
-    assert _rpc(client, 'ping', api_key=api_key, headers={'Origin': f'{own.scheme}://{own.netloc}'}).status_code == 200
+    assert _rpc(client, 'ping', api_key=token, headers={'Origin': f'{own.scheme}://{own.netloc}'}).status_code == 200
 
-    # "API access requires key" off: open, like the REST API...
+    # Required even with "API access requires key" off, there is no open mode
     settings['api_access_token_enabled'] = False
     try:
-        assert _rpc(client, 'ping').status_code == 200
-        # ...unless the UI is password protected, then the key is still required (and no login redirect)
+        assert _rpc(client, 'ping').status_code == 403
+        # and a password-protected UI never sends an assistant to the login page
         settings['password'] = 'something'
-        res = _rpc(client, 'ping')
-        assert res.status_code == 403
-        assert _rpc(client, 'ping', api_key=api_key).status_code == 200
+        assert _rpc(client, 'ping', api_key=token).status_code == 200
     finally:
         settings['password'] = False
         settings['api_access_token_enabled'] = True
@@ -136,7 +140,7 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
 
 def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
     datastore = client.application.config['DATASTORE']
-    api_key = datastore.data['settings']['application'].get('api_access_token')
+    api_key = datastore.data['settings']['application'].get('mcp_access_token')
     group, policy, broken = _setup(datastore)
 
     result = _call(client, api_key, 'list_watches')
@@ -196,7 +200,7 @@ def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
 
 def test_mcp_write_tools(client, live_server, measure_memory_usage, datastore_path):
     datastore = client.application.config['DATASTORE']
-    api_key = datastore.data['settings']['application'].get('api_access_token')
+    api_key = datastore.data['settings']['application'].get('mcp_access_token')
     watching = datastore.data['watching']
 
     # Create, with validation shared with the REST API
@@ -282,7 +286,7 @@ def test_mcp_write_tools(client, live_server, measure_memory_usage, datastore_pa
 def test_mcp_argument_validation(client, live_server, measure_memory_usage, datastore_path):
     """Bad arguments come back as a tool error listing every problem (the model can fix them), never silently ignored."""
     datastore = client.application.config['DATASTORE']
-    api_key = datastore.data['settings']['application'].get('api_access_token')
+    api_key = datastore.data['settings']['application'].get('mcp_access_token')
     uuid = datastore.add_watch(url='https://example.com/validate', extras={'paused': False})
 
     # A typo'd argument is an error, and nothing is changed

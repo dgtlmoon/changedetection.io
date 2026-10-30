@@ -924,7 +924,7 @@ def changedetection_app(config=None, datastore_o=None):
             # API routes - use their own auth mechanism (@auth.check_token)
             elif request.path.startswith('/api/'):
                 return None
-            # MCP server - its own API-key auth (blueprint/mcp/__init__.py)
+            # MCP server - its own access token (blueprint/mcp/__init__.py)
             elif request.blueprint == 'mcp':
                 return None
             else:
@@ -1405,12 +1405,14 @@ def changedetection_app(config=None, datastore_o=None):
         )
     )
 
-    # MCP server for AI assistants, JSON-RPC with its own API-key auth, so no CSRF token
+    # MCP server for AI assistants, JSON-RPC with its own access token, so no CSRF token.
+    # Not registered at all with LLM_FEATURES_DISABLED or DISABLE_MCP=true.
     import changedetectionio.blueprint.mcp as mcp
 
-    mcp_blueprint = mcp.construct_blueprint(datastore, update_q)
-    csrf.exempt(mcp_blueprint)
-    app.register_blueprint(mcp_blueprint, url_prefix='/mcp')
+    if not mcp.is_mcp_disabled():
+        mcp_blueprint = mcp.construct_blueprint(datastore, update_q)
+        csrf.exempt(mcp_blueprint)
+        app.register_blueprint(mcp_blueprint, url_prefix='/mcp')
 
     import changedetectionio.blueprint.pwa as pwa
 

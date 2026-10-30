@@ -463,6 +463,10 @@ msgid "All notifications unmuted."
 msgstr "Tutte le notifiche attivate."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP access token regenerated, update it in your AI assistants."
+msgstr "Token di accesso MCP rigenerato, aggiornalo nei tuoi assistenti IA."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -470,14 +474,15 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "AI / LLM configuration removed."
-msgstr ""
+msgstr "Configurazione IA / LLM rimossa."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
-msgstr ""
+msgstr "Cache dei riepiloghi IA svuotata ({} file rimossi)."
 
-#: changedetectionio/blueprint/settings/llm/sidebar.py changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/sidebar.py
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr ""
@@ -942,6 +947,125 @@ msgstr ""
 msgid "Failed"
 msgstr ""
 
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "copied"
+msgstr "copiato"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copy"
+msgstr "copia"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect AI assistants with MCP"
+msgstr "Collega gli assistenti IA con MCP"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
+"use other applications as tools."
+msgstr ""
+"MCP (Model Context Protocol) è uno standard aperto che permette ad assistenti IA come Claude, ChatGPT, Cursor e VS "
+"Code di usare altre applicazioni come strumenti."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Connect one to changedetection.io and you can ask it things like \"what changed on my competitor pages this month?\" "
+"or \"why is this monitor failing?\", or have it add, tag and recheck monitors for you."
+msgstr ""
+"Collegane uno a changedetection.io e potrai chiedergli cose come «cosa è cambiato questo mese sulle pagine dei miei "
+"concorrenti?» o «perché questo monitor non funziona?», oppure fargli aggiungere, etichettare e ricontrollare monitor."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The MCP server is switched off on this installation."
+msgstr "Il server MCP è disattivato su questa installazione."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Server address"
+msgstr "Indirizzo del server"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "MCP access token"
+msgstr "Token di accesso MCP"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Regenerate MCP token"
+msgstr "Rigenera token MCP"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one."
+msgstr "Solo per MCP, separato dalla chiave API. Rigenerarlo scollega tutti gli assistenti che usano quello vecchio."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Run this in a terminal, then start a new Claude Code session and ask, for example, \"Which of my monitors have "
+"errors?\""
+msgstr ""
+"Esegui questo comando in un terminale, poi avvia una nuova sessione di Claude Code e chiedi ad esempio «Quali dei "
+"miei monitor hanno errori?»"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To remove it again:"
+msgstr "Per rimuoverlo:"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read-only"
+msgstr "Sola lettura"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To let an assistant look but never change anything, use this address instead:"
+msgstr "Per permettere a un assistente di guardare senza mai cambiare nulla, usa invece questo indirizzo:"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Other AI assistants"
+msgstr "Altri assistenti IA"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access "
+"token."
+msgstr ""
+"Tramite il bridge mcp-remote (richiede Node.js), perché i connettori di Claude Desktop supportano solo l'accesso, non"
+" un token di accesso."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not "
+"offer yet."
+msgstr ""
+"ChatGPT e claude.ai nel browser si collegano solo a server con accesso (OAuth), che questo server MCP non offre "
+"ancora."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "What an assistant can do"
+msgstr "Cosa può fare un assistente"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being "
+"checked right now."
+msgstr ""
+"Consultare: elencare monitor e gruppi, cosa è cambiato tra due date, differenze, istantanee delle pagine, errori e "
+"cosa si sta controllando ora."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Change: add monitors, change their settings, tag them, recheck them and add notification URLs."
+msgstr "Modificare: aggiungere monitor, cambiarne le impostazioni, etichettarli, ricontrollarli e aggiungere URL di notifica."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these."
+msgstr "Eliminare: monitor, la loro cronologia, gruppi e URL di notifica. Gli assistenti te lo chiedono prima."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
+msgstr ""
+"Il testo delle pagine monitorate viene passato all'assistente come dati. Gli URL di notifica non gli vengono mai "
+"mostrati per intero."
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "MCP Server"
+msgstr "Server MCP"
+
 #: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Unknown notification service"
 msgstr "Servizio di notifica sconosciuto"
@@ -1237,10 +1361,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "header - required for the Chrome Extension to work"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "copy"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
