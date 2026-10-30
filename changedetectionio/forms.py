@@ -1374,6 +1374,12 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class globalLLMSettingsPageForm(Form):
+    """The /settings/llm page. Still stored under datastore['settings']['application']['llm'], the
+    sub-form keeps the `llm-` field prefix so settings/llm/templates/llm-settings.html renders it unchanged."""
     llm = FormField(globalSettingsLLMForm)
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 

@@ -436,12 +436,14 @@ msgstr "Kesalahan saat menyesuaikan worker: {}"
 msgid "Password protection enabled."
 msgstr "Perlindungan kata sandi diaktifkan."
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Settings updated."
 msgstr "Pengaturan diperbarui."
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "Terjadi kesalahan, silakan lihat di bawah."
 
@@ -465,7 +467,7 @@ msgstr "Semua notifikasi dibisukan."
 msgid "All notifications unmuted."
 msgstr "Semua notifikasi diaktifkan kembali."
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -473,14 +475,527 @@ msgstr ""
 "api_key diperlukan ketika api_base berbeda dari konfigurasi yang tersimpan. Menolak mengirim kunci API tersimpan ke "
 "endpoint yang berbeda."
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "AI / LLM configuration removed."
 msgstr "Konfigurasi AI / LLM dihapus."
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Cache ringkasan AI dibersihkan ({} file dihapus)."
+
+#: changedetectionio/blueprint/settings/llm/sidebar.py changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr "AI / LLM"
+
+#: changedetectionio/blueprint/settings/llm/sidebar.py
+msgid "AI / LLM settings"
+msgstr "Pengaturan AI / LLM"
+
+#. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgctxt "AI usage stats"
+msgid "Usage"
+msgstr "Penggunaan"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Overview"
+msgstr "Ringkasan"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Provider"
+msgstr "Penyedia"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Prompts"
+msgstr "Prompt"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Behaviour"
+msgstr "Perilaku"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "AI-powered change monitoring"
+msgstr "Pemantauan perubahan bertenaga AI"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Connect an LLM to move from \"something changed\" to \"only the thing you care about changed\"."
+msgstr "Hubungkan LLM untuk beralih dari \"ada sesuatu yang berubah\" menjadi \"hanya hal yang Anda pedulikan yang berubah\"."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Intent filtering"
+msgstr "Pemfilteran intent"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
+"diff against it and suppresses irrelevant noise."
+msgstr ""
+"Setiap monitor atau tag dapat memiliki intent teks biasa — %(ex1)s atau %(ex2)s. Pada setiap perubahan yang "
+"terdeteksi, AI mengevaluasi perbedaannya terhadap intent tersebut dan menyaring gangguan yang tidak relevan."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
+"small models (≤3B) may misjudge numeric comparisons."
+msgstr ""
+"Kiat: evaluasi intent akan lebih baik dengan model yang mumpuni — direkomendasikan %(local)s untuk lokal, atau "
+"%(gpt)s / %(gemini)s. Model yang sangat kecil (≤3B) dapat salah menilai perbandingan numerik."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
+"prompt here, or override per watch or tag."
+msgstr ""
+"Alih-alih perbedaan mentah, terima ringkasan bahasa biasa dalam notifikasi — %(ex1)s atau %(ex2)s. Atur prompt "
+"default global di sini, atau timpa per monitor atau tag."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Minimal cost"
+msgstr "Biaya minimal"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
+"handle this well, typically fractions of a cent per check."
+msgstr ""
+"AI hanya melihat unified diff dari apa yang berubah — bukan HTML halaman penuh. Model berbiaya rendah seperti %(gpt)s"
+" atau %(gemini)s mampu menanganinya dengan baik, biasanya hanya sebagian kecil sen per pemeriksaan."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "AI / LLM configured:"
+msgstr "AI / LLM dikonfigurasi:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Edit provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Configure AI Provider"
+msgstr "Konfigurasikan Penyedia AI"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "AI Provider"
+msgstr "Penyedia AI"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
+msgstr "Sakelar utama — saat nonaktif, semua pencarian AI dilewati meskipun penyedia dikonfigurasi di bawah."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Third-party data transfer — please read"
+msgstr "Transfer data pihak ketiga — harap dibaca"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
+" sent to an external AI provider of your choice."
+msgstr ""
+"Saat fitur AI aktif, data perubahan dari situs web yang Anda pantau — termasuk diff halaman dan teks yang diekstrak —"
+" dikirim ke penyedia AI eksternal pilihan Anda."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
+msgstr ""
+"Anda sepenuhnya bertanggung jawab untuk memastikan hal ini mematuhi ketentuan layanan setiap situs web yang Anda "
+"pantau."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
+"data that may appear in monitored content."
+msgstr ""
+"Anda sepenuhnya bertanggung jawab atas kepatuhan terhadap hukum perlindungan data yang berlaku (mis. GDPR) terkait "
+"data pribadi apa pun yang mungkin muncul dalam konten yang dipantau."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
+"control over those charges."
+msgstr ""
+"Biaya API yang dikenakan oleh penyedia pilihan Anda menjadi tanggung jawab Anda sendiri; perangkat lunak ini tidak "
+"dapat melihat atau mengendalikan biaya tersebut."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
+"fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
+"AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any "
+"kind."
+msgstr ""
+"Model AI / LLM diketahui dapat berhalusinasi — menghasilkan keluaran yang terdengar masuk akal tetapi secara faktual "
+"salah atau sepenuhnya dibuat-buat dengan keyakinan seolah benar — dan secara desain dapat menghilangkan atau memotong"
+" data relevan saat membuat ringkasan. Keluaran AI tidak boleh dianggap lengkap atau akurat. Perangkat lunak ini "
+"disediakan apa adanya tanpa jaminan apa pun."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
+" from any claims, damages, or liability arising from this data transfer or your use of AI features."
+msgstr ""
+"Dengan mengaktifkan fitur AI, Anda secara pribadi membebaskan dan melindungi pembuat serta kontributor perangkat "
+"lunak ini dari klaim, kerusakan, atau tanggung jawab apa pun yang timbul dari transfer data ini atau penggunaan fitur"
+" AI oleh Anda."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
+msgstr ""
+"Saya telah membaca dan memahami hal di atas. Saya menerima tanggung jawab penuh dan membebaskan pembuat perangkat "
+"lunak ini dari tuntutan."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/templates/_common_fields.html
+msgid "Note"
+msgstr "Catatan"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
+"<code>LLM_MODEL</code> environment variable to configure via this form instead."
+msgstr ""
+"AI / LLM dikonfigurasi melalui variabel lingkungan (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Hapus variabel "
+"lingkungan <code>LLM_MODEL</code> untuk mengonfigurasi melalui formulir ini."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "select a provider"
+msgstr "pilih penyedia"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
+msgstr "Kompatibel dengan OpenAI (vLLM, LM Studio, llama.cpp)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
+msgstr "Hanya diperlukan untuk Ollama atau endpoint kustom/self-hosted. Biarkan kosong untuk penyedia cloud."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
+"scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it"
+" if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
+"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
+"original tight caps."
+msgstr ""
+"Model reasoning (Qwen3, DeepSeek-R1, Gemma 3, dll.) menghasilkan chain-of-thought sebelum jawaban akhir. Pengali ini "
+"menskalakan setiap batas <code>max_tokens</code> untuk endpoint ini agar tersedia ruang reasoning. Default "
+"%(default)s; tingkatkan jika respons terpotong atau kosong, turunkan (hingga 1x) jika Anda menginginkan batas lebih "
+"ketat pada endpoint berbayar. Berlaku untuk endpoint Ollama dan yang kompatibel dengan OpenAI — penyedia cloud lain "
+"(OpenAI, Anthropic, Gemini) tetap menggunakan batas ketat aslinya."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Load available models"
+msgstr "Muat model yang tersedia"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Available models"
+msgstr "Model yang tersedia"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "choose a model"
+msgstr "pilih model"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Change model"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Remove AI / LLM configuration?"
+msgstr "Hapus konfigurasi AI / LLM?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "This will remove your saved AI provider, model, and API key."
+msgstr "Ini akan menghapus penyedia AI, model, dan kunci API yang tersimpan."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Remove"
+msgstr "Hapus"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "Batal"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Remove provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Test connection"
+msgstr "Uji koneksi"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
+"extracted text are sent to the LLM — no full page HTML."
+msgstr ""
+"Kunci API Anda disimpan secara lokal dan hanya dikirim ke penyedia yang Anda pilih. Pada setiap perubahan yang "
+"terdeteksi, diff monitor dan teks yang diekstrak dikirim ke LLM — bukan HTML halaman penuh."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Cache"
+msgstr "Cache"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Clear all summary cache?"
+msgstr "Hapus seluruh cache ringkasan?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "This will remove all cached AI change summaries across all watches."
+msgstr "Ini akan menghapus semua ringkasan perubahan AI yang tersimpan di cache dari seluruh monitor."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "They will be regenerated on the next check."
+msgstr "Ringkasan akan dibuat ulang pada pemeriksaan berikutnya."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Clear cache"
+msgstr "Hapus cache"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Clear all summary cache"
+msgstr "Hapus seluruh cache ringkasan"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
+msgstr ""
+"Menghapus semua ringkasan perubahan AI yang tersimpan di cache dari seluruh monitor. Ringkasan akan dibuat ulang pada"
+" pemeriksaan berikutnya."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
+"Leave off in production — generates a lot of log volume."
+msgstr ""
+"Mengaktifkan output verbose litellm (dialirkan melalui loguru). Berguna saat mendiagnosis kesalahan penyedia atau "
+"respons kosong. Biarkan nonaktif di produksi — menghasilkan volume log yang besar."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Default AI Change Summary"
+msgstr "Ringkasan Perubahan AI Default"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Used for all watches unless overridden by the watch or its tag/group."
+msgstr "Digunakan untuk semua monitor kecuali ditimpa oleh monitor atau tag/grupnya."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Modify default prompt"
+msgstr "Ubah prompt default"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid ""
+"When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use "
+"<code>%(raw_diff)s</code> to always get the original."
+msgstr ""
+"Saat diaktifkan, token notifikasi <code>%(diff)s</code> menampilkan ringkasan AI alih-alih diff mentah. Gunakan "
+"<code>%(raw_diff)s</code> untuk selalu mendapatkan versi asli."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
+"structured metadata (JSON-LD, microdata, OpenGraph) is found."
+msgstr ""
+"Saat diaktifkan, AI akan digunakan sebagai upaya terakhir untuk mengekstrak harga dan status stok dari halaman produk"
+" ketika tidak ditemukan metadata terstruktur (JSON-LD, microdata, OpenGraph)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
+"Off if summaries are being cut short."
+msgstr ""
+"Khusus model Gemini 2.5+. Token thinking meningkatkan kualitas reasoning tetapi mengurangi anggaran output. Atur ke "
+"Nonaktif jika ringkasan terpotong."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
+"more."
+msgstr ""
+"Batas maksimum token yang dapat digunakan AI saat menulis ringkasan perubahan. Nilai lebih tinggi memungkinkan "
+"ringkasan lebih panjang tetapi biayanya lebih besar."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
+msgstr "Baseline yang digunakan tautan “Ringkasan” pada daftar monitor untuk membandingkan versi terbaru secara default."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Configure a provider first to unlock behaviour settings."
+msgstr "Konfigurasikan penyedia terlebih dahulu untuk membuka pengaturan perilaku."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Token & Cost Tracking"
+msgstr "Pelacakan Token & Biaya"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "This month"
+msgstr "Bulan ini"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "tokens"
+msgstr "token"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid "%(percent)s%% of %(budget)s"
+msgstr "%(percent)s%% dari %(budget)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "All-time total"
+msgstr "Total sepanjang waktu"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Monthly token budget reached. AI summarisation is paused until next month."
+msgstr "Anggaran token AI bulanan tercapai. Ringkasan AI dijeda hingga bulan berikutnya."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Token budget this period"
+msgstr "Anggaran token periode ini"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+msgstr "(diatur melalui <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "0 = unlimited"
+msgstr "0 = tanpa batas"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "tokens (0 = unlimited)"
+msgstr "token (0 = tanpa batas)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Current billing period"
+msgstr "Periode penagihan saat ini"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
+msgstr "(diatur melalui <code>LLM_MAX_INPUT_CHARS</code>)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#, python-format
+msgid "characters — currently enforcing: %(limit)s"
+msgstr "karakter — batas yang diterapkan saat ini: %(limit)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
+"unlimited)"
+msgstr ""
+"token — melewati evaluasi AI pada monitor setelah penggunaan dalam periode saat ini (bulanan) mencapai batas ini (0 ="
+" tanpa batas)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "No AI usage recorded yet."
+msgstr "Belum ada penggunaan AI yang tercatat."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Token budget"
+msgstr "Anggaran token"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "tokens per month (0 = unlimited)"
+msgstr "token per bulan (0 = tanpa batas)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "platform.openai.com → API keys"
+msgstr "platform.openai.com → Kunci API"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "console.anthropic.com → API keys"
+msgstr "console.anthropic.com → Kunci API"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "aistudio.google.com → Get API key"
+msgstr "aistudio.google.com → Dapatkan kunci API"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "No API key needed for local Ollama"
+msgstr "Tidak perlu kunci API untuk Ollama lokal"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
+msgstr "Bearer token untuk server self-hosted Anda (vLLM, LM Studio, dll.)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "openrouter.ai → Keys"
+msgstr "openrouter.ai → Kunci"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Select a provider first."
+msgstr "Pilih penyedia terlebih dahulu."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Loading…"
+msgstr "Memuat…"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "No models returned by the provider."
+msgstr "Penyedia tidak mengembalikan model."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "— choose a model —"
+msgstr "— pilih model —"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "models available with your key"
+msgstr "model tersedia dengan kunci Anda"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Request failed"
+msgstr "Permintaan gagal"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Testing…"
+msgstr "Menguji…"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Connected"
+msgstr "Terhubung"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Failed"
+msgstr "Gagal"
 
 #: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Unknown notification service"
@@ -558,11 +1073,6 @@ msgstr "Waktu & Tanggal"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "CAPTCHA & Proxies"
 msgstr "CAPTCHA & Proksi"
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr "AI / LLM"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Info"
@@ -969,510 +1479,6 @@ msgstr "Plugin aktif:"
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "Tidak ada plugin aktif"
-
-#. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgctxt "AI usage stats"
-msgid "Usage"
-msgstr "Penggunaan"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Overview"
-msgstr "Ringkasan"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Provider"
-msgstr "Penyedia"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Prompts"
-msgstr "Prompt"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Behaviour"
-msgstr "Perilaku"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI-powered change monitoring"
-msgstr "Pemantauan perubahan bertenaga AI"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Connect an LLM to move from \"something changed\" to \"only the thing you care about changed\"."
-msgstr "Hubungkan LLM untuk beralih dari \"ada sesuatu yang berubah\" menjadi \"hanya hal yang Anda pedulikan yang berubah\"."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Intent filtering"
-msgstr "Pemfilteran intent"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
-"diff against it and suppresses irrelevant noise."
-msgstr ""
-"Setiap monitor atau tag dapat memiliki intent teks biasa — %(ex1)s atau %(ex2)s. Pada setiap perubahan yang "
-"terdeteksi, AI mengevaluasi perbedaannya terhadap intent tersebut dan menyaring gangguan yang tidak relevan."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
-"small models (≤3B) may misjudge numeric comparisons."
-msgstr ""
-"Kiat: evaluasi intent akan lebih baik dengan model yang mumpuni — direkomendasikan %(local)s untuk lokal, atau "
-"%(gpt)s / %(gemini)s. Model yang sangat kecil (≤3B) dapat salah menilai perbandingan numerik."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
-"prompt here, or override per watch or tag."
-msgstr ""
-"Alih-alih perbedaan mentah, terima ringkasan bahasa biasa dalam notifikasi — %(ex1)s atau %(ex2)s. Atur prompt "
-"default global di sini, atau timpa per monitor atau tag."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Minimal cost"
-msgstr "Biaya minimal"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
-"handle this well, typically fractions of a cent per check."
-msgstr ""
-"AI hanya melihat unified diff dari apa yang berubah — bukan HTML halaman penuh. Model berbiaya rendah seperti %(gpt)s"
-" atau %(gemini)s mampu menanganinya dengan baik, biasanya hanya sebagian kecil sen per pemeriksaan."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI / LLM configured:"
-msgstr "AI / LLM dikonfigurasi:"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Edit provider"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Configure AI Provider"
-msgstr "Konfigurasikan Penyedia AI"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI Provider"
-msgstr "Penyedia AI"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
-msgstr "Sakelar utama — saat nonaktif, semua pencarian AI dilewati meskipun penyedia dikonfigurasi di bawah."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Third-party data transfer — please read"
-msgstr "Transfer data pihak ketiga — harap dibaca"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
-" sent to an external AI provider of your choice."
-msgstr ""
-"Saat fitur AI aktif, data perubahan dari situs web yang Anda pantau — termasuk diff halaman dan teks yang diekstrak —"
-" dikirim ke penyedia AI eksternal pilihan Anda."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
-msgstr ""
-"Anda sepenuhnya bertanggung jawab untuk memastikan hal ini mematuhi ketentuan layanan setiap situs web yang Anda "
-"pantau."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
-"data that may appear in monitored content."
-msgstr ""
-"Anda sepenuhnya bertanggung jawab atas kepatuhan terhadap hukum perlindungan data yang berlaku (mis. GDPR) terkait "
-"data pribadi apa pun yang mungkin muncul dalam konten yang dipantau."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
-"control over those charges."
-msgstr ""
-"Biaya API yang dikenakan oleh penyedia pilihan Anda menjadi tanggung jawab Anda sendiri; perangkat lunak ini tidak "
-"dapat melihat atau mengendalikan biaya tersebut."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
-"fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
-"AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any "
-"kind."
-msgstr ""
-"Model AI / LLM diketahui dapat berhalusinasi — menghasilkan keluaran yang terdengar masuk akal tetapi secara faktual "
-"salah atau sepenuhnya dibuat-buat dengan keyakinan seolah benar — dan secara desain dapat menghilangkan atau memotong"
-" data relevan saat membuat ringkasan. Keluaran AI tidak boleh dianggap lengkap atau akurat. Perangkat lunak ini "
-"disediakan apa adanya tanpa jaminan apa pun."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
-" from any claims, damages, or liability arising from this data transfer or your use of AI features."
-msgstr ""
-"Dengan mengaktifkan fitur AI, Anda secara pribadi membebaskan dan melindungi pembuat serta kontributor perangkat "
-"lunak ini dari klaim, kerusakan, atau tanggung jawab apa pun yang timbul dari transfer data ini atau penggunaan fitur"
-" AI oleh Anda."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
-msgstr ""
-"Saya telah membaca dan memahami hal di atas. Saya menerima tanggung jawab penuh dan membebaskan pembuat perangkat "
-"lunak ini dari tuntutan."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/templates/_common_fields.html
-msgid "Note"
-msgstr "Catatan"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
-"<code>LLM_MODEL</code> environment variable to configure via this form instead."
-msgstr ""
-"AI / LLM dikonfigurasi melalui variabel lingkungan (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Hapus variabel "
-"lingkungan <code>LLM_MODEL</code> untuk mengonfigurasi melalui formulir ini."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "select a provider"
-msgstr "pilih penyedia"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
-msgstr "Kompatibel dengan OpenAI (vLLM, LM Studio, llama.cpp)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Saved. Use \"Remove provider\" below to change the provider or key."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
-msgstr "Hanya diperlukan untuk Ollama atau endpoint kustom/self-hosted. Biarkan kosong untuk penyedia cloud."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
-"scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it"
-" if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
-"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
-"original tight caps."
-msgstr ""
-"Model reasoning (Qwen3, DeepSeek-R1, Gemma 3, dll.) menghasilkan chain-of-thought sebelum jawaban akhir. Pengali ini "
-"menskalakan setiap batas <code>max_tokens</code> untuk endpoint ini agar tersedia ruang reasoning. Default "
-"%(default)s; tingkatkan jika respons terpotong atau kosong, turunkan (hingga 1x) jika Anda menginginkan batas lebih "
-"ketat pada endpoint berbayar. Berlaku untuk endpoint Ollama dan yang kompatibel dengan OpenAI — penyedia cloud lain "
-"(OpenAI, Anthropic, Gemini) tetap menggunakan batas ketat aslinya."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Load available models"
-msgstr "Muat model yang tersedia"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Available models"
-msgstr "Model yang tersedia"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "choose a model"
-msgstr "pilih model"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Type a model name or choose from available models"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
-"key blank to keep your saved key."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Change model"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Remove AI / LLM configuration?"
-msgstr "Hapus konfigurasi AI / LLM?"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This will remove your saved AI provider, model, and API key."
-msgstr "Ini akan menghapus penyedia AI, model, dan kunci API yang tersimpan."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Remove"
-msgstr "Hapus"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "Batal"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Remove provider"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Test connection"
-msgstr "Uji koneksi"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
-"extracted text are sent to the LLM — no full page HTML."
-msgstr ""
-"Kunci API Anda disimpan secara lokal dan hanya dikirim ke penyedia yang Anda pilih. Pada setiap perubahan yang "
-"terdeteksi, diff monitor dan teks yang diekstrak dikirim ke LLM — bukan HTML halaman penuh."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Cache"
-msgstr "Cache"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear all summary cache?"
-msgstr "Hapus seluruh cache ringkasan?"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This will remove all cached AI change summaries across all watches."
-msgstr "Ini akan menghapus semua ringkasan perubahan AI yang tersimpan di cache dari seluruh monitor."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "They will be regenerated on the next check."
-msgstr "Ringkasan akan dibuat ulang pada pemeriksaan berikutnya."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear cache"
-msgstr "Hapus cache"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear all summary cache"
-msgstr "Hapus seluruh cache ringkasan"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
-msgstr ""
-"Menghapus semua ringkasan perubahan AI yang tersimpan di cache dari seluruh monitor. Ringkasan akan dibuat ulang pada"
-" pemeriksaan berikutnya."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
-"Leave off in production — generates a lot of log volume."
-msgstr ""
-"Mengaktifkan output verbose litellm (dialirkan melalui loguru). Berguna saat mendiagnosis kesalahan penyedia atau "
-"respons kosong. Biarkan nonaktif di produksi — menghasilkan volume log yang besar."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Default AI Change Summary"
-msgstr "Ringkasan Perubahan AI Default"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Used for all watches unless overridden by the watch or its tag/group."
-msgstr "Digunakan untuk semua monitor kecuali ditimpa oleh monitor atau tag/grupnya."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/templates/edit/include_llm_intent.html
-msgid "Modify default prompt"
-msgstr "Ubah prompt default"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use "
-"<code>%(raw_diff)s</code> to always get the original."
-msgstr ""
-"Saat diaktifkan, token notifikasi <code>%(diff)s</code> menampilkan ringkasan AI alih-alih diff mentah. Gunakan "
-"<code>%(raw_diff)s</code> untuk selalu mendapatkan versi asli."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
-"structured metadata (JSON-LD, microdata, OpenGraph) is found."
-msgstr ""
-"Saat diaktifkan, AI akan digunakan sebagai upaya terakhir untuk mengekstrak harga dan status stok dari halaman produk"
-" ketika tidak ditemukan metadata terstruktur (JSON-LD, microdata, OpenGraph)."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
-"Off if summaries are being cut short."
-msgstr ""
-"Khusus model Gemini 2.5+. Token thinking meningkatkan kualitas reasoning tetapi mengurangi anggaran output. Atur ke "
-"Nonaktif jika ringkasan terpotong."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
-"more."
-msgstr ""
-"Batas maksimum token yang dapat digunakan AI saat menulis ringkasan perubahan. Nilai lebih tinggi memungkinkan "
-"ringkasan lebih panjang tetapi biayanya lebih besar."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
-msgstr "Baseline yang digunakan tautan “Ringkasan” pada daftar monitor untuk membandingkan versi terbaru secara default."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Configure a provider first to unlock behaviour settings."
-msgstr "Konfigurasikan penyedia terlebih dahulu untuk membuka pengaturan perilaku."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token & Cost Tracking"
-msgstr "Pelacakan Token & Biaya"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This month"
-msgstr "Bulan ini"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens"
-msgstr "token"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid "%(percent)s%% of %(budget)s"
-msgstr "%(percent)s%% dari %(budget)s"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "All-time total"
-msgstr "Total sepanjang waktu"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Monthly token budget reached. AI summarisation is paused until next month."
-msgstr "Anggaran token AI bulanan tercapai. Ringkasan AI dijeda hingga bulan berikutnya."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token budget this period"
-msgstr "Anggaran token periode ini"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
-msgstr "(diatur melalui <code>LLM_TOKEN_BUDGET_MONTH</code>)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "0 = unlimited"
-msgstr "0 = tanpa batas"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens (0 = unlimited)"
-msgstr "token (0 = tanpa batas)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Current billing period"
-msgstr "Periode penagihan saat ini"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
-msgstr "(diatur melalui <code>LLM_MAX_INPUT_CHARS</code>)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid "characters — currently enforcing: %(limit)s"
-msgstr "karakter — batas yang diterapkan saat ini: %(limit)s"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
-"unlimited)"
-msgstr ""
-"token — melewati evaluasi AI pada monitor setelah penggunaan dalam periode saat ini (bulanan) mencapai batas ini (0 ="
-" tanpa batas)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No AI usage recorded yet."
-msgstr "Belum ada penggunaan AI yang tercatat."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token budget"
-msgstr "Anggaran token"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens per month (0 = unlimited)"
-msgstr "token per bulan (0 = tanpa batas)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "platform.openai.com → API keys"
-msgstr "platform.openai.com → Kunci API"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.anthropic.com → API keys"
-msgstr "console.anthropic.com → Kunci API"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "aistudio.google.com → Get API key"
-msgstr "aistudio.google.com → Dapatkan kunci API"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No API key needed for local Ollama"
-msgstr "Tidak perlu kunci API untuk Ollama lokal"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
-msgstr "Bearer token untuk server self-hosted Anda (vLLM, LM Studio, dll.)"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "openrouter.ai → Keys"
-msgstr "openrouter.ai → Kunci"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "platform.deepseek.com → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.groq.com → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.mistral.ai → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "api.together.ai → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.x.ai → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Select a provider first."
-msgstr "Pilih penyedia terlebih dahulu."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Loading…"
-msgstr "Memuat…"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No models returned by the provider."
-msgstr "Penyedia tidak mengembalikan model."
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "— choose a model —"
-msgstr "— pilih model —"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "models available with your key"
-msgstr "model tersedia dengan kunci Anda"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Request failed"
-msgstr "Permintaan gagal"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Testing…"
-msgstr "Menguji…"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Connected"
-msgstr "Terhubung"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Failed"
-msgstr "Gagal"
 
 #: changedetectionio/blueprint/tags/__init__.py
 #, python-brace-format
@@ -3424,7 +3430,7 @@ msgstr "Gunakan pengaturan global untuk waktu antar pemeriksaan dan penjadwal."
 msgid "AI Change Intent - Notify me when.."
 msgstr "Intent Perubahan AI - Beri tahu saya saat.."
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/blueprint/ui/templates/diff.html
 #: changedetectionio/forms.py
 msgid "AI Change Summary"
 msgstr "Ringkasan Perubahan AI"
@@ -3772,7 +3778,7 @@ msgstr "Pengali token untuk model reasoning lokal"
 msgid "Default AI Change Summary prompt"
 msgstr "Prompt Ringkasan Perubahan AI default"
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/forms.py
 msgid "Max tokens per watch per period"
 msgstr "Token maks. per monitor per periode"
 
@@ -3780,7 +3786,7 @@ msgstr "Token maks. per monitor per periode"
 msgid "Monthly token budget"
 msgstr "Anggaran token bulanan"
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/forms.py
 msgid "Max input characters"
 msgstr "Karakter input maks."
 

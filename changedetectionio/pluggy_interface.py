@@ -214,6 +214,39 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
+    def register_sidebar_items(datastore):
+        """Return links to add to the left action sidebar, after the built-in ones. Plugin API 0.5.0+.
+
+        Called on every page render inside a request (so url_for() and gettext work), keep it
+        in memory: no disk or network.
+
+        Return a dict, a list of dicts, or None. Each dict:
+            {
+                'label': str,            # shown next to the icon, already translated
+                'endpoint': str,         # Flask endpoint for url_for(), or give 'url' instead
+                'url': str,              # used when there's no 'endpoint'
+                'icon': str,             # a Feather icon name, e.g. 'cpu', https://feathericons.com
+                'svg': str,              # or your own inline <svg class="action-icon" ...>, used instead of 'icon'.
+                                         # Trusted markup from your plugin's code only, never user input
+                                         # (it's rendered as-is). Draw with stroke="currentColor" to follow
+                                         # the theme and the active state
+                'title': str,            # optional tooltip, defaults to the label
+                'active_prefix': str,    # optional, highlight when request.endpoint starts with it
+                'weight': int,           # optional, lower comes first among plugin items (default 0)
+                'disabled': bool,        # optional, shown greyed out and not clickable (no endpoint/url needed),
+                                         # like the built-in "Browsers (coming soon)" item
+                'badge': str,            # optional, a small label after the text, e.g. 'soon', already translated
+            }
+
+        Prefer 'endpoint' over a hard-coded 'url' so sub-path deployments (USE_X_SETTINGS /
+        X-Forwarded-Prefix) work.
+
+        Args:
+            datastore: The ChangeDetectionStore instance
+        """
+        pass
+
+    @hookspec
     def get_html_head_extras():
         """Return HTML to inject into the <head> of every page via base.html.
 
@@ -638,6 +671,59 @@ def register_plugin_blueprints(app, datastore):
             registered.append(blueprint.name)
             logger.debug(f"Registered plugin blueprint '{blueprint.name}'")
     return registered
+
+
+def collect_sidebar_items(datastore):
+    """Every plugin's sidebar links (register_sidebar_items), ready for sidebar-nav.html.
+
+    [{'label', 'url', 'icon', 'svg', 'title', 'active', 'disabled', 'badge', 'source'}], sorted by weight, 'source' being the module path of
+    the plugin that added it. A bad entry is logged and skipped.
+    """
+    from flask import request, url_for
+    from markupsafe import Markup
+
+    items = []
+    # Each implementation is called on its own (still through the failure-isolation wrapper) so every
+    # item knows which plugin added it, sidebar-nav.html writes that as <!-- blueprint:module.path -->
+    for impl in plugin_manager.hook.register_sidebar_items.get_hookimpls():
+        result = impl.function(*[{'datastore': datastore}.get(name) for name in impl.argnames])
+        if not result:
+            continue
+        plugin = impl.plugin
+        source = getattr(plugin, '__name__', None) if inspect.ismodule(plugin) else \
+            f"{type(plugin).__module__}.{type(plugin).__qualname__}"
+        # Goes into an HTML comment, '--' would end it early
+        source = (source or impl.plugin_name).replace('--', '-')
+        for entry in (result if isinstance(result, (list, tuple)) else [result]):
+            if not isinstance(entry, dict) or not entry.get('label'):
+                logger.error(f"register_sidebar_items: expected a dict with a 'label', got {entry!r}")
+                continue
+            disabled = bool(entry.get('disabled'))
+            if disabled:
+                # Not clickable, nothing to link to
+                url = '#'
+            else:
+                try:
+                    url = url_for(entry['endpoint']) if entry.get('endpoint') else entry.get('url')
+                except Exception as e:
+                    logger.error(f"register_sidebar_items: no URL for '{entry.get('label')}': {e}")
+                    continue
+                if not url:
+                    continue
+            prefix = entry.get('active_prefix')
+            items.append({
+                'label': str(entry['label']),
+                'url': url,
+                'icon': entry.get('icon') or 'circle',
+                'svg': Markup(entry['svg']) if entry.get('svg') else None,
+                'title': str(entry.get('title') or entry['label']),
+                'active': not disabled and bool(prefix and (request.endpoint or '').startswith(prefix)),
+                'disabled': disabled,
+                'badge': str(entry['badge']) if entry.get('badge') else None,
+                'weight': entry.get('weight', 0),
+                'source': source,
+            })
+    return sorted(items, key=lambda i: i['weight'])
 
 
 def collect_watch_list_extra_text(watch):

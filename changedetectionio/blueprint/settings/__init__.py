@@ -10,12 +10,12 @@ from flask_babel import gettext
 
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
-from changedetectionio.model.LLMSettings import LLMSettings
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     from changedetectionio.llm.evaluator import is_llm_features_disabled
     settings_blueprint = Blueprint('settings', __name__, template_folder="templates")
+    # The AI / LLM settings page and its helpers (/settings/llm), not registered at all with LLM_FEATURES_DISABLED
     if not is_llm_features_disabled():
         from changedetectionio.blueprint.settings.llm import construct_llm_blueprint
         settings_blueprint.register_blueprint(construct_llm_blueprint(datastore), url_prefix='/llm')
@@ -40,13 +40,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
 
         default = deepcopy(datastore.data['settings'])
-
-        # api_key is intentionally blanked on GET — PasswordField never re-renders
-        # its value, and a blank submission preserves the stored key.
-        default['llm'] = LLMSettings.model_validate(
-            datastore.data['settings']['application'].get('llm') or {}
-        ).model_dump()
-        default['llm']['api_key'] = ''
 
         if datastore.proxy_list is not None:
             available_proxies = list(datastore.proxy_list.keys())
@@ -100,44 +93,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     app_update.pop(nf, None)
 
                 datastore.data['settings']['application'].update(app_update)
-
-                # LLM config lives under settings.application.llm.* (post update_31).
-                # Hydrate the stored dict into LLMSettings, then merge form input over it.
-                # WTForms field names match LLMSettings field names exactly, so both sides
-                # of the merge use the same key shape.
-                existing_llm = LLMSettings.model_validate(
-                    datastore.data['settings']['application'].get('llm') or {}
-                )
-
-                llm_form_input = dict(form.data.get('llm') or {})
-
-                # Empty IntegerField submissions come back as None from WTForms;
-                # the schema declares those fields as strict `int`, so passing
-                # them through would fail validation. Treat None like the
-                # absent-key case: keep the stored value, don't merge.
-                llm_form_input = {k: v for k, v in llm_form_input.items() if v is not None}
-
-                # PasswordField never re-renders, so a blank submitted value means
-                # "keep stored key" — drop it from the merge.
-                if not (llm_form_input.get('api_key') or '').strip():
-                    llm_form_input.pop('api_key', None)
-
-                # Env-var overrides make these fields read-only in the UI — ignore form input.
-                if os.getenv('LLM_TOKEN_BUDGET_MONTH', '').strip():
-                    llm_form_input.pop('token_budget_month', None)
-                if os.getenv('LLM_MAX_INPUT_CHARS', '').strip():
-                    llm_form_input.pop('max_input_chars', None)
-
-                # System-managed counters must never come from the form.
-                for protected in LLMSettings.PROTECTED_FIELDS:
-                    llm_form_input.pop(protected, None)
-
-                merged = LLMSettings.model_validate({**existing_llm.model_dump(), **llm_form_input})
-
-                # Clearing the model field strips only the provider-connection fields.
-                # User toggles, budgets, prompts and system counters survive (matches /llm/clear).
-                exclude = set(LLMSettings.CONNECTION_FIELDS) if not merged.model.strip() else None
-                datastore.data['settings']['application']['llm'] = merged.model_dump(exclude=exclude)
 
                 # Handle dynamic worker count adjustment
                 old_worker_count = datastore.data['settings']['requests'].get('workers', 1)
@@ -227,44 +182,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Instantiate the form with existing settings
             plugin_forms[plugin_id] = form_class(data=settings)
 
-        from changedetectionio.llm.evaluator import (
-            get_llm_config as _get_llm_cfg,
-            llm_configured_via_env,
-            get_global_token_budget_month,
-        )
-        llm_config = _get_llm_cfg(datastore) or {}
-        llm_env_configured = llm_configured_via_env()
-
-        # Once a key is stored, the provider and the key itself are locked and can only be
-        # cleared with "Remove provider". The key field renders blank so that an untouched
-        # save preserves it, which makes any stray value in it - a browser autofill, a bad
-        # paste - silently overwrite a working key on the next Save, with no copy kept
-        # anywhere to recover from. Disabling the input takes it out of the POST entirely;
-        # the form is seeded with data=default, so an absent field falls back to the stored
-        # value and the merge below is a no-op for it.
-        llm_provider_locked = bool(llm_config.get('api_key')) and not llm_env_configured
-        llm_stored = datastore.data['settings']['application'].get('llm') or {}
-        llm_token_budget_month = get_global_token_budget_month(datastore)
-        llm_token_budget_month_env = get_global_token_budget_month()  # env var only, for readonly logic
-        _max_input_chars_env_str = os.getenv('LLM_MAX_INPUT_CHARS', '').strip()
-        llm_max_input_chars_env = int(_max_input_chars_env_str) if _max_input_chars_env_str.isdigit() else 0
-        from changedetectionio.llm.evaluator import _get_max_input_chars, _DEFAULT_MAX_INPUT_CHARS
-        llm_effective_max_input_chars = _get_max_input_chars(datastore)
-        # Cost display: only when user configured their own key (not hosted/operator-managed)
-        llm_show_costs = not llm_env_configured
-
         output = render_template("settings.html",
                                 active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
-                                llm_config=llm_config,
-                                llm_env_configured=llm_env_configured,
-                                llm_provider_locked=llm_provider_locked,
-                                llm_stored=llm_stored,
-                                llm_token_budget_month=llm_token_budget_month,
-                                llm_token_budget_month_env=llm_token_budget_month_env,
-                                llm_max_input_chars_env=llm_max_input_chars_env,
-                                llm_effective_max_input_chars=llm_effective_max_input_chars,
-                                llm_show_costs=llm_show_costs,
                                 python_version=python_version,
                                 uptime_seconds=uptime_seconds,
                                 # None unless PAGE_WATCH_LIMIT is set, which hides the row entirely
