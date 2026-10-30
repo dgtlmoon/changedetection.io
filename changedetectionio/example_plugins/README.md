@@ -94,6 +94,27 @@ pip install .
 
 ---
 
+## Hello world - `ui/hello_world`
+
+Its own page at `/hello-world`, shown inside the normal app layout (header, menu, styles), with a
+"Hello world!" box and how many monitors you have.
+
+**Hooks**
+- `register_blueprints` - mounts the plugin's Flask blueprint at `/hello-world`
+
+**Also shows** a template that extends `base.html`, kept under `templates/cdio_example_hello_world/` so
+its path can't clash with a core template. The page needs the same login as the rest of the UI.
+
+**Install**
+```bash
+cd changedetectionio/example_plugins/ui/hello_world
+pip install .
+```
+
+**Try it:** open `http://localhost:5000/hello-world/`.
+
+---
+
 ## Simple SVG chart - `restock/simple_svg_chart`
 
 Replaces the price charts of restock & price watches (the one that rolls down from the History button in
