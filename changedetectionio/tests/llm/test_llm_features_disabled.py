@@ -96,9 +96,9 @@ def test_llm_features_enabled_by_default(client, live_server, monkeypatch):
     assert b'name="llm-model"' in res.data
     # Highlighted in the sidebar while on it
     assert b'class="action-sidebar-item active"' in res.data
-    # Its sidebar icon is the octopus (an inline svg), not a Feather icon
-    from changedetectionio.blueprint.settings.llm.sidebar import OCTOPUS_SVG
-    assert OCTOPUS_SVG.encode() in res.data
+    # Its sidebar icon is the "AI" chip (an inline svg), not a Feather icon
+    from changedetectionio.blueprint.settings.llm.sidebar import AI_CHIP_SVG
+    assert AI_CHIP_SVG.encode() in res.data
 
     # With an LLM configured, the Add-watch page offers both ways of narrowing a watch,
     # so "Select by element" goes back to being an opt-in checkbox.
