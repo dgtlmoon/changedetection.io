@@ -13,6 +13,10 @@ class _SidebarPlugin:
             {'label': 'Plugin page', 'endpoint': 'tags.tags_overview_page', 'icon': 'star',
              'active_prefix': 'tags.', 'title': 'A page from a plugin'},
             {'label': 'External', 'url': 'https://example.com/help', 'icon': 'help-circle', 'weight': -1},
+            # Greyed out and not clickable, no endpoint needed
+            {'label': 'Coming later', 'icon': 'clock', 'disabled': True, 'badge': 'soon', 'title': 'Coming later (soon)'},
+            # A custom icon instead of a Feather one
+            {'label': 'Own icon', 'url': '/own', 'svg': '<svg class="action-icon" id="test-own-svg" viewBox="0 0 24 24"></svg>'},
             # Bad entries are skipped, the page still renders
             {'label': 'No such endpoint', 'endpoint': 'nope.nothing'},
             {'no': 'label'},
@@ -36,9 +40,18 @@ def test_plugin_sidebar_items(client, live_server, measure_memory_usage, datasto
     assert f'href="{tags_url}"' in html and 'Plugin page' in html and 'data-feather="star"' in html
     assert 'title="A page from a plugin"' in html
     assert 'href="https://example.com/help"' in html
+    # A disabled item renders like the built-in "Browsers (coming soon)" one
+    assert ('<a href="#"\n           class="action-sidebar-item is-disabled"\n           title="Coming later (soon)"\n'
+            '           aria-disabled="true"\n           tabindex="-1">') in html
+    assert '<span class="action-badge">soon</span>' in html.split('Coming later (soon)')[1].split('</a>')[0]
+
+    # A custom svg is rendered as-is, in place of the Feather icon
+    own = html.split('href="/own"')[1].split('</a>')[0]
+    assert '<svg class="action-icon" id="test-own-svg"' in own and 'data-feather' not in own
+
     # Each plugin item says which plugin added it, just before its <li>
     marker = f'<!-- blueprint:{_SidebarPlugin.__module__}._SidebarPlugin -->'
-    assert html.count(marker) == 2 * 2, "two items, rendered in the desktop rail and the mobile drawer"
+    assert html.count(marker) == 4 * 2, "four items, rendered in the desktop rail and the mobile drawer"
     assert html.split(marker)[1].lstrip().startswith('<li class="action-sidebar-li">')
     # The built-in AI / LLM link is added the same way, by its own module
     assert '<!-- blueprint:changedetectionio.blueprint.settings.llm.sidebar -->' in html

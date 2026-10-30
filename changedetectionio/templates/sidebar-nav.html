@@ -117,11 +117,26 @@
     {%- for item in plugin_sidebar_items|default([]) %}
     <!-- blueprint:{{ item.source }} -->
     <li class="action-sidebar-li">
+        {%- if item.disabled %}
+        <a href="#"
+           class="action-sidebar-item is-disabled"
+           title="{{ item.title }}"
+           aria-disabled="true"
+           tabindex="-1">
+        {%- else %}
         <a href="{{ item.url }}"
            class="action-sidebar-item {% if item.active %}active{% endif %}"
            title="{{ item.title }}">
+        {%- endif %}
+            {%- if item.svg %}
+            {{ item.svg }}
+            {%- else %}
             <i data-feather="{{ item.icon }}" class="action-icon"></i>
+            {%- endif %}
             <span class="action-label">{{ item.label }}</span>
+            {%- if item.badge %}
+            <span class="action-badge">{{ item.badge }}</span>
+            {%- endif %}
         </a>
     </li>
     {%- endfor %}
