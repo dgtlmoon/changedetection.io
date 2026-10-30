@@ -215,7 +215,7 @@ class ChangeDetectionSpec:
 
     @hookspec
     def register_sidebar_items(datastore):
-        """Return links to add to the left action sidebar, after the built-in ones.
+        """Return links to add to the left action sidebar, after the built-in ones. Plugin API 0.5.0+.
 
         Called on every page render inside a request (so url_for() and gettext work), keep it
         in memory: no disk or network.

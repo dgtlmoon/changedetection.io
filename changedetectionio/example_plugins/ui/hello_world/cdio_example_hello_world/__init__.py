@@ -1,5 +1,6 @@
 """
-Example plugin - adds its own page at /hello-world, shown inside the normal app layout.
+Example plugin - adds its own page at /hello-world, shown inside the normal app layout, with a link to it in
+the left sidebar.
 
 Install it with `pip install .` from the directory above this one, see example_plugins/README.md.
 It is not active until installed (or registered), nothing scans example_plugins/ for plugins.
@@ -31,3 +32,16 @@ def register_blueprints(datastore):
     global _datastore
     _datastore = datastore
     return {'blueprint': blueprint, 'url_prefix': '/hello-world'}
+
+
+@hookimpl
+def register_sidebar_items(datastore):
+    """A link to the page in the left sidebar, after the built-in ones. Called on every page render, so
+    stay in memory. 'endpoint' rather than a hard-coded URL keeps sub-path deployments working."""
+    return {
+        'label': 'Hello world',
+        'title': 'Hello world (example plugin)',
+        'endpoint': 'cdio_example_hello_world.hello',
+        'icon': 'smile',  # a Feather icon name, or give 'svg' with your own <svg class="action-icon" ...>
+        'active_prefix': 'cdio_example_hello_world.',  # highlighted while on any of this plugin's pages
+    }
