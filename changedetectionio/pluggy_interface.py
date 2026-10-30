@@ -272,6 +272,31 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
+    def register_blueprints(datastore):
+        """Return Flask blueprints to mount in the app, called once at startup.
+
+        Return a Blueprint, a dict, or a list of either. The dict form sets the options:
+            {'blueprint': bp, 'url_prefix': '/my-plugin', 'login_required': True}
+
+        url_prefix defaults to the one the Blueprint was created with. Routes are protected
+        by the same optional password login as the rest of the UI unless you pass
+        'login_required': False (for example an endpoint that does its own API-key auth),
+        in which case securing them is up to you. CSRF protection applies to POST routes as
+        usual, exempt a blueprint with `from changedetectionio.flask_app import csrf;
+        csrf.exempt(bp)` only if it authenticates some other way.
+
+        Prefix your blueprint name and URLs with your plugin name: a blueprint whose name is
+        already registered is skipped with an error in the log.
+
+        Args:
+            datastore: The ChangeDetectionStore instance
+
+        Returns:
+            Blueprint, dict, a list of either, or None
+        """
+        pass
+
+    @hookspec
     def watch_list_extra_text(watch):
         """Short plain-text notes shown under the watch in the watch list (class extra-watch-text).
 
@@ -577,6 +602,43 @@ def register_builtin_api_plugins():
     if not plugin_manager.is_registered(api_state):
         # 'builtin_' names are hidden from the active plugins list, see get_active_plugins()
         plugin_manager.register(api_state, 'builtin_restock_api_state')
+
+def _require_login_before_request():
+    from changedetectionio.auth_decorator import login_optionally_required
+    # None lets the request through, otherwise it's the login redirect/401
+    return login_optionally_required(lambda: None)()
+
+
+def register_plugin_blueprints(app, datastore):
+    """Mount every blueprint returned by the register_blueprints hook on `app`.
+
+    One bad entry (wrong type, blueprint name already taken) is logged and skipped, it never
+    stops the app from starting. Returns the names of the blueprints that were registered.
+    """
+    from flask import Blueprint
+
+    registered = []
+    for result in plugin_manager.hook.register_blueprints(datastore=datastore):
+        if not result:
+            continue
+        for entry in (result if isinstance(result, (list, tuple)) else [result]):
+            options = entry if isinstance(entry, dict) else {'blueprint': entry}
+            blueprint = options.get('blueprint')
+            if not isinstance(blueprint, Blueprint):
+                logger.error(f"register_blueprints: expected a Blueprint or dict with 'blueprint', got {entry!r}")
+                continue
+            try:
+                if options.get('login_required', True):
+                    blueprint.before_request(_require_login_before_request)
+                kwargs = {'url_prefix': options['url_prefix']} if 'url_prefix' in options else {}
+                app.register_blueprint(blueprint, **kwargs)
+            except Exception as e:
+                logger.error(f"register_blueprints: could not register blueprint '{blueprint.name}': {e}")
+                continue
+            registered.append(blueprint.name)
+            logger.debug(f"Registered plugin blueprint '{blueprint.name}'")
+    return registered
+
 
 def collect_watch_list_extra_text(watch):
     """All plugins' notes for this watch in the watch list, as a list of strings."""

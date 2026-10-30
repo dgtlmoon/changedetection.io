@@ -123,5 +123,9 @@ Copy an example's directory, then rename the package directory and its `name` / 
 Every hook and its arguments are documented on `ChangeDetectionSpec` in
 [`pluggy_interface.py`](../pluggy_interface.py).
 
+Plugins can add their own pages and endpoints with the `register_blueprints` hook: return a Flask
+`Blueprint` (or `{'blueprint': bp, 'url_prefix': '/my-plugin'}`). Its routes need the same login as the
+rest of the UI unless you return `'login_required': False` and secure them yourself.
+
 In Docker, add your published package to the `EXTRA_PACKAGES` environment variable instead of
 running `pip install` yourself.
