@@ -259,10 +259,21 @@
       background: var(--color-background-code);
       border-radius: 5px;
     }
+
+    // Only one of the two is filled at a time: the built URL, or the hint/error in its place
+    .ns-url:empty,
+    .ns-message:empty {
+      display: none;
+    }
+
+    .ns-add {
+      margin-left: auto;
+    }
   }
 
   .ns-message {
-    margin-top: 0.35rem;
+    flex: 1;
+    min-width: 0;
     font-size: 0.85em;
     opacity: 0.75;
 
@@ -280,4 +291,45 @@
 
 @media (prefers-reduced-motion: reduce) {
   .notification-setup .ns-card { animation: none; }
+}
+
+// The e-mail quick-add and the setup widget share one grid, labels | inputs | button or message, so their
+// inputs line up. Each row is display: contents, which makes its label and input cells of this grid.
+// On narrow screens it's left as the stacked layout above.
+.notification-add-grid {
+  @media only screen and (min-width: 761px) {
+    display: grid;
+    grid-template-columns: max-content minmax(16rem, 28rem) 1fr;
+    align-items: center;
+    gap: 0.5rem 0.7rem;
+    padding: $common-gap 0;
+
+    > #notification-add-email-preset,
+    > #notification-add-email-preset .add-destination-inline,
+    > .notification-setup {
+      display: contents;
+    }
+
+    // The grid gap does the spacing (only the two row labels, not the fields inside the card)
+    > #notification-add-email-preset > label,
+    > .notification-setup > label {
+      margin: 0;
+    }
+
+    #add-email-input {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    #add-email-go {
+      justify-self: start;
+    }
+
+    .notification-setup {
+      .ns-search-wrap { max-width: none; }
+      .ns-added { margin-left: 0; }
+      .ns-card { grid-column: 1 / -1; margin-top: 0; }
+    }
+  }
 }

@@ -159,16 +159,19 @@
    render_common_settings_form. #}
 {% macro notification_part_render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) %}
                         <div class="pure-control-group">
-                            {% if emailprefix %}
-                            <div class="notification-add-buttons" id="notification-add-email-preset">
-                                <label for="add-email-input">{{ _('Add email notification:') }}</label>
-                                <span class="add-destination-inline">
-                                    <input type="email" id="add-email-input" placeholder="name@example.com" autocomplete="off">
-                                    <a id="add-email-go" class="pure-button button-secondary button-xsmall">{{ _('Add to list') }} <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="{{ _('Add an email address') }}"></a>
-                                </span>
+                            {# Both quick-add rows share one grid so their inputs line up (stacked on mobile) #}
+                            <div class="notification-add-grid">
+                                {% if emailprefix %}
+                                <div class="notification-add-buttons" id="notification-add-email-preset">
+                                    <label for="add-email-input">{{ _('Add email notification:') }}</label>
+                                    <span class="add-destination-inline">
+                                        <input type="email" id="add-email-input" placeholder="name@example.com" autocomplete="off">
+                                        <a id="add-email-go" class="pure-button button-secondary button-xsmall">{{ _('Add to list') }} <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="{{ _('Add an email address') }}"></a>
+                                    </span>
+                                </div>
+                                {% endif %}
+                                {% include '_common_fields-notification.html' %}
                             </div>
-                            {% endif %}
-                            {% include '_common_fields-notification.html' %}
                             <div id="notification-recipients" class="notification-recipients" style="display: none;"></div>
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
     Gitter - gitter://token/room
