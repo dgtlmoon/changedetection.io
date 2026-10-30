@@ -316,17 +316,10 @@ def get_system_info(ctx, args):
 
     from changedetectionio.api.operations import checking_now
     running = checking_now(datastore)
-    now = time.time()
 
-    # Same rule as /api/v1/systeminfo: not checked within its interval, plus 5 minutes of grace. Paused watches,
-    # one by one or all of them with "pause all", aren't supposed to be checked, so they're never overdue (#4607)
-    overdue = 0
-    for watch in datastore.data['watching'].values():
-        if app.get('all_paused') or watch.get('paused'):
-            continue
-        threshold = watch.threshold_seconds() or datastore.threshold_seconds
-        if now - (watch.get('last_checked') or 0) - (5 * 60) > threshold:
-            overdue += 1
+    # The same rule as /api/v1/systeminfo (paused watches, and everything while "pause all" is on, are never overdue)
+    from changedetectionio.api.SystemInfo import overdue_watch_uuids
+    overdue = len(overdue_watch_uuids(datastore))
 
     info = {
         'version': __version__,
