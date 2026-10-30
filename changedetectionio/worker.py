@@ -601,10 +601,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                 except Exception as _fe:
                                     logger.warning(f"Could not write change-summary file for {uuid}: {_fe}")
 
-                            empty_pages_are_a_change = datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
-                            if update_handler.fetcher.content or (not update_handler.fetcher.content and empty_pages_are_a_change):
-                                watch.save_last_fetched_html(contents=update_handler.fetcher.content, timestamp=int(fetch_start_time))
-                            watch.save_last_fetched_pdf(contents=getattr(update_handler.fetcher, 'raw_content', None), timestamp=int(fetch_start_time))
+                            watch.save_historical_artifacts(
+                                timestamp=int(fetch_start_time),
+                                fetcher=update_handler.fetcher,
+                                empty_pages_are_a_change=datastore.data['settings']['application'].get('empty_pages_are_a_change', False))
 
                             # Explicitly delete large content variables to free memory IMMEDIATELY after saving
                             # These are no longer needed after being saved to history
