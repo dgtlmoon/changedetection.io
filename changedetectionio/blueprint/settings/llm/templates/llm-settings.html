@@ -17,6 +17,13 @@
 <div class="tab-pane-inner tab-pane-current" id="ai">
 <script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
 
+    <img src="{{url_for('static_content', group='images', filename='ai-infographic.jpg')}}"
+     alt="MCP - A way for AI Assistants to interact with changedetection.io"
+     style="max-width: 900px; width: 100%; height: auto;">
+<h4>{{ _('Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini.') }}</h4>
+<p>
+    <A href="https://changedetection.io/tutorial/ai-summary-and-change-detection-bring-your-own-key">{{ _('For a short tutorial on how to setup AI integration, see this tutorial.')}}</A>
+</p>
 {# TRANSLATORS: 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide #}
 {% set _usage_label = pgettext('AI usage stats', 'Usage') %}
 {% call stab_shell('ai-settings', [

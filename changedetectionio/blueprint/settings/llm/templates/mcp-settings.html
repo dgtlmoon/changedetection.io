@@ -16,7 +16,9 @@
     <code id="{{ id }}" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code>
     {%- endif -%}
 {%- endmacro %}
-
+        <img src="{{url_for('static_content', group='images', filename='mcp-infographic.jpg')}}"
+             alt="MCP - A way for AI Assistants to interact with changedetection.io"
+             style="max-width: 900px; width: 100%; height: auto;">
     <h4>{{ _('Connect AI assistants with MCP') }}</h4>
     <p>{{ _('MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code use other applications as tools.') }}</p>
     <p>{{ _('Connect one to changedetection.io and you can ask it things like "what changed on my competitor pages this month?" or "why is this monitor failing?", or have it add, tag and recheck monitors for you.') }}</p>

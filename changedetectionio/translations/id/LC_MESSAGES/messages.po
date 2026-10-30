@@ -498,6 +498,14 @@ msgstr "AI / LLM"
 msgid "AI / LLM settings"
 msgstr "Pengaturan AI / LLM"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "For a short tutorial on how to setup AI integration, see this tutorial."
+msgstr ""
+
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgctxt "AI usage stats"
