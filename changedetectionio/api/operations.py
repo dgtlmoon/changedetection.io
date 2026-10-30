@@ -3,7 +3,6 @@ Watch and tag operations shared by the REST API and the MCP server, so both vali
 same answers. Each raises ApiError(message, status) with the REST API's message and HTTP status.
 """
 import copy
-import functools
 
 from loguru import logger
 
@@ -15,18 +14,29 @@ class ApiError(Exception):
         self.status = status
 
 
-@functools.cache
+# {schema_name: (the merged spec dict it was built from, validator)}
+_spec_validators = {}
+
+
 def _spec_validator(schema_name):
     """A JSON Schema validator for one of the API spec's component schemas (CreateWatch, UpdateWatch...).
 
     Loaded on first use, not at startup, and from the merged spec, so plugin processors and fields are included.
+    Rebuilt whenever the merged spec is (its cache is cleared when plugins change, e.g. in tests), so it never
+    holds on to an older spec.
     """
     from openapi_schema_validator import OAS31Validator
     from changedetectionio.api import get_openapi_schema_dict
-    root = dict(get_openapi_schema_dict())
+    spec = get_openapi_schema_dict()
+    cached = _spec_validators.get(schema_name)
+    if cached and cached[0] is spec:
+        return cached[1]
+    root = dict(spec)
     # Validate against the component, resolving its $refs inside the whole spec document
     root['$ref'] = f'#/components/schemas/{schema_name}'
-    return OAS31Validator(root)
+    validator = OAS31Validator(root)
+    _spec_validators[schema_name] = (spec, validator)
+    return validator
 
 
 def validate_against_spec(data, schema_name):

@@ -13,7 +13,6 @@ waited for.
 Text that comes from monitored pages is untrusted: a page can say "ignore previous instructions...", so results
 that include page text start with UNTRUSTED_NOTE.
 """
-import functools
 import os
 
 from changedetectionio.changes_report import (MODES, _iso, _unified, group_changes, parse_timestamp,
@@ -619,11 +618,23 @@ def _from_spec(marker):
     return resolved
 
 
-@functools.cache
+# {tool name: (the spec properties it was built from, schema)}
+_tool_schemas = {}
+
+
 def _tool_schema(name):
-    """The tool's input schema, with the spec-backed fields filled in."""
+    """The tool's input schema, with the spec-backed fields filled in.
+
+    Rebuilt whenever the API spec is (its cache is cleared when plugins change, e.g. a plugin processor in tests).
+    """
+    from changedetectionio.api import get_watch_schema_properties
+    spec_properties = get_watch_schema_properties()
+    cached = _tool_schemas.get(name)
+    if cached and cached[0] is spec_properties:
+        return cached[1]
     schema = dict(TOOLS[name][4])
     schema['properties'] = {k: (_from_spec(v) if 'x-from-spec' in v else v) for k, v in schema['properties'].items()}
+    _tool_schemas[name] = (spec_properties, schema)
     return schema
 
 
