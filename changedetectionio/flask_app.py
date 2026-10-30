@@ -1406,6 +1406,11 @@ def changedetection_app(config=None, datastore_o=None):
         url_prefix='',
     )
 
+    # After the built-in blueprints, so a plugin can't take over a core blueprint name
+    from changedetectionio.pluggy_interface import register_plugin_blueprints
+
+    register_plugin_blueprints(app, datastore)
+
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = (
         datastore.data['settings']['application'].get('ui', {}).get('socket_io_enabled', True)

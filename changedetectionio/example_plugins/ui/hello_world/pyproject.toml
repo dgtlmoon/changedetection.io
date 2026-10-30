@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=77"]  # 77+ for the SPDX license string
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdio-example-hello-world"
+version = "0.1.0"
+description = "Example changedetection.io plugin: its own page at /hello-world, inside the normal app layout"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+# No dependency on changedetection.io itself: install this into the same environment that runs it
+# (it needs plugin API 0.4.0 or newer, changedetectionio.plugin_api.PLUGIN_API_VERSION)
+dependencies = []
+
+# This is what makes changedetection.io load the plugin at startup
+[project.entry-points.changedetectionio]
+cdio_example_hello_world = "cdio_example_hello_world"
+
+[tool.setuptools]
+packages = ["cdio_example_hello_world"]
+
+[tool.setuptools.package-data]
+cdio_example_hello_world = ["templates/cdio_example_hello_world/*"]

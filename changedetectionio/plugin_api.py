@@ -38,7 +38,7 @@ hookimpl = pluggy.HookimplMarker("changedetectionio")
 
 # Version of this public API, not of changedetection.io. Below 1.0 it can still change between
 # minor versions; from 1.0 on, breaking changes mean a major version bump.
-PLUGIN_API_VERSION = "0.3.0"
+PLUGIN_API_VERSION = "0.4.0"
 
 
 async def await_me_maybe(value):
