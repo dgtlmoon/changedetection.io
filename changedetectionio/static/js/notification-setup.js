@@ -8,7 +8,8 @@ $(function () {
 
     var t = $w.data('i18n') || {};
     var $search = $('#ns-search'), $results = $('#ns-results'), $card = $w.find('.ns-card');
-    var $url = $card.find('.ns-url'), $add = $card.find('.ns-add'), $msg = $card.find('.ns-message');
+    var $url = $card.find('.ns-url'), $add = $card.find('.ns-add'), $test = $card.find('.ns-test');
+    var $msg = $card.find('.ns-message');
     var services = null, current = null, builtUrl = null, buildTimer = null, buildSeq = 0, active = -1;
 
     // ---- Service search ----
@@ -154,7 +155,7 @@ $(function () {
         $card.find('.ns-options').prop('open', false).toggle($options.children().length > 0);
 
         $url.text('').attr('title', '');
-        $add.prop('disabled', true);
+        $add.add($test).prop('disabled', true);
         $msg.removeClass('error ok').text(t.fillIn || 'Fill in the fields to build the URL');
         $card.prop('hidden', false);
         $fields.find('input, select, textarea').first().trigger('focus');
@@ -202,7 +203,7 @@ $(function () {
                 var text = res.missing ? (t.required || 'Required') + ': ' + res.missing.join(', ') : (res.error || '');
                 $msg.removeClass('ok').addClass('error').text(text);
             }
-            $add.prop('disabled', !builtUrl);
+            $add.add($test).prop('disabled', !builtUrl);
         });
     }
 
@@ -214,6 +215,17 @@ $(function () {
     // Enter in a field would submit the whole settings form
     $card.on('keydown', 'input', function (e) {
         if (e.key === 'Enter') e.preventDefault();
+    });
+
+    // Test this one URL before adding it, with the title/body/format currently in the form
+    $test.on('click', function () {
+        if (!builtUrl) return;
+        $test.prop('disabled', true);
+        $msg.removeClass('error ok').text(t.sending || 'Sending..');
+        sendTestNotification(builtUrl, function (text, ok) {
+            $msg.toggleClass('error', !ok).toggleClass('ok', ok).text(text);
+            $test.prop('disabled', !builtUrl);
+        });
     });
 
     $add.on('click', function () {

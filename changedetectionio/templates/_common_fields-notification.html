@@ -13,6 +13,7 @@
         'headersHint': _('One per line, Name=Value'),
         'fillIn': _('Fill in the fields to build the URL'),
         'added': _('Added to the list below'),
+        'sending': _('Processing..'),
      }|tojson|forceescape }}">
     <label for="ns-search">{{ _('Add a notification service:') }}</label>
     <div class="ns-search-wrap">
@@ -35,6 +36,7 @@
         <div class="ns-preview">
             <code class="ns-url"></code>
             <span class="ns-message"></span>
+            <button type="button" class="pure-button button-xsmall ns-test" disabled>{{ _('Send test notification') }}</button>
             <button type="button" class="pure-button button-secondary button-xsmall ns-add" disabled>{{ _('Add to list') }}</button>
         </div>
     </div>

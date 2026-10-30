@@ -243,12 +243,13 @@
 
   .ns-preview {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.6rem;
     margin-top: 0.8rem;
 
     .ns-url {
-      flex: 1;
+      flex: 1 1 14rem;
       min-width: 0;
       min-height: 1.2em;
       padding: 0.3rem 0.55rem;
@@ -266,19 +267,25 @@
       display: none;
     }
 
-    .ns-add {
+    // Push the buttons right when there's only a short message, or nothing, next to them
+    .ns-test {
       margin-left: auto;
     }
   }
 
   .ns-message {
-    flex: 1;
+    flex: 1 1 14rem;
     min-width: 0;
     font-size: 0.85em;
     opacity: 0.75;
 
     &.error {
       color: var(--color-text-notification-setup-error);
+      opacity: 1;
+    }
+
+    &.ok {
+      color: var(--color-background-button-success);
       opacity: 1;
     }
   }
