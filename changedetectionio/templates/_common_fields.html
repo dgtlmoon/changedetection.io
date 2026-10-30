@@ -168,6 +168,7 @@
                                 </span>
                             </div>
                             {% endif %}
+                            {% include '_common_fields-notification.html' %}
                             <div id="notification-recipients" class="notification-recipients" style="display: none;"></div>
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
     Gitter - gitter://token/room

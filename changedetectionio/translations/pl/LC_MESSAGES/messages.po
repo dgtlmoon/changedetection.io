@@ -487,6 +487,10 @@ msgstr "Usunięto konfigurację AI / LLM."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Pamięć podręczna podsumowań AI została wyczyszczona (usunięto {} plików)."
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "Nieznana usługa powiadomień"
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr "Powiadomienia domyślne"
@@ -2850,7 +2854,8 @@ msgstr "w „%(title)s”"
 msgid "RSS Feed"
 msgstr "Kanał RSS"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
 msgstr "Zamknij"
 
@@ -4026,6 +4031,10 @@ msgstr "%syr temu"
 msgid "in %syr"
 msgstr "w %syr"
 
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "Własny e-mail"
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "Podczas przeszukiwania całej historii obserwacji pod kątem tego wyrażenia regularnego nie znaleziono żadnych wyników."
@@ -4315,6 +4324,54 @@ msgstr "Protokół „watch” jest niedozwolony lub format adresu URL jest niep
 msgid "No proxy"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "Brak pasującej usługi"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "Wymagane"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "Kilka wartości oddziel przecinkami"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "Bezpieczne połączenie (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "Jedna na wiersz, Nazwa=Wartość"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "Wypełnij pola, aby utworzyć URL"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "Dodano do listy poniżej"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "Dodaj usługę powiadomień:"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr "Discord, Telegram, ntfy, Slack, e-mail…"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "Skąd je wziąć?"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "Opcje"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "Dodaj do listy"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4497,10 +4554,6 @@ msgstr "Więcej tutaj"
 #: changedetectionio/templates/_common_fields.html
 msgid "Add email notification:"
 msgstr "Dodaj powiadomienie e-mailowe:"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr "Dodaj do listy"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"

@@ -482,6 +482,10 @@ msgstr "Konfigurasi AI / LLM dihapus."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Cache ringkasan AI dibersihkan ({} file dihapus)."
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "Layanan notifikasi tidak dikenal"
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr "Notifikasi Default"
@@ -2804,7 +2808,8 @@ msgstr "di '%(title)s'"
 msgid "RSS Feed"
 msgstr "Feed RSS"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
 msgstr "Tutup"
 
@@ -3980,6 +3985,10 @@ msgstr "%sth lalu"
 msgid "in %syr"
 msgstr "dalam %sth"
 
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "Email kustom"
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "Tidak ditemukan kecocokan saat memindai seluruh riwayat monitor untuk RegEx tersebut."
@@ -4267,6 +4276,54 @@ msgstr "Protokol monitor tidak diizinkan atau format URL tidak valid"
 msgid "No proxy"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "Tidak ada layanan yang cocok"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "Wajib"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "Pisahkan beberapa dengan koma"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "Koneksi aman (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "Satu per baris, Nama=Nilai"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "Isi kolom untuk membuat URL"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "Ditambahkan ke daftar di bawah"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "Tambah layanan notifikasi:"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr "Discord, Telegram, ntfy, Slack, email…"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "Bagaimana cara mendapatkannya?"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "Opsi"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "Tambahkan ke daftar"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4448,10 +4505,6 @@ msgstr "Selengkapnya Di Sini"
 #: changedetectionio/templates/_common_fields.html
 msgid "Add email notification:"
 msgstr "Tambahkan notifikasi email:"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr "Tambahkan ke daftar"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"

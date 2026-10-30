@@ -477,6 +477,10 @@ msgstr "AI / LLM 設定已移除。"
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 摘要快取已清除（已移除 {} 個檔案）。"
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "未知的通知服務"
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr "預設通知"
@@ -2706,7 +2710,8 @@ msgstr "於 '%(title)s'"
 msgid "RSS Feed"
 msgstr "RSS Feed"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
 msgstr "關閉"
 
@@ -3878,6 +3883,10 @@ msgstr "%s 年前"
 msgid "in %syr"
 msgstr "%s 年後"
 
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "自訂電子郵件"
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "掃描此 RegEx 的所有監測歷史記錄時找不到相符項目。"
@@ -4165,6 +4174,54 @@ msgstr "監測協定不被允許或 URL 格式無效"
 msgid "No proxy"
 msgstr ""
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "沒有符合的服務"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "必填"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "多個值以逗號分隔"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "安全連線 (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "每行一個，名稱=值"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "填寫欄位以產生 URL"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "已加入下方清單"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "新增通知服務："
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr "Discord、Telegram、ntfy、Slack、電子郵件…"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "如何取得？"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "選項"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "新增至清單"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4340,10 +4397,6 @@ msgstr "更多資訊"
 #: changedetectionio/templates/_common_fields.html
 msgid "Add email notification:"
 msgstr "新增電子郵件通知："
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr "新增至清單"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"

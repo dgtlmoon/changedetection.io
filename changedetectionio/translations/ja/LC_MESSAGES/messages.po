@@ -477,6 +477,10 @@ msgstr ""
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "不明な通知サービス"
+
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
 msgstr "デフォルト通知"
@@ -2714,7 +2718,8 @@ msgstr "'%(title)s' 内"
 msgid "RSS Feed"
 msgstr "RSSフィード"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
 msgid "Close"
 msgstr "閉じる"
 
@@ -3886,6 +3891,10 @@ msgstr ""
 msgid "in %syr"
 msgstr ""
 
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "カスタムメール"
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "その正規表現についてウォッチ履歴全体をスキャンしましたが、一致するものが見つかりませんでした。"
@@ -4173,6 +4182,54 @@ msgstr "ウォッチのプロトコルが許可されていないか、URL形式
 msgid "No proxy"
 msgstr "プロキシなし"
 
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "一致するサービスがありません"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "必須"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "複数ある場合はカンマで区切ります"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "セキュア接続 (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "1行に1つ、名前=値"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "フィールドを入力するとURLが作成されます"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "下のリストに追加しました"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "通知サービスを追加:"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr "Discord、Telegram、ntfy、Slack、メール…"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "入手方法"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "オプション"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "リストに追加"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
@@ -4353,10 +4410,6 @@ msgstr "詳細はこちら"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add email notification:"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
