@@ -221,7 +221,7 @@ def test_filter_failure_count_resets_with_ignore_status_codes(client, live_serve
         'filter_failure_notification_send': True,
         'notification_urls': [url_for('test_notification_endpoint', _external=True).replace('http', 'post')],
     })
-
+    wait_for_all_checks(client)
     # Fail - filter not in the page
     set_original_response(datastore_path=datastore_path)
     client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -240,7 +240,7 @@ def test_filter_failure_count_resets_with_ignore_status_codes(client, live_serve
     wait_for_all_checks(client)
     assert datastore.data['watching'][uuid]['consecutive_filter_failures'] == 1
 
-    time.sleep(1)
+    time.sleep(3)
     if os.path.isfile(notification_file):
         with open(notification_file, 'r') as f:
             assert 'Your configured CSS/xPath filters' not in f.read()
