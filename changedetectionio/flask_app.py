@@ -482,12 +482,21 @@ def _get_html_head_extras():
     return collect_html_head_extras()
 
 
-@app.template_filter('format_number_locale')
-def _jinja2_filter_format_number_locale(value: float) -> str:
-    "Formats for example 4000.10 to the local locale default of 4,000.10"
-    # Format the number with two decimal places (locale format string will return 6 decimal)
-    formatted_value = locale.format_string("%.2f", value, grouping=True)
-    return formatted_value
+@app.template_filter('format_price')
+def _jinja2_filter_format_price(value: float, currency: str = '') -> str:
+    """A price in the visitor's language with the currency's own decimal places (ISO 4217, #4615),
+    e.g. 12345 JPY -> ¥12,345, 1234.5 USD -> $1,234.50, 1234.5 EUR in German -> 1.234,50 €.
+
+    The visitor's UI language, not the server's locale, which is one setting for everyone on the instance.
+    Without a known ISO 4217 code (empty, or something odd the page had) it's the number with two decimals,
+    followed by whatever currency text there was. static/js/restock-price-graph.js fmtPrice() does the same."""
+    from babel.numbers import format_currency, format_decimal, is_currency
+    ui_locale = get_locale() or app.config['BABEL_DEFAULT_LOCALE']
+    code = (currency or '').strip().upper()
+    if code and is_currency(code):
+        return format_currency(value, code, locale=ui_locale)
+    number = format_decimal(value, format='#,##0.00', locale=ui_locale)
+    return f"{number} {currency}" if currency else number
 
 
 @app.template_filter('format_int_locale')
@@ -834,7 +843,9 @@ def changedetection_app(config=None, datastore_o=None):
         # 2. Fall back to Accept-Language header
         browser_locale = request.accept_languages.best_match(_locale_match_list)
         # 3. Map browser locale to our internal locale if needed
-        return _locale_aliases.get(browser_locale, browser_locale)
+        # 4. Nothing matched: the default, which Babel would use anyway. Never None, templates print this
+        #    (<html lang="None">, the language flag) and the price formatting reads it
+        return _locale_aliases.get(browser_locale, browser_locale) or app.config['BABEL_DEFAULT_LOCALE']
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)
