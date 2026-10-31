@@ -1384,6 +1384,12 @@ class globalLLMSettingsPageForm(Form):
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 
+class globalMCPSettingsPageForm(Form):
+    """The /settings/ai/mcp page ("MCP Server" tab), stored in datastore['settings']['application']['mcp_read_only']."""
+    read_only = BooleanField(_l('Read-only mode, assistants can look but never add, change or delete anything'), default=False)
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
 class extractDataForm(Form):
     extract_regex = StringField(_l('RegEx to extract'), validators=[validators.DataRequired(), ValidateSinglePythonRegexString()])
     extract_submit_button = SubmitField(_l('Extract as CSV'), render_kw={"class": "pure-button pure-button-primary"})

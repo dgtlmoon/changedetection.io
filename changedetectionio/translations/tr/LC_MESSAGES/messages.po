@@ -470,6 +470,14 @@ msgid "All notifications unmuted."
 msgstr "Tüm bildirimlerin sesi açıldı."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched on."
+msgstr "MCP salt okunur modu açıldı."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched off."
+msgstr "MCP salt okunur modu kapatıldı."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP access token regenerated, update it in your AI assistants."
 msgstr "MCP erişim anahtarı yeniden oluşturuldu, yapay zekâ asistanlarınızda güncelleyin."
 
@@ -487,16 +495,6 @@ msgstr "Yapay zekâ / LLM yapılandırması kaldırıldı."
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Yapay zekâ özet önbelleği temizlendi ({} dosya kaldırıldı)."
-
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-msgid "AI / LLM settings"
-msgstr "AI / LLM ayarları"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
@@ -985,12 +983,9 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
-"Connect one to changedetection.io and you can ask it things like \"what changed on my competitor pages this month?\" "
-"or \"why is this monitor failing?\", or have it add, tag and recheck monitors for you."
+"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic "
+"devices, MCP provides a standardized way to connect AI applications to external systems."
 msgstr ""
-"Birini changedetection.io'ya bağlayın ve ona örneğin \"bu ay rakiplerimin sayfalarında ne değişti?\" ya da \"bu "
-"izleyici neden hata veriyor?\" diye sorun ya da izleyici eklemesini, etiketlemesini ve yeniden kontrol etmesini "
-"isteyin."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "The MCP server is switched off on this installation."
@@ -1029,8 +1024,12 @@ msgid "Read-only"
 msgstr "Salt okunur"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "To let an assistant look but never change anything, use this address instead:"
-msgstr "Bir asistanın yalnızca bakıp hiçbir şeyi değiştirmemesi için bunun yerine bu adresi kullanın:"
+msgid "An assistant that tries to change something is told that read-only mode is on."
+msgstr "Bir şeyi değiştirmeye çalışan asistana salt okunur modun açık olduğu söylenir."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "Yalnızca bir asistanı salt okunur yapmak için onun yerine bu adresi kullanın:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Other AI assistants"
@@ -1079,6 +1078,16 @@ msgid "Text from monitored pages is passed on to the assistant as data. Notifica
 msgstr "İzlenen sayfalardaki metin asistana veri olarak iletilir. Bildirim URL'leri ona asla tam olarak gösterilmez."
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 msgid "MCP Server"
 msgstr "MCP Sunucusu"
 
@@ -1124,42 +1133,42 @@ msgstr "Bildirim hata ayıklama günlüğü"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Install and create shortcut - then \"install\""
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "Genel"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Fetching"
 msgstr "Getiriliyor"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Global Filters"
 msgstr "Genel Filtreler"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "Arayüz Seçenekleri"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Backups"
 msgstr "Yedeklemeler"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "Saat ve Tarih"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "CAPTCHA & Proxies"
 msgstr "CAPTCHA ve Proxy'ler"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
 msgstr "Bilgi"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -3910,6 +3919,10 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Changes since you last viewed the watch"
 msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Read-only mode, assistants can look but never add, change or delete anything"
+msgstr "Salt okunur, asistanlar bakabilir ama hiçbir şeyi ekleyemez, değiştiremez veya silemez"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

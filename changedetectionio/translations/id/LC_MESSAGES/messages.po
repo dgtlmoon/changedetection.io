@@ -468,6 +468,14 @@ msgid "All notifications unmuted."
 msgstr "Semua notifikasi diaktifkan kembali."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched on."
+msgstr "Mode hanya-baca MCP diaktifkan."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched off."
+msgstr "Mode hanya-baca MCP dinonaktifkan."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP access token regenerated, update it in your AI assistants."
 msgstr "Token akses MCP dibuat ulang, perbarui di asisten AI Anda."
 
@@ -487,16 +495,6 @@ msgstr "Konfigurasi AI / LLM dihapus."
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Cache ringkasan AI dibersihkan ({} file dihapus)."
-
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr "AI / LLM"
-
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-msgid "AI / LLM settings"
-msgstr "Pengaturan AI / LLM"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
@@ -1033,11 +1031,9 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
-"Connect one to changedetection.io and you can ask it things like \"what changed on my competitor pages this month?\" "
-"or \"why is this monitor failing?\", or have it add, tag and recheck monitors for you."
+"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic "
+"devices, MCP provides a standardized way to connect AI applications to external systems."
 msgstr ""
-"Hubungkan satu ke changedetection.io dan tanyakan misalnya \"apa yang berubah di halaman pesaing saya bulan ini?\" "
-"atau \"mengapa monitor ini gagal?\", atau minta ia menambah, memberi tag, dan memeriksa ulang monitor."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "The MCP server is switched off on this installation."
@@ -1076,8 +1072,12 @@ msgid "Read-only"
 msgstr "Hanya baca"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "To let an assistant look but never change anything, use this address instead:"
-msgstr "Agar asisten hanya bisa melihat tanpa pernah mengubah apa pun, gunakan alamat ini:"
+msgid "An assistant that tries to change something is told that read-only mode is on."
+msgstr "Asisten yang mencoba mengubah sesuatu akan diberi tahu bahwa mode hanya-baca aktif."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "Agar hanya satu asisten yang hanya-baca, gunakan alamat ini untuknya:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Other AI assistants"
@@ -1120,6 +1120,16 @@ msgid "Text from monitored pages is passed on to the assistant as data. Notifica
 msgstr ""
 "Teks dari halaman yang dipantau diteruskan ke asisten sebagai data. URL notifikasi tidak pernah ditampilkan utuh "
 "kepadanya."
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr "AI / LLM"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 msgid "MCP Server"
@@ -1169,42 +1179,42 @@ msgstr "Log debug notifikasi"
 msgid "For security this log is emptied on restart."
 msgstr "Demi keamanan, log ini dikosongkan saat aplikasi dimulai ulang."
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Install and create shortcut - then \"install\""
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "Umum"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Fetching"
 msgstr "Pengambilan"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Global Filters"
 msgstr "Filter Global"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "Opsi UI"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Backups"
 msgstr "Cadangan"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "Waktu & Tanggal"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "CAPTCHA & Proxies"
 msgstr "CAPTCHA & Proksi"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
 msgstr "Info"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -3965,6 +3975,10 @@ msgstr "Versi sebelumnya (kedua terakhir vs terbaru)"
 #: changedetectionio/forms.py
 msgid "Changes since you last viewed the watch"
 msgstr "Perubahan sejak terakhir Anda melihat monitor"
+
+#: changedetectionio/forms.py
+msgid "Read-only mode, assistants can look but never add, change or delete anything"
+msgstr "Hanya-baca, asisten bisa melihat tetapi tidak pernah menambah, mengubah, atau menghapus apa pun"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

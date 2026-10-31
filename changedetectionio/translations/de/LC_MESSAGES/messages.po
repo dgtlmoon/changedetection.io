@@ -469,6 +469,14 @@ msgid "All notifications unmuted."
 msgstr "Alle Benachrichtigungen entstummt."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched on."
+msgstr "MCP-Nur-Lesen-Modus eingeschaltet."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched off."
+msgstr "MCP-Nur-Lesen-Modus ausgeschaltet."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP access token regenerated, update it in your AI assistants."
 msgstr "MCP-Zugriffstoken neu erstellt, bitte in deinen KI-Assistenten aktualisieren."
 
@@ -486,16 +494,6 @@ msgstr "KI-/LLM-Konfiguration entfernt."
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "KI-Zusammenfassungs-Cache geleert ({} Datei(en) entfernt)."
-
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-msgid "AI / LLM settings"
-msgstr "AI / LLM-Einstellungen"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
@@ -984,12 +982,9 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
-"Connect one to changedetection.io and you can ask it things like \"what changed on my competitor pages this month?\" "
-"or \"why is this monitor failing?\", or have it add, tag and recheck monitors for you."
+"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic "
+"devices, MCP provides a standardized way to connect AI applications to external systems."
 msgstr ""
-"Verbinde einen mit changedetection.io und frag ihn zum Beispiel „Was hat sich diesen Monat auf den Seiten meiner "
-"Konkurrenz geändert?“ oder „Warum schlägt dieser Monitor fehl?“, oder lass ihn Monitore hinzufügen, taggen und neu "
-"prüfen."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "The MCP server is switched off on this installation."
@@ -1028,8 +1023,12 @@ msgid "Read-only"
 msgstr "Nur lesen"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "To let an assistant look but never change anything, use this address instead:"
-msgstr "Damit ein Assistent nur schauen, aber nie etwas ändern kann, verwende stattdessen diese Adresse:"
+msgid "An assistant that tries to change something is told that read-only mode is on."
+msgstr "Ein Assistent, der etwas ändern will, erfährt, dass der Nur-Lesen-Modus aktiv ist."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "Um nur einen Assistenten auf Lesen zu beschränken, nutzen Sie für ihn diese Adresse:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Other AI assistants"
@@ -1078,6 +1077,16 @@ msgstr ""
 "vollständig gezeigt."
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 msgid "MCP Server"
 msgstr "MCP-Server"
 
@@ -1123,42 +1132,42 @@ msgstr "Benachrichtigungs-Debug-Protokoll"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Install and create shortcut - then \"install\""
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "Allgemein"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Fetching"
 msgstr "Abrufen"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Global Filters"
 msgstr "Globale Filter"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "UI-Optionen"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Backups"
 msgstr "Backups"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "Uhrzeit und Datum"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "CAPTCHA & Proxies"
 msgstr "CAPTCHA & Proxys"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
 msgstr "Info"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -3915,6 +3924,10 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Changes since you last viewed the watch"
 msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Read-only mode, assistants can look but never add, change or delete anything"
+msgstr "Nur lesen, Assistenten können nachsehen, aber nie etwas hinzufügen, ändern oder löschen"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

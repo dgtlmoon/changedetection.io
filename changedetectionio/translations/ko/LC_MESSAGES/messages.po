@@ -463,6 +463,14 @@ msgid "All notifications unmuted."
 msgstr "모든 알림의 음소거가 해제되었습니다."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched on."
+msgstr "MCP 읽기 전용 모드를 켰습니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched off."
+msgstr "MCP 읽기 전용 모드를 껐습니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP access token regenerated, update it in your AI assistants."
 msgstr "MCP 액세스 토큰을 다시 만들었습니다. AI 어시스턴트에서도 업데이트하세요."
 
@@ -480,16 +488,6 @@ msgstr "AI / LLM 설정이 제거되었습니다."
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 요약 캐시가 지워졌습니다({}개 파일 제거됨)."
-
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr "AI / LLM"
-
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-msgid "AI / LLM settings"
-msgstr "AI / LLM 설정"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
@@ -982,9 +980,9 @@ msgstr "MCP(Model Context Protocol)는 Claude, ChatGPT, Cursor, VS Code 같은 A
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
-"Connect one to changedetection.io and you can ask it things like \"what changed on my competitor pages this month?\" "
-"or \"why is this monitor failing?\", or have it add, tag and recheck monitors for you."
-msgstr "changedetection.io에 연결하면 \"이번 달 경쟁사 페이지에서 무엇이 바뀌었어?\"나 \"이 모니터는 왜 실패해?\" 같은 질문을 하거나, 모니터 추가·태그 지정·재확인을 맡길 수 있습니다."
+"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic "
+"devices, MCP provides a standardized way to connect AI applications to external systems."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "The MCP server is switched off on this installation."
@@ -1021,8 +1019,12 @@ msgid "Read-only"
 msgstr "읽기 전용"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "To let an assistant look but never change anything, use this address instead:"
-msgstr "어시스턴트가 보기만 하고 아무것도 바꾸지 못하게 하려면 대신 이 주소를 사용하세요:"
+msgid "An assistant that tries to change something is told that read-only mode is on."
+msgstr "무언가를 바꾸려는 어시스턴트에게는 읽기 전용 모드라고 알려 줍니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "어시스턴트 하나만 읽기 전용으로 하려면 대신 이 주소를 사용하세요:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Other AI assistants"
@@ -1061,6 +1063,16 @@ msgstr "삭제: 모니터, 그 기록, 그룹, 알림 URL. 어시스턴트는 �
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
 msgstr "모니터링하는 페이지의 텍스트는 데이터로 어시스턴트에 전달됩니다. 알림 URL은 절대 전체가 보이지 않습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr "AI / LLM"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 msgid "MCP Server"
@@ -1108,42 +1120,42 @@ msgstr "알림 디버그 로그"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Install and create shortcut - then \"install\""
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "일반"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Fetching"
 msgstr "가져오기"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Global Filters"
 msgstr "전역 필터"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "UI 옵션"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Backups"
 msgstr "백업"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "시간 및 날짜"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "CAPTCHA & Proxies"
 msgstr "보안 문자 및 프록시"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
 msgstr "정보"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -3852,6 +3864,10 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Changes since you last viewed the watch"
 msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Read-only mode, assistants can look but never add, change or delete anything"
+msgstr "읽기 전용, 어시스턴트는 조회만 할 수 있고 추가·변경·삭제는 할 수 없습니다"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

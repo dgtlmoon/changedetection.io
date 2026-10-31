@@ -3,6 +3,7 @@
 {% block content %}
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field, render_fieldlist_with_inline_errors %}
 {% from '_common_fields.html' import show_token_placeholders %}
+{% from 'settings-tabs.html' import settings_tabs with context %}
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
@@ -14,25 +15,7 @@
 {%- set install_action -%}<strong>{{ _('Install and create shortcut - then "install"') }}</strong>{% endset -%}
 
 <div class="edit-form">
-    <div class="tabs collapsable">
-        <ul>
-            <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
-            <li class="tab"><a href="#fetching">{{ _('Fetching') }}</a></li>
-            <li class="tab"><a href="#filters">{{ _('Global Filters') }}</a></li>
-            <li class="tab"><a href="#ui-options">{{ _('UI Options') }}</a></li>
-            <li class="tab"><a href="#api">API</a></li>
-            <li class="tab"><a href="#rss">RSS</a></li>
-            <li class="tab"><a href="{{ url_for('backups.create') }}">{{ _('Backups') }}</a></li>
-            <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
-            <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
-            {% if plugin_tabs %}
-                {% for tab in plugin_tabs %}
-            <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
-                {% endfor %}
-            {% endif %}
-            <li class="tab"><a href="#info">{{ _('Info') }}</a></li>
-        </ul>
-    </div>
+    {{ settings_tabs(plugin_tabs=plugin_tabs) }}
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked settings" action="{{url_for('settings.settings_page')}}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >

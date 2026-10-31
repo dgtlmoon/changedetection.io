@@ -47,7 +47,7 @@ def test_llm_features_disabled_hides_ui(client, live_server, monkeypatch):
     _llm_markers_absent(res.data, where='settings')
 
     # 2b. The AI / LLM settings page is refused (and not registered at all when the env var is set at
-    # startup), and the sidebar has no link to it - the watch list check above also covers the sidebar
+    # startup), and /settings has no tab linking to it - checked by _llm_markers_absent above
     assert client.get(url_for('settings.llm.llm_settings_page')).status_code == 404
 
     # 3. Edit page for a watch (should not have an AI / LLM tab or include_llm_intent body)
@@ -83,12 +83,14 @@ def test_llm_features_enabled_by_default(client, live_server, monkeypatch):
     from changedetectionio.llm.evaluator import is_llm_features_disabled
     assert is_llm_features_disabled() is False
 
-    # The AI / LLM settings have their own page now, /settings/llm, linked from the left sidebar
+    # The AI settings have their own pages, linked from an "AI / LLM / MCP" tab on /settings (a real link like
+    # Backups, not an #anchor) and no longer from the left sidebar
     llm_page = url_for('settings.llm.llm_settings_page')
     res = client.get(url_for('settings.settings_page'))
     assert res.status_code == 200
-    assert b'href="#ai"' not in res.data, "the AI / LLM tab moved off /settings"
-    assert f'href="{llm_page}"'.encode() in res.data, "sidebar link to the AI / LLM page"
+    assert b'href="#ai"' not in res.data
+    assert f'<li class="tab"><a href="{llm_page}">AI / LLM / MCP</a></li>'.encode() in res.data
+    assert b'title="AI / LLM settings"' not in client.get(url_for('watchlist.index')).data, "not in the sidebar"
 
     res = client.get(llm_page)
     assert res.status_code == 200
@@ -97,11 +99,6 @@ def test_llm_features_enabled_by_default(client, live_server, monkeypatch):
     assert f'href="{url_for("settings.llm.mcp_settings_page")}"'.encode() in res.data
     assert b'id="ai"' in res.data
     assert b'name="llm-model"' in res.data
-    # Highlighted in the sidebar while on it
-    assert b'class="action-sidebar-item active"' in res.data
-    # Its sidebar icon is the "AI" chip (an inline svg), not a Feather icon
-    from changedetectionio.blueprint.settings.llm.sidebar import AI_CHIP_SVG
-    assert AI_CHIP_SVG.encode() in res.data
 
     # With an LLM configured, the Add-watch page offers both ways of narrowing a watch,
     # so "Select by element" goes back to being an opt-in checkbox.

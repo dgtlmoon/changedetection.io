@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'settings-tabs.html' import settings_tabs with context %}
 {#
   The "AI / LLM" tab, /settings/ai/llm (blueprint/settings/llm). Stored in settings.application.llm.
   Only registered when LLM_FEATURES_DISABLED isn't set. The "MCP Server" tab is its own page, mcp-settings.html.
@@ -10,8 +11,10 @@
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 
 <div class="edit-form">
-    {% include 'settings-ai-tabs.html' %}
+    {# The /settings tab row with "AI / LLM / MCP" active, then a switch between this page and the other AI page #}
+    {{ settings_tabs(active='ai', plugin_tabs=plugin_tabs) }}
     <div class="box-wrap inner">
+        {% include 'settings-ai-tabs.html' %}
         <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.llm_settings_page') }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <div class="tab-pane-inner tab-pane-current" id="ai">

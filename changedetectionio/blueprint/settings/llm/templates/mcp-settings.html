@@ -1,12 +1,19 @@
 {% extends 'base.html' %}
+{% from 'settings-tabs.html' import settings_tabs with context %}
+{% from '_helpers.html' import render_checkbox_field, render_button %}
 {#
   The "MCP Server" tab, /settings/ai/mcp (blueprint/settings/llm). Its own page and route, see settings-ai-tabs.html.
-  Requires template context: mcp_disabled, mcp_url, mcp_token (see mcp_template_context())
+  Requires template context: form (forms.globalMCPSettingsPageForm), mcp_disabled, mcp_url, mcp_token, mcp_read_only
+  (see mcp_template_context()). One form like the AI / LLM tab, its Save button at the bottom.
 #}
 {% block content %}
 <div class="edit-form">
-    {% include 'settings-ai-tabs.html' %}
+    {# The /settings tab row with "AI / LLM / MCP" active, then a switch between this page and the other AI page #}
+    {{ settings_tabs(active='ai', plugin_tabs=plugin_tabs) }}
     <div class="box-wrap inner">
+        {% include 'settings-ai-tabs.html' %}
+        <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.mcp_settings_page') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <div class="tab-pane-inner tab-pane-current" id="mcp">
 <script src="{{ url_for('static_content', group='js', filename='click-to-copy.js') }}" defer></script>
 {% macro copyable(text, id, block=False) -%}
@@ -21,7 +28,7 @@
              style="max-width: 900px; width: 100%; height: auto;">
     <h4>{{ _('Connect AI assistants with MCP') }}</h4>
     <p>{{ _('MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code use other applications as tools.') }}</p>
-    <p>{{ _('Connect one to changedetection.io and you can ask it things like "what changed on my competitor pages this month?" or "why is this monitor failing?", or have it add, tag and recheck monitors for you.') }}</p>
+    <p><i>"{{ _('Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic devices, MCP provides a standardized way to connect AI applications to external systems.') }}"</i></p>
 
     {% if mcp_disabled %}
     <p class="pure-form-message-inline"><strong>{{ _('The MCP server is switched off on this installation.') }}</strong></p>
@@ -35,10 +42,9 @@
     <div class="pure-control-group">
         <h4>{{ _('MCP access token') }}</h4>
         {{ copyable(mcp_token, 'mcp-token') }}
-        <form method="POST" action="{{ url_for('settings.llm.mcp_reset_token') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <p><button type="submit" class="cdio-btn button-small button-cancel">{{ _('Regenerate MCP token') }}</button></p>
-        </form>
+        {# Inside the page's form (nested forms are invalid), so it posts elsewhere with formaction, like "Regenerate API key" #}
+        <p><button type="submit" formmethod="post" formnovalidate formaction="{{ url_for('settings.llm.mcp_reset_token') }}"
+                   class="cdio-btn button-small button-cancel">{{ _('Regenerate MCP token') }}</button></p>
         <p class="pure-form-message-inline">{{ _('Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one.') }}</p>
     </div>
 
@@ -51,8 +57,13 @@
 
     <div class="pure-control-group">
         <h4>{{ _('Read-only') }}</h4>
-        <p>{{ _('To let an assistant look but never change anything, use this address instead:') }}</p>
+        {{ render_checkbox_field(form.read_only) }}
+        {% if mcp_read_only %}
+        <p class="pure-form-message-inline">{{ _('An assistant that tries to change something is told that read-only mode is on.') }}</p>
+        {% else %}
+        <p>{{ _('To make only one assistant read-only, use this address for it instead:') }}</p>
         {{ copyable(mcp_url ~ '?readonly=1', 'mcp-url-readonly') }}
+        {% endif %}
     </div>
 
     <details class="mcp-other-clients">
@@ -80,8 +91,15 @@
         </ul>
         <p class="pure-form-message-inline">{{ _('Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full.') }}</p>
     </div>
+
+    <div id="actions">
+        <div class="pure-control-group">
+            {{ render_button(form.save_button) }}
+        </div>
+    </div>
     {% endif %}
 </div>
+        </form>
     </div>
 </div>
 {% endblock %}

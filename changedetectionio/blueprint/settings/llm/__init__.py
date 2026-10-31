@@ -99,17 +99,19 @@ def mcp_template_context(datastore):
         mcp_disabled=mcp_disabled,
         mcp_url=mcp_url,
         mcp_token=app_settings.get('mcp_access_token') or '',
+        mcp_read_only=bool(app_settings.get('mcp_read_only')),
     )
 
 
 def construct_llm_blueprint(datastore: ChangeDetectionStore):
     llm_blueprint = Blueprint('llm', __name__, template_folder="templates")
 
-    # Its link in the left sidebar, only when this page exists ('builtin_' plugins aren't listed as active plugins)
-    from changedetectionio.pluggy_interface import plugin_manager
-    from changedetectionio.blueprint.settings.llm import sidebar
-    if not plugin_manager.is_registered(sidebar):
-        plugin_manager.register(sidebar, 'builtin_llm_sidebar')
+    def get_plugin_settings_tabs():
+        # For the /settings tab row these pages show (settings-tabs.html), so plugin tabs are listed there too
+        from changedetectionio.pluggy_interface import get_plugin_settings_tabs
+        return get_plugin_settings_tabs()
+
+    # Linked from the "AI / LLM / MCP" tab on /settings (blueprint/settings/templates/settings.html)
 
     # Two tabs, each its own page and route (not #anchors), so each tab's form stands alone:
     #   /settings/ai/llm - the "AI / LLM" tab (the default), /settings/ai/mcp - the "MCP Server" tab
@@ -147,16 +149,29 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 return redirect(url_for('settings.llm.llm_settings_page'))
             flash(gettext("An error occurred, please see below."), "error")
 
-        return render_template("llm-settings.html", form=form, active_tab='llm', **llm_template_context(datastore))
+        return render_template("llm-settings.html", form=form, active_tab='llm', plugin_tabs=get_plugin_settings_tabs(),
+                               **llm_template_context(datastore))
 
-    @llm_blueprint.route("/mcp", methods=['GET'])
+    @llm_blueprint.route("/mcp", methods=['GET', 'POST'])
     @login_optionally_required
     def mcp_settings_page():
-        """The "MCP Server" tab: the address, the access token and how to connect assistants."""
+        """The "MCP Server" tab: the address, the access token, how to connect assistants and the read-only switch."""
+        from changedetectionio import forms
         from changedetectionio.llm.evaluator import is_llm_features_disabled
         if is_llm_features_disabled():
             abort(404)
-        return render_template("mcp-settings.html", active_tab='mcp', **mcp_template_context(datastore))
+        app_settings = datastore.data['settings']['application']
+        form = forms.globalMCPSettingsPageForm(formdata=request.form if request.method == 'POST' else None,
+                                               data={'read_only': bool(app_settings.get('mcp_read_only'))})
+        if request.method == 'POST' and form.validate():
+            # Read-only: every MCP connector may only look, write tools are refused with a readable error
+            read_only = bool(form.read_only.data)
+            app_settings['mcp_read_only'] = read_only
+            datastore.commit()
+            flash(gettext("MCP read-only mode switched on.") if read_only else gettext("MCP read-only mode switched off."), 'notice')
+            return redirect(url_for('settings.llm.mcp_settings_page'))
+        return render_template("mcp-settings.html", form=form, active_tab='mcp', plugin_tabs=get_plugin_settings_tabs(),
+                               **mcp_template_context(datastore))
 
     @llm_blueprint.route("/mcp/token/reset", methods=['POST'])
     @login_optionally_required

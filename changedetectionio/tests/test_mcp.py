@@ -2,7 +2,7 @@
 """The MCP server at /mcp: stateless JSON-RPC, API-key auth, read-only tools."""
 import json
 
-from changedetectionio.blueprint.mcp import SUPPORTED_PROTOCOL_VERSIONS
+from mcp_types.version import LATEST_HANDSHAKE_VERSION
 from changedetectionio.blueprint.mcp.tools import UNTRUSTED_NOTE
 from .util import delete_all_watches
 
@@ -51,8 +51,13 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     assert result['serverInfo']['name'] == 'changedetection.io'
     assert 'get_changes' in result['instructions']
     # A version we don't know gets our newest
-    res = _rpc(client, 'initialize', {'protocolVersion': '1999-01-01'}, api_key=api_key)
-    assert res.json['result']['protocolVersion'] == SUPPORTED_PROTOCOL_VERSIONS[0]
+    res = _rpc(client, 'initialize', {'protocolVersion': '1999-01-01', 'capabilities': {},
+                                       'clientInfo': {'name': 'test', 'version': '1'}}, api_key=api_key)
+    assert res.json['result']['protocolVersion'] == LATEST_HANDSHAKE_VERSION
+    # The newer stateless-envelope revisions aren't spoken here, a client asking for one is offered a handshake version
+    res = _rpc(client, 'initialize', {'protocolVersion': '2026-07-28', 'capabilities': {},
+                                       'clientInfo': {'name': 'test', 'version': '1'}}, api_key=api_key)
+    assert res.json['result']['protocolVersion'] == LATEST_HANDSHAKE_VERSION
 
     # Notifications get no answer
     res = _rpc(client, 'notifications/initialized', msg_id=None, api_key=api_key)
@@ -72,7 +77,8 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     assert {n for n, t in tools.items() if t['annotations']['destructiveHint']} == destructive
     assert tools['get_changes']['inputSchema']['required'] == ['from']
 
-    # ?readonly=1 offers only the read-only tools, and refuses the others even when called by name
+    # ?readonly=1 offers only the read-only tools, and refuses the others even when called by name, as a tool error
+    # the assistant can read and pass on
     res = client.post('/mcp?readonly=1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list'}),
                       content_type='application/json', headers={'x-api-key': api_key})
     assert {t['name'] for t in res.json['result']['tools']} == read_only
@@ -82,7 +88,17 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     res = client.post('/mcp?readonly=1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
                                                           'params': {'name': 'delete_watch', 'arguments': {'watch': 'x'}}}),
                       content_type='application/json', headers={'x-api-key': api_key})
-    assert res.json['error']['code'] == -32602
+    assert res.json['result']['isError'] is True
+    assert '?readonly=1' in res.json['result']['content'][0]['text']
+
+    # Requests are checked against the protocol schema (mcp-types)
+    res = _rpc(client, 'tools/call', {'arguments': {}}, api_key=api_key)
+    assert res.json['error']['code'] == -32602 and 'name' in res.json['error']['message']
+    res = _rpc(client, 'initialize', {'protocolVersion': '2025-06-18'}, api_key=api_key)
+    assert res.json['error']['code'] == -32602, "initialize without capabilities/clientInfo"
+    # A protocol version header we don't speak is refused (MCP spec), one we do is fine
+    assert _rpc(client, 'ping', api_key=api_key, headers={'MCP-Protocol-Version': '1999-01-01'}).status_code == 400
+    assert _rpc(client, 'ping', api_key=api_key, headers={'MCP-Protocol-Version': '2025-06-18'}).status_code == 200
 
     # Batches
     res = client.post('/mcp', data=json.dumps([{'jsonrpc': '2.0', 'id': 1, 'method': 'ping'},
