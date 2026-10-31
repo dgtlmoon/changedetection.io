@@ -262,6 +262,8 @@
        data-cancel-button="{{ _('Cancel') }}">
       &#10005; {{ _('Clear all summary cache') }}
     </a>
+        <br>
+
     <span class="pure-form-message-inline">{{ _('Removes all cached AI change summaries across all watches. They will be regenerated on the next check.') }}</span>
   </div>
 
@@ -271,6 +273,7 @@
     <label for="{{ form.llm.form.debug.id }}" style="display:inline; font-weight:normal;">
       {{ form.llm.form.debug.label.text }}
     </label>
+  <br>
     <span class="pure-form-message-inline">
       {{ _('Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. Leave off in production — generates a lot of log volume.') }}
     </span>
