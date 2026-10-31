@@ -250,11 +250,52 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             # Maybe they copied a bunch of watch subdirs across too
             self._load_state()
 
-        # The MCP server's own access token (separate from the API key), created at startup for any datastore that
-        # doesn't have one yet: new, existing or migrated. The "MCP Server" tab on /settings/llm can rotate it.
+        # Runs for every datastore - new, existing or migrated. These used to run on every startup, until the
+        # move to per-watch files put them inside init_fresh_install(), where they only ran for brand-new
+        # installs (so e.g. removepassword.lock did nothing).
+        self._after_load(version_tag)
+
+    def _after_load(self, version_tag):
+        """Startup housekeeping once the datastore is loaded: the running version, missing IDs and tokens,
+        and the password reset lockfile."""
+        # Set version tag
+        self.__data['version_tag'] = version_tag
+
+        # Validate proxies.json if it exists
+        _ = self.proxy_list  # Just to test parsing
+
+        # Ensure app_guid exists (for datastores loaded from existing files)
+        if 'app_guid' not in self.__data:
+            if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
+                self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
+            else:
+                self.__data['app_guid'] = str(uuid_builder.uuid4())
+            self.commit()
+
+        # Ensure RSS access token exists
+        if not self.__data['settings']['application'].get('rss_access_token'):
+            secret = secrets.token_hex(16)
+            self.__data['settings']['application']['rss_access_token'] = secret
+            self.commit()
+
+        # Ensure API access token exists
+        if not self.__data['settings']['application'].get('api_access_token'):
+            secret = secrets.token_hex(16)
+            self.__data['settings']['application']['api_access_token'] = secret
+            self.commit()
+
+        # Ensure the MCP server's own access token exists (separate from the API key), the "MCP Server" tab on
+        # /settings/ai/mcp can rotate it
         if not self.__data['settings']['application'].get('mcp_access_token'):
             self.__data['settings']['application']['mcp_access_token'] = secrets.token_hex(16)
             self.commit()
+
+        # Handle password reset lockfile
+        password_reset_lockfile = os.path.join(self.datastore_path, "removepassword.lock")
+        if path.isfile(password_reset_lockfile):
+            self.remove_password()
+            unlink(password_reset_lockfile)
+
 
     def init_fresh_install(self, include_default_watches, version_tag):
       # Generate app_guid FIRST (required for all operations)
@@ -299,38 +340,6 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             logger.error(f"Failed to create initial changedetection.json: {e}")
 
 
-
-        # Set version tag
-        self.__data['version_tag'] = version_tag
-
-        # Validate proxies.json if it exists
-        _ = self.proxy_list  # Just to test parsing
-
-        # Ensure app_guid exists (for datastores loaded from existing files)
-        if 'app_guid' not in self.__data:
-            if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
-                self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
-            else:
-                self.__data['app_guid'] = str(uuid_builder.uuid4())
-            self.commit()
-
-        # Ensure RSS access token exists
-        if not self.__data['settings']['application'].get('rss_access_token'):
-            secret = secrets.token_hex(16)
-            self.__data['settings']['application']['rss_access_token'] = secret
-            self.commit()
-
-        # Ensure API access token exists
-        if not self.__data['settings']['application'].get('api_access_token'):
-            secret = secrets.token_hex(16)
-            self.__data['settings']['application']['api_access_token'] = secret
-            self.commit()
-
-        # Handle password reset lockfile
-        password_reset_lockfile = os.path.join(self.datastore_path, "removepassword.lock")
-        if path.isfile(password_reset_lockfile):
-            self.remove_password()
-            unlink(password_reset_lockfile)
 
     def rehydrate_entity(self, uuid, entity, processor_override=None):
         """Set the dict back to the dict Watch object"""
