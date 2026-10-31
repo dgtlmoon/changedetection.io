@@ -13,7 +13,7 @@
                 </span>
             {% endif %}
             {% if restock_latest.price is not none %}
-                <span class="restock-latest-price">{{ restock_currency }}{{ restock_latest.price }}</span>
+                <span class="restock-latest-price">{{ restock_latest.price|format_price(restock_currency) if restock_latest.price is number else restock_currency ~ restock_latest.price }}</span>
             {% endif %}
         </div>
         {% endif %}
