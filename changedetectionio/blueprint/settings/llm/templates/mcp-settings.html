@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% from 'settings-tabs.html' import settings_tabs with context %}
+{% from '_helpers.html' import render_checkbox_field, render_button %}
+{#
+  The "MCP Server" tab, /settings/ai/mcp (blueprint/settings/llm). Its own page and route, see settings-ai-tabs.html.
+  Requires template context: form (forms.globalMCPSettingsPageForm), mcp_disabled, mcp_url, mcp_token, mcp_read_only
+  (see mcp_template_context()). One form like the AI / LLM tab, its Save button at the bottom.
+#}
+{% block content %}
+<div class="edit-form">
+    {# The /settings tab row with "AI / LLM / MCP" active, then a switch between this page and the other AI page #}
+    {{ settings_tabs(active='ai', plugin_tabs=plugin_tabs) }}
+    <div class="box-wrap inner">
+        {% include 'settings-ai-tabs.html' %}
+        <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.mcp_settings_page') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="tab-pane-inner tab-pane-current" id="mcp">
+<script src="{{ url_for('static_content', group='js', filename='click-to-copy.js') }}" defer></script>
+{% macro copyable(text, id, block=False) -%}
+    {%- if block -%}
+    <div class="mcp-snippet"><pre><code id="{{ id }}" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code></pre></div>
+    {%- else -%}
+    <code id="{{ id }}" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code>
+    {%- endif -%}
+{%- endmacro %}
+        <img src="{{url_for('static_content', group='images', filename='mcp-infographic.jpg')}}"
+             alt="MCP - A way for AI Assistants to interact with changedetection.io"
+             style="max-width: 900px; width: 100%; height: auto;">
+    <h4>{{ _('Connect AI assistants with MCP') }}</h4>
+    <p>{{ _('MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code use other applications as tools.') }}</p>
+    <p><i>"{{ _('Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic devices, MCP provides a standardized way to connect AI applications to external systems.') }}"</i></p>
+
+    {% if mcp_disabled %}
+    <p class="pure-form-message-inline"><strong>{{ _('The MCP server is switched off on this installation.') }}</strong></p>
+    {% else %}
+
+    <div class="pure-control-group">
+        <h4>{{ _('Server address') }}</h4>
+        {{ copyable(mcp_url, 'mcp-url') }}
+    </div>
+
+    <div class="pure-control-group">
+        <h4>{{ _('MCP access token') }}</h4>
+        {{ copyable(mcp_token, 'mcp-token') }}
+        {# Inside the page's form (nested forms are invalid), so it posts elsewhere with formaction, like "Regenerate API key" #}
+        <p><button type="submit" formmethod="post" formnovalidate formaction="{{ url_for('settings.llm.mcp_reset_token') }}"
+                   class="cdio-btn button-small button-cancel">{{ _('Regenerate MCP token') }}</button></p>
+        <p class="pure-form-message-inline">{{ _('Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one.') }}</p>
+    </div>
+
+    <div class="pure-control-group">
+        <h4>Claude Code</h4>
+        <p>{{ _('Run this in a terminal, then start a new Claude Code session and ask, for example, "Which of my monitors have errors?"') }}</p>
+        {{ copyable('claude mcp add --transport http changedetection ' ~ mcp_url ~ ' --header "Authorization: Bearer ' ~ mcp_token ~ '"', 'mcp-claude-code', block=True) }}
+        <p class="pure-form-message-inline">{{ _('To remove it again:') }} <code>claude mcp remove changedetection</code></p>
+    </div>
+
+    <div class="pure-control-group">
+        <h4>{{ _('Read-only') }}</h4>
+        {{ render_checkbox_field(form.read_only) }}
+        {% if mcp_read_only %}
+        <p class="pure-form-message-inline">{{ _('An assistant that tries to change something is told that read-only mode is on.') }}</p>
+        {% else %}
+        <p>{{ _('To make only one assistant read-only, use this address for it instead:') }}</p>
+        {{ copyable(mcp_url ~ '?readonly=1', 'mcp-url-readonly') }}
+        {% endif %}
+    </div>
+
+    <details class="mcp-other-clients">
+        <summary>{{ _('Other AI assistants') }}</summary>
+
+        <h4>Cursor <span class="mcp-where">~/.cursor/mcp.json</span></h4>
+        {{ copyable('{"mcpServers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-cursor', block=True) }}
+
+        <h4>VS Code / GitHub Copilot <span class="mcp-where">.vscode/mcp.json</span></h4>
+        {{ copyable('{"servers": {"changedetection": {"type": "http", "url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-vscode', block=True) }}
+
+        <h4>Claude Desktop <span class="mcp-where">claude_desktop_config.json</span></h4>
+        <p class="pure-form-message-inline">{{ _('Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access token.') }}</p>
+        {{ copyable('{"mcpServers": {"changedetection": {"command": "npx", "args": ["mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-claude-desktop', block=True) }}
+
+        <p class="pure-form-message-inline">{{ _('ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not offer yet.') }}</p>
+    </details>
+
+    <div class="pure-control-group">
+        <h4>{{ _('What an assistant can do') }}</h4>
+        <ul>
+            <li>{{ _('Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked right now.') }}</li>
+            <li>{{ _('Change: add monitors, change their settings, tag them, recheck them and add notification URLs.') }}</li>
+            <li>{{ _('Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these.') }}</li>
+        </ul>
+        <p class="pure-form-message-inline">{{ _('Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full.') }}</p>
+    </div>
+
+    <div id="actions">
+        <div class="pure-control-group">
+            {{ render_button(form.save_button) }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+        </form>
+    </div>
+</div>
+{% endblock %}

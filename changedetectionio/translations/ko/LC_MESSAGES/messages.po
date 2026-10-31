@@ -463,6 +463,18 @@ msgid "All notifications unmuted."
 msgstr "모든 알림의 음소거가 해제되었습니다."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched on."
+msgstr "MCP 읽기 전용 모드를 켰습니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP read-only mode switched off."
+msgstr "MCP 읽기 전용 모드를 껐습니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP access token regenerated, update it in your AI assistants."
+msgstr "MCP 액세스 토큰을 다시 만들었습니다. AI 어시스턴트에서도 업데이트하세요."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -477,14 +489,13 @@ msgstr "AI / LLM 설정이 제거되었습니다."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 요약 캐시가 지워졌습니다({}개 파일 제거됨)."
 
-#: changedetectionio/blueprint/settings/llm/sidebar.py changedetectionio/blueprint/settings/llm/templates/llm-settings.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr "AI / LLM"
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
+msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-msgid "AI / LLM settings"
-msgstr "AI / LLM 설정"
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid "For a short tutorial on how to setup AI integration, see this tutorial."
+msgstr ""
 
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
@@ -948,6 +959,125 @@ msgstr "연결됨"
 msgid "Failed"
 msgstr "실패"
 
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "copied"
+msgstr "복사됨"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copy"
+msgstr "복사"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect AI assistants with MCP"
+msgstr "MCP로 AI 어시스턴트 연결"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
+"use other applications as tools."
+msgstr "MCP(Model Context Protocol)는 Claude, ChatGPT, Cursor, VS Code 같은 AI 어시스턴트가 다른 애플리케이션을 도구로 사용할 수 있게 해 주는 개방형 표준입니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic "
+"devices, MCP provides a standardized way to connect AI applications to external systems."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The MCP server is switched off on this installation."
+msgstr "이 설치에서는 MCP 서버가 꺼져 있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Server address"
+msgstr "서버 주소"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "MCP access token"
+msgstr "MCP 액세스 토큰"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Regenerate MCP token"
+msgstr "MCP 토큰 다시 만들기"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one."
+msgstr "MCP 전용이며 API 키와 별개입니다. 다시 만들면 이전 토큰을 쓰는 모든 어시스턴트의 연결이 끊어집니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Run this in a terminal, then start a new Claude Code session and ask, for example, \"Which of my monitors have "
+"errors?\""
+msgstr "터미널에서 이것을 실행한 다음 새 Claude Code 세션을 시작하고, 예를 들어 \"오류가 있는 모니터는?\"이라고 물어보세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To remove it again:"
+msgstr "다시 제거하려면:"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read-only"
+msgstr "읽기 전용"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "An assistant that tries to change something is told that read-only mode is on."
+msgstr "무언가를 바꾸려는 어시스턴트에게는 읽기 전용 모드라고 알려 줍니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "어시스턴트 하나만 읽기 전용으로 하려면 대신 이 주소를 사용하세요:"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Other AI assistants"
+msgstr "다른 AI 어시스턴트"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access "
+"token."
+msgstr "mcp-remote 브리지를 통해(Node.js 필요). Claude Desktop 커넥터는 액세스 토큰이 아니라 로그인만 지원하기 때문입니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not "
+"offer yet."
+msgstr "브라우저의 ChatGPT와 claude.ai는 로그인(OAuth)이 있는 서버에만 연결되며, 이 MCP 서버는 아직 이를 제공하지 않습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "What an assistant can do"
+msgstr "어시스턴트가 할 수 있는 일"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being "
+"checked right now."
+msgstr "보기: 모니터와 그룹 목록, 두 날짜 사이의 변경 사항, 차이, 페이지 스냅샷, 오류, 지금 확인 중인 항목."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Change: add monitors, change their settings, tag them, recheck them and add notification URLs."
+msgstr "변경: 모니터 추가, 설정 변경, 태그 지정, 재확인, 알림 URL 추가."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these."
+msgstr "삭제: 모니터, 그 기록, 그룹, 알림 URL. 어시스턴트는 실행하기 전에 묻습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
+msgstr "모니터링하는 페이지의 텍스트는 데이터로 어시스턴트에 전달됩니다. 알림 URL은 절대 전체가 보이지 않습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr "AI / LLM"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "MCP Server"
+msgstr "MCP 서버"
+
 #: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Unknown notification service"
 msgstr "알 수 없는 알림 서비스"
@@ -990,42 +1120,42 @@ msgstr "알림 디버그 로그"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Install and create shortcut - then \"install\""
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "일반"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Fetching"
 msgstr "가져오기"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Global Filters"
 msgstr "전역 필터"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "UI 옵션"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Backups"
 msgstr "백업"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "시간 및 날짜"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "CAPTCHA & Proxies"
 msgstr "보안 문자 및 프록시"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
 msgstr "정보"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -1244,10 +1374,6 @@ msgstr "다음을 사용해 API 액세스를 제한합니다."
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "header - required for the Chrome Extension to work"
 msgstr "헤더입니다. Chrome 확장 프로그램이 작동하려면 필요합니다."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "copy"
-msgstr "복사"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
@@ -3738,6 +3864,10 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Changes since you last viewed the watch"
 msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Read-only mode, assistants can look but never add, change or delete anything"
+msgstr "읽기 전용, 어시스턴트는 조회만 할 수 있고 추가·변경·삭제는 할 수 없습니다"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

@@ -284,6 +284,12 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             self.__data['settings']['application']['api_access_token'] = secret
             self.commit()
 
+        # Ensure the MCP server's own access token exists (separate from the API key), the "MCP Server" tab on
+        # /settings/ai/mcp can rotate it
+        if not self.__data['settings']['application'].get('mcp_access_token'):
+            self.__data['settings']['application']['mcp_access_token'] = secrets.token_hex(16)
+            self.commit()
+
         # Handle password reset lockfile
         password_reset_lockfile = os.path.join(self.datastore_path, "removepassword.lock")
         if path.isfile(password_reset_lockfile):
@@ -303,6 +309,9 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # Generate API access token
         self.__data['settings']['application']['api_access_token'] = secrets.token_hex(16)
+
+        # Generate the MCP server's own access token (separate from the API key)
+        self.__data['settings']['application']['mcp_access_token'] = secrets.token_hex(16)
         logger.warning(f"No datastore found, creating new datastore at {self.datastore_path}")
 
         # Set schema version to latest (no updates needed)

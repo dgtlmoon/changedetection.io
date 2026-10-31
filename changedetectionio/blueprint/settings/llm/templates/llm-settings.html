@@ -1,27 +1,32 @@
 {% extends 'base.html' %}
+{% from 'settings-tabs.html' import settings_tabs with context %}
 {#
-  The AI / LLM settings page, /settings/llm (blueprint/settings/llm). Stored in settings.application.llm.
-  Only registered when LLM_FEATURES_DISABLED isn't set. One tab for now, an MCP tab will join it.
+  The "AI / LLM" tab, /settings/ai/llm (blueprint/settings/llm). Stored in settings.application.llm.
+  Only registered when LLM_FEATURES_DISABLED isn't set. The "MCP Server" tab is its own page, mcp-settings.html.
   Requires template context: form, llm_config, llm_env_configured (see llm_template_context())
 #}
 {% block content %}
 {% from '_helpers.html' import render_field, render_button %}
 {% from '_stab.html' import stab_shell, stab_pane %}
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
-<script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 
 <div class="edit-form">
-    <div class="tabs collapsable">
-        <ul>
-            <li class="tab"><a href="#ai">{{ _('AI / LLM') }}</a></li>
-        </ul>
-    </div>
+    {# The /settings tab row with "AI / LLM / MCP" active, then a switch between this page and the other AI page #}
+    {{ settings_tabs(active='ai', plugin_tabs=plugin_tabs) }}
     <div class="box-wrap inner">
+        {% include 'settings-ai-tabs.html' %}
         <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.llm_settings_page') }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<div class="tab-pane-inner" id="ai">
+<div class="tab-pane-inner tab-pane-current" id="ai">
 <script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
 
+    <img src="{{url_for('static_content', group='images', filename='ai-infographic.jpg')}}"
+     alt="MCP - A way for AI Assistants to interact with changedetection.io"
+     style="max-width: 900px; width: 100%; height: auto;">
+<h4>{{ _('Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini.') }}</h4>
+<p>
+    <A href="https://changedetection.io/tutorial/ai-summary-and-change-detection-bring-your-own-key">{{ _('For a short tutorial on how to setup AI integration, see this tutorial.')}}</A>
+</p>
 {# TRANSLATORS: 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide #}
 {% set _usage_label = pgettext('AI usage stats', 'Usage') %}
 {% call stab_shell('ai-settings', [
@@ -257,6 +262,8 @@
        data-cancel-button="{{ _('Cancel') }}">
       &#10005; {{ _('Clear all summary cache') }}
     </a>
+        <br>
+
     <span class="pure-form-message-inline">{{ _('Removes all cached AI change summaries across all watches. They will be regenerated on the next check.') }}</span>
   </div>
 
@@ -266,6 +273,7 @@
     <label for="{{ form.llm.form.debug.id }}" style="display:inline; font-weight:normal;">
       {{ form.llm.form.debug.label.text }}
     </label>
+  <br>
     <span class="pure-form-message-inline">
       {{ _('Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. Leave off in production — generates a lot of log volume.') }}
     </span>
@@ -476,6 +484,11 @@
   {% endcall %}
 
 {% endcall %}{# stab_shell #}
+<div id="actions">
+    <div class="pure-control-group">
+        {{ render_button(form.save_button) }}
+    </div>
+</div>
 </div>
 
 <script>
@@ -677,11 +690,6 @@
 }());
 </script>
 
-            <div id="actions">
-                <div class="pure-control-group">
-                    {{ render_button(form.save_button) }}
-                </div>
-            </div>
         </form>
     </div>
 </div>

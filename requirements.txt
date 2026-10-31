@@ -164,6 +164,9 @@ litellm>=1.91.5; platform_machine == "armv7l"
 # Used today for LLMSettings (model/LLMSettings.py); transitively pulled by litellm but pinned explicitly
 # so the validation/typing layer doesn't disappear if litellm drops it.
 pydantic>=2.14.1,<3.0
+# MCP wire types and protocol versions for /mcp (MIT, only needs pydantic). Not the full `mcp` SDK, which is ASGI
+# (starlette/uvicorn). ~15MB once loaded, so only imported on the first authenticated /mcp request.
+mcp-types>=2.3.0,<3.0
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 
