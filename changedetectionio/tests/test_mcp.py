@@ -2,11 +2,20 @@
 """The MCP server at /mcp: stateless JSON-RPC, API-key auth, read-only tools."""
 import json
 
+import pytest
 from mcp_types.version import LATEST_HANDSHAKE_VERSION
 from changedetectionio.blueprint.mcp.tools import UNTRUSTED_NOTE
-from .util import delete_all_watches
+from .util import delete_all_watches, new_mcp_token
 
 T0 = 1700000000  # 2023-11-14T22:13:20Z
+
+
+@pytest.fixture(autouse=True)
+def mcp_switched_on(client):
+    """The MCP server is off until the switch on its settings tab is on, these tests are about it being on, with
+    tokens with every tool allowed (a token's permissions grid has its own tests in test_mcp_notifications.py and
+    test_mcp_settings_page.py)."""
+    client.application.config['DATASTORE'].data['settings']['application']['mcp_enabled'] = True
 
 
 def _rpc(client, method, params=None, msg_id=1, headers=None, api_key=None):
@@ -17,7 +26,7 @@ def _rpc(client, method, params=None, msg_id=1, headers=None, api_key=None):
         body['id'] = msg_id
     h = {'x-api-key': api_key} if api_key else {}
     h.update(headers or {})
-    return client.post('/mcp', data=json.dumps(body), content_type='application/json', headers=h)
+    return client.post('/mcp/v1', data=json.dumps(body), content_type='application/json', headers=h)
 
 
 def _call(client, api_key, tool, **arguments):
@@ -40,7 +49,7 @@ def _setup(datastore):
 
 def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path):
     datastore = client.application.config['DATASTORE']
-    api_key = datastore.data['settings']['application'].get('mcp_access_token')
+    api_key = new_mcp_token(client)
 
     res = _rpc(client, 'initialize', {'protocolVersion': '2025-06-18', 'capabilities': {},
                                        'clientInfo': {'name': 'test', 'version': '1'}}, api_key=api_key)
@@ -68,7 +77,9 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     res = _rpc(client, 'tools/list', api_key=api_key)
     tools = {t['name']: t for t in res.json['result']['tools']}
     read_only = {'list_watches', 'get_watch', 'list_tags', 'get_changes', 'get_diff', 'get_snapshot',
-                 'get_system_info', 'list_notifications'}
+                 'get_system_info', 'list_notifications', 'notification_services',
+                 # From the built-in restock_diff plugin (register_mcp_tools, see test_mcp_plugin_tools.py)
+                 'restock_status'}
     # update_* can replace settings (e.g. the whole notification URL list), so they count as destructive too
     destructive = {'delete_watch', 'clear_history', 'delete_tag', 'remove_notification', 'update_watch', 'update_tag'}
     assert read_only | destructive <= set(tools)
@@ -79,13 +90,13 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
 
     # ?readonly=1 offers only the read-only tools, and refuses the others even when called by name, as a tool error
     # the assistant can read and pass on
-    res = client.post('/mcp?readonly=1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list'}),
+    res = client.post('/mcp/v1?readonly=1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list'}),
                       content_type='application/json', headers={'x-api-key': api_key})
     assert {t['name'] for t in res.json['result']['tools']} == read_only
     # Tools that make the server fetch outside pages say so
     assert all(tools[n]['annotations']['openWorldHint'] for n in ('create_watch', 'import_watches', 'recheck_watches'))
     assert all(t['annotations'].get('title') for t in tools.values())
-    res = client.post('/mcp?readonly=1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
+    res = client.post('/mcp/v1?readonly=1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
                                                           'params': {'name': 'delete_watch', 'arguments': {'watch': 'x'}}}),
                       content_type='application/json', headers={'x-api-key': api_key})
     assert res.json['result']['isError'] is True
@@ -101,7 +112,7 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     assert _rpc(client, 'ping', api_key=api_key, headers={'MCP-Protocol-Version': '2025-06-18'}).status_code == 200
 
     # Batches
-    res = client.post('/mcp', data=json.dumps([{'jsonrpc': '2.0', 'id': 1, 'method': 'ping'},
+    res = client.post('/mcp/v1', data=json.dumps([{'jsonrpc': '2.0', 'id': 1, 'method': 'ping'},
                                                {'jsonrpc': '2.0', 'method': 'notifications/initialized'},
                                                {'jsonrpc': '2.0', 'id': 2, 'method': 'ping'}]),
                       content_type='application/json', headers={'x-api-key': api_key})
@@ -111,21 +122,28 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     assert _rpc(client, 'resources/list', api_key=api_key).json['error']['code'] == -32601
     res = _rpc(client, 'tools/call', {'name': 'delete_everything', 'arguments': {}}, api_key=api_key)
     assert res.json['error']['code'] == -32602
-    res = client.post('/mcp', data='{not json', content_type='application/json', headers={'x-api-key': api_key})
+    res = client.post('/mcp/v1', data='{not json', content_type='application/json', headers={'x-api-key': api_key})
     assert res.status_code == 400 and res.json['error']['code'] == -32700
-    assert client.post('/mcp', data=json.dumps({'id': 1}), content_type='application/json',
+    assert client.post('/mcp/v1', data=json.dumps({'id': 1}), content_type='application/json',
                        headers={'x-api-key': api_key}).json['error']['code'] == -32600
     # Stateless: no SSE stream, no session
-    assert client.get('/mcp').status_code == 405
-    assert client.delete('/mcp', headers={'x-api-key': api_key}).status_code == 405
+    assert client.get('/mcp/v1').status_code == 405
+    assert client.delete('/mcp/v1', headers={'x-api-key': api_key}).status_code == 405
 
 
 def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
-    """MCP has its own access token, separate from the REST API key, and it is always required."""
+    """MCP has its own named access tokens, separate from the REST API key, and one is always required."""
     datastore = client.application.config['DATASTORE']
     settings = datastore.data['settings']['application']
-    token = settings.get('mcp_access_token')
-    assert token and token != settings.get('api_access_token')
+    settings.pop('mcp_tokens', None)
+    # A fresh install has none, so nothing can connect until one is added
+    assert _rpc(client, 'ping', api_key='').status_code == 403
+    token = new_mcp_token(client, name='Claude Code, laptop')
+    assert token.startswith('cdio_mcp_') and token != settings.get('api_access_token')
+    # Only its hash is stored, never the token itself
+    stored = list(settings['mcp_tokens'].values())[0]
+    assert token not in str(settings['mcp_tokens']) and stored['hint'] == token[:13]
+    assert stored['last_used'] is None
 
     assert _rpc(client, 'ping').status_code == 403
     assert _rpc(client, 'ping', api_key='wrong').status_code == 403
@@ -135,6 +153,11 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
     # Bearer (what the copyable configs use) or x-api-key
     assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {token}'}).status_code == 200
     assert _rpc(client, 'ping', api_key=token).status_code == 200
+    # "Last used", and which client from initialize
+    assert stored['last_used']
+    _rpc(client, 'initialize', {'protocolVersion': '2025-06-18', 'capabilities': {},
+                                'clientInfo': {'name': 'claude-code', 'version': '1'}}, api_key=token)
+    assert stored['last_client'] == 'claude-code'
     # A web page in someone's browser must not reach it (DNS rebinding), the assistant itself sends no Origin
     assert _rpc(client, 'ping', api_key=token, headers={'Origin': 'https://evil.example'}).status_code == 403
     from urllib.parse import urlsplit
@@ -153,10 +176,14 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
         settings['password'] = False
         settings['api_access_token_enabled'] = True
 
+    # Revoked: refused at once
+    settings['mcp_tokens'].clear()
+    assert _rpc(client, 'ping', api_key=token).status_code == 403
+
 
 def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
     datastore = client.application.config['DATASTORE']
-    api_key = datastore.data['settings']['application'].get('mcp_access_token')
+    api_key = new_mcp_token(client)
     group, policy, broken = _setup(datastore)
 
     result = _call(client, api_key, 'list_watches')
@@ -216,7 +243,7 @@ def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
 
 def test_mcp_write_tools(client, live_server, measure_memory_usage, datastore_path):
     datastore = client.application.config['DATASTORE']
-    api_key = datastore.data['settings']['application'].get('mcp_access_token')
+    api_key = new_mcp_token(client)
     watching = datastore.data['watching']
 
     # Create, with validation shared with the REST API
@@ -302,7 +329,7 @@ def test_mcp_write_tools(client, live_server, measure_memory_usage, datastore_pa
 def test_mcp_argument_validation(client, live_server, measure_memory_usage, datastore_path):
     """Bad arguments come back as a tool error listing every problem (the model can fix them), never silently ignored."""
     datastore = client.application.config['DATASTORE']
-    api_key = datastore.data['settings']['application'].get('mcp_access_token')
+    api_key = new_mcp_token(client)
     uuid = datastore.add_watch(url='https://example.com/validate', extras={'paused': False})
 
     # A typo'd argument is an error, and nothing is changed

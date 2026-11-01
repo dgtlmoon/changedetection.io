@@ -470,16 +470,16 @@ msgid "All notifications unmuted."
 msgstr "Tüm bildirimlerin sesi açıldı."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP read-only mode switched on."
-msgstr "MCP salt okunur modu açıldı."
+msgid "MCP settings saved."
+msgstr "MCP ayarları kaydedildi."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP read-only mode switched off."
-msgstr "MCP salt okunur modu kapatıldı."
+msgid "MCP server switched on."
+msgstr "MCP sunucusu açıldı."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP access token regenerated, update it in your AI assistants."
-msgstr "MCP erişim anahtarı yeniden oluşturuldu, yapay zekâ asistanlarınızda güncelleyin."
+msgid "MCP server switched off."
+msgstr "MCP sunucusu kapatıldı."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
@@ -496,6 +496,35 @@ msgstr "Yapay zekâ / LLM yapılandırması kaldırıldı."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Yapay zekâ özet önbelleği temizlendi ({} dosya kaldırıldı)."
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#, python-format
+msgid "Last used %(when)s"
+msgstr "Son kullanım %(when)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Never used"
+msgstr "Hiç kullanılmadı"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Edit"
+msgstr "Düzenle"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Revoke"
+msgstr "İptal et"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "No access tokens yet"
+msgstr "Henüz erişim anahtarı yok"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Add one for each assistant, so each has its own permissions and can be revoked on its own."
+msgstr "Her asistan için bir tane ekleyin; böylece her birinin kendi izinleri olur ve tek tek iptal edilebilir."
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
 msgstr ""
@@ -511,8 +540,9 @@ msgid "Usage"
 msgstr "Kullanım"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Overview"
-msgstr ""
+msgstr "Genel bakış"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Provider"
@@ -710,6 +740,7 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "İptal"
@@ -970,8 +1001,52 @@ msgid "copy"
 msgstr "kopyala"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
+msgstr ""
+"Okuma: listeleme, değişiklikler, farklar ve anlık görüntüler. Yazma: ekleme, değiştirme, yeniden kontrol, etiketleme "
+"ve silme."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list. Write: create, rename and delete."
+msgstr "Okuma: listeleme. Yazma: oluşturma, yeniden adlandırma ve silme."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
+msgstr "Okuma: listeleme (gizli bilgiler saklı) ve servis arama. Yazma: ekleme, kaldırma ve sessize alma."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Health, the check queue and what is being checked right now."
+msgstr "Durum, kontrol kuyruğu ve şu an neyin kontrol edildiği."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Connect AI assistants with MCP"
 msgstr "Yapay zekâ asistanlarını MCP ile bağlayın"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The MCP server is switched off on this installation."
+msgstr "MCP sunucusu bu kurulumda kapalı."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect"
+msgstr "Bağlan"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Access tokens"
+msgstr "Erişim anahtarları"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "OAuth connections"
+msgstr "OAuth bağlantıları"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Off: the MCP and OAuth endpoints are switched off and no assistant can connect. Everything here can still be set up "
+"first."
+msgstr "Kapalı: MCP ve OAuth uç noktaları kapalı, hiçbir asistan bağlanamaz. Buradaki her şey yine de önceden ayarlanabilir."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Off"
+msgstr "Kapalı"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -982,14 +1057,40 @@ msgstr ""
 "araç olarak kullanmasını sağlayan açık bir standarttır."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid ""
-"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic "
-"devices, MCP provides a standardized way to connect AI applications to external systems."
-msgstr ""
+msgid "Look"
+msgstr "Görüntüleme"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "The MCP server is switched off on this installation."
-msgstr "MCP sunucusu bu kurulumda kapalı."
+msgid ""
+"List monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked "
+"right now."
+msgstr ""
+"Monitörleri ve grupları listeleme, iki tarih arasında neyin değiştiği, farklar, sayfa anlık görüntüleri, hatalar ve "
+"şu an neyin kontrol edildiği."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Change"
+msgstr "Değiştirme"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add monitors, change their settings, tag them, recheck them and set up notifications, as far as the permissions allow."
+msgstr "İzinlerin elverdiği ölçüde monitör ekleme, ayarlarını değiştirme, etiketleme, yeniden kontrol etme ve bildirim kurma."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Safe by default"
+msgstr "Varsayılan olarak güvenli"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
+msgstr "İzlenen sayfalardaki metin asistana veri olarak iletilir. Bildirim URL'leri ona asla tam olarak gösterilmez."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect an assistant"
+msgstr "Bir asistan bağla"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Server"
+msgstr "Sunucu"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Server address"
@@ -1000,12 +1101,28 @@ msgid "MCP access token"
 msgstr "MCP erişim anahtarı"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Regenerate MCP token"
-msgstr "Yeni MCP anahtarı oluştur"
+msgid "Add a token for each assistant on the Access tokens sub-tab. It is shown once, when it is created."
+msgstr "Erişim anahtarları alt sekmesinde her asistan için bir anahtar ekleyin. Yalnızca oluşturulurken bir kez gösterilir."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one."
-msgstr "Yalnızca MCP için, API anahtarından ayrı. Yenisini oluşturmak eskisini kullanan tüm asistanların bağlantısını keser."
+msgid "Treat it like a password."
+msgstr "Bir parola gibi davranın."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"It does not expire, and anyone who has it can use these tools and read what they return. Never paste it into a file "
+"you commit or share."
+msgstr ""
+"Süresi dolmaz ve ona sahip olan herkes bu araçları kullanıp döndürdüklerini okuyabilir. Commit ettiğiniz veya "
+"paylaştığınız bir dosyaya asla yapıştırmayın."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Most assistants below can read it from an environment variable, so it stays out of their config files. Set it once, "
+"for example in ~/.bashrc or ~/.zshrc:"
+msgstr ""
+"Aşağıdaki asistanların çoğu onu bir ortam değişkeninden okuyabilir, böylece yapılandırma dosyalarına girmez. Bir kez "
+"ayarlayın, örneğin ~/.bashrc veya ~/.zshrc içinde:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1020,20 +1137,36 @@ msgid "To remove it again:"
 msgstr "Kaldırmak için:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Read-only"
-msgstr "Salt okunur"
+msgid ""
+"By default (--scope local) Claude Code saves this in ~/.claude.json, only for you and only in the current project. "
+"Add --scope user to have it in all your projects."
+msgstr ""
+"Varsayılan olarak (--scope local) Claude Code bunu ~/.claude.json içine kaydeder, yalnızca sizin için ve yalnızca "
+"geçerli projede. Tüm projelerinizde olması için --scope user ekleyin."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "An assistant that tries to change something is told that read-only mode is on."
-msgstr "Bir şeyi değiştirmeye çalışan asistana salt okunur modun açık olduğu söylenir."
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "To make only one assistant read-only, use this address for it instead:"
-msgstr "Yalnızca bir asistanı salt okunur yapmak için onun yerine bu adresi kullanın:"
+msgid ""
+"--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves "
+"a reference to the environment variable, not the token:"
+msgstr ""
+"--scope project, projeye genellikle commit edilen .mcp.json dosyasını yazar. Orada bunun yerine bu biçimi kullanın; "
+"anahtarın kendisini değil, ortam değişkenine bir başvuruyu kaydeder:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Other AI assistants"
 msgstr "Diğer yapay zekâ asistanları"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "This file contains the token: keep it in your own settings, not in anything you commit or share."
+msgstr "Bu dosya anahtarı içerir: onu kendi ayarlarınızda tutun, commit ettiğiniz veya paylaştığınız hiçbir şeye koymayın."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "VS Code asks for the token once and stores it securely, so this file is safe to commit."
+msgstr "VS Code anahtarı bir kez sorar ve güvenle saklar, bu yüzden bu dosyayı commit etmek güvenlidir."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Uses httpUrl, not url (url means the older SSE transport)."
+msgstr "url değil httpUrl kullanır (url eski SSE aktarımı anlamına gelir)."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1044,6 +1177,54 @@ msgstr ""
 "oturum açmayı destekler."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Any other assistant (Windsurf, Devin and others)"
+msgstr "Diğer asistanlar (Windsurf, Devin ve diğerleri)"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Most assistants can run a local command: the same mcp-remote bridge (needs Node.js), in the format of that "
+"assistant's MCP settings."
+msgstr ""
+"Asistanların çoğu yerel bir komut çalıştırabilir: aynı mcp-remote köprüsü (Node.js gerekir), o asistanın MCP "
+"ayarlarının biçiminde."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add token"
+msgstr "Anahtar ekle"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "One for each assistant, each with its own permissions. Revoking one disconnects only that assistant."
+msgstr "Her asistan için bir tane, her birinin kendi izinleri var. Birini iptal etmek yalnızca o asistanın bağlantısını keser."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Revoke this access token?"
+msgstr "Bu erişim anahtarı iptal edilsin mi?"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The assistant using it is disconnected at once."
+msgstr "Onu kullanan asistanın bağlantısı hemen kesilir."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Something went wrong, please try again."
+msgstr "Bir şeyler ters gitti, lütfen tekrar deneyin."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Notifications are read-only by default. A page an assistant reads could try to get it to send your alerts, and the "
+"page text in them, somewhere else."
+msgstr ""
+"Bildirimler varsayılan olarak salt okunurdur. Asistanın okuduğu bir sayfa, uyarılarınızı sayfa metniyle birlikte "
+"başka bir yere göndermesini sağlamaya çalışabilir."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "Yalnızca bir asistanı salt okunur yapmak için onun yerine bu adresi kullanın:"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Sign in with OAuth is coming soon"
+msgstr "OAuth ile giriş yakında"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
 "ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not "
 "offer yet."
@@ -1052,30 +1233,32 @@ msgstr ""
 "sunmuyor."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "What an assistant can do"
-msgstr "Bir asistan neler yapabilir"
+msgid "Assistants you connect that way will be listed here, and you can disconnect them."
+msgstr "Bu şekilde bağlanan asistanlar burada listelenecek ve bağlantılarını kesebileceksiniz."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid ""
-"Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being "
-"checked right now."
-msgstr ""
-"Bakmak: izleyicileri ve grupları listelemek, iki tarih arasında neyin değiştiği, farklar, sayfa anlık görüntüleri, "
-"hatalar ve şu anda neyin kontrol edildiği."
+msgid "Edit access token"
+msgstr "Erişim anahtarını düzenle"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Change: add monitors, change their settings, tag them, recheck them and add notification URLs."
-msgstr ""
-"Değiştirmek: izleyici eklemek, ayarlarını değiştirmek, etiketlemek, yeniden kontrol etmek ve bildirim URL'leri "
-"eklemek."
+msgid "Add access token"
+msgstr "Erişim anahtarı ekle"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these."
-msgstr "Silmek: izleyiciler, geçmişleri, gruplar ve bildirim URL'leri. Asistanlar bunlardan önce size sorar."
+msgid "Access token created"
+msgstr "Erişim anahtarı oluşturuldu"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
-msgstr "İzlenen sayfalardaki metin asistana veri olarak iletilir. Bildirim URL'leri ona asla tam olarak gösterilmez."
+msgid "Copy it now, it is not shown again."
+msgstr "Şimdi kopyalayın, bir daha gösterilmeyecek."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Set it once, for example in ~/.bashrc or ~/.zshrc, then use the configs on the Connect sub-tab:"
+msgstr "Bir kez ayarlayın, örneğin ~/.bashrc veya ~/.zshrc içinde, sonra Bağlan alt sekmesindeki yapılandırmaları kullanın:"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Done"
+msgstr "Tamam"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
@@ -1407,6 +1590,14 @@ msgid "header - required for the Chrome Extension to work"
 msgstr "başlık - Chrome Eklentisinin çalışması için gereklidir"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Regenerate API key?"
+msgstr "API anahtarı yeniden oluşturulsun mu?"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Anything using the current API key stops working until it is given the new one."
+msgstr "Mevcut API anahtarını kullanan her şey, yenisi verilene kadar çalışmaz."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
 msgstr "API anahtarını yeniden oluştur"
 
@@ -1726,11 +1917,6 @@ msgstr "Bildirimleri sessize al"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "Yeniden Kontrol Et"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Edit"
-msgstr "Düzenle"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Delete Group?"
@@ -3443,8 +3629,8 @@ msgstr "Bildirim temel URL'sini geçersiz kılma"
 msgid "Not set"
 msgstr ""
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/blueprint/tags/form.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
 msgid "Save"
 msgstr "Kaydet"
 
@@ -3617,10 +3803,11 @@ msgstr "Proxy"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "Filtre artık sayfada bulunamadığında bir bildirim gönder"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
 msgid "On"
 msgstr "Açık"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
@@ -3921,8 +4108,39 @@ msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Read-only mode, assistants can look but never add, change or delete anything"
-msgstr "Salt okunur, asistanlar bakabilir ama hiçbir şeyi ekleyemez, değiştiremez veya silemez"
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "MCP ve OAuth uç noktalarını aç"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "örn. Claude Code, dizüstü"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Monitors"
+msgstr "Monitörler"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "Write"
+msgstr "Yazma"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "None"
+msgstr "Yok"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "Read"
+msgstr "Okuma"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Groups (tags)"
+msgstr "Gruplar (etiketler)"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "System info"
+msgstr "Sistem bilgisi"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

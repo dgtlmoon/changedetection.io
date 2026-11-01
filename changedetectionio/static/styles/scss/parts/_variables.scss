@@ -53,6 +53,10 @@
   --color-background-tab: rgba(255, 255, 255, 0.2);
   --color-background-tab-hover: rgba(255, 255, 255, 0.5);
   --color-text-tab-active: #222;
+  // The sub-page switch inside a settings box (.settings-subtabs), on the box's background, not the page gradient
+  --color-text-subtab: var(--color-grey-300);
+  --color-background-subtabs: rgba(0, 0, 0, 0.06);
+  --color-background-subtab-hover: rgba(0, 0, 0, 0.06);
   --color-api-key: #0078e7;
 
   --color-background-button-primary: #0078e7;
@@ -153,6 +157,9 @@
   --color-text-menu-link: var(--color-grey-800);
   --color-border-table-cell: var(--color-grey-400);
   --color-text-tab-active: var(--color-text);
+  --color-text-subtab: var(--color-grey-750);
+  --color-background-subtabs: rgba(255, 255, 255, 0.06);
+  --color-background-subtab-hover: rgba(255, 255, 255, 0.08);
 
   --color-border-input: var(--color-grey-400);
   --color-shadow-input: var(--color-grey-50);

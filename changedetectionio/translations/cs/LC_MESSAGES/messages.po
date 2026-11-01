@@ -463,16 +463,16 @@ msgid "All notifications unmuted."
 msgstr "Všechna oznámení odtlumena."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP read-only mode switched on."
-msgstr "Režim MCP jen pro čtení zapnut."
+msgid "MCP settings saved."
+msgstr "Nastavení MCP uloženo."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP read-only mode switched off."
-msgstr "Režim MCP jen pro čtení vypnut."
+msgid "MCP server switched on."
+msgstr "Server MCP zapnut."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP access token regenerated, update it in your AI assistants."
-msgstr "Přístupový token MCP vygenerován znovu, aktualizujte ho ve svých AI asistentech."
+msgid "MCP server switched off."
+msgstr "Server MCP vypnut."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
@@ -489,6 +489,35 @@ msgstr "AI / LLM konfigurace odstraněna."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI cache souhrnů vyčištěna ({}s soubor(ů) odstraněno)."
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#, python-format
+msgid "Last used %(when)s"
+msgstr "Naposledy použito %(when)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Never used"
+msgstr "Nikdy nepoužito"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Edit"
+msgstr "Upravit"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Revoke"
+msgstr "Odvolat"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "No access tokens yet"
+msgstr "Zatím žádné přístupové tokeny"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Add one for each assistant, so each has its own permissions and can be revoked on its own."
+msgstr "Přidejte jeden pro každého asistenta, aby měl vlastní oprávnění a šel odvolat samostatně."
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
 msgstr ""
@@ -504,6 +533,7 @@ msgid "Usage"
 msgstr "Využití"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Overview"
 msgstr "Přehled"
 
@@ -703,6 +733,7 @@ msgid "Remove"
 msgstr "Odstranit"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "Zrušit"
@@ -963,8 +994,52 @@ msgid "copy"
 msgstr "kopírovat"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
+msgstr "Čtení: výpis, změny, rozdíly a snímky. Zápis: přidat, změnit, znovu zkontrolovat, štítkovat a smazat."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list. Write: create, rename and delete."
+msgstr "Čtení: výpis. Zápis: vytvořit, přejmenovat a smazat."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
+msgstr "Čtení: výpis (tajné údaje skryté) a vyhledání služeb. Zápis: přidat, odebrat a ztlumit."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Health, the check queue and what is being checked right now."
+msgstr "Stav, fronta kontrol a co se právě kontroluje."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Connect AI assistants with MCP"
 msgstr "Připojit AI asistenty přes MCP"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The MCP server is switched off on this installation."
+msgstr "Server MCP je na této instalaci vypnutý."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect"
+msgstr "Připojit"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Access tokens"
+msgstr "Přístupové tokeny"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "OAuth connections"
+msgstr "Připojení OAuth"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Off: the MCP and OAuth endpoints are switched off and no assistant can connect. Everything here can still be set up "
+"first."
+msgstr ""
+"Vypnuto: koncové body MCP a OAuth jsou vypnuté a žádný asistent se nemůže připojit. Vše zde lze přesto nastavit "
+"předem."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Off"
+msgstr "Vyp"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -975,14 +1050,40 @@ msgstr ""
 "umožňuje používat jiné aplikace jako nástroje."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid ""
-"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic "
-"devices, MCP provides a standardized way to connect AI applications to external systems."
-msgstr ""
+msgid "Look"
+msgstr "Číst"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "The MCP server is switched off on this installation."
-msgstr "Server MCP je na této instalaci vypnutý."
+msgid ""
+"List monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked "
+"right now."
+msgstr "Výpis monitorů a skupin, co se změnilo mezi dvěma daty, rozdíly, snímky stránek, chyby a co se právě kontroluje."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Change"
+msgstr "Měnit"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add monitors, change their settings, tag them, recheck them and set up notifications, as far as the permissions allow."
+msgstr ""
+"Přidávat monitory, měnit jejich nastavení, štítkovat je, znovu kontrolovat a nastavovat upozornění, nakolik to "
+"oprávnění dovolí."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Safe by default"
+msgstr "Bezpečné ve výchozím stavu"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
+msgstr "Text ze sledovaných stránek se asistentovi předává jako data. URL notifikací mu nikdy nejsou ukázány celé."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect an assistant"
+msgstr "Připojit asistenta"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Server"
+msgstr "Server"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Server address"
@@ -993,12 +1094,28 @@ msgid "MCP access token"
 msgstr "Přístupový token MCP"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Regenerate MCP token"
-msgstr "Vygenerovat nový token MCP"
+msgid "Add a token for each assistant on the Access tokens sub-tab. It is shown once, when it is created."
+msgstr "Přidejte token pro každého asistenta na podzáložce Přístupové tokeny. Zobrazí se jen jednou, při vytvoření."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one."
-msgstr "Jen pro MCP, odděleně od API klíče. Nový token odpojí všechny asistenty, kteří používají ten starý."
+msgid "Treat it like a password."
+msgstr "Zacházejte s ním jako s heslem."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"It does not expire, and anyone who has it can use these tools and read what they return. Never paste it into a file "
+"you commit or share."
+msgstr ""
+"Nevyprší a kdokoli ho má, může tyto nástroje používat a číst, co vracejí. Nikdy ho nevkládejte do souboru, který "
+"commitujete nebo sdílíte."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Most assistants below can read it from an environment variable, so it stays out of their config files. Set it once, "
+"for example in ~/.bashrc or ~/.zshrc:"
+msgstr ""
+"Většina asistentů níže ho umí číst z proměnné prostředí, takže zůstane mimo jejich konfigurační soubory. Nastavte ji "
+"jednou, například v ~/.bashrc nebo ~/.zshrc:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1011,20 +1128,36 @@ msgid "To remove it again:"
 msgstr "Pro odebrání:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Read-only"
-msgstr "Jen pro čtení"
+msgid ""
+"By default (--scope local) Claude Code saves this in ~/.claude.json, only for you and only in the current project. "
+"Add --scope user to have it in all your projects."
+msgstr ""
+"Ve výchozím nastavení (--scope local) to Claude Code uloží do ~/.claude.json, jen pro vás a jen v aktuálním projektu."
+" S --scope user to budete mít ve všech projektech."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "An assistant that tries to change something is told that read-only mode is on."
-msgstr "Asistent, který se pokusí něco změnit, se dozví, že je zapnutý režim jen pro čtení."
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "To make only one assistant read-only, use this address for it instead:"
-msgstr "Chcete-li jen jednoho asistenta omezit na čtení, použijte pro něj tuto adresu:"
+msgid ""
+"--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves "
+"a reference to the environment variable, not the token:"
+msgstr ""
+"--scope project zapíše .mcp.json do projektu, který se obvykle commituje. Tam použijte raději tento tvar, uloží odkaz"
+" na proměnnou prostředí, ne token:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Other AI assistants"
 msgstr "Další AI asistenti"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "This file contains the token: keep it in your own settings, not in anything you commit or share."
+msgstr "Tento soubor obsahuje token: nechte ho ve svém vlastním nastavení, ne v ničem, co commitujete nebo sdílíte."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "VS Code asks for the token once and stores it securely, so this file is safe to commit."
+msgstr "VS Code si token jednou vyžádá a bezpečně uloží, takže tento soubor lze bezpečně commitovat."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Uses httpUrl, not url (url means the older SSE transport)."
+msgstr "Používá httpUrl, ne url (url znamená starší přenos SSE)."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1035,6 +1168,54 @@ msgstr ""
 "token."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Any other assistant (Windsurf, Devin and others)"
+msgstr "Jakýkoli jiný asistent (Windsurf, Devin a další)"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Most assistants can run a local command: the same mcp-remote bridge (needs Node.js), in the format of that "
+"assistant's MCP settings."
+msgstr ""
+"Většina asistentů umí spustit lokální příkaz: stejný most mcp-remote (potřebuje Node.js), ve formátu nastavení MCP "
+"daného asistenta."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add token"
+msgstr "Přidat token"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "One for each assistant, each with its own permissions. Revoking one disconnects only that assistant."
+msgstr "Jeden pro každého asistenta, každý s vlastními oprávněními. Odvolání odpojí jen toho asistenta."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Revoke this access token?"
+msgstr "Odvolat tento přístupový token?"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The assistant using it is disconnected at once."
+msgstr "Asistent, který ho používá, se okamžitě odpojí."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Something went wrong, please try again."
+msgstr "Něco se pokazilo, zkuste to prosím znovu."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Notifications are read-only by default. A page an assistant reads could try to get it to send your alerts, and the "
+"page text in them, somewhere else."
+msgstr ""
+"Upozornění jsou ve výchozím stavu jen pro čtení. Stránka, kterou asistent čte, by se ho mohla pokusit přimět, aby "
+"vaše upozornění i s textem stránky posílal jinam."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "Chcete-li jen jednoho asistenta omezit na čtení, použijte pro něj tuto adresu:"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Sign in with OAuth is coming soon"
+msgstr "Přihlášení přes OAuth brzy"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
 "ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not "
 "offer yet."
@@ -1043,28 +1224,32 @@ msgstr ""
 "nenabízí."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "What an assistant can do"
-msgstr "Co asistent umí"
+msgid "Assistants you connect that way will be listed here, and you can disconnect them."
+msgstr "Asistenti připojení tímto způsobem se zobrazí zde a budete je moci odpojit."
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid ""
-"Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being "
-"checked right now."
-msgstr ""
-"Prohlížet: výpis monitorů a skupin, co se změnilo mezi dvěma daty, rozdíly, snímky stránek, chyby a co se právě "
-"kontroluje."
+msgid "Edit access token"
+msgstr "Upravit přístupový token"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Change: add monitors, change their settings, tag them, recheck them and add notification URLs."
-msgstr "Měnit: přidávat monitory, měnit jejich nastavení, štítkovat je, znovu je kontrolovat a přidávat URL notifikací."
+msgid "Add access token"
+msgstr "Přidat přístupový token"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these."
-msgstr "Mazat: monitory, jejich historii, skupiny a URL notifikací. Asistenti se vás před tím zeptají."
+msgid "Access token created"
+msgstr "Přístupový token vytvořen"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
-msgstr "Text ze sledovaných stránek se asistentovi předává jako data. URL notifikací mu nikdy nejsou ukázány celé."
+msgid "Copy it now, it is not shown again."
+msgstr "Zkopírujte ho teď, znovu se nezobrazí."
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Set it once, for example in ~/.bashrc or ~/.zshrc, then use the configs on the Connect sub-tab:"
+msgstr "Nastavte ho jednou, například v ~/.bashrc nebo ~/.zshrc, a pak použijte konfigurace na podzáložce Připojit:"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Done"
+msgstr "Hotovo"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
@@ -1378,6 +1563,14 @@ msgid "header - required for the Chrome Extension to work"
 msgstr "hlavičky - vyžadováno pro správné fungování Chrome rozšíření"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Regenerate API key?"
+msgstr "Vygenerovat nový klíč API?"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Anything using the current API key stops working until it is given the new one."
+msgstr "Vše, co používá současný klíč API, přestane fungovat, dokud nedostane nový."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
 msgstr "Obnovit API klíč"
 
@@ -1689,11 +1882,6 @@ msgstr "Ztlumit oznámení"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "Znovu zkontrolovat"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Edit"
-msgstr "Upravit"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Delete Group?"
@@ -3394,8 +3582,8 @@ msgstr "Základní URL pro upozornění"
 msgid "Not set"
 msgstr "Nenastaveno"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/blueprint/tags/form.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
 msgid "Save"
 msgstr "Uložit"
 
@@ -3568,10 +3756,11 @@ msgstr "Proxy"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "Odeslat upozornění pokud filtr již na stránce nelze najít"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
 msgid "On"
 msgstr "Zapnuto"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
@@ -3872,8 +4061,39 @@ msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py
-msgid "Read-only mode, assistants can look but never add, change or delete anything"
-msgstr "Jen pro čtení, asistenti mohou prohlížet, ale nikdy nic nepřidají, nezmění ani nesmažou"
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "Zapnout koncové body MCP a OAuth"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "např. Claude Code, notebook"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Monitors"
+msgstr "Monitory"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "Write"
+msgstr "Zápis"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "None"
+msgstr "Žádné"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "Read"
+msgstr "Čtení"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Groups (tags)"
+msgstr "Skupiny (štítky)"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "System info"
+msgstr "Systém"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

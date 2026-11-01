@@ -465,16 +465,16 @@ msgid "All notifications unmuted."
 msgstr "所有通知已取消靜音。"
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP read-only mode switched on."
-msgstr "已開啟 MCP 唯讀模式。"
+msgid "MCP settings saved."
+msgstr "MCP 設定已儲存。"
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP read-only mode switched off."
-msgstr "已關閉 MCP 唯讀模式。"
+msgid "MCP server switched on."
+msgstr "MCP 伺服器已開啟。"
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
-msgid "MCP access token regenerated, update it in your AI assistants."
-msgstr "MCP 存取權杖已重新產生，請在你的 AI 助理中更新。"
+msgid "MCP server switched off."
+msgstr "MCP 伺服器已關閉。"
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
@@ -491,6 +491,35 @@ msgstr "AI / LLM 設定已移除。"
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 摘要快取已清除（已移除 {} 個檔案）。"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#, python-format
+msgid "Last used %(when)s"
+msgstr "上次使用 %(when)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Never used"
+msgstr "從未使用"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Edit"
+msgstr "編輯"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Revoke"
+msgstr "撤銷"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "No access tokens yet"
+msgstr "尚無存取權杖"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Add one for each assistant, so each has its own permissions and can be revoked on its own."
+msgstr "為每個助理新增一個，這樣每個助理都有自己的權限，並可單獨撤銷。"
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Configure the connection with your favorite AI assistant service, such as OpenAI, Claude, Google Gemini."
 msgstr ""
@@ -506,6 +535,7 @@ msgid "Usage"
 msgstr "使用量"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Overview"
 msgstr "概覽"
 
@@ -710,6 +740,7 @@ msgid "Remove"
 msgstr "移除"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "取消"
@@ -970,8 +1001,50 @@ msgid "copy"
 msgstr "複製"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
+msgstr "讀取：清單、變更、差異與快照。寫入：新增、變更、重新檢查、加標籤與刪除。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list. Write: create, rename and delete."
+msgstr "讀取：清單。寫入：建立、重新命名與刪除。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
+msgstr "讀取：列出（隱藏機密）並查詢服務。寫入：新增、移除與靜音。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Health, the check queue and what is being checked right now."
+msgstr "運作狀態、檢查佇列以及目前正在檢查的項目。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Connect AI assistants with MCP"
 msgstr "透過 MCP 連接 AI 助理"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The MCP server is switched off on this installation."
+msgstr "此安裝已關閉 MCP 伺服器。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect"
+msgstr "連線"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Access tokens"
+msgstr "存取權杖"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "OAuth connections"
+msgstr "OAuth 連線"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Off: the MCP and OAuth endpoints are switched off and no assistant can connect. Everything here can still be set up "
+"first."
+msgstr "關閉：MCP 與 OAuth 端點已關閉，任何助理都無法連線。這裡的所有設定仍可事先完成。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Off"
+msgstr "關"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -980,14 +1053,38 @@ msgid ""
 msgstr "MCP（Model Context Protocol）是一個開放標準，讓 Claude、ChatGPT、Cursor 和 VS Code 等 AI 助理可以把其他應用程式當作工具使用。"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid ""
-"Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic "
-"devices, MCP provides a standardized way to connect AI applications to external systems."
-msgstr ""
+msgid "Look"
+msgstr "檢視"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "The MCP server is switched off on this installation."
-msgstr "此安裝已關閉 MCP 伺服器。"
+msgid ""
+"List monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked "
+"right now."
+msgstr "列出監視器與群組、兩個日期之間的變更、差異、頁面快照、錯誤以及目前正在檢查的項目。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Change"
+msgstr "變更"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add monitors, change their settings, tag them, recheck them and set up notifications, as far as the permissions allow."
+msgstr "在權限允許的範圍內新增監視器、變更設定、加標籤、重新檢查與設定通知。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Safe by default"
+msgstr "預設安全"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
+msgstr "被監控頁面的文字會作為資料傳給助理。通知 URL 絕不會完整地顯示給它。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect an assistant"
+msgstr "連線助理"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Server"
+msgstr "伺服器"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Server address"
@@ -998,12 +1095,24 @@ msgid "MCP access token"
 msgstr "MCP 存取權杖"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Regenerate MCP token"
-msgstr "重新產生 MCP 權杖"
+msgid "Add a token for each assistant on the Access tokens sub-tab. It is shown once, when it is created."
+msgstr "在「存取權杖」子分頁為每個助理新增權杖。權杖只在建立時顯示一次。"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one."
-msgstr "僅用於 MCP，與 API 金鑰分開。重新產生後，使用舊權杖的所有助理都會中斷連線。"
+msgid "Treat it like a password."
+msgstr "請像對待密碼一樣對待它。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"It does not expire, and anyone who has it can use these tools and read what they return. Never paste it into a file "
+"you commit or share."
+msgstr "它不會過期，任何拿到它的人都能使用這些工具並讀取回傳的內容。切勿把它貼到你會提交或分享的檔案裡。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Most assistants below can read it from an environment variable, so it stays out of their config files. Set it once, "
+"for example in ~/.bashrc or ~/.zshrc:"
+msgstr "下面大多數助理都能從環境變數讀取它，這樣權杖就不會寫進它們的設定檔。設定一次即可，例如在 ~/.bashrc 或 ~/.zshrc 中："
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1016,20 +1125,32 @@ msgid "To remove it again:"
 msgstr "如需移除："
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Read-only"
-msgstr "唯讀"
+msgid ""
+"By default (--scope local) Claude Code saves this in ~/.claude.json, only for you and only in the current project. "
+"Add --scope user to have it in all your projects."
+msgstr "預設情況下（--scope local），Claude Code 會把它儲存到 ~/.claude.json，僅你本人、僅目前專案可用。加上 --scope user 可在所有專案中使用。"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "An assistant that tries to change something is told that read-only mode is on."
-msgstr "助理嘗試變更內容時，會被告知唯讀模式已開啟。"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "To make only one assistant read-only, use this address for it instead:"
-msgstr "若只想讓某個助理唯讀，請改為給它使用此位址："
+msgid ""
+"--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves "
+"a reference to the environment variable, not the token:"
+msgstr "--scope project 會把 .mcp.json 寫進專案，而它通常會被提交。這種情況請改用下面的形式，它儲存的是環境變數的參照，而不是權杖："
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Other AI assistants"
 msgstr "其他 AI 助理"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "This file contains the token: keep it in your own settings, not in anything you commit or share."
+msgstr "此檔案包含權杖：只放在你自己的設定裡，不要放進任何會提交或分享的內容中。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "VS Code asks for the token once and stores it securely, so this file is safe to commit."
+msgstr "VS Code 會詢問一次權杖並安全保存，所以這個檔案可以放心提交。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Uses httpUrl, not url (url means the older SSE transport)."
+msgstr "使用 httpUrl，而不是 url（url 表示舊的 SSE 傳輸）。"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1038,32 +1159,82 @@ msgid ""
 msgstr "透過 mcp-remote 橋接（需要 Node.js），因為 Claude Desktop 連接器只支援登入，不支援存取權杖。"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Any other assistant (Windsurf, Devin and others)"
+msgstr "其他任何助理（Windsurf、Devin 等）"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Most assistants can run a local command: the same mcp-remote bridge (needs Node.js), in the format of that "
+"assistant's MCP settings."
+msgstr "大多數助理都能執行本機指令：使用同一個 mcp-remote 橋接（需要 Node.js），依該助理的 MCP 設定格式填寫。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add token"
+msgstr "新增權杖"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "One for each assistant, each with its own permissions. Revoking one disconnects only that assistant."
+msgstr "每個助理一個，各有自己的權限。撤銷一個只會中斷那個助理。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Revoke this access token?"
+msgstr "撤銷這個存取權杖？"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "The assistant using it is disconnected at once."
+msgstr "使用它的助理會立即中斷連線。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Something went wrong, please try again."
+msgstr "發生錯誤，請再試一次。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid ""
+"Notifications are read-only by default. A page an assistant reads could try to get it to send your alerts, and the "
+"page text in them, somewhere else."
+msgstr "通知預設為唯讀。助理讀取的頁面可能會試圖讓它把你的提醒連同頁面文字傳送到別處。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "若只想讓某個助理唯讀，請改為給它使用此位址："
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Sign in with OAuth is coming soon"
+msgstr "OAuth 登入即將推出"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
 "ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not "
 "offer yet."
 msgstr "瀏覽器中的 ChatGPT 和 claude.ai 只能連接支援登入（OAuth）的伺服器，此 MCP 伺服器暫不提供。"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "What an assistant can do"
-msgstr "助理可以做什麼"
+msgid "Assistants you connect that way will be listed here, and you can disconnect them."
+msgstr "以這種方式連線的助理會列在這裡，你可以中斷連線。"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid ""
-"Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being "
-"checked right now."
-msgstr "查看：列出監控和群組、兩個日期之間的變化、差異、頁面快照、錯誤以及正在檢查的項目。"
+msgid "Edit access token"
+msgstr "編輯存取權杖"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Change: add monitors, change their settings, tag them, recheck them and add notification URLs."
-msgstr "更改：新增監控、更改設定、加上標籤、重新檢查以及新增通知 URL。"
+msgid "Add access token"
+msgstr "新增存取權杖"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these."
-msgstr "刪除：監控及其歷史、群組和通知 URL。助理會在執行前先詢問你。"
+msgid "Access token created"
+msgstr "存取權杖已建立"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
-msgstr "被監控頁面的文字會作為資料傳給助理。通知 URL 絕不會完整地顯示給它。"
+msgid "Copy it now, it is not shown again."
+msgstr "請現在複製，它不會再次顯示。"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Set it once, for example in ~/.bashrc or ~/.zshrc, then use the configs on the Connect sub-tab:"
+msgstr "設定一次，例如在 ~/.bashrc 或 ~/.zshrc 中，然後使用「連線」子分頁中的設定："
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Done"
+msgstr "完成"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
@@ -1377,6 +1548,14 @@ msgid "header - required for the Chrome Extension to work"
 msgstr "標頭 - 這是 Chrome 擴充功能運作所必需的"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Regenerate API key?"
+msgstr "重新產生 API 金鑰？"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Anything using the current API key stops working until it is given the new one."
+msgstr "所有使用目前 API 金鑰的地方在換上新金鑰之前都會停止運作。"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
 msgstr "重新產生 API 金鑰"
 
@@ -1686,11 +1865,6 @@ msgstr "靜音通知"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "複查"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Edit"
-msgstr "編輯"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Delete Group?"
@@ -3389,8 +3563,8 @@ msgstr "通知基礎 URL 覆寫"
 msgid "Not set"
 msgstr "未設定"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/blueprint/tags/form.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
 msgid "Save"
 msgstr "儲存"
 
@@ -3563,10 +3737,11 @@ msgstr "代理伺服器"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "當頁面上找不到過濾器時發送通知"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
 msgid "On"
 msgstr "開啟"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
@@ -3867,8 +4042,39 @@ msgid "Changes since you last viewed the watch"
 msgstr "自您上次檢視該監測任務以來的變更"
 
 #: changedetectionio/forms.py
-msgid "Read-only mode, assistants can look but never add, change or delete anything"
-msgstr "唯讀，助理可以查看，但不能新增、變更或刪除任何內容"
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "開啟 MCP 與 OAuth 端點"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "例如 Claude Code，筆電"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Monitors"
+msgstr "監視器"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "Write"
+msgstr "寫入"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "None"
+msgstr "無"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html changedetectionio/forms.py
+msgid "Read"
+msgstr "讀取"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Groups (tags)"
+msgstr "群組（標籤）"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "System info"
+msgstr "系統資訊"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

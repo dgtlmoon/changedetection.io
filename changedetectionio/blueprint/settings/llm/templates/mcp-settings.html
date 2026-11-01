@@ -1,11 +1,47 @@
 {% extends 'base.html' %}
 {% from 'settings-tabs.html' import settings_tabs with context %}
 {% from '_helpers.html' import render_checkbox_field, render_button %}
+{% from '_stab.html' import stab_shell, stab_pane %}
 {#
   The "MCP Server" tab, /settings/ai/mcp (blueprint/settings/llm). Its own page and route, see settings-ai-tabs.html.
-  Requires template context: form (forms.globalMCPSettingsPageForm), mcp_disabled, mcp_url, mcp_token, mcp_read_only
-  (see mcp_template_context()). One form like the AI / LLM tab, its Save button at the bottom.
+  Requires template context: form (forms.globalMCPSettingsPageForm), token_form (forms.MCPTokenForm), mcp_disabled,
+  mcp_enabled, mcp_url, mcp_tokens (see mcp_template_context()). One form like the AI / LLM tab, its Save button at the
+  bottom; the access tokens are managed in an overlay outside it, with ajax (mcp-tokens.js).
+  Vertical sub-tabs (_stab.html) like the AI / LLM tab, the on/off switch at the top of Overview. Everything can be set
+  up while the switch is off.
 #}
+{% macro copyable(text, id, block=False) -%}
+    {%- if block -%}
+    <div class="mcp-snippet"><pre><code id="{{ id }}" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code></pre></div>
+    {%- else -%}
+    <code id="{{ id }}" class="click-to-copy mcp-value" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code>
+    {%- endif -%}
+{%- endmacro %}
+{# The None / Read / Write grid, one row per perm_<area> field of forms.MCPTokenForm #}
+{% macro permissions_grid(form) -%}
+  {% set rows = [
+      (form.perm_monitors, _('Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete.')),
+      (form.perm_tags, _('Read: list. Write: create, rename and delete.')),
+      (form.perm_notifications, _('Read: list them (secrets hidden) and look up services. Write: add, remove and mute.')),
+      (form.perm_system, _('Health, the check queue and what is being checked right now.')),
+  ] %}
+  <table class="mcp-perms">
+    <thead>
+      <tr><th scope="col"></th><th scope="col">{{ _('None') }}</th><th scope="col">{{ _('Read') }}</th><th scope="col">{{ _('Write') }}</th></tr>
+    </thead>
+    <tbody>
+      {% for field, description in rows %}
+      <tr>
+        <th scope="row"><span class="mcp-perm-name">{{ field.label.text }}</span><span class="mcp-perm-desc">{{ description }}</span></th>
+        {% for option in field %}
+        <td><label class="mcp-perm-choice" title="{{ field.label.text }}: {{ option.label.text }}">{{ option() }}<span class="sr-only">{{ option.label.text }}</span></label></td>
+        {% endfor %}
+        {% if field.choices|length < 3 %}<td class="mcp-perm-na" aria-hidden="true">&ndash;</td>{% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{%- endmacro %}
 {% block content %}
 <div class="edit-form">
     {# The /settings tab row with "AI / LLM / MCP" active, then a switch between this page and the other AI page #}
@@ -15,91 +51,241 @@
         <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.mcp_settings_page') }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <div class="tab-pane-inner tab-pane-current" id="mcp">
+<script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
 <script src="{{ url_for('static_content', group='js', filename='click-to-copy.js') }}" defer></script>
-{% macro copyable(text, id, block=False) -%}
-    {%- if block -%}
-    <div class="mcp-snippet"><pre><code id="{{ id }}" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code></pre></div>
-    {%- else -%}
-    <code id="{{ id }}" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code>
-    {%- endif -%}
-{%- endmacro %}
-        <img src="{{url_for('static_content', group='images', filename='mcp-infographic.jpg')}}"
-             alt="MCP - A way for AI Assistants to interact with changedetection.io"
-             style="max-width: 900px; width: 100%; height: auto;">
-    <h4>{{ _('Connect AI assistants with MCP') }}</h4>
-    <p>{{ _('MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code use other applications as tools.') }}</p>
-    <p><i>"{{ _('Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect electronic devices, MCP provides a standardized way to connect AI applications to external systems.') }}"</i></p>
+<script src="{{ url_for('static_content', group='js', filename='modal.js') }}"></script>
+<script src="{{ url_for('static_content', group='js', filename='mcp-tokens.js') }}" defer></script>
 
-    {% if mcp_disabled %}
-    <p class="pure-form-message-inline"><strong>{{ _('The MCP server is switched off on this installation.') }}</strong></p>
+  {% if mcp_disabled %}
+  <div class="mcp-power">
+    <div class="mcp-power-text">
+      <strong>{{ _('Connect AI assistants with MCP') }}</strong>
+      <span>{{ _('The MCP server is switched off on this installation.') }}</span>
+    </div>
+  </div>
+  {% else %}
+  {# Every sub-tab can be set up while the switch is off, so it's ready before anything can connect #}
+  {% call stab_shell('mcp-settings', [
+      {'id': 'overview', 'label': _('Overview'), 'icon': 'info'},
+      {'id': 'connect', 'label': _('Connect'), 'icon': 'link'},
+      {'id': 'tokens', 'label': _('Access tokens'), 'icon': 'key'},
+      {'id': 'oauth', 'label': _('OAuth connections'), 'icon': 'log-in'},
+  ]) %}
+
+  {# ── Overview ──────────────────────────────────────────────────────────── #}
+  {% call stab_pane('overview') %}
+  <div class="mcp-power{% if mcp_enabled %} on{% endif %}">
+    <div class="mcp-power-text">
+      {{ render_checkbox_field(form.enabled) }}
+      {% if not mcp_enabled %}
+      <span>{{ _('Off: the MCP and OAuth endpoints are switched off and no assistant can connect. Everything here can still be set up first.') }}</span>
+      {% endif %}
+    </div>
+    <span class="mcp-status">{% if mcp_enabled %}{{ _('On') }}{% else %}{{ _('Off') }}{% endif %}</span>
+  </div>
+  {# The access tokens at a glance, each one opens the Access tokens sub-tab #}
+  <div class="mcp-perm-summary">
+    <span class="mcp-perm-summary-title">{{ _('Access tokens') }}</span>
+    {% for token in mcp_tokens %}
+    <button type="button" class="mcp-chip" data-stab-goto="tokens">{{ token.name }}</button>
     {% else %}
+    <button type="button" class="mcp-chip level-none" data-stab-goto="tokens">{{ _('No access tokens yet') }}</button>
+    {% endfor %}
+  </div>
 
+  <div class="stab-overview-hero">
+    <h3><span class="stab-overview-glyph"><i data-feather="cpu"></i></span> {{ _('Connect AI assistants with MCP') }}</h3>
+    <p>{{ _('MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code use other applications as tools.') }}</p>
+  </div>
+  <img class="mcp-infographic" src="{{url_for('static_content', group='images', filename='mcp-infographic.jpg')}}"
+       alt="MCP - A way for AI Assistants to interact with changedetection.io">
+  <div class="stab-overview-features">
+    <div class="stab-overview-feature">
+      <div class="stab-overview-icon"><i data-feather="eye"></i></div>
+      <div class="stab-overview-text">
+        <strong>{{ _('Look') }}</strong>
+        <p>{{ _('List monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked right now.') }}</p>
+      </div>
+    </div>
+    <div class="stab-overview-feature">
+      <div class="stab-overview-icon"><i data-feather="edit-3"></i></div>
+      <div class="stab-overview-text">
+        <strong>{{ _('Change') }}</strong>
+        <p>{{ _('Add monitors, change their settings, tag them, recheck them and set up notifications, as far as the permissions allow.') }}</p>
+      </div>
+    </div>
+    <div class="stab-overview-feature">
+      <div class="stab-overview-icon"><i data-feather="shield"></i></div>
+      <div class="stab-overview-text">
+        <strong>{{ _('Safe by default') }}</strong>
+        <p>{{ _('Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full.') }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="stab-overview-cta">
+    <button type="button" class="cdio-btn pure-button-primary" data-stab-goto="connect">{{ _('Connect an assistant') }}</button>
+    <button type="button" class="cdio-btn" data-stab-goto="tokens">{{ _('Access tokens') }}</button>
+  </div>
+  {% endcall %}
+
+  {# ── Connect ───────────────────────────────────────────────────────────── #}
+  {% call stab_pane('connect') %}
+  <p class="stab-section-title">{{ _('Server') }}</p>
+  <dl class="mcp-fields">
+    <dt>{{ _('Server address') }}</dt>
+    <dd>{{ copyable(mcp_url, 'mcp-url') }}</dd>
+    <dt>{{ _('MCP access token') }}</dt>
+    <dd>
+      <button type="button" class="cdio-btn button-small" data-stab-goto="tokens">{{ _('Access tokens') }}</button>
+      <p class="mcp-hint">{{ _('Add a token for each assistant on the Access tokens sub-tab. It is shown once, when it is created.') }}</p>
+      <p class="mcp-hint"><strong>{{ _('Treat it like a password.') }}</strong> {{ _('It does not expire, and anyone who has it can use these tools and read what they return. Never paste it into a file you commit or share.') }}</p>
+    </dd>
+  </dl>
+  <p class="mcp-hint">{{ _('Most assistants below can read it from an environment variable, so it stays out of their config files. Set it once, for example in ~/.bashrc or ~/.zshrc:') }}</p>
+  {{ copyable('export CDIO_MCP_TOKEN=YOUR_MCP_TOKEN', 'mcp-token-env', block=True) }}
+
+  <p class="stab-section-title">Claude Code</p>
+  <p class="mcp-hint">{{ _('Run this in a terminal, then start a new Claude Code session and ask, for example, "Which of my monitors have errors?"') }}</p>
+  {{ copyable('claude mcp add --transport http changedetection ' ~ mcp_url ~  ' --header "Authorization: Bearer $CDIO_MCP_TOKEN"', 'mcp-claude-code', block=True) }}
+  <p class="mcp-hint">{{ _('To remove it again:') }} <code>claude mcp remove changedetection</code></p>
+  {# Claude Code expands ${VAR} in headers, so the project form stores a reference, never the token #}
+  <p class="mcp-hint">{{ _('By default (--scope local) Claude Code saves this in ~/.claude.json, only for you and only in the current project. Add --scope user to have it in all your projects.') }}</p>
+  <p class="mcp-hint">{{ _('--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves a reference to the environment variable, not the token:') }}</p>
+  {{ copyable("claude mcp add --transport http --scope project changedetection " ~ mcp_url ~ " --header 'Authorization: Bearer ${CDIO_MCP_TOKEN}'", 'mcp-claude-code-project', block=True) }}
+
+  <details class="mcp-other-clients">
+    <summary class="stab-section-title">{{ _('Other AI assistants') }}</summary>
+
+    {#- Config syntax checked against each client's own docs (2026-11-01). Where a client resolves environment
+        variables in headers the token stays out of the file (CDIO_MCP_TOKEN); where it doesn't, it's inline and
+        the file is the user's own settings, with a warning. See MCP-config.md. -#}
+    {%- set token_in_file -%}<p class="mcp-hint">{{ _('This file contains the token: keep it in your own settings, not in anything you commit or share.') }}</p>{%- endset -%}
+
+    <p class="mcp-client">Cursor <span class="mcp-where">~/.cursor/mcp.json</span></p>
+    {{ copyable('{"mcpServers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ${env:CDIO_MCP_TOKEN}"}}}}', 'mcp-cursor', block=True) }}
+
+    <p class="mcp-client">VS Code / GitHub Copilot <span class="mcp-where">.vscode/mcp.json</span></p>
+    <p class="mcp-hint">{{ _('VS Code asks for the token once and stores it securely, so this file is safe to commit.') }}</p>
+    {{ copyable('{"inputs": [{"type": "promptString", "id": "cdio-mcp-token", "description": "changedetection.io MCP access token", "password": true}], "servers": {"changedetection": {"type": "http", "url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ${input:cdio-mcp-token}"}}}}', 'mcp-vscode', block=True) }}
+
+    <p class="mcp-client">OpenAI Codex <span class="mcp-where">~/.codex/config.toml</span></p>
+    {{ copyable('[mcp_servers.changedetection]\nurl = "' ~ mcp_url ~ '"\nbearer_token_env_var = "CDIO_MCP_TOKEN"', 'mcp-codex', block=True) }}
+
+    <p class="mcp-client">OpenCode <span class="mcp-where">opencode.json</span></p>
+    {{ copyable('{"mcp": {"changedetection": {"type": "remote", "url": "' ~ mcp_url ~ '", "oauth": false, "headers": {"Authorization": "Bearer {env:CDIO_MCP_TOKEN}"}}}}', 'mcp-opencode', block=True) }}
+
+    <p class="mcp-client">Gemini CLI <span class="mcp-where">~/.gemini/settings.json</span></p>
+    <p class="mcp-hint">{{ _('Uses httpUrl, not url (url means the older SSE transport).') }}</p>
+    {{ copyable('{"mcpServers": {"changedetection": {"httpUrl": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-gemini', block=True) }}
+    {{ token_in_file }}
+
+    <p class="mcp-client">GitHub Copilot CLI <span class="mcp-where">~/.copilot/mcp-config.json</span></p>
+    {{ copyable('copilot mcp add --transport http --header "Authorization: Bearer $CDIO_MCP_TOKEN" changedetection ' ~ mcp_url, 'mcp-copilot-cli', block=True) }}
+    {{ token_in_file }}
+
+    <p class="mcp-client">Zed <span class="mcp-where">settings.json</span></p>
+    {{ copyable('{"context_servers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-zed', block=True) }}
+    {{ token_in_file }}
+
+    <p class="mcp-client">Claude Desktop <span class="mcp-where">claude_desktop_config.json</span></p>
+    <p class="mcp-hint">{{ _('Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access token.') }}</p>
+    {{ copyable('{"mcpServers": {"changedetection": {"command": "npx", "args": ["-y", "mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-claude-desktop', block=True) }}
+    {{ token_in_file }}
+
+    <p class="mcp-client">{{ _('Any other assistant (Windsurf, Devin and others)') }}</p>
+    <p class="mcp-hint">{{ _("Most assistants can run a local command: the same mcp-remote bridge (needs Node.js), in the format of that assistant's MCP settings.") }}</p>
+    {{ copyable('{"command": "npx", "args": ["-y", "mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer YOUR_MCP_TOKEN"}}', 'mcp-other', block=True) }}
+    {{ token_in_file }}
+  </details>
+  {% endcall %}
+
+  {# ── Access tokens ─────────────────────────────────────────────────────── #}
+  {% call stab_pane('tokens') %}
+  <div class="mcp-tokens-head">
+    <p class="stab-section-title">{{ _('Access tokens') }}</p>
+    <button type="button" class="cdio-btn pure-button-primary button-small" data-mcp-token-add>{{ _('Add token') }}</button>
+  </div>
+  <p class="mcp-hint">{{ _('One for each assistant, each with its own permissions. Revoking one disconnects only that assistant.') }}</p>
+  <div id="mcp-tokens" data-list-url="{{ url_for('settings.llm.mcp_tokens_list') }}"
+       data-revoke-title="{{ _('Revoke this access token?') }}"
+       data-revoke-message="{{ _('The assistant using it is disconnected at once.') }}"
+       data-revoke-button="{{ _('Revoke') }}"
+       data-error="{{ _('Something went wrong, please try again.') }}">
+    {% include '_mcp-tokens.html' %}
+  </div>
+  <div class="stab-overview-disclaimer">
+    <div class="stab-disclaimer-icon"><i data-feather="alert-triangle"></i></div>
+    <div class="stab-disclaimer-body">
+      <p>{{ _('Notifications are read-only by default. A page an assistant reads could try to get it to send your alerts, and the page text in them, somewhere else.') }}</p>
+    </div>
+  </div>
+  <p class="mcp-hint">{{ _('To make only one assistant read-only, use this address for it instead:') }}</p>
+  {{ copyable(mcp_url ~ '?readonly=1', 'mcp-url-readonly') }}
+  {% endcall %}
+
+  {# ── OAuth connections ─────────────────────────────────────────────────── #}
+  {% call stab_pane('oauth') %}
+  <p class="stab-section-title">{{ _('OAuth connections') }}</p>
+  <div class="mcp-empty">
+    <i data-feather="key"></i>
+    <p><strong>{{ _('Sign in with OAuth is coming soon') }}</strong></p>
+    <p class="mcp-hint">{{ _('ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not offer yet.') }}</p>
+    <p class="mcp-hint">{{ _('Assistants you connect that way will be listed here, and you can disconnect them.') }}</p>
+  </div>
+  {% endcall %}
+
+  {% endcall %}
+  {% endif %}
+
+  {% if not mcp_disabled %}
+  <div id="actions">
     <div class="pure-control-group">
-        <h4>{{ _('Server address') }}</h4>
-        {{ copyable(mcp_url, 'mcp-url') }}
+      {{ render_button(form.save_button) }}
     </div>
-
-    <div class="pure-control-group">
-        <h4>{{ _('MCP access token') }}</h4>
-        {{ copyable(mcp_token, 'mcp-token') }}
-        {# Inside the page's form (nested forms are invalid), so it posts elsewhere with formaction, like "Regenerate API key" #}
-        <p><button type="submit" formmethod="post" formnovalidate formaction="{{ url_for('settings.llm.mcp_reset_token') }}"
-                   class="cdio-btn button-small button-cancel">{{ _('Regenerate MCP token') }}</button></p>
-        <p class="pure-form-message-inline">{{ _('Only for MCP, separate from the API key. Regenerating it disconnects every assistant using the old one.') }}</p>
-    </div>
-
-    <div class="pure-control-group">
-        <h4>Claude Code</h4>
-        <p>{{ _('Run this in a terminal, then start a new Claude Code session and ask, for example, "Which of my monitors have errors?"') }}</p>
-        {{ copyable('claude mcp add --transport http changedetection ' ~ mcp_url ~ ' --header "Authorization: Bearer ' ~ mcp_token ~ '"', 'mcp-claude-code', block=True) }}
-        <p class="pure-form-message-inline">{{ _('To remove it again:') }} <code>claude mcp remove changedetection</code></p>
-    </div>
-
-    <div class="pure-control-group">
-        <h4>{{ _('Read-only') }}</h4>
-        {{ render_checkbox_field(form.read_only) }}
-        {% if mcp_read_only %}
-        <p class="pure-form-message-inline">{{ _('An assistant that tries to change something is told that read-only mode is on.') }}</p>
-        {% else %}
-        <p>{{ _('To make only one assistant read-only, use this address for it instead:') }}</p>
-        {{ copyable(mcp_url ~ '?readonly=1', 'mcp-url-readonly') }}
-        {% endif %}
-    </div>
-
-    <details class="mcp-other-clients">
-        <summary>{{ _('Other AI assistants') }}</summary>
-
-        <h4>Cursor <span class="mcp-where">~/.cursor/mcp.json</span></h4>
-        {{ copyable('{"mcpServers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-cursor', block=True) }}
-
-        <h4>VS Code / GitHub Copilot <span class="mcp-where">.vscode/mcp.json</span></h4>
-        {{ copyable('{"servers": {"changedetection": {"type": "http", "url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-vscode', block=True) }}
-
-        <h4>Claude Desktop <span class="mcp-where">claude_desktop_config.json</span></h4>
-        <p class="pure-form-message-inline">{{ _('Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access token.') }}</p>
-        {{ copyable('{"mcpServers": {"changedetection": {"command": "npx", "args": ["mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer ' ~ mcp_token ~ '"}}}}', 'mcp-claude-desktop', block=True) }}
-
-        <p class="pure-form-message-inline">{{ _('ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not offer yet.') }}</p>
-    </details>
-
-    <div class="pure-control-group">
-        <h4>{{ _('What an assistant can do') }}</h4>
-        <ul>
-            <li>{{ _('Look: list monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked right now.') }}</li>
-            <li>{{ _('Change: add monitors, change their settings, tag them, recheck them and add notification URLs.') }}</li>
-            <li>{{ _('Delete: monitors, their history, groups and notification URLs. Assistants ask you before using these.') }}</li>
-        </ul>
-        <p class="pure-form-message-inline">{{ _('Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full.') }}</p>
-    </div>
-
-    <div id="actions">
-        <div class="pure-control-group">
-            {{ render_button(form.save_button) }}
-        </div>
-    </div>
-    {% endif %}
+  </div>
+  {% endif %}
 </div>
         </form>
     </div>
 </div>
+
+{% if not mcp_disabled %}
+{# Add / edit an access token, sent with ajax by mcp-tokens.js (X-CSRFToken header from csrf.js). After "Add" it shows
+   the new token once #}
+<dialog id="mcp-token-dialog" class="modal-dialog mcp-token-dialog" aria-labelledby="mcp-token-dialog-title">
+  <form id="mcp-token-form" class="pure-form pure-form-stacked" action="{{ url_for('settings.llm.mcp_token_add') }}" method="POST"
+        data-add-url="{{ url_for('settings.llm.mcp_token_add') }}"
+        data-title-add="{{ _('Add access token') }}" data-title-edit="{{ _('Edit access token') }}">
+    <div class="modal-header">
+      <h2 class="modal-title" id="mcp-token-dialog-title">{{ _('Add access token') }}</h2>
+    </div>
+    <div class="modal-body">
+      <div class="pure-control-group">
+        {{ token_form.name.label }}
+        {{ token_form.name(class='pure-input-1') }}
+        <ul class="errors mcp-token-errors" hidden></ul>
+      </div>
+      {{ permissions_grid(token_form) }}
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="modal-btn-cancel pure-button" data-mcp-dialog-close>{{ _('Cancel') }}</button>
+      <button type="submit" class="pure-button pure-button-primary">{{ _('Save') }}</button>
+    </div>
+  </form>
+  <div class="mcp-token-created" hidden>
+    <div class="modal-header">
+      <h2 class="modal-title">{{ _('Access token created') }}</h2>
+    </div>
+    <div class="modal-body">
+      <p><strong>{{ _('Copy it now, it is not shown again.') }}</strong></p>
+      <code id="mcp-new-token" class="click-to-copy mcp-value" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}"></code>
+      <p class="mcp-hint">{{ _('Set it once, for example in ~/.bashrc or ~/.zshrc, then use the configs on the Connect sub-tab:') }}</p>
+      <div class="mcp-snippet"><pre><code id="mcp-new-token-env" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}"></code></pre></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="pure-button pure-button-primary" data-mcp-dialog-close>{{ _('Done') }}</button>
+    </div>
+  </div>
+</dialog>
+{% endif %}
 {% endblock %}

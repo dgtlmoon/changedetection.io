@@ -1423,7 +1423,9 @@ def changedetection_app(config=None, datastore_o=None):
     if not mcp.is_mcp_disabled():
         mcp_blueprint = mcp.construct_blueprint(datastore, update_q)
         csrf.exempt(mcp_blueprint)
-        app.register_blueprint(mcp_blueprint, url_prefix='/mcp')
+        # /mcp/v1 versions our tool contract (names, arguments, results), not the MCP protocol, which is negotiated
+        # per session. Additive changes stay in v1; only a breaking change would get a /mcp/v2.
+        app.register_blueprint(mcp_blueprint, url_prefix='/mcp/v1')
 
     import changedetectionio.blueprint.pwa as pwa
 

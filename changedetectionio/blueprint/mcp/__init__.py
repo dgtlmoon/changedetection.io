@@ -1,5 +1,5 @@
 """
-MCP (Model Context Protocol) server at /mcp, so AI assistants (Claude, ChatGPT, Cursor...) can use changedetection.io.
+MCP (Model Context Protocol) server at /mcp/v1, so AI assistants (Claude, ChatGPT, Cursor...) can use changedetection.io.
 
 A small hand-written implementation of MCP's Streamable HTTP transport in its stateless form: every message is one
 POST with a JSON-RPC body, answered with plain JSON. There is no session and no SSE stream (GET returns 405).
@@ -11,20 +11,26 @@ and would add ~8 packages to every instance, so only its wire types are used (`m
 the protocol versions and the request validation come from there, so a newer `mcp-types` keeps this current.
 It costs ~15MB once imported, so it is only imported on the first authenticated request (see protocol()).
 
-Auth is MCP's own access token (settings.application.mcp_access_token, on the "MCP Server" tab of /settings/llm), not
-the REST API key, sent as `Authorization: Bearer <token>` or `x-api-key`. It is always required. Off with
-LLM_FEATURES_DISABLED, or on its own with DISABLE_MCP=true.
+Auth is one of MCP's own named access tokens (tokens.py, the "Access tokens" sub-tab of /settings/ai/mcp), never the
+REST API key, sent as `Authorization: Bearer <token>` or `x-api-key`. It is always required. Off until the
+switch at the top of that tab is on (settings.application.mcp_enabled). Off for good with LLM_FEATURES_DISABLED, or on
+its own with DISABLE_MCP=true.
+
+The /v1 versions our tool contract (tool names, arguments, results), not the MCP protocol version, which is
+negotiated per session. Additive changes (new tools, new optional arguments) stay in v1; only renaming or removing a
+tool, or changing what one means, would get a /mcp/v2 (keeping old names as aliases rather than a second code path).
 
 Connect, for example:
-    claude mcp add --transport http changedetection http://localhost:5000/mcp --header "Authorization: Bearer YOUR_MCP_TOKEN"
-Use http://localhost:5000/mcp?readonly=1 for a connector that may only look, never change anything, or tick
-"Read-only" on the "MCP Server" tab (settings.application.mcp_read_only) to make every connector read-only.
+    claude mcp add --transport http changedetection http://localhost:5000/mcp/v1 --header "Authorization: Bearer YOUR_MCP_TOKEN"
+What an assistant may do is its token's own None / Read / Write grid (see tools.permissions()): monitors, tags,
+notifications and system info. Use
+http://localhost:5000/mcp/v1?readonly=1 for a connector that may only look, never change anything.
 """
 import hmac
 import os
 from urllib.parse import urlsplit
 
-from flask import Blueprint, jsonify, make_response, request
+from flask import Blueprint, g, jsonify, make_response, request
 from loguru import logger
 
 INSTRUCTIONS = (
@@ -37,7 +43,7 @@ INSTRUCTIONS = (
 
 READ_ONLY_INSTRUCTIONS = (
     " This server is read-only: it can look things up but cannot add, change or delete anything. If the user "
-    "asks for a change, say that read-only mode is on."
+    "asks for a change, say that the MCP permissions don't allow it."
 )
 
 PARSE_ERROR, INVALID_REQUEST, METHOD_NOT_FOUND, INVALID_PARAMS, INTERNAL_ERROR = -32700, -32600, -32601, -32602, -32603
@@ -84,25 +90,29 @@ def construct_blueprint(datastore, update_q=None):
     mcp_blueprint = Blueprint('mcp', __name__)
     ctx = tools.Context(datastore, update_q)
 
-    def read_only_server():
-        # The "Read-only" switch on the "MCP Server" settings tab, for every connector
-        return bool(datastore.data['settings']['application'].get('mcp_read_only'))
+    def readonly_address():
+        # /mcp/v1?readonly=1 - every row capped at read, for a connector that should only look
+        return request.args.get('readonly', '').lower() in ('1', 'true', 'yes')
 
-    def read_only_requested():
-        # /mcp?readonly=1 - only the tools that change nothing, for a connector that should only look
-        return read_only_server() or request.args.get('readonly', '').lower() in ('1', 'true', 'yes')
+    def permissions(read_only=None):
+        # The None / Read / Write grid of the token this request came with
+        return tools.permissions(g.mcp_token.get('permissions'),
+                                 read_only=readonly_address() if read_only is None else read_only)
 
-    def read_only_refusal(name):
-        """The tool error for a write tool called while read-only. A tool error, not a protocol error, so the
-        assistant reads it and can tell the user why (clients may still have the full tool list cached)."""
-        if read_only_server():
-            text = (f"The changedetection.io MCP server is in read-only mode, so '{name}' (which changes data) is "
-                    f"not available. Tell the user it can be switched off with the 'Read-only' setting on the "
-                    f"'MCP Server' settings tab.")
-        else:
-            text = (f"This connection is read-only (its address ends with ?readonly=1), so '{name}' (which "
-                    f"changes data) is not available. Tell the user to connect without ?readonly=1 to allow changes.")
+    def refusal(text):
+        """A tool error, not a protocol error, so the assistant reads it and can tell the user why (clients may still
+        have an older tool list cached)."""
         return {'content': [{'type': 'text', 'text': text}], 'isError': True}
+
+    def permission_refusal(name):
+        area = tools.tool_area(name)
+        if readonly_address() and permissions(read_only=False)[area] == tools.WRITE_ACCESS:
+            return refusal(f"This connection is read-only (its address ends with ?readonly=1), so '{name}' (which "
+                           f"changes data) is not available. Tell the user to connect without ?readonly=1 to allow "
+                           f"changes.")
+        return refusal(f"'{name}' is not allowed: this access token ('{g.mcp_token.get('name')}') has "
+                       f"'{permissions()[area]}' access to {area}. Tell the user it can be changed on the 'Access "
+                       f"tokens' sub-tab of the 'MCP Server' settings.")
 
     def access_denied():
         """A response refusing the request, or None when it may go ahead."""
@@ -112,13 +122,16 @@ def construct_blueprint(datastore, update_q=None):
         if origin and urlsplit(origin).netloc != request.host:
             return make_response(jsonify({'error': 'Origin not allowed'}), 403)
 
-        # Always its own token (settings.application.mcp_access_token, shown on the /settings/llm "MCP Server" tab),
-        # never the REST API key: MCP can create and delete monitors, so there is no "open" mode
-        expected = datastore.data['settings']['application'].get('mcp_access_token') or ''
+        # Always one of its own named tokens (tokens.py), never the REST API key: MCP can create and delete monitors,
+        # so there is no "open" mode
+        from changedetectionio.blueprint.mcp.tokens import find_token, mark_used
         authorization = request.headers.get('Authorization', '')
         given = authorization[7:].strip() if authorization.lower().startswith('bearer ') else ''
-        given = given or request.headers.get('x-api-key') or ''
-        if expected and given and hmac.compare_digest(given.encode(), expected.encode()):
+        token = find_token(datastore.data['settings']['application'], given or request.headers.get('x-api-key') or '')
+        if token:
+            g.mcp_token = token
+            if mark_used(token):
+                datastore.commit()
             return None
         return make_response(jsonify({'error': 'Invalid access - MCP access token invalid.'}), 403)
 
@@ -150,25 +163,37 @@ def construct_blueprint(datastore, update_q=None):
                                                   f"{first['msg'] if first else e}")
 
         if method == 'initialize':
+            from changedetectionio.blueprint.mcp.tokens import mark_used
+            client = (params.get('clientInfo') or {}).get('name')
+            if isinstance(client, str) and mark_used(g.mcp_token, client):
+                datastore.commit()
             return _result(msg_id, {
                 'protocolVersion': version,
                 'capabilities': {'tools': {'listChanged': False}},
                 'serverInfo': {'name': 'changedetection.io', 'title': 'changedetection.io', 'version': __version__},
-                'instructions': INSTRUCTIONS + (READ_ONLY_INSTRUCTIONS if read_only_requested() else ''),
+                'instructions': INSTRUCTIONS + (READ_ONLY_INSTRUCTIONS if tools.WRITE_ACCESS not in permissions().values() else ''),
             })
         if method == 'ping':
             return _result(msg_id, {})
         if method == 'tools/list':
-            return _result(msg_id, {'tools': tools.definitions(read_only=read_only_requested())})
+            return _result(msg_id, {'tools': tools.definitions(permissions())})
         if method == 'tools/call':
             name = params.get('name')
-            if name not in tools.TOOLS:
+            if name not in tools.get_tools():
                 return _error(msg_id, INVALID_PARAMS, f"Unknown tool: {name}")
-            if read_only_requested() and not tools.is_read_only(name):
-                return _result(msg_id, read_only_refusal(name))
+            perms = permissions()
+            if not tools.tool_allowed(perms, name):
+                return _result(msg_id, permission_refusal(name))
             arguments = params.get('arguments') or {}
             if not isinstance(arguments, dict):
                 return _error(msg_id, INVALID_PARAMS, "'arguments' must be an object")
+            blocked = tools.blocked_arguments(perms, name, arguments)
+            if blocked:
+                return _result(msg_id, refusal(
+                    f"Changing notifications ({', '.join(blocked)}) is not allowed for this "
+                    f"access token, nothing was changed. Tell the user that Notifications can be set to 'Write' for it "
+                    f"on the 'Access tokens' sub-tab of the 'MCP Server' settings, or that they can change it in the UI. "
+                    f"Call it again without {', '.join(blocked)} for the other changes."))
             import time
             started = time.monotonic()
             try:
@@ -186,6 +211,11 @@ def construct_blueprint(datastore, update_q=None):
         # Not registered at all when disabled at startup, refused if it's switched off later
         if is_mcp_disabled():
             return make_response(jsonify({'error': 'Not found'}), 404)
+        # The switch at the top of the "MCP Server" settings tab, off until someone turns it on. Before auth: while
+        # it's off nothing is done with the request at all
+        if not datastore.data['settings']['application'].get('mcp_enabled'):
+            return make_response(jsonify({'error': 'The MCP server is switched off, switch it on at the top of the '
+                                                   'MCP Server settings tab.'}), 404)
         if request.method != 'POST':
             # Stateless: no SSE stream to open (GET) and no session to end (DELETE)
             response = make_response(jsonify({'error': 'Method not allowed, POST JSON-RPC messages'}), 405)

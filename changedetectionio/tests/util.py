@@ -513,3 +513,11 @@ def new_live_server_setup(live_server):
         return resp
 
     live_server.start()
+
+
+def new_mcp_token(client, name='test', **permissions):
+    """A new MCP access token (blueprint/mcp/tokens.py), every row at write unless given, e.g. notifications='read'."""
+    from changedetectionio.blueprint.mcp.tokens import add_token
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'system': 'read', **permissions}
+    return add_token(settings, name, levels)[1]

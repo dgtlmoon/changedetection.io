@@ -85,6 +85,7 @@ def llm_template_context(datastore):
 
 def mcp_template_context(datastore):
     """What the "MCP Server" tab (mcp-server-tab.html) needs."""
+    from changedetectionio import forms
     from changedetectionio.blueprint.mcp import is_mcp_disabled
 
     app_settings = datastore.data['settings']['application']
@@ -94,13 +95,24 @@ def mcp_template_context(datastore):
         # The configured Base URL is the instance's public address when set; otherwise build it from this request,
         # which already includes the X-Forwarded-Prefix/Host/Proto of a reverse proxy (USE_X_SETTINGS)
         base_url = (app_settings.get('base_url') or os.getenv('BASE_URL') or '').strip()
-        mcp_url = base_url.rstrip('/') + '/mcp' if base_url else url_for('mcp.endpoint', _external=True)
+        mcp_url = base_url.rstrip('/') + '/mcp/v1' if base_url else url_for('mcp.endpoint', _external=True)
     return dict(
         mcp_disabled=mcp_disabled,
+        mcp_enabled=bool(app_settings.get('mcp_enabled')),
         mcp_url=mcp_url,
-        mcp_token=app_settings.get('mcp_access_token') or '',
-        mcp_read_only=bool(app_settings.get('mcp_read_only')),
+        token_form=forms.MCPTokenForm(),
+        **mcp_tokens_context(datastore),
     )
+
+
+def mcp_tokens_context(datastore):
+    """What the access token list (_mcp-tokens.html) needs, also rendered on its own after every ajax change."""
+    from changedetectionio.blueprint.mcp.tools import permissions
+    tokens = datastore.data['settings']['application'].get('mcp_tokens') or {}
+    listed = [dict(token, id=token_id, levels=permissions(token.get('permissions')))
+              for token_id, token in tokens.items()]
+    listed.sort(key=lambda t: t.get('created') or 0)
+    return dict(mcp_tokens=listed)
 
 
 def construct_llm_blueprint(datastore: ChangeDetectionStore):
@@ -155,33 +167,98 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @llm_blueprint.route("/mcp", methods=['GET', 'POST'])
     @login_optionally_required
     def mcp_settings_page():
-        """The "MCP Server" tab: the address, the access token, how to connect assistants and the read-only switch."""
+        """The "MCP Server" tab: the on/off switch, the address, the access tokens and how to connect assistants."""
         from changedetectionio import forms
         from changedetectionio.llm.evaluator import is_llm_features_disabled
         if is_llm_features_disabled():
             abort(404)
         app_settings = datastore.data['settings']['application']
         form = forms.globalMCPSettingsPageForm(formdata=request.form if request.method == 'POST' else None,
-                                               data={'read_only': bool(app_settings.get('mcp_read_only'))})
+                                               data={'enabled': bool(app_settings.get('mcp_enabled'))})
         if request.method == 'POST' and form.validate():
-            # Read-only: every MCP connector may only look, write tools are refused with a readable error
-            read_only = bool(form.read_only.data)
-            app_settings['mcp_read_only'] = read_only
+            was_enabled = bool(app_settings.get('mcp_enabled'))
+            enabled = bool(form.enabled.data)
+            app_settings['mcp_enabled'] = enabled
+            if enabled == was_enabled:
+                message = gettext("MCP settings saved.")
+            elif enabled:
+                message = gettext("MCP server switched on.")
+            else:
+                message = gettext("MCP server switched off.")
             datastore.commit()
-            flash(gettext("MCP read-only mode switched on.") if read_only else gettext("MCP read-only mode switched off."), 'notice')
+            flash(message, 'notice')
             return redirect(url_for('settings.llm.mcp_settings_page'))
         return render_template("mcp-settings.html", form=form, active_tab='mcp', plugin_tabs=get_plugin_settings_tabs(),
                                **mcp_template_context(datastore))
 
-    @llm_blueprint.route("/mcp/token/reset", methods=['POST'])
+    # The access tokens, managed from the overlay on the "Access tokens" sub-tab with ajax. Every change answers with
+    # the re-rendered list, which the page swaps in. POST only, with the CSRF token in the X-CSRFToken header (csrf.js)
+
+    def mcp_tokens_html():
+        return render_template("_mcp-tokens.html", **mcp_tokens_context(datastore))
+
+    def mcp_ai_enabled_or_404():
+        from changedetectionio.llm.evaluator import is_llm_features_disabled
+        if is_llm_features_disabled():
+            abort(404)
+
+    def mcp_token_or_404(token_id):
+        mcp_ai_enabled_or_404()
+        token = (datastore.data['settings']['application'].get('mcp_tokens') or {}).get(token_id)
+        if not token:
+            abort(404)
+        return token
+
+    def mcp_token_form_errors(form):
+        return jsonify({'errors': {name: [str(e) for e in errors] for name, errors in form.errors.items()}}), 400
+
+    def mcp_token_permissions(form):
+        from changedetectionio.blueprint.mcp.tools import PERMISSION_DEFAULTS
+        return {area: form[f'perm_{area}'].data for area in PERMISSION_DEFAULTS}
+
+    @llm_blueprint.route("/mcp/tokens", methods=['GET'])
     @login_optionally_required
-    def mcp_reset_token():
-        """A new MCP access token; every assistant using the old one has to be given the new one."""
-        import secrets
-        datastore.data['settings']['application']['mcp_access_token'] = secrets.token_hex(16)
+    def mcp_tokens_list():
+        mcp_ai_enabled_or_404()
+        return mcp_tokens_html()
+
+    @llm_blueprint.route("/mcp/tokens", methods=['POST'])
+    @login_optionally_required
+    def mcp_token_add():
+        """A new access token. The token itself is in this answer only, it's stored hashed."""
+        from changedetectionio import forms
+        from changedetectionio.blueprint.mcp.tokens import add_token
+        mcp_ai_enabled_or_404()
+        form = forms.MCPTokenForm(formdata=request.form)
+        if not form.validate():
+            return mcp_token_form_errors(form)
+        token_id, token = add_token(datastore.data['settings']['application'], form.name.data.strip(),
+                                    mcp_token_permissions(form))
         datastore.commit()
-        flash(gettext("MCP access token regenerated, update it in your AI assistants."), 'notice')
-        return redirect(url_for('settings.llm.mcp_settings_page'))
+        return jsonify({'id': token_id, 'token': token, 'html': mcp_tokens_html()})
+
+    @llm_blueprint.route("/mcp/tokens/<string:token_id>", methods=['POST'])
+    @login_optionally_required
+    def mcp_token_update(token_id):
+        """A token's new name and permissions, the token itself stays the same."""
+        from changedetectionio import forms
+        token = mcp_token_or_404(token_id)
+        form = forms.MCPTokenForm(formdata=request.form)
+        if not form.validate():
+            return mcp_token_form_errors(form)
+        token['name'] = form.name.data.strip()
+        token['permissions'] = mcp_token_permissions(form)
+        datastore.commit()
+        return jsonify({'id': token_id, 'html': mcp_tokens_html()})
+
+    @llm_blueprint.route("/mcp/tokens/<string:token_id>/revoke", methods=['POST'])
+    @login_optionally_required
+    def mcp_token_revoke(token_id):
+        """The token stops working at once; the assistant using it has to be given a new one."""
+        mcp_token_or_404(token_id)
+        del datastore.data['settings']['application']['mcp_tokens'][token_id]
+        datastore.commit()
+        return jsonify({'html': mcp_tokens_html()})
 
     @llm_blueprint.route("/llm/models", methods=['GET'])
     @login_optionally_required

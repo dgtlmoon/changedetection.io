@@ -225,7 +225,10 @@ nav
                     </div>
                 </div>
                 <div class="pure-control-group">
-                    <button type="submit" formmethod="post" formnovalidate formaction="{{url_for('settings.settings_reset_api_key')}}" class="cdio-btn button-small button-cancel">{{ _('Regenerate API key') }}</button>
+                    <a href="{{url_for('settings.settings_reset_api_key')}}" data-method="POST" data-requires-confirm
+                       data-confirm-type="danger" data-confirm-title="{{ _('Regenerate API key?') }}"
+                       data-confirm-message="<p>{{ _('Anything using the current API key stops working until it is given the new one.') }}</p>"
+                       data-confirm-button="{{ _('Regenerate API key') }}" class="cdio-btn button-small button-cancel">{{ _('Regenerate API key') }}</a>
                 </div>
                 <div class="pure-control-group">
                     <h4>{{ _('Chrome Extension') }}</h4>

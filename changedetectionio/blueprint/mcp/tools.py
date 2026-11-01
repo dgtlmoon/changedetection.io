@@ -2,7 +2,7 @@
 The MCP tools: their definitions (tools/list) and what each one does (tools/call).
 
 Reads, writes and destructive changes, each marked with MCP tool annotations so assistants can ask before the
-destructive ones. /mcp?readonly=1 offers only the read-only tools.
+destructive ones. /mcp/v1?readonly=1 offers only the read-only tools.
 
 Writes go through the same code as the REST API (api/operations.py), so validation and answers are the same.
 
@@ -12,8 +12,15 @@ waited for.
 
 Text that comes from monitored pages is untrusted: a page can say "ignore previous instructions...", so results
 that include page text start with UNTRUSTED_NOTE.
+
+Plugins (usually processors, e.g. restock_diff) add their own tools with the register_mcp_tools hook, see
+pluggy_interface.py. They're merged in by get_tools() and get the same argument checks, read-only gating and error
+handling as these.
 """
 import os
+import re
+
+from loguru import logger
 
 from changedetectionio.changes_report import (MODES, _iso, _unified, group_changes, parse_timestamp,
                                               render_unified, select_watches)
@@ -207,9 +214,12 @@ def get_watch(ctx, args):
         # How many, never the URLs themselves: they hold tokens and passwords
         'notification_urls_count': len(watch.get('notification_urls') or []),
     })
-    restock = watch.get('restock') or {}
-    if restock:
-        info['restock'] = {k: restock.get(k) for k in ('in_stock', 'price', 'currency', 'original_price') if k in restock}
+    # The processor's own settings and state, the same as the REST API's GET (processor_config_{name},
+    # processor_state_{name} from the get_api_watch_processor_state hook), e.g. restock_diff's stock and price
+    from changedetectionio.api import get_processor_api_fields
+    processor_fields = {k: v for k, v in get_processor_api_fields(watch, datastore, 'get').items()
+                        if not k.endswith('_source')}
+    info.update(processor_fields)
 
     # The latest change, so "what changed on X?" is one call
     latest = None
@@ -225,7 +235,7 @@ def get_watch(ctx, args):
     out = [f"{info['title']} - {info['url']}", f"uuid: {info['uuid']}"]
     for key in ('tags', 'processor', 'paused', 'notification_muted', 'last_checked', 'last_changed', 'last_error',
                 'snapshots', 'fetch_backend', 'include_filters', 'ignore_text', 'trigger_text',
-                'notification_urls_count', 'restock'):
+                'notification_urls_count', *processor_fields):
         if info.get(key) not in (None, [], {}, '', False):
             out.append(f"{key}: {info[key]}")
     if info['recent_snapshots']:
@@ -355,12 +365,91 @@ def _notification_target(ctx, args):
     return 'global settings', datastore.data['settings']['application'].setdefault('notification_urls', []), None
 
 
+# Notification settings that hold no secrets, shown by list_notifications
+NOTIFICATION_SETTINGS = ('notification_format', 'notification_title', 'notification_body', 'notification_muted')
+
+
 def list_notifications(ctx, args):
-    label, urls, _ = _notification_target(ctx, args)
+    label, urls, owner = _notification_target(ctx, args)
     masked = [{'position': i + 1, 'url': _mask_notification_url(u)} for i, u in enumerate(urls)]
+    source = owner if owner is not None else ctx.datastore.data['settings']['application']
+    settings = {k: source.get(k) for k in NOTIFICATION_SETTINGS if source.get(k) not in (None, '')}
     lines = [f"{len(masked)} notification URLs on {label} (secrets hidden)"] + \
             [f"{m['position']}. {m['url']}" for m in masked]
-    return '\n'.join(lines), {'scope': label, 'notification_urls': masked}
+    lines += [f"{k}: {v}" for k, v in settings.items()]
+    return '\n'.join(lines), {'scope': label, 'notification_urls': masked, 'settings': settings}
+
+
+# At most this many services described in full per notification_services call
+_SERVICE_MAX = 5
+
+
+def _apprise_services():
+    import apprise
+    # changedetection.io's own get:// post:// ... handlers, so they're described too
+    import changedetectionio.notification.apprise_plugin.custom_handlers  # noqa: F401
+    schemas = apprise.Apprise().details()['schemas']
+    # Options nearly every service has (timeouts, retry, format...): a few services have almost none, so "all of them"
+    # would leave nothing out
+    from collections import Counter
+    counts = Counter(k for s in schemas for k in ((s.get('details') or {}).get('args') or {}))
+    common = {k for k, n in counts.items() if n >= 0.9 * len(schemas)}
+    return schemas, common
+
+
+def _service_schemes(service):
+    return [str(p) for p in (service.get('secure_protocols') or ()) + (service.get('protocols') or ()) if p]
+
+
+def _describe_service(service, common_args):
+    details = service.get('details') or {}
+
+    def fields(items):
+        out = {}
+        for key, spec in (items or {}).items():
+            spec = spec or {}
+            entry = {'name': str(spec.get('name') or key), 'type': str(spec.get('type') or 'string')}
+            for flag in ('required', 'private'):
+                if spec.get(flag):
+                    entry[flag] = True
+            if spec.get('values'):
+                entry['values'] = [str(v) for v in spec['values']]
+            if spec.get('default') not in (None, ''):
+                entry['default'] = spec['default'] if isinstance(spec['default'], (int, float, bool)) else str(spec['default'])
+            out[key] = entry
+        return out
+
+    return {'service': str(service.get('service_name')), 'schemes': _service_schemes(service),
+            'setup_url': str(service.get('setup_url') or ''),
+            'templates': [str(t) for t in details.get('templates') or ()],
+            'tokens': fields(details.get('tokens')),
+            'options': fields({k: v for k, v in (details.get('args') or {}).items() if k not in common_args})}
+
+
+def notification_services(ctx, args):
+    search = (args.get('search') or '').strip().lower()
+    schemas, common = _apprise_services()
+    if not search:
+        names = sorted(f"{s.get('service_name')} ({', '.join(_service_schemes(s))})" for s in schemas
+                       if s.get('enabled', True))
+        return (f"{len(names)} notification services. Give 'search' (e.g. 'slack') for how to set one up:\n"
+                + ', '.join(names)), {'services': names}
+    matches = [s for s in schemas if search in str(s.get('service_name')).lower()
+               or search in [x.lower() for x in _service_schemes(s)]]
+    if not matches:
+        raise ToolError(f"No notification service matches '{search}', call notification_services without 'search' "
+                        f"for the full list")
+    described = [_describe_service(s, common) for s in matches[:_SERVICE_MAX]]
+    lines = []
+    for d in described:
+        lines.append(f"## {d['service']} (scheme: {', '.join(d['schemes'])}) - setup: {d['setup_url']}")
+        lines.append('URL forms: ' + ' | '.join(d['templates']))
+        lines += [f"- {k}: {v['name']} ({v['type']}" + (', required' if v.get('required') else '')
+                  + (', secret: ask the user' if v.get('private') else '') + ')' for k, v in d['tokens'].items()]
+    if len(matches) > _SERVICE_MAX:
+        lines.append(f"... and {len(matches) - _SERVICE_MAX} more, search more precisely")
+    lines.append("Add one with add_notification: 'service' (a scheme above) and 'tokens', or a whole 'url'.")
+    return '\n'.join(lines), {'services': described}
 
 
 # ---- write ----
@@ -523,11 +612,29 @@ def update_tag(ctx, args):
     return f"Updated tag {uuid}: {', '.join(sorted(data))}", {'uuid': uuid}
 
 
+def _url_from_tokens(service, tokens):
+    """An Apprise URL built by Apprise itself from a scheme and its tokens, so nothing has to be escaped by hand."""
+    import apprise
+    import changedetectionio.notification.apprise_plugin.custom_handlers  # noqa: F401
+    if not isinstance(tokens, dict):
+        raise ToolError("'tokens' must be an object, e.g. {\"token_a\": \"...\", \"targets\": [\"#channel\"]}")
+    instance = apprise.Apprise.instantiate({**tokens, 'schema': service.strip().lower()})
+    if not instance:
+        raise ToolError(f"Couldn't make a '{service}' notification URL from those tokens. Check the scheme and the "
+                        f"required tokens with notification_services(search='{service}').")
+    return instance.url(privacy=False)
+
+
 def add_notification(ctx, args):
     from changedetectionio.api.operations import validate_notification_urls
     url = (args.get('url') or '').strip()
+    if args.get('service'):
+        if url:
+            raise ToolError("Give either 'url', or 'service' and 'tokens', not both")
+        url = _url_from_tokens(args['service'], args.get('tokens') or {})
     if not url:
-        raise ToolError("'url' is required, an Apprise notification URL like 'discord://webhook_id/webhook_token'")
+        raise ToolError("Give 'url' (an Apprise URL like 'discord://webhook_id/webhook_token'), or 'service' and "
+                        "'tokens' (see notification_services)")
     _api_call(validate_notification_urls, [url])
     label, urls, owner = _notification_target(ctx, args)
     if url in urls:
@@ -615,19 +722,21 @@ def _from_spec(marker):
 _tool_schemas = {}
 
 
-def _tool_schema(name):
+def _tool_schema(name, tools=None):
     """The tool's input schema, with the spec-backed fields filled in.
 
     Rebuilt whenever the API spec is (its cache is cleared when plugins change, e.g. a plugin processor in tests).
     """
     from changedetectionio.api import get_watch_schema_properties
     spec_properties = get_watch_schema_properties()
+    tool = (tools or get_tools())[name]
     cached = _tool_schemas.get(name)
-    if cached and cached[0] is spec_properties:
+    # The tool itself is part of the key too: a plugin tool can be replaced by another plugin's of the same name
+    if cached and cached[0] is spec_properties and cached[2] is tool:
         return cached[1]
-    schema = dict(TOOLS[name][4])
+    schema = dict(tool[4])
     schema['properties'] = {k: (_from_spec(v) if 'x-from-spec' in v else v) for k, v in schema['properties'].items()}
-    _tool_schemas[name] = (spec_properties, schema)
+    _tool_schemas[name] = (spec_properties, schema, tool)
     return schema
 
 
@@ -681,14 +790,20 @@ TOOLS = {
         "Health and load: how many monitors (failing, paused, overdue for a check), the check queue size, how many "
         "fetch workers there are and which monitors they're checking right now and for how long. Use it for 'why "
         "are my monitors slow / not being checked?'.", _schema({})),
-    'list_notifications': (list_notifications, READ_ONLY, 'List notification URLs',
+    'list_notifications': (list_notifications, READ_ONLY, 'List notifications',
         "The notification URLs (Apprise) on the global settings, a tag or a monitor, with their secrets hidden and a "
-        "position number for remove_notification.", _schema(dict(_SCOPE))),
+        "position number for remove_notification, and that level's notification format, title and body.",
+        _schema(dict(_SCOPE))),
+    'notification_services': (notification_services, READ_ONLY, 'Notification services',
+        "How to set up a notification service (Slack, Discord, Telegram, email, ntfy, Teams and 140 more): its URL "
+        "forms and the tokens it needs, which ones are secrets, and where the user gets them. Without 'search', the "
+        "list of services.",
+        _schema({'search': {'type': 'string', 'description': "A service name or scheme, e.g. 'slack' or 'tgram'"}})),
 
     'create_watch': (create_watch, dict(WRITE, openWorldHint=True), 'Add a monitor',
         "Start monitoring a web page. The first check happens shortly, done by the scheduler.",
         _schema({'url': _spec('url', 'http(s) URL of the page'), 'title': _spec('title'), 'tags': _TAGS,
-                 'processor': _spec('processor', "'text_json_diff' (default, any text change) or 'restock_diff' (price and stock of a single product page)"),
+                 'processor': _spec('processor', "'text_json_diff' (default, any text change) or 'restock_diff' (back in stock alerts and price drops for one product page, then set its alerts with restock_set_rules)"),
                  'include_filters': _spec('include_filters', 'CSS or XPath selectors, only this part of the page is watched'),
                  'paused': _spec('paused'), 'check_interval': _INTERVAL}, ['url'])),
     'import_watches': (import_watches, dict(WRITE, openWorldHint=True), 'Add many monitors',
@@ -717,10 +832,14 @@ TOOLS = {
         "Rename a tag/group, mute its notifications, or set its notification URLs (replaces the list).",
         _schema({'tag': _TAG, 'title': {'type': 'string'}, 'notification_muted': {'type': 'boolean'},
                  'notification_urls': _TEXT_LIST}, ['tag'])),
-    'add_notification': (add_notification, WRITE, 'Add a notification URL',
-        "Add an Apprise notification URL (e.g. 'mailtos://...', 'discord://...', 'tgram://...') to the global "
-        "settings, a tag or one monitor. Ask the user for any secret in it, never guess one.",
-        _schema(dict(_SCOPE, url={'type': 'string', 'description': 'The Apprise URL'}), ['url'])),
+    'add_notification': (add_notification, WRITE, 'Add a notification',
+        "Add a notification to the global settings, a tag or one monitor: a whole Apprise URL (e.g. "
+        "'discord://...'), or 'service' and 'tokens' from notification_services, and the URL is built for you. Ask "
+        "the user for every secret, never guess one, and tell them once that a secret typed into the chat is seen by "
+        "the AI provider.",
+        _schema(dict(_SCOPE, url={'type': 'string', 'description': 'A whole Apprise URL'},
+                     service={'type': 'string', 'description': "A scheme from notification_services, e.g. 'slack'"},
+                     tokens={'type': 'object', 'description': "That service's tokens by key, e.g. {\"token_a\": \"...\", \"targets\": [\"#sales\"]}"}))),
 
     'delete_watch': (delete_watch, DESTRUCTIVE, 'Delete a monitor',
         'Delete one monitor and all its history. Cannot be undone.', _schema({'watch': _WATCH}, ['watch'])),
@@ -735,15 +854,142 @@ TOOLS = {
 }
 
 
+# ---- tools from plugins (the register_mcp_tools hook) ----
+
+# For plugins to use in their input_schema and results
+WATCH_ARGUMENT = _WATCH
+_PLUGIN_KINDS = {'read': READ_ONLY, 'write': WRITE, 'destructive': DESTRUCTIVE}
+_PLUGIN_TOOL_NAME = re.compile(r'[a-z][a-z0-9_]{0,63}')
+# A plugin tool's text is cut at this, so one can't blow the assistant's context
+PLUGIN_TOOL_MAX_CHARS = 100_000
+# (the registered plugins, their tools), rebuilt when the plugins change
+_plugin_tools_cache = (None, {})
+
+
+def _wrap_plugin_handler(name, spec):
+    processor = spec.get('processor')
+
+    def handler(ctx, args):
+        watch = None
+        if args.get('watch') not in (None, ''):
+            watch = _resolve_watch(ctx.datastore, args['watch'])
+            uses = watch.get('processor') or 'text_json_diff'
+            if processor and uses != processor:
+                raise ToolError(f"'{name}' only works on {processor} monitors, '{watch.label}' uses {uses}")
+        text, structured = spec['handler'](ctx, args, watch)
+        text = str(text or '')
+        if len(text) > PLUGIN_TOOL_MAX_CHARS:
+            text = text[:PLUGIN_TOOL_MAX_CHARS] + f"\n... cut at {PLUGIN_TOOL_MAX_CHARS} characters"
+        return text, structured if isinstance(structured, dict) else {}
+    return handler
+
+
+def _plugin_tools():
+    """{name: tool} from every plugin's register_mcp_tools(), the ones that are valid."""
+    global _plugin_tools_cache
+    from changedetectionio.pluggy_interface import plugin_manager
+    registered = frozenset(id(p) for p in plugin_manager.get_plugins())
+    if _plugin_tools_cache[0] == registered:
+        return _plugin_tools_cache[1]
+
+    found = {}
+    for result in plugin_manager.hook.register_mcp_tools():
+        for spec in result or []:
+            name = spec.get('name') if isinstance(spec, dict) else None
+            problem = None
+            if not isinstance(name, str) or not _PLUGIN_TOOL_NAME.fullmatch(name):
+                problem = "name must be a-z, 0-9 and _, at most 64 characters, starting with a letter"
+            elif name in TOOLS or name in found:
+                problem = "that name is already taken"
+            elif spec.get('kind') not in _PLUGIN_KINDS:
+                problem = "kind must be 'read', 'write' or 'destructive'"
+            elif not (spec.get('title') and spec.get('description') and callable(spec.get('handler'))):
+                problem = "title, description and handler are required"
+            elif not isinstance(spec.get('input_schema') or {}, dict):
+                problem = "input_schema must be a dict of JSON Schema properties"
+            if problem:
+                logger.warning(f"MCP: skipping plugin tool {name!r}: {problem}")
+                continue
+            found[name] = (_wrap_plugin_handler(name, spec), _PLUGIN_KINDS[spec['kind']], str(spec['title']),
+                           str(spec['description']), _schema(dict(spec.get('input_schema') or {}), spec.get('required')))
+    _plugin_tools_cache = (registered, found)
+    return found
+
+
+def get_tools():
+    """Core's tools and the plugins' tools, {name: (handler, annotations, title, description, schema)}."""
+    plugin_tools = _plugin_tools()
+    return {**TOOLS, **plugin_tools} if plugin_tools else TOOLS
+
+
+# ---- permissions: the None / Read / Write grid on the "MCP Server" settings tab (settings.application.mcp_permissions) ----
+
+NONE, READ, WRITE_ACCESS = 'none', 'read', 'write'
+LEVELS = (NONE, READ, WRITE_ACCESS)
+# Each row of the grid and its default
+PERMISSION_DEFAULTS = {'monitors': WRITE_ACCESS, 'tags': WRITE_ACCESS, 'notifications': READ, 'system': READ}
+# Rows without write tools, they only go up to read
+READ_ONLY_AREAS = {'system'}
+# The row each tool belongs to, everything else (plugin tools too, they act on a monitor) is 'monitors'
+TOOL_AREAS = {'list_tags': 'tags', 'create_tag': 'tags', 'update_tag': 'tags', 'delete_tag': 'tags',
+              'list_notifications': 'notifications', 'notification_services': 'notifications',
+              'add_notification': 'notifications', 'remove_notification': 'notifications',
+              'get_system_info': 'system'}
+# Arguments of other rows' tools that change notifications, so they need notifications: write. A page an assistant
+# reads could try to get it to send alerts, and the page text in them, somewhere else, or to mute them
+NOTIFICATION_ARGUMENTS = {'update_watch': ('notification_urls', 'notification_muted'),
+                          'update_tag': ('notification_urls', 'notification_muted'),
+                          'create_tag': ('notification_muted',)}
+
+
+def permissions(stored=None, read_only=False):
+    """{area: level} from the saved grid, the defaults for anything not saved; read_only (?readonly=1) caps every
+    row at read."""
+    stored = stored if isinstance(stored, dict) else {}
+    result = {}
+    for area, default in PERMISSION_DEFAULTS.items():
+        level = stored.get(area) if stored.get(area) in LEVELS else default
+        if level == WRITE_ACCESS and (read_only or area in READ_ONLY_AREAS):
+            level = READ
+        result[area] = level
+    return result
+
+
+def tool_area(name):
+    return TOOL_AREAS.get(name, 'monitors')
+
+
 def is_read_only(name):
-    return TOOLS[name][1]['readOnlyHint']
+    return get_tools()[name][1]['readOnlyHint']
 
 
-def definitions(read_only=False):
-    return [{'name': name, 'title': title, 'description': description, 'inputSchema': _tool_schema(name),
-             'annotations': dict(annotations, title=title)}
-            for name, (handler, annotations, title, description, schema) in TOOLS.items()
-            if not read_only or annotations['readOnlyHint']]
+def tool_allowed(perms, name):
+    level = perms[tool_area(name)]
+    return level == WRITE_ACCESS or (level == READ and is_read_only(name))
+
+
+def blocked_arguments(perms, name, arguments):
+    """The arguments of this call that change notifications while notifications aren't writable."""
+    if perms['notifications'] == WRITE_ACCESS:
+        return []
+    return [a for a in NOTIFICATION_ARGUMENTS.get(name, ()) if a in (arguments or {})]
+
+
+def definitions(perms=None):
+    perms = perms or permissions()
+    tools = get_tools()
+    out = []
+    for name, (handler, annotations, title, description, schema) in tools.items():
+        if not tool_allowed(perms, name):
+            continue
+        input_schema = _tool_schema(name, tools)
+        if perms['notifications'] != WRITE_ACCESS and name in NOTIFICATION_ARGUMENTS:
+            # Not offered at all while notifications aren't writable, so the assistant doesn't try
+            input_schema = dict(input_schema, properties={k: v for k, v in input_schema['properties'].items()
+                                                          if k not in NOTIFICATION_ARGUMENTS[name]})
+        out.append({'name': name, 'title': title, 'description': description, 'inputSchema': input_schema,
+                    'annotations': dict(annotations, title=title)})
+    return out
 
 
 def argument_errors(name, arguments):
@@ -767,7 +1013,7 @@ def argument_errors(name, arguments):
 
 def call(ctx, name, arguments):
     """Run a tool. Returns an MCP CallToolResult dict; a ToolError becomes isError so the model can correct itself."""
-    handler = TOOLS[name][0]
+    handler = get_tools()[name][0]
     arguments = arguments or {}
     # Bad arguments are a tool error the model can read and fix, not a protocol error (many clients hide those)
     errors = argument_errors(name, arguments)

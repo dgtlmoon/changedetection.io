@@ -71,18 +71,18 @@ body.wrapped-tabs {
   padding: 3px;
   margin-bottom: 1.5em;
   border-radius: 8px;
-  background-color: var(--color-background-tab);
+  background-color: var(--color-background-subtabs);
 
   .settings-subtab {
     padding: 0.45em 1.1em;
     border-radius: 6px;
-    color: var(--color-text-tab);
+    color: var(--color-text-subtab);
     text-decoration: none;
     white-space: nowrap;
     transition: background-color 0.15s ease, color 0.15s ease;
 
     &:hover:not(.active) {
-      background-color: var(--color-background-tab-hover);
+      background-color: var(--color-background-subtab-hover);
     }
 
     &.active {

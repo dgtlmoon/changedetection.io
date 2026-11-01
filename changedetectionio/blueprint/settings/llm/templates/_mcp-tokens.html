@@ -1,0 +1,38 @@
+{#
+  The MCP access token list on the "Access tokens" sub-tab of /settings/ai/mcp. Included by mcp-settings.html, and
+  rendered on its own by the token routes after every ajax change (mcp-tokens.js swaps it in).
+  Requires template context: mcp_tokens (see mcp_tokens_context()).
+#}
+{% set level_labels = {'none': _('None'), 'read': _('Read'), 'write': _('Write')} %}
+{% set area_labels = {'monitors': _('Monitors'), 'tags': _('Groups (tags)'), 'notifications': _('Notifications'), 'system': _('System info')} %}
+{% if mcp_tokens %}
+<ul class="mcp-token-list">
+  {% for token in mcp_tokens %}
+  <li class="mcp-token" data-token-id="{{ token.id }}" data-name="{{ token.name }}" data-permissions="{{ token.levels|tojson|forceescape }}"
+      data-update-url="{{ url_for('settings.llm.mcp_token_update', token_id=token.id) }}"
+      data-revoke-url="{{ url_for('settings.llm.mcp_token_revoke', token_id=token.id) }}">
+    <div class="mcp-token-main">
+      <span class="mcp-token-name">{{ token.name }}</span>
+      <code class="mcp-token-hint">{{ token.hint }}&hellip;</code>
+      <span class="mcp-token-used">
+        {%- if token.last_used %}{{ _('Last used %(when)s', when=token.last_used|format_timestamp_timeago) }}{% else %}{{ _('Never used') }}{% endif -%}
+        {%- if token.last_client %} &middot; {{ token.last_client }}{% endif -%}
+      </span>
+    </div>
+    <div class="mcp-token-levels">
+      {% for area, level in token.levels.items() %}<span class="mcp-chip level-{{ level }}">{{ area_labels[area] }} <strong>{{ level_labels[level] }}</strong></span>{% endfor %}
+    </div>
+    <div class="mcp-token-actions">
+      <button type="button" class="cdio-btn button-small" data-mcp-token-edit>{{ _('Edit') }}</button>
+      <button type="button" class="cdio-btn button-small button-cancel" data-mcp-token-revoke>{{ _('Revoke') }}</button>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="mcp-empty">
+  <i data-feather="key"></i>
+  <p><strong>{{ _('No access tokens yet') }}</strong></p>
+  <p class="mcp-hint">{{ _('Add one for each assistant, so each has its own permissions and can be revoked on its own.') }}</p>
+</div>
+{% endif %}
