@@ -133,6 +133,13 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 existing_tags = settings_data.get('settings', {}).get('application', {}).get('tags') or {}
                 self.__data['settings']['application']['tags'] = TagsDict(existing_tags, datastore_path=self.datastore_path)
 
+            # Any other section kept under settings (added by a developer or a plugin). _build_settings_data()
+            # writes every section to changedetection.json, so one that is not read back here looks saved,
+            # then the next commit() after a restart rewrites the file without it.
+            for section, values in settings_data['settings'].items():
+                if section not in ('headers', 'requests', 'application'):
+                    self.__data['settings'][section] = values
+
         # More or less for the old format which had this data in the one url-watches.json
         # cant hurt to leave it here,
         if 'watching' in settings_data:
