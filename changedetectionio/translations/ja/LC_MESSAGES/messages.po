@@ -1237,13 +1237,13 @@ msgid "AI / LLM / MCP"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-msgid "Outgoing · your AI provider"
-msgstr "送信 · AI プロバイダー"
-
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "Outgoing · your AI provider"
+msgstr "送信 · AI プロバイダー"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 msgid "MCP Server"

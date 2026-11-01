@@ -1318,13 +1318,13 @@ msgid "AI / LLM / MCP"
 msgstr "ИИ/LLM/MCP"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-msgid "Outgoing · your AI provider"
-msgstr "Исходящие · ваш провайдер ИИ"
-
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr "ИИ/LLM"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "Outgoing · your AI provider"
+msgstr "Исходящие · ваш провайдер ИИ"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 msgid "MCP Server"
