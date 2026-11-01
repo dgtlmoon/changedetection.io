@@ -224,13 +224,16 @@ def completion(  # noqa: C901
                         dropped.append('thinkingConfig')
                         if not gen_cfg:
                             extra_body.pop('generationConfig', None)
-                        if not extra_body:
-                            kwargs.pop('extra_body', None)
                     elif 'thinkingConfig' in extra_body:
                         extra_body.pop('thinkingConfig', None)
                         dropped.append('thinkingConfig')
-                        if not extra_body:
-                            kwargs.pop('extra_body', None)
+                    # The self-hosted "thinking off" switches (evaluator.SELF_HOSTED_THINKING_OFF), which
+                    # a stricter OpenAI-compatible server may not know
+                    for key in ('think', 'reasoning_effort', 'chat_template_kwargs'):
+                        if extra_body.pop(key, None) is not None:
+                            dropped.append(key)
+                    if not extra_body:
+                        kwargs.pop('extra_body', None)
 
                 if dropped:
                     _stripped_sampling = True

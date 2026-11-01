@@ -693,6 +693,16 @@ msgstr ""
 "(OpenAI, Anthropic, Gemini) tetap menggunakan batas ketat aslinya."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
+"--reasoning-budget). Works with Ollama and llama.cpp; on other OpenAI-compatible servers, with models whose chat "
+"template supports enable_thinking (Qwen3 and others)."
+msgstr ""
+"Meminta server menjawab tanpa thinking terlebih dahulu, jauh lebih cepat. Jika tidak dicentang, server yang "
+"menentukan (llama.cpp: --reasoning-budget). Berfungsi dengan Ollama dan llama.cpp; di server lain yang kompatibel "
+"dengan OpenAI, dengan model yang template chat-nya mendukung enable_thinking (Qwen3 dan lainnya)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Load available models"
 msgstr "Muat model yang tersedia"
 
@@ -3773,6 +3783,10 @@ msgstr "URL Dasar API"
 #: changedetectionio/forms.py
 msgid "Token multiplier for local reasoning models"
 msgstr "Pengali token untuk model reasoning lokal"
+
+#: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "Matikan thinking"
 
 #: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"

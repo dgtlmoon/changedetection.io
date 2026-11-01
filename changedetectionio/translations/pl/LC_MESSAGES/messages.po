@@ -706,6 +706,16 @@ msgstr ""
 "swoje pierwotne, wąskie limity."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
+"--reasoning-budget). Works with Ollama and llama.cpp; on other OpenAI-compatible servers, with models whose chat "
+"template supports enable_thinking (Qwen3 and others)."
+msgstr ""
+"Prosi serwer o odpowiedź bez wcześniejszego myślenia, co jest znacznie szybsze. Gdy niezaznaczone, decyduje serwer "
+"(llama.cpp: --reasoning-budget). Działa z Ollama i llama.cpp; na innych serwerach zgodnych z OpenAI z modelami, "
+"których szablon czatu obsługuje enable_thinking (Qwen3 i inne)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Load available models"
 msgstr "Załaduj dostępne modele"
 
@@ -3819,6 +3829,10 @@ msgstr "Podstawowy adres URL interfejsu API"
 #: changedetectionio/forms.py
 msgid "Token multiplier for local reasoning models"
 msgstr "Mnożnik tokenów dla modeli wnioskowania lokalnego"
+
+#: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "Wyłącz myślenie"
 
 #: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"

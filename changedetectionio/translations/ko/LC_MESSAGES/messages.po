@@ -660,6 +660,15 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
+"--reasoning-budget). Works with Ollama and llama.cpp; on other OpenAI-compatible servers, with models whose chat "
+"template supports enable_thinking (Qwen3 and others)."
+msgstr ""
+"먼저 추론하지 않고 답하도록 서버에 요청합니다. 훨씬 빠릅니다. 선택하지 않으면 서버가 정합니다(llama.cpp: --reasoning-budget). Ollama와 llama.cpp에서 작동하며, 그 밖의 "
+"OpenAI 호환 서버에서는 채팅 템플릿이 enable_thinking을 지원하는 모델(Qwen3 등)에서 작동합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Load available models"
 msgstr "사용 가능한 모델 불러오기"
 
@@ -3670,6 +3679,10 @@ msgstr "API 기본 URL"
 #: changedetectionio/forms.py
 msgid "Token multiplier for local reasoning models"
 msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "추론 끄기"
 
 #: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"
