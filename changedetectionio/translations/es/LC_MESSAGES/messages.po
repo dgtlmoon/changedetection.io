@@ -666,11 +666,11 @@ msgstr ""
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid ""
 "Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
-"--reasoning-budget). Works with Ollama and llama.cpp; on other OpenAI-compatible servers, with models whose chat "
+"--reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat "
 "template supports enable_thinking (Qwen3 and others)."
 msgstr ""
 "Pide al servidor que responda sin razonar antes, lo que es mucho más rápido. Sin marcar, decide el servidor "
-"(llama.cpp: --reasoning-budget). Funciona con Ollama y llama.cpp; en otros servidores compatibles con OpenAI, con "
+"(llama.cpp: --reasoning-budget). Funciona con Ollama y, en servidores compatibles con OpenAI (llama.cpp, vLLM), con "
 "modelos cuya plantilla de chat admite enable_thinking (Qwen3 y otros)."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html

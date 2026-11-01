@@ -20,7 +20,6 @@ Environment variable overrides (take priority over datastore settings):
                       unless LLM_TIMEOUT is set. See resolve_llm_timeout().
 """
 
-import copy
 import hashlib
 import os
 from dataclasses import dataclass
@@ -87,23 +86,12 @@ def _check_input_size(text: str, max_chars: int) -> None:
         )
 
 
-# Sent to self-hosted servers when "Switch thinking off" is ticked (local_thinking_off, #4638), by provider_kind.
-# Ollama has its own `think` field. For OpenAI-compatible servers llama-server handles reasoning_effort='none'
-# itself, and enable_thinking only works if the model's chat template reads it (Qwen3 does), so both are sent.
-# client.completion() strips them and retries if a server rejects them.
-SELF_HOSTED_THINKING_OFF = {
-    'ollama': {'think': False},
-    'openai_compatible': {'reasoning_effort': 'none', 'chat_template_kwargs': {'enable_thinking': False}},
-}
-
-
 def _thinking_extra_body(model: str, budget: int, llm_cfg: dict | None = None) -> dict | None:
     """Return litellm extra_body to control thinking for models that support it.
 
-    Self-hosted servers (Ollama, and OpenAI-compatible ones: llama.cpp, vLLM, LM Studio) can only switch thinking
-    off per request, there's no per-request token budget (llama-server's is its --reasoning-budget flag). That is
-    its own opt-in setting, not the budget: the budget defaults to Off, and following it would have switched
-    thinking off for every existing self-hosted user. Untouched, the server's own default applies.
+    Self-hosted servers (Ollama, OpenAI-compatible: llama.cpp, vLLM, LM Studio) take no per-request budget, only
+    on/off, so that's its own opt-in (local_thinking_off, #4638). Not the budget: it defaults to Off, following it
+    would switch thinking off for every existing self-hosted user.
 
     The `thinkingConfig.thinkingBudget` payload is Gemini-specific (Anthropic and
     OpenAI reasoning models use different parameters), so we gate on the gemini/
@@ -113,10 +101,11 @@ def _thinking_extra_body(model: str, budget: int, llm_cfg: dict | None = None) -
     them, without us hardcoding model names here.
     """
     llm_cfg = llm_cfg or {}
-    if llm_cfg.get('provider_kind') in SELF_HOSTED_THINKING_OFF:
-        # A copy: client.completion() pops keys from it on a 400 retry
-        return (copy.deepcopy(SELF_HOSTED_THINKING_OFF[llm_cfg['provider_kind']])
-                if llm_cfg.get('local_thinking_off') else None)
+    if llm_cfg.get('local_thinking_off'):
+        if llm_cfg.get('provider_kind') == 'ollama':
+            return {'think': False}
+        if llm_cfg.get('provider_kind') == 'openai_compatible':
+            return {'chat_template_kwargs': {'enable_thinking': False}}
     if not model.startswith('gemini/'):
         return None
     if 'flash-lite' in model.lower():

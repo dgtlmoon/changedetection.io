@@ -176,7 +176,7 @@
     </span>
   </div>
 
-  {# Ollama and OpenAI-compatible endpoints, shown with the multiplier above (evaluator.SELF_HOSTED_THINKING_OFF) #}
+  {# Ollama and OpenAI-compatible endpoints, shown with the multiplier above (evaluator._thinking_extra_body) #}
   <div class="pure-control-group" id="llm-local-thinking-group" style="display:none">
     <label></label>
     {{ form.llm.form.local_thinking_off() }}
@@ -184,7 +184,7 @@
       {{ form.llm.form.local_thinking_off.label.text }}
     </label>
     <span class="pure-form-message-inline">
-      {{ _('Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: --reasoning-budget). Works with Ollama and llama.cpp; on other OpenAI-compatible servers, with models whose chat template supports enable_thinking (Qwen3 and others).') }}
+      {{ _('Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: --reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat template supports enable_thinking (Qwen3 and others).') }}
     </span>
   </div>
 

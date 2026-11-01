@@ -662,11 +662,11 @@ msgstr ""
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid ""
 "Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
-"--reasoning-budget). Works with Ollama and llama.cpp; on other OpenAI-compatible servers, with models whose chat "
+"--reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat "
 "template supports enable_thinking (Qwen3 and others)."
 msgstr ""
-"먼저 추론하지 않고 답하도록 서버에 요청합니다. 훨씬 빠릅니다. 선택하지 않으면 서버가 정합니다(llama.cpp: --reasoning-budget). Ollama와 llama.cpp에서 작동하며, 그 밖의 "
-"OpenAI 호환 서버에서는 채팅 템플릿이 enable_thinking을 지원하는 모델(Qwen3 등)에서 작동합니다."
+"먼저 추론하지 않고 답하도록 서버에 요청합니다. 훨씬 빠릅니다. 선택하지 않으면 서버가 정합니다(llama.cpp: --reasoning-budget). Ollama에서 작동하며, OpenAI 호환 "
+"서버(llama.cpp, vLLM)에서는 채팅 템플릿이 enable_thinking을 지원하는 모델(Qwen3 등)에서 작동합니다."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Load available models"
