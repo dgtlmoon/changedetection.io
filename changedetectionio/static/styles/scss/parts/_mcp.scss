@@ -38,6 +38,17 @@
     margin: 0;
   }
 
+  // Incoming: the MCP page takes the teal accent where the AI / LLM page has orange
+  .stab-btn.active {
+    border-left-color: var(--color-ai-incoming);
+    background: var(--color-ai-incoming-soft);
+    color: var(--color-ai-incoming);
+  }
+
+  .stab-overview-glyph {
+    color: var(--color-ai-incoming);
+  }
+
   .mcp-hint {
     margin: 0.35rem 0;
     font-size: 0.82rem !important;

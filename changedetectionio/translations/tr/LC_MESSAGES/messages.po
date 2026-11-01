@@ -1266,6 +1266,10 @@ msgid "AI / LLM / MCP"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "Outgoing · your AI provider"
+msgstr "Giden · yapay zekâ sağlayıcınız"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr ""
@@ -1273,6 +1277,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 msgid "MCP Server"
 msgstr "MCP Sunucusu"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "Incoming · AI assistants"
+msgstr "Gelen · yapay zekâ asistanları"
 
 #: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Unknown notification service"

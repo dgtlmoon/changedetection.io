@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """The MCP server at /mcp: stateless JSON-RPC, API-key auth, read-only tools."""
 import json
+import os
 
 import pytest
 from mcp_types.version import LATEST_HANDSHAKE_VERSION
@@ -384,3 +385,68 @@ def test_changes_time_budget():
     report = group_changes([object()], T0, T0 + 100, time_budget=1e-9)
     assert report['incomplete'] is True and report['watches'] == []
     assert 'Incomplete' in render_unified(report)
+
+
+def test_mcp_snapshot_unfiltered(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """get_snapshot unfiltered=true: the whole page from the HTML saved with the snapshot, for questions the filters
+    don't cover ("the fried cheese prices on all my restaurant menus" when the filter picks out the beer)."""
+    from changedetectionio.blueprint.mcp import tools
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    menus = datastore.add_tag('restaurant menus')
+    page = ('<html><body><h1>Menu</h1><div id="beer">Pale ale $8</div>'
+            '<div id="food">Fried cheese $12</div></body></html>')
+    uuids = []
+    for n, name in enumerate(('Bistro', 'Cafe', 'Diner')):
+        uuid = datastore.add_watch(url=f'https://{name.lower()}.example.com/menu',
+                                   extras={'title': name, 'paused': True, 'tags': [menus], 'include_filters': ['#beer']})
+        w = datastore.data['watching'][uuid]
+        w.save_history_blob('Pale ale $8', T0 + n, 'a')
+        w.save_last_fetched_html(timestamp=T0 + n, contents=page)
+        uuids.append(uuid)
+    # A JSON one: no HTML to convert, given as it was fetched
+    api = datastore.add_watch(url='https://api.example.com/menu.json', extras={'title': 'Api', 'paused': True})
+    datastore.data['watching'][api]['content-type'] = 'application/json'
+    datastore.data['watching'][api].save_history_blob('{"beer": 8}', T0, 'j')
+    datastore.data['watching'][api].save_last_fetched_html(timestamp=T0, contents='{"beer": 8, "fried_cheese": 12}')
+
+    # Filtered by default, the whole page with unfiltered
+    result = _call(client, api_key, 'get_snapshot', watch=uuids[0])
+    assert 'Fried cheese' not in result['structuredContent']['content'] and result['structuredContent']['source'] == 'filtered'
+    result = _call(client, api_key, 'get_snapshot', watch=uuids[0], unfiltered=True)
+    assert not result['isError'], result
+    assert 'Fried cheese $12' in result['structuredContent']['content'] and '<div' not in result['structuredContent']['content']
+    assert result['structuredContent']['source'] == 'html' and 'before filters' in result['content'][0]['text']
+    result = _call(client, api_key, 'get_snapshot', watch=api, unfiltered=True)
+    assert result['structuredContent']['content'] == '{"beer": 8, "fried_cheese": 12}' and result['structuredContent']['source'] == 'raw'
+
+    # The whole tag in one call, paged
+    result = _call(client, api_key, 'get_snapshot', tag='restaurant menus', unfiltered=True, limit=2)
+    data = result['structuredContent']
+    assert [s['title'] for s in data['snapshots']] == ['Bistro', 'Cafe'] and data['total'] == 3 and data['next_offset'] == 2
+    assert all('Fried cheese $12' in s['content'] for s in data['snapshots'])
+    assert 'call again with offset=2' in result['content'][0]['text']
+    data = _call(client, api_key, 'get_snapshot', tag='restaurant menus', unfiltered=True, offset=2)['structuredContent']
+    assert [s['title'] for s in data['snapshots']] == ['Diner'] and data['next_offset'] is None and 'warning' not in data
+    data = _call(client, api_key, 'get_snapshot', watches=['Bistro', 'Api'], unfiltered=True)['structuredContent']
+    assert {s['source'] for s in data['snapshots']} == {'html', 'raw'}
+
+    # No saved page (only the newest two snapshots keep theirs): the filtered text, saying so
+    for name in os.listdir(datastore.data['watching'][uuids[1]].data_dir):
+        if name.endswith('.html.br'):
+            os.unlink(os.path.join(datastore.data['watching'][uuids[1]].data_dir, name))
+    result = _call(client, api_key, 'get_snapshot', watch=uuids[1], unfiltered=True)
+    assert result['structuredContent']['source'] == 'snapshot' and 'only kept for the newest two' in result['content'][0]['text']
+
+    # Many matches: a warning the assistant can act on
+    monkeypatch.setattr(tools, 'SNAPSHOT_BATCH_WARN', 2)
+    result = _call(client, api_key, 'get_snapshot', tag='restaurant menus', limit=1)
+    assert result['content'][0]['text'].startswith('Warning: 3 monitors match, this could take a while.')
+    assert 'Warning' in result['structuredContent']['warning']
+
+    # One or several, not both
+    assert _call(client, api_key, 'get_snapshot', watch=uuids[0], tag='restaurant menus')['isError'] is True
+    assert _call(client, api_key, 'get_snapshot')['isError'] is True
+
+    client.post('/tags/delete_all', follow_redirects=True)
+    delete_all_watches(client)

@@ -306,16 +306,95 @@ def get_diff(ctx, args):
                   'diff': diff, 'truncated': truncated}
 
 
-def get_snapshot(ctx, args):
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+# get_snapshot over many monitors (watches / tag): at most this many per call, paged with offset
+SNAPSHOT_BATCH_MAX = 50
+# More matches than this gets a warning in the answer, so the assistant can narrow it down first
+SNAPSHOT_BATCH_WARN = 100
+
+
+def _original_text(watch, key):
+    """The whole page of a snapshot, before filters and triggers: the HTML saved with it (the newest two snapshots
+    keep theirs) as text, the HTML-less content as it is (JSON, plain text). (text, source), source is 'html', 'raw'
+    or 'snapshot' when there's no saved page, then it's the filtered text."""
+    from changedetectionio.html_tools import html_to_text
+    from changedetectionio.processors.magic import guess_stream_type
+    uuid = watch.get('uuid')
+    logger.info(f"getting original for watch {uuid} via MCP text start...")
+    html = watch.get_fetched_html(key)
+    if not html:
+        text, source = watch.get_history_snapshot(timestamp=str(key)) or '', 'snapshot'
+    elif guess_stream_type(str(watch.get('content-type') or ''), html).is_html:
+        text, source = html_to_text(html), 'html'
+    else:
+        text, source = html, 'raw'
+    logger.info(f"getting original for watch {uuid} via MCP text ...done ({len(text)} characters, from {source})")
+    return text, source
+
+
+def _snapshot_of(watch, args, max_chars, unfiltered):
     key = _snapshot_key(watch, args.get('timestamp'), 'latest')
-    content = watch.get_history_snapshot(timestamp=str(key)) or ''
-    max_chars = _int(args, 'max_chars', 20000, 100, 200000)
+    if unfiltered:
+        content, source = _original_text(watch, key)
+    else:
+        content, source = watch.get_history_snapshot(timestamp=str(key)) or '', 'filtered'
     truncated = len(content) > max_chars
     if truncated:
         content = content[:max_chars] + f"\n... {len(content) - max_chars} more characters, ask for a higher max_chars"
-    text = f"{UNTRUSTED_NOTE}\n### {watch.label} - {watch.get('url')}\nsnapshot: {_iso(key)}\n{content}"
-    return text, {'uuid': watch.get('uuid'), 'timestamp': key, 'content': content, 'truncated': truncated}
+    header = f"### {watch.label} - {watch.get('url')}\nsnapshot: {_iso(key)}"
+    if source == 'snapshot':
+        header += "\n(the whole page is only kept for the newest two snapshots, this is the filtered text)"
+    elif unfiltered:
+        header += "\n(the whole page, before filters and triggers)"
+    return f"{header}\n{content}", {'uuid': watch.get('uuid'), 'title': watch.label, 'timestamp': key, 'content': content,
+                                   'truncated': truncated, 'source': source}
+
+
+def get_snapshot(ctx, args):
+    import time
+    unfiltered = bool(args.get('unfiltered'))
+    many = bool(args.get('watches') or args.get('tag'))
+    if many == bool(args.get('watch')):
+        raise ToolError("Give either 'watch' (one monitor) or 'watches' / 'tag' (several)")
+    if not many:
+        watch = _resolve_watch(ctx.datastore, args.get('watch'))
+        text, item = _snapshot_of(watch, args, _int(args, 'max_chars', 20000, 100, 200000), unfiltered)
+        return f"{UNTRUSTED_NOTE}\n{text}", item
+
+    uuids = [_resolve_watch(ctx.datastore, r).get('uuid') for r in _list(args, 'watches')]
+    try:
+        watches = select_watches(ctx.datastore, tag=args.get('tag'), uuids=uuids)
+    except LookupError as e:
+        raise ToolError(str(e))
+    watches = sorted((w for w in watches if w.history), key=lambda w: (w.label or '').lower())
+    limit = _int(args, 'limit', 10, 1, SNAPSHOT_BATCH_MAX)
+    offset = _int(args, 'offset', 0, 0, 10_000_000)
+    max_chars = _int(args, 'max_chars', 5000, 100, 50000)
+
+    texts, items, started = [], [], time.monotonic()
+    for watch in watches[offset:offset + limit]:
+        if time.monotonic() - started > CHANGES_TIME_BUDGET:
+            break
+        try:
+            text, item = _snapshot_of(watch, args, max_chars, unfiltered)
+        except ToolError as e:
+            text, item = f"### {watch.label} - {watch.get('url')}\n{e}", {'uuid': watch.get('uuid'), 'error': str(e)}
+        texts.append(text)
+        items.append(item)
+
+    shown_to = offset + len(items)
+    notes = []
+    if len(watches) > SNAPSHOT_BATCH_WARN:
+        notes.append(f"Warning: {len(watches)} monitors match, this could take a while. Narrow it down with a tag or "
+                     f"'watches' if you can, or page through with offset.")
+    if shown_to < len(watches):
+        notes.append(f"Showing {offset + 1}-{shown_to} of {len(watches)}, call again with offset={shown_to} for more.")
+    elif not watches:
+        notes.append("None of these monitors has a snapshot yet.")
+    structured = {'snapshots': items, 'total': len(watches), 'offset': offset,
+                  'next_offset': shown_to if shown_to < len(watches) else None}
+    if notes:
+        structured['warning'] = ' '.join(notes)
+    return '\n'.join(notes + [UNTRUSTED_NOTE] + texts), structured
 
 
 def get_system_info(ctx, args):
@@ -783,9 +862,19 @@ TOOLS = {
                  'context': {'type': 'integer', 'minimum': 0, 'maximum': 20, 'default': 3},
                  'max_lines': {'type': 'integer', 'minimum': 1, 'maximum': 5000, 'default': 400}}, ['watch'])),
     'get_snapshot': (get_snapshot, READ_ONLY, 'Snapshot text',
-        "The text of one monitor's page as it was at a snapshot, by default the latest.",
-        _schema({'watch': _WATCH, 'timestamp': {'type': ['string', 'integer'], 'description': 'Which snapshot: ' + _WHEN, 'default': 'latest'},
-                 'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 200000, 'default': 20000}}, ['watch'])),
+        "The text of a monitor's page as it was at a snapshot, by default the latest; one monitor ('watch') or "
+        "several ('watches' or a 'tag', paged). By default only what its filters select. unfiltered=true gives the "
+        "whole page instead, for questions its filters don't cover, e.g. 'the fried cheese prices on all my "
+        "restaurant menus' when the filter only picks out the beer prices (kept for the newest two snapshots).",
+        _schema({'watch': _WATCH, 'watches': _WATCHES, 'tag': _TAG,
+                 'timestamp': {'type': ['string', 'integer'], 'description': 'Which snapshot: ' + _WHEN, 'default': 'latest'},
+                 'unfiltered': {'type': 'boolean', 'default': False,
+                                'description': 'The whole page, before the include/exclude filters and triggers'},
+                 'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 200000,
+                               'description': 'Per monitor: default 20000 for one, 5000 (at most 50000) each for several'},
+                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': SNAPSHOT_BATCH_MAX, 'default': 10,
+                           'description': 'Several monitors: how many in this call'},
+                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}})),
     'get_system_info': (get_system_info, READ_ONLY, 'System info',
         "Health and load: how many monitors (failing, paused, overdue for a check), the check queue size, how many "
         "fetch workers there are and which monitors they're checking right now and for how long. Use it for 'why "

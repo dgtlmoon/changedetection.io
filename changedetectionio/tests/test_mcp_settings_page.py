@@ -39,7 +39,7 @@ def test_mcp_settings_page(client, live_server, measure_memory_usage, datastore_
     assert res.status_code == 200
     html = res.get_data(as_text=True)
     # Its own page, "MCP Server" marked active by the server in the AI pages' switch
-    assert (f'<a href="{url_for("settings.llm.mcp_settings_page")}" class="settings-subtab active" '
+    assert (f'<a href="{url_for("settings.llm.mcp_settings_page")}" class="settings-subtab subtab-incoming active" '
             f'aria-current="page">') in html
     assert 'id="mcp"' in html and 'id="ai"' not in html
     assert 'Model Context Protocol' in html
@@ -277,14 +277,14 @@ def test_ai_pages_settings_tab_row(client, live_server, measure_memory_usage, da
     assert '<li class="tab"><a href="#fetching">' in html and f'<li class="tab">{ai_tab}</li>' in html
     assert f'href="{url_for("backups.create")}"' in html
 
-    for page, active_switch in ((llm_page, llm_page), (mcp_page, mcp_page)):
+    for page, active_switch, direction in ((llm_page, llm_page, 'outgoing'), (mcp_page, mcp_page, 'incoming')):
         html = client.get(page).get_data(as_text=True)
         assert f'<li class="tab active">{ai_tab}</li>' in html, page
         assert html.count('<li class="tab active">') == 1, page
         for anchor in ('general', 'fetching', 'filters', 'ui-options', 'api', 'rss', 'timedate', 'proxies', 'info'):
             assert f'<li class="tab"><a href="{settings_page}#{anchor}">' in html, (page, anchor)
         assert f'href="{url_for("backups.create")}"' in html
-        assert f'<a href="{active_switch}" class="settings-subtab active" aria-current="page">' in html, page
+        assert f'<a href="{active_switch}" class="settings-subtab subtab-{direction} active" aria-current="page">' in html, page
 
 
 def test_ai_settings_csrf(client, live_server, measure_memory_usage, datastore_path):

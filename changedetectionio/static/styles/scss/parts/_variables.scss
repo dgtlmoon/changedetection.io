@@ -57,6 +57,10 @@
   --color-text-subtab: var(--color-grey-300);
   --color-background-subtabs: rgba(0, 0, 0, 0.06);
   --color-background-subtab-hover: rgba(0, 0, 0, 0.06);
+  // The two AI pages: outgoing (AI / LLM, the existing orange accent) and incoming (MCP Server, teal)
+  --color-ai-outgoing: var(--color-menu-accent);
+  --color-ai-incoming: #0e9488;
+  --color-ai-incoming-soft: rgba(14, 148, 136, 0.08);
   --color-api-key: #0078e7;
 
   --color-background-button-primary: #0078e7;
@@ -160,6 +164,8 @@
   --color-text-subtab: var(--color-grey-750);
   --color-background-subtabs: rgba(255, 255, 255, 0.06);
   --color-background-subtab-hover: rgba(255, 255, 255, 0.08);
+  --color-ai-incoming: #2dd4bf;
+  --color-ai-incoming-soft: rgba(45, 212, 191, 0.12);
 
   --color-border-input: var(--color-grey-400);
   --color-shadow-input: var(--color-grey-50);
