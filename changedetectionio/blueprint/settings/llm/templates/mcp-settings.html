@@ -27,7 +27,12 @@
   ] %}
   <table class="mcp-perms">
     <thead>
-      <tr><th scope="col"></th><th scope="col">{{ _('None') }}</th><th scope="col">{{ _('Read') }}</th><th scope="col">{{ _('Write') }}</th></tr>
+      <tr>
+        <th scope="col"></th>
+        <th scope="col">{{ _('None') }}</th>
+        <th scope="col">{{ _('Read') }}</th>
+        <th scope="col">{{ _('Write') }}</th>
+      </tr>
     </thead>
     <tbody>
       {% for field, description in rows %}
@@ -138,7 +143,10 @@
     <dd>
       <button type="button" class="cdio-btn button-small" data-stab-goto="tokens">{{ _('Access tokens') }}</button>
       <p class="mcp-hint">{{ _('Add a token for each assistant on the Access tokens sub-tab. It is shown once, when it is created.') }}</p>
-      <p class="mcp-hint"><strong>{{ _('Treat it like a password.') }}</strong> {{ _('It does not expire, and anyone who has it can use these tools and read what they return. Never paste it into a file you commit or share.') }}</p>
+      <p class="mcp-hint">
+        <strong>{{ _('Treat it like a password.') }}</strong>
+        {{ _('It does not expire, and anyone who has it can use these tools and read what they return. Never paste it into a file you commit or share.') }}
+      </p>
     </dd>
   </dl>
   <p class="mcp-hint">{{ _('Most assistants below can read it from an environment variable, so it stays out of their config files. Set it once, for example in ~/.bashrc or ~/.zshrc:') }}</p>
