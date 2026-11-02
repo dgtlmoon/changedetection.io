@@ -675,10 +675,6 @@ components:
           enum: ['replace', 'append']
           default: 'replace'
           description: Whether llm_change_summary replaces the prompt inherited from the tag/global settings, or is appended to the end of it.
-        llm_prefilter:
-          type: [string, 'null']
-          readOnly: true
-          description: CSS selector derived by the AI to narrow content scope before evaluation (auto-managed, do not set manually).
         llm_evaluation_cache:
           type: object
           readOnly: true

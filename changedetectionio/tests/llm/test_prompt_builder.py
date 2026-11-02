@@ -8,8 +8,6 @@ from changedetectionio.llm.prompt_builder import (
     _annotate_moved_lines,
     build_eval_prompt,
     build_eval_system_prompt,
-    build_setup_prompt,
-    build_setup_system_prompt,
 )
 
 
@@ -109,50 +107,3 @@ class TestBuildEvalSystemPrompt:
     def test_defines_summary_field(self):
         result = build_eval_system_prompt()
         assert 'summary' in result
-
-
-class TestBuildSetupPrompt:
-    def test_contains_intent(self):
-        prompt = build_setup_prompt(
-            intent='monitor footer changes',
-            snapshot_text='<footer>Copyright 2024</footer>',
-        )
-        assert 'monitor footer changes' in prompt
-
-    def test_contains_url_when_provided(self):
-        prompt = build_setup_prompt(
-            intent='price',
-            snapshot_text='price: $10',
-            url='https://shop.example.com',
-        )
-        assert 'https://shop.example.com' in prompt
-
-    def test_url_absent_when_not_provided(self):
-        prompt = build_setup_prompt(intent='price', snapshot_text='text')
-        assert 'URL:' not in prompt
-
-    def test_large_snapshot_trimmed(self):
-        big_snapshot = 'unrelated junk line\n' * 500
-        prompt = build_setup_prompt(
-            intent='monitor price section',
-            snapshot_text=big_snapshot,
-        )
-        assert len(prompt) < len(big_snapshot)
-
-
-class TestBuildSetupSystemPrompt:
-    def test_returns_string(self):
-        result = build_setup_system_prompt()
-        assert isinstance(result, str)
-
-    def test_forbids_positional_selectors(self):
-        result = build_setup_system_prompt()
-        assert 'nth-child' in result or 'positional' in result
-
-    def test_defines_needs_prefilter_field(self):
-        result = build_setup_system_prompt()
-        assert 'needs_prefilter' in result
-
-    def test_defines_selector_field(self):
-        result = build_setup_system_prompt()
-        assert 'selector' in result
