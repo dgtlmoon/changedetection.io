@@ -3,39 +3,20 @@
 {% block content %}
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field, render_fieldlist_with_inline_errors %}
 {% from '_common_fields.html' import show_token_placeholders %}
+{% from 'settings-tabs.html' import settings_tabs with context %}
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='click-to-copy.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
 {# PWA related #}
 {%- set menu_icon -%}&nbsp;<i data-feather="more-vertical"></i>{% endset -%}
 {%- set install_action -%}<strong>{{ _('Install and create shortcut - then "install"') }}</strong>{% endset -%}
 
 <div class="edit-form">
-    <div class="tabs collapsable">
-        <ul>
-            <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
-            <li class="tab"><a href="#fetching">{{ _('Fetching') }}</a></li>
-            <li class="tab"><a href="#filters">{{ _('Global Filters') }}</a></li>
-            <li class="tab"><a href="#ui-options">{{ _('UI Options') }}</a></li>
-            <li class="tab"><a href="#api">API</a></li>
-            <li class="tab"><a href="#rss">RSS</a></li>
-            <li class="tab"><a href="{{ url_for('backups.create') }}">{{ _('Backups') }}</a></li>
-            <li class="tab"><a href="#timedate">{{ _('Time & Date') }}</a></li>
-            <li class="tab"><a href="#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
-            {% if plugin_tabs %}
-                {% for tab in plugin_tabs %}
-            <li class="tab"><a href="#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
-                {% endfor %}
-            {% endif %}
-            {% if not llm_features_disabled %}
-            <li class="tab"><a href="#ai">{{ _('AI / LLM') }}</a></li>
-            {% endif %}
-            <li class="tab"><a href="#info">{{ _('Info') }}</a></li>
-        </ul>
-    </div>
+    {{ settings_tabs(plugin_tabs=plugin_tabs) }}
     <div class="box-wrap inner">
         <form class="pure-form pure-form-stacked settings" action="{{url_for('settings.settings_page')}}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" >
@@ -240,12 +221,14 @@ nav
                     {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
                     {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     <div class="pure-form-message-inline">{{ _('Restrict API access limit by using') }} <code>x-api-key</code> {{ _('header - required for the Chrome Extension to work') }}</div><br>
-                    <div class="pure-form-message-inline"><br>{{ _('API Key') }} <span id="api-key">{{api_key}}</span>
-                        <span style="display:none;" id="api-key-copy" >{{ _('copy') }}</span>
+                    <div class="pure-form-message-inline"><br>{{ _('API Key') }} <code id="api-key" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{api_key}}</code>
                     </div>
                 </div>
                 <div class="pure-control-group">
-                    <button type="submit" formmethod="post" formnovalidate formaction="{{url_for('settings.settings_reset_api_key')}}" class="cdio-btn button-small button-cancel">{{ _('Regenerate API key') }}</button>
+                    <a href="{{url_for('settings.settings_reset_api_key')}}" data-method="POST" data-requires-confirm
+                       data-confirm-type="danger" data-confirm-title="{{ _('Regenerate API key?') }}"
+                       data-confirm-message="<p>{{ _('Anything using the current API key stops working until it is given the new one.') }}</p>"
+                       data-confirm-button="{{ _('Regenerate API key') }}" class="cdio-btn button-small button-cancel">{{ _('Regenerate API key') }}</a>
                 </div>
                 <div class="pure-control-group">
                     <h4>{{ _('Chrome Extension') }}</h4>
@@ -451,9 +434,6 @@ nav
                 {% endif %}
             </div>
                 {% endfor %}
-            {% endif %}
-            {% if not llm_features_disabled %}
-            {% include 'settings_llm_tab.html' %}
             {% endif %}
             <div class="tab-pane-inner" id="info">
                 <p><strong>{{ _('Uptime:') }}</strong> {{ uptime_seconds|format_duration }}</p>

@@ -31,7 +31,7 @@ requests-file
 chardet>=7.7.0
 
 wtforms~=3.3
-jsonpath-ng~=1.13.0
+jsonpath-ng~=1.14.0
 
 # Fast JSON serialization for better performance
 orjson~=3.13
@@ -43,7 +43,7 @@ orjson~=3.13
 # jq not available on Windows so must be installed manually
 
 # Notification library
-apprise==2.0.1
+apprise==2.1.0
 
 diff_match_patch
 
@@ -164,6 +164,9 @@ litellm>=1.91.5; platform_machine == "armv7l"
 # Used today for LLMSettings (model/LLMSettings.py); transitively pulled by litellm but pinned explicitly
 # so the validation/typing layer doesn't disappear if litellm drops it.
 pydantic>=2.14.1,<3.0
+# MCP wire types and protocol versions for /mcp (MIT, only needs pydantic). Not the full `mcp` SDK, which is ASGI
+# (starlette/uvicorn). ~15MB once loaded, so only imported on the first authenticated /mcp request.
+mcp-types>=2.3.0,<3.0
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 

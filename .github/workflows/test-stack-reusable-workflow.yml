@@ -719,6 +719,14 @@ jobs:
         run: |
           docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_html_head_extras.py'
 
+      - name: Plugin register_blueprints hook mounts plugin routes
+        run: |
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_register_blueprints.py'
+
+      - name: Plugin register_sidebar_items hook adds left sidebar links
+        run: |
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_sidebar_items.py'
+
   # Container startup tests
   container-tests:
     runs-on: ubuntu-latest

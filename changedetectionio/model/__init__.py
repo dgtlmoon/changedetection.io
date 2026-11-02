@@ -3,6 +3,7 @@ import uuid
 
 from changedetectionio import strtobool
 from .persistence import EntityPersistenceMixin, _determine_entity_type
+from .frozen import INTERNED_WATCH_KEYS, intern_frozen
 
 __all__ = ['EntityPersistenceMixin', 'watch_base']
 
@@ -213,7 +214,6 @@ class watch_base(dict):
             'llm_change_summary_mode': 'replace',  # 'replace' the inherited prompt, or 'append' to it
             'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
             'llm_intent': '',                # Plain-English description of what the user cares about (change filter)
-            'llm_prefilter': None,           # CSS selector derived at setup time (semantic only, e.g. "footer")
             'method': 'GET',
             'notification_alert_count': 0,
             'notification_body': None,
@@ -309,6 +309,8 @@ class watch_base(dict):
         })
 
         super(watch_base, self).__init__(*arg, **kw)
+        # dict.__init__ bypasses our __setitem__/update, so intern here too
+        self._intern_shared_values()
 
         # Check if we're being initialized from an existing watch object
         # that has was_edited=True, so we can preserve the flag
@@ -356,6 +358,13 @@ class watch_base(dict):
                 and key not in SYSTEM_MANAGED_NON_SPEC_FIELDS):
             self.__watch_was_edited = True
 
+    def _intern_shared_values(self):
+        """Swap values that are identical across most watches for one shared read-only copy, see model/frozen.py"""
+        for key in INTERNED_WATCH_KEYS:
+            value = dict.get(self, key)
+            if type(value) is dict:
+                dict.__setitem__(self, key, intern_frozen(value))
+
     def __setitem__(self, key, value):
         """
         Override dict.__setitem__ to track when writable watch fields are modified.
@@ -366,6 +375,8 @@ class watch_base(dict):
 
         Only sets the edited flag when field is NOT in readonly_fields (from OpenAPI spec).
         """
+        if key in INTERNED_WATCH_KEYS:
+            value = intern_frozen(value)
         # Set the value first (always)
         super().__setitem__(key, value)
         # Mark as edited if writable field
@@ -384,6 +395,7 @@ class watch_base(dict):
         """Override dict.update() to track modifications to writable fields."""
         # Call parent update first
         super().update(*args, **kwargs)
+        self._intern_shared_values()
 
         # Mark as edited for any writable fields that were updated
         # Handle both update(dict) and update(key=value) forms
@@ -404,6 +416,8 @@ class watch_base(dict):
         """Override dict.setdefault() to track modifications to writable fields."""
         # Only marks as edited if key didn't exist (i.e., a new value was set)
         existed = key in self
+        if key in INTERNED_WATCH_KEYS:
+            default = intern_frozen(default)
         result = super().setdefault(key, default)
         if not existed:
             self._mark_field_as_edited(key)

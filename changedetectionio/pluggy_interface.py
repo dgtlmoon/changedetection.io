@@ -17,7 +17,8 @@ PLUGIN_NAMESPACE = "changedetectionio"
 LEGACY_CONDITIONS_NAMESPACE = "changedetectionio_conditions"
 
 hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
-hookimpl = pluggy.HookimplMarker(PLUGIN_NAMESPACE)
+# The marker lives in plugin_api (the public plugin module), see the comment there
+from changedetectionio.plugin_api import hookimpl
 
 # A plugin that raises is logged and counted, and the hook carries on with the other plugins.
 # After this many failures in a row the plugin is reported as "errored" (it is still called).
@@ -59,14 +60,20 @@ class ChangeDetectionSpec:
 
     @hookspec
     def fetcher_status_icon(fetcher_name):
-        """Return status icon HTML attributes for a content fetcher.
+        """Return the status icon shown in the watch list for a content fetcher.
 
         Args:
             fetcher_name: The name of the fetcher (e.g., 'html_webdriver', 'html_js_zyte')
 
         Returns:
-            str: HTML string containing <img> tags or other status icon elements
-                 Empty string if no custom status icon is needed
+            dict or None: None if fetcher_name isn't yours, otherwise
+                {
+                    'filename': 'my-icon.svg',  # served from the static 'group' below
+                    'alt': 'Alt text',
+                    'title': 'Tooltip text',
+                    'group': 'plugin',          # optional, 'plugin' = your plugin_static_path() directory
+                    'style': 'height: 1em;',    # optional inline CSS
+                }
         """
         pass
 
@@ -207,6 +214,39 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
+    def register_sidebar_items(datastore):
+        """Return links to add to the left action sidebar, after the built-in ones. Plugin API 0.5.0+.
+
+        Called on every page render inside a request (so url_for() and gettext work), keep it
+        in memory: no disk or network.
+
+        Return a dict, a list of dicts, or None. Each dict:
+            {
+                'label': str,            # shown next to the icon, already translated
+                'endpoint': str,         # Flask endpoint for url_for(), or give 'url' instead
+                'url': str,              # used when there's no 'endpoint'
+                'icon': str,             # a Feather icon name, e.g. 'cpu', https://feathericons.com
+                'svg': str,              # or your own inline <svg class="action-icon" ...>, used instead of 'icon'.
+                                         # Trusted markup from your plugin's code only, never user input
+                                         # (it's rendered as-is). Draw with stroke="currentColor" to follow
+                                         # the theme and the active state
+                'title': str,            # optional tooltip, defaults to the label
+                'active_prefix': str,    # optional, highlight when request.endpoint starts with it
+                'weight': int,           # optional, lower comes first among plugin items (default 0)
+                'disabled': bool,        # optional, shown greyed out and not clickable (no endpoint/url needed),
+                                         # like the built-in "Browsers (coming soon)" item
+                'badge': str,            # optional, a small label after the text, e.g. 'soon', already translated
+            }
+
+        Prefer 'endpoint' over a hard-coded 'url' so sub-path deployments (USE_X_SETTINGS /
+        X-Forwarded-Prefix) work.
+
+        Args:
+            datastore: The ChangeDetectionStore instance
+        """
+        pass
+
+    @hookspec
     def get_html_head_extras():
         """Return HTML to inject into the <head> of every page via base.html.
 
@@ -261,6 +301,129 @@ class ChangeDetectionSpec:
 
         Returns:
             str or None: Raw HTML string to inject inside <head>, or None
+        """
+        pass
+
+    @hookspec
+    def register_blueprints(datastore):
+        """Return Flask blueprints to mount in the app, called once at startup. Plugin API 0.4.0+.
+
+        Return a Blueprint, a dict, or a list of either. The dict form sets the options:
+            {'blueprint': bp, 'url_prefix': '/my-plugin', 'login_required': True}
+
+        url_prefix defaults to the one the Blueprint was created with. Routes are protected
+        by the same optional password login as the rest of the UI unless you pass
+        'login_required': False (for example an endpoint that does its own API-key auth),
+        in which case securing them is up to you. CSRF protection applies to POST routes as
+        usual, exempt a blueprint with `from changedetectionio.flask_app import csrf;
+        csrf.exempt(bp)` only if it authenticates some other way.
+
+        Prefix your blueprint name and URLs with your plugin name: a blueprint whose name is
+        already registered is skipped with an error in the log.
+
+        Args:
+            datastore: The ChangeDetectionStore instance
+
+        Returns:
+            Blueprint, dict, a list of either, or None
+        """
+        pass
+
+    @hookspec
+    def watch_list_extra_text(watch):
+        """Short plain-text notes shown under the watch in the watch list (class extra-watch-text).
+
+        This runs for every watch on every watch list render, so stay in memory: no disk,
+        network or other slow work.
+
+        Args:
+            watch: The Watch model instance
+
+        Returns:
+            str, a list of str, or None. Escaped when rendered, so HTML shows as text.
+        """
+        pass
+
+    @hookspec(firstresult=True)
+    def get_api_watch_processor_state(watch, processor_name, context):
+        """Return the current processor state of a watch for the REST API.
+
+        Core calls this with the watch's own processor name and adds your dict to the response
+        as `processor_state_{processor_name}` on:
+        - GET /api/v1/watch/<uuid>  (context='get')
+        - GET /api/v1/watch         (context='list', called once per watch in the listing)
+
+        You never pick the key, core does, so a plugin can't overwrite other watch fields.
+        Return None when processor_name isn't yours, the first non-None result wins.
+
+        Document the shape as components.schemas.processor_state_{processor_name} in your
+        processor's api.yaml, it is merged into the Watch schema as read-only.
+
+        With context='list' this runs for every watch on every listing, so stay in memory:
+        no disk, network or other slow work.
+
+        @IMPORTANT-TODO: where a processor keeps this state on the watch has no convention yet,
+        see store update_watch().
+
+        Example (the built-in restock_diff processor):
+            @hookimpl
+            def get_api_watch_processor_state(watch, processor_name, context):
+                if processor_name != 'restock_diff':
+                    return None
+                restock = watch.get('restock') or {}
+                return {'in_stock': restock.get('in_stock'), 'price': restock.get('price')}
+
+        Args:
+            watch: The Watch model instance
+            processor_name: The watch's processor, e.g. 'restock_diff'
+            context: 'get' or 'list'
+
+        Returns:
+            dict or None: JSON-serialisable state for this watch, or None
+        """
+        pass
+
+    @hookspec
+    def register_mcp_tools():
+        """Add tools to the MCP server (/mcp/v1), typically ones only a processor can answer.
+
+        Return a list of tool dicts. Core adds them to tools/list next to its own and wraps each one, so a
+        plugin never deals with MCP itself:
+        - the arguments are checked against `input_schema` before the handler runs;
+        - read-only mode and ?readonly=1 offer only the 'read' tools, from `kind`;
+        - a `watch` argument is resolved (uuid, or part of the title or URL) and, with `processor` set,
+          refused with a readable error when that monitor uses another processor;
+        - a ToolError (changedetectionio.blueprint.mcp.tools.ToolError) becomes an error the assistant
+          reads and can correct, any other exception an internal error;
+        - the text is capped in length.
+
+        The tool list is the same for every connection (MCP clients cache it), so list your tools whenever
+        the plugin is installed, not only while some monitor uses your processor.
+
+        Each dict:
+            name:         a-z, 0-9 and _, at most 64 characters, starting with a letter. Prefix it with
+                          your processor's name, e.g. 'restock_status'. A name core already uses is skipped.
+            title:        short, shown to the user, e.g. 'Stock and prices'
+            description:  what it answers, written for the assistant
+            kind:         'read' (changes nothing), 'write' or 'destructive' (can't be undone)
+            input_schema: JSON Schema properties, e.g. {'watch': tools.WATCH_ARGUMENT}. Unknown
+                          arguments are refused.
+            required:     optional list of required argument names
+            processor:    optional processor name its `watch` argument must use, e.g. 'restock_diff'
+            handler:      handler(ctx, args, watch) -> (text, structured_dict). ctx.datastore and
+                          ctx.update_q, args as validated, watch the resolved Watch or None.
+
+        Text that comes from monitored pages should start with tools.UNTRUSTED_NOTE.
+
+        Example (the built-in restock tools, processors/restock_diff/plugins/mcp_tools.py):
+            @hookimpl
+            def register_mcp_tools():
+                return [{'name': 'restock_status', 'title': 'Stock and prices', 'kind': 'read',
+                         'description': 'Which product monitors are in stock, and their prices.',
+                         'input_schema': {'tag': {'type': 'string'}}, 'handler': restock_status}]
+
+        Returns:
+            list of dict, or None
         """
         pass
 
@@ -490,8 +653,8 @@ def register_builtin_fetchers():
 def register_builtin_restock_plugins():
     """Register built-in restock processor plugins after all imports are complete.
 
-    Called from content_fetchers/__init__.py alongside register_builtin_fetchers()
-    to avoid the circular import that occurs when loading via load_plugins_from_directories()
+    Only called from changedetectionio.main() (so not when the app is built directly, e.g. in tests),
+    deferred to avoid the circular import that occurs when loading via load_plugins_from_directories()
     (restock_diff/__init__.py → model.Watch → content_fetchers → pluggy_interface).
     """
     import importlib
@@ -503,6 +666,125 @@ def register_builtin_restock_plugins():
             logger.debug("Registered built-in restock plugin: llm_restock")
     except Exception as e:
         logger.error(f"Failed to register llm_restock plugin: {e}")
+
+
+def register_builtin_api_plugins():
+    """Register the built-in get_api_watch_processor_state and register_mcp_tools implementations.
+
+    Called from flask_app.changedetection_app() where the API resources are set up, so it runs
+    however the app is started. Can't happen at module load for the same circular import reason
+    as register_builtin_restock_plugins().
+    """
+    from changedetectionio.processors.restock_diff.plugins import api_state, mcp_tools
+    if not plugin_manager.is_registered(api_state):
+        # 'builtin_' names are hidden from the active plugins list, see get_active_plugins()
+        plugin_manager.register(api_state, 'builtin_restock_api_state')
+    # The restock MCP tools (register_mcp_tools). Light to import: what they need is imported when they run
+    if not plugin_manager.is_registered(mcp_tools):
+        plugin_manager.register(mcp_tools, 'builtin_restock_mcp_tools')
+
+def _require_login_before_request():
+    from changedetectionio.auth_decorator import login_optionally_required
+    # None lets the request through, otherwise it's the login redirect/401
+    return login_optionally_required(lambda: None)()
+
+
+def register_plugin_blueprints(app, datastore):
+    """Mount every blueprint returned by the register_blueprints hook on `app`.
+
+    One bad entry (wrong type, blueprint name already taken) is logged and skipped, it never
+    stops the app from starting. Returns the names of the blueprints that were registered.
+    """
+    from flask import Blueprint
+
+    registered = []
+    for result in plugin_manager.hook.register_blueprints(datastore=datastore):
+        if not result:
+            continue
+        for entry in (result if isinstance(result, (list, tuple)) else [result]):
+            options = entry if isinstance(entry, dict) else {'blueprint': entry}
+            blueprint = options.get('blueprint')
+            if not isinstance(blueprint, Blueprint):
+                logger.error(f"register_blueprints: expected a Blueprint or dict with 'blueprint', got {entry!r}")
+                continue
+            try:
+                if options.get('login_required', True):
+                    blueprint.before_request(_require_login_before_request)
+                kwargs = {'url_prefix': options['url_prefix']} if 'url_prefix' in options else {}
+                app.register_blueprint(blueprint, **kwargs)
+            except Exception as e:
+                logger.error(f"register_blueprints: could not register blueprint '{blueprint.name}': {e}")
+                continue
+            registered.append(blueprint.name)
+            logger.debug(f"Registered plugin blueprint '{blueprint.name}'")
+    return registered
+
+
+def collect_sidebar_items(datastore):
+    """Every plugin's sidebar links (register_sidebar_items), ready for sidebar-nav.html.
+
+    [{'label', 'url', 'icon', 'svg', 'title', 'active', 'disabled', 'badge', 'source'}], sorted by weight, 'source' being the module path of
+    the plugin that added it. A bad entry is logged and skipped.
+    """
+    from flask import request, url_for
+    from markupsafe import Markup
+
+    items = []
+    # Each implementation is called on its own (still through the failure-isolation wrapper) so every
+    # item knows which plugin added it, sidebar-nav.html writes that as <!-- blueprint:module.path -->
+    for impl in plugin_manager.hook.register_sidebar_items.get_hookimpls():
+        result = impl.function(*[{'datastore': datastore}.get(name) for name in impl.argnames])
+        if not result:
+            continue
+        plugin = impl.plugin
+        source = getattr(plugin, '__name__', None) if inspect.ismodule(plugin) else \
+            f"{type(plugin).__module__}.{type(plugin).__qualname__}"
+        # Goes into an HTML comment, '--' would end it early
+        source = (source or impl.plugin_name).replace('--', '-')
+        for entry in (result if isinstance(result, (list, tuple)) else [result]):
+            if not isinstance(entry, dict) or not entry.get('label'):
+                logger.error(f"register_sidebar_items: expected a dict with a 'label', got {entry!r}")
+                continue
+            disabled = bool(entry.get('disabled'))
+            if disabled:
+                # Not clickable, nothing to link to
+                url = '#'
+            else:
+                try:
+                    url = url_for(entry['endpoint']) if entry.get('endpoint') else entry.get('url')
+                except Exception as e:
+                    logger.error(f"register_sidebar_items: no URL for '{entry.get('label')}': {e}")
+                    continue
+                if not url:
+                    continue
+            prefix = entry.get('active_prefix')
+            items.append({
+                'label': str(entry['label']),
+                'url': url,
+                'icon': entry.get('icon') or 'circle',
+                'svg': Markup(entry['svg']) if entry.get('svg') else None,
+                'title': str(entry.get('title') or entry['label']),
+                'active': not disabled and bool(prefix and (request.endpoint or '').startswith(prefix)),
+                'disabled': disabled,
+                'badge': str(entry['badge']) if entry.get('badge') else None,
+                'weight': entry.get('weight', 0),
+                'source': source,
+            })
+    return sorted(items, key=lambda i: i['weight'])
+
+
+def collect_watch_list_extra_text(watch):
+    """All plugins' notes for this watch in the watch list, as a list of strings."""
+    notes = []
+    try:
+        for result in reversed(plugin_manager.hook.watch_list_extra_text(watch=watch)):
+            if not result:
+                continue
+            notes.extend([result] if isinstance(result, str) else [str(r) for r in result if r])
+    except Exception as e:
+        logger.error(f"watch_list_extra_text failed: {e}")
+    return notes
+
 
 # Helper function to collect UI stats extras from all plugins
 def collect_ui_edit_stats_extras(watch):

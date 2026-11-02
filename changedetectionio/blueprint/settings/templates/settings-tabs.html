@@ -1,0 +1,34 @@
+{#
+  The /settings tab row, shared by /settings and the pages that look like one of its tabs (the AI pages).
+
+  On /settings itself (active=None) the tabs are in-page #anchors that tabs.js switches. Anywhere else they link
+  back to /settings#<tab>, which tabs.js opens on arrival, and `active` marks the current page's tab server-side.
+  "AI / LLM / MCP" and "Backups" are always links to their own pages.
+
+  Import `with context`, it needs llm_features_disabled from the context processor:
+    {% from 'settings-tabs.html' import settings_tabs with context %}
+    {{ settings_tabs(active='ai', plugin_tabs=plugin_tabs) }}
+#}
+{% macro settings_tabs(active=None, plugin_tabs=None) %}
+{%- set base = '' if active is none else url_for('settings.settings_page') -%}
+<div class="tabs collapsable">
+    <ul>
+        <li class="tab"><a href="{{ base }}#general">{{ _('General') }}</a></li>
+        <li class="tab"><a href="{{ base }}#fetching">{{ _('Fetching') }}</a></li>
+        <li class="tab"><a href="{{ base }}#filters">{{ _('Global Filters') }}</a></li>
+        <li class="tab"><a href="{{ base }}#ui-options">{{ _('UI Options') }}</a></li>
+        <li class="tab"><a href="{{ base }}#api">API</a></li>
+        {% if not llm_features_disabled %}
+        <li class="tab{% if active == 'ai' %} active{% endif %}"><a href="{{ url_for('settings.llm.llm_settings_page') }}">{{ _('AI / LLM / MCP') }}</a></li>
+        {% endif %}
+        <li class="tab"><a href="{{ base }}#rss">RSS</a></li>
+        <li class="tab"><a href="{{ url_for('backups.create') }}">{{ _('Backups') }}</a></li>
+        <li class="tab"><a href="{{ base }}#timedate">{{ _('Time & Date') }}</a></li>
+        <li class="tab"><a href="{{ base }}#proxies">{{ _('CAPTCHA & Proxies') }}</a></li>
+        {% for tab in plugin_tabs or [] %}
+        <li class="tab"><a href="{{ base }}#plugin-{{ tab.plugin_id }}">{{ tab.tab_label }}</a></li>
+        {% endfor %}
+        <li class="tab"><a href="{{ base }}#info">{{ _('Info') }}</a></li>
+    </ul>
+</div>
+{% endmacro %}

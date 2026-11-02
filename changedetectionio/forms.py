@@ -1269,6 +1269,11 @@ class globalSettingsLLMForm(Form):
         default=5,
         render_kw={"placeholder": "5", "style": "width: 6em;"},
     )
+    # Ollama / OpenAI-compatible endpoints only, off by default so the server's own thinking default applies (#4638)
+    local_thinking_off = BooleanField(
+        _l('Switch thinking off'),
+        default=False,
+    )
     change_summary_default = TextAreaField(
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
@@ -1374,8 +1379,33 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class globalLLMSettingsPageForm(Form):
+    """The /settings/llm page. Still stored under datastore['settings']['application']['llm'], the
+    sub-form keeps the `llm-` field prefix so settings/llm/templates/llm-settings_llm.html renders it unchanged."""
     llm = FormField(globalSettingsLLMForm)
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class globalMCPSettingsPageForm(Form):
+    """The /settings/ai/mcp page ("MCP Server" tab), stored in datastore['settings']['application']['mcp_enabled']. The
+    access tokens have their own form, MCPTokenForm."""
+    # Also the switch for the OAuth endpoints once they exist (MCP-config.md, point 3)
+    enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class MCPTokenForm(Form):
+    """Add or edit one MCP access token (the overlay on the "Access tokens" sub-tab, sent with ajax): its name and its
+    None / Read / Write grid, one perm_<area> field per row (see blueprint/mcp/tools.py)."""
+    name = StringField(_l('Name'), validators=[validators.DataRequired(), validators.Length(max=64)],
+                       render_kw={'placeholder': _l('e.g. Claude Code, laptop'), 'maxlength': 64})
+    perm_monitors = RadioField(_l('Monitors'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_tags = RadioField(_l('Groups (tags)'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_notifications = RadioField(_l('Notifications'), default='read', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_system = RadioField(_l('System info'), default='read', choices=[('none', _l('None')), ('read', _l('Read'))])
 
 
 class extractDataForm(Form):

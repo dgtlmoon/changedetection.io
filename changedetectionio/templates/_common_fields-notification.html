@@ -1,0 +1,44 @@
+{# Setup widget, builds an Apprise URL from a few fields and appends it to the
+   textarea below (which stays the source of truth). Its inputs have no name=
+   so nothing here is submitted with the form. See notification-setup.js #}
+<div id="notification-setup" class="notification-setup"
+     data-services-url="{{ url_for('settings.notifications.apprise_services') }}"
+     data-service-url="{{ url_for('settings.notifications.apprise_service', schema='__SCHEMA__') }}"
+     data-build-url="{{ url_for('settings.notifications.apprise_build') }}"
+     data-i18n="{{ {
+        'noMatches': _('No matching service'),
+        'required': _('Required'),
+        'commaSeparated': _('Separate several with commas'),
+        'secure': _('Secure connection (TLS)'),
+        'headersHint': _('One per line, Name=Value'),
+        'fillIn': _('Fill in the fields to build the URL'),
+        'added': _('Added to the list below'),
+        'sending': _('Processing..'),
+     }|tojson|forceescape }}">
+    <label for="ns-search">{{ _('Add a notification service:') }}</label>
+    <div class="ns-search-wrap">
+        <input type="search" id="ns-search" autocomplete="off" spellcheck="false"
+               placeholder="{{ _('Discord, Telegram, ntfy, Slack, email…') }}"
+               role="combobox" aria-expanded="false" aria-controls="ns-results" aria-autocomplete="list">
+        <ul id="ns-results" class="ns-results" role="listbox" hidden></ul>
+    </div>
+    <div class="ns-card" hidden>
+        <div class="ns-card-head">
+            <strong class="ns-name"></strong> <code class="ns-schema"></code>
+            <a class="ns-help" target="_blank" rel="noopener">{{ _('How do I get these?') }}</a>
+            <a href="#" class="ns-close" title="{{ _('Close') }}">✕</a>
+        </div>
+        <div class="ns-fields"></div>
+        <details class="ns-options">
+            <summary>{{ _('Options') }}</summary>
+            <div class="ns-fields ns-options-body"></div>
+        </details>
+        <div class="ns-preview">
+            <code class="ns-url"></code>
+            <span class="ns-message"></span>
+            <button type="button" class="pure-button button-xsmall ns-test" disabled>{{ _('Send test notification') }}</button>
+            <button type="button" class="pure-button button-secondary button-xsmall ns-add" disabled>{{ _('Add to list') }}</button>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static_content', group='js', filename='notification-setup.js') }}" defer></script>

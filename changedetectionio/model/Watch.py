@@ -1329,6 +1329,95 @@ class model(EntityPersistenceMixin, watch_base):
         return csv_output_filename
 
 
+    # A find_change() regex longer than this is refused, same limit as the regex_replace Jinja2 filter
+    FIND_CHANGE_MAX_PATTERN = 500
+    # The matching line returned with each period is cut at this
+    FIND_CHANGE_MAX_LINE = 300
+
+    def find_change(self, text, regex=False, case_sensitive=False, from_ts=None, to_ts=None, deadline=None):
+        """When `text` was on the page: the periods of consecutive snapshots that contain it.
+
+        Answers "when did the price become 319?" or "when did 'Out of stock' go away?" in one pass over the history,
+        instead of fetching snapshots one by one to narrow it down. A text can come and go several times, so each
+        period is listed. Snapshots are only saved when the page changed, so first_seen is when it was first detected.
+
+        :param text: plain text to look for, or a regular expression when regex=True
+        :param from_ts/to_ts: only search snapshots inside this range of unix seconds (both included)
+        :param deadline: a time.monotonic() value, stop there and return what was found with 'incomplete': True
+        :return: {'periods': [{'first_seen', 'last_seen', 'gone_at', 'snapshots', 'line'}], 'snapshots_searched',
+                  'snapshots_total', 'matching_snapshots', 'incomplete'}
+                 gone_at is the first later snapshot without it, None when it was still there at the last one searched;
+                 line is the first matching line of the period's first snapshot.
+        :raises ValueError: the regex is invalid or too long
+        :raises TimeoutError: the regex took longer than REGEX_TIMEOUT_SECONDS on one snapshot (catastrophic
+                 backtracking), raised rather than swallowed so the caller can say so
+        """
+        import time
+
+        text = str(text or '')
+        if not text.strip():
+            raise ValueError("Give some text to look for")
+
+        if regex:
+            if len(text) > self.FIND_CHANGE_MAX_PATTERN:
+                raise ValueError(f"The regex is too long, at most {self.FIND_CHANGE_MAX_PATTERN} characters")
+            # The 'regex' package enforces the timeout inside the matcher, so it works in any thread, the same
+            # ReDoS protection as the regex_replace Jinja2 filter
+            import regex as regex_lib
+            from changedetectionio.jinja2_custom.plugins.regex import REGEX_TIMEOUT_SECONDS
+            try:
+                compiled = regex_lib.compile(text, 0 if case_sensitive else regex_lib.IGNORECASE)
+            except regex_lib.error as e:
+                raise ValueError(f"Invalid regex: {e}")
+
+            def first_match(content):
+                # TimeoutError is left to propagate
+                m = compiled.search(content, timeout=REGEX_TIMEOUT_SECONDS)
+                return m.start() if m else -1
+        else:
+            needle = text if case_sensitive else text.casefold()
+
+            def first_match(content):
+                return (content if case_sensitive else content.casefold()).find(needle)
+
+        def line_at(content, position):
+            start = content.rfind('\n', 0, position) + 1
+            end = content.find('\n', position)
+            line = content[start:end if end != -1 else len(content)].strip()
+            return line[:self.FIND_CHANGE_MAX_LINE]
+
+        # Read the index once: get_history_snapshot(timestamp=...) re-reads it on every call
+        history = self.history or {}
+        keys = sorted(history.keys(), key=int)
+        searched_keys = [k for k in keys
+                         if (from_ts is None or int(k) >= from_ts) and (to_ts is None or int(k) <= to_ts)]
+
+        periods, current, searched, matching, incomplete = [], None, 0, 0, False
+        for k in searched_keys:
+            if deadline and time.monotonic() > deadline:
+                incomplete = True
+                break
+            # Lets other requests/greenlets run between snapshots, this runs inside a web request
+            time.sleep(0)
+            content = self.get_history_snapshot(filepath=history[k])
+            searched += 1
+            # Binary history (image/PDF processors) has no text to search
+            position = first_match(content) if isinstance(content, str) else -1
+            if position >= 0:
+                matching += 1
+                if current is None:
+                    current = {'first_seen': int(k), 'last_seen': int(k), 'gone_at': None, 'snapshots': 0,
+                               'line': line_at(content, position)}
+                    periods.append(current)
+                current['last_seen'] = int(k)
+                current['snapshots'] += 1
+            elif current is not None:
+                current['gone_at'] = int(k)
+                current = None
+
+        return {'periods': periods, 'snapshots_searched': searched, 'snapshots_total': len(keys),
+                'matching_snapshots': matching, 'incomplete': incomplete}
+
     def has_special_diff_filter_options_set(self):
 
         # All False - nothing would be done, so act like it's not processable

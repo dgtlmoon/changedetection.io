@@ -314,7 +314,7 @@
       </div>
       <div class="modal-body">
         <p>{{ _('LLM-powered summaries are not yet enabled. Configure an AI provider in Settings to get started.') }}</p>
-        <p><a href="{{ url_for('settings.settings_page') }}#ai" class="pure-button pure-button-primary">{{ _('Go to AI / LLM Settings') }}</a></p>
+        <p><a href="{{ url_for('settings.llm.llm_settings_page') }}" class="pure-button pure-button-primary">{{ _('Go to AI / LLM Settings') }}</a></p>
       </div>
       <div class="modal-footer">
         <button type="button" class="pure-button" id="close-llm-not-configured-modal">{{ _('Close') }}</button>

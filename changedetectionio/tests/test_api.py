@@ -45,6 +45,16 @@ def set_modified_response(datastore_path):
 
     return None
 
+def _time_schedule_limit(timezone, start_time, disabled_day):
+    """A full, non-default time_schedule_limit structure as the API sends/returns it"""
+    schedule = {'enabled': True}
+    for day in ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'):
+        schedule[day] = {'enabled': day != disabled_day, 'start_time': start_time,
+                         'duration': {'hours': '8', 'minutes': '30'}}
+    schedule['timezone'] = timezone
+    return schedule
+
+
 def is_valid_uuid(val):
     try:
         uuid.UUID(str(val))
@@ -281,6 +291,11 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     )
     assert res.json.get('watch_count') == 1
     assert res.json.get('uptime') > 0.5
+    # Which watches the fetch workers are on right now, and how many workers there are
+    assert res.json.get('fetch_workers') >= 1
+    assert isinstance(res.json.get('checking_now'), list)
+    for running in res.json['checking_now']:
+        assert set(running) == {'uuid', 'title', 'url', 'running_seconds'}
 
     ######################################################
     # Mute and Pause, check it worked
@@ -449,6 +464,9 @@ def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path
     )
 
     watch=res.json
+    original_schedule = watch['time_schedule_limit']
+    assert original_schedule['monday']['duration'] == {'hours': '24', 'minutes': '00'}, \
+        "Default time_schedule_limit structure is returned in full"
 
     # Be sure that 'readOnly' values are never updated in the real watch
     watch['last_changed'] = 454444444444
@@ -482,6 +500,8 @@ def test_roundtrip_API(client, live_server, measure_memory_usage, datastore_path
 
     assert res.json.get('extract_lines_containing') == ['celsius', 'temperature'], \
         "extract_lines_containing should be persisted and returned via API"
+    assert res.json.get('time_schedule_limit') == original_schedule, \
+        "time_schedule_limit survives the GET -> PUT -> GET round trip unchanged"
 
 
 def test_api_strips_internal_fields(client, live_server, measure_memory_usage, datastore_path):
@@ -631,10 +651,13 @@ def test_access_denied(client, live_server, measure_memory_usage, datastore_path
 
 def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datastore_path):
 
-    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    from changedetectionio.model.frozen import FrozenDict
+    datastore = live_server.app.config['DATASTORE']
+    api_key = datastore.data['settings']['application'].get('api_access_token')
     # Create a watch
     set_original_response(datastore_path=datastore_path)
     test_url = url_for('test_endpoint', _external=True)
+    created_schedule = _time_schedule_limit(timezone='Europe/Berlin', start_time='09:30', disabled_day='sunday')
 
     # Create new
     res = client.post(
@@ -643,6 +666,7 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
                          'tag': "One, Two",
                          "title": "My test URL",
                          'headers': {'cookie': 'yum'},
+                         'time_schedule_limit': created_schedule,
                          "conditions": [
                              {
                                  "field": "page_filtered_text",
@@ -700,6 +724,62 @@ def test_api_watch_PUT_update(client, live_server, measure_memory_usage, datasto
     )
     assert res.json.get('title') == 'new title'
     assert res.json.get('viewed'), 'With the timestamp greater than "changed" a watch can be updated to viewed'
+    assert res.json.get('time_schedule_limit') == created_schedule, \
+        "time_schedule_limit from POST is returned exactly, and a PUT without it leaves it alone"
+
+    # time_schedule_limit is stored as a shared read-only value (model/frozen.py), identical schedules
+    # are the same object in memory. A second watch with the same schedule must never be affected by
+    # changes to the first, and each watch.json must hold exactly its own schedule.
+    res = client.post(
+        url_for("createwatch"),
+        data=json.dumps({"url": test_url + "?second", 'time_schedule_limit': created_schedule}),
+        headers={'content-type': 'application/json', 'x-api-key': api_key},
+    )
+    assert res.status_code == 201, res.data
+    other_uuid = res.json['uuid']
+    watch = datastore.data['watching'][watch_uuid]
+    other_watch = datastore.data['watching'][other_uuid]
+    shared = other_watch['time_schedule_limit']
+    assert isinstance(shared, FrozenDict)
+    assert watch['time_schedule_limit'] is shared, "Identical schedules share one object"
+
+    # An in-place write is refused, it can't reach the other watch through the shared object
+    try:
+        watch['time_schedule_limit']['monday']['enabled'] = False
+        assert False, "In-place write to a shared time_schedule_limit should raise"
+    except TypeError:
+        pass
+    assert other_watch['time_schedule_limit']['monday']['enabled'] is True
+
+    # HTTP PUT a different time_schedule_limit on the first watch only
+    updated_schedule = _time_schedule_limit(timezone='Pacific/Kiritimati', start_time='22:15', disabled_day='wednesday')
+    res = client.put(
+        url_for("watch", uuid=watch_uuid),
+        headers={'x-api-key': api_key, 'content-type': 'application/json'},
+        data=json.dumps({'time_schedule_limit': updated_schedule}),
+    )
+    assert res.status_code == 200, f"HTTP PUT time_schedule_limit was sent OK: {res.data}"
+
+    for uuid, expected in ((watch_uuid, updated_schedule), (other_uuid, created_schedule)):
+        # API returns exactly what was set, and nothing bled across
+        res = client.get(url_for("watch", uuid=uuid), headers={'x-api-key': api_key})
+        assert res.json.get('time_schedule_limit') == expected, f"API time_schedule_limit for {uuid}"
+        live = datastore.data['watching'][uuid]['time_schedule_limit']
+        assert isinstance(live, FrozenDict)
+        assert live == expected, f"In-memory time_schedule_limit for {uuid}"
+
+        # Saved to disk exactly, key order included, and loads back the same
+        watch_json = os.path.join(datastore.data['watching'][uuid].data_dir, "watch.json")
+        with open(watch_json) as f:
+            on_disk = json.load(f)
+        assert on_disk['time_schedule_limit'] == expected, f"watch.json time_schedule_limit for {uuid}"
+        assert list(on_disk['time_schedule_limit'].keys()) == list(expected.keys())
+        reloaded = datastore.rehydrate_entity(uuid, on_disk)
+        assert reloaded['time_schedule_limit'] == expected
+        assert reloaded['time_schedule_limit'] is live, "Reloaded schedule rejoins the shared object"
+
+    assert other_watch['time_schedule_limit'] is shared, "The untouched watch still holds the original object"
+    assert watch['time_schedule_limit'] is not shared
 
     # Check in the edit page just to be sure
     res = client.get(
@@ -1178,6 +1258,32 @@ def test_api_watch_get_returns_resolved_restock_processor_config(client, live_se
     delete_all_watches(client)
 
 
+def test_api_processor_enum_lists_installed_processors(client, live_server, measure_memory_usage, datastore_path):
+    """The static spec only lists the built-in processors, the merged spec must accept every installed
+    processor (image_ssim_diff isn't in the static enum, neither is any plugin processor), and still
+    reject unknown ones."""
+    from changedetectionio.api import build_merged_spec_dict
+    from changedetectionio.processors import find_processors
+
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    headers = {'content-type': 'application/json', 'x-api-key': api_key}
+    test_url = url_for('test_endpoint', _external=True)
+
+    installed = {proc_name for _module, proc_name in find_processors()}
+    spec_enum = build_merged_spec_dict()['components']['schemas']['WatchBase']['properties']['processor']['enum']
+    assert set(spec_enum) == installed
+
+    res = client.post(url_for("createwatch"), headers=headers,
+                      data=json.dumps({"url": test_url, "processor": "image_ssim_diff", "paused": True}))
+    assert res.status_code == 201, res.data
+
+    res = client.post(url_for("createwatch"), headers=headers,
+                      data=json.dumps({"url": test_url, "processor": "no_such_processor"}))
+    assert res.status_code == 400
+
+    delete_all_watches(client)
+
+
 def test_api_conflict_UI_password(client, live_server, measure_memory_usage, datastore_path):
 
 
@@ -1582,5 +1688,44 @@ def test_api_recheck_with_errors_skips_paused(client, live_server, measure_memor
     assert final[ok_uuid] != after[ok_uuid]
     assert final[error_uuid] != after[error_uuid]
     assert final[paused_uuid] == before[paused_uuid]
+
+    delete_all_watches(client)
+
+
+def test_api_watch_value_validation(client, live_server, measure_memory_usage, datastore_path):
+    """Values are checked against the API spec (types, lengths, list sizes, enums, patterns) on create and update,
+    in api/operations.py, so every way into a watch (REST, MCP) gets the same checks."""
+    datastore = live_server.app.config['DATASTORE']
+    api_key = datastore.data['settings']['application'].get('api_access_token')
+    headers = {'x-api-key': api_key, 'content-type': 'application/json'}
+
+    res = client.post(url_for("createwatch"), data=json.dumps({"url": "https://example.com/validate", "title": "Fine"}),
+                      headers=headers)
+    assert res.status_code == 201
+    watch_uuid = res.json['uuid']
+    watch = datastore.data['watching'][watch_uuid]
+
+    # Each bad value is refused and nothing is written
+    for bad in ({"title": "x" * 6000}, {"paused": "false"}, {"processor": "not-a-processor"},
+                {"fetch_backend": "not-a-fetcher"}, {"include_filters": ["#a"] * 101},
+                {"notification_urls": ["json://example.com/" + "x" * 1000]}):
+        res = client.put(url_for("watch", uuid=watch_uuid), data=json.dumps(bad), headers=headers)
+        assert res.status_code == 400, f"{list(bad)} should have been refused"
+        assert watch.get('title') == 'Fine' and not watch.get('paused')
+
+    # Create gets the same checks, nothing is added
+    count = len(datastore.data['watching'])
+    res = client.post(url_for("createwatch"), data=json.dumps({"url": "https://example.com/two", "include_filters": ["#a"] * 101}),
+                      headers=headers)
+    assert res.status_code == 400
+    assert len(datastore.data['watching']) == count
+
+    # The shared check itself gives short messages, without repeating the value
+    from changedetectionio.api.operations import ApiError, validate_against_spec
+    try:
+        validate_against_spec({"title": "x" * 6000, "paused": "no"}, 'UpdateWatch')
+        assert False, "should have raised"
+    except ApiError as e:
+        assert e.message == "paused: must be of type boolean; title: longer than 5000 characters"
 
     delete_all_watches(client)

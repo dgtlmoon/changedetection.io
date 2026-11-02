@@ -13,6 +13,29 @@ import threading
 _test_endpoint_content_lock = threading.Lock()
 _test_endpoint_content = {}
 
+def import_example_plugin(example_dir, package):
+    """Import an example_plugins/<example_dir> package as its own top-level package, the way
+    `pip install .` makes it importable, e.g. import_example_plugin('processor/wordcounter', 'cdio_example_wordcounter')"""
+    import importlib
+    import sys
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'example_plugins', example_dir))
+    sys.path.insert(0, path)
+    try:
+        return importlib.import_module(package)
+    finally:
+        sys.path.remove(path)
+
+
+def clear_plugin_discovery_caches():
+    """Processor discovery and the merged API spec are cached at first use, a plugin registered
+    afterwards (like in a test) is only seen once these are cleared."""
+    from changedetectionio import processors, api
+    for f in (processors.find_processors, processors.get_plugin_processor_metadata, processors._available_processors_cached,
+              api.build_merged_spec_dict, api.get_openapi_spec, api.get_openapi_schema_dict,
+              api._resolve_schema_properties, api.get_watch_schema_properties, api.get_tag_schema_properties):
+        f.cache_clear()
+
+
 def write_test_file_and_sync(filepath, content, mode='w'):
     """
     Write test data to file and ensure it's synced to disk.
@@ -490,3 +513,11 @@ def new_live_server_setup(live_server):
         return resp
 
     live_server.start()
+
+
+def new_mcp_token(client, name='test', **permissions):
+    """A new MCP access token (blueprint/mcp/tokens.py), every row at write unless given, e.g. notifications='read'."""
+    from changedetectionio.blueprint.mcp.tokens import add_token
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'system': 'read', **permissions}
+    return add_token(settings, name, levels)[1]

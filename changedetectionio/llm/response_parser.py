@@ -11,11 +11,6 @@ import re
 
 from changedetectionio.strtobool import strtobool
 
-# Positional selectors are fragile — reject them even if the LLM generates them
-_POSITIONAL_SELECTOR_RE = re.compile(
-    r'nth-child|nth-of-type|:eq\(|\[\d+\]|\/\/\*\[\d', re.IGNORECASE
-)
-
 # Reasoning models (DeepSeek-R1, Qwen reasoning, etc.) wrap their scratchpad in <think> tags.
 # Three shapes have to be handled, because the scratchpad routinely contains JSON of its own
 # ("initially I thought {"important": false}, but..."), so leaving any of it in place lets
@@ -97,28 +92,3 @@ def parse_preview_response(raw: str) -> dict:
         }
     except (json.JSONDecodeError, AttributeError):
         return {'found': False, 'answer': ''}
-
-
-def parse_setup_response(raw: str) -> dict:
-    """
-    Parse a setup/pre-filter decision response.
-    Returns {'needs_prefilter': bool, 'selector': str|None, 'reason': str}.
-    Rejects positional selectors even if the LLM generates them.
-    """
-    try:
-        data = json.loads(_extract_json(raw))
-        needs = _to_bool(data.get('needs_prefilter'), default=False)
-        selector = data.get('selector') or None
-
-        # Sanitise: reject positional selectors
-        if selector and _POSITIONAL_SELECTOR_RE.search(selector):
-            selector = None
-            needs = False
-
-        return {
-            'needs_prefilter': needs,
-            'selector': selector if needs else None,
-            'reason': str(data.get('reason', '')).strip(),
-        }
-    except (json.JSONDecodeError, AttributeError):
-        return {'needs_prefilter': False, 'selector': None, 'reason': ''}

@@ -159,15 +159,19 @@
    render_common_settings_form. #}
 {% macro notification_part_render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) %}
                         <div class="pure-control-group">
-                            {% if emailprefix %}
-                            <div class="notification-add-buttons" id="notification-add-email-preset">
-                                <label for="add-email-input">{{ _('Add email notification:') }}</label>
-                                <span class="add-destination-inline">
-                                    <input type="email" id="add-email-input" placeholder="name@example.com" autocomplete="off">
-                                    <a id="add-email-go" class="pure-button button-secondary button-xsmall">{{ _('Add to list') }} <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="{{ _('Add an email address') }}"></a>
-                                </span>
+                            {# Both quick-add rows share one grid so their inputs line up (stacked on mobile) #}
+                            <div class="notification-add-grid">
+                                {% if emailprefix %}
+                                <div class="notification-add-buttons" id="notification-add-email-preset">
+                                    <label for="add-email-input">{{ _('Add email notification:') }}</label>
+                                    <span class="add-destination-inline">
+                                        <input type="email" id="add-email-input" placeholder="name@example.com" autocomplete="off">
+                                        <a id="add-email-go" class="pure-button button-secondary button-xsmall">{{ _('Add to list') }} <img style="height: 1em; display: inline-block" src="{{url_for('static_content', group='images', filename='email.svg')}}" alt="{{ _('Add an email address') }}"></a>
+                                    </span>
+                                </div>
+                                {% endif %}
+                                {% include '_common_fields-notification.html' %}
                             </div>
-                            {% endif %}
                             <div id="notification-recipients" class="notification-recipients" style="display: none;"></div>
                             {{ render_field(form.notification_urls, rows=5, placeholder="Examples:
     Gitter - gitter://token/room
@@ -184,13 +188,14 @@
                             </div>
 
                             <div class="pure-form-message-inline">
-                                <p>
-                                <strong>{{ _('Tip:') }}</strong> {{ _('Use <a target="newwindow" href="%(url)s">AppRise Notification URLs</a> for notification to just about any service!',
-                                    url='https://github.com/caronc/apprise')|safe }} <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}{{ _('<i>Please read the notification services wiki here for important configuration notes</i>')|safe }}</a>.<br>
-</p>
+                                <br>
                                 <details class="form-wrapper" id="edit-advanced">
                                     <summary>{{ _('Show advanced help and tips') }}</summary>
+
                                     <ul>
+                                        <li>
+                                            <a target="newwindow" href="https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes">{# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}{{ _('<i>Please read the notification services wiki here for important configuration notes</i>')|safe }}</a>.
+                                        </li>
                                         <li>
                                             {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                                             <code><a target="newwindow" href="https://github.com/caronc/apprise/wiki/Notify_discord">discord://</a></code> {{ _('(or') }}

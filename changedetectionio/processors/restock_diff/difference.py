@@ -9,7 +9,8 @@ was in stock and red where it was out of stock.
 Conforms to processors.difference_base.DifferenceRenderer (module-level render()), and also
 provides an optional get_data() hook served as JSON by /diff/<uuid>/processor-data so the
 (potentially long) timeline stays out of the rendered HTML - same rationale as the preview
-asset endpoint.
+asset endpoint. The charts themselves come from get_chart() (/diff/<uuid>/processor-chart), which
+plugins can replace through the hooks in hookspecs.py.
 """
 import re
 import statistics
@@ -169,6 +170,27 @@ def get_data(watch, datastore, request):
     }
 
 
+# ?context= of /diff/<uuid>/processor-chart -> the hook that draws that chart, see hookspecs.py
+CHART_HOOKS = {
+    'watchlist': 'restock_diff_watchlist_overview_chart',
+    'history': 'restock_diff_watch_history_page_chart',
+}
+
+
+def get_chart(watch, datastore, request):
+    """HTML of a price/stock chart, served by /diff/<uuid>/processor-chart?context=watchlist|history.
+    Drawn by whichever plugin implements the matching hook, the built-in chart otherwise.
+    Returns None for an unknown context."""
+    from changedetectionio.pluggy_interface import plugin_manager
+
+    hook_name = CHART_HOOKS.get(request.args.get('context', 'history'))
+    if not hook_name:
+        return None
+    series = _build_series(watch)
+    return getattr(plugin_manager.hook, hook_name)(
+        series=series, currency=_currency(watch), summary=compute_price_summary(series), watch=watch)
+
+
 def render(watch, datastore, request, url_for, render_template, flash, redirect, extract_form=None):
     """Render the price/stock timeline page (shell + summary). The graph data is loaded
     asynchronously from get_data() so this stays light regardless of history length."""
@@ -205,4 +227,5 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
         restock_currency=_currency(watch),
         has_enough_history=len(dates) >= 2,
         processor_data_url=url_for('ui.ui_diff.diff_history_page_processor_data', uuid=uuid),
+        processor_chart_url=url_for('ui.ui_diff.diff_history_page_processor_chart', uuid=uuid, context='history'),
     )
