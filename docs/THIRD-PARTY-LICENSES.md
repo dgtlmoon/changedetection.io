@@ -1,6 +1,6 @@
 # Third-party licences
 
-Generated 2026-11-01 from the built container.
+Generated 2026-11-02 from the built container.
 **Do not edit by hand** - run `.github/scripts/generate-third-party-licenses.sh`.
 
 Every third-party Python package bundled in the distributed image
