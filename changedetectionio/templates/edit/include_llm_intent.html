@@ -13,7 +13,7 @@
                       watch) and is the group's only AI control; on a watch it is a checkbox.
 
   Watch edit only:
-    watch               — the Watch object (for processor check and prefilter display)
+    watch               — the Watch object (for the processor check)
     llm_group_overrides — dict returned by _resolve_llm_group_overrides():
                           {'llm_intent': {'value': str, 'group_name': str} | None,
                            'llm_change_summary': {'value': str, 'group_name': str} | None,
@@ -138,11 +138,6 @@
             <li><em>{{ _('Only important if package versions change or a CVE is mentioned') }}</em></li>
         </ul>
     </div>
-    {% if watch is defined and watch.get('llm_prefilter') %}
-    <div class="pure-form-message-inline" style="margin-top: 0.5em;">
-        <small>{{ _('AI pre-filter active: <code>%(filter)s</code> — narrows content scope before evaluation', filter=watch.get('llm_prefilter')|e) | safe }}</small>
-    </div>
-    {% endif %}
     {% endif %}
 
 </div>

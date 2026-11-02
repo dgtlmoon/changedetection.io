@@ -101,8 +101,8 @@ def test_api_cannot_reset_token_counters_via_watch_put(
 def test_api_watch_put_llm_readonly_fields_are_ignored(
         client, live_server, measure_memory_usage, datastore_path):
     """
-    llm_prefilter, llm_evaluation_cache, llm_last_tokens_used,
-    llm_tokens_used_cumulative are all readOnly in the API spec.
+    llm_evaluation_cache, llm_last_tokens_used and llm_tokens_used_cumulative
+    are all readOnly in the API spec.
     Sending them in a PUT must not raise an error (they should be silently
     stripped) and must not modify the watch's stored values.
     """
@@ -128,7 +128,6 @@ def test_api_watch_put_llm_readonly_fields_are_ignored(
             "url": test_url,
             "llm_tokens_used_cumulative": 999999,
             "llm_last_tokens_used": 888888,
-            "llm_prefilter": "div.hacked",
             "llm_evaluation_cache": {"fake_key": {"important": True}},
         }),
     )

@@ -5263,11 +5263,6 @@ msgstr "패키지 버전이 변경되거나 CVE가 언급된 경우에만 중요
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 #, python-format
-msgid "AI pre-filter active: <code>%(filter)s</code> — narrows content scope before evaluation"
-msgstr "AI 사전 필터 사용 중: <code>%(filter)s</code> - 평가 전에 콘텐츠 범위를 좁힙니다"
-
-#: changedetectionio/templates/edit/include_llm_intent.html
-#, python-format
 msgid ""
 "When a change is detected, the AI describes it according to your instructions and replaces <code>%(diff)s</code> in "
 "your notification. Use <code>%(raw_diff)s</code> if you still want the original diff."
