@@ -311,7 +311,7 @@ def get_watch(ctx, args):
         'snapshots': len(keys),
         'first_snapshot': _iso(keys[0]) if keys else None,
         'recent_snapshots': [_iso(k) for k in keys[-10:]],
-        'fetch_backend': watch.get('fetch_backend'),
+        **_fetch_settings(ctx, watch),
         'check_interval': watch.get('time_between_check'),
         'include_filters': watch.get('include_filters') or [],
         'subtractive_selectors': watch.get('subtractive_selectors') or [],
@@ -343,7 +343,8 @@ def get_watch(ctx, args):
 
     out = [f"{info['title']} - {info['url']}", f"uuid: {info['uuid']}"] + [f"NOTE: {n}" for n in notes]
     for key in ('tags', 'processor', 'paused', 'notification_muted', 'last_checked', 'last_changed', 'last_error',
-                'snapshots', 'first_snapshot', 'fetch_backend', 'include_filters', 'ignore_text', 'trigger_text',
+                'snapshots', 'first_snapshot', 'fetch_backend', 'effective_fetcher', 'proxy', 'effective_proxy',
+                'include_filters', 'ignore_text', 'trigger_text',
                 'notification_urls_count', *processor_fields):
         if info.get(key) not in (None, [], {}, '', False):
             out.append(f"{key}: {info[key]}")
@@ -825,6 +826,15 @@ def get_system_info(ctx, args):
     }
     if ctx.limited:
         info['limited_to_groups'] = ctx.tag_names()
+    # What create_watch / update_watch can choose from: fetcher names and proxy names, never proxy URLs
+    from changedetectionio.content_fetchers import available_fetchers
+    proxies = datastore.proxy_list or {}
+    info['fetchers'] = [name for name, _ in available_fetchers()] + \
+        [f"extra_browser_{b.get('browser_name')}" for b in datastore.data['settings']['requests'].get('extra_browsers') or []]
+    info['default_fetcher'] = app.get('fetch_backend')
+    info['proxies'] = [{'id': key, 'label': p.get('label')} for key, p in proxies.items()]
+    default_proxy = datastore.data['settings']['requests'].get('proxy')
+    info['default_proxy'] = (proxies.get(default_proxy) or {}).get('label') if default_proxy else None
     lines = [f"{k}: {v}" for k, v in info.items()]
     if running:
         lines.append('checking now:')
@@ -944,12 +954,57 @@ def _interval(args):
     return {k: int(value.get(k) or 0) for k in ('weeks', 'days', 'hours', 'minutes', 'seconds')}
 
 
+def _proxy_key(ctx, value):
+    """A proxy id from its id or its label (what the user sees). None for '' or 'system': the system proxy. Proxy
+    URLs are never taken or shown, they hold credentials."""
+    value = (str(value) if value is not None else '').strip()
+    if value in ('', 'system'):
+        return None
+    proxies = ctx.datastore.proxy_list or {}
+    if value in proxies:
+        return value
+    by_label = {(p.get('label') or '').strip().lower(): key for key, p in proxies.items()}
+    if value.lower() in by_label:
+        return by_label[value.lower()]
+    known = ', '.join(f"{p.get('label')} ({key})" for key, p in proxies.items()) or 'none are configured'
+    raise ToolError(f"No proxy called '{value}'. The proxies are: {known}.")
+
+
+def _check_fetch_backend(ctx, value):
+    if value and value.startswith('extra_browser_'):
+        names = [b.get('browser_name') for b in ctx.datastore.data['settings']['requests'].get('extra_browsers') or []]
+        if value[len('extra_browser_'):] not in names:
+            raise ToolError(f"No custom browser called '{value[len('extra_browser_'):]}'. The custom browsers are: "
+                            f"{', '.join(names) or 'none are configured'} (as extra_browser_<name>).")
+    return value
+
+
+def _fetch_settings(ctx, watch):
+    """What the monitor is set to and what a check actually uses, from the same resolvers as the fetch itself
+    (resolve_content_fetcher, get_preferred_proxy_for_watch), so a group or system default is accounted for."""
+    from changedetectionio.content_fetchers import resolve_content_fetcher
+    try:
+        _, effective_fetcher, _ = resolve_content_fetcher(watch=watch, datastore=ctx.datastore)
+    except Exception as e:
+        logger.debug(f"MCP: couldn't resolve the fetcher of {watch.get('uuid')}: {e}")
+        effective_fetcher = None
+    proxies = ctx.datastore.proxy_list or {}
+    proxy_id = ctx.datastore.get_preferred_proxy_for_watch(watch.get('uuid')) if proxies else None
+    return {'fetch_backend': watch.get('fetch_backend') or 'system', 'effective_fetcher': effective_fetcher,
+            'proxy': watch.get('proxy') or 'system',
+            'effective_proxy': (proxies.get(proxy_id) or {}).get('label') if proxy_id else None}
+
+
 def create_watch(ctx, args):
     from changedetectionio.api.operations import create_watch as op
     data = {'url': (args.get('url') or '').strip()}
     for key in ('title', 'processor', 'include_filters', 'paused'):
         if args.get(key) not in (None, '', []):
             data[key] = args[key]
+    if args.get('fetch_backend'):
+        data['fetch_backend'] = _check_fetch_backend(ctx, args['fetch_backend'])
+    if args.get('proxy') not in (None, ''):
+        data['proxy'] = _proxy_key(ctx, args['proxy'])
     tags = _tags_for_new_monitor(ctx, _list(args, 'tags'))
     if tags:
         data['tag'] = ','.join(tags)
@@ -958,8 +1013,10 @@ def create_watch(ctx, args):
         data.update({'time_between_check': interval, 'time_between_check_use_default': False})
     uuid = _api_call(op, ctx.datastore, data)
     watch = ctx.datastore.data['watching'][uuid]
-    return (f"Created monitor {watch.label} | {watch.get('url')} | uuid {uuid}. "
-            f"It will be checked shortly by the scheduler."), _summary(ctx, watch)
+    fetch = _fetch_settings(ctx, watch)
+    return (f"Created monitor {watch.label} | {watch.get('url')} | uuid {uuid}, fetched with "
+            f"{fetch['effective_fetcher']}" + (f" through the proxy {fetch['effective_proxy']}" if fetch['effective_proxy'] else '')
+            + ". It will be checked shortly by the scheduler."), dict(_summary(ctx, watch), **fetch)
 
 
 def import_watches(ctx, args):
@@ -988,13 +1045,18 @@ def import_watches(ctx, args):
 
 
 UPDATE_FIELDS = ('title', 'url', 'paused', 'notification_muted', 'include_filters', 'subtractive_selectors',
-                 'ignore_text', 'trigger_text', 'processor', 'fetch_backend', 'notification_urls')
+                 'ignore_text', 'trigger_text', 'processor', 'fetch_backend', 'proxy', 'notification_urls')
 
 
 def update_watch(ctx, args):
     from changedetectionio.api.operations import update_watch as op
     watch = _resolve_watch(ctx, args.get('watch'))
     data = {k: args[k] for k in UPDATE_FIELDS if k in args}
+    if 'proxy' in data:
+        # '' or 'system' goes back to the system proxy
+        data['proxy'] = _proxy_key(ctx, data['proxy'])
+    if data.get('fetch_backend'):
+        _check_fetch_backend(ctx, data['fetch_backend'])
     interval = _interval(args)
     if interval:
         data.update({'time_between_check': interval, 'time_between_check_use_default': False})
@@ -1002,7 +1064,14 @@ def update_watch(ctx, args):
         raise ToolError(f"Nothing to change, give at least one of: {', '.join(UPDATE_FIELDS + ('check_interval',))}")
     _api_call(op, ctx.datastore, watch.get('uuid'), data)
     changed = sorted(data.keys() - {'time_between_check_use_default'})
-    return f"Updated {watch.label}: {', '.join(changed)}", _summary(ctx, watch)
+    text = f"Updated {watch.label}: {', '.join(changed)}"
+    structured = _summary(ctx, watch)
+    if {'fetch_backend', 'proxy'} & set(data):
+        fetch = _fetch_settings(ctx, watch)
+        structured.update(fetch)
+        text += f". It's now fetched with {fetch['effective_fetcher']}" + \
+                (f" through the proxy {fetch['effective_proxy']}" if fetch['effective_proxy'] else ' without a proxy')
+    return text, structured
 
 
 def recheck_watches(ctx, args):
@@ -1365,11 +1434,18 @@ TOOLS = {
         _schema({'search': {'type': 'string', 'description': "A service name or scheme, e.g. 'slack' or 'tgram'"}})),
 
     'create_watch': (create_watch, dict(WRITE, openWorldHint=True), 'Add a monitor',
-        "Start monitoring a web page. The first check happens shortly, done by the scheduler.",
+        "Start monitoring a web page. The first check happens shortly, done by the scheduler. Optionally choose how "
+        "it's fetched (fetch_backend) and through which proxy, from what get_system_info lists.",
         _schema({'url': _spec('url', 'http(s) URL of the page'), 'title': _spec('title'), 'tags': _TAGS,
                  'processor': _spec('processor', "'text_json_diff' (default, any text change) or 'restock_diff' (back in stock alerts and price drops for one product page, then set its alerts with restock_set_rules)"),
                  'include_filters': _spec('include_filters', 'CSS or XPath selectors, only this part of the page is watched'),
-                 'paused': _spec('paused'), 'check_interval': _INTERVAL}, ['url'])),
+                 'paused': _spec('paused'), 'check_interval': _INTERVAL,
+                 'fetch_backend': _spec('fetch_backend', "'system' (the system default), 'html_requests' (fast, no "
+                                        "JavaScript), 'html_webdriver' (a real browser) or extra_browser_<name>; see "
+                                        "get_system_info for what's available"),
+                 'proxy': {'type': 'string', 'maxLength': 200,
+                           'description': "A proxy by its name or id from get_system_info, 'system' for the system default"}},
+                ['url'])),
     'import_watches': (import_watches, dict(WRITE, openWorldHint=True), 'Add many monitors',
         f"Add up to {IMPORT_MAX_URLS} monitors in one call, optionally all in the same tags.",
         _schema({'urls': dict(_TEXT_LIST, description='http(s) URLs'), 'tags': _TAGS}, ['urls'])),
@@ -1377,7 +1453,9 @@ TOOLS = {
     'update_watch': (update_watch, dict(WRITE, destructiveHint=True), 'Change a monitor',
         "Change a monitor's settings: pause or unpause it, mute its notifications, filters, check interval, "
         "notification URLs (replaces the list), URL or title.",
-        _schema({'watch': _WATCH, **{f: _spec(f) for f in UPDATE_FIELDS}, 'check_interval': _INTERVAL}, ['watch'])),
+        _schema({'watch': _WATCH, **{f: _spec(f) for f in UPDATE_FIELDS}, 'check_interval': _INTERVAL,
+                 'proxy': _spec('proxy', "A proxy by its name or id from get_system_info, 'system' for the system default")},
+                ['watch'])),
     'recheck_watches': (recheck_watches, dict(WRITE, idempotentHint=True, openWorldHint=True), 'Recheck monitors',
         "Queue monitors to be checked now: by name/uuid, a whole tag, the ones with errors, or all. Returns at once, "
         "it doesn't wait for the checks. Paused monitors are skipped unless named.",

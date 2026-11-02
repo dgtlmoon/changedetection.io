@@ -664,3 +664,47 @@ def test_find_change_regex_timeout(client, live_server, measure_memory_usage, da
         datastore.data['watching'][uuid].find_change('(a|aa)+$', regex=True)
 
     delete_all_watches(client)
+
+
+def test_mcp_fetcher_and_proxy(client, live_server, measure_memory_usage, datastore_path):
+    """create_watch / update_watch choose the fetcher and proxy (by name, as the user sees it), and say what a check
+    will actually use. Proxy URLs hold passwords: they're never shown."""
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    requests_settings = datastore.data['settings']['requests']
+    requests_settings['extra_proxies'] = [{'proxy_name': 'Czech exit', 'proxy_url': 'http://agent:s3cret@cz.example.com:3128'}]
+    requests_settings['extra_browsers'] = [{'browser_name': 'stealth', 'browser_connection_url': 'ws://browser.example.com:3000'}]
+    try:
+        info = _call(client, api_key, 'get_system_info')
+        data = info['structuredContent']
+        assert {'id': 'ui-0Czech exit', 'label': 'Czech exit'} in data['proxies']
+        assert 'html_requests' in data['fetchers'] and 'extra_browser_stealth' in data['fetchers']
+        assert 's3cret' not in json.dumps(info) and 'browser.example.com' not in json.dumps(info)
+
+        result = _call(client, api_key, 'create_watch', url='https://shop.example.com/', proxy='czech exit',
+                       fetch_backend='html_requests', paused=True)
+        assert not result['isError'], result
+        data = result['structuredContent']
+        assert (data['proxy'], data['effective_proxy'], data['effective_fetcher']) == ('ui-0Czech exit', 'Czech exit', 'html_requests')
+        assert 'through the proxy Czech exit' in result['content'][0]['text'] and 's3cret' not in json.dumps(result)
+        uuid = data['uuid']
+        assert datastore.data['watching'][uuid]['proxy'] == 'ui-0Czech exit'
+
+        # get_watch says what a check uses; 'system' goes back to the defaults
+        assert _call(client, api_key, 'get_watch', watch=uuid)['structuredContent']['effective_fetcher'] == 'html_requests'
+        result = _call(client, api_key, 'update_watch', watch=uuid, proxy='system', fetch_backend='system')
+        assert not result['isError'], result
+        assert not datastore.data['watching'][uuid].get('proxy')
+        assert result['structuredContent']['fetch_backend'] == 'system'
+
+        # Mistakes name what's available, never a URL
+        result = _call(client, api_key, 'create_watch', url='https://shop.example.com/2', proxy='Mars exit')
+        assert result['isError'] and 'Czech exit (ui-0Czech exit)' in result['content'][0]['text']
+        assert 's3cret' not in result['content'][0]['text']
+        result = _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='extra_browser_nope')
+        assert result['isError'] and 'stealth' in result['content'][0]['text']
+        assert not _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='extra_browser_stealth')['isError']
+    finally:
+        requests_settings['extra_proxies'] = []
+        requests_settings['extra_browsers'] = []
+        delete_all_watches(client)
