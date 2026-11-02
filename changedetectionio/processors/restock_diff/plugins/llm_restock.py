@@ -224,25 +224,15 @@ def _remove_chrome(html_content: str) -> str:
         return html_content
 
 
-def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
-    """HTML-to-text for LLM consumption.
+# Removing site chrome must leave at least this share of the page's text. Less means a page-wide wrapper matched a
+# chrome pattern (e.g. <div class="has-sidebar"> around everything) and took the content with it
+_CHROME_MIN_KEPT = 0.1
 
-    1. Extracts JSON-LD (structured product data) to prepend.
-    2. Strips nav/header/footer/recommendation blocks via BS4.
-    3. Removes all remaining tags and collapses whitespace.
-    JSON-LD is prepended so reliable price/availability data is always visible
-    to the LLM regardless of how deep it sits in the page.
 
-    `max_chars` caps the total returned length — callers pass the app's
-    configured `max_input_chars` setting so the prompt size obeys the UI.
-    """
-    jsonld = _extract_jsonld(html_content)
-
-    # Remove site-chrome before generic tag stripping
-    cleaned = _remove_chrome(html_content)
-
+def _html_text(html_content: str) -> str:
+    """The text of some HTML: no comments, scripts, styles or tags, common entities decoded, whitespace collapsed."""
     # Drop HTML comments (can contain large disabled markup blocks)
-    text = re.sub(r'<!--.*?-->', ' ', cleaned, flags=re.DOTALL)
+    text = re.sub(r'<!--.*?-->', ' ', html_content, flags=re.DOTALL)
     # Drop all <script> and <style> blocks
     text = re.sub(r'<(script|style)[^>]*>.*?</(script|style)>', ' ', text, flags=re.DOTALL | re.IGNORECASE)
     # Strip remaining tags
@@ -255,7 +245,31 @@ def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
             .replace('&gt;', '>')
             .replace('&quot;', '"')
             .replace('&#39;', "'"))
-    text = re.sub(r'\s+', ' ', text).strip()
+    return re.sub(r'\s+', ' ', text).strip()
+
+
+def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
+    """HTML-to-text for LLM consumption.
+
+    1. Extracts JSON-LD (structured product data) to prepend.
+    2. Strips nav/header/footer/recommendation blocks via BS4, unless that would remove nearly all the text
+       (a page-wide wrapper whose class looks like chrome), then the page is kept whole.
+    3. Removes all remaining tags and collapses whitespace.
+    JSON-LD is prepended so reliable price/availability data is always visible
+    to the LLM regardless of how deep it sits in the page.
+
+    `max_chars` caps the total returned length — callers pass the app's
+    configured `max_input_chars` setting so the prompt size obeys the UI.
+    """
+    jsonld = _extract_jsonld(html_content)
+
+    # Remove site-chrome before generic tag stripping
+    text = _html_text(_remove_chrome(html_content))
+    whole = _html_text(html_content)
+    if len(text) < len(whole) * _CHROME_MIN_KEPT:
+        logger.info(f"LLM restock fallback: removing site chrome left {len(text)} of {len(whole)} characters, "
+                    f"a page-wide element must have matched, using the whole page instead")
+        text = whole
 
     if jsonld:
         # The structured metadata is extra CONTEXT, not a replacement for the page text — the
@@ -276,7 +290,8 @@ def build_restock_messages(content: str, url: str, llm_intent: str = None,
     text_content = _strip_html(content, max_chars=max_chars) if content else ''
     logger.debug(f"LLM restock fallback: stripped HTML to {len(text_content)} chars for {url}")
     if not text_content.strip():
-        logger.debug("LLM restock fallback: no text content after stripping HTML")
+        # INFO, not debug: otherwise the fallback silently never runs for this page
+        logger.info(f"LLM restock fallback: no text left after stripping the HTML of {url}, not asking the LLM")
         return None
 
     user_prompt = f'URL: {url or "unknown"}\n\nPage content:\n{text_content}'
