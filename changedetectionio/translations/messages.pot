@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.60.10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-02 10:30+0100\n"
+"POT-Creation-Date: 2026-11-02 11:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -648,6 +648,13 @@ msgid ""
 " if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
 "Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
 "original tight caps."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
+"--reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat "
+"template supports enable_thinking (Qwen3 and others)."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
@@ -3658,6 +3665,10 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Token multiplier for local reasoning models"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Switch thinking off"
 msgstr ""
 
 #: changedetectionio/forms.py
