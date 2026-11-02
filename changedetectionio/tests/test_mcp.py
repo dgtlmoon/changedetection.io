@@ -79,7 +79,7 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     tools = {t['name']: t for t in res.json['result']['tools']}
     read_only = {'list_watches', 'get_watch', 'list_tags', 'get_changes', 'get_diff', 'get_snapshot',
                  'get_system_info', 'list_notifications', 'notification_services',
-                 'list_snapshots', 'find_change', 'get_history', 'line_timeline',
+                 'list_snapshots', 'find_change', 'get_history', 'line_timeline', 'get_screenshot',
                  # From the built-in restock_diff plugin (register_mcp_tools, see test_mcp_plugin_tools.py)
                  'restock_status'}
     # update_* can replace settings (e.g. the whole notification URL list), so they count as destructive too
@@ -708,3 +708,46 @@ def test_mcp_fetcher_and_proxy(client, live_server, measure_memory_usage, datast
         requests_settings['extra_proxies'] = []
         requests_settings['extra_browsers'] = []
         delete_all_watches(client)
+
+
+def test_mcp_screenshot_and_hashes(client, live_server, measure_memory_usage, datastore_path):
+    """get_screenshot returns a readable slice of the (possibly very tall) latest screenshot as image content, and
+    get_snapshot / get_history give each snapshot's SHA-256."""
+    import base64
+    import hashlib
+    from io import BytesIO
+    from PIL import Image
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    uuid = _menu_history(datastore)
+    w = datastore.data['watching'][uuid]
+
+    # No screenshot yet: says why
+    result = _call(client, api_key, 'get_screenshot', watch=uuid)
+    assert result['isError'] and 'browser fetchers' in result['content'][0]['text']
+
+    # A tall full-page capture, 2048 x 6000: scaled to 1024 wide (3000 tall), sent 1568 at a time
+    tall = BytesIO()
+    Image.new('RGB', (2048, 6000), (200, 30, 30)).save(tall, 'PNG')
+    w.save_screenshot(tall.getvalue())
+    result = _call(client, api_key, 'get_screenshot', watch=uuid)
+    assert not result['isError'], result
+    data = result['structuredContent']
+    assert (data['width'], data['height'], data['offset'], data['part_height'], data['next_offset']) == (1024, 3000, 0, 1568, 1568)
+    image = result['content'][1]
+    assert image['type'] == 'image' and image['mimeType'] == 'image/jpeg'
+    with Image.open(BytesIO(base64.b64decode(image['data']))) as img:
+        assert img.size == (1024, 1568)
+    assert 'call again with offset=1568' in result['content'][0]['text']
+    data = _call(client, api_key, 'get_screenshot', watch=uuid, offset=1568)['structuredContent']
+    assert (data['offset'], data['part_height'], data['next_offset']) == (1568, 1432, None)
+    result = _call(client, api_key, 'get_screenshot', watch=uuid, which='error')
+    assert result['isError'] and 'failed check' in result['content'][0]['text']
+
+    # Hashes: the same as hashing the text yourself
+    snap = _call(client, api_key, 'get_snapshot', watch=uuid, timestamp=T0 + 100)['structuredContent']
+    assert snap['sha256'] == hashlib.sha256(w.get_history_snapshot(timestamp=str(T0 + 100)).encode()).hexdigest()
+    hist = _call(client, api_key, 'get_history', watch=uuid, timestamps=[T0, T0 + 100])['structuredContent']
+    assert hist['patches'][0]['sha256'] == snap['sha256'] and len(hist['base']['sha256']) == 64
+
+    delete_all_watches(client)

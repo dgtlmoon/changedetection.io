@@ -439,22 +439,29 @@ def _original_text(watch, key):
     return text, source
 
 
+def _sha256(text):
+    """SHA-256 of a snapshot's text (UTF-8), as hex. Computed when read: it shows two reads are the same text."""
+    import hashlib
+    return hashlib.sha256((text or '').encode('utf-8')).hexdigest()
+
+
 def _snapshot_of(watch, args, max_chars, unfiltered):
     key = _snapshot_key(watch, args.get('timestamp'), 'latest')
     if unfiltered:
         content, source = _original_text(watch, key)
     else:
         content, source = watch.get_history_snapshot(timestamp=str(key)) or '', 'filtered'
+    sha256 = _sha256(content)
     truncated = len(content) > max_chars
     if truncated:
         content = content[:max_chars] + f"\n... {len(content) - max_chars} more characters, ask for a higher max_chars"
-    header = f"### {watch.label} - {watch.get('url')}\nsnapshot: {_iso(key)}"
+    header = f"### {watch.label} - {watch.get('url')}\nsnapshot: {_iso(key)} | sha256 {sha256}"
     if source == 'snapshot':
         header += "\n(the whole page is only kept for the newest two snapshots, this is the filtered text)"
     elif unfiltered:
         header += "\n(the whole page, before filters and triggers)"
     return f"{header}\n{content}", {'uuid': watch.get('uuid'), 'title': watch.label, 'timestamp': key, 'content': content,
-                                   'truncated': truncated, 'source': source}
+                                   'truncated': truncated, 'source': source, 'sha256': sha256}
 
 
 def get_snapshot(ctx, args):
@@ -758,6 +765,7 @@ def get_history(ctx, args):
     if any(not isinstance(text, str) for _, text in snapshots):
         raise ToolError("This monitor's history isn't text (images or PDFs), use list_snapshots for its dates")
     result = snapshots_as_patches(snapshots, relative_to=relative_to, context=_int(args, 'context', 0, 0, 10))
+    hashes = {k: _sha256(text) for k, text in snapshots}
 
     max_chars = _int(args, 'max_chars', HISTORY_DEFAULT_MAX_CHARS, 100, 200000)
     base = result['base']
@@ -781,13 +789,42 @@ def get_history(ctx, args):
     header = (f"### {watch.label} - {watch.get('url')}\n{len(chosen)} of {len(keys)} snapshots, the first in full, "
               f"then each one as a diff from the {'one before it' if relative_to == 'previous' else 'first'}")
     structured = {'uuid': watch.get('uuid'), 'snapshots_total': len(keys), 'relative_to': relative_to,
-                  'base': {'date': _iso(base['timestamp']), 'text': base['text'], 'truncated': base_truncated},
-                  'patches': [{'date': _iso(p['timestamp']), 'against': _iso(p['against']), 'diff': p['diff'],
+                  'base': {'date': _iso(base['timestamp']), 'sha256': hashes[base['timestamp']], 'text': base['text'],
+                           'truncated': base_truncated},
+                  'patches': [{'date': _iso(p['timestamp']), 'sha256': hashes[p['timestamp']], 'against': _iso(p['against']),
+                               'diff': p['diff'],
                                **({'unchanged': True} if p['unchanged'] else {})} for p in result['patches']],
                   'truncated': truncated or base_truncated}
     if notes:
         structured['notes'] = notes
     return '\n'.join(notes + [UNTRUSTED_NOTE, header, render_patches(result)]), structured
+
+
+def get_screenshot(ctx, args):
+    import base64
+    watch = _resolve_watch(ctx, args.get('watch'))
+    which = args.get('which') or 'latest'
+    if which not in ('latest', 'error'):
+        raise ToolError("'which' must be 'latest' or 'error'")
+    try:
+        jpeg, info = watch.get_screenshot_part(which=which, offset=_int(args, 'offset', 0, 0, 1_000_000))
+    except Exception as e:
+        logger.warning(f"MCP: couldn't read the screenshot of {watch.get('uuid')}: {e}")
+        raise ToolError("The screenshot couldn't be read")
+    if not jpeg:
+        hint = ("Screenshots are only taken by the browser fetchers (html_webdriver or a custom browser): this monitor "
+                f"is fetched with {_fetch_settings(ctx, watch)['effective_fetcher']}." if which == 'latest'
+                else "There's no screenshot of a failed check (the last check didn't fail, or it failed before one could be taken).")
+        raise ToolError(f"No {'' if which == 'latest' else 'error '}screenshot for {watch.label}. {hint}")
+    end = info['offset'] + info['part_height']
+    text = (f"### {watch.label} - {watch.get('url')}\n{'Screenshot' if which == 'latest' else 'Screenshot of the failed check'} "
+            f"taken {_iso(info['taken'])}, shown {info['width']} px wide: pixels {info['offset']}-{end} of {info['height']}"
+            + (f". More below: call again with offset={end}." if end < info['height'] else '.')
+            + " Only the latest screenshot is kept, not one per snapshot.")
+    structured = {'uuid': watch.get('uuid'), 'which': which, 'taken': _iso(info['taken']), 'width': info['width'],
+                  'height': info['height'], 'offset': info['offset'], 'part_height': info['part_height'],
+                  'next_offset': end if end < info['height'] else None}
+    return text, structured, [{'type': 'image', 'data': base64.b64encode(jpeg).decode('ascii'), 'mimeType': 'image/jpeg'}]
 
 
 def get_system_info(ctx, args):
@@ -1419,6 +1456,14 @@ TOOLS = {
                                'description': 'The first snapshot is cut at this'},
                  'max_lines': {'type': 'integer', 'minimum': 1, 'maximum': 20000, 'default': HISTORY_DEFAULT_MAX_LINES,
                                'description': 'All the diffs together are cut at this'}}, ['watch'])),
+    'get_screenshot': (get_screenshot, READ_ONLY, 'Screenshot of a page',
+        "The latest screenshot of a monitor's page as an image (or of its last failed check with which='error'), "
+        "for what the text can't show: layout, images, a banner, a cookie wall, a block page. Full pages are long, "
+        "so it's a slice: page down with offset. Only the browser fetchers take screenshots, and only the latest "
+        "one is kept.",
+        _schema({'watch': _WATCH, 'which': {'type': 'string', 'enum': ['latest', 'error'], 'default': 'latest'},
+                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0,
+                            'description': 'Pixels from the top to start at, from the previous answer'}}, ['watch'])),
     'get_system_info': (get_system_info, READ_ONLY, 'System info',
         "Health and load: how many monitors (failing, paused, overdue for a check), the check queue size, how many "
         "fetch workers there are and which monitors they're checking right now and for how long. Use it for 'why "
@@ -1663,7 +1708,10 @@ def call(ctx, name, arguments):
         return {'content': [{'type': 'text', 'text': 'Invalid arguments:\n' + '\n'.join(f'- {e}' for e in errors)}],
                 'isError': True}
     try:
-        text, structured = handler(ctx, arguments)
+        # (text, structured) or (text, structured, [more content items, e.g. an image])
+        answer = handler(ctx, arguments)
     except ToolError as e:
         return {'content': [{'type': 'text', 'text': str(e)}], 'isError': True}
-    return {'content': [{'type': 'text', 'text': text}], 'structuredContent': structured, 'isError': False}
+    text, structured = answer[0], answer[1]
+    extra = list(answer[2]) if len(answer) > 2 and answer[2] else []
+    return {'content': [{'type': 'text', 'text': text}] + extra, 'structuredContent': structured, 'isError': False}
