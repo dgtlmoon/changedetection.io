@@ -11,13 +11,15 @@ flaskapi-guard is not in requirements.txt. To use it, install it with the exact 
 Environment variables (all optional except the switch):
   FLASKAPI_GUARD_ENABLED          true/false, default false
   FLASKAPI_GUARD_RATE_LIMIT       max requests per client IP per 60 seconds, default 600
+  FLASKAPI_GUARD_MCP_RATE_LIMIT   max requests per client IP per 60 seconds to the MCP server (/mcp/v1), default 300
   FLASKAPI_GUARD_TRUSTED_PROXIES  comma separated IPs/CIDRs allowed to set X-Forwarded-*, default 127.0.0.1,::1
                                   (with USE_X_SETTINGS also set, USE_X_SETTINGS_TRUSTED_PROXIES takes precedence for
                                   the X-Forwarded-* filter, see forwarded_headers.py)
   FLASKAPI_GUARD_ALLOWED_IPS      comma separated IPs/CIDRs, when set ONLY these clients may connect (and are not rate limited)
 
 Scanning skips /api (it has its own API key check, the guard's ban list, allow list and rate limit still apply there)
-and /language/auto-detect. /login has its own budget, see LOGIN_RATE_LIMIT.
+and /language/auto-detect. /login has its own budget, see LOGIN_RATE_LIMIT, and so has the MCP server, see
+DEFAULT_MCP_RATE_LIMIT.
 
 Request bodies are never scanned (watch settings, filters and notification templates are free text), and
 Redis, response security headers, the guard's own CORS handling and the telemetry agent are all disabled.
@@ -34,6 +36,10 @@ DEFAULT_RATE_LIMIT = 600
 # is a POST plus the GET of the redirect back to the form, so this allows about 10 wrong passwords then the right one,
 # while an attacker gets about 15 guesses per 5 minutes per IP.
 LOGIN_RATE_LIMIT = (30, 300)
+# Requests per client IP per 60 seconds to /mcp/v1, half the general budget. Every MCP message is its own short POST
+# (stateless Streamable HTTP) and a client can send several a second (tests/test_mcp*.py send more than 120 a minute
+# from one IP), so 5 a second fits a busy assistant or script while a client flooding the tools is stopped.
+DEFAULT_MCP_RATE_LIMIT = 300
 # SecurityConfig's own default exclude_paths, which setting the field replaces
 DEFAULT_EXCLUDE_PATHS = ['/docs', '/redoc', '/openapi.json', '/openapi.yaml', '/favicon.ico', '/static']
 
@@ -50,6 +56,16 @@ def trusted_proxies():
     return _csv_env('FLASKAPI_GUARD_TRUSTED_PROXIES', DEFAULT_TRUSTED_PROXIES)
 
 
+def _one_mcp_path(wsgi_app):
+    # The MCP route answers /mcp/v1 and /mcp/v1/ (strict_slashes=False) and the guard counts an endpoint limit per exact
+    # path, so the slashed spelling is served as /mcp/v1: alternating the two would otherwise double the MCP budget.
+    def app(environ, start_response):
+        if environ.get('PATH_INFO') == '/mcp/v1/':
+            environ['PATH_INFO'] = '/mcp/v1'
+        return wsgi_app(environ, start_response)
+    return app
+
+
 def init_guard(app):
     try:
         from flaskapi_guard import FlaskAPIGuard, SecurityConfig
@@ -62,6 +78,7 @@ def init_guard(app):
         ) from e
 
     allowed_ips = _csv_env('FLASKAPI_GUARD_ALLOWED_IPS')
+    mcp_rate_limit = int(os.getenv('FLASKAPI_GUARD_MCP_RATE_LIMIT', DEFAULT_MCP_RATE_LIMIT))
     config = SecurityConfig(
         enable_redis=False,
         enable_agent=False,
@@ -74,11 +91,12 @@ def init_guard(app):
         # Setting this REPLACES the library defaults, so they are repeated. Prefix match on whole path segments.
         # /api has its own key check (a bad key gets the app's 403). Bans, allow list and rate limit still apply there.
         exclude_paths=DEFAULT_EXCLUDE_PATHS + ['/api', '/language/auto-detect'],
-        endpoint_rate_limits={'/login': LOGIN_RATE_LIMIT},
+        endpoint_rate_limits={'/login': LOGIN_RATE_LIMIT, '/mcp/v1': (mcp_rate_limit, 60)},
         rate_limit=int(os.getenv('FLASKAPI_GUARD_RATE_LIMIT', DEFAULT_RATE_LIMIT)),
         rate_limit_window=60,
         trusted_proxies=trusted_proxies(),
         whitelist=allowed_ips or None,
     )
     FlaskAPIGuard(app, config=config)
-    logger.info(f"flaskapi-guard is ENABLED ({config.rate_limit} requests/{config.rate_limit_window}s per client IP)")
+    app.wsgi_app = _one_mcp_path(app.wsgi_app)
+    logger.info(f"flaskapi-guard is ENABLED ({config.rate_limit} requests/{config.rate_limit_window}s per client IP, MCP {mcp_rate_limit}/60s)")

@@ -46,6 +46,7 @@ def make_app(monkeypatch, **env):
     @app.route('/api/v1/watch', methods=['GET'])
     @app.route('/login', methods=['GET', 'POST'])
     @app.route('/other', methods=['GET'])
+    @app.route('/mcp/v1', methods=['GET', 'POST'], strict_slashes=False)
     def index():
         return 'ok'
 
@@ -285,3 +286,25 @@ def test_real_server_use_x_settings_and_guard_trust_same_proxies(datastore_path,
     finally:
         proc.terminate()
         proc.wait(timeout=20)
+
+
+@needs_guard
+def test_mcp_has_its_own_budget(monkeypatch):
+    app = make_app(monkeypatch, FLASKAPI_GUARD_MCP_RATE_LIMIT=3)
+    ip = unique_ip()
+    client = app.test_client()
+    codes = [client.post('/mcp/v1', environ_overrides={'REMOTE_ADDR': ip}).status_code for _ in range(5)]
+    assert codes == [200] * 3 + [429] * 2
+    # the rest of the app keeps the general budget
+    assert get(app, ip, '/other').status_code == 200
+
+
+@needs_guard
+def test_mcp_budget_is_shared_by_both_spellings(monkeypatch):
+    # /mcp/v1 and /mcp/v1/ reach the same route, alternating them must not double the budget
+    app = make_app(monkeypatch, FLASKAPI_GUARD_MCP_RATE_LIMIT=3)
+    ip = unique_ip()
+    client = app.test_client()
+    codes = [client.post(path, environ_overrides={'REMOTE_ADDR': ip}).status_code for path in ['/mcp/v1', '/mcp/v1/'] * 3]
+    assert codes == [200] * 3 + [429] * 3
+

@@ -68,6 +68,7 @@ services:
   #        With USE_X_SETTINGS also set (and USE_X_SETTINGS_TRUSTED_PROXIES not), only the TRUSTED_PROXIES addresses may set X-Forwarded-*, add your proxy's IP if it is not on 127.0.0.1.
   #      - FLASKAPI_GUARD_ENABLED=true
   #      - FLASKAPI_GUARD_RATE_LIMIT=600
+  #      - FLASKAPI_GUARD_MCP_RATE_LIMIT=300
   #      - FLASKAPI_GUARD_TRUSTED_PROXIES=127.0.0.1,::1
   #      - FLASKAPI_GUARD_ALLOWED_IPS=192.168.1.0/24
   #
