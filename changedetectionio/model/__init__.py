@@ -214,7 +214,6 @@ class watch_base(dict):
             'llm_change_summary_mode': 'replace',  # 'replace' the inherited prompt, or 'append' to it
             'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
             'llm_intent': '',                # Plain-English description of what the user cares about (change filter)
-            'llm_prefilter': None,           # CSS selector derived at setup time (semantic only, e.g. "footer")
             'method': 'GET',
             'notification_alert_count': 0,
             'notification_body': None,

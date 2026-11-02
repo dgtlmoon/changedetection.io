@@ -10,7 +10,6 @@ from changedetectionio.llm.response_parser import (
     _extract_json,
     parse_eval_response,
     parse_preview_response,
-    parse_setup_response,
 )
 
 
@@ -224,68 +223,3 @@ class TestParsePreviewResponse:
         result = parse_preview_response(raw)
         assert result['found'] is True
         assert result['answer'] == '$19.99'
-
-
-class TestParseSetupResponse:
-    def test_no_prefilter_needed(self):
-        raw = '{"needs_prefilter": false, "selector": null, "reason": "intent is global"}'
-        result = parse_setup_response(raw)
-        assert result['needs_prefilter'] is False
-        assert result['selector'] is None
-
-    def test_string_false_in_setup(self):
-        raw = '{"needs_prefilter": "false", "selector": null, "reason": "global"}'
-        result = parse_setup_response(raw)
-        assert result['needs_prefilter'] is False
-
-    def test_semantic_selector_accepted(self):
-        raw = (
-            '{"needs_prefilter": true, "selector": "footer", "reason": "intent references footer"}'
-        )
-        result = parse_setup_response(raw)
-        assert result['needs_prefilter'] is True
-        assert result['selector'] == 'footer'
-
-    def test_attribute_selector_accepted(self):
-        raw = '{"needs_prefilter": true, "selector": "[class*=\'price\']", "reason": "pricing section"}'
-        result = parse_setup_response(raw)
-        assert result['needs_prefilter'] is True
-        assert result['selector'] is not None
-
-    def test_nth_child_positional_selector_rejected(self):
-        raw = '{"needs_prefilter": true, "selector": "div:nth-child(3)", "reason": "third div"}'
-        result = parse_setup_response(raw)
-        assert result['selector'] is None
-        assert result['needs_prefilter'] is False
-
-    def test_nth_of_type_positional_selector_rejected(self):
-        raw = '{"needs_prefilter": true, "selector": "p:nth-of-type(2)", "reason": "second p"}'
-        result = parse_setup_response(raw)
-        assert result['selector'] is None
-        assert result['needs_prefilter'] is False
-
-    def test_eq_positional_selector_rejected(self):
-        raw = '{"needs_prefilter": true, "selector": "div:eq(0)", "reason": "first div"}'
-        result = parse_setup_response(raw)
-        assert result['selector'] is None
-
-    def test_xpath_positional_selector_rejected(self):
-        raw = '{"needs_prefilter": true, "selector": "//*[2]", "reason": "second element"}'
-        result = parse_setup_response(raw)
-        assert result['selector'] is None
-
-    def test_selector_forced_to_null_when_needs_prefilter_false(self):
-        # Even if selector is provided alongside needs_prefilter=false, selector is nulled
-        raw = '{"needs_prefilter": false, "selector": "main", "reason": "not needed"}'
-        result = parse_setup_response(raw)
-        assert result['selector'] is None
-
-    def test_malformed_json_safe_defaults(self):
-        result = parse_setup_response('garbage text')
-        assert result['needs_prefilter'] is False
-        assert result['selector'] is None
-        assert result['reason'] == ''
-
-    def test_empty_response_safe_defaults(self):
-        result = parse_setup_response('')
-        assert result['needs_prefilter'] is False
