@@ -347,6 +347,16 @@ class TestLLMRestockPluginHTMLStripping:
         result = _strip_html(long_html)
         assert len(result) <= _MAX_CONTENT_CHARS
 
+    def test_strip_html_keeps_page_when_root_class_looks_like_chrome(self):
+        # Amazon sets class="... mn-nav-stripe-moved" on <html>, which matches \bnav\b
+        from changedetectionio.processors.restock_diff.plugins.llm_restock import _strip_html
+        html = ('<!DOCTYPE html><html class="a-js mn-nav-stripe-moved"><body class="sidebar-layout">'
+                '<nav>Menu</nav><span>$49.99</span> Add to cart</body></html>')
+        result = _strip_html(html)
+        assert '$49.99' in result
+        assert 'Add to cart' in result
+        assert 'Menu' not in result
+
 
 class TestLLMRestockReusableHelpers:
     """The pieces another LLM backend (a plugin not using litellm) reuses."""

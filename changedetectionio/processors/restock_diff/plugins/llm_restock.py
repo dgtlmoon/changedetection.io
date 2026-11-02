@@ -177,6 +177,9 @@ def _extract_jsonld(html_content: str) -> str:
 # Semantic tags always treated as chrome (nav/header/footer)
 _CHROME_TAGS = {'nav', 'header', 'footer', 'aside'}
 
+# Never removed, a class on the root (e.g. Amazon's "mn-nav-stripe-moved" on <html>) would wipe the whole page
+_ROOT_TAGS = {'html', 'body'}
+
 # id/class fragments that strongly indicate navigation or site-chrome
 _CHROME_PATTERNS = re.compile(
     r'\b(nav|navigation|navbar|menu|mega-menu|breadcrumb|breadcrumbs?|'
@@ -206,6 +209,8 @@ def _remove_chrome(html_content: str) -> str:
             if not isinstance(tag, Tag) or tag.parent is None:
                 continue
             name = tag.name or ''
+            if name in _ROOT_TAGS:
+                continue
             if name in _CHROME_TAGS:
                 tag.decompose()
                 continue
