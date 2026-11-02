@@ -169,6 +169,18 @@
     </span>
   </div>
 
+  {# Ollama and OpenAI-compatible endpoints, shown with the multiplier above (evaluator._thinking_extra_body) #}
+  <div class="pure-control-group" id="llm-local-thinking-group" style="display:none">
+    <label></label>
+    {{ form.llm.form.local_thinking_off() }}
+    <label for="{{ form.llm.form.local_thinking_off.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.local_thinking_off.label.text }}
+    </label>
+    <span class="pure-form-message-inline">
+      {{ _('Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: --reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat template supports enable_thinking (Qwen3 and others).') }}
+    </span>
+  </div>
+
   <div class="pure-control-group" id="llm-fetch-group" style="display:none">
     <label></label>
     <button type="button" id="llm-fetch-btn" class="cdio-btn button-xsmall" onclick="llmFetchModels()"
@@ -529,6 +541,8 @@
     // endpoints. Cloud providers get the original tight caps and don't see this
     // section at all.
     if (localAdvGrp) localAdvGrp.style.display = (provider === 'ollama' || provider === 'openai_compatible') ? '' : 'none';
+    const localThinkGrp = document.getElementById('llm-local-thinking-group');
+    if (localThinkGrp) localThinkGrp.style.display = localAdvGrp ? localAdvGrp.style.display : 'none';
 
     hint.textContent = KEY_HINTS[provider] || '';
     modelSelGrp.style.display = 'none';
