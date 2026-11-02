@@ -62,6 +62,22 @@ def test_restock_tools(client, live_server, measure_memory_usage, datastore_path
     everything = _call(client, 'restock_status')['structuredContent']
     assert everything['total'] == 3, "only restock_diff monitors, not the news page"
 
+    # "Is anything cheap now?": a name search, and the price history from the snapshots, as on the price graph
+    t0 = 1700000000
+    for i, (stock, price) in enumerate([(True, 449.0), (True, 379.0), (True, 399.0), (True, 429.0), (True, 429.0)]):
+        datastore.data['watching'][headphones].save_history_blob(f"In Stock: {stock} - Price: {price}", t0 + i * 86400, str(i))
+    result = _call(client, 'restock_status', search='sony')
+    monitors = result['structuredContent']['monitors']
+    assert [m['title'] for m in monitors] == ['Sony WH-1000XM6'], "search matches the title or URL"
+    history = monitors[0]['price_history']
+    assert (history['min'], history['max'], history['snapshots']) == (379.0, 449.0, 5)
+    assert history['last_change'] == {'from': 399.0, 'to': 429.0, 'date': '2023-11-17T22:13:20Z'}
+    assert history['since'] == '2023-11-17T22:13:20Z', "the start of the run at the current price"
+    assert 'was 399.0 until 2023-11-17' in result['content'][0]['text']
+    assert _call(client, 'restock_status', search='kettle')['structuredContent']['monitors'][0]['price_history'] is None, \
+        "no snapshots yet, no history"
+    assert _call(client, 'restock_status', search='nothing like it')['structuredContent']['total'] == 0
+
     # "Tell me if it goes under $450": only the rules given change, the others are kept
     result = _call(client, 'restock_set_rules', watch='Sony', in_stock_processing='in_stock_only')
     assert result['isError'] is False, result

@@ -79,7 +79,7 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     tools = {t['name']: t for t in res.json['result']['tools']}
     read_only = {'list_watches', 'get_watch', 'list_tags', 'get_changes', 'get_diff', 'get_snapshot',
                  'get_system_info', 'list_notifications', 'notification_services',
-                 'list_snapshots', 'find_change', 'get_history',
+                 'list_snapshots', 'find_change', 'get_history', 'line_timeline',
                  # From the built-in restock_diff plugin (register_mcp_tools, see test_mcp_plugin_tools.py)
                  'restock_status'}
     # update_* can replace settings (e.g. the whole notification URL list), so they count as destructive too
@@ -468,38 +468,47 @@ def _menu_history(datastore):
     return uuid
 
 
+def _iso(ts):
+    from changedetectionio.changes_report import _iso as iso
+    return iso(ts)
+
+
 def test_mcp_history_tools(client, live_server, measure_memory_usage, datastore_path):
     """list_snapshots, find_change and get_history: 'how did the prices on this menu change over time?' in a few
     calls instead of one get_snapshot per date."""
     datastore = client.application.config['DATASTORE']
     api_key = new_mcp_token(client)
     uuid = _menu_history(datastore)
+    D = [_iso(T0 + i * 100) for i in range(6)]
 
     # get_watch says where the history starts
     assert _call(client, api_key, 'get_watch', watch=uuid)['structuredContent']['first_snapshot'] == '2023-11-14T22:13:20Z'
 
-    # list_snapshots: every date, the broken capture flagged
+    # list_snapshots: every date (ISO only), the broken capture flagged
     result = _call(client, api_key, 'list_snapshots', watch='Bistro')
     data = result['structuredContent']
-    assert data['total'] == 6 and [s['timestamp'] for s in data['snapshots']] == [T0 + i * 100 for i in range(6)]
-    assert [s.get('shrunk', False) for s in data['snapshots']] == [False] * 5 + [True]
+    assert data['total'] == 6 and [s['date'] for s in data['snapshots']] == D
+    assert [s.get('flag') for s in data['snapshots']] == [None] * 5 + ['shrunk']
     assert 'SHRUNK' in result['content'][0]['text'] and '/' not in str(data['snapshots'][0]), "never a path on disk"
+    assert 'timestamp' not in data['snapshots'][0], "one date format"
     data = _call(client, api_key, 'list_snapshots', watch=uuid, **{'from': T0 + 100, 'to': T0 + 300}, limit=2)['structuredContent']
-    assert data['in_range'] == 3 and [s['timestamp'] for s in data['snapshots']] == [T0 + 100, T0 + 200]
+    assert data['in_range'] == 3 and [s['date'] for s in data['snapshots']] == D[1:3]
 
-    # find_change: each period the text was there, with when it went away and the line it's on
+    # find_change: each period the text was there, with when it went away, and every matching line
     result = _call(client, api_key, 'find_change', watch=uuid, text='schnitzel 259')
     found = result['structuredContent']
     assert not result['isError'] and found['matching_snapshots'] == 3 and found['snapshots_searched'] == 6
-    assert [(p['first_seen'], p['last_seen'], p['gone_at']) for p in found['periods']] == \
-           [(T0 + 100, T0 + 200, T0 + 300), (T0 + 400, T0 + 400, T0 + 500)]
+    assert [(p['first_seen'], p['last_seen'], p['gone_at']) for p in found['periods']] == [(D[1], D[2], D[3]), (D[4], D[4], D[5])]
     assert found['periods'][0]['line'] == 'Schnitzel 259' and result['content'][0]['text'].startswith(UNTRUSTED_NOTE)
     # Case sensitive, a range, a regex, still there at the end
     assert _call(client, api_key, 'find_change', watch=uuid, text='schnitzel 259', case_sensitive=True)['structuredContent']['periods'] == []
     found = _call(client, api_key, 'find_change', watch=uuid, text='Schnitzel 259', **{'to': T0 + 250})['structuredContent']
     assert found['snapshots_searched'] == 3 and found['periods'][0]['gone_at'] is None
     found = _call(client, api_key, 'find_change', watch=uuid, text=r'Beef broth 8\d', regex=True)['structuredContent']
-    assert [(p['first_seen'], p['gone_at']) for p in found['periods']] == [(T0 + 200, T0 + 500)]
+    assert [(p['first_seen'], p['gone_at']) for p in found['periods']] == [(D[2], D[5])]
+    # Every distinct matching line, not only the first of each period: broth 85 then 89 are one period
+    assert [(m['line'], m['first_seen'], m['last_seen']) for m in found['lines']] == \
+           [('Beef broth 85', D[2], D[3]), ('Beef broth 89', D[4], D[4])]
     assert 'Not found' in _call(client, api_key, 'find_change', watch=uuid, text='Lobster')['content'][0]['text']
     # A bad regex and an empty text are errors the assistant can fix
     result = _call(client, api_key, 'find_change', watch=uuid, text='(unclosed', regex=True)
@@ -509,7 +518,7 @@ def test_mcp_history_tools(client, live_server, measure_memory_usage, datastore_
     # get_history: the first in full, the rest as diffs
     result = _call(client, api_key, 'get_history', watch=uuid, sample=3)
     data, text = result['structuredContent'], result['content'][0]['text']
-    assert [data['base']['timestamp']] + [p['timestamp'] for p in data['patches']] == [T0, T0 + 300, T0 + 500], \
+    assert [data['base']['date']] + [p['date'] for p in data['patches']] == [D[0], D[3], D[5]], \
         "evenly spaced, first and last included"
     # The broken capture at the end is a real change: every line went
     assert data['patches'][-1]['diff'].count('-Opening hours') == 40 and '+Error: Cannot set property' in data['patches'][-1]['diff']
@@ -519,16 +528,120 @@ def test_mcp_history_tools(client, live_server, measure_memory_usage, datastore_
     assert '=== 2023-11-14T22:15:00Z: changes from 2023-11-14T22:13:20Z ===\n@@ -4 +4 @@\n-Schnitzel 239\n+Schnitzel 259' in text
     # Against the first: each patch on its own
     data = _call(client, api_key, 'get_history', watch=uuid, timestamps=[T0, T0 + 200, T0 + 400], relative_to='first')['structuredContent']
-    assert all(p['against'] == T0 for p in data['patches'])
+    assert all(p['against'] == D[0] for p in data['patches'])
     assert '+Beef broth 89' in data['patches'][1]['diff'] and '-Beef broth 79' in data['patches'][1]['diff']
     # Same text twice says so, ISO dates resolve to the snapshot at or before them
     data = _call(client, api_key, 'get_history', watch=uuid, timestamps=[T0 + 100, T0 + 150, T0 + 200])['structuredContent']
-    assert len(data['patches']) == 1 and data['base']['timestamp'] == T0 + 100
+    assert len(data['patches']) == 1 and data['base']['date'] == D[1]
     # Limits
     result = _call(client, api_key, 'get_history', watch=uuid, max_lines=1)
     assert result['structuredContent']['truncated'] and 'more lines' in result['content'][0]['text']
+    assert 'line_timeline' in result['content'][0]['text'], "points at the smaller tool when diffs get cut"
     assert _call(client, api_key, 'get_history', watch=uuid, timestamps=[T0], sample=3)['isError'] is True
     assert _call(client, api_key, 'get_history', watch=uuid, **{'from': T0 + 10_000})['isError'] is True
+
+    delete_all_watches(client)
+
+
+def test_mcp_line_timeline(client, live_server, measure_memory_usage, datastore_path):
+    """line_timeline: what was added to a list and when, each line once, even when the page flips between layouts."""
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    uuid = datastore.add_watch(url='https://band.example.com/tour', extras={'title': 'Band tour', 'paused': True})
+    w = datastore.data['watching'][uuid]
+    header = 'Tour Dates\nTickets\n'
+    w.save_history_blob(header + 'Oct 9 Manchester\nOct 29 Prague', T0, 'a')
+    w.save_history_blob(header + 'Oct 9 Manchester\nOct 29 Prague\nFeb 6 Leeuwarden', T0 + 100, 'b')
+    # The page breaks (a different layout), then comes back: nothing in it is new again
+    w.save_history_blob('Loading...', T0 + 200, 'c')
+    w.save_history_blob(header + 'Oct 29 Prague\nFeb 6 Leeuwarden\nJul 4 Helsinki', T0 + 300, 'd')
+
+    result = _call(client, api_key, 'line_timeline', watch=uuid)
+    data, text = result['structuredContent'], result['content'][0]['text']
+    assert [(e['line'], e['first_seen'], e['still_there']) for e in data['lines']] == \
+           [('Feb 6 Leeuwarden', _iso(T0 + 100), True), ('Loading...', _iso(T0 + 200), False),
+            ('Jul 4 Helsinki', _iso(T0 + 300), True)], "only lines added after the first snapshot, each once"
+    assert data['left_out_at_start'] == 4 and 'include_start=true' in text and text.startswith(UNTRUSTED_NOTE)
+    # Everything, and what went away
+    data = _call(client, api_key, 'line_timeline', watch=uuid, include_start=True, still_there=False)['structuredContent']
+    assert [(e['line'], e['last_seen']) for e in data['lines']] == [('Oct 9 Manchester', _iso(T0 + 100)),
+                                                                    ('Loading...', _iso(T0 + 200))]
+    assert data['lines'][0]['at_start'] is True
+    # A filter, a regex, a range
+    data = _call(client, api_key, 'line_timeline', watch=uuid, text='prague', include_start=True)['structuredContent']
+    assert [(e['line'], e['first_seen'], e['last_seen']) for e in data['lines']] == [('Oct 29 Prague', _iso(T0), _iso(T0 + 300))]
+    data = _call(client, api_key, 'line_timeline', watch=uuid, text=r'^(Feb|Jul) ', regex=True)['structuredContent']
+    assert [e['line'] for e in data['lines']] == ['Feb 6 Leeuwarden', 'Jul 4 Helsinki']
+    data = _call(client, api_key, 'line_timeline', watch=uuid, **{'from': T0 + 100})['structuredContent']
+    assert [e['line'] for e in data['lines']] == ['Loading...', 'Jul 4 Helsinki'], "the range's first snapshot is the start"
+    assert _call(client, api_key, 'line_timeline', watch=uuid, text='(x', regex=True)['isError'] is True
+
+    delete_all_watches(client)
+
+
+def test_mcp_history_summaries(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """The answers that used to overflow: list_snapshots summarises long histories, get_history samples instead of
+    refusing, find_change counts per period, and SHRUNK compares with the median so a short page isn't flagged."""
+    from changedetectionio.blueprint.mcp import tools
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    uuid = datastore.add_watch(url='https://news.example.com/', extras={'title': 'News', 'paused': True})
+    w = datastore.data['watching'][uuid]
+    import random
+    rng = random.Random(1)
+    day = 86400
+    for i in range(70):
+        headline = f"Headline {i} about {'Ukraine' if i % 10 == 0 else 'art'}"
+        body = '\n'.join(f"{rng.random()} filler {rng.random()}" for _ in range(60))
+        # One error page, then back to normal
+        w.save_history_blob('Error 503' if i == 40 else f"{headline}\n{body}", T0 + i * 7 * day, str(i))
+
+    # Summary by default when long
+    result = _call(client, api_key, 'list_snapshots', watch=uuid)
+    data = result['structuredContent']
+    assert data['summary'] is True and data['total'] == 70 and 'snapshots' not in data
+    assert sum(data['by_month'].values()) == 70 and data['stored_bytes']['min'] < data['stored_bytes']['median']
+    assert [(f['date'], f['flag']) for f in data['flagged']] == [(_iso(T0 + 40 * 7 * day), 'shrunk'),
+                                                                 (_iso(T0 + 41 * 7 * day), 'recovered')]
+    assert 'full=true' in result['content'][0]['text']
+    assert len(_call(client, api_key, 'list_snapshots', watch=uuid, full=True, limit=500)['structuredContent']['snapshots']) == 70
+
+    # get_history: more than the limit is sampled down, with a note, instead of an error
+    monkeypatch.setattr(tools, 'HISTORY_MAX_SNAPSHOTS', 10)
+    result = _call(client, api_key, 'get_history', watch=uuid, max_chars=200, max_lines=50)
+    assert not result['isError'] and len(result['structuredContent']['patches']) == 9
+    assert 'evenly spaced' in result['structuredContent']['notes'][0]
+
+    # find_change: every matching headline, and how many new ones per period
+    found = _call(client, api_key, 'find_change', watch=uuid, text='ukraine', group_by='year')['structuredContent']
+    assert found['lines_total'] == 6 and sum(found['new_lines_by_year'].values()) == 6  # no. 40 is the error page
+    assert _call(client, api_key, 'find_change', watch=uuid, text='x', group_by='week')['isError'] is True
+    found = _call(client, api_key, 'find_change', watch=uuid, text='Headline', max_lines=5)['structuredContent']
+    assert found['lines_total'] == 69 and len(found['lines']) == 5
+
+    delete_all_watches(client)
+
+
+def test_mcp_get_watch_notes(client, live_server, measure_memory_usage, datastore_path):
+    """get_watch says in words when a setting hides changes: trigger text, or nothing recorded for months although
+    every check succeeds (the Metallica monitor with a 'Prague' trigger stayed silent for 17 months)."""
+    import time
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    uuid = datastore.add_watch(url='https://band.example.com/tour', extras={'title': 'Band', 'trigger_text': ['Prague']})
+    w = datastore.data['watching'][uuid]
+    w.save_history_blob('Upcoming dates', int(time.time()) - 400 * 86400, 'a')
+    w['last_checked'] = int(time.time()) - 3600
+    w['paused'] = False
+    info = _call(client, api_key, 'get_watch', watch=uuid)
+    notes = info['structuredContent']['notes']
+    assert any("trigger_text is set ('Prague')" in n for n in notes)
+    assert any('Nothing recorded for 399 days' in n and 'trigger_text' in n for n in notes)
+    assert info['content'][0]['text'].split('\n')[2].startswith('NOTE: '), "near the top, not buried"
+    # A failing monitor isn't "quiet", it's broken, its error says so
+    w['last_error'] = 'Error - 503'
+    w['trigger_text'] = []
+    assert 'notes' not in _call(client, api_key, 'get_watch', watch=uuid)['structuredContent']
 
     delete_all_watches(client)
 
