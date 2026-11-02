@@ -661,6 +661,15 @@ msgstr ""
 "其他雲端供應商（OpenAI、Anthropic、Gemini）則保持其原本嚴格的上限。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+msgid ""
+"Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
+"--reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat "
+"template supports enable_thinking (Qwen3 and others)."
+msgstr ""
+"要求伺服器不先思考直接回答，速度快得多。未勾選時由伺服器決定（llama.cpp：--reasoning-budget）。適用於 Ollama；在相容 OpenAI 的伺服器（llama.cpp、vLLM）上，適用於聊天範本支援 "
+"enable_thinking 的模型（Qwen3 等）。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
 msgid "Load available models"
 msgstr "載入可用模型"
 
@@ -3671,6 +3680,10 @@ msgstr "API 基礎 URL"
 #: changedetectionio/forms.py
 msgid "Token multiplier for local reasoning models"
 msgstr "本地推理模型的權杖乘數"
+
+#: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "關閉思考"
 
 #: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"
