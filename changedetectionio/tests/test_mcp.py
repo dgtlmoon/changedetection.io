@@ -79,6 +79,7 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     tools = {t['name']: t for t in res.json['result']['tools']}
     read_only = {'list_watches', 'get_watch', 'list_tags', 'get_changes', 'get_diff', 'get_snapshot',
                  'get_system_info', 'list_notifications', 'notification_services',
+                 'list_snapshots', 'find_change', 'get_history',
                  # From the built-in restock_diff plugin (register_mcp_tools, see test_mcp_plugin_tools.py)
                  'restock_status'}
     # update_* can replace settings (e.g. the whole notification URL list), so they count as destructive too
@@ -449,4 +450,104 @@ def test_mcp_snapshot_unfiltered(client, live_server, measure_memory_usage, data
     assert _call(client, api_key, 'get_snapshot')['isError'] is True
 
     client.post('/tags/delete_all', follow_redirects=True)
+    delete_all_watches(client)
+
+
+def _menu_history(datastore):
+    """A restaurant menu whose prices go up, then a broken capture: the history the three history tools are for."""
+    uuid = datastore.add_watch(url='https://bistro.example.com/menu', extras={'title': 'Bistro menu', 'paused': True})
+    w = datastore.data['watching'][uuid]
+    menu = 'Soups\nBeef broth 79\nMains\nSchnitzel 239\nGoulash 249\n' + 'Opening hours Mon-Sun 11-22\n' * 40
+    w.save_history_blob(menu, T0, 'a')
+    w.save_history_blob(menu.replace('Schnitzel 239', 'Schnitzel 259'), T0 + 100, 'b')
+    w.save_history_blob(menu.replace('Schnitzel 239', 'Schnitzel 259').replace('Beef broth 79', 'Beef broth 85'), T0 + 200, 'c')
+    w.save_history_blob(menu.replace('Schnitzel 239', 'Schnitzel 279').replace('Beef broth 79', 'Beef broth 85'), T0 + 300, 'd')
+    # Back to 259 for a while (a text can come and go), then the page breaks
+    w.save_history_blob(menu.replace('Schnitzel 239', 'Schnitzel 259').replace('Beef broth 79', 'Beef broth 89'), T0 + 400, 'e')
+    w.save_history_blob('Error: Cannot set property', T0 + 500, 'f')
+    return uuid
+
+
+def test_mcp_history_tools(client, live_server, measure_memory_usage, datastore_path):
+    """list_snapshots, find_change and get_history: 'how did the prices on this menu change over time?' in a few
+    calls instead of one get_snapshot per date."""
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    uuid = _menu_history(datastore)
+
+    # get_watch says where the history starts
+    assert _call(client, api_key, 'get_watch', watch=uuid)['structuredContent']['first_snapshot'] == '2023-11-14T22:13:20Z'
+
+    # list_snapshots: every date, the broken capture flagged
+    result = _call(client, api_key, 'list_snapshots', watch='Bistro')
+    data = result['structuredContent']
+    assert data['total'] == 6 and [s['timestamp'] for s in data['snapshots']] == [T0 + i * 100 for i in range(6)]
+    assert [s.get('shrunk', False) for s in data['snapshots']] == [False] * 5 + [True]
+    assert 'SHRUNK' in result['content'][0]['text'] and '/' not in str(data['snapshots'][0]), "never a path on disk"
+    data = _call(client, api_key, 'list_snapshots', watch=uuid, **{'from': T0 + 100, 'to': T0 + 300}, limit=2)['structuredContent']
+    assert data['in_range'] == 3 and [s['timestamp'] for s in data['snapshots']] == [T0 + 100, T0 + 200]
+
+    # find_change: each period the text was there, with when it went away and the line it's on
+    result = _call(client, api_key, 'find_change', watch=uuid, text='schnitzel 259')
+    found = result['structuredContent']
+    assert not result['isError'] and found['matching_snapshots'] == 3 and found['snapshots_searched'] == 6
+    assert [(p['first_seen'], p['last_seen'], p['gone_at']) for p in found['periods']] == \
+           [(T0 + 100, T0 + 200, T0 + 300), (T0 + 400, T0 + 400, T0 + 500)]
+    assert found['periods'][0]['line'] == 'Schnitzel 259' and result['content'][0]['text'].startswith(UNTRUSTED_NOTE)
+    # Case sensitive, a range, a regex, still there at the end
+    assert _call(client, api_key, 'find_change', watch=uuid, text='schnitzel 259', case_sensitive=True)['structuredContent']['periods'] == []
+    found = _call(client, api_key, 'find_change', watch=uuid, text='Schnitzel 259', **{'to': T0 + 250})['structuredContent']
+    assert found['snapshots_searched'] == 3 and found['periods'][0]['gone_at'] is None
+    found = _call(client, api_key, 'find_change', watch=uuid, text=r'Beef broth 8\d', regex=True)['structuredContent']
+    assert [(p['first_seen'], p['gone_at']) for p in found['periods']] == [(T0 + 200, T0 + 500)]
+    assert 'Not found' in _call(client, api_key, 'find_change', watch=uuid, text='Lobster')['content'][0]['text']
+    # A bad regex and an empty text are errors the assistant can fix
+    result = _call(client, api_key, 'find_change', watch=uuid, text='(unclosed', regex=True)
+    assert result['isError'] and 'Invalid regex' in result['content'][0]['text']
+    assert _call(client, api_key, 'find_change', watch=uuid, text='  ')['isError'] is True
+
+    # get_history: the first in full, the rest as diffs
+    result = _call(client, api_key, 'get_history', watch=uuid, sample=3)
+    data, text = result['structuredContent'], result['content'][0]['text']
+    assert [data['base']['timestamp']] + [p['timestamp'] for p in data['patches']] == [T0, T0 + 300, T0 + 500], \
+        "evenly spaced, first and last included"
+    # The broken capture at the end is a real change: every line went
+    assert data['patches'][-1]['diff'].count('-Opening hours') == 40 and '+Error: Cannot set property' in data['patches'][-1]['diff']
+    text = _call(client, api_key, 'get_history', watch=uuid, **{'to': T0 + 400})['content'][0]['text']
+    assert text.count('Opening hours') == 40, "the unchanged text is sent once, not once per snapshot"
+    assert '-Schnitzel 239\n+Schnitzel 279' in data['patches'][0]['diff']
+    assert '=== 2023-11-14T22:15:00Z: changes from 2023-11-14T22:13:20Z ===\n@@ -4 +4 @@\n-Schnitzel 239\n+Schnitzel 259' in text
+    # Against the first: each patch on its own
+    data = _call(client, api_key, 'get_history', watch=uuid, timestamps=[T0, T0 + 200, T0 + 400], relative_to='first')['structuredContent']
+    assert all(p['against'] == T0 for p in data['patches'])
+    assert '+Beef broth 89' in data['patches'][1]['diff'] and '-Beef broth 79' in data['patches'][1]['diff']
+    # Same text twice says so, ISO dates resolve to the snapshot at or before them
+    data = _call(client, api_key, 'get_history', watch=uuid, timestamps=[T0 + 100, T0 + 150, T0 + 200])['structuredContent']
+    assert len(data['patches']) == 1 and data['base']['timestamp'] == T0 + 100
+    # Limits
+    result = _call(client, api_key, 'get_history', watch=uuid, max_lines=1)
+    assert result['structuredContent']['truncated'] and 'more lines' in result['content'][0]['text']
+    assert _call(client, api_key, 'get_history', watch=uuid, timestamps=[T0], sample=3)['isError'] is True
+    assert _call(client, api_key, 'get_history', watch=uuid, **{'from': T0 + 10_000})['isError'] is True
+
+    delete_all_watches(client)
+
+
+def test_find_change_regex_timeout(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """A regex that backtracks for ever is stopped (the regex package's timeout, as the regex_replace Jinja2 filter
+    uses), and the assistant is told so instead of getting 'not found'."""
+    from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    uuid = datastore.add_watch(url='https://example.com/redos', extras={'title': 'ReDoS', 'paused': True})
+    datastore.data['watching'][uuid].save_history_blob('a' * 40 + '!', T0, 'a')
+    monkeypatch.setattr(regex_plugin, 'REGEX_TIMEOUT_SECONDS', 0.2)
+    # (the regex package optimises the textbook (a+)+$ away, (a|aa)+$ still backtracks)
+
+    result = _call(client, api_key, 'find_change', watch=uuid, text='(a|aa)+$', regex=True)
+    assert result['isError'] and 'took longer than' in result['content'][0]['text']
+    # The model method raises it, for other callers (the UI) to handle as well
+    with pytest.raises(TimeoutError):
+        datastore.data['watching'][uuid].find_change('(a|aa)+$', regex=True)
+
     delete_all_watches(client)

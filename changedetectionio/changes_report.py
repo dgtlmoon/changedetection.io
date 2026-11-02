@@ -205,3 +205,47 @@ def render_unified(report):
             out.append(w['diff'])
 
     return '\n'.join(out) + '\n'
+
+
+RELATIVE_TO = ('previous', 'first')
+
+
+def snapshots_as_patches(snapshots, relative_to='previous', context=0):
+    """Several snapshots of one watch as the first in full plus a diff for each of the others.
+
+    Snapshots of a page are mostly the same text, so reading five of them in full costs five times the text for a
+    few changed lines. This sends the text once.
+
+    :param snapshots: [(timestamp, text), ...] oldest first
+    :param relative_to: 'previous' diffs each snapshot against the one before it in the list (each step on its own,
+        small even when the page drifts a lot), 'first' diffs each one against the first (each patch stands alone)
+    :return: {'base': {'timestamp', 'text'}, 'patches': [{'timestamp', 'against', 'diff', 'unchanged'}]}
+    """
+    if relative_to not in RELATIVE_TO:
+        raise ValueError(f"relative_to must be one of: {', '.join(RELATIVE_TO)}")
+    if not snapshots:
+        return {'base': None, 'patches': []}
+    base_ts, base_text = snapshots[0]
+    patches = []
+    previous_ts, previous_text = base_ts, base_text
+    for ts, text in snapshots[1:]:
+        against_ts, against_text = (previous_ts, previous_text) if relative_to == 'previous' else (base_ts, base_text)
+        # The ---/+++ file header only repeats the two dates, which the patch header already gives
+        lines = _unified(against_text, text, against_ts, ts, context)[2:]
+        patches.append({'timestamp': ts, 'against': against_ts, 'diff': '\n'.join(lines), 'unchanged': not lines})
+        previous_ts, previous_text = ts, text
+    return {'base': {'timestamp': base_ts, 'text': base_text}, 'patches': patches}
+
+
+def render_patches(result):
+    """snapshots_as_patches() as plain text, a header line before the base and before each patch."""
+    base = result['base']
+    if not base:
+        return ''
+    out = [f"=== {_iso(base['timestamp'])} (full text) ===", base['text']]
+    for p in result['patches']:
+        if p['unchanged']:
+            out.append(f"=== {_iso(p['timestamp'])}: same text as {_iso(p['against'])} ===")
+        else:
+            out += [f"=== {_iso(p['timestamp'])}: changes from {_iso(p['against'])} ===", p['diff']]
+    return '\n'.join(out)
