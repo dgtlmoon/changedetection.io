@@ -16,6 +16,12 @@ import functools
 #   - api/Watch.py: strip from GET responses and silently discard from PUT/POST inputs
 #                   so that a GET → PUT round trip doesn't trip the unknown-field validator
 #
+# Spec-declared `readOnly: true` fields (e.g. `uuid`, `date_created`, `llm_prefilter`,
+# `llm_evaluation_cache`, `llm_last_tokens_used`, `llm_tokens_used_cumulative`,
+# `llm_tokens_this_period`, `llm_tokens_period_key`, etc.) are automatically handled by
+# get_readonly_watch_fields() and must NOT be added here; doing so would mistakenly strip
+# them from GET responses at the API boundary.
+#
 # `last_viewed` is intentionally NOT included: it's set internally by mark_all_viewed BUT
 # is also explicitly writable via the UpdateWatch schema (see api/Watch.py valid_fields).
 SYSTEM_MANAGED_NON_SPEC_FIELDS = frozenset({
@@ -25,10 +31,6 @@ SYSTEM_MANAGED_NON_SPEC_FIELDS = frozenset({
     '_llm_result',                 # LLM runtime — populated by evaluator
     '_llm_intent',
     '_llm_change_summary',
-    'llm_prefilter',
-    'llm_evaluation_cache',
-    'llm_last_tokens_used',
-    'llm_tokens_used_cumulative',
 })
 
 
