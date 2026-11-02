@@ -403,7 +403,7 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             # reasoning on for accuracy) and add plenty of headroom for the answer and any
             # provider-default reasoning we don't explicitly control.
             max_tokens=apply_local_token_multiplier(max(1000, settings.thinking_budget + 800), llm_cfg),
-            extra_body=_thinking_extra_body(llm_cfg['model'], settings.thinking_budget),
+            extra_body=_thinking_extra_body(llm_cfg['model'], settings.thinking_budget, llm_cfg),
         )
 
         accumulate_global_tokens(

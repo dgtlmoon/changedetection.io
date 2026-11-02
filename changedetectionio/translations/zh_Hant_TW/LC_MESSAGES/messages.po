@@ -4005,6 +4005,10 @@ msgid "Token multiplier for local reasoning models"
 msgstr "本地推理模型的權杖乘數"
 
 #: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "關閉思考"
+
+#: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"
 msgstr "預設 AI 變更摘要提示詞"
 

@@ -4086,6 +4086,10 @@ msgid "Token multiplier for local reasoning models"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "Denken ausschalten"
+
+#: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"
 msgstr ""
 

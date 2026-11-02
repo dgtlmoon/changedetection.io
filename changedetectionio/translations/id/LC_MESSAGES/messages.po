@@ -4129,6 +4129,10 @@ msgid "Token multiplier for local reasoning models"
 msgstr "Pengali token untuk model reasoning lokal"
 
 #: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "Matikan thinking"
+
+#: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"
 msgstr "Prompt Ringkasan Perubahan AI default"
 

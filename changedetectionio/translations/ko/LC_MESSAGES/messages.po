@@ -4006,6 +4006,10 @@ msgid "Token multiplier for local reasoning models"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "추론 끄기"
+
+#: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"
 msgstr "기본 AI 변경 요약 프롬프트"
 
