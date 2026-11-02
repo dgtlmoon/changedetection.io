@@ -383,6 +383,50 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec
+    def register_mcp_tools():
+        """Add tools to the MCP server (/mcp/v1), typically ones only a processor can answer.
+
+        Return a list of tool dicts. Core adds them to tools/list next to its own and wraps each one, so a
+        plugin never deals with MCP itself:
+        - the arguments are checked against `input_schema` before the handler runs;
+        - read-only mode and ?readonly=1 offer only the 'read' tools, from `kind`;
+        - a `watch` argument is resolved (uuid, or part of the title or URL) and, with `processor` set,
+          refused with a readable error when that monitor uses another processor;
+        - a ToolError (changedetectionio.blueprint.mcp.tools.ToolError) becomes an error the assistant
+          reads and can correct, any other exception an internal error;
+        - the text is capped in length.
+
+        The tool list is the same for every connection (MCP clients cache it), so list your tools whenever
+        the plugin is installed, not only while some monitor uses your processor.
+
+        Each dict:
+            name:         a-z, 0-9 and _, at most 64 characters, starting with a letter. Prefix it with
+                          your processor's name, e.g. 'restock_status'. A name core already uses is skipped.
+            title:        short, shown to the user, e.g. 'Stock and prices'
+            description:  what it answers, written for the assistant
+            kind:         'read' (changes nothing), 'write' or 'destructive' (can't be undone)
+            input_schema: JSON Schema properties, e.g. {'watch': tools.WATCH_ARGUMENT}. Unknown
+                          arguments are refused.
+            required:     optional list of required argument names
+            processor:    optional processor name its `watch` argument must use, e.g. 'restock_diff'
+            handler:      handler(ctx, args, watch) -> (text, structured_dict). ctx.datastore and
+                          ctx.update_q, args as validated, watch the resolved Watch or None.
+
+        Text that comes from monitored pages should start with tools.UNTRUSTED_NOTE.
+
+        Example (the built-in restock tools, processors/restock_diff/plugins/mcp_tools.py):
+            @hookimpl
+            def register_mcp_tools():
+                return [{'name': 'restock_status', 'title': 'Stock and prices', 'kind': 'read',
+                         'description': 'Which product monitors are in stock, and their prices.',
+                         'input_schema': {'tag': {'type': 'string'}}, 'handler': restock_status}]
+
+        Returns:
+            list of dict, or None
+        """
+        pass
+
     # --- Conditions (JSON Logic rules on the watch edit page) ---
 
     @hookspec
@@ -625,16 +669,19 @@ def register_builtin_restock_plugins():
 
 
 def register_builtin_api_plugins():
-    """Register the built-in get_api_watch_processor_state implementations.
+    """Register the built-in get_api_watch_processor_state and register_mcp_tools implementations.
 
     Called from flask_app.changedetection_app() where the API resources are set up, so it runs
     however the app is started. Can't happen at module load for the same circular import reason
     as register_builtin_restock_plugins().
     """
-    from changedetectionio.processors.restock_diff.plugins import api_state
+    from changedetectionio.processors.restock_diff.plugins import api_state, mcp_tools
     if not plugin_manager.is_registered(api_state):
         # 'builtin_' names are hidden from the active plugins list, see get_active_plugins()
         plugin_manager.register(api_state, 'builtin_restock_api_state')
+    # The restock MCP tools (register_mcp_tools). Light to import: what they need is imported when they run
+    if not plugin_manager.is_registered(mcp_tools):
+        plugin_manager.register(mcp_tools, 'builtin_restock_mcp_tools')
 
 def _require_login_before_request():
     from changedetectionio.auth_decorator import login_optionally_required

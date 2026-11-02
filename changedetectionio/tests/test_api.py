@@ -291,6 +291,11 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     )
     assert res.json.get('watch_count') == 1
     assert res.json.get('uptime') > 0.5
+    # Which watches the fetch workers are on right now, and how many workers there are
+    assert res.json.get('fetch_workers') >= 1
+    assert isinstance(res.json.get('checking_now'), list)
+    for running in res.json['checking_now']:
+        assert set(running) == {'uuid', 'title', 'url', 'running_seconds'}
 
     ######################################################
     # Mute and Pause, check it worked
@@ -1683,5 +1688,44 @@ def test_api_recheck_with_errors_skips_paused(client, live_server, measure_memor
     assert final[ok_uuid] != after[ok_uuid]
     assert final[error_uuid] != after[error_uuid]
     assert final[paused_uuid] == before[paused_uuid]
+
+    delete_all_watches(client)
+
+
+def test_api_watch_value_validation(client, live_server, measure_memory_usage, datastore_path):
+    """Values are checked against the API spec (types, lengths, list sizes, enums, patterns) on create and update,
+    in api/operations.py, so every way into a watch (REST, MCP) gets the same checks."""
+    datastore = live_server.app.config['DATASTORE']
+    api_key = datastore.data['settings']['application'].get('api_access_token')
+    headers = {'x-api-key': api_key, 'content-type': 'application/json'}
+
+    res = client.post(url_for("createwatch"), data=json.dumps({"url": "https://example.com/validate", "title": "Fine"}),
+                      headers=headers)
+    assert res.status_code == 201
+    watch_uuid = res.json['uuid']
+    watch = datastore.data['watching'][watch_uuid]
+
+    # Each bad value is refused and nothing is written
+    for bad in ({"title": "x" * 6000}, {"paused": "false"}, {"processor": "not-a-processor"},
+                {"fetch_backend": "not-a-fetcher"}, {"include_filters": ["#a"] * 101},
+                {"notification_urls": ["json://example.com/" + "x" * 1000]}):
+        res = client.put(url_for("watch", uuid=watch_uuid), data=json.dumps(bad), headers=headers)
+        assert res.status_code == 400, f"{list(bad)} should have been refused"
+        assert watch.get('title') == 'Fine' and not watch.get('paused')
+
+    # Create gets the same checks, nothing is added
+    count = len(datastore.data['watching'])
+    res = client.post(url_for("createwatch"), data=json.dumps({"url": "https://example.com/two", "include_filters": ["#a"] * 101}),
+                      headers=headers)
+    assert res.status_code == 400
+    assert len(datastore.data['watching']) == count
+
+    # The shared check itself gives short messages, without repeating the value
+    from changedetectionio.api.operations import ApiError, validate_against_spec
+    try:
+        validate_against_spec({"title": "x" * 6000, "paused": "no"}, 'UpdateWatch')
+        assert False, "should have raised"
+    except ApiError as e:
+        assert e.message == "paused: must be of type boolean; title: longer than 5000 characters"
 
     delete_all_watches(client)

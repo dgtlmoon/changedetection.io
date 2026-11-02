@@ -303,6 +303,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
         # Generate API access token
         self.__data['settings']['application']['api_access_token'] = secrets.token_hex(16)
+
         logger.warning(f"No datastore found, creating new datastore at {self.datastore_path}")
 
         # Set schema version to latest (no updates needed)

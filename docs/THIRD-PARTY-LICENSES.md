@@ -4,7 +4,7 @@ Generated 2026-11-02 from the built container.
 **Do not edit by hand** - run `.github/scripts/generate-third-party-licenses.sh`.
 
 Every third-party Python package bundled in the distributed image
-(171 packages). This exists to satisfy attribution requirements and to
+(172 packages). This exists to satisfy attribution requirements and to
 answer procurement and due-diligence questions without a manual audit.
 
 For copyright ownership and our licence elections, see `NOTICE`.
@@ -93,6 +93,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [lxml_html_clean](https://github.com/fedora-python/lxml_html_clean/) | 0.4.6 | BSD-3-Clause |
 | [Markdown](https://Python-Markdown.github.io/) | 3.11.2 | BSD-3-Clause |
 | [MarkupSafe](https://github.com/pallets/markupsafe/) | 3.0.4 | BSD-3-Clause |
+| [mcp-types](https://modelcontextprotocol.io) | 2.3.0 | MIT License |
 | mf2py | 2.0.2 | MIT License |
 | [more-itertools](https://github.com/more-itertools/more-itertools) | 11.2.1 | MIT |
 | [multidict](https://github.com/aio-libs/multidict) | 7.2.1 | Apache-2.0 |

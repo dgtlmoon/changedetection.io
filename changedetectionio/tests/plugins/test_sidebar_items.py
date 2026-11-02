@@ -53,8 +53,6 @@ def test_plugin_sidebar_items(client, live_server, measure_memory_usage, datasto
     marker = f'<!-- blueprint:{_SidebarPlugin.__module__}._SidebarPlugin -->'
     assert html.count(marker) == 4 * 2, "four items, rendered in the desktop rail and the mobile drawer"
     assert html.split(marker)[1].lstrip().startswith('<li class="action-sidebar-li">')
-    # The built-in AI / LLM link is added the same way, by its own module
-    assert '<!-- blueprint:changedetectionio.blueprint.settings.llm.sidebar -->' in html
     assert 'No such endpoint' not in html
     # Lower weight first
     assert html.index('External') < html.index('Plugin page')

@@ -58,6 +58,7 @@ from changedetectionio.api import (
     WatchSingleHistory,
 )
 from changedetectionio.api.Search import Search
+from changedetectionio.api.Changes import Changes
 from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.favicon_utils import get_favicon_mime_type
 from changedetectionio.languages import (
@@ -934,6 +935,9 @@ def changedetection_app(config=None, datastore_o=None):
             # API routes - use their own auth mechanism (@auth.check_token)
             elif request.path.startswith('/api/'):
                 return None
+            # MCP server - its own access token (blueprint/mcp/__init__.py)
+            elif request.blueprint == 'mcp':
+                return None
             else:
                 return login_manager.unauthorized()
 
@@ -1014,6 +1018,8 @@ def changedetection_app(config=None, datastore_o=None):
     )
 
     watch_api.add_resource(Search, '/api/v1/search', resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(Changes, '/api/v1/changes', resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(
         Notifications, '/api/v1/notifications', resource_class_kwargs={'datastore': datastore}
@@ -1409,6 +1415,17 @@ def changedetection_app(config=None, datastore_o=None):
             datastore, update_q, worker_pool, queuedWatchMetaData, watch_check_update
         )
     )
+
+    # MCP server for AI assistants, JSON-RPC with its own access token, so no CSRF token.
+    # Not registered at all with LLM_FEATURES_DISABLED or DISABLE_MCP=true.
+    import changedetectionio.blueprint.mcp as mcp
+
+    if not mcp.is_mcp_disabled():
+        mcp_blueprint = mcp.construct_blueprint(datastore, update_q)
+        csrf.exempt(mcp_blueprint)
+        # /mcp/v1 versions our tool contract (names, arguments, results), not the MCP protocol, which is negotiated
+        # per session. Additive changes stay in v1; only a breaking change would get a /mcp/v2.
+        app.register_blueprint(mcp_blueprint, url_prefix='/mcp/v1')
 
     import changedetectionio.blueprint.pwa as pwa
 

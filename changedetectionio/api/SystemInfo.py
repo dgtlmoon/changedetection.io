@@ -37,8 +37,11 @@ class SystemInfo(Resource):
     def get(self):
         """Return system info."""
         overdue_watches = overdue_watch_uuids(self.datastore)
-        from changedetectionio import __version__ as main_version
+        from changedetectionio import __version__ as main_version, worker_pool
+        from changedetectionio.api.operations import checking_now
         return {
+            'checking_now': checking_now(self.datastore),
+            'fetch_workers': worker_pool.get_worker_count(),
             'all_muted': self.datastore.data['settings']['application']['all_muted'],
             'all_paused': self.datastore.data['settings']['application']['all_paused'],
             'base_url': self.datastore.data['settings']['application']['base_url'],

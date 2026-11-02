@@ -2,7 +2,6 @@ import os
 import re
 import threading
 
-from changedetectionio.validate_url import is_safe_valid_url
 from changedetectionio.favicon_utils import get_favicon_mime_type
 
 from . import auth
@@ -13,11 +12,9 @@ from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-from . import validate_openapi_request, get_readonly_watch_fields, strip_internal_api_fields, \
-    get_processor_api_fields, strip_readonly_processor_fields
+from . import validate_openapi_request, strip_internal_api_fields, get_processor_api_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
-from ..model.Watch import validate_time_between_check_required
 
 
 def validate_time_schedule_limit(json_data):
@@ -153,109 +150,13 @@ class Watch(Resource):
     @validate_openapi_request('updateWatch')
     def put(self, uuid):
         """Update watch information."""
-        watch = self.datastore.data['watching'].get(uuid)
-        if not watch:
+        from changedetectionio.api.operations import ApiError, update_watch
+        if not self.datastore.data['watching'].get(uuid):
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
-
-        if request.json.get('proxy'):
-            plist = self.datastore.proxy_list
-            if not plist or request.json.get('proxy') not in plist:
-                proxy_list_str = ', '.join(plist) if plist else 'none configured'
-                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
-
-        # Validate time_between_check when not using defaults
-        validation_error = validate_time_between_check_required(request.json)
-        if validation_error:
-            return validation_error, 400
-
-        # An invalid timezone here makes the watch permanently unschedulable
-        validation_error = validate_time_schedule_limit(request.json)
-        if validation_error:
-            return validation_error, 400
-
-        # Validate notification_urls if provided
-        if 'notification_urls' in request.json:
-            from wtforms import ValidationError
-            from changedetectionio.api.Notifications import validate_notification_urls
-            try:
-                notification_urls = request.json.get('notification_urls', [])
-                validate_notification_urls(notification_urls)
-            except ValidationError as e:
-                return str(e), 400
-
-        validation_error = validate_jinja2_templates(request.json)
-        if validation_error:
-            return validation_error, 400
-
-        # XSS etc protection - validate URL if it's being updated
-        if 'url' in request.json:
-            new_url = request.json.get('url')
-
-            # URL must be a non-empty string
-            if new_url is None:
-                return "URL cannot be null", 400
-
-            if not isinstance(new_url, str):
-                return "URL must be a string", 400
-
-            if not new_url.strip():
-                return "URL cannot be empty or whitespace only", 400
-
-            if not is_safe_valid_url(new_url.strip()):
-                return "Invalid or unsupported URL format. URL must use http://, https://, or ftp:// protocol", 400
-
-        # Handle processor-config-* fields separately (save to JSON, not datastore)
-        from changedetectionio import processors
-
-        # Make a mutable copy of request.json for modification.
-        # Silently discard `__`-prefixed transient/internal keys — they are not part of the
-        # public schema and must never be writable (e.g. clients that round-trip GET → PUT).
-        json_data = strip_internal_api_fields(dict(request.json))
-        # Same for the read-only processor_state_* / processor_config_*_source fields GET adds
-        json_data = strip_readonly_processor_fields(json_data)
-
-        # Extract and remove processor config fields from json_data
-        processor_config_data = processors.extract_processor_config_from_form_data(json_data)
-
-        # Filter out readOnly fields (extracted from OpenAPI spec Watch schema)
-        # These are system-managed fields that should never be user-settable
-        readonly_fields = get_readonly_watch_fields()
-
-        # Also filter out @property attributes (computed/derived values from the model)
-        # These are not stored and should be ignored in PUT requests
-        from changedetectionio.model.Watch import model as WatchModel
-        property_fields = WatchModel.get_property_names()
-
-        # Combine both sets of fields to ignore
-        fields_to_ignore = readonly_fields | property_fields
-
-        # Remove all ignored fields from update data
-        for field in fields_to_ignore:
-            json_data.pop(field, None)
-
-        # Validate remaining fields - reject truly unknown fields
-        # Get valid fields from WatchBase schema
-        from . import get_watch_schema_properties
-        valid_fields = set(get_watch_schema_properties().keys())
-
-        # Also allow last_viewed (explicitly defined in UpdateWatch schema)
-        valid_fields.add('last_viewed')
-
-        # Check for unknown fields
-        unknown_fields = set(json_data.keys()) - valid_fields
-        if unknown_fields:
-            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
-
-        # Update watch with regular (non-processor-config) fields
-        watch.update(json_data)
-        # The request alone can be valid but leave no interval once merged, e.g. nulling the
-        # interval of a watch that already has time_between_check_use_default=False
-        watch.ensure_valid_time_between_check()
-        watch.commit()
-
-        # Save processor config to JSON file
-        processors.save_processor_config(self.datastore, uuid, processor_config_data)
-
+        try:
+            update_watch(self.datastore, uuid, request.json)
+        except ApiError as e:
+            return e.message, e.status
         return "OK", 200
 
 
@@ -506,77 +407,13 @@ class CreateWatch(Resource):
     @validate_openapi_request('createWatch')
     def post(self):
         """Create a single watch."""
-
-        # Silently discard `__`-prefixed transient/internal keys (not part of the public schema).
-        json_data = strip_internal_api_fields(request.get_json())
-        url = json_data['url'].strip()
-
-        validation_error = validate_jinja2_templates(json_data)
-        if validation_error:
-            return validation_error, 400
-
-        if not is_safe_valid_url(url):
-            return "Invalid or unsupported URL", 400
-
-        if json_data.get('proxy'):
-            plist = self.datastore.proxy_list
-            if not plist or json_data.get('proxy') not in plist:
-                proxy_list_str = ', '.join(plist) if plist else 'none configured'
-                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
-
-        # Validate time_between_check when not using defaults
-        validation_error = validate_time_between_check_required(json_data)
-        if validation_error:
-            return validation_error, 400
-
-        # An invalid timezone here makes the watch permanently unschedulable
-        validation_error = validate_time_schedule_limit(json_data)
-        if validation_error:
-            return validation_error, 400
-
-        # Validate notification_urls if provided
-        if 'notification_urls' in json_data:
-            from wtforms import ValidationError
-            from changedetectionio.api.Notifications import validate_notification_urls
-            try:
-                notification_urls = json_data.get('notification_urls', [])
-                validate_notification_urls(notification_urls)
-            except ValidationError as e:
-                return str(e), 400
-
-        # Handle processor-config-* fields separately (save to JSON, not watch)
-        from changedetectionio import processors
-
-        extras = copy.deepcopy(json_data)
-
-        # Extract and remove processor config fields from extras
-        processor_config_data = processors.extract_processor_config_from_form_data(extras)
-
-        # Because we renamed 'tag' to 'tags' but don't want to change the API (can do this in v2 of the API)
-        tags = None
-        if extras.get('tag'):
-            tags = extras.get('tag')
-            del extras['tag']
-
-        del extras['url']
-
-        # PAGE_WATCH_LIMIT - checked up front so a blocked add is reported as 429 rather than
-        # being guessed at from add_watch() returning None
-        if self.datastore.watch_limit_reached():
-            current_watch_count = len(self.datastore.data['watching'])
-            return f"Watch limit reached ({current_watch_count}/{self.datastore.watch_limit} watches). Cannot add more watches.", 429
-
-        new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
-
-        # Save processor config to separate JSON file
-        if new_uuid and processor_config_data:
-            processors.save_processor_config(self.datastore, new_uuid, processor_config_data)
-        if new_uuid:
-# Dont queue because the scheduler will check that it hasnt been checked before anyway
-#            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
-            return {'uuid': new_uuid}, 201
-        else:
-            return "Invalid or unsupported URL", 400
+        from changedetectionio.api.operations import ApiError, create_watch
+        try:
+            new_uuid = create_watch(self.datastore, request.get_json())
+        except ApiError as e:
+            return e.message, e.status
+        # Dont queue because the scheduler will check that it hasnt been checked before anyway
+        return {'uuid': new_uuid}, 201
 
     @auth.check_token
     @validate_openapi_request('listWatches')

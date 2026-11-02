@@ -463,6 +463,18 @@ msgid "All notifications unmuted."
 msgstr "모든 알림의 음소거가 해제되었습니다."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP settings saved."
+msgstr "MCP 설정을 저장했습니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP server switched on."
+msgstr "MCP 서버를 켰습니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP server switched off."
+msgstr "MCP 서버를 껐습니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -477,75 +489,146 @@ msgstr "AI / LLM 설정이 제거되었습니다."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 요약 캐시가 지워졌습니다({}개 파일 제거됨)."
 
-#: changedetectionio/blueprint/settings/llm/sidebar.py changedetectionio/blueprint/settings/llm/templates/llm-settings.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr "AI / LLM"
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access tokens"
+msgstr "액세스 토큰"
 
-#: changedetectionio/blueprint/settings/llm/sidebar.py
-msgid "AI / LLM settings"
-msgstr "AI / LLM 설정"
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Get started"
+msgstr "시작하기"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Switch on the MCP server"
+msgstr "MCP 서버 켜기"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Tick the box above, then Save."
+msgstr "위의 상자를 선택한 다음 저장하세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Add an access token"
+msgstr "액세스 토큰 추가"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Every assistant needs one to connect."
+msgstr "모든 어시스턴트는 연결하려면 토큰이 필요합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add access token"
+msgstr "액세스 토큰 추가"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Connect an assistant"
+msgstr "어시스턴트 연결"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Copy the command or config for your assistant."
+msgstr "어시스턴트용 명령이나 설정을 복사하세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Connect"
+msgstr "연결"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#, python-format
+msgid "Last used %(when)s"
+msgstr "마지막 사용 %(when)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Never used"
+msgstr "사용한 적 없음"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Edit"
+msgstr "편집"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Revoke"
+msgstr "취소"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Add your first access token"
+msgstr "첫 액세스 토큰 추가"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Add one for each assistant, so each has its own permissions and can be revoked on its own."
+msgstr "어시스턴트마다 하나씩 추가하면 각자 권한을 갖고 따로 취소할 수 있습니다."
 
 #. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgctxt "AI usage stats"
 msgid "Usage"
 msgstr "사용량"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Overview"
 msgstr "개요"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Provider"
 msgstr "프로바이더"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Prompts"
 msgstr "프롬프트"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Behaviour"
 msgstr "동작"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "AI-powered change monitoring"
 msgstr "AI 기반 변경 모니터링"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
-msgid "Connect an LLM to move from \"something changed\" to \"only the thing you care about changed\"."
-msgstr "LLM을 연결해 \"무언가 변경됨\"에서 \"관심 있는 내용만 변경됨\"으로 전환하세요."
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"Configure the connection to your favorite AI assistant service, such as OpenAI, Claude, Google Gemini - move from "
+"\"something changed\" to \"only the thing you care about changed\"."
+msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "For a short tutorial on how to setup AI integration, see this tutorial."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Intent filtering"
 msgstr "판단 기준 필터링"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid ""
 "Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
 "diff against it and suppresses irrelevant noise."
 msgstr "각 모니터링 또는 태그에 일반 텍스트 판단 기준(%(ex1)s 또는 %(ex2)s)을 지정할 수 있습니다. 변경이 감지될 때마다 AI가 diff를 이 기준과 비교해 불필요한 알림을 줄입니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid ""
 "Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
 "small models (≤3B) may misjudge numeric comparisons."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid ""
 "Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
 "prompt here, or override per watch or tag."
 msgstr "raw diff 대신 알림에서 자연어 요약(%(ex1)s 또는 %(ex2)s)을 받을 수 있습니다. 여기에서 전역 기본 프롬프트를 설정하거나 모니터링/태그별로 재정의하세요."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Minimal cost"
 msgstr "최소 비용"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid ""
 "The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
@@ -554,53 +637,53 @@ msgstr ""
 "AI는 전체 페이지 HTML이 아닌 변경된 내용의 unified diff만 확인합니다. %(gpt)s 또는 %(gemini)s 같은 저비용 모델도 이를 잘 처리합니다. 보통 확인당 1센트보다 훨씬 적은 비용이 "
 "듭니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "AI / LLM configured:"
 msgstr "AI / LLM 설정됨:"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Edit provider"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Configure AI Provider"
 msgstr "AI 프로바이더 설정"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "AI Provider"
 msgstr "AI 프로바이더"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Third-party data transfer — please read"
 msgstr "제3자 데이터 전송 - 읽어 주세요"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
 " sent to an external AI provider of your choice."
 msgstr "AI 기능이 활성화되면 모니터링하는 웹사이트의 변경 데이터(페이지 diff와 추출된 텍스트 포함)가 선택한 외부 AI 프로바이더로 전송됩니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
 msgstr "이 기능 사용이 모니터링하는 각 웹사이트의 서비스 약관을 준수하는지 확인할 책임은 전적으로 사용자에게 있습니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
 "data that may appear in monitored content."
 msgstr "모니터링된 콘텐츠에 포함될 수 있는 개인정보와 관련해 적용되는 데이터 보호 법률(예: GDPR)을 준수할 책임은 전적으로 사용자에게 있습니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
 "control over those charges."
 msgstr "선택한 프로바이더에서 청구하는 API 비용은 사용자 책임입니다. 이 소프트웨어는 해당 비용을 확인하거나 제어할 수 없습니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
 "fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
@@ -610,21 +693,21 @@ msgstr ""
 "AI / LLM 모델은 그럴듯하지만 사실과 다르거나 완전히 조작된 출력을 확신하는 듯 생성하는 환각 현상이 있을 수 있으며, 설계상 요약 과정에서 관련 데이터를 누락하거나 잘라낼 수 있습니다. AI 출력이 "
 "완전하거나 정확하다고 절대 의존해서는 안 됩니다. 이 소프트웨어는 어떠한 보증도 없이 있는 그대로 제공됩니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
 " from any claims, damages, or liability arising from this data transfer or your use of AI features."
 msgstr "AI 기능을 활성화하면 이 데이터 전송 또는 AI 기능 사용으로 인해 발생하는 모든 청구, 손해 또는 책임이 사용자에게 있으며, 이 소프트웨어의 제작자와 기여자에게 책임을 묻지 않는 데 동의하는 것입니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
 msgstr "위 내용을 읽고 이해했습니다. 모든 책임이 사용자에게 있음을 인지하고 이에 동의합니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html changedetectionio/templates/_common_fields.html
 msgid "Note"
 msgstr "참고"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid ""
 "AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
@@ -633,23 +716,23 @@ msgstr ""
 "AI / LLM이 환경 변수(<code>LLM_MODEL=%(model)s</code>%(api_base)s)로 설정되어 있습니다. 대신 이 양식에서 설정하려면 <code>LLM_MODEL</code> 환경 "
 "변수를 제거하세요."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "select a provider"
 msgstr "프로바이더 선택"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Saved. Use \"Remove provider\" below to change the provider or key."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
 msgstr "Ollama 또는 사용자 지정/자체 호스팅 엔드포인트에만 필요합니다. 클라우드 프로바이더는 비워 두세요."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid ""
 "Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
@@ -659,303 +742,552 @@ msgid ""
 "original tight caps."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
 "--reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat "
 "template supports enable_thinking (Qwen3 and others)."
 msgstr ""
-"먼저 추론하지 않고 답하도록 서버에 요청합니다. 훨씬 빠릅니다. 선택하지 않으면 서버가 정합니다(llama.cpp: --reasoning-budget). Ollama에서 작동하며, OpenAI 호환 "
-"서버(llama.cpp, vLLM)에서는 채팅 템플릿이 enable_thinking을 지원하는 모델(Qwen3 등)에서 작동합니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Load available models"
 msgstr "사용 가능한 모델 불러오기"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Available models"
 msgstr "사용 가능한 모델"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "choose a model"
 msgstr "모델 선택"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Type a model name or choose from available models"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
 "key blank to keep your saved key."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Change model"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove AI / LLM configuration?"
 msgstr "AI / LLM 설정을 제거할까요?"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "This will remove your saved AI provider, model, and API key."
 msgstr "저장된 AI 프로바이더, 모델, API 키가 제거됩니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove"
 msgstr "제거"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "취소"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove provider"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Test connection"
 msgstr "연결 테스트"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
 "extracted text are sent to the LLM — no full page HTML."
 msgstr "API 키는 로컬에 저장되며 선택한 프로바이더에만 전송됩니다. 변경이 감지될 때마다 모니터링의 diff와 추출된 텍스트가 LLM으로 전송되며, 전체 페이지 HTML은 전송되지 않습니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Cache"
 msgstr "캐시"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Clear all summary cache?"
 msgstr "모든 요약 캐시를 지울까요?"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "This will remove all cached AI change summaries across all watches."
 msgstr "모든 모니터링에 저장된 AI 변경 요약 캐시가 제거됩니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "They will be regenerated on the next check."
 msgstr "다음 확인 시 다시 생성됩니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Clear cache"
 msgstr "캐시 지우기"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Clear all summary cache"
 msgstr "모든 요약 캐시 지우기"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
 msgstr "모든 모니터링에 저장된 AI 변경 요약 캐시를 제거합니다. 다음 확인 시 다시 생성됩니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
 "Leave off in production — generates a lot of log volume."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Default AI Change Summary"
 msgstr "기본 AI 변경 요약"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Used for all watches unless overridden by the watch or its tag/group."
 msgstr "모니터링 또는 태그/그룹에서 재정의하지 않는 한 모든 모니터링에 사용됩니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Modify default prompt"
 msgstr "기본 프롬프트 수정"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid ""
 "When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use "
 "<code>%(raw_diff)s</code> to always get the original."
 msgstr "활성화하면 <code>%(diff)s</code> 알림 토큰은 raw diff 대신 AI 요약을 표시합니다. 원본을 항상 받으려면 <code>%(raw_diff)s</code>를 사용하세요."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
 "structured metadata (JSON-LD, microdata, OpenGraph) is found."
 msgstr "활성화하면 구조화된 메타데이터(JSON-LD, microdata, OpenGraph)를 찾을 수 없는 상품 페이지에서 가격과 재고 상태를 추출하기 위한 최후의 수단으로 AI를 사용합니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
 "Off if summaries are being cut short."
 msgstr "Gemini 2.5 이상 모델 전용입니다. 추론 토큰은 응답 품질을 높이지만 출력 예산에 포함됩니다. 요약이 중간에 잘린다면 끄기로 설정하세요."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
 "more."
 msgstr "AI가 변경 요약을 작성할 때 사용할 수 있는 토큰 상한입니다. 값이 높을수록 더 긴 요약이 가능하지만 비용이 증가합니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Configure a provider first to unlock behaviour settings."
 msgstr "동작 설정을 사용하려면 먼저 프로바이더를 설정하세요."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Token & Cost Tracking"
 msgstr "토큰 및 비용 추적"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "This month"
 msgstr "이번 달"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "tokens"
 msgstr "토큰"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid "%(percent)s%% of %(budget)s"
 msgstr "%(budget)s 중 %(percent)s%%"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "All-time total"
 msgstr "전체 누적"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Monthly token budget reached. AI summarisation is paused until next month."
 msgstr "월간 토큰 예산에 도달했습니다. AI 요약은 다음 달까지 일시중지됩니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Token budget this period"
 msgstr "이번 기간 토큰 예산"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
 msgstr "(<code>LLM_TOKEN_BUDGET_MONTH</code>로 설정됨)"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "0 = unlimited"
 msgstr "0 = 무제한"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "tokens (0 = unlimited)"
 msgstr "토큰(0 = 무제한)"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Current billing period"
 msgstr "현재 청구 기간"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
 msgstr "(<code>LLM_MAX_INPUT_CHARS</code>로 설정됨)"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #, python-format
 msgid "characters — currently enforcing: %(limit)s"
 msgstr "문자 - 현재 적용 중: %(limit)s"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
 "tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
 "unlimited)"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "No AI usage recorded yet."
 msgstr "아직 기록된 AI 사용량이 없습니다."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Token budget"
 msgstr "토큰 예산"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "tokens per month (0 = unlimited)"
 msgstr "월별 토큰(0 = 무제한)"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "platform.openai.com → API keys"
 msgstr "platform.openai.com → API 키"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "console.anthropic.com → API keys"
 msgstr "console.anthropic.com → API 키"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "aistudio.google.com → Get API key"
 msgstr "aistudio.google.com → API 키 받기"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "No API key needed for local Ollama"
 msgstr "로컬 Ollama에는 API 키가 필요 없습니다"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "openrouter.ai → Keys"
 msgstr "openrouter.ai → 키"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "platform.deepseek.com → API keys"
 msgstr "platform.deepseek.com → API 키"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "console.groq.com → API keys"
 msgstr "console.groq.com → API 키"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "console.mistral.ai → API keys"
 msgstr "console.mistral.ai → API 키"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "api.together.ai → API keys"
 msgstr "api.together.ai → API 키"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "console.x.ai → API keys"
 msgstr "console.x.ai → API 키"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Select a provider first."
 msgstr "먼저 프로바이더를 선택하세요."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Loading…"
 msgstr "불러오는 중..."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "No models returned by the provider."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "— choose a model —"
 msgstr "- 모델 선택 -"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "models available with your key"
 msgstr "개 모델을 이 키로 사용할 수 있습니다"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Request failed"
 msgstr "요청 실패"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Testing…"
 msgstr "테스트 중..."
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Connected"
 msgstr "연결됨"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Failed"
 msgstr "실패"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copy"
+msgstr "복사"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copied"
+msgstr "복사됨"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
+msgstr "읽기: 목록, 변경 사항, 차이, 스냅샷. 쓰기: 추가, 변경, 재확인, 태그 지정, 삭제."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read: list. Write: create, rename and delete."
+msgstr "읽기: 목록. 쓰기: 생성, 이름 변경, 삭제."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
+msgstr "읽기: 목록(비밀 정보 숨김) 및 서비스 조회. 쓰기: 추가, 제거, 음소거."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Health, the check queue and what is being checked right now."
+msgstr "상태, 확인 대기열, 지금 확인 중인 항목."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Connect AI assistants with MCP"
+msgstr "MCP로 AI 어시스턴트 연결"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "The MCP server is switched off on this installation."
+msgstr "이 설치에서는 MCP 서버가 꺼져 있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
+"use other applications as tools."
+msgstr "MCP(Model Context Protocol)는 Claude, ChatGPT, Cursor, VS Code 같은 AI 어시스턴트가 다른 애플리케이션을 도구로 사용할 수 있게 해 주는 개방형 표준입니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Off: the MCP and OAuth endpoints are switched off and no assistant can connect. Everything here can still be set up "
+"first."
+msgstr "꺼짐: MCP 및 OAuth 엔드포인트가 꺼져 있어 어떤 어시스턴트도 연결할 수 없습니다. 여기의 모든 설정은 미리 해 둘 수 있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Off"
+msgstr "꺼짐"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Look"
+msgstr "조회"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"List monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked "
+"right now."
+msgstr "모니터와 그룹 목록, 두 날짜 사이의 변경 사항, 차이, 페이지 스냅샷, 오류, 지금 확인 중인 항목."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Change"
+msgstr "변경"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add monitors, change their settings, tag them, recheck them and set up notifications, as far as the permissions allow."
+msgstr "권한이 허용하는 범위에서 모니터 추가, 설정 변경, 태그 지정, 재확인, 알림 설정."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Safe by default"
+msgstr "기본적으로 안전"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
+msgstr "모니터링하는 페이지의 텍스트는 데이터로 어시스턴트에 전달됩니다. 알림 URL은 절대 전체가 보이지 않습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Server"
+msgstr "서버"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Server address"
+msgstr "서버 주소"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "MCP access token"
+msgstr "MCP 액세스 토큰"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add a token for each assistant on the Access tokens sub-tab. It is shown once, when it is created."
+msgstr "액세스 토큰 하위 탭에서 어시스턴트마다 토큰을 추가하세요. 생성할 때 한 번만 표시됩니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Treat it like a password."
+msgstr "비밀번호처럼 다루세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"It does not expire, and anyone who has it can use these tools and read what they return. Never paste it into a file "
+"you commit or share."
+msgstr "만료되지 않으며, 이를 가진 사람은 누구나 이 도구들을 쓰고 그 결과를 읽을 수 있습니다. 커밋하거나 공유하는 파일에는 절대 붙여 넣지 마세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Most assistants below can read it from an environment variable, so it stays out of their config files. Set it once, "
+"for example in ~/.bashrc or ~/.zshrc:"
+msgstr "아래 대부분의 어시스턴트는 환경 변수에서 읽을 수 있어 설정 파일에 토큰을 넣지 않아도 됩니다. 한 번만 설정하세요 (예: ~/.bashrc 또는 ~/.zshrc):"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Run this in a terminal, then start a new Claude Code session and ask, for example, \"Which of my monitors have "
+"errors?\""
+msgstr "터미널에서 이것을 실행한 다음 새 Claude Code 세션을 시작하고, 예를 들어 \"오류가 있는 모니터는?\"이라고 물어보세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "To remove it again:"
+msgstr "다시 제거하려면:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"By default (--scope local) Claude Code saves this in ~/.claude.json, only for you and only in the current project. "
+"Add --scope user to have it in all your projects."
+msgstr ""
+"기본값(--scope local)에서는 Claude Code가 이를 ~/.claude.json에 저장하며, 나만 현재 프로젝트에서만 사용합니다. --scope user를 추가하면 모든 프로젝트에서 사용할 수 "
+"있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves "
+"a reference to the environment variable, not the token:"
+msgstr "--scope project는 프로젝트에 .mcp.json을 쓰며, 이 파일은 보통 커밋됩니다. 이때는 이 형식을 쓰세요. 토큰 대신 환경 변수에 대한 참조가 저장됩니다:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "This file contains the token: keep it in your own settings, not in anything you commit or share."
+msgstr "이 파일에는 토큰이 들어 있습니다: 내 설정에만 두고, 커밋하거나 공유하는 곳에는 넣지 마세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "VS Code asks for the token once and stores it securely, so this file is safe to commit."
+msgstr "VS Code는 토큰을 한 번 묻고 안전하게 저장하므로 이 파일은 커밋해도 안전합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Uses httpUrl, not url (url means the older SSE transport)."
+msgstr "url이 아니라 httpUrl을 씁니다 (url은 예전 SSE 전송을 뜻합니다)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access "
+"token."
+msgstr "mcp-remote 브리지를 통해(Node.js 필요). Claude Desktop 커넥터는 액세스 토큰이 아니라 로그인만 지원하기 때문입니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Any other assistant (Windsurf, Devin and others)"
+msgstr "그 밖의 어시스턴트 (Windsurf, Devin 등)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Most assistants can run a local command: the same mcp-remote bridge (needs Node.js), in the format of that "
+"assistant's MCP settings."
+msgstr "대부분의 어시스턴트는 로컬 명령을 실행할 수 있습니다: 같은 mcp-remote 브리지(Node.js 필요)를 해당 어시스턴트의 MCP 설정 형식으로 넣으세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add token"
+msgstr "토큰 추가"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "One for each assistant, each with its own permissions. Revoking one disconnects only that assistant."
+msgstr "어시스턴트마다 하나씩, 각자 권한이 있습니다. 하나를 취소하면 그 어시스턴트만 연결이 끊깁니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Revoke this access token?"
+msgstr "이 액세스 토큰을 취소할까요?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "The assistant using it is disconnected at once."
+msgstr "이 토큰을 쓰는 어시스턴트는 즉시 연결이 끊깁니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Something went wrong, please try again."
+msgstr "문제가 발생했습니다. 다시 시도해 주세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Notifications are read-only by default. A page an assistant reads could try to get it to send your alerts, and the "
+"page text in them, somewhere else."
+msgstr "알림은 기본적으로 읽기 전용입니다. 어시스턴트가 읽는 페이지가 알림을 페이지 내용과 함께 다른 곳으로 보내도록 유도할 수 있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "어시스턴트 하나만 읽기 전용으로 하려면 대신 이 주소를 사용하세요:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "OAuth connections"
+msgstr "OAuth 연결"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Sign in with OAuth is coming soon"
+msgstr "OAuth 로그인 지원 예정"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not "
+"offer yet."
+msgstr "브라우저의 ChatGPT와 claude.ai는 로그인(OAuth)이 있는 서버에만 연결되며, 이 MCP 서버는 아직 이를 제공하지 않습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Assistants you connect that way will be listed here, and you can disconnect them."
+msgstr "이 방법으로 연결한 어시스턴트가 여기에 표시되며 연결을 해제할 수 있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Edit access token"
+msgstr "액세스 토큰 편집"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access token created"
+msgstr "액세스 토큰을 만들었습니다"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Copy it now, it is not shown again."
+msgstr "지금 복사하세요. 다시 표시되지 않습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Set it once, for example in ~/.bashrc or ~/.zshrc, then use the configs on the Connect sub-tab:"
+msgstr "~/.bashrc 또는 ~/.zshrc 등에 한 번 설정한 뒤 연결 하위 탭의 설정을 사용하세요:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Done"
+msgstr "완료"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr "AI / LLM"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "Outgoing · your AI provider"
+msgstr "나가는 연결 · AI 제공업체"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "MCP Server"
+msgstr "MCP 서버"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "Incoming · AI assistants"
+msgstr "들어오는 연결 · AI 어시스턴트"
 
 #: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Unknown notification service"
@@ -999,42 +1331,42 @@ msgstr "알림 디버그 로그"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Install and create shortcut - then \"install\""
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "일반"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Fetching"
 msgstr "가져오기"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Global Filters"
 msgstr "전역 필터"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "UI 옵션"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Backups"
 msgstr "백업"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "시간 및 날짜"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "CAPTCHA & Proxies"
 msgstr "보안 문자 및 프록시"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
 msgstr "정보"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
 
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
@@ -1255,8 +1587,12 @@ msgid "header - required for the Chrome Extension to work"
 msgstr "헤더입니다. Chrome 확장 프로그램이 작동하려면 필요합니다."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "copy"
-msgstr "복사"
+msgid "Regenerate API key?"
+msgstr "API 키를 다시 생성할까요?"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Anything using the current API key stops working until it is given the new one."
+msgstr "현재 API 키를 쓰는 모든 것은 새 키를 받을 때까지 작동하지 않습니다."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
@@ -1570,11 +1906,6 @@ msgstr "알림 음소거"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Recheck"
 msgstr "재확인"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Edit"
-msgstr "편집"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Delete Group?"
@@ -3271,8 +3602,8 @@ msgstr "알림 기본 URL 재정의"
 msgid "Not set"
 msgstr "설정되지 않음"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/blueprint/tags/form.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
 msgid "Save"
 msgstr "저장"
 
@@ -3336,8 +3667,8 @@ msgstr "확인 간격 및 예약 실행에 전역 설정 사용"
 msgid "AI Change Intent - Notify me when.."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/forms.py
 msgid "AI Change Summary"
 msgstr "AI 변경 요약"
 
@@ -3445,10 +3776,11 @@ msgstr "프록시"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "페이지에서 필터를 더 이상 찾을 수 없으면 알림 보내기"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "On"
 msgstr "켜짐"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
@@ -3688,7 +4020,7 @@ msgstr "추론 끄기"
 msgid "Default AI Change Summary prompt"
 msgstr "기본 AI 변경 요약 프롬프트"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html changedetectionio/forms.py
 msgid "Max tokens per watch per period"
 msgstr ""
 
@@ -3696,7 +4028,7 @@ msgstr ""
 msgid "Monthly token budget"
 msgstr "월간 토큰 예산"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html changedetectionio/forms.py
 msgid "Max input characters"
 msgstr "최대 입력 문자 수"
 
@@ -3751,6 +4083,41 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Changes since you last viewed the watch"
 msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "MCP 및 OAuth 엔드포인트 켜기"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "예: Claude Code, 노트북"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Monitors"
+msgstr "모니터"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "Write"
+msgstr "쓰기"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "None"
+msgstr "없음"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "Read"
+msgstr "읽기"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Groups (tags)"
+msgstr "그룹(태그)"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "System info"
+msgstr "시스템 정보"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"
