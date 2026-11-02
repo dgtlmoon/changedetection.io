@@ -52,7 +52,7 @@ def save_llm_form(datastore, llm_form_data):
 
 
 def llm_template_context(datastore):
-    """What llm-settings.html needs, besides the form."""
+    """What the "AI / LLM" part (llm-settings_llm.html) needs, besides the form."""
     from changedetectionio.llm.evaluator import (
         _get_max_input_chars,
         get_global_token_budget_month,
@@ -84,7 +84,7 @@ def llm_template_context(datastore):
 
 
 def mcp_template_context(datastore):
-    """What the "MCP Server" tab (mcp-server-tab.html) needs."""
+    """What the "MCP Server" part (llm-settings_mcp.html) needs."""
     from changedetectionio import forms
     from changedetectionio.blueprint.mcp import is_mcp_disabled
 
@@ -193,7 +193,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             datastore.commit()
             flash(message, 'notice')
             return redirect(url_for('settings.llm.mcp_settings_page'))
-        return render_template("mcp-settings.html", form=form, active_tab='mcp', plugin_tabs=get_plugin_settings_tabs(),
+        return render_template("llm-settings.html", form=form, active_tab='mcp', plugin_tabs=get_plugin_settings_tabs(),
                                **mcp_template_context(datastore))
 
     # The access tokens, managed from the overlay on the "Access tokens" sub-tab with ajax. Every change answers with
