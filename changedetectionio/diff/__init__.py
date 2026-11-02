@@ -408,6 +408,22 @@ def customSequenceMatcher(
                     # No real changes, skip this line
                     continue
                 yield [inline_diff]
+            elif word_diff and len(before_lines) == len(after_lines):
+                # Same number of lines on both sides (e.g. a ranked table where every row moved):
+                # pair them up in order and word-diff each pair, rather than dumping the whole
+                # old block followed by the whole new block.
+                paired = []
+                for before_line, after_line in zip(before_lines, after_lines, strict=True):
+                    # The matcher can leave identical lines (often blank ones) inside a replace block
+                    if prepare_line(before_line) == prepare_line(after_line):
+                        paired.append(after_line)
+                        continue
+                    inline_diff, has_changes = render_inline_word_diff(before_line, after_line, ignore_junk=ignore_junk, tokenizer=tokenizer, include_change_type_prefix=include_change_type_prefix)
+                    if ignore_junk and not has_changes:
+                        continue
+                    paired.append(inline_diff)
+                if paired:
+                    yield paired
             else:
                 # Fall back to line-level diff for multi-line changes
                 if include_change_type_prefix:
