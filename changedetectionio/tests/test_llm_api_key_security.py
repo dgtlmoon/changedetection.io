@@ -809,3 +809,43 @@ def test_llm_clear_via_post_still_works(
     assert 'api_key' not in llm, f"api_key should have been wiped, got: {llm!r}"
     assert 'model' not in llm
     assert 'api_base' not in llm
+
+
+def test_llm_keyless_server_at_a_new_address(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """A local Ollama has no API key: with no key saved there is nothing to leak, so trying a new api_base before
+    Save works (it used to be refused with "api_key is required when api_base differs ...")."""
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')  # so localhost passes SSRF
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds, api_key='')
+    ds.data['settings']['application']['llm'].pop('api_base', None)
+
+    import changedetectionio.llm.model_list as model_list
+    received = []
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: (received.append(kwargs), ['ollama/llama3.2'])[1])
+    res = client.get(url_for('settings.llm.llm_get_models'),
+                     query_string={'provider': 'ollama', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 200, res.get_json()
+    assert res.get_json()['models'] == ['ollama/llama3.2']
+    assert received[0]['api_key'] == ''
+
+    # The connection test too, with a placeholder key so litellm can't fall back to one from the environment
+    import changedetectionio.llm.client as llm_client
+    calls = []
+    monkeypatch.setattr(llm_client, 'completion_isolated', lambda **kw: calls.append(kw) or ('ready', 1, 1, 0))
+    monkeypatch.setenv('OPENAI_API_KEY', 'sk-from-the-environment')
+    res = client.post(url_for('settings.llm.llm_test'),
+                      query_string={'model': 'ollama/llama3.2', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 200, res.get_json()
+    from changedetectionio.blueprint.settings.llm import NO_KEY_PLACEHOLDER
+    assert calls[0]['api_key'] == NO_KEY_PLACEHOLDER
+
+    # With a key saved, the guard still refuses a different address
+    ds.data['settings']['application']['llm']['api_key'] = CANARY_KEY
+    res = client.get(url_for('settings.llm.llm_get_models'),
+                     query_string={'provider': 'ollama', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 400 and 'api_key' in res.get_json()['error']
+    res = client.post(url_for('settings.llm.llm_test'),
+                      query_string={'model': 'ollama/llama3.2', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 400 and len(calls) == 1
