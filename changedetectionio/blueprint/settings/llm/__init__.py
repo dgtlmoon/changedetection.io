@@ -115,6 +115,12 @@ def mcp_tokens_context(datastore):
     return dict(mcp_tokens=listed)
 
 
+# Sent as the API key when the connection test goes to an address that isn't the saved one and no key is saved:
+# keyless servers (Ollama, most local OpenAI-compatible ones) ignore it, and it keeps litellm from using a key from
+# the environment instead
+NO_KEY_PLACEHOLDER = 'no-key'
+
+
 def construct_llm_blueprint(datastore: ChangeDetectionStore):
     llm_blueprint = Blueprint('llm', __name__, template_folder="templates")
 
@@ -292,7 +298,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             if api_base == stored_api_base:
                 api_key = (stored_llm.get('api_key') or '')
                 logger.debug("LLM model list: no api_key in request, using stored key (api_base matches saved)")
-            elif api_base:
+            elif api_base and (stored_llm.get('api_key') or '').strip():
                 logger.warning("LLM model list refused: api_base differs from saved config but no api_key supplied")
                 return jsonify({'models': [], 'error': gettext(
                     "api_key is required when api_base differs from the saved configuration. "
@@ -362,11 +368,15 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         # Otherwise a CSRF / unauthenticated request can route the operator's
         # long-lived provider key to an attacker-controlled endpoint.
         if req_api_base and req_api_base != stored_api_base and not req_api_key:
-            logger.warning("LLM connection test refused: api_base differs from saved config but no api_key supplied")
-            return jsonify({'ok': False, 'error': gettext(
-                "api_key is required when api_base differs from the saved configuration. "
-                "Refusing to send the stored API key to a different endpoint."
-            )}), 400
+            if (stored.get('api_key') or '').strip():
+                logger.warning("LLM connection test refused: api_base differs from saved config but no api_key supplied")
+                return jsonify({'ok': False, 'error': gettext(
+                    "api_key is required when api_base differs from the saved configuration. "
+                    "Refusing to send the stored API key to a different endpoint."
+                )}), 400
+            # No key saved, so none to leak: e.g. a local Ollama tried before Save. Send a placeholder rather than no
+            # key, or litellm falls back to a provider key from the environment (OPENAI_API_KEY...) and sends that
+            llm_cfg['api_key'] = NO_KEY_PLACEHOLDER
 
         try:
             logger.debug(f"LLM connection test: sending test prompt to model={model!r}")
