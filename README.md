@@ -158,7 +158,7 @@ $ docker compose up -d
 
 Docker standalone
 ```bash
-$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
+$ docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io docker.io/dgtlmoon/changedetection.io
 ```
 
 `:latest` tag is our latest stable release, `:dev` tag is our bleeding edge `master` branch.
@@ -189,7 +189,7 @@ _Now with per-site configurable support for using a fast built in HTTP fetcher o
 docker pull dgtlmoon/changedetection.io
 docker kill $(docker ps -a -f name=changedetection.io -q)
 docker rm $(docker ps -a -f name=changedetection.io -q)
-docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io dgtlmoon/changedetection.io
+docker run -d --restart always -p "127.0.0.1:5000:5000" -v datastore-volume:/datastore --name changedetection.io docker.io/dgtlmoon/changedetection.io
 ```
 
 ### docker compose
