@@ -54,7 +54,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [Flask-Login](https://github.com/maxcountryman/flask-login) | 0.6.3 | MIT License |
 | [flask-paginate](https://github.com/lixxu/flask-paginate) | 2026.10.22 | BSD License |
 | [Flask-RESTful](https://www.github.com/flask-restful/flask-restful/) | 0.3.10 | BSD License |
-| [Flask-SocketIO](https://code.miguelgrinberg.com/miguelgrinberg/flask-socketio) | 5.7.0 | MIT License |
+| [Flask-SocketIO](https://code.miguelgrinberg.com/miguelgrinberg/flask-socketio) | 5.7.1 | MIT |
 | [Flask-WTF](https://flask-wtf.readthedocs.io/) | 1.3.0 | BSD License |
 | [frozenlist](https://github.com/aio-libs/frozenlist) | 1.8.0 | Apache-2.0 |
 | [fsspec](https://github.com/fsspec/filesystem_spec) | 2026.9.0 | BSD-3-Clause |
@@ -139,7 +139,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [python-dateutil](https://github.com/dateutil/dateutil) | 2.9.0.post0 | Apache Software License; BSD License |
 | [python-dotenv](https://github.com/theskumar/python-dotenv) | 1.2.4 | BSD-3-Clause |
 | [python-engineio](https://code.miguelgrinberg.com/miguelgrinberg/python-engineio) | 4.15.1 | MIT |
-| [python-socketio](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio) | 5.17.1 | MIT |
+| [python-socketio](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio) | 5.18.0 | MIT |
 | [pytz](http://pythonhosted.org/pytz) | 2026.6 | MIT License |
 | [PyYAML](https://pyyaml.org/) | 6.0.3 | MIT License |
 | [rank-bm25](https://github.com/dorianbrown/rank_bm25) | 0.2.2 | Apache2.0 |
@@ -178,7 +178,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [websockets](https://github.com/aaugustin/websockets) | 10.4 | BSD License |
 | [Werkzeug](https://github.com/pallets/werkzeug/) | 3.1.9 | BSD-3-Clause |
 | [wsproto](https://github.com/python-hyper/wsproto/) | 1.3.2 | MIT |
-| [WTForms](https://wtforms.readthedocs.io) | 3.3.1 | BSD License |
+| [WTForms](https://wtforms.readthedocs.io) | 3.3.2 | BSD License |
 | [yarl](https://github.com/aio-libs/yarl) | 1.25.1 | Apache-2.0 |
 | [zipp](https://github.com/jaraco/zipp) | 4.1.2 | MIT |
 | [zope.event](https://github.com/zopefoundation/zope.event) | 6.2 | ZPL-2.1 |
