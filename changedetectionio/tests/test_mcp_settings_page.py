@@ -97,9 +97,9 @@ def test_mcp_on_off_switch(client, live_server, measure_memory_usage, datastore_
     settings.pop('mcp_enabled', None)
     assert _ping(client, token).status_code == 404, "off until switched on, even with the right token"
     html = client.get(url_for('settings.llm.mcp_settings_page')).get_data(as_text=True)
-    # The switch first in the form, red and saying it's off
+    # The switch on Overview, under its introduction and above "Get started", red and saying it's off
     assert 'id="enabled"' in html and 'checked id="enabled"' not in html
-    assert html.index('id="enabled"') < html.index('Connect AI assistants with MCP')
+    assert html.index('Connect AI assistants with MCP') < html.index('id="enabled"') < html.index('Get started')
     assert '<div class="mcp-power">' in html and 'Everything here can still be set up first.' in html
     # Every sub-tab is there while it's off, so it can all be set up first
     for tab in ('overview', 'connect', 'tokens', 'oauth'):
