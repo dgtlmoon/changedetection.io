@@ -553,6 +553,14 @@ msgid "Never used"
 msgstr "Не использовался"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Only"
+msgstr "Только"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "deleted groups"
+msgstr "удалённые группы"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
@@ -1325,6 +1333,14 @@ msgstr "Подключённые так ассистенты будут пока
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "Изменить токен доступа"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
+msgstr "Ничего не отмечено: все мониторы. Отмечено: только мониторы в этих группах, например одна группа на дело или клиента."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "There are no groups yet. Add some to limit a token to them."
+msgstr "Групп пока нет. Добавьте их, чтобы ограничить ими токен."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Access token created"
@@ -4248,6 +4264,10 @@ msgstr "Группы (теги)"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "Система"
+
+#: changedetectionio/forms.py
+msgid "Only these groups"
+msgstr "Только эти группы"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

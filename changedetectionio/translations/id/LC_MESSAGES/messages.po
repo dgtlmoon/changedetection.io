@@ -551,6 +551,14 @@ msgid "Never used"
 msgstr "Belum pernah dipakai"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Only"
+msgstr "Hanya"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "deleted groups"
+msgstr "grup terhapus"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
@@ -1319,6 +1327,14 @@ msgstr "Asisten yang terhubung dengan cara itu akan tercantum di sini, dan Anda 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "Ubah token akses"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
+msgstr "Tidak ada yang dicentang: semua monitor. Dicentang: hanya monitor di grup tersebut, misalnya satu grup per kasus atau pelanggan."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "There are no groups yet. Add some to limit a token to them."
+msgstr "Belum ada grup. Tambahkan untuk membatasi token ke grup tersebut."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Access token created"
@@ -4241,6 +4257,10 @@ msgstr "Grup (tag)"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "Info sistem"
+
+#: changedetectionio/forms.py
+msgid "Only these groups"
+msgstr "Hanya grup ini"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

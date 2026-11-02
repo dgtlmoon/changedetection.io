@@ -99,16 +99,28 @@ def mcp_template_context(datastore):
     return dict(
         mcp_disabled=mcp_disabled,
         mcp_url=mcp_url,
-        token_form=forms.MCPTokenForm(),
+        token_form=mcp_token_form(datastore),
         **mcp_tokens_context(datastore),
     )
+
+
+def mcp_token_form(datastore, formdata=None):
+    """The add / edit token form, its group checkboxes being the tags that exist now."""
+    from changedetectionio import forms
+    form = forms.MCPTokenForm(formdata=formdata)
+    tags = datastore.data['settings']['application'].get('tags') or {}
+    form.tags.choices = sorted(((uuid, t.get('title') or uuid) for uuid, t in tags.items()), key=lambda c: c[1].lower())
+    return form
 
 
 def mcp_tokens_context(datastore):
     """What the access token list (_mcp-tokens.html) needs, also rendered on its own after every ajax change."""
     from changedetectionio.blueprint.mcp.tools import permissions
     tokens = datastore.data['settings']['application'].get('mcp_tokens') or {}
-    listed = [dict(token, id=token_id, levels=permissions(token.get('permissions')))
+    all_tags = datastore.data['settings']['application'].get('tags') or {}
+    listed = [dict(token, id=token_id, levels=permissions(token.get('permissions')),
+                   tags=[t for t in token.get('tags') or []],
+                   group_names=[all_tags[t].get('title') for t in token.get('tags') or [] if t in all_tags])
               for token_id, token in tokens.items()]
     listed.sort(key=lambda t: t.get('created') or 0)
     return dict(mcp_tokens=listed, mcp_enabled=bool(datastore.data['settings']['application'].get('mcp_enabled')))
@@ -234,28 +246,27 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def mcp_token_add():
         """A new access token. The token itself is in this answer only, it's stored hashed."""
-        from changedetectionio import forms
         from changedetectionio.blueprint.mcp.tokens import add_token
         mcp_ai_enabled_or_404()
-        form = forms.MCPTokenForm(formdata=request.form)
+        form = mcp_token_form(datastore, request.form)
         if not form.validate():
             return mcp_token_form_errors(form)
         token_id, token = add_token(datastore.data['settings']['application'], form.name.data.strip(),
-                                    mcp_token_permissions(form))
+                                    mcp_token_permissions(form), form.tags.data)
         datastore.commit()
         return jsonify({'id': token_id, 'token': token, **mcp_tokens_html()})
 
     @llm_blueprint.route("/mcp/tokens/<string:token_id>", methods=['POST'])
     @login_optionally_required
     def mcp_token_update(token_id):
-        """A token's new name and permissions, the token itself stays the same."""
-        from changedetectionio import forms
+        """A token's new name, permissions and groups, the token itself stays the same."""
         token = mcp_token_or_404(token_id)
-        form = forms.MCPTokenForm(formdata=request.form)
+        form = mcp_token_form(datastore, request.form)
         if not form.validate():
             return mcp_token_form_errors(form)
         token['name'] = form.name.data.strip()
         token['permissions'] = mcp_token_permissions(form)
+        token['tags'] = list(form.tags.data or [])
         datastore.commit()
         return jsonify({'id': token_id, **mcp_tokens_html()})
 

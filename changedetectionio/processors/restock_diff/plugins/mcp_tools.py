@@ -84,8 +84,9 @@ def restock_status(ctx, args, watch):
     import time
     from changedetectionio.blueprint.mcp.tools import CHANGES_TIME_BUDGET, _iso, _resolve_tag
     datastore = ctx.datastore
-    tag_uuid = _resolve_tag(datastore, args['tag']) if args.get('tag') else None
-    watches = [w for w in datastore.data['watching'].values()
+    tag_uuid = _resolve_tag(ctx, args['tag']) if args.get('tag') else None
+    # ctx.watches(): only the monitors this access token may see
+    watches = [w for w in ctx.watches()
                if w.get('processor') == PROCESSOR and (not tag_uuid or tag_uuid in (w.get('tags') or []))]
     if watch is not None:
         watches = [watch]
