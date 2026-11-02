@@ -751,3 +751,32 @@ def test_mcp_screenshot_and_hashes(client, live_server, measure_memory_usage, da
     assert hist['patches'][0]['sha256'] == snap['sha256'] and len(hist['base']['sha256']) == 64
 
     delete_all_watches(client)
+
+
+def test_mcp_recheck_wait(client, live_server, measure_memory_usage, datastore_path):
+    """recheck_watches wait=true: waits for the check and says how it went, instead of 'look later'."""
+    from flask import url_for
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    with open(os.path.join(datastore_path, 'endpoint-content.txt'), 'w') as f:
+        f.write('<html><body>Hello there</body></html>')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'title': 'Endpoint'})
+
+    result = _call(client, api_key, 'recheck_watches', watches=[uuid], wait=True, wait_seconds=30)
+    assert not result['isError'], result
+    check = result['structuredContent']['checks'][0]
+    assert check['state'] == 'checked', result['content'][0]['text']
+    assert '1 of 1 checked' in result['content'][0]['text']
+    # Without wait: the old answer
+    assert 'wait=true' in _call(client, api_key, 'recheck_watches', watches=[uuid])['content'][0]['text']
+    delete_all_watches(client)
+
+
+def test_queue_positions():
+    """The queue's order for 'queued, position 2 of 3': lowest priority value first."""
+    from changedetectionio import queuedWatchMetaData
+    from changedetectionio.queue_handlers import RecheckPriorityQueue
+    q = RecheckPriorityQueue()
+    for uuid, priority in (('a', 5), ('b', 1), ('c', 3)):
+        q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
+    assert q.get_queue_positions() == {'b': 1, 'c': 2, 'a': 3}

@@ -1111,6 +1111,46 @@ def update_watch(ctx, args):
     return text, structured
 
 
+# recheck_watches wait=true: at most this many seconds (under MCP clients' tool timeouts), for at most this many monitors
+RECHECK_WAIT_MAX_SECONDS = 60
+RECHECK_WAIT_MAX_MONITORS = 20
+
+
+def _check_states(ctx, watches, since):
+    """Where each check is: 'checked' (with whether it changed and any error), 'checking' or 'queued' (position)."""
+    import time
+    from changedetectionio import worker_pool
+    positions = ctx.update_q.get_queue_positions() if ctx.update_q is not None and hasattr(ctx.update_q, 'get_queue_positions') else {}
+    queued_total = len(positions)
+    running = set(worker_pool.get_running_uuids())
+    states = []
+    for w in watches:
+        uuid = w.get('uuid')
+        state = {'uuid': uuid, 'title': w.label}
+        if uuid in running:
+            started = worker_pool.get_uuid_started_at(uuid)
+            state.update(state='checking', running_seconds=round(time.time() - started) if started else None)
+        elif uuid in positions:
+            state.update(state='queued', position=positions[uuid], queued_total=queued_total)
+        elif (w.get('last_checked') or 0) >= since:
+            state.update(state='checked', last_checked=_iso(w['last_checked']),
+                         changed=bool(w.last_changed and w.last_changed >= since), error=w.get('last_error') or None)
+        else:
+            state.update(state='not queued')
+        states.append(state)
+    return states
+
+
+def _describe_state(s):
+    if s['state'] == 'checked':
+        return (f"checked, {'CHANGED' if s['changed'] else 'no change'}" + (f", error: {s['error']}" if s['error'] else ''))
+    if s['state'] == 'checking':
+        return f"checking now ({s['running_seconds']}s so far)"
+    if s['state'] == 'queued':
+        return f"queued, position {s['position']} of {s['queued_total']}"
+    return 'not queued'
+
+
 def recheck_watches(ctx, args):
     from changedetectionio.api.operations import queue_rechecks
     datastore = ctx.datastore
@@ -1127,10 +1167,34 @@ def recheck_watches(ctx, args):
     # Same as the UI "Recheck all": never paused watches, unless they were asked for by name
     if not refs:
         watches = [w for w in watches if not w.get('paused')]
+    import time
+    started = int(time.time())
     queued, skipped = queue_rechecks(ctx.update_q, [w.get('uuid') for w in watches])
-    text = (f"Queued {queued} monitors for a recheck" + (f" ({skipped} already queued or running)" if skipped else '') +
-            ". This doesn't wait for the checks: look at last_checked with get_watch or list_watches later.")
-    return text, {'queued': queued, 'skipped': skipped}
+    text = f"Queued {queued} monitors for a recheck" + (f" ({skipped} already queued or running)" if skipped else '')
+    structured = {'queued': queued, 'skipped': skipped}
+    if not args.get('wait'):
+        return text + ". This doesn't wait for the checks: look at last_checked with get_watch or list_watches later, " \
+                      "or call again with wait=true.", structured
+    if len(watches) > RECHECK_WAIT_MAX_MONITORS:
+        return text + f". Not waiting: wait=true is for at most {RECHECK_WAIT_MAX_MONITORS} monitors.", structured
+
+    # Waiting holds only this request: the checks run in the fetch workers, and the short sleeps let other requests
+    # (and greenlets, in gevent mode) run in the meantime
+    deadline = time.monotonic() + _int(args, 'wait_seconds', 30, 1, RECHECK_WAIT_MAX_SECONDS)
+    while True:
+        states = _check_states(ctx, watches, started)
+        # 'not queued' right after queueing can be a worker that has taken it but not yet marked it running, so it
+        # only counts as settled after a few seconds
+        settled = ('checked', 'not queued') if time.time() - started > 3 else ('checked',)
+        if all(s['state'] in settled for s in states) or time.monotonic() >= deadline:
+            break
+        time.sleep(0.5)
+    done = sum(1 for s in states if s['state'] == 'checked')
+    lines = [text + f". {done} of {len(states)} checked" + ('' if done == len(states) else ', the rest are still going: '
+                                                            'call again with wait=true, or look later with get_watch')]
+    lines += [f"- {s['title']} | {_describe_state(s)} | uuid {s['uuid']}" for s in states]
+    structured['checks'] = states
+    return '\n'.join(lines), structured
 
 
 def add_tags(ctx, args):
@@ -1503,9 +1567,14 @@ TOOLS = {
                 ['watch'])),
     'recheck_watches': (recheck_watches, dict(WRITE, idempotentHint=True, openWorldHint=True), 'Recheck monitors',
         "Queue monitors to be checked now: by name/uuid, a whole tag, the ones with errors, or all. Returns at once, "
-        "it doesn't wait for the checks. Paused monitors are skipped unless named.",
+        "or with wait=true waits up to wait_seconds and says for each whether it changed, is being checked, or its "
+        "place in the queue. Paused monitors are skipped unless named.",
         _schema({'watches': _WATCHES, 'tag': _TAG, 'with_errors': {'type': 'boolean'},
-                 'all': {'type': 'boolean', 'description': 'Every monitor that isn\'t paused'}})),
+                 'all': {'type': 'boolean', 'description': 'Every monitor that isn\'t paused'},
+                 'wait': {'type': 'boolean', 'default': False,
+                          'description': f'Wait for the checks (at most {RECHECK_WAIT_MAX_MONITORS} monitors) and say how each went, '
+                                         'or where it is in the queue'},
+                 'wait_seconds': {'type': 'integer', 'minimum': 1, 'maximum': RECHECK_WAIT_MAX_SECONDS, 'default': 30}})),
     'add_tags': (add_tags, dict(WRITE, idempotentHint=True), 'Tag monitors',
         'Add tags/groups to monitors by name. Tags that don\'t exist yet are created.',
         _schema({'watches': _WATCHES, 'tags': _TAGS}, ['watches', 'tags'])),
