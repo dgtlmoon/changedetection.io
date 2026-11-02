@@ -69,12 +69,13 @@
     </div>
   </div>
   {% else %}
-  {# Every sub-tab can be set up while the switch is off, so it's ready before anything can connect #}
+  {# Every sub-tab can be set up while the switch is off, so it's ready before anything can connect. "OAuth" is the
+     protocol's name, not translated #}
   {% call stab_shell('mcp-settings', [
       {'id': 'overview', 'label': _('Overview'), 'icon': 'info'},
-      {'id': 'connect', 'label': _('Connect'), 'icon': 'link'},
       {'id': 'tokens', 'label': _('Access tokens'), 'icon': 'key'},
-      {'id': 'oauth', 'label': _('OAuth connections'), 'icon': 'log-in'},
+      {'id': 'connect', 'label': _('Connect'), 'icon': 'link'},
+      {'id': 'oauth', 'label': 'OAuth', 'icon': 'log-in'},
   ]) %}
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}
@@ -88,14 +89,9 @@
     </div>
     <span class="mcp-status">{% if mcp_enabled %}{{ _('On') }}{% else %}{{ _('Off') }}{% endif %}</span>
   </div>
-  {# The access tokens at a glance, each one opens the Access tokens sub-tab #}
-  <div class="mcp-perm-summary">
-    <span class="mcp-perm-summary-title">{{ _('Access tokens') }}</span>
-    {% for token in mcp_tokens %}
-    <button type="button" class="mcp-chip" data-stab-goto="tokens">{{ token.name }}</button>
-    {% else %}
-    <button type="button" class="mcp-chip level-none" data-stab-goto="tokens">{{ _('No access tokens yet') }}</button>
-    {% endfor %}
+  {# The tokens at a glance, or "Get started" until it's set up. Swapped after every token change (mcp-tokens.js) #}
+  <div id="mcp-overview-status">
+    {% include '_mcp-overview-status.html' %}
   </div>
 
   <div class="stab-overview-hero">
@@ -161,50 +157,46 @@
   <p class="mcp-hint">{{ _('--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves a reference to the environment variable, not the token:') }}</p>
   {{ copyable("claude mcp add --transport http --scope project changedetection " ~ mcp_url ~ " --header 'Authorization: Bearer ${CDIO_MCP_TOKEN}'", 'mcp-claude-code-project', block=True) }}
 
-  <details class="mcp-other-clients">
-    <summary class="stab-section-title">{{ _('Other AI assistants') }}</summary>
+  {#- Config syntax checked against each client's own docs (2026-11-01). Where a client resolves environment
+      variables in headers the token stays out of the file (CDIO_MCP_TOKEN); where it doesn't, it's inline and
+      the file is the user's own settings, with a warning. See MCP-config.md. -#}
+  {%- set token_in_file -%}<p class="mcp-hint">{{ _('This file contains the token: keep it in your own settings, not in anything you commit or share.') }}</p>{%- endset -%}
 
-    {#- Config syntax checked against each client's own docs (2026-11-01). Where a client resolves environment
-        variables in headers the token stays out of the file (CDIO_MCP_TOKEN); where it doesn't, it's inline and
-        the file is the user's own settings, with a warning. See MCP-config.md. -#}
-    {%- set token_in_file -%}<p class="mcp-hint">{{ _('This file contains the token: keep it in your own settings, not in anything you commit or share.') }}</p>{%- endset -%}
+  <p class="mcp-client">Cursor <span class="mcp-where">~/.cursor/mcp.json</span></p>
+  {{ copyable('{"mcpServers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ${env:CDIO_MCP_TOKEN}"}}}}', 'mcp-cursor', block=True) }}
 
-    <p class="mcp-client">Cursor <span class="mcp-where">~/.cursor/mcp.json</span></p>
-    {{ copyable('{"mcpServers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ${env:CDIO_MCP_TOKEN}"}}}}', 'mcp-cursor', block=True) }}
+  <p class="mcp-client">VS Code / GitHub Copilot <span class="mcp-where">.vscode/mcp.json</span></p>
+  <p class="mcp-hint">{{ _('VS Code asks for the token once and stores it securely, so this file is safe to commit.') }}</p>
+  {{ copyable('{"inputs": [{"type": "promptString", "id": "cdio-mcp-token", "description": "changedetection.io MCP access token", "password": true}], "servers": {"changedetection": {"type": "http", "url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ${input:cdio-mcp-token}"}}}}', 'mcp-vscode', block=True) }}
 
-    <p class="mcp-client">VS Code / GitHub Copilot <span class="mcp-where">.vscode/mcp.json</span></p>
-    <p class="mcp-hint">{{ _('VS Code asks for the token once and stores it securely, so this file is safe to commit.') }}</p>
-    {{ copyable('{"inputs": [{"type": "promptString", "id": "cdio-mcp-token", "description": "changedetection.io MCP access token", "password": true}], "servers": {"changedetection": {"type": "http", "url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer ${input:cdio-mcp-token}"}}}}', 'mcp-vscode', block=True) }}
+  <p class="mcp-client">OpenAI Codex <span class="mcp-where">~/.codex/config.toml</span></p>
+  {{ copyable('[mcp_servers.changedetection]\nurl = "' ~ mcp_url ~ '"\nbearer_token_env_var = "CDIO_MCP_TOKEN"', 'mcp-codex', block=True) }}
 
-    <p class="mcp-client">OpenAI Codex <span class="mcp-where">~/.codex/config.toml</span></p>
-    {{ copyable('[mcp_servers.changedetection]\nurl = "' ~ mcp_url ~ '"\nbearer_token_env_var = "CDIO_MCP_TOKEN"', 'mcp-codex', block=True) }}
+  <p class="mcp-client">OpenCode <span class="mcp-where">opencode.json</span></p>
+  {{ copyable('{"mcp": {"changedetection": {"type": "remote", "url": "' ~ mcp_url ~ '", "oauth": false, "headers": {"Authorization": "Bearer {env:CDIO_MCP_TOKEN}"}}}}', 'mcp-opencode', block=True) }}
 
-    <p class="mcp-client">OpenCode <span class="mcp-where">opencode.json</span></p>
-    {{ copyable('{"mcp": {"changedetection": {"type": "remote", "url": "' ~ mcp_url ~ '", "oauth": false, "headers": {"Authorization": "Bearer {env:CDIO_MCP_TOKEN}"}}}}', 'mcp-opencode', block=True) }}
+  <p class="mcp-client">Gemini CLI <span class="mcp-where">~/.gemini/settings.json</span></p>
+  <p class="mcp-hint">{{ _('Uses httpUrl, not url (url means the older SSE transport).') }}</p>
+  {{ copyable('{"mcpServers": {"changedetection": {"httpUrl": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-gemini', block=True) }}
+  {{ token_in_file }}
 
-    <p class="mcp-client">Gemini CLI <span class="mcp-where">~/.gemini/settings.json</span></p>
-    <p class="mcp-hint">{{ _('Uses httpUrl, not url (url means the older SSE transport).') }}</p>
-    {{ copyable('{"mcpServers": {"changedetection": {"httpUrl": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-gemini', block=True) }}
-    {{ token_in_file }}
+  <p class="mcp-client">GitHub Copilot CLI <span class="mcp-where">~/.copilot/mcp-config.json</span></p>
+  {{ copyable('copilot mcp add --transport http --header "Authorization: Bearer $CDIO_MCP_TOKEN" changedetection ' ~ mcp_url, 'mcp-copilot-cli', block=True) }}
+  {{ token_in_file }}
 
-    <p class="mcp-client">GitHub Copilot CLI <span class="mcp-where">~/.copilot/mcp-config.json</span></p>
-    {{ copyable('copilot mcp add --transport http --header "Authorization: Bearer $CDIO_MCP_TOKEN" changedetection ' ~ mcp_url, 'mcp-copilot-cli', block=True) }}
-    {{ token_in_file }}
+  <p class="mcp-client">Zed <span class="mcp-where">settings.json</span></p>
+  {{ copyable('{"context_servers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-zed', block=True) }}
+  {{ token_in_file }}
 
-    <p class="mcp-client">Zed <span class="mcp-where">settings.json</span></p>
-    {{ copyable('{"context_servers": {"changedetection": {"url": "' ~ mcp_url ~ '", "headers": {"Authorization": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-zed', block=True) }}
-    {{ token_in_file }}
+  <p class="mcp-client">Claude Desktop <span class="mcp-where">claude_desktop_config.json</span></p>
+  <p class="mcp-hint">{{ _('Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access token.') }}</p>
+  {{ copyable('{"mcpServers": {"changedetection": {"command": "npx", "args": ["-y", "mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-claude-desktop', block=True) }}
+  {{ token_in_file }}
 
-    <p class="mcp-client">Claude Desktop <span class="mcp-where">claude_desktop_config.json</span></p>
-    <p class="mcp-hint">{{ _('Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access token.') }}</p>
-    {{ copyable('{"mcpServers": {"changedetection": {"command": "npx", "args": ["-y", "mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer YOUR_MCP_TOKEN"}}}}', 'mcp-claude-desktop', block=True) }}
-    {{ token_in_file }}
-
-    <p class="mcp-client">{{ _('Any other assistant (Windsurf, Devin and others)') }}</p>
-    <p class="mcp-hint">{{ _("Most assistants can run a local command: the same mcp-remote bridge (needs Node.js), in the format of that assistant's MCP settings.") }}</p>
-    {{ copyable('{"command": "npx", "args": ["-y", "mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer YOUR_MCP_TOKEN"}}', 'mcp-other', block=True) }}
-    {{ token_in_file }}
-  </details>
+  <p class="mcp-client">{{ _('Any other assistant (Windsurf, Devin and others)') }}</p>
+  <p class="mcp-hint">{{ _("Most assistants can run a local command: the same mcp-remote bridge (needs Node.js), in the format of that assistant's MCP settings.") }}</p>
+  {{ copyable('{"command": "npx", "args": ["-y", "mcp-remote", "' ~ mcp_url ~ '", "--header", "Authorization:${MCP_AUTH}"], "env": {"MCP_AUTH": "Bearer YOUR_MCP_TOKEN"}}', 'mcp-other', block=True) }}
+  {{ token_in_file }}
   {% endcall %}
 
   {# ── Access tokens ─────────────────────────────────────────────────────── #}

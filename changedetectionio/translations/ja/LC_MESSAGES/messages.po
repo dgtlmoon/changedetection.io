@@ -491,6 +491,51 @@ msgstr "AI / LLM の設定を削除しました。"
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 要約のキャッシュを削除しました（{} 件のファイル）。"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Access tokens"
+msgstr "アクセストークン"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Get started"
+msgstr "はじめに"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Switch on the MCP server"
+msgstr "MCP サーバーをオンにする"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Tick the box above, then Save."
+msgstr "上のボックスにチェックを入れて保存します。"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Add an access token"
+msgstr "アクセストークンを追加"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Every assistant needs one to connect."
+msgstr "アシスタントの接続には必ず必要です。"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add access token"
+msgstr "アクセストークンを追加"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect an assistant"
+msgstr "アシスタントを接続"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Copy the command or config for your assistant."
+msgstr "アシスタント用のコマンドまたは設定をコピーします。"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect"
+msgstr "接続"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #, python-format
 msgid "Last used %(when)s"
@@ -512,9 +557,8 @@ msgid "Revoke"
 msgstr "取り消す"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "No access tokens yet"
-msgstr "アクセストークンはまだありません"
+msgid "Add your first access token"
+msgstr "最初のアクセストークンを追加"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 msgid "Add one for each assistant, so each has its own permissions and can be revoked on its own."
@@ -987,13 +1031,14 @@ msgid "Failed"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "copied"
-msgstr "コピーしました"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "copy"
 msgstr "コピー"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copied"
+msgstr "コピーしました"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
@@ -1018,18 +1063,6 @@ msgstr "MCP で AI アシスタントを接続"
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "The MCP server is switched off on this installation."
 msgstr "このインストールでは MCP サーバーがオフになっています。"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Connect"
-msgstr "接続"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Access tokens"
-msgstr "アクセストークン"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "OAuth connections"
-msgstr "OAuth 接続"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1072,10 +1105,6 @@ msgstr "初期状態で安全"
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
 msgstr "監視しているページのテキストは、データとしてアシスタントに渡されます。通知 URL が完全な形で見せられることはありません。"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Connect an assistant"
-msgstr "アシスタントを接続"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Server"
@@ -1130,10 +1159,6 @@ msgid ""
 "--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves "
 "a reference to the environment variable, not the token:"
 msgstr "--scope project はプロジェクトに .mcp.json を書き込み、これは通常コミットされます。その場合はこの形式を使ってください。トークンではなく環境変数への参照が保存されます:"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Other AI assistants"
-msgstr "その他の AI アシスタント"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "This file contains the token: keep it in your own settings, not in anything you commit or share."
@@ -1194,6 +1219,10 @@ msgid "To make only one assistant read-only, use this address for it instead:"
 msgstr "1 つのアシスタントだけを読み取り専用にするには、代わりにこのアドレスを使います:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "OAuth connections"
+msgstr "OAuth 接続"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Sign in with OAuth is coming soon"
 msgstr "OAuth によるサインインは近日対応"
 
@@ -1210,10 +1239,6 @@ msgstr "その方法で接続したアシスタントはここに表示され、
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Edit access token"
 msgstr "アクセストークンを編集"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Add access token"
-msgstr "アクセストークンを追加"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Access token created"

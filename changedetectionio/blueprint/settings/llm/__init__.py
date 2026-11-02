@@ -98,7 +98,6 @@ def mcp_template_context(datastore):
         mcp_url = base_url.rstrip('/') + '/mcp/v1' if base_url else url_for('mcp.endpoint', _external=True)
     return dict(
         mcp_disabled=mcp_disabled,
-        mcp_enabled=bool(app_settings.get('mcp_enabled')),
         mcp_url=mcp_url,
         token_form=forms.MCPTokenForm(),
         **mcp_tokens_context(datastore),
@@ -112,7 +111,7 @@ def mcp_tokens_context(datastore):
     listed = [dict(token, id=token_id, levels=permissions(token.get('permissions')))
               for token_id, token in tokens.items()]
     listed.sort(key=lambda t: t.get('created') or 0)
-    return dict(mcp_tokens=listed)
+    return dict(mcp_tokens=listed, mcp_enabled=bool(datastore.data['settings']['application'].get('mcp_enabled')))
 
 
 # Sent as the API key when the connection test goes to an address that isn't the saved one and no key is saved:
@@ -201,7 +200,10 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     # the re-rendered list, which the page swaps in. POST only, with the CSRF token in the X-CSRFToken header (csrf.js)
 
     def mcp_tokens_html():
-        return render_template("_mcp-tokens.html", **mcp_tokens_context(datastore))
+        """The token list and Overview's status, both depend on the tokens."""
+        context = mcp_tokens_context(datastore)
+        return {'html': render_template("_mcp-tokens.html", **context),
+                'overview_html': render_template("_mcp-overview-status.html", **context)}
 
     def mcp_ai_enabled_or_404():
         from changedetectionio.llm.evaluator import is_llm_features_disabled
@@ -226,7 +228,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def mcp_tokens_list():
         mcp_ai_enabled_or_404()
-        return mcp_tokens_html()
+        return mcp_tokens_html()['html']
 
     @llm_blueprint.route("/mcp/tokens", methods=['POST'])
     @login_optionally_required
@@ -241,7 +243,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         token_id, token = add_token(datastore.data['settings']['application'], form.name.data.strip(),
                                     mcp_token_permissions(form))
         datastore.commit()
-        return jsonify({'id': token_id, 'token': token, 'html': mcp_tokens_html()})
+        return jsonify({'id': token_id, 'token': token, **mcp_tokens_html()})
 
     @llm_blueprint.route("/mcp/tokens/<string:token_id>", methods=['POST'])
     @login_optionally_required
@@ -255,7 +257,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         token['name'] = form.name.data.strip()
         token['permissions'] = mcp_token_permissions(form)
         datastore.commit()
-        return jsonify({'id': token_id, 'html': mcp_tokens_html()})
+        return jsonify({'id': token_id, **mcp_tokens_html()})
 
     @llm_blueprint.route("/mcp/tokens/<string:token_id>/revoke", methods=['POST'])
     @login_optionally_required
@@ -264,7 +266,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         mcp_token_or_404(token_id)
         del datastore.data['settings']['application']['mcp_tokens'][token_id]
         datastore.commit()
-        return jsonify({'html': mcp_tokens_html()})
+        return jsonify(mcp_tokens_html())
 
     @llm_blueprint.route("/llm/models", methods=['GET'])
     @login_optionally_required

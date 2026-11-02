@@ -9,6 +9,7 @@
 <script src="{{url_for('static_content', group='js', filename='plugins.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='vis.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='click-to-copy.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
 {# PWA related #}
 {%- set menu_icon -%}&nbsp;<i data-feather="more-vertical"></i>{% endset -%}
@@ -220,8 +221,7 @@ nav
                     {{ render_checkbox_field(form.application.form.api_access_token_enabled) }}
                     {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                     <div class="pure-form-message-inline">{{ _('Restrict API access limit by using') }} <code>x-api-key</code> {{ _('header - required for the Chrome Extension to work') }}</div><br>
-                    <div class="pure-form-message-inline"><br>{{ _('API Key') }} <span id="api-key">{{api_key}}</span>
-                        <span style="display:none;" id="api-key-copy" >{{ _('copy') }}</span>
+                    <div class="pure-form-message-inline"><br>{{ _('API Key') }} <code id="api-key" class="click-to-copy" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{api_key}}</code>
                     </div>
                 </div>
                 <div class="pure-control-group">

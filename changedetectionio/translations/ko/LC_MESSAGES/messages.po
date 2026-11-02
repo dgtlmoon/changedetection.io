@@ -489,6 +489,51 @@ msgstr "AI / LLM 설정이 제거되었습니다."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 요약 캐시가 지워졌습니다({}개 파일 제거됨)."
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Access tokens"
+msgstr "액세스 토큰"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Get started"
+msgstr "시작하기"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Switch on the MCP server"
+msgstr "MCP 서버 켜기"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Tick the box above, then Save."
+msgstr "위의 상자를 선택한 다음 저장하세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Add an access token"
+msgstr "액세스 토큰 추가"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Every assistant needs one to connect."
+msgstr "모든 어시스턴트는 연결하려면 토큰이 필요합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add access token"
+msgstr "액세스 토큰 추가"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect an assistant"
+msgstr "어시스턴트 연결"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Copy the command or config for your assistant."
+msgstr "어시스턴트용 명령이나 설정을 복사하세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect"
+msgstr "연결"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #, python-format
 msgid "Last used %(when)s"
@@ -510,9 +555,8 @@ msgid "Revoke"
 msgstr "취소"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "No access tokens yet"
-msgstr "아직 액세스 토큰이 없습니다"
+msgid "Add your first access token"
+msgstr "첫 액세스 토큰 추가"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 msgid "Add one for each assistant, so each has its own permissions and can be revoked on its own."
@@ -991,13 +1035,14 @@ msgid "Failed"
 msgstr "실패"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "copied"
-msgstr "복사됨"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "copy"
 msgstr "복사"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copied"
+msgstr "복사됨"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
@@ -1022,18 +1067,6 @@ msgstr "MCP로 AI 어시스턴트 연결"
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "The MCP server is switched off on this installation."
 msgstr "이 설치에서는 MCP 서버가 꺼져 있습니다."
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Connect"
-msgstr "연결"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Access tokens"
-msgstr "액세스 토큰"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "OAuth connections"
-msgstr "OAuth 연결"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1076,10 +1109,6 @@ msgstr "기본적으로 안전"
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
 msgstr "모니터링하는 페이지의 텍스트는 데이터로 어시스턴트에 전달됩니다. 알림 URL은 절대 전체가 보이지 않습니다."
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Connect an assistant"
-msgstr "어시스턴트 연결"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Server"
@@ -1136,10 +1165,6 @@ msgid ""
 "--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves "
 "a reference to the environment variable, not the token:"
 msgstr "--scope project는 프로젝트에 .mcp.json을 쓰며, 이 파일은 보통 커밋됩니다. 이때는 이 형식을 쓰세요. 토큰 대신 환경 변수에 대한 참조가 저장됩니다:"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Other AI assistants"
-msgstr "다른 AI 어시스턴트"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "This file contains the token: keep it in your own settings, not in anything you commit or share."
@@ -1200,6 +1225,10 @@ msgid "To make only one assistant read-only, use this address for it instead:"
 msgstr "어시스턴트 하나만 읽기 전용으로 하려면 대신 이 주소를 사용하세요:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "OAuth connections"
+msgstr "OAuth 연결"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Sign in with OAuth is coming soon"
 msgstr "OAuth 로그인 지원 예정"
 
@@ -1216,10 +1245,6 @@ msgstr "이 방법으로 연결한 어시스턴트가 여기에 표시되며 연
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Edit access token"
 msgstr "액세스 토큰 편집"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Add access token"
-msgstr "액세스 토큰 추가"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Access token created"

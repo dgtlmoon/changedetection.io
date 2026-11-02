@@ -490,6 +490,51 @@ msgstr "Налаштування ШІ / LLM видалено."
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "Кеш ШІ-зведень очищено (видалено файлів: {})."
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Access tokens"
+msgstr "Токени доступу"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Get started"
+msgstr "Початок роботи"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Switch on the MCP server"
+msgstr "Увімкніть сервер MCP"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Tick the box above, then Save."
+msgstr "Позначте поле вище, потім Зберегти."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Add an access token"
+msgstr "Додайте токен доступу"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Every assistant needs one to connect."
+msgstr "Він потрібен кожному асистенту для підключення."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Add access token"
+msgstr "Додати токен доступу"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect an assistant"
+msgstr "Підключити асистента"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Copy the command or config for your assistant."
+msgstr "Скопіюйте команду або конфігурацію для свого асистента."
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "Connect"
+msgstr "Підключення"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #, python-format
 msgid "Last used %(when)s"
@@ -511,9 +556,8 @@ msgid "Revoke"
 msgstr "Відкликати"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "No access tokens yet"
-msgstr "Токенів доступу ще немає"
+msgid "Add your first access token"
+msgstr "Додайте свій перший токен доступу"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 msgid "Add one for each assistant, so each has its own permissions and can be revoked on its own."
@@ -986,13 +1030,14 @@ msgid "Failed"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "copied"
-msgstr "скопійовано"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "copy"
 msgstr "копіювати"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copied"
+msgstr "скопійовано"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
@@ -1017,18 +1062,6 @@ msgstr "Підключення ШІ-асистентів через MCP"
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "The MCP server is switched off on this installation."
 msgstr "Сервер MCP вимкнено в цій установці."
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Connect"
-msgstr "Підключення"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Access tokens"
-msgstr "Токени доступу"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "OAuth connections"
-msgstr "Підключення OAuth"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid ""
@@ -1079,10 +1112,6 @@ msgstr "Безпечно за замовчуванням"
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
 msgstr "Текст із відстежуваних сторінок передається асистенту як дані. URL сповіщень ніколи не показуються йому повністю."
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Connect an assistant"
-msgstr "Підключити асистента"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Server"
@@ -1149,10 +1178,6 @@ msgstr ""
 "посилання на змінну середовища, а не сам токен:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Other AI assistants"
-msgstr "Інші ШІ-асистенти"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "This file contains the token: keep it in your own settings, not in anything you commit or share."
 msgstr "Цей файл містить токен: тримайте його у своїх налаштуваннях, а не в тому, що комітите чи передаєте."
 
@@ -1215,6 +1240,10 @@ msgid "To make only one assistant read-only, use this address for it instead:"
 msgstr "Щоб обмежити читанням лише одного асистента, використовуйте для нього цю адресу:"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
+msgid "OAuth connections"
+msgstr "Підключення OAuth"
+
+#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Sign in with OAuth is coming soon"
 msgstr "Вхід через OAuth незабаром"
 
@@ -1233,10 +1262,6 @@ msgstr "Підключені так асистенти з'являться ту�
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Edit access token"
 msgstr "Редагувати токен доступу"
-
-#: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
-msgid "Add access token"
-msgstr "Додати токен доступу"
 
 #: changedetectionio/blueprint/settings/llm/templates/mcp-settings.html
 msgid "Access token created"

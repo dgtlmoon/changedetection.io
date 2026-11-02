@@ -2,7 +2,8 @@
  * MCP access tokens on the "Access tokens" sub-tab of /settings/ai/mcp: the add / edit overlay and Revoke.
  *
  * Everything goes through jQuery POSTs, so csrf.js attaches the X-CSRFToken header, and every answer carries the
- * re-rendered token list (_mcp-tokens.html), which is swapped in, so the list is always the server's own. A new
+ * re-rendered token list (_mcp-tokens.html) and Overview's status (_mcp-overview-status.html), which are swapped in,
+ * so both are always the server's own. A new
  * token comes back once, in the answer to "Add", and is shown in the overlay; the server only keeps its hash.
  */
 $(document).ready(function () {
@@ -15,8 +16,10 @@ $(document).ready(function () {
     var $errors = $form.find('.mcp-token-errors');
     var defaults = $form.serializeArray();
 
-    function refreshList(html) {
-        $list.html(html);
+    // The list and Overview's status (tokens at a glance / "Get started"), both rendered by the server
+    function refresh(data) {
+        $list.html(data.html);
+        $('#mcp-overview-status').html(data.overview_html);
         if (window.feather) feather.replace();
     }
 
@@ -58,7 +61,7 @@ $(document).ready(function () {
             message: '<p><strong>' + _modalEscapeHTML(String($token.data('name'))) + '</strong></p><p>' + _modalEscapeHTML($list.data('revoke-message')) + '</p>',
             confirmText: $list.data('revoke-button'),
             onConfirm: function () {
-                $.post($token.data('revoke-url')).done(function (data) { refreshList(data.html); }).fail(failed);
+                $.post($token.data('revoke-url')).done(function (data) { refresh(data); }).fail(failed);
             }
         });
     });
@@ -68,7 +71,7 @@ $(document).ready(function () {
         var adding = $form.attr('action') === $form.data('add-url');
         $.post($form.attr('action'), $form.serialize())
             .done(function (data) {
-                refreshList(data.html);
+                refresh(data);
                 if (adding && data.token) {
                     // Shown this once, the server keeps only its hash
                     $('#mcp-new-token').text(data.token);

@@ -30,9 +30,13 @@
   {% endfor %}
 </ul>
 {% else %}
-<div class="mcp-empty">
-  <i data-feather="key"></i>
-  <p><strong>{{ _('No access tokens yet') }}</strong></p>
-  <p class="mcp-hint">{{ _('Add one for each assistant, so each has its own permissions and can be revoked on its own.') }}</p>
-</div>
+{# Nothing can connect without one, so the empty list is the next step, not just a note #}
+<button type="button" class="mcp-token-cta" data-mcp-token-add>
+  <span class="mcp-token-cta-plus" aria-hidden="true">+</span>
+  <span class="mcp-token-cta-text">
+    <strong>{{ _('Add your first access token') }}</strong>
+    <span>{{ _('Every assistant needs one to connect.') }}</span>
+    <span>{{ _('Add one for each assistant, so each has its own permissions and can be revoked on its own.') }}</span>
+  </span>
+</button>
 {% endif %}

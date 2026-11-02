@@ -175,7 +175,9 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
 
     # None yet, and the overlay (outside the page's form, nested forms are invalid) with the defaults ticked
     html = client.get(url_for('settings.llm.mcp_settings_page')).get_data(as_text=True)
-    assert 'No access tokens yet' in html
+    # No tokens: a call to action that opens the add overlay, from the list and from Overview
+    assert 'Add your first access token' in html and 'class="mcp-token-cta" data-mcp-token-add' in html
+    assert 'Get started' in html and 'data-stab-goto="tokens" data-mcp-token-add>+ Add access token' in html
     page_form = html.split(f'action="{url_for("settings.llm.mcp_settings_page")}" method="POST">')[1].split('</form>')[0]
     assert '<form ' not in page_form and 'name="perm_monitors"' not in page_form
     assert '<dialog id="mcp-token-dialog"' in html
@@ -192,6 +194,8 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
     assert 'Never used' in res.json['html']
     assert 'Monitors <strong>Write</strong>' in res.json['html'] and 'Notifications <strong>Read</strong>' in res.json['html']
     assert token not in json.dumps(settings['mcp_tokens']), "stored hashed"
+    # Overview's status comes back too, so it doesn't go stale without a reload: the token, no "Get started" (MCP is on)
+    assert 'Claude Code, laptop' in res.json['overview_html'] and 'Get started' not in res.json['overview_html']
     defaults = _tool_names(client, token)
     assert {'delete_watch', 'create_tag', 'list_notifications', 'get_system_info'} <= defaults
     assert 'add_notification' not in defaults
@@ -243,9 +247,13 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
     # Revoked: refused at once, the other token keeps working; unknown ids are a 404
     res = client.post(url_for('settings.llm.mcp_token_revoke', token_id=token_id))
     assert res.status_code == 200 and 'Claude Code' not in res.json['html'] and 'Tags off' in res.json['html']
+    assert 'Claude Code' not in res.json['overview_html'] and 'Tags off' in res.json['overview_html']
     assert _ping(client, token).status_code == 403 and _ping(client, other).status_code == 200
     assert client.post(url_for('settings.llm.mcp_token_revoke', token_id=token_id)).status_code == 404
     assert client.post(url_for('settings.llm.mcp_token_update', token_id='nope'), data=dict(GRID, name='x')).status_code == 404
+    # The last one revoked: "Get started" is back on Overview straight away
+    res = client.post(url_for('settings.llm.mcp_token_revoke', token_id=list(settings['mcp_tokens'])[0]))
+    assert 'Get started' in res.json['overview_html'] and 'Add your first access token' in res.json['html']
 
     settings.pop('mcp_tokens', None)
     delete_all_watches(client)

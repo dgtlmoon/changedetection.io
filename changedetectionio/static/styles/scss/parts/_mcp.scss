@@ -8,19 +8,6 @@
   display: block;
 }
 
-// Click to copy, same look as the API key on /settings (static/js/click-to-copy.js)
-.click-to-copy {
-  cursor: pointer;
-  word-break: break-all;
-}
-
-.click-to-copy-hint {
-  color: var(--color-api-key);
-  margin-left: 0.5em;
-  font-size: 0.9em;
-}
-
-// The MCP Server tab: an on/off bar, then the vertical sub-tabs (_sub_tabs.scss) with these panes in them
 // The token overlay sits outside #mcp (it's a <dialog> after the page's form), so it shares these styles
 #mcp,
 .mcp-token-dialog {
@@ -192,11 +179,6 @@
       margin: 0;
       min-width: 0;
     }
-
-    .cdio-btn {
-      margin-left: 0.5rem;
-      vertical-align: middle;
-    }
   }
 
   .mcp-value {
@@ -238,14 +220,6 @@
     margin-left: 0.4em;
   }
 
-  .mcp-other-clients {
-    margin: 0.5rem 0 0;
-
-    summary {
-      cursor: pointer;
-      margin-top: 1.4rem;
-    }
-  }
 
   // ── Permissions grid: one row per area, None / Read / Write columns ──
   .mcp-perms {
@@ -409,6 +383,154 @@
     gap: 0.4rem;
   }
 
+  // ── Overview: "Get started", until the server is on and has a token ──
+  .mcp-steps {
+    max-width: 46rem;
+    margin: 0 0 1.6rem;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid rgba(0, 120, 231, 0.35);
+    border-radius: var(--common-round-border, 8px);
+    background: rgba(0, 120, 231, 0.04);
+
+    ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.55rem 0;
+
+      & + li {
+        border-top: 1px solid var(--mcp-line);
+      }
+
+      .cdio-btn {
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      &.done .mcp-step-text strong {
+        opacity: 0.6;
+      }
+    }
+  }
+
+  .mcp-steps-title {
+    margin: 0 0 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-background-button-primary);
+  }
+
+  .mcp-step-mark {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 2px solid var(--color-background-button-primary);
+    color: var(--color-background-button-primary);
+  }
+
+  .mcp-steps li.done .mcp-step-mark {
+    border-color: var(--mcp-on);
+    background: var(--mcp-on);
+    color: #fff;
+  }
+
+  .mcp-step-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+
+    span {
+      font-size: 0.82rem;
+      color: var(--color-text-input-description);
+    }
+  }
+
+  // ── No tokens yet: the next step, so a blue call to action rather than an empty-state note ──
+  .mcp-token-cta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 46rem;
+    margin: 0.8rem 0 1.2rem;
+    padding: 1.1rem 1.3rem;
+    border: 2px dashed var(--color-background-button-primary);
+    border-radius: var(--common-round-border, 8px);
+    background: rgba(0, 120, 231, 0.05);
+    color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-style 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(0, 120, 231, 0.1);
+      border-style: solid;
+    }
+
+    .mcp-token-cta-plus {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 50%;
+      background: var(--color-background-button-primary);
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .mcp-token-cta-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+
+      strong {
+        color: var(--color-background-button-primary);
+        font-size: 1rem;
+      }
+
+      span {
+        font-size: 0.82rem;
+        color: var(--color-text-input-description);
+      }
+    }
+  }
+
+  // Overview's token chips open the Access tokens sub-tab, so they look like links
+  .mcp-perm-summary .mcp-chip {
+    color: var(--color-link);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .mcp-chip.mcp-chip-add {
+    border-color: var(--color-background-button-primary);
+    background: rgba(0, 120, 231, 0.08);
+    color: var(--color-background-button-primary);
+    font-weight: 600;
+  }
+
   // ── OAuth connections, until there are any ──
   .mcp-empty {
     max-width: 34rem;
@@ -468,7 +590,21 @@
   #mcp-new-token {
     display: block;
     margin: 0.4rem 0 0.8rem;
+    padding-right: 6em;
     word-break: break-all;
+  }
+
+  // A block there, so the copy hint goes inside it, top right, like the code blocks
+  .click-to-copy-inline {
+    display: block;
+
+    .click-to-copy-hint {
+      top: 0.55em;
+      left: auto;
+      right: 0.6em;
+      margin-left: 0;
+      transform: none;
+    }
   }
 }
 
@@ -486,6 +622,15 @@
     .mcp-power.on .mcp-status {
       background: rgba(39, 174, 96, 0.18);
       color: #5db880;
+    }
+
+    .mcp-token-cta {
+      background: rgba(89, 189, 251, 0.06);
+
+      &:hover,
+      &:focus-visible {
+        background: rgba(89, 189, 251, 0.12);
+      }
     }
 
     .mcp-chip {

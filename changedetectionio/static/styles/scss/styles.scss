@@ -919,16 +919,70 @@ ul {
     width: 5em;
 }
 
-#api-key {
-  &:hover {
-    cursor: pointer;
+// Click to copy (static/js/click-to-copy.js), e.g. the API key on /settings and the MCP Server tab: the hint
+// floats over its box, so showing it never moves the page
+.click-to-copy {
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.click-to-copy-inline {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+
+  .click-to-copy-hint {
+    top: 50%;
+    left: 100%;
+    right: auto;
+    margin-left: 0.4rem;
+    transform: translateY(-50%);
   }
 }
 
-#api-key-copy {
-  color: var(--color-api-key);
+.mcp-snippet {
+  position: relative;
+  cursor: pointer;
 }
 
+.click-to-copy-hint {
+  position: absolute;
+  top: 0.75em;
+  right: 0.6em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.15em 0.5em;
+  border-radius: 4px;
+  background: var(--color-background);
+  color: var(--color-api-key);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  // Lingers 2s after the mouse leaves, so moving onto the hint (or a little off it) doesn't make it vanish. It's
+  // inside the same box, so hovering or clicking it counts as the box
+  transition: opacity 0.2s ease 2s, visibility 0s linear 2.2s;
+
+  svg {
+    stroke: currentColor;
+    fill: none;
+  }
+
+  &.copied {
+    color: #1f8a4c;
+  }
+
+  .click-to-copy-inline:hover &,
+  .mcp-snippet:hover & {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.12s ease, visibility 0s;
+  }
+}
+
+// The MCP Server tab: an on/off bar, then the vertical sub-tabs (_sub_tabs.scss) with these panes in them
 .button-green {
   background-color: var(--color-background-button-green);
 }
