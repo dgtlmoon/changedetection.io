@@ -1269,6 +1269,11 @@ class globalSettingsLLMForm(Form):
         default=5,
         render_kw={"placeholder": "5", "style": "width: 6em;"},
     )
+    # Ollama / OpenAI-compatible endpoints only, off by default so the server's own thinking default applies (#4638)
+    local_thinking_off = BooleanField(
+        _l('Switch thinking off'),
+        default=False,
+    )
     change_summary_default = TextAreaField(
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
