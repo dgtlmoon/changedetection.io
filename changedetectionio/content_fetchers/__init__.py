@@ -106,6 +106,20 @@ def _log_fetcher_capabilities(fetcher_class, backend_name, uuid=None):
     return caps
 
 
+def get_fetcher_by_name(backend_name, watch=None):
+    """The fetcher class registered as `backend_name` ('html_requests', a plugin's 'html_...'), or None when
+    there isn't one, or when `watch` is a PDF watch and this fetcher can't supply the original PDF."""
+    import inspect
+    if not backend_name or not backend_name.startswith('html_'):
+        return None
+    fetcher_obj = getattr(sys.modules[__name__], backend_name, None)
+    if not inspect.isclass(fetcher_obj):
+        return None
+    if watch is not None and getattr(watch, 'is_pdf', False) and not getattr(fetcher_obj, 'supports_pdf', False):
+        return None
+    return fetcher_obj
+
+
 def resolve_content_fetcher(watch, datastore):
     """Single source of truth for resolving which content fetcher a watch should use.
 

@@ -8,6 +8,7 @@ def overdue_watch_uuids(datastore, now=None):
     """Watches that have not been checked but should have been: not checked within their interval, plus 5 minutes
     of grace. Paused watches (one by one, or all of them with "pause all") aren't supposed to be checked, so they're
     never overdue (#4607)."""
+    from changedetectionio.pluggy_interface import apply_recheck_seconds_override
     now = time.time() if now is None else now
     if datastore.data['settings']['application'].get('all_paused'):
         return []
@@ -19,6 +20,8 @@ def overdue_watch_uuids(datastore, now=None):
         # see if now - last_checked is greater than the time that should have been
         # this is not super accurate (maybe they just edited it) but better than nothing
         threshold = watch.threshold_seconds() or datastore.threshold_seconds
+        # Same as the scheduler, a plugin may have the last word
+        threshold = apply_recheck_seconds_override(watch, datastore, threshold)
         # Allow 5 minutes of grace time before we decide it's overdue
         if now - (watch.get('last_checked') or 0) - (5 * 60) > threshold:
             overdue.append(uuid)

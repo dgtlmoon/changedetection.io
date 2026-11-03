@@ -1727,6 +1727,7 @@ def notification_runner(worker_id=0):
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
+    from changedetectionio.pluggy_interface import apply_recheck_seconds_override
 
     proxy_last_called_time = {}
     last_health_check = 0
@@ -1862,6 +1863,8 @@ def ticker_thread_check_time_launch_checks():
                 if watch.get('time_between_check_use_default')
                 else watch.threshold_seconds() or recheck_time_system_seconds
             )
+            # A plugin that has the watch under its control has the last word
+            threshold = apply_recheck_seconds_override(watch, datastore, threshold)
 
             # #580 - Jitter plus/minus amount of time to make the check seem more random to the server
             jitter = datastore.data['settings']['requests'].get('jitter_seconds', 0)
