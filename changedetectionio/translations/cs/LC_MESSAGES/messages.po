@@ -4668,6 +4668,10 @@ msgid "Discord, Telegram, ntfy, Slack, email…"
 msgstr "Discord, Telegram, ntfy, Slack, e-mail…"
 
 #: changedetectionio/templates/_common_fields-notification.html
+msgid "List all"
+msgstr "Zobrazit vše"
+
+#: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"
 msgstr "Kde je získám?"
 

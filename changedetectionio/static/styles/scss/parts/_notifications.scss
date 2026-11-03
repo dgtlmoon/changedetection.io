@@ -110,6 +110,60 @@
     }
   }
 
+  .ns-all {
+    margin-top: 0.3rem;
+
+    summary {
+      cursor: pointer;
+      font-size: 0.85em;
+      opacity: 0.75;
+      &:hover { opacity: 1; }
+    }
+  }
+
+  .ns-all-list {
+    max-height: 18rem;
+    overflow-y: auto;
+    margin: 0.3rem 0 0;
+    padding: 0.25rem;
+    list-style: none;
+    border: 1px solid var(--color-border-notification);
+    border-radius: var(--common-round-border);
+
+    a {
+      display: grid;
+      grid-template-columns: 9rem 1fr;
+      gap: 0.6rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      text-decoration: none;
+      color: inherit;
+
+      &:hover,
+      &:focus-visible {
+        background: var(--color-background-button-primary);
+        color: var(--color-white);
+        code { color: inherit; opacity: 0.85; }
+      }
+    }
+
+    code {
+      background: none;
+      font-size: 0.85em;
+      opacity: 0.65;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    // "  -  " between the prefix and the name
+    span::before {
+      content: "-";
+      margin-right: 0.6rem;
+      opacity: 0.4;
+    }
+  }
+
   .ns-results {
     position: absolute;
     z-index: 20;
@@ -324,6 +378,13 @@
     > #notification-add-email-preset > label,
     > .notification-setup > label {
       margin: 0;
+    }
+
+    // The search cell is taller than one row ("List all" sits under the input), so line the label up
+    // with the input rather than the middle of the cell. The padding matches the input's own padding + border.
+    > .notification-setup > label {
+      align-self: start;
+      padding-top: calc(0.5em + 1px);
     }
 
     #add-email-input {

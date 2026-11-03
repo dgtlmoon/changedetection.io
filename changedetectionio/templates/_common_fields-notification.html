@@ -21,6 +21,10 @@
                placeholder="{{ _('Discord, Telegram, ntfy, Slack, email…') }}"
                role="combobox" aria-expanded="false" aria-controls="ns-results" aria-autocomplete="list">
         <ul id="ns-results" class="ns-results" role="listbox" hidden></ul>
+        <details class="ns-all">
+            <summary>{{ _('List all') }}</summary>
+            <ul class="ns-all-list"></ul>
+        </details>
     </div>
     <div class="ns-card" hidden>
         <div class="ns-card-head">

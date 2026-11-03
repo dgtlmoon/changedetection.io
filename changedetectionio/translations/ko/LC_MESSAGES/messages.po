@@ -4648,6 +4648,10 @@ msgid "Discord, Telegram, ntfy, Slack, email…"
 msgstr "Discord, Telegram, ntfy, Slack, 이메일…"
 
 #: changedetectionio/templates/_common_fields-notification.html
+msgid "List all"
+msgstr "모두 보기"
+
+#: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"
 msgstr "어떻게 얻나요?"
 

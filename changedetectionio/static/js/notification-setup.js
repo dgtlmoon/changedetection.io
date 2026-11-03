@@ -100,6 +100,27 @@ $(function () {
     });
     $search.on('blur', function () { setTimeout(hideResults, 100); });
 
+    // "List all", every service as "schema://  -  Name", sorted by the schema, filled in on first open
+    var $all = $w.find('.ns-all'), $allList = $all.find('.ns-all-list');
+    function allLabel(s) { return s.hint || s.schema + '://'; }
+    $all.on('toggle', function () {
+        if (!$all.prop('open') || $allList.children().length) return;
+        loadServices(function () {
+            var sorted = services.slice().sort(function (a, b) { return allLabel(a).localeCompare(allLabel(b)); });
+            $.each(sorted, function (i, s) {
+                $('<li></li>').append(
+                    $('<a href="#"></a>').attr('data-schema', s.schema)
+                        .append($('<code></code>').text(allLabel(s)), $('<span></span>').text(s.name))
+                ).appendTo($allList);
+            });
+        });
+    });
+    $allList.on('click', 'a[data-schema]', function (e) {
+        e.preventDefault();
+        $all.prop('open', false);
+        pick($(this).data('schema'));
+    });
+
     // ---- Service form ----
 
     function pick(schema) {

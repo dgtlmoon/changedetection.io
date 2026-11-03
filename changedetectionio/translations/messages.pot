@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.60.10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-03 15:34+0100\n"
+"POT-Creation-Date: 2026-11-03 15:40+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4632,6 +4632,10 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Discord, Telegram, ntfy, Slack, email…"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "List all"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html

@@ -4655,6 +4655,10 @@ msgid "Discord, Telegram, ntfy, Slack, email…"
 msgstr "Discord、Telegram、ntfy、Slack、メール…"
 
 #: changedetectionio/templates/_common_fields-notification.html
+msgid "List all"
+msgstr "すべて表示"
+
+#: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"
 msgstr "入手方法"
 
