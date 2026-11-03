@@ -23,10 +23,29 @@ from unittest.mock import patch
 from changedetectionio.browser_steps.browser_steps import steppable_browser_interface
 from changedetectionio.validate_url import (
     is_fetch_url_allowed,
+    is_private_hostname,
     is_special_purpose_ip,
     validate_fetch_url,
     validate_fetch_url_async,
 )
+
+
+def _gai(*addresses):
+    """Build a socket.getaddrinfo() return value from (address, family[, scope_id]) tuples.
+
+    Only family and sockaddr are read by is_private_hostname(), and the scope id is the whole
+    point of the link-local tests, so the sockaddr shape has to be the real one: 2-tuple for
+    AF_INET, 4-tuple (addr, port, flowinfo, scope_id) for AF_INET6.
+    """
+    import socket
+    out = []
+    for addr, version, *rest in addresses:
+        scope_id = rest[0] if rest else 0
+        if version == 6:
+            out.append((socket.AF_INET6, socket.SOCK_STREAM, 6, '', (addr, 0, 0, scope_id)))
+        else:
+            out.append((socket.AF_INET, socket.SOCK_STREAM, 6, '', (addr, 0)))
+    return out
 
 # tests/conftest.py sets ALLOW_IANA_RESTRICTED_ADDRESSES=true for the functional suite, so the
 # locked-down default has to be re-asserted explicitly rather than assumed.
@@ -167,6 +186,54 @@ class TestFetchUrlGate(unittest.TestCase):
                         'https://example.com/path?a=b&c=d#frag'):
                 with self.subTest(url=url):
                     self.assertAllowed(url)
+
+    def test_junk_link_local_aaaa_record_does_not_block_a_public_site(self):
+        """Real sites publish a bare 'fe80::...' AAAA by mistake - competa.com and upnano.com
+        both do (a Plesk/TransIP box leaking its own NIC autoconf address into DNS). Nothing can
+        connect to a link-local address without a zone id, and DNS cannot carry one, so refusing
+        the whole hostname over that record blocked legitimate sites for no security gain."""
+        with patch.dict('os.environ', LOCKED_DOWN):
+            with patch('socket.getaddrinfo', return_value=_gai(
+                    ('149.210.194.177', 4), ('fe80::5054:ff:fe3b:3cbd', 6))):
+                self.assertFalse(is_private_hostname('competa.example'))
+                self.assertAllowed('https://competa.example/')
+
+    def test_link_local_only_hostname_is_still_blocked(self):
+        """The exception above is only for a junk record riding alongside a usable one. A name
+        that resolves to nothing but link-local space is what deliberately aiming the fetcher at
+        its own link segment looks like, so it stays refused."""
+        with patch.dict('os.environ', LOCKED_DOWN):
+            with patch('socket.getaddrinfo', return_value=_gai(('fe80::1', 6))):
+                self.assertTrue(is_private_hostname('linklocal.example'))
+                self.assertBlocked('https://linklocal.example/')
+
+    def test_scoped_link_local_is_still_blocked(self):
+        """A zone id (fe80::1%eth0, scope_id != 0) makes the address genuinely connectable, so
+        the 'unreachable record' reasoning does not apply to it."""
+        with patch.dict('os.environ', LOCKED_DOWN):
+            with patch('socket.getaddrinfo', return_value=_gai(
+                    ('93.184.216.34', 4), ('fe80::1', 6, 2))):
+                self.assertTrue(is_private_hostname('scoped.example'))
+
+    def test_link_local_exception_does_not_extend_to_ipv4(self):
+        """169.254.0.0/16 is link-local too, but it IS routable - and 169.254.169.254 is cloud
+        metadata. A public A record next to it must not buy it a pass."""
+        with patch.dict('os.environ', LOCKED_DOWN):
+            with patch('socket.getaddrinfo', return_value=_gai(
+                    ('93.184.216.34', 4), ('169.254.169.254', 4))):
+                self.assertTrue(is_private_hostname('metadata.example'))
+                self.assertBlocked('https://metadata.example/')
+
+    def test_link_local_exception_does_not_extend_to_other_blocked_ranges(self):
+        """Only link-local is deferred; a public record alongside CGNAT/private/reserved space
+        still refuses the hostname (GHSA-gwph-fp79-379w)."""
+        with patch.dict('os.environ', LOCKED_DOWN):
+            for other in ('100.64.0.1', '10.0.0.1', '127.0.0.1', 'fc00::1', '::1'):
+                with self.subTest(other=other):
+                    fam = 6 if ':' in other else 4
+                    with patch('socket.getaddrinfo', return_value=_gai(
+                            ('93.184.216.34', 4), (other, fam))):
+                        self.assertTrue(is_private_hostname('mixed.example'))
 
     def test_validate_fetch_url_raises_with_the_reason(self):
         with patch.dict('os.environ', LOCKED_DOWN):
