@@ -26,14 +26,16 @@ class TestTemperatureModelMatching(unittest.TestCase):
     def test_reasoning_models_do_not_get_temperature(self):
         for model in ('gpt-5', 'openai/gpt-5', 'gpt-5-mini', 'gpt-5.1',
                       'o1', 'o1-mini', 'o3', 'o3-mini', 'o4-mini',
-                      'gemini/gemini-2.0-flash-lite', 'gemini-2.0-thinking-exp'):
+                      'gemini/gemini-2.0-flash-lite', 'gemini-2.0-thinking-exp',
+                      'claude-sonnet-5', 'anthropic/claude-haiku-5-5', 'claude-opus-5-5',
+                      'claude-fable-5', 'anthropic/claude-fable-5-1'):
             self.assertFalse(_sends_temperature(model),
                              f"{model} rejects temperature; sending it costs a retry on every call")
 
     def test_ordinary_models_still_get_temperature(self):
         """Over-matching is the quieter failure: no error, just non-deterministic output."""
         for model in ('gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo',
-                      'claude-sonnet-5', 'gemini/gemini-2.0-flash',
+                      'claude-sonnet-4-5', 'claude-haiku-4-5-20251001', 'gemini/gemini-2.0-flash',
                       'ollama/llama3', 'ollama/mistral', 'ollama/gemma3'):
             self.assertTrue(_sends_temperature(model),
                             f"{model} accepts temperature - dropping it loses determinism silently")
@@ -60,9 +62,22 @@ class TestReasoningTokenHeadroom(unittest.TestCase):
     def test_non_reasoning_cloud_models_are_unchanged(self):
         """Raising these would silently increase everyone's bill for no benefit."""
         for model, kind in (('gpt-4o', 'openai'), ('gpt-4-turbo', 'openai'),
-                            ('claude-sonnet-5', 'anthropic'), ('gemini-2.0-flash', 'gemini')):
+                            ('claude-sonnet-4-5', 'anthropic'), ('gemini-2.0-flash', 'gemini')):
             self.assertEqual(400, apply_local_token_multiplier(400, {'model': model,
                                                                      'provider_kind': kind}))
+
+    def test_claude_5_gets_headroom_but_claude_4_does_not(self):
+        """Claude 5.x thinks by default: on 400 tokens it returned content='' with
+        finish_reason='length', so intent eval failed open (every change notified)."""
+        for model in ('anthropic/claude-haiku-5-5', 'claude-haiku-5-5', 'claude-sonnet-5',
+                      'anthropic/claude-sonnet-5-5', 'claude-opus-5', 'github_copilot/claude-haiku-5.5',
+                      'claude-fable-5-1'):
+            self.assertGreater(apply_local_token_multiplier(
+                400, {'model': model, 'provider_kind': 'anthropic'}), 400, model)
+        for model in ('anthropic/claude-haiku-4-5-20251001', 'claude-sonnet-4-5', 'claude-opus-4-1',
+                      'claude-3-5-haiku-20241022', 'claude-3-5-sonnet-20241022'):
+            self.assertEqual(400, apply_local_token_multiplier(
+                400, {'model': model, 'provider_kind': 'anthropic'}), model)
 
     def test_local_endpoints_keep_their_existing_headroom(self):
         self.assertEqual(2000, apply_local_token_multiplier(
