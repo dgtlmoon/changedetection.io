@@ -51,9 +51,11 @@ def _currency(watch):
 def _build_series(watch):
     """Read the full history into a [{timestamp, price, in_stock}] timeline (oldest -> newest)."""
     series = []
-    for ts in list(watch.history.keys()):
+    # Read the index once, get_history_snapshot(timestamp=...) re-reads it on every call
+    history = watch.history or {}
+    for ts, filepath in history.items():
         try:
-            snapshot = watch.get_history_snapshot(timestamp=ts)
+            snapshot = watch.get_history_snapshot(filepath=filepath)
         except Exception as e:
             logger.error(f"Restock diff: unable to read snapshot {ts} for {watch.get('uuid')}: {e}")
             continue

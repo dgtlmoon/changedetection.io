@@ -197,6 +197,33 @@ def list_watches(ctx, args):
     return '\n'.join(lines), {'total': len(watches), 'offset': offset, 'limit': limit, 'watches': page}
 
 
+# get_watch says so when checks succeed but nothing has been recorded for this many days
+QUIET_DAYS = 60
+
+
+def _watch_notes(watch, keys):
+    """Settings and states that silently hide changes, said in words: an assistant reading only the history would
+    otherwise conclude the page hasn't changed."""
+    import time
+    notes = []
+    triggers = [t for t in (watch.get('trigger_text') or []) if str(t).strip()]
+    if triggers:
+        notes.append(f"trigger_text is set ({', '.join(repr(str(t)) for t in triggers)}): a change is only recorded "
+                     f"while the page contains one of these, so the history can stay unchanged for a long time while "
+                     f"the page itself changes.")
+    last_checked = watch.get('last_checked') or 0
+    if keys and last_checked and not watch.get('last_error') and not watch.get('paused') \
+            and time.time() - last_checked < 7 * 86400:
+        quiet = (last_checked - keys[-1]) / 86400
+        if quiet >= QUIET_DAYS:
+            why = [w for w, on in (('trigger_text', triggers), ('include_filters', watch.get('include_filters')),
+                                   ('ignore_text', watch.get('ignore_text'))) if on]
+            notes.append(f"Nothing recorded for {int(quiet)} days although checks succeed (last {_iso(last_checked)})"
+                         + (f": check whether {', '.join(why)} hides the changes, or the page really hasn't changed."
+                            if why else ": the page may really not have changed, or the filters no longer match."))
+    return notes
+
+
 def get_watch(ctx, args):
     datastore = ctx.datastore
     watch = _resolve_watch(datastore, args.get('watch'))
@@ -230,10 +257,13 @@ def get_watch(ctx, args):
         truncated = len(lines) > LATEST_CHANGE_MAX_LINES
         if truncated:
             lines = lines[:LATEST_CHANGE_MAX_LINES] + [f"... {len(lines) - LATEST_CHANGE_MAX_LINES} more lines, use get_diff"]
-        latest = {'from_timestamp': keys[-2], 'to_timestamp': keys[-1], 'diff': '\n'.join(lines), 'truncated': truncated}
+        latest = {'from': _iso(keys[-2]), 'to': _iso(keys[-1]), 'diff': '\n'.join(lines), 'truncated': truncated}
     info['latest_change'] = latest
+    notes = _watch_notes(watch, keys)
+    if notes:
+        info['notes'] = notes
 
-    out = [f"{info['title']} - {info['url']}", f"uuid: {info['uuid']}"]
+    out = [f"{info['title']} - {info['url']}", f"uuid: {info['uuid']}"] + [f"NOTE: {n}" for n in notes]
     for key in ('tags', 'processor', 'paused', 'notification_muted', 'last_checked', 'last_changed', 'last_error',
                 'snapshots', 'first_snapshot', 'fetch_backend', 'include_filters', 'ignore_text', 'trigger_text',
                 'notification_urls_count', *processor_fields):
@@ -412,46 +442,100 @@ def _range(args):
     return bounds[0], bounds[1]
 
 
-# A snapshot whose stored size falls below this share of the one before it is flagged by list_snapshots: usually a
-# broken capture (an error page, a half-loaded page, a cookie wall) rather than a real change
+# A snapshot whose stored size falls below this share of the median of the few before it is flagged SHRUNK by
+# list_snapshots: usually a broken capture (an error page, a half-loaded page, a cookie wall) rather than a real
+# change. The median, not just the previous snapshot, so one small snapshot after a run of big ones doesn't make the
+# next normal one look like a jump, and a page that slowly gets shorter isn't flagged.
 SHRINK_RATIO = 0.3
+SHRINK_WINDOW = 5
+# More snapshots than this in the range and list_snapshots gives a summary unless full=true
+SNAPSHOT_LIST_SUMMARY_OVER = 60
 
 
-def list_snapshots(ctx, args):
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
-    from_ts, to_ts = _range(args)
+def _snapshot_rows(watch):
+    """[{'ts', 'date', 'stored_bytes', 'flag'}] oldest first, flag is 'shrunk', 'recovered' (back to normal after a
+    shrunk one) or None."""
+    import statistics
     history = watch.history or {}
-    keys = sorted(history.keys(), key=int)
-    total = len(keys)
-    items, previous = [], None
-    for k in keys:
+    rows, recent, previous_flag = [], [], None
+    for k in sorted(history.keys(), key=int):
         try:
             size = os.path.getsize(history[k])
         except OSError:
             size = None
-        item = {'timestamp': int(k), 'date': _iso(k), 'stored_bytes': size}
-        if size is not None and previous and size < previous * SHRINK_RATIO:
-            item['shrunk'] = True
-        if size is not None:
-            previous = size
-        items.append(item)
-    items = [i for i in items if (from_ts is None or i['timestamp'] >= from_ts) and (to_ts is None or i['timestamp'] <= to_ts)]
+        flag = None
+        if size is not None and recent:
+            if size < statistics.median(recent) * SHRINK_RATIO:
+                flag = 'shrunk'
+            elif previous_flag == 'shrunk':
+                flag = 'recovered'
+        rows.append({'ts': int(k), 'date': _iso(k), 'stored_bytes': size, 'flag': flag})
+        previous_flag = flag
+        # A shrunk snapshot doesn't count toward what normal looks like
+        if size is not None and flag != 'shrunk':
+            recent = (recent + [size])[-SHRINK_WINDOW:]
+    return rows
+
+
+def _row(row):
+    out = {'date': row['date'], 'stored_bytes': row['stored_bytes']}
+    if row['flag']:
+        out['flag'] = row['flag']
+    return out
+
+
+def list_snapshots(ctx, args):
+    import statistics
+    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    from_ts, to_ts = _range(args)
+    rows = _snapshot_rows(watch)
+    total = len(rows)
+    rows = [r for r in rows if (from_ts is None or r['ts'] >= from_ts) and (to_ts is None or r['ts'] <= to_ts)]
+    head = [f"### {watch.label} - {watch.get('url')}",
+            f"{total} snapshots" + (f", {len(rows)} in the range" if (from_ts or to_ts) else '')
+            + (f", {rows[0]['date']} to {rows[-1]['date']}" if rows else ', none to show'),
+            "(stored_bytes is the size on disk, usually compressed. SHRUNK: much smaller than the snapshots before "
+            "it, often an error or half-loaded page; RECOVERED: back to normal after one)"]
+    structured = {'uuid': watch.get('uuid'), 'total': total, 'in_range': len(rows),
+                  'first': rows[0]['date'] if rows else None, 'last': rows[-1]['date'] if rows else None}
+
+    if len(rows) > SNAPSHOT_LIST_SUMMARY_OVER and not args.get('full'):
+        by_month = {}
+        for r in rows:
+            by_month[r['date'][:7]] = by_month.get(r['date'][:7], 0) + 1
+        sizes = [r['stored_bytes'] for r in rows if r['stored_bytes'] is not None]
+        flagged = [_row(r) for r in rows if r['flag']]
+        size_summary = {'min': min(sizes), 'median': int(statistics.median(sizes)), 'max': max(sizes)} if sizes else None
+        head += ['Snapshots per month: ' + ', '.join(f"{m}: {n}" for m, n in by_month.items()),
+                 f"Size in bytes: {size_summary}" if size_summary else 'Size: unknown',
+                 f"Flagged: {len(flagged)}"] + [f"- {f['date']} | {f['stored_bytes']} bytes | {f['flag'].upper()}"
+                                                 for f in flagged[:50]]
+        if len(flagged) > 50:
+            head.append(f"... {len(flagged) - 50} more flagged")
+        head.append("This is a summary, full=true lists every snapshot (paged with limit/offset).")
+        structured.update({'summary': True, 'by_month': by_month, 'stored_bytes': size_summary,
+                           'flagged': flagged[:50]})
+        return '\n'.join(head), structured
 
     limit = _int(args, 'limit', 200, 1, 2000)
     offset = _int(args, 'offset', 0, 0, 10_000_000)
-    page = items[offset:offset + limit]
-    lines = [f"### {watch.label} - {watch.get('url')}",
-             f"{total} snapshots" + (f", first {_iso(keys[0])}, last {_iso(keys[-1])}" if keys else '')
-             + (f", {len(items)} in the range" if (from_ts or to_ts) else '')
-             + (f", showing {offset + 1}-{offset + len(page)}" if page else ', none to show'),
-             "(stored_bytes is the size on disk, usually compressed: compare snapshots by it, a sudden drop marked "
-             "SHRUNK is often an error page or a half-loaded page)"]
-    lines += [f"- {i['date']} | {i['timestamp']} | {i['stored_bytes']} bytes" + (' | SHRUNK' if i.get('shrunk') else '')
-              for i in page]
-    if offset + len(page) < len(items):
-        lines.append(f"... call again with offset={offset + len(page)} for more")
-    return '\n'.join(lines), {'uuid': watch.get('uuid'), 'total': total, 'in_range': len(items), 'offset': offset,
-                              'limit': limit, 'snapshots': page}
+    page = [_row(r) for r in rows[offset:offset + limit]]
+    head += [f"- {r['date']} | {r['stored_bytes']} bytes" + (f" | {r['flag'].upper()}" if r.get('flag') else '')
+             for r in page]
+    if offset + len(page) < len(rows):
+        head.append(f"... call again with offset={offset + len(page)} for more")
+    structured.update({'offset': offset, 'limit': limit, 'snapshots': page})
+    return '\n'.join(head), structured
+
+
+GROUP_BY = ('month', 'year')
+
+
+def _regex_timeout_error():
+    from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
+    return ToolError(f"The regex took longer than {regex_plugin.REGEX_TIMEOUT_SECONDS}s on one line and was stopped, it "
+                     f"probably backtracks badly (e.g. nested or overlapping repeats like (a|aa)+). Use a simpler regex, "
+                     f"or plain text with regex=false.")
 
 
 def find_change(ctx, args):
@@ -459,38 +543,112 @@ def find_change(ctx, args):
     watch = _resolve_watch(ctx.datastore, args.get('watch'))
     from_ts, to_ts = _range(args)
     text = args.get('text') or ''
+    group_by = args.get('group_by')
+    if group_by and group_by not in GROUP_BY:
+        raise ToolError(f"'group_by' must be one of: {', '.join(GROUP_BY)}")
     try:
         found = watch.find_change(text, regex=bool(args.get('regex')), case_sensitive=bool(args.get('case_sensitive')),
                                   from_ts=from_ts, to_ts=to_ts, deadline=time.monotonic() + CHANGES_TIME_BUDGET)
     except ValueError as e:
         raise ToolError(str(e))
     except TimeoutError:
-        from changedetectionio.jinja2_custom.plugins.regex import REGEX_TIMEOUT_SECONDS
-        raise ToolError(f"The regex took longer than {REGEX_TIMEOUT_SECONDS}s on one snapshot and was stopped, it "
-                        f"probably backtracks badly (e.g. nested or overlapping repeats like (a|aa)+). Use a simpler regex, or plain "
-                        f"text with regex=false.")
+        raise _regex_timeout_error()
 
-    periods = found['periods']
-    lines = [f"### {watch.label} - {watch.get('url')}",
-             f"'{text}' is in {found['matching_snapshots']} of {found['snapshots_searched']} snapshots searched "
-             f"({found['snapshots_total']} in total), in {len(periods)} period{'s' if len(periods) != 1 else ''}"]
+    periods = [{'first_seen': _iso(p['first_seen']), 'last_seen': _iso(p['last_seen']),
+                'gone_at': _iso(p['gone_at']) if p['gone_at'] else None, 'snapshots': p['snapshots'], 'line': p['line']}
+               for p in found['periods']]
+    all_lines = [{'line': m['line'], 'first_seen': _iso(m['first_seen']), 'last_seen': _iso(m['last_seen']),
+                  'snapshots': m['snapshots']} for m in sorted(found['lines'], key=lambda m: m['first_seen'])]
+    max_lines = _int(args, 'max_lines', 100, 1, 2000)
+    shown = all_lines[:max_lines]
+
+    out = [f"### {watch.label} - {watch.get('url')}",
+           f"'{text}' is in {found['matching_snapshots']} of {found['snapshots_searched']} snapshots searched "
+           f"({found['snapshots_total']} in total): {len(all_lines)} different matching lines, "
+           f"{len(periods)} period{'s' if len(periods) != 1 else ''} with a match"]
     if found['incomplete']:
-        lines.append(f"Incomplete: stopped at the time limit after {found['snapshots_searched']} snapshots, narrow it "
-                     f"down with 'from'/'to' and call again.")
-    for p in periods:
-        gone = f"gone at {_iso(p['gone_at'])}" if p['gone_at'] else 'still there at the last snapshot searched'
-        lines.append(f"- first seen {_iso(p['first_seen'])}, last seen {_iso(p['last_seen'])}, {gone} "
-                     f"({p['snapshots']} snapshots) | line: {p['line']}")
-    if not periods:
-        lines.append("Not found. Snapshots hold the filtered text, so it may be outside the monitor's filters.")
-    for p in periods:
-        for key in ('first_seen', 'last_seen', 'gone_at'):
-            p[f'{key}_date'] = _iso(p[key]) if p[key] else None
-    return UNTRUSTED_NOTE + '\n' + '\n'.join(lines), dict(found, uuid=watch.get('uuid'))
+        out.append(f"Incomplete: stopped at the time limit after {found['snapshots_searched']} snapshots, narrow it "
+                   f"down with 'from'/'to' and call again.")
+    structured = {'uuid': watch.get('uuid'), 'snapshots_searched': found['snapshots_searched'],
+                  'snapshots_total': found['snapshots_total'], 'matching_snapshots': found['matching_snapshots'],
+                  'incomplete': found['incomplete'], 'periods': periods, 'lines': shown,
+                  'lines_total': len(all_lines)}
+    if group_by:
+        width = 7 if group_by == 'month' else 4
+        counts = {}
+        for m in all_lines:
+            counts[m['first_seen'][:width]] = counts.get(m['first_seen'][:width], 0) + 1
+        structured['new_lines_by_' + group_by] = counts
+        out.append(f"New matching lines per {group_by}: " + ', '.join(f"{k}: {v}" for k, v in counts.items()))
+    out.append('Periods (runs of snapshots with a match):')
+    out += [f"- {p['first_seen']} to {p['last_seen']}, " + (f"gone at {p['gone_at']}" if p['gone_at'] else
+            'still there at the last snapshot searched') + f" ({p['snapshots']} snapshots)" for p in periods]
+    if all_lines:
+        out.append('Matching lines (first seen to last seen):')
+        out += [f"- {m['first_seen'][:10]} to {m['last_seen'][:10]} | {m['line']}" for m in shown]
+        if len(all_lines) > len(shown):
+            out.append(f"... {len(all_lines) - len(shown)} more, ask for a higher max_lines or narrow with 'from'/'to'")
+    else:
+        out.append("Not found. Snapshots hold the filtered text, so it may be outside the monitor's filters.")
+    return UNTRUSTED_NOTE + '\n' + '\n'.join(out), structured
 
 
-# get_history: at most this many snapshots per call
+def line_timeline(ctx, args):
+    import time
+    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    from_ts, to_ts = _range(args)
+    try:
+        found = watch.line_timeline(from_ts=from_ts, to_ts=to_ts, deadline=time.monotonic() + CHANGES_TIME_BUDGET,
+                                    text=args.get('text'), regex=bool(args.get('regex')),
+                                    case_sensitive=bool(args.get('case_sensitive')))
+    except ValueError as e:
+        raise ToolError(str(e))
+    except TimeoutError:
+        raise _regex_timeout_error()
+
+    include_start = bool(args.get('include_start'))
+    entries = [e for e in found['lines'] if include_start or not e['at_start']]
+    if args.get('still_there') is not None:
+        entries = [e for e in entries if e['still_there'] is bool(args['still_there'])]
+    at_start = sum(1 for e in found['lines'] if e['at_start'])
+    limit = _int(args, 'limit', 200, 1, 2000)
+    offset = _int(args, 'offset', 0, 0, 10_000_000)
+    page = [{'line': e['line'], 'first_seen': _iso(e['first_seen']), 'last_seen': _iso(e['last_seen']),
+             'still_there': e['still_there'], **({'at_start': True} if e['at_start'] else {})}
+            for e in entries[offset:offset + limit]]
+
+    first, last = found['first_snapshot'], found['last_snapshot']
+    out = [f"### {watch.label} - {watch.get('url')}",
+           f"{found['snapshots_searched']} snapshots searched" + (f", {_iso(first)} to {_iso(last)}" if first else '')
+           + f": {len(entries)} lines" + ('' if include_start else
+                                          f" added after the first snapshot ({at_start} already on it are left out, "
+                                          f"include_start=true for them)")]
+    if found['incomplete']:
+        out.append("Incomplete: stopped at the time or size limit, narrow it down with 'from'/'to' or 'text'.")
+    out += [f"- {e['first_seen'][:10]} to {'now' if e['still_there'] else e['last_seen'][:10]} | {e['line']}"
+            for e in page]
+    if offset + len(page) < len(entries):
+        out.append(f"... call again with offset={offset + len(page)} for more")
+    return UNTRUSTED_NOTE + '\n' + '\n'.join(out), {
+        'uuid': watch.get('uuid'), 'snapshots_searched': found['snapshots_searched'],
+        'first_snapshot': _iso(first) if first else None, 'last_snapshot': _iso(last) if last else None,
+        'incomplete': found['incomplete'], 'total': len(entries), 'left_out_at_start': 0 if include_start else at_start,
+        'offset': offset, 'limit': limit, 'lines': page}
+
+
+# get_history: at most this many snapshots per call, more are sampled down to it
 HISTORY_MAX_SNAPSHOTS = 50
+# Defaults sized so a call stays well under what assistants accept in one tool result (Claude Code saves results over
+# about 25k tokens to a file instead)
+HISTORY_DEFAULT_MAX_CHARS = 12000
+HISTORY_DEFAULT_MAX_LINES = 600
+
+
+def _sample(keys, n):
+    """n evenly spaced keys, always the first and the last (half rounds up, round() would round half to even)."""
+    if n >= len(keys):
+        return list(keys)
+    return sorted({keys[int(i * (len(keys) - 1) / (n - 1) + 0.5)] for i in range(n)})
 
 
 def get_history(ctx, args):
@@ -500,6 +658,7 @@ def get_history(ctx, args):
     if not keys:
         raise ToolError("This monitor has no snapshots yet")
 
+    notes = []
     timestamps = _list(args, 'timestamps')
     if timestamps:
         if args.get('sample') or args.get('from') or args.get('to'):
@@ -510,16 +669,13 @@ def get_history(ctx, args):
         chosen = [k for k in keys if (from_ts is None or k >= from_ts) and (to_ts is None or k <= to_ts)]
         if not chosen:
             raise ToolError(f"No snapshots in that range, they go from {_iso(keys[0])} to {_iso(keys[-1])}")
-        sample = args.get('sample')
-        if sample:
-            n = _int(args, 'sample', 5, 2, HISTORY_MAX_SNAPSHOTS)
-            if n < len(chosen):
-                # Evenly spaced, always including the first and the last
-                # (half rounds up, round() would round half to even)
-                chosen = sorted({chosen[int(i * (len(chosen) - 1) / (n - 1) + 0.5)] for i in range(n)})
+        if args.get('sample'):
+            chosen = _sample(chosen, _int(args, 'sample', 5, 2, HISTORY_MAX_SNAPSHOTS))
     if len(chosen) > HISTORY_MAX_SNAPSHOTS:
-        raise ToolError(f"That's {len(chosen)} snapshots, at most {HISTORY_MAX_SNAPSHOTS} per call: give 'sample' "
-                        f"(e.g. 10) for evenly spaced ones, or a shorter 'from'/'to' range")
+        notes.append(f"{len(chosen)} snapshots match, more than {HISTORY_MAX_SNAPSHOTS} per call, so these are "
+                     f"{HISTORY_MAX_SNAPSHOTS} evenly spaced ones. Narrow it with 'from'/'to' for every step, or use "
+                     f"line_timeline for what was added and when.")
+        chosen = _sample(chosen, HISTORY_MAX_SNAPSHOTS)
 
     relative_to = args.get('relative_to') or 'previous'
     if relative_to not in RELATIVE_TO:
@@ -529,13 +685,13 @@ def get_history(ctx, args):
         raise ToolError("This monitor's history isn't text (images or PDFs), use list_snapshots for its dates")
     result = snapshots_as_patches(snapshots, relative_to=relative_to, context=_int(args, 'context', 0, 0, 10))
 
-    max_chars = _int(args, 'max_chars', 20000, 100, 200000)
+    max_chars = _int(args, 'max_chars', HISTORY_DEFAULT_MAX_CHARS, 100, 200000)
     base = result['base']
-    base['truncated'] = len(base['text']) > max_chars
-    if base['truncated']:
+    base_truncated = len(base['text']) > max_chars
+    if base_truncated:
         base['text'] = base['text'][:max_chars] + f"\n... {len(base['text']) - max_chars} more characters, ask for a higher max_chars"
 
-    max_lines = _int(args, 'max_lines', 2000, 1, 20000)
+    max_lines = _int(args, 'max_lines', HISTORY_DEFAULT_MAX_LINES, 1, 20000)
     used, truncated = 0, False
     for p in result['patches']:
         lines = p['diff'].split('\n') if p['diff'] else []
@@ -544,12 +700,20 @@ def get_history(ctx, args):
             p['diff'] = '\n'.join(lines[:keep] + [f"... {len(lines) - keep} more lines, ask for a higher max_lines"])
             truncated = True
         used += len(lines)
+    if truncated:
+        notes.append("Diffs cut at max_lines. If the page repeats a long list (or flips between two layouts), "
+                     "line_timeline gives each line once with when it was added.")
 
     header = (f"### {watch.label} - {watch.get('url')}\n{len(chosen)} of {len(keys)} snapshots, the first in full, "
               f"then each one as a diff from the {'one before it' if relative_to == 'previous' else 'first'}")
     structured = {'uuid': watch.get('uuid'), 'snapshots_total': len(keys), 'relative_to': relative_to,
-                  'base': base, 'patches': result['patches'], 'truncated': truncated or base['truncated']}
-    return f"{UNTRUSTED_NOTE}\n{header}\n{render_patches(result)}", structured
+                  'base': {'date': _iso(base['timestamp']), 'text': base['text'], 'truncated': base_truncated},
+                  'patches': [{'date': _iso(p['timestamp']), 'against': _iso(p['against']), 'diff': p['diff'],
+                               **({'unchanged': True} if p['unchanged'] else {})} for p in result['patches']],
+                  'truncated': truncated or base_truncated}
+    if notes:
+        structured['notes'] = notes
+    return '\n'.join(notes + [UNTRUSTED_NOTE, header, render_patches(result)]), structured
 
 
 def get_system_info(ctx, args):
@@ -1031,31 +1195,57 @@ TOOLS = {
                            'description': 'Several monitors: how many in this call'},
                  'offset': {'type': 'integer', 'minimum': 0, 'default': 0}})),
     'list_snapshots': (list_snapshots, READ_ONLY, 'List snapshots',
-        "Every snapshot date of one monitor (a snapshot is saved each time the page changed), oldest first, with its "
-        "size on disk. A snapshot much smaller than the one before is marked SHRUNK, often an error or half-loaded "
-        "page. Use it to see how far the history goes and to pick dates for get_history or get_snapshot.",
+        "The snapshot dates of one monitor (one is saved each time the page changed) and their size on disk. With "
+        f"more than {SNAPSHOT_LIST_SUMMARY_OVER} it gives a summary: date range, snapshots per month, sizes, and only "
+        "the flagged ones; full=true lists them all. SHRUNK: much smaller than the ones before, often an error or "
+        "half-loaded page; RECOVERED: back to normal. Use it to see how far the history goes and pick dates.",
         _schema({'watch': _WATCH,
+                 'from': {'type': ['string', 'integer'], 'description': 'Only snapshots at or after this: unix seconds or an ISO date'},
+                 'to': {'type': ['string', 'integer'], 'description': 'Only snapshots at or before this'},
+                 'full': {'type': 'boolean', 'default': False, 'description': 'Every snapshot, not the summary'},
+                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 200},
+                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['watch'])),
+    'find_change': (find_change, READ_ONLY, 'When did this text appear',
+        "When a text was on a monitor's page, searching every snapshot line by line in one call: every different "
+        "line that matched with when it was first and last seen, and the periods with a match (when it went away). "
+        "Use it to date a change ('when did the price become 319?') or for a topic over time (text 'Ukraine', "
+        "group_by=year counts the new matching lines per year). Plain text, case insensitive, unless regex=true / "
+        "case_sensitive=true. It searches the saved (filtered) text.",
+        _schema({'watch': _WATCH, 'text': {'type': 'string', 'description': 'The text to look for, or a regex with regex=true'},
+                 'regex': {'type': 'boolean', 'default': False},
+                 'case_sensitive': {'type': 'boolean', 'default': False},
+                 'group_by': {'type': 'string', 'enum': list(GROUP_BY),
+                              'description': 'Also count the new matching lines per month or year'},
+                 'max_lines': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 100,
+                               'description': 'How many matching lines to list'},
+                 'from': {'type': ['string', 'integer'], 'description': 'Only search snapshots at or after this'},
+                 'to': {'type': ['string', 'integer'], 'description': 'Only search snapshots at or before this'}},
+                ['watch', 'text'])),
+    'line_timeline': (line_timeline, READ_ONLY, 'What was added and when',
+        "Every line that appeared on a monitor's page, once each, with when it was first and last seen: new tour "
+        "dates, bands added to a line-up, headlines, changelog entries, products. Better than get_history for lists "
+        "that grow and shrink or pages that flip between layouts, as a line coming back isn't new again. Lines "
+        "already on the first snapshot are left out unless include_start=true. Narrow it with 'text' (or a regex) "
+        "and 'from'/'to'; still_there=false for what was removed.",
+        _schema({'watch': _WATCH,
+                 'text': {'type': 'string', 'description': 'Only lines containing this, or matching it with regex=true'},
+                 'regex': {'type': 'boolean', 'default': False},
+                 'case_sensitive': {'type': 'boolean', 'default': False},
+                 'include_start': {'type': 'boolean', 'default': False,
+                                   'description': 'Also the lines already on the first snapshot searched'},
+                 'still_there': {'type': 'boolean',
+                                 'description': 'Only lines still on the page (true) or that went away (false)'},
                  'from': {'type': ['string', 'integer'], 'description': 'Only snapshots at or after this: unix seconds or an ISO date'},
                  'to': {'type': ['string', 'integer'], 'description': 'Only snapshots at or before this'},
                  'limit': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 200},
                  'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['watch'])),
-    'find_change': (find_change, READ_ONLY, 'When did this text appear',
-        "When a text was on a monitor's page: searches every snapshot in one call and gives each period it was "
-        "there (first seen, last seen, when it went away) with the matching line. Use it to date a change, e.g. "
-        "'when did the price become 319?' (text '319') or 'when did Out of stock go away?'. Plain text, case "
-        "insensitive, unless regex=true / case_sensitive=true. It searches the saved (filtered) text.",
-        _schema({'watch': _WATCH, 'text': {'type': 'string', 'description': 'The text to look for, or a regex with regex=true'},
-                 'regex': {'type': 'boolean', 'default': False},
-                 'case_sensitive': {'type': 'boolean', 'default': False},
-                 'from': {'type': ['string', 'integer'], 'description': 'Only search snapshots at or after this'},
-                 'to': {'type': ['string', 'integer'], 'description': 'Only search snapshots at or before this'}},
-                ['watch', 'text'])),
     'get_history': (get_history, READ_ONLY, 'Several snapshots as diffs',
         "Several snapshots of one monitor in one call, compactly: the first in full, then each of the others only as "
         "a diff, so text that stays the same is sent once. Use it for 'how did this page/its prices change over "
         "time?'. Pick them with 'timestamps', or 'from'/'to', and 'sample' for that many evenly spaced ones (first "
-        f"and last included). At most {HISTORY_MAX_SNAPSHOTS} per call. relative_to=previous (default) diffs each "
-        "against the one before it, relative_to=first against the first.",
+        f"and last included); more than {HISTORY_MAX_SNAPSHOTS} are sampled down to it. relative_to=previous "
+        "(default) diffs each against the one before it, relative_to=first against the first. For 'what was added' "
+        "on a list, line_timeline is smaller.",
         _schema({'watch': _WATCH,
                  'timestamps': {'type': 'array', 'items': {'type': ['string', 'integer']},
                                 'description': 'Which snapshots, each ' + _WHEN},
@@ -1065,9 +1255,9 @@ TOOLS = {
                             'description': 'Only this many, evenly spaced over the range'},
                  'relative_to': {'type': 'string', 'enum': list(RELATIVE_TO), 'default': 'previous'},
                  'context': {'type': 'integer', 'minimum': 0, 'maximum': 10, 'default': 0},
-                 'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 200000, 'default': 20000,
+                 'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 200000, 'default': HISTORY_DEFAULT_MAX_CHARS,
                                'description': 'The first snapshot is cut at this'},
-                 'max_lines': {'type': 'integer', 'minimum': 1, 'maximum': 20000, 'default': 2000,
+                 'max_lines': {'type': 'integer', 'minimum': 1, 'maximum': 20000, 'default': HISTORY_DEFAULT_MAX_LINES,
                                'description': 'All the diffs together are cut at this'}}, ['watch'])),
     'get_system_info': (get_system_info, READ_ONLY, 'System info',
         "Health and load: how many monitors (failing, paused, overdue for a check), the check queue size, how many "
