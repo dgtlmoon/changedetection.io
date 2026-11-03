@@ -6,7 +6,7 @@ import os
 import pytest
 from mcp_types.version import LATEST_HANDSHAKE_VERSION
 from changedetectionio.blueprint.mcp.tools import UNTRUSTED_NOTE
-from .util import delete_all_watches, new_mcp_token
+from .util import delete_all_watches, new_mcp_token, wait_for_all_checks
 
 T0 = 1700000000  # 2023-11-14T22:13:20Z
 
@@ -626,13 +626,19 @@ def test_mcp_get_watch_notes(client, live_server, measure_memory_usage, datastor
     """get_watch says in words when a setting hides changes: trigger text, or nothing recorded for months although
     every check succeeds (the Metallica monitor with a 'Prague' trigger stayed silent for 17 months)."""
     import time
+    from flask import url_for
     datastore = client.application.config['DATASTORE']
     api_key = new_mcp_token(client)
-    uuid = datastore.add_watch(url='https://band.example.com/tour', extras={'title': 'Band', 'trigger_text': ['Prague']})
+    # Added paused, with a local URL: unpaused with last_checked=0 the ticker queues it straight away, and the real
+    # fetch sets last_error / a new snapshot, which (correctly) removes the "quiet" note - a race the test sometimes lost
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True),
+                               extras={'title': 'Band', 'trigger_text': ['Prague'], 'paused': True})
     w = datastore.data['watching'][uuid]
     w.save_history_blob('Upcoming dates', int(time.time()) - 400 * 86400, 'a')
+    # Checked an hour ago, so not due again (well inside the default recheck time) once unpaused
     w['last_checked'] = int(time.time()) - 3600
     w['paused'] = False
+    wait_for_all_checks(client)
     info = _call(client, api_key, 'get_watch', watch=uuid)
     notes = info['structuredContent']['notes']
     assert any("trigger_text is set ('Prague')" in n for n in notes)
