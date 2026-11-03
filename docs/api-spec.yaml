@@ -939,6 +939,20 @@ components:
             type: string
             format: uuid
           description: All watches which have not been checked but should have been
+        processors:
+          type: array
+          description: |
+            The enabled processors (change detection modes) in the order the UI shows them, including plugin
+            processors and excluding any listed in `DISABLED_PROCESSORS`. `name` is the value to use for a watch's `processor`.
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: text_json_diff
+              description:
+                type: string
+                example: Webpage Text/HTML, JSON and PDF changes
         fetch_workers:
           type: integer
           description: How many fetch workers check watches at the same time
