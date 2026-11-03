@@ -51,10 +51,12 @@ class PDFNotAvailableFromFetcher(ValueError):
 class FilterConfig:
     """Consolidates all filter and rule configurations from watch, tags, and global settings."""
 
-    def __init__(self, watch, datastore):
+    def __init__(self, watch, datastore, inject_ldjson_price_selectors=True):
         self.watch = watch
         self.datastore = datastore
         self.watch_uuid = watch.get('uuid')
+        # restock_diff reads its own price data, it only wants the user's filters
+        self.inject_ldjson_price_selectors = inject_ldjson_price_selectors
         # Cache computed properties to avoid repeated list operations
         self._include_filters_cache = None
         self._subtractive_selectors_cache = None
@@ -76,7 +78,7 @@ class FilterConfig:
         if self._include_filters_cache is None:
             filters = self._get_merged_rules('include_filters')
             # Inject LD+JSON price tracker rule if enabled
-            if self.watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
+            if self.inject_ldjson_price_selectors and self.watch.get('track_ldjson_price_data', '') == PRICE_DATA_TRACK_ACCEPT:
                 filters += html_tools.LD_JSON_PRODUCT_OFFER_SELECTORS
             self._include_filters_cache = filters
         return self._include_filters_cache
@@ -396,6 +398,72 @@ class ContentProcessor:
         """Remove elements matching subtractive selectors."""
         return html_tools.element_removal(self.filter_config.subtractive_selectors, content)
 
+    def preprocess(self, content, stream_content_type):
+        """RSS/PDF/JSON/obfuscation preprocessing of the fetched content, before any filters.
+        Note: RSS reader mode switches stream_content_type to HTML in place."""
+        # RSS preprocessing
+        if stream_content_type.is_rss:
+            content = self.preprocess_rss(content)
+            if self.datastore.data["settings"]["application"].get("rss_reader_mode"):
+                # Now just becomes regular HTML that can have xpath/CSS applied (first of the set etc)
+                stream_content_type.is_rss = False
+                stream_content_type.is_html = True
+                self.fetcher.content = content
+
+        # PDF preprocessing
+        if self.watch.is_pdf or stream_content_type.is_pdf:
+            content = self.preprocess_pdf(raw_content=self.fetcher.raw_content)
+            stream_content_type.is_html = True
+
+        # JSON - Always reformat it nicely for consistency.
+        if stream_content_type.is_json:
+            if not self.filter_config.has_include_json_filters:
+                content = self.preprocess_json(raw_content=content)
+        #else, otherwise it gets sorted/formatted in the filter stage anyway
+
+        # HTML obfuscation workarounds
+        if stream_content_type.is_html:
+            content = html_tools.workarounds_for_obfuscations(content)
+
+        return content
+
+    def filter_to_text(self, content, stream_content_type):
+        """Subtractive selectors, include filters, then HTML -> text (plus trim_text_whitespace).
+        Returns (html_content after filters, text). Also used by restock_diff to find a price
+        with the user's filters (#2707), so both processors filter identically."""
+        # Start with content reference, avoid copy until modification
+        html_content = content
+
+        # Apply subtractive selectors first so include filters operate on already-cleaned content.
+        # Otherwise a subtractive selector that relies on ancestor context (e.g. ".main .ads")
+        # cannot match after the include filter has extracted the inner element and stripped
+        # the parent wrapper.
+        if self.filter_config.has_subtractive_selectors:
+            html_content = self.apply_subtractive_selectors(html_content)
+
+        # Apply include filters (CSS, XPath, JSON)
+        if self.filter_config.has_include_filters:
+            html_content = self.apply_include_filters(html_content, stream_content_type)
+
+        # === TEXT EXTRACTION ===
+        if self.watch.is_source_type_url:
+            # For source URLs, keep raw content
+            stripped_text = html_content
+        elif stream_content_type.is_plaintext:
+            # For plaintext, keep as-is without HTML-to-text conversion
+            stripped_text = html_content
+        else:
+            # Extract text from HTML/RSS content (not generic XML)
+            if stream_content_type.is_html or stream_content_type.is_rss:
+                stripped_text = self.extract_text_from_html(html_content, stream_content_type)
+            else:
+                stripped_text = html_content
+
+        if self.watch.get('trim_text_whitespace'):
+            stripped_text = ContentTransformer.trim_whitespace(stripped_text)
+
+        return html_content, stripped_text
+
     def extract_text_from_html(self, html_content, stream_content_type):
         """Convert HTML to plain text."""
         do_anchor = self.datastore.data["settings"]["application"].get("render_anchor_tag_content", False)
@@ -481,70 +549,14 @@ class perform_site_check(difference_detection_processor):
         update_obj['last_filter_config_hash'] = current_filter_config_hash
 
         # === CONTENT PREPROCESSING ===
-        # Avoid creating unnecessary intermediate string copies by reassigning only when needed
-        content = self.fetcher.content
-
-        # RSS preprocessing
-        if stream_content_type.is_rss:
-            content = content_processor.preprocess_rss(content)
-            if self.datastore.data["settings"]["application"].get("rss_reader_mode"):
-                # Now just becomes regular HTML that can have xpath/CSS applied (first of the set etc)
-                stream_content_type.is_rss = False
-                stream_content_type.is_html = True
-                self.fetcher.content = content
-
-        # PDF preprocessing
-        if watch.is_pdf or stream_content_type.is_pdf:
-            content = content_processor.preprocess_pdf(raw_content=self.fetcher.raw_content)
-            stream_content_type.is_html = True
-
-        # JSON - Always reformat it nicely for consistency.
-
-        if stream_content_type.is_json:
-            if not filter_config.has_include_json_filters:
-                content = content_processor.preprocess_json(raw_content=content)
-        #else, otherwise it gets sorted/formatted in the filter stage anyway
-
-        # HTML obfuscation workarounds
-        if stream_content_type.is_html:
-            content = html_tools.workarounds_for_obfuscations(content)
+        content = content_processor.preprocess(self.fetcher.content, stream_content_type)
 
         # Check for LD+JSON price data (for HTML content)
         if stream_content_type.is_html:
             update_obj['has_ldjson_price_data'] = html_tools.has_ldjson_product_info(content)
 
-        # === FILTER APPLICATION ===
-        # Start with content reference, avoid copy until modification
-        html_content = content
-
-        # Apply subtractive selectors first so include filters operate on already-cleaned content.
-        # Otherwise a subtractive selector that relies on ancestor context (e.g. ".main .ads")
-        # cannot match after the include filter has extracted the inner element and stripped
-        # the parent wrapper.
-        if filter_config.has_subtractive_selectors:
-            html_content = content_processor.apply_subtractive_selectors(html_content)
-
-        # Apply include filters (CSS, XPath, JSON)
-        if filter_config.has_include_filters:
-            html_content = content_processor.apply_include_filters(html_content, stream_content_type)
-
-        # === TEXT EXTRACTION ===
-        if watch.is_source_type_url:
-            # For source URLs, keep raw content
-            stripped_text = html_content
-        elif stream_content_type.is_plaintext:
-            # For plaintext, keep as-is without HTML-to-text conversion
-            stripped_text = html_content
-        else:
-            # Extract text from HTML/RSS content (not generic XML)
-            if stream_content_type.is_html or stream_content_type.is_rss:
-                stripped_text = content_processor.extract_text_from_html(html_content, stream_content_type)
-            else:
-                stripped_text = html_content
-
-        # === TEXT TRANSFORMATIONS ===
-        if watch.get('trim_text_whitespace'):
-            stripped_text = transformer.trim_whitespace(stripped_text)
+        # === FILTER APPLICATION + TEXT EXTRACTION ===
+        html_content, stripped_text = content_processor.filter_to_text(content, stream_content_type)
 
         # Save text before ignore filters (for diff calculation)
         text_content_before_ignored_filter = stripped_text
