@@ -410,6 +410,53 @@ class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
 
+    def _price_from_user_filters(self, watch):
+        """The user picked the price with 'Filters & Triggers' (#2707): include filters, subtractive
+        selectors, 'Extract text', 'Extract lines containing'. Run text mode's own filter pipeline
+        over the page, so the filters behave exactly as they do there, then pick the price out of
+        what's left. Returns None when none of those are set (auto-detection is used).
+
+        FilterNotFoundInResponse (filter matched nothing) is raised as-is, the same as text mode,
+        so the "filter not found" error and notification work unchanged."""
+        from changedetectionio.processors.text_json_diff.processor import (
+            FilterConfig, ContentProcessor, ContentTransformer, guess_stream_type, DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER)
+        from .filtered_price import (extract_price_from_filtered_text, NoPriceInFilteredText,
+                                     MoreThanOnePriceInFilteredText)
+
+        # No LD+JSON selector injection, that's text mode's price tracker, restock reads that itself
+        filter_config = FilterConfig(watch, self.datastore, inject_ldjson_price_selectors=False)
+        # Subtractive selectors alone only clean the page, they don't point at a price
+        has_extract = any(r.strip() for r in [*filter_config.extract_text, *filter_config.extract_lines_containing])
+        if not (filter_config.has_include_filters or has_extract):
+            return None
+
+        ctype_header = self.fetcher.get_all_headers().get('content-type', DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER).lower()
+        stream_content_type = guess_stream_type(http_content_header=ctype_header, content=self.fetcher.content)
+        content_processor = ContentProcessor(self.fetcher, watch, filter_config, self.datastore)
+
+        content = content_processor.preprocess(self.fetcher.content, stream_content_type)
+        _, text = content_processor.filter_to_text(content, stream_content_type)
+        if filter_config.extract_lines_containing:
+            text = ContentTransformer.extract_lines_containing(text, filter_config.extract_lines_containing)
+        if filter_config.extract_text:
+            text = ContentTransformer.extract_by_regex(text, filter_config.extract_text)
+
+        shown = ' '.join(text.split())[:100]
+        try:
+            return extract_price_from_filtered_text(text)
+        except NoPriceInFilteredText:
+            message = f"Your filters matched \"{shown}\" but no price was found in it, point the filter at the price itself."
+        except MoreThanOnePriceInFilteredText as e:
+            message = f"Your filters matched more than one price ({', '.join(str(a) for a in e.amounts)}) in \"{shown}\", narrow the filter down to just the price."
+
+        raise ProcessorException(
+            message=message,
+            url=watch.get('url'),
+            status_code=self.fetcher.get_last_status_code(),
+            screenshot=self.fetcher.screenshot,
+            xpath_data=self.fetcher.xpath_data
+        )
+
     def run_changedetection(self, watch, force_reprocess=False):
         import hashlib
 
@@ -538,6 +585,20 @@ class perform_site_check(difference_detection_processor):
                         logger.info(f"Using plugin-provided availability data for fetcher '{fetcher_name}' (built-in had price={has_price}, availability={has_availability}; plugin has price={plugin_has_price}, availability={plugin_has_availability})")
                 if not plugin_availability:
                     logger.debug("No item price/availability from plugins")
+
+        # The user pointed 'Filters & Triggers' straight at the price (#2707), that beats any
+        # automatic guess and also settles "more than one price". Only the price comes from the
+        # filters, stock still comes from the page metadata / stock-not-in-stock.js on the WHOLE
+        # page, the selected snippet rarely holds the "out of stock" text.
+        filtered = self._price_from_user_filters(watch)
+        if filtered:
+            filtered_price, filtered_currency = filtered
+            itemprop_availability = dict(itemprop_availability or {})
+            itemprop_availability['price'] = filtered_price
+            # Prefer the page's own ISO currency code ("USD") over the "$" the snippet shows
+            if not itemprop_availability.get('currency'):
+                itemprop_availability['currency'] = filtered_currency
+            logger.debug(f"Watch UUID {watch.get('uuid')} price {filtered_price} {filtered_currency} from the user's filters")
 
         # If we had multiple prices and plugins also failed, NOW raise the exception
         if multiple_prices_found and not itemprop_availability.get('price'):
