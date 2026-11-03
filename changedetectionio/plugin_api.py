@@ -70,10 +70,15 @@ async def gather_hook_results(results):
 #   Fetcher                        - base class of a register_content_fetcher fetcher
 #   load_plugin_settings           - (datastore_path, plugin_id) -> the dict saved from your plugin_settings_tab
 #   Non200ErrorCodeReceived        - what a fetcher raises when the site answers with an error status (.status_code)
+#   TimeBetweenCheckForm           - the weeks/days/hours/minutes/seconds recheck time widget, for FormField() in a
+#                                    plugin_settings_tab form (render_kw={'class': 'time-check-widget'} styles it)
+#   time_between_check_to_seconds  - that widget's saved dict as seconds
 if TYPE_CHECKING:
     # Never runs, only tells linters/IDEs/type checkers what the lazy exports below are
     from changedetectionio.content_fetchers.base import Fetcher
     from changedetectionio.content_fetchers.exceptions import Non200ErrorCodeReceived
+    from changedetectionio.forms import TimeBetweenCheckForm
+    from changedetectionio.model.Watch import time_between_check_to_seconds
     from changedetectionio.html_tools import html_to_text
     from changedetectionio.pluggy_interface import load_plugin_settings
     from changedetectionio.processors import get_resolved_processor_config
@@ -83,6 +88,8 @@ _LAZY_EXPORTS = {
     'Fetcher': 'changedetectionio.content_fetchers.base',
     'load_plugin_settings': 'changedetectionio.pluggy_interface',
     'Non200ErrorCodeReceived': 'changedetectionio.content_fetchers.exceptions',
+    'TimeBetweenCheckForm': 'changedetectionio.forms',
+    'time_between_check_to_seconds': 'changedetectionio.model.Watch',
     'difference_detection_processor': 'changedetectionio.processors.base',
     'get_resolved_processor_config': 'changedetectionio.processors',
     'html_to_text': 'changedetectionio.html_tools',
@@ -102,6 +109,7 @@ __all__ = [
     'Fetcher',
     'Non200ErrorCodeReceived',
     'PLUGIN_API_VERSION',
+    'TimeBetweenCheckForm',
     'await_me_maybe',
     'difference_detection_processor',
     'gather_hook_results',
@@ -109,4 +117,5 @@ __all__ = [
     'hookimpl',
     'html_to_text',
     'load_plugin_settings',
+    'time_between_check_to_seconds',
 ]

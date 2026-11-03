@@ -25,17 +25,31 @@ class fetcher(Fetcher):
         # proxy_override is ignored, a scraping API fetches through its own network
         super().__init__(**kwargs)
 
-    async def run(self, url=None, timeout=None, request_headers=None, ignore_status_codes=False, **kwargs):
-        # requests is blocking, keep it off the event loop
-        await asyncio.get_event_loop().run_in_executor(
-            None, lambda: self._fetch(url, timeout, request_headers, ignore_status_codes))
-
-    def _fetch(self, url, timeout, request_headers, ignore_status_codes):
-        import base64
-        import requests
-        from . import get_settings
+    async def run(self, url=None, timeout=None, request_headers=None, ignore_status_codes=False, watch_uuid=None, **kwargs):
+        from . import _duration, get_settings, over_daily_limit, take_control
 
         settings = get_settings()
+        # Over the daily limit: don't call the API, fail the check with an error that says when it can go again.
+        # (As a fallback it isn't even offered then, this is for watches using it directly, or a race.)
+        # The short pause stops a queue full of these from spinning through the workers.
+        free_in = over_daily_limit(settings)
+        if free_in:
+            await asyncio.sleep(1)
+            raise Exception(f"Fallback fetcher limit reached, {settings.get('fallback_fetcher_daily_limit')} successful "
+                            f"calls in 24 hours, the next is possible in {_duration(free_in)}")
+
+        # requests is blocking, keep it off the event loop
+        await asyncio.get_event_loop().run_in_executor(
+            None, lambda: self._fetch(settings, url, timeout, request_headers, ignore_status_codes))
+        # It worked as a fallback (core sets fallback_from): the watch is under our control for a while
+        if self.fallback_from and watch_uuid:
+            take_control(watch_uuid, settings)
+
+    def _fetch(self, settings, url, timeout, request_headers, ignore_status_codes):
+        import base64
+        import requests
+        from .state import record_successful_call
+
         api_url = (settings.get('fallback_fetcher_url') or '').strip()
         if not api_url:
             raise Exception("The fallback fetcher isn't set up, add the scraping API URL in Settings > Fallback fetcher")
@@ -51,6 +65,8 @@ class fetcher(Fetcher):
             reply = r.json()
         except ValueError:
             raise Exception("Scraping API didn't answer with JSON")
+        # The API did its job (and charged for it), whatever the site itself answered
+        record_successful_call()
 
         status_code = int(reply.get('status_code') or 200)
         content = reply.get('content') or ''

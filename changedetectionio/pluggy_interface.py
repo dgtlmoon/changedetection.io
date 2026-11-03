@@ -58,30 +58,33 @@ class ChangeDetectionSpec:
         """
         pass
 
-    @hookspec(firstresult=True)
-    def select_fetch_backend(watch, datastore, backend_name, failed_fetch):
-        """Pick a different content fetcher for this one check, without changing the watch's settings.
+    @hookspec
+    def select_fetch_backend(watch, datastore, backend_name, failed_fetch, tried):
+        """Offer a different content fetcher for this one check, without changing the watch's settings.
         Plugin API 0.6.0+.
 
-        Called twice at most per check:
-          - before fetching, with failed_fetch=None: return a fetcher name to use instead of backend_name
-          - when that fetch raised, with the exception as failed_fetch: return a fetcher name to retry
-            with once, straight away. A Non200ErrorCodeReceived has the site's answer in .status_code.
-            If the retry fails too, its error is what the watch shows.
+        Asked before fetching (failed_fetch=None, swap the fetcher before it runs), and again each time a fetch
+        raised (retry straight away with another one). Every plugin can offer, core tries the offers in priority
+        order, lowest first, skipping fetchers already tried in this check, up to FETCH_FALLBACK_MAX_ATTEMPTS
+        retries (default 3). So fallbacks chain: a preferred scraping service at priority 1, another at 2 when
+        the first fails or is out of quota. If every attempt fails, the last error is what the watch shows.
 
-        For example: fall back to a scraping service when the site answers 403, see
-        example_plugins/fetcher/fallback_fetcher. The first plugin to return a name wins.
+        Don't offer what can't work, for example over your own daily quota, so the next fetcher gets the
+        attempt. See example_plugins/fetcher/fallback_fetcher.
 
         Args:
             watch: The watch being checked
             datastore: The application datastore
-            backend_name: The fetcher that would be used (or was used, when failed_fetch is set),
+            backend_name: The fetcher that would be used (or just failed, when failed_fetch is set),
                           e.g. 'html_requests'
-            failed_fetch: None before the fetch, the exception after a failed one
+            failed_fetch: None before the fetch, the exception after a failed one. A Non200ErrorCodeReceived
+                          has the site's answer in .status_code
+            tried: Fetcher names already tried in this check, in order
 
         Returns:
-            str or None: A registered fetcher name (starting with 'html_'), or None to leave it.
-                         Unknown names, and fetchers that can't fetch a PDF watch, are ignored.
+            None, a registered fetcher name (starting with 'html_'), or {'backend': name, 'priority': int}.
+            A plain name has priority 0. Unknown names, fetchers already tried, and fetchers that can't
+            fetch a PDF watch are skipped.
         """
         pass
 
@@ -1129,17 +1132,32 @@ def get_plugin_template_paths():
     return template_paths
 
 
-async def select_fetch_backend(watch, datastore, backend_name, failed_fetch=None):
-    """The fetcher name a plugin picked for this check (see the select_fetch_backend hook), or None."""
-    from changedetectionio.plugin_api import await_me_maybe
-    choice = await await_me_maybe(plugin_manager.hook.select_fetch_backend(
-        watch=watch, datastore=datastore, backend_name=backend_name, failed_fetch=failed_fetch))
-    if not choice or choice == backend_name:
-        return None
-    if not isinstance(choice, str):
-        logger.warning(f"select_fetch_backend returned {choice!r}, expected a fetcher name")
-        return None
-    return choice
+async def select_fetch_backends(watch, datastore, backend_name, failed_fetch=None, tried=()):
+    """The fetcher names plugins offered for this check (see the select_fetch_backend hook), best first."""
+    from changedetectionio.plugin_api import gather_hook_results
+    offers = await gather_hook_results(plugin_manager.hook.select_fetch_backend(
+        watch=watch, datastore=datastore, backend_name=backend_name, failed_fetch=failed_fetch, tried=list(tried)))
+    ranked = []
+    for offer in offers:
+        if isinstance(offer, str):
+            name, priority = offer, 0
+        elif isinstance(offer, dict) and isinstance(offer.get('backend'), str):
+            name = offer['backend']
+            try:
+                priority = int(offer.get('priority') or 0)
+            except (TypeError, ValueError):
+                priority = 0
+        else:
+            logger.warning(f"select_fetch_backend returned {offer!r}, expected a fetcher name or {{'backend': .., 'priority': ..}}")
+            continue
+        if name != backend_name and name not in tried:
+            ranked.append((priority, name))
+    # sorted() is stable, equal priorities keep the plugins' order
+    names = []
+    for _, name in sorted(ranked, key=lambda r: r[0]):
+        if name not in names:
+            names.append(name)
+    return names
 
 
 def apply_recheck_seconds_override(watch, datastore, seconds):

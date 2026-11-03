@@ -193,7 +193,7 @@ class difference_detection_processor():
             watch=self.watch, datastore=self.datastore)
 
         # A plugin may pick another fetcher for this check only (the select_fetch_backend hook)
-        plugin_choice = await self._plugin_fetcher_choice(prefer_fetch_backend, failed_fetch=None)
+        plugin_choice = await self._plugin_fetcher_choice(prefer_fetch_backend, failed_fetch=None, tried=())
         if plugin_choice:
             fetcher_obj, prefer_fetch_backend, custom_browser_connection_url = plugin_choice
 
@@ -261,24 +261,7 @@ class difference_detection_processor():
             # Not a failure, the page is just the same as last time
             raise
         except Exception as failed_fetch:
-            # A plugin may retry once with another fetcher, e.g. a scraping service when the site answered 403
-            plugin_choice = await self._plugin_fetcher_choice(prefer_fetch_backend, failed_fetch=failed_fetch)
-            if not plugin_choice:
-                raise
-            failed_backend = prefer_fetch_backend
-            try:
-                await self.fetcher.quit(watch=self.watch)
-            except Exception as e:
-                logger.debug(f"Closing the '{failed_backend}' fetcher after it failed: {e}")
-            fetcher_obj, prefer_fetch_backend, custom_browser_connection_url = plugin_choice
-            logger.info(f"Watch {self.watch.get('uuid')} - '{failed_backend}' failed ({type(failed_fetch).__name__}"
-                        f"{f' {failed_fetch.status_code}' if getattr(failed_fetch, 'status_code', None) else ''}), "
-                        f"retrying with '{prefer_fetch_backend}'")
-            self.fetcher = self._new_fetcher(fetcher_obj, prefer_fetch_backend, custom_browser_connection_url,
-                                             preferred_proxy_id)
-            self.fetcher.fallback_from = failed_backend
-            # If this fails too, its error is the one the watch shows
-            await self.fetcher.run(**run_args)
+            await self._fetch_with_fallbacks(failed_fetch, prefer_fetch_backend, preferred_proxy_id, run_args)
 
         # @todo .quit here could go on close object, so we can run JS if change-detected
         await self.fetcher.quit(watch=self.watch)
@@ -295,24 +278,55 @@ class difference_detection_processor():
 
         # After init, call run_changedetection() which will do the actual change-detection
 
-    async def _plugin_fetcher_choice(self, backend_name, failed_fetch):
-        """(fetcher_class, backend_name, custom_browser_connection_url) for the fetcher a plugin picked with the
-        select_fetch_backend hook, or None to carry on with backend_name."""
+    async def _plugin_fetcher_choice(self, backend_name, failed_fetch, tried):
+        """(fetcher_class, backend_name, custom_browser_connection_url) for the best fetcher plugins offered with
+        the select_fetch_backend hook, or None to carry on with backend_name."""
         from changedetectionio.content_fetchers import get_fetcher_by_name, _log_fetcher_capabilities
-        from changedetectionio.pluggy_interface import select_fetch_backend
+        from changedetectionio.pluggy_interface import select_fetch_backends
 
-        choice = await select_fetch_backend(self.watch, self.datastore, backend_name, failed_fetch=failed_fetch)
-        if not choice:
-            return None
-        fetcher_obj = get_fetcher_by_name(choice, watch=self.watch)
-        if not fetcher_obj:
-            logger.warning(f"Watch {self.watch.get('uuid')} - a plugin chose fetcher '{choice}', which isn't installed "
-                           f"or can't fetch this watch, keeping '{backend_name}'")
-            return None
-        if not failed_fetch:
-            logger.info(f"Watch {self.watch.get('uuid')} - a plugin chose fetcher '{choice}' instead of '{backend_name}' for this check")
-        _log_fetcher_capabilities(fetcher_obj, choice, uuid=self.watch.get('uuid'))
-        return fetcher_obj, choice, None
+        for choice in await select_fetch_backends(self.watch, self.datastore, backend_name,
+                                                  failed_fetch=failed_fetch, tried=tried):
+            fetcher_obj = get_fetcher_by_name(choice, watch=self.watch)
+            if not fetcher_obj:
+                logger.warning(f"Watch {self.watch.get('uuid')} - a plugin offered fetcher '{choice}', which isn't "
+                               f"installed or can't fetch this watch, skipped")
+                continue
+            if not failed_fetch:
+                logger.info(f"Watch {self.watch.get('uuid')} - a plugin chose fetcher '{choice}' instead of '{backend_name}' for this check")
+            _log_fetcher_capabilities(fetcher_obj, choice, uuid=self.watch.get('uuid'))
+            return fetcher_obj, choice, None
+        return None
+
+    async def _fetch_with_fallbacks(self, failed_fetch, failed_backend, preferred_proxy_id, run_args):
+        """The fetch raised: retry with the fetchers plugins offer (select_fetch_backend hook), best first, each
+        at most once, up to FETCH_FALLBACK_MAX_ATTEMPTS. Re-raises the last error when nothing (else) works."""
+        from changedetectionio.content_fetchers.exceptions import checksumFromPreviousCheckWasTheSame
+        max_attempts = int(os.getenv('FETCH_FALLBACK_MAX_ATTEMPTS', 3))
+        tried = [failed_backend]
+        for _ in range(max_attempts):
+            plugin_choice = await self._plugin_fetcher_choice(failed_backend, failed_fetch=failed_fetch, tried=tried)
+            if not plugin_choice:
+                break
+            try:
+                await self.fetcher.quit(watch=self.watch)
+            except Exception as e:
+                logger.debug(f"Closing the '{failed_backend}' fetcher after it failed: {e}")
+            fetcher_obj, backend_name, custom_browser_connection_url = plugin_choice
+            logger.info(f"Watch {self.watch.get('uuid')} - '{failed_backend}' failed ({type(failed_fetch).__name__}"
+                        f"{f' {failed_fetch.status_code}' if getattr(failed_fetch, 'status_code', None) else ''}), "
+                        f"retrying with '{backend_name}'")
+            self.fetcher = self._new_fetcher(fetcher_obj, backend_name, custom_browser_connection_url, preferred_proxy_id)
+            # The first fetcher of this check that failed, so a fallback knows it's one
+            self.fetcher.fallback_from = tried[0]
+            tried.append(backend_name)
+            try:
+                await self.fetcher.run(**run_args)
+                return
+            except checksumFromPreviousCheckWasTheSame:
+                raise
+            except Exception as e:
+                failed_fetch, failed_backend = e, backend_name
+        raise failed_fetch
 
     def _new_fetcher(self, fetcher_obj, backend_name, custom_browser_connection_url, preferred_proxy_id):
         """An instance of fetcher_obj set up for this watch: proxy, browser steps, render delay, JS to run."""

@@ -80,20 +80,36 @@ an error. The watch is then "under control" of the plugin for a while ("Then kee
 default): its checks go straight to the fallback, no more often than every 12h ("Meanwhile check no more
 often than every", a minimum, so a watch already checked every 3 days stays at 3 days), and the watch list
 says so. After that the normal fetch is tried again. "Only for these groups" limits it to some groups.
+"Most successful calls in 24 hours" caps the cost: over it, checks that need the fallback fail with an error
+saying when the next call is possible, without calling the API. A "Fetch stats" icon in the left sidebar
+opens a page with the calls per hour, the limit, and the watches it has taken over.
+
+Several fallback fetchers chain: each offers itself with its own "Priority" (lowest first, this one defaults
+to 10), and when the first fails, or is over its daily limit and so doesn't offer itself, the next is tried
+in the same check, up to `FETCH_FALLBACK_MAX_ATTEMPTS` retries (default 3). The watch shows an error only
+when they all fail. Set `EXAMPLE_FETCHER_HELLOWORLD_TIME_BETWEEN_RECHECK_MINIMUM_SECONDS` to fix the minimum
+recheck time for the whole install, the settings widget then shows it read-only.
 
 **Hooks**
 - `register_content_fetcher` - adds the `html_example_fallback_fetcher` fetch method
-- `select_fetch_backend` - picks the fallback for one check: before it (still under control) or as a retry
-  after the normal fetch failed with one of the status codes (plugin API 0.6.0+)
+- `select_fetch_backend` - offers the fallback for one check, at its priority: before it (still under
+  control) or as a retry after the normal fetch, or a fallback before it, failed (plugin API 0.6.0+)
 - `recheck_seconds_override` - the longer recheck time while under control, the last word after the
   system, group and watch settings (plugin API 0.6.0+)
 - `watch_list_extra_text` - "Blocked with HTTP 403, using the fallback fetcher, ..." under the watch
+- `register_blueprints`, `register_sidebar_items` - the fetch stats page and its sidebar icon
 - `plugin_settings_tab`, `fetcher_status_icon`, `plugin_static_path` - as in the example browser fetcher
 
-**Also shows** the JSON contract it expects from the scraping API, at the top of `fetcher.py`. Most
-services take something close to it, adapt `_fetch()` to yours. Which watches are under control is kept
-in memory (`recheck_seconds_override` runs for every watch every second, so it must not read files), so
-after a restart the first check tries the normal fetch again.
+**Also shows**
+- the JSON contract it expects from the scraping API, at the top of `fetcher.py`. Most services take
+  something close to it, adapt `_fetch()` to yours
+- the same recheck time widget as the rest of the app in a settings form: `FormField(TimeBetweenCheckForm,
+  render_kw={'class': 'time-check-widget'})`, read back with `time_between_check_to_seconds()`
+- the plugin keeping its own state, `{datastore}/cdio_example_fallback_fetcher-state.json` (see `state.py`):
+  the times of the successful calls in the last 24 hours, read once and kept in memory, written atomically
+
+Which watches are under control is kept in memory only (`recheck_seconds_override` runs for every watch
+every second, so it must not read files), so after a restart the first check tries the normal fetch again.
 
 **Install**
 ```bash

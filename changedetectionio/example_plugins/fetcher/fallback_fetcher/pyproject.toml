@@ -20,4 +20,4 @@ cdio_example_fallback_fetcher = "cdio_example_fallback_fetcher"
 packages = ["cdio_example_fallback_fetcher"]
 
 [tool.setuptools.package-data]
-cdio_example_fallback_fetcher = ["static/*"]
+cdio_example_fallback_fetcher = ["static/*", "templates/cdio_example_fallback_fetcher/*"]

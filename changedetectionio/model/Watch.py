@@ -53,6 +53,12 @@ minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
 
 
+def time_between_check_to_seconds(value):
+    """A time_between_check dict ({'weeks': .., 'days': .., 'hours': .., 'minutes': .., 'seconds': ..}, any part
+    may be missing or None) as seconds."""
+    return sum((value or {}).get(m) * n for m, n in mtable.items() if (value or {}).get(m))
+
+
 def validate_time_between_check_required(json_data):
     """
     Validate that at least one time interval is specified when not using default settings.
@@ -873,12 +879,7 @@ class model(EntityPersistenceMixin, watch_base):
         return True
 
     def threshold_seconds(self):
-        seconds = 0
-        for m, n in mtable.items():
-            x = (self.get('time_between_check') or {}).get(m, None)
-            if x:
-                seconds += x * n
-        return seconds
+        return time_between_check_to_seconds(self.get('time_between_check'))
 
     # Iterate over all history texts and see if something new exists
     # Always applying .strip() to start/end but optionally replace any other whitespace
