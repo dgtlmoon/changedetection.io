@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.60.10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-03 12:32+0100\n"
+"POT-Creation-Date: 2026-11-03 15:34+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4828,6 +4828,10 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
+msgid "Configured list of notifications - Use the \"Add a notification service\" to add to this."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html

@@ -4879,6 +4879,10 @@ msgid "Add an email address"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
+msgid "Configured list of notifications - Use the \"Add a notification service\" to add to this."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "Journaux de débogage des notifications"
 

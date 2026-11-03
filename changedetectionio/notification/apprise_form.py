@@ -326,7 +326,8 @@ def _custom_http_entry():
     return {
         'schema': CUSTOM_HTTP,
         'name': gettext('Custom POST/GET/PUT/DELETE…'),
-        'setup_url': 'https://github.com/dgtlmoon/changedetection.io/wiki/Notification-configuration-notes',
+        # No "How do I get these?" link, there's nothing to go and fetch, it's the user's own endpoint
+        'setup_url': None,
         # Shown instead of a scheme in the service list
         'hint': 'webhook / API',
         # Searching any of these finds this entry first

@@ -23,7 +23,7 @@ $(function () {
     }
 
     // Shown before anything is typed
-    var POPULAR = ['mailtos', 'discord', 'tgram', 'slack', 'ntfys', 'jsons', 'workflow', 'matrixs', 'gotifys', 'pover'];
+    var POPULAR = ['mailtos', 'discord', 'tgram', 'slack', 'ntfys', 'custom-http', 'workflow', 'matrixs', 'gotifys', 'pover'];
 
     // 0 = name starts with it, 1 = a word in the name or the scheme starts with it (punctuation ignored,
     // so "email" finds "Custom e-mail"), 2 = anywhere in the name
