@@ -546,6 +546,14 @@ msgid "Never used"
 msgstr "從未使用"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Only"
+msgstr "僅"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "deleted groups"
+msgstr "已刪除的群組"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
@@ -1249,6 +1257,14 @@ msgstr "以這種方式連線的助理會列在這裡，你可以中斷連線。
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "編輯存取權杖"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
+msgstr "不勾選：所有監視器。勾選：僅這些群組中的監視器，例如每個案件或客戶一個群組。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "There are no groups yet. Add some to limit a token to them."
+msgstr "尚無群組。新增群組後即可將權杖限制在其中。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Access token created"
@@ -4117,6 +4133,10 @@ msgstr "群組（標籤）"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "系統資訊"
+
+#: changedetectionio/forms.py
+msgid "Only these groups"
+msgstr "僅限這些群組"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

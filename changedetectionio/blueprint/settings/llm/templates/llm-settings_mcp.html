@@ -253,6 +253,15 @@
         <ul class="errors mcp-token-errors" hidden></ul>
       </div>
       {{ permissions_grid(token_form) }}
+      <fieldset class="mcp-token-groups">
+        <legend>{{ token_form.tags.label.text }}</legend>
+        {% if token_form.tags.choices %}
+        {{ token_form.tags(class='mcp-token-group-list') }}
+        <span class="pure-form-message-inline">{{ _('None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer.') }}</span>
+        {% else %}
+        <span class="pure-form-message-inline">{{ _('There are no groups yet. Add some to limit a token to them.') }}</span>
+        {% endif %}
+      </fieldset>
     </div>
     <div class="modal-footer">
       <button type="button" class="modal-btn-cancel pure-button" data-mcp-dialog-close>{{ _('Cancel') }}</button>

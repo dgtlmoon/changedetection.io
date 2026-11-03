@@ -27,8 +27,12 @@ $(document).ready(function () {
         alert($list.data('error'));
     }
 
-    function open(title, url, name, permissions) {
+    function open(title, url, name, permissions, tags) {
         $form[0].reset();
+        $form.find('[name="tags"]').prop('checked', false);
+        $.each(tags || [], function (_, tag) {
+            $form.find('[name="tags"][value="' + tag + '"]').prop('checked', true);
+        });
         $.each(defaults, function (_, field) {
             if (field.name.indexOf('perm_') === 0) $form.find('[name="' + field.name + '"][value="' + field.value + '"]').prop('checked', true);
         });
@@ -50,7 +54,7 @@ $(document).ready(function () {
 
     $list.on('click', '[data-mcp-token-edit]', function () {
         var $token = $(this).closest('.mcp-token');
-        open($form.data('title-edit'), $token.data('update-url'), $token.data('name'), $token.data('permissions'));
+        open($form.data('title-edit'), $token.data('update-url'), $token.data('name'), $token.data('permissions'), $token.data('tags'));
     });
 
     $list.on('click', '[data-mcp-token-revoke]', function () {

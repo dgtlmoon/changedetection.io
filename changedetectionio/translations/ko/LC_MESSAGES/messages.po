@@ -544,6 +544,14 @@ msgid "Never used"
 msgstr "사용한 적 없음"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Only"
+msgstr "만"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "deleted groups"
+msgstr "삭제된 그룹"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
@@ -1250,6 +1258,14 @@ msgstr "이 방법으로 연결한 어시스턴트가 여기에 표시되며 연
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "액세스 토큰 편집"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
+msgstr "선택 안 함: 모든 모니터. 선택: 해당 그룹의 모니터만 (예: 사건 또는 고객별로 그룹 하나)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "There are no groups yet. Add some to limit a token to them."
+msgstr "아직 그룹이 없습니다. 토큰을 제한하려면 그룹을 추가하세요."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Access token created"
@@ -4118,6 +4134,10 @@ msgstr "그룹(태그)"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "시스템 정보"
+
+#: changedetectionio/forms.py
+msgid "Only these groups"
+msgstr "이 그룹만"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

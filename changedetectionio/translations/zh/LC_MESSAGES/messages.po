@@ -547,6 +547,14 @@ msgid "Never used"
 msgstr "从未使用"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Only"
+msgstr "仅"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "deleted groups"
+msgstr "已删除的分组"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
@@ -1245,6 +1253,14 @@ msgstr "以这种方式连接的助手会列在这里，你可以断开它们。
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "编辑访问令牌"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
+msgstr "不勾选：所有监视器。勾选：仅这些分组中的监视器，例如每个案件或客户一个分组。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "There are no groups yet. Add some to limit a token to them."
+msgstr "还没有分组。添加分组后即可将令牌限制在其中。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Access token created"
@@ -4112,6 +4128,10 @@ msgstr "分组（标签）"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "系统信息"
+
+#: changedetectionio/forms.py
+msgid "Only these groups"
+msgstr "仅限这些分组"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"
