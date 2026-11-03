@@ -34,10 +34,11 @@ DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
 # NOT all GPT models: gpt-4o, gpt-4-turbo and gpt-3.5-turbo take temperature normally. It is
 # reasoning that forbids it. gpt-5 reports "only temperature=1 is supported unless
 # reasoning_effort resolves to 'none'" - we never set reasoning_effort=none, so it is always
-# in that state for us. Claude 5.x (haiku/sonnet/opus) thinks by default and litellm rejects
-# temperature for it the same way.
+# in that state for us. Claude 5.x (haiku/sonnet/opus/fable) refuses sampling params itself, not
+# because of thinking: Opus 5/5.5, Sonnet 5 and Fable reject any temperature, Haiku 5.5 and
+# Sonnet 5.5 any non-default one (which our 0 is).
 _NO_TEMPERATURE_MODEL_KEYWORDS = ('flash-lite', 'thinking-exp', 'o1', 'o3', 'o4', 'gpt-5',
-                                  'haiku-5', 'sonnet-5', 'opus-5')
+                                  'haiku-5', 'sonnet-5', 'opus-5', 'fable-5')
 
 DEFAULT_RETRIES = 3
 

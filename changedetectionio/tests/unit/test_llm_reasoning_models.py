@@ -27,7 +27,8 @@ class TestTemperatureModelMatching(unittest.TestCase):
         for model in ('gpt-5', 'openai/gpt-5', 'gpt-5-mini', 'gpt-5.1',
                       'o1', 'o1-mini', 'o3', 'o3-mini', 'o4-mini',
                       'gemini/gemini-2.0-flash-lite', 'gemini-2.0-thinking-exp',
-                      'claude-sonnet-5', 'anthropic/claude-haiku-5-5', 'claude-opus-5-5'):
+                      'claude-sonnet-5', 'anthropic/claude-haiku-5-5', 'claude-opus-5-5',
+                      'claude-fable-5', 'anthropic/claude-fable-5-1'):
             self.assertFalse(_sends_temperature(model),
                              f"{model} rejects temperature; sending it costs a retry on every call")
 
@@ -69,7 +70,8 @@ class TestReasoningTokenHeadroom(unittest.TestCase):
         """Claude 5.x thinks by default: on 400 tokens it returned content='' with
         finish_reason='length', so intent eval failed open (every change notified)."""
         for model in ('anthropic/claude-haiku-5-5', 'claude-haiku-5-5', 'claude-sonnet-5',
-                      'anthropic/claude-sonnet-5-5', 'claude-opus-5', 'github_copilot/claude-haiku-5.5'):
+                      'anthropic/claude-sonnet-5-5', 'claude-opus-5', 'github_copilot/claude-haiku-5.5',
+                      'claude-fable-5-1'):
             self.assertGreater(apply_local_token_multiplier(
                 400, {'model': model, 'provider_kind': 'anthropic'}), 400, model)
         for model in ('anthropic/claude-haiku-4-5-20251001', 'claude-sonnet-4-5', 'claude-opus-4-1',

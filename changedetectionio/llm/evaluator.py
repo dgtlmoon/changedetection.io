@@ -176,9 +176,9 @@ def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS
 # Models that emit chain-of-thought before the answer, on any provider. Reasoning tokens are
 # billed and counted against max_tokens, so these need headroom or the answer never lands.
 # Kept in step with client._NO_TEMPERATURE_MODEL_KEYWORDS - reasoning is what drives both.
-# Claude 5.x (haiku/sonnet/opus) thinks by default: same empty content on the 400 cap as gpt-5.
-# The keywords don't match claude-*-4-5 or claude-3-5-*.
-REASONING_MODEL_KEYWORDS = ('o1', 'o3', 'o4', 'gpt-5', 'thinking-exp', 'haiku-5', 'sonnet-5', 'opus-5')
+# Claude 5.x (haiku/sonnet/opus) thinks by default and Fable always does: same empty content on
+# the 400 cap as gpt-5. The keywords don't match claude-*-4-5 or claude-3-5-*.
+REASONING_MODEL_KEYWORDS = ('o1', 'o3', 'o4', 'gpt-5', 'thinking-exp', 'haiku-5', 'sonnet-5', 'opus-5', 'fable-5')
 
 
 def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
