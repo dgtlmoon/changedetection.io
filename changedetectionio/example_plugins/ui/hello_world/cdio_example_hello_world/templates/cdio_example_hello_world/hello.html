@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="edit-form">
+        <div class="box-wrap inner">
+            <div id="cdio-example-hello-world">
+                <h2>Hello world!</h2>
+                <p>This page comes from the <code>cdio_example_hello_world</code> plugin.</p>
+                <p>You have <strong>{{ watch_count }}</strong> monitors.</p>
+                <p><a href="{{ url_for('watchlist.index') }}" class="pure-button pure-button-primary">Back to the monitor list</a></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -324,7 +324,7 @@ def test_settings_page_does_not_render_llm_api_key_in_plaintext(
     ds = client.application.config.get('DATASTORE')
     _configure_llm(ds)
 
-    res = client.get(url_for('settings.settings_page'))
+    res = client.get(url_for('settings.llm.llm_settings_page'))
     assert res.status_code == 200
     body = res.data.decode('utf-8', errors='replace')
     assert CANARY_KEY not in body, \
@@ -343,7 +343,7 @@ def test_settings_form_preserves_api_key_when_submitted_blank(
     _configure_llm(ds, api_key='sk-should-be-kept')
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             'llm-api_key': '',           # blank — PasswordField behaviour
@@ -384,7 +384,7 @@ def test_settings_form_preserves_api_key_when_field_is_absent(
     _configure_llm(ds, api_key='sk-should-survive-absence')
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             # no 'llm-api_key' at all — this is what a disabled input submits
@@ -436,7 +436,7 @@ def test_datastore_never_ends_up_with_a_blank_key(
     for label, extra in (('absent', {}), ('empty', {'llm-api_key': ''}),
                          ('whitespace', {'llm-api_key': '   '})):
         _configure_llm(ds, api_key='sk-original')
-        client.post(url_for('settings.settings_page'), data={**base, **extra},
+        client.post(url_for('settings.llm.llm_settings_page'), data={**base, **extra},
                     follow_redirects=True)
         saved = ds.data['settings']['application'].get('llm', {}).get('api_key', '')
         assert saved == 'sk-original', f"{label} submission blanked the stored key (got '{saved}')"
@@ -451,7 +451,7 @@ def test_provider_and_key_are_locked_once_a_key_is_stored(
     ds = client.application.config.get('DATASTORE')
     _configure_llm(ds, api_key='sk-locked')
 
-    page = client.get(url_for('settings.settings_page')).data
+    page = client.get(url_for('settings.llm.llm_settings_page')).data
     key_field = _element(page, b'id="llm-api_key"')
     assert b'disabled' in key_field, "stored key must render the field disabled"
 
@@ -466,7 +466,7 @@ def test_provider_and_key_are_locked_once_a_key_is_stored(
 def test_provider_and_key_are_editable_when_nothing_is_stored(
         client, live_server, measure_memory_usage, datastore_path):
     """The lock must not strand a fresh install with fields it can never fill in."""
-    page = client.get(url_for('settings.settings_page')).data
+    page = client.get(url_for('settings.llm.llm_settings_page')).data
 
     key_field = _element(page, b'id="llm-api_key"')
     assert b'disabled' not in key_field, "no stored key - the field has to be usable"
@@ -586,7 +586,7 @@ def test_settings_form_rejects_private_api_base(
     ds.data['settings']['application'].pop('llm', None)
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model':    'gpt-4o',
             'llm-api_key':  '',
@@ -809,3 +809,43 @@ def test_llm_clear_via_post_still_works(
     assert 'api_key' not in llm, f"api_key should have been wiped, got: {llm!r}"
     assert 'model' not in llm
     assert 'api_base' not in llm
+
+
+def test_llm_keyless_server_at_a_new_address(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """A local Ollama has no API key: with no key saved there is nothing to leak, so trying a new api_base before
+    Save works (it used to be refused with "api_key is required when api_base differs ...")."""
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')  # so localhost passes SSRF
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds, api_key='')
+    ds.data['settings']['application']['llm'].pop('api_base', None)
+
+    import changedetectionio.llm.model_list as model_list
+    received = []
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: (received.append(kwargs), ['ollama/llama3.2'])[1])
+    res = client.get(url_for('settings.llm.llm_get_models'),
+                     query_string={'provider': 'ollama', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 200, res.get_json()
+    assert res.get_json()['models'] == ['ollama/llama3.2']
+    assert received[0]['api_key'] == ''
+
+    # The connection test too, with a placeholder key so litellm can't fall back to one from the environment
+    import changedetectionio.llm.client as llm_client
+    calls = []
+    monkeypatch.setattr(llm_client, 'completion_isolated', lambda **kw: calls.append(kw) or ('ready', 1, 1, 0))
+    monkeypatch.setenv('OPENAI_API_KEY', 'sk-from-the-environment')
+    res = client.post(url_for('settings.llm.llm_test'),
+                      query_string={'model': 'ollama/llama3.2', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 200, res.get_json()
+    from changedetectionio.blueprint.settings.llm import NO_KEY_PLACEHOLDER
+    assert calls[0]['api_key'] == NO_KEY_PLACEHOLDER
+
+    # With a key saved, the guard still refuses a different address
+    ds.data['settings']['application']['llm']['api_key'] = CANARY_KEY
+    res = client.get(url_for('settings.llm.llm_get_models'),
+                     query_string={'provider': 'ollama', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 400 and 'api_key' in res.get_json()['error']
+    res = client.post(url_for('settings.llm.llm_test'),
+                      query_string={'model': 'ollama/llama3.2', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 400 and len(calls) == 1

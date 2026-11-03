@@ -1,0 +1,4 @@
+/* Served by the plugin's plugin_static_path(), linked from get_html_head_extras() */
+.cdio-example-check-stats td:first-child {
+  font-weight: bold;
+}

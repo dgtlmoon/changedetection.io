@@ -29,6 +29,26 @@ components:
           maximum: 100
           description: Minimum price change percentage since the original price to trigger a notification
 
+    processor_state_restock_diff:
+      type: object
+      description: |
+        The current restock and price state, as found by the most recent check.
+        Returned on both `GET /watch/{uuid}` and each item of `GET /watch`, only for watches
+        with `"processor": "restock_diff"`. Values are `null` until a check has found them.
+      properties:
+        in_stock:
+          type: [boolean, 'null']
+          description: Whether the product is in stock
+        price:
+          type: [number, 'null']
+          description: The current price
+        currency:
+          type: [string, 'null']
+          description: Currency code of the price, e.g. `USD`
+        last_price:
+          type: [number, 'null']
+          description: The price before the most recent price change
+
 paths:
   /watch:
     post:

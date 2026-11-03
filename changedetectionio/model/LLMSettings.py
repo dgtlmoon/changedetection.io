@@ -52,6 +52,8 @@ class LLMSettings(BaseModel):
     api_base: str = ''
     provider_kind: str = ''
     local_token_multiplier: int = LLM_DEFAULT_LOCAL_TOKEN_MULTIPLIER
+    # Ollama / OpenAI-compatible endpoints only: ask the server to skip thinking, see evaluator._thinking_extra_body()
+    local_thinking_off: bool = False
 
     tokens_total_cumulative: int = 0
     tokens_this_month: int = 0
@@ -61,7 +63,7 @@ class LLMSettings(BaseModel):
 
     # Provider-connection fields wiped on /llm/clear and when the model is emptied.
     CONNECTION_FIELDS: ClassVar[Tuple[str, ...]] = (
-        'model', 'api_key', 'api_base', 'provider_kind', 'local_token_multiplier',
+        'model', 'api_key', 'api_base', 'provider_kind', 'local_token_multiplier', 'local_thinking_off',
     )
     # Runtime-managed counters — form submissions must never overwrite these.
     PROTECTED_FIELDS: ClassVar[Tuple[str, ...]] = (

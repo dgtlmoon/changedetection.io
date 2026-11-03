@@ -494,7 +494,7 @@ def test_global_default_saved_and_loaded_via_settings_form(
     _configure_llm(client)
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'application-empty_pages_are_a_change': '',
             'requests-time_between_check-minutes': 180,

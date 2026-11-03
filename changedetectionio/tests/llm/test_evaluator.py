@@ -44,7 +44,6 @@ def _make_watch(llm_intent='', llm_change_summary='', tags=None, uuid='test-uuid
     w['url'] = 'https://example.com'
     w['page_title'] = 'Test Page'
     w['llm_evaluation_cache'] = {}
-    w['llm_prefilter'] = None
     return w
 
 

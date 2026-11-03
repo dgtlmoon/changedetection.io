@@ -13,6 +13,29 @@ import threading
 _test_endpoint_content_lock = threading.Lock()
 _test_endpoint_content = {}
 
+def import_example_plugin(example_dir, package):
+    """Import an example_plugins/<example_dir> package as its own top-level package, the way
+    `pip install .` makes it importable, e.g. import_example_plugin('processor/wordcounter', 'cdio_example_wordcounter')"""
+    import importlib
+    import sys
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'example_plugins', example_dir))
+    sys.path.insert(0, path)
+    try:
+        return importlib.import_module(package)
+    finally:
+        sys.path.remove(path)
+
+
+def clear_plugin_discovery_caches():
+    """Processor discovery and the merged API spec are cached at first use, a plugin registered
+    afterwards (like in a test) is only seen once these are cleared."""
+    from changedetectionio import processors, api
+    for f in (processors.find_processors, processors.get_plugin_processor_metadata, processors._available_processors_cached,
+              api.build_merged_spec_dict, api.get_openapi_spec, api.get_openapi_schema_dict,
+              api._resolve_schema_properties, api.get_watch_schema_properties, api.get_tag_schema_properties):
+        f.cache_clear()
+
+
 def write_test_file_and_sync(filepath, content, mode='w'):
     """
     Write test data to file and ensure it's synced to disk.
@@ -436,6 +459,19 @@ def new_live_server_setup(live_server):
     def test_return_query():
         return request.query_string
 
+    # A stand-in scraping API with the JSON contract of example_plugins/fetcher/fallback_fetcher
+    @live_server.app.route('/test-scrape-api', methods=['POST'])
+    def test_scrape_api():
+        body = request.get_json()
+        one_pixel_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        return {
+            'status_code': int(request.args.get('status_code', 200)),
+            'content': f"<html><body><p>Fetched by the scraping API</p><p>url:{body.get('url')}</p>"
+                       f"<p>key:{request.headers.get('X-Api-Key')}</p></body></html>",
+            'content_type': 'text/html',
+            'screenshot': one_pixel_png if body.get('screenshot') else None,
+        }
+
 
     @live_server.app.route('/endpoint-test.pdf')
     def test_pdf_endpoint():
@@ -490,3 +526,12 @@ def new_live_server_setup(live_server):
         return resp
 
     live_server.start()
+
+
+def new_mcp_token(client, name='test', tags=None, **permissions):
+    """A new MCP access token (blueprint/mcp/tokens.py), every row at write unless given, e.g. notifications='read'.
+    tags: the tag uuids it's limited to, None for every monitor."""
+    from changedetectionio.blueprint.mcp.tokens import add_token
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'system': 'read', **permissions}
+    return add_token(settings, name, levels, tags)[1]

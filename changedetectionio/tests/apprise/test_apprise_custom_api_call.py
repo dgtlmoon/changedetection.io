@@ -57,6 +57,10 @@ def test_get_headers(url, body, expected_content_type):
         ("get://localhost:9999?param1=value1", {"param1": "value1"}),
         ("get://localhost:9999?param1=value1&-param2=ignored", {"param1": "value1"}),
         ("get://localhost:9999?param1=value1&+header=test", {"param1": "value1"}),
+        # Capitalised header and ignore names are never sent as query parameters too
+        ("get://localhost:9999?param1=value1&+X-Key=secret", {"param1": "value1"}),
+        ("get://localhost:9999?param1=value1&+Authorization=Bearer%20token", {"param1": "value1"}),
+        ("get://localhost:9999?param1=value1&-Param2=ignored", {"param1": "value1"}),
         (
             "get://localhost:9999?encoded%20param=encoded%20value",
             {"encoded param": "encoded value"},

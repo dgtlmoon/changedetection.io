@@ -266,47 +266,14 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             # Maybe they copied a bunch of watch subdirs across too
             self._load_state()
 
-    def init_fresh_install(self, include_default_watches, version_tag):
-      # Generate app_guid FIRST (required for all operations)
-        if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
-            self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
-        else:
-            self.__data['app_guid'] = str(uuid_builder.uuid4())
+        # Runs for every datastore - new, existing or migrated. These used to run on every startup, until the
+        # move to per-watch files put them inside init_fresh_install(), where they only ran for brand-new
+        # installs (so e.g. removepassword.lock did nothing).
+        self._after_load(version_tag)
 
-        # Generate RSS access token
-        self.__data['settings']['application']['rss_access_token'] = secrets.token_hex(16)
-
-        # Generate API access token
-        self.__data['settings']['application']['api_access_token'] = secrets.token_hex(16)
-        logger.warning(f"No datastore found, creating new datastore at {self.datastore_path}")
-
-        # Set schema version to latest (no updates needed)
-        latest_update_available = self.get_updates_available().pop()
-        logger.info(f"Marking fresh install to schema version {latest_update_available}")
-        self.__data['settings']['application']['schema_version'] = latest_update_available
-
-        # Add default watches if requested
-        if include_default_watches:
-            self.add_watch(
-                url='https://news.ycombinator.com/',
-                tag='Tech news',
-                extras={'fetch_backend': 'html_requests'}
-            )
-            self.add_watch(
-                url='https://changedetection.io/CHANGELOG.txt',
-                tag='changedetection.io',
-                extras={'fetch_backend': 'html_requests'}
-            )
-
-        # Create changedetection.json immediately
-        try:
-            self._save_settings()
-            logger.info("Created changedetection.json for new datastore")
-        except Exception as e:
-            logger.error(f"Failed to create initial changedetection.json: {e}")
-
-
-
+    def _after_load(self, version_tag):
+        """Startup housekeeping once the datastore is loaded: the running version, missing IDs and tokens,
+        and the password reset lockfile."""
         # Set version tag
         self.__data['version_tag'] = version_tag
 
@@ -338,6 +305,49 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         if path.isfile(password_reset_lockfile):
             self.remove_password()
             unlink(password_reset_lockfile)
+
+
+    def init_fresh_install(self, include_default_watches, version_tag):
+      # Generate app_guid FIRST (required for all operations)
+        if "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
+            self.__data['app_guid'] = "test-" + str(uuid_builder.uuid4())
+        else:
+            self.__data['app_guid'] = str(uuid_builder.uuid4())
+
+        # Generate RSS access token
+        self.__data['settings']['application']['rss_access_token'] = secrets.token_hex(16)
+
+        # Generate API access token
+        self.__data['settings']['application']['api_access_token'] = secrets.token_hex(16)
+
+        logger.warning(f"No datastore found, creating new datastore at {self.datastore_path}")
+
+        # Set schema version to latest (no updates needed)
+        latest_update_available = self.get_updates_available().pop()
+        logger.info(f"Marking fresh install to schema version {latest_update_available}")
+        self.__data['settings']['application']['schema_version'] = latest_update_available
+
+        # Add default watches if requested
+        if include_default_watches:
+            self.add_watch(
+                url='https://news.ycombinator.com/',
+                tag='Tech news',
+                extras={'fetch_backend': 'html_requests'}
+            )
+            self.add_watch(
+                url='https://changedetection.io/CHANGELOG.txt',
+                tag='changedetection.io',
+                extras={'fetch_backend': 'html_requests'}
+            )
+
+        # Create changedetection.json immediately
+        try:
+            self._save_settings()
+            logger.info("Created changedetection.json for new datastore")
+        except Exception as e:
+            logger.error(f"Failed to create initial changedetection.json: {e}")
+
+
 
     def rehydrate_entity(self, uuid, entity, processor_override=None):
         """Set the dict back to the dict Watch object"""
@@ -583,6 +593,13 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                         self.__data['watching'][uuid][dict_key].update(update_obj[dict_key])
                         del (update_obj[dict_key])
 
+            # @IMPORTANT-TODO: processors have no storage of their own for what a check found, whatever
+            # they return in update_obj is merged straight into the watch here (e.g. watch['restock']).
+            # Those keys then leak into the raw API GET dict and fail a GET -> PUT round trip as unknown
+            # fields, unless core hardcodes them (SYSTEM_MANAGED_NON_SPEC_FIELDS) - a plugin processor can't.
+            # Needs a real per-processor storage convention, planned as its own PR for a new release.
+            # The example plugin uses watch['processor_state_{name}'] meanwhile, see
+            # example_plugins/processor/wordcounter/processor.py
             self.__data['watching'][uuid].update(update_obj)
 
         # Immediate save

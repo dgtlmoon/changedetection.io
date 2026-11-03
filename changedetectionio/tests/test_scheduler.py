@@ -82,7 +82,12 @@ def test_check_basic_scheduler_functionality(client, live_server, measure_memory
     # Enabling today in Kiritimati should work flawless
     kiritimati_time = datetime.now(timezone.utc).astimezone(ZoneInfo("Pacific/Kiritimati"))
     kiritimati_time_day_of_week = kiritimati_time.strftime("%A").lower()
-    live_server.app.config['DATASTORE'].data['watching'][uuid]["time_schedule_limit"][kiritimati_time_day_of_week]["enabled"] = True
+    # time_schedule_limit is a shared read-only value (model/frozen.py), so modify a copy and assign it back
+    from changedetectionio.model.frozen import thaw
+    watch = live_server.app.config['DATASTORE'].data['watching'][uuid]
+    schedule = thaw(watch["time_schedule_limit"])
+    schedule[kiritimati_time_day_of_week]["enabled"] = True
+    watch["time_schedule_limit"] = schedule
     time.sleep(3)
     assert live_server.app.config['DATASTORE'].data['watching'][uuid]['last_checked'] != last_check
 

@@ -132,6 +132,8 @@ class Fetcher():
     browser_steps_screenshot_path = None
     content = None
     error = None
+    # Set when this fetcher is a retry after another one failed (the select_fetch_backend hook): the failed one's name
+    fallback_from = None
     fetcher_description = "No description"
     # Short name for browser lists, e.g. "Local Playwright: My firefox". None falls back to
     # fetcher_description (see browser_config.engine_short_description()).

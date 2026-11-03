@@ -221,6 +221,11 @@ class difference_detection_processor():
         fetcher_obj, prefer_fetch_backend, custom_browser_connection_url, browser_config = resolve_content_fetcher(
             watch=self.watch, datastore=self.datastore)
 
+        # A plugin may pick another fetcher for this check only (the select_fetch_backend hook)
+        plugin_choice = await self._plugin_fetcher_choice(prefer_fetch_backend, failed_fetch=None, tried=())
+        if plugin_choice:
+            fetcher_obj, prefer_fetch_backend, custom_browser_connection_url = plugin_choice
+
         proxy_url = None
         if preferred_proxy_id:
             proxy_url = self.datastore.proxy_list.get(preferred_proxy_id).get('url')
@@ -276,47 +281,11 @@ class difference_detection_processor():
         # Raises to stop the fetch, the plugin's message becomes the watch's error
         await apply_browser_request_alter(browser_request, watch=self.watch, datastore=self.datastore)
 
-        # Applied after the plugins so none of them can undo it: an engine that reaches the web
-        # through someone else's browser service handles its own egress, so our proxy must not be
-        # layered on top (Fetcher.ignores_proxy_setting).
-        proxy_url = browser_request.proxy_url
-        if proxy_url and getattr(fetcher_obj, 'ignores_proxy_setting', False):
-            logger.debug(f"Skipping proxy data - '{prefer_fetch_backend}' connects to an "
-                         f"external browser service that handles its own egress.")
-            proxy_url = None
-
-        logger.debug(f"Using proxy '{redact_proxy_url(proxy_url)}' for {self.watch['uuid']}")
-
-        # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
-        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
-        self.fetcher = fetcher_obj(proxy_override=proxy_url,
-                                   custom_browser_connection_url=custom_browser_connection_url,
-                                   screenshot_format=self.screenshot_format,
-                                   worker_id=self.worker_id
-                                   )
-
-        # Stamp the resolved backend name so downstream consumers (processors, plugins)
-        # can read it directly instead of re-deriving it from the fetcher class name.
-        self.fetcher.backend_name = prefer_fetch_backend
-        # Inject the resolved per-watch browser behaviour; fetchers that read it apply what
-        # they can, others ignore it. Never None so consumers can read attributes freely.
-        self.fetcher.browser_config = browser_config
-        # Cookies from plugins, scoped to the watched URL unless they name their own domain/url
-        self.fetcher.cookies = browser_request.cookies_for_browser()
-        if self.fetcher.cookies and not getattr(fetcher_obj, 'supports_cookies', False):
-            logger.warning(f"'{prefer_fetch_backend}' can't set cookies, ignoring {len(self.fetcher.cookies)} "
-                           f"cookie(s) for watch {self.watch_uuid}")
-        try:
-            logger.debug(
-                f"Watch {self.watch.get('uuid')} fetch: backend='{prefer_fetch_backend}' "
-                f"browser_config={browser_config.model_dump() if browser_config else None}"
-            )
-        except Exception as e:
-            logger.debug(f"Could not log browser_config: {e}")
-
-        if self.watch.has_browser_steps:
-            self.fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
-            self.fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
+        # Everything a fetcher (this one, or a fallback a plugin offers) is set up with
+        fetcher_setup = dict(proxy_url=browser_request.proxy_url,
+                             browser_config=browser_config,
+                             cookies=browser_request.cookies_for_browser())
+        self.fetcher = self._new_fetcher(fetcher_obj, prefer_fetch_backend, custom_browser_connection_url, **fetcher_setup)
 
         # Requests timeout now lives on the plain client's browser config (FetcherConfig.timeout,
         # default DEFAULT_REQUEST_TIMEOUT_SECONDS; existing installs migrated by update_35), and the
@@ -327,16 +296,6 @@ class difference_detection_processor():
             or int(os.getenv('DEFAULT_SETTINGS_REQUESTS_TIMEOUT', 45))
 
         ignore_status_codes = self.watch.get('ignore_status_codes', False)
-
-        # Configurable per-watch or global extra delay before extracting text (for webDriver types)
-        system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
-        if self.watch.get('webdriver_delay'):
-            self.fetcher.render_extract_delay = self.watch.get('webdriver_delay')
-        elif system_webdriver_delay is not None:
-            self.fetcher.render_extract_delay = system_webdriver_delay
-
-        if self.watch.get('webdriver_js_execute_code') is not None and self.watch.get('webdriver_js_execute_code').strip():
-            self.fetcher.webdriver_js_execute_code = self.watch.get('webdriver_js_execute_code')
 
         # Requests for PDF's, images etc should be passwd the is_binary flag
         is_binary = self.watch.is_pdf
@@ -349,8 +308,7 @@ class difference_detection_processor():
                 # A plugin already has the page, use it instead of running the browser
                 self._use_plugin_response(browser_request, empty_pages_are_a_change, ignore_status_codes)
             else:
-                # All fetchers are now async
-                await self.fetcher.run(
+                run_args = dict(
                     current_include_filters=self.watch.get('include_filters'),
                     empty_pages_are_a_change=empty_pages_are_a_change,
                     fetch_favicon=self.watch.favicon_is_expired() and self.datastore.data['settings']['application'].get('ui', {}).get('favicons_enabled', True),
@@ -364,6 +322,15 @@ class difference_detection_processor():
                     url=url,
                     watch_uuid=self.watch_uuid,
                 )
+                from changedetectionio.content_fetchers.exceptions import checksumFromPreviousCheckWasTheSame
+                # All fetchers are now async
+                try:
+                    await self.fetcher.run(**run_args)
+                except checksumFromPreviousCheckWasTheSame:
+                    # Not a failure, the page is just the same as last time
+                    raise
+                except Exception as failed_fetch:
+                    await self._fetch_with_fallbacks(failed_fetch, prefer_fetch_backend, run_args, fetcher_setup)
 
                 # @todo .quit here could go on close object, so we can run JS if change-detected
                 await self.fetcher.quit(watch=self.watch)
@@ -386,6 +353,113 @@ class difference_detection_processor():
             self.fetcher.content = self.fetcher.content.encode('utf-8', errors='replace').decode('utf-8')
 
         # After init, call run_changedetection() which will do the actual change-detection
+
+    async def _plugin_fetcher_choice(self, backend_name, failed_fetch, tried):
+        """(fetcher_class, backend_name, custom_browser_connection_url) for the best fetcher plugins offered with
+        the select_fetch_backend hook, or None to carry on with backend_name."""
+        from changedetectionio.content_fetchers import get_fetcher_by_name, _log_fetcher_capabilities
+        from changedetectionio.pluggy_interface import select_fetch_backends
+
+        for choice in await select_fetch_backends(self.watch, self.datastore, backend_name,
+                                                  failed_fetch=failed_fetch, tried=tried):
+            fetcher_obj = get_fetcher_by_name(choice, watch=self.watch)
+            if not fetcher_obj:
+                logger.warning(f"Watch {self.watch.get('uuid')} - a plugin offered fetcher '{choice}', which isn't "
+                               f"installed or can't fetch this watch, skipped")
+                continue
+            if not failed_fetch:
+                logger.info(f"Watch {self.watch.get('uuid')} - a plugin chose fetcher '{choice}' instead of '{backend_name}' for this check")
+            _log_fetcher_capabilities(fetcher_obj, choice, uuid=self.watch.get('uuid'))
+            return fetcher_obj, choice, None
+        return None
+
+    async def _fetch_with_fallbacks(self, failed_fetch, failed_backend, run_args, fetcher_setup):
+        """The fetch raised: retry with the fetchers plugins offer (select_fetch_backend hook), best first, each
+        at most once, up to FETCH_FALLBACK_MAX_ATTEMPTS. Re-raises the last error when nothing (else) works."""
+        from changedetectionio.content_fetchers.exceptions import checksumFromPreviousCheckWasTheSame
+        max_attempts = int(os.getenv('FETCH_FALLBACK_MAX_ATTEMPTS', 3))
+        tried = [failed_backend]
+        for _ in range(max_attempts):
+            plugin_choice = await self._plugin_fetcher_choice(failed_backend, failed_fetch=failed_fetch, tried=tried)
+            if not plugin_choice:
+                break
+            try:
+                await self.fetcher.quit(watch=self.watch)
+            except Exception as e:
+                logger.debug(f"Closing the '{failed_backend}' fetcher after it failed: {e}")
+            fetcher_obj, backend_name, custom_browser_connection_url = plugin_choice
+            logger.info(f"Watch {self.watch.get('uuid')} - '{failed_backend}' failed ({type(failed_fetch).__name__}"
+                        f"{f' {failed_fetch.status_code}' if getattr(failed_fetch, 'status_code', None) else ''}), "
+                        f"retrying with '{backend_name}'")
+            self.fetcher = self._new_fetcher(fetcher_obj, backend_name, custom_browser_connection_url, **fetcher_setup)
+            # The first fetcher of this check that failed, so a fallback knows it's one
+            self.fetcher.fallback_from = tried[0]
+            tried.append(backend_name)
+            try:
+                await self.fetcher.run(**run_args)
+                return
+            except checksumFromPreviousCheckWasTheSame:
+                raise
+            except Exception as e:
+                failed_fetch, failed_backend = e, backend_name
+        raise failed_fetch
+
+    def _new_fetcher(self, fetcher_obj, backend_name, custom_browser_connection_url, proxy_url=None,
+                     browser_config=None, cookies=None):
+        """An instance of fetcher_obj set up for this watch: proxy, browser config, cookies, browser steps,
+        render delay, JS to run. proxy_url and cookies are what the BrowserRequest plugins left."""
+        # Applied after the plugins so none of them can undo it: an engine that reaches the web
+        # through someone else's browser service handles its own egress, so our proxy must not be
+        # layered on top (Fetcher.ignores_proxy_setting).
+        if proxy_url and getattr(fetcher_obj, 'ignores_proxy_setting', False):
+            logger.debug(f"Skipping proxy data - '{backend_name}' connects to an "
+                         f"external browser service that handles its own egress.")
+            proxy_url = None
+
+        logger.debug(f"Using proxy '{redact_proxy_url(proxy_url)}' for {self.watch['uuid']}")
+
+        # Now call the fetcher (playwright/requests/etc) with arguments that only a fetcher would need.
+        # When browser_connection_url is None, it method should default to working out whats the best defaults (os env vars etc)
+        fetcher = fetcher_obj(proxy_override=proxy_url,
+                              custom_browser_connection_url=custom_browser_connection_url,
+                              screenshot_format=self.screenshot_format,
+                              worker_id=self.worker_id
+                              )
+
+        # Stamp the resolved backend name so downstream consumers (processors, plugins)
+        # can read it directly instead of re-deriving it from the fetcher class name.
+        fetcher.backend_name = backend_name
+        # Inject the resolved per-watch browser behaviour; fetchers that read it apply what
+        # they can, others ignore it. Never None so consumers can read attributes freely.
+        fetcher.browser_config = browser_config
+        # Cookies from plugins, scoped to the watched URL unless they name their own domain/url
+        fetcher.cookies = cookies
+        if cookies and not getattr(fetcher_obj, 'supports_cookies', False):
+            logger.warning(f"'{backend_name}' can't set cookies, ignoring {len(cookies)} "
+                           f"cookie(s) for watch {self.watch_uuid}")
+        try:
+            logger.debug(
+                f"Watch {self.watch.get('uuid')} fetch: backend='{backend_name}' "
+                f"browser_config={browser_config.model_dump() if browser_config else None}"
+            )
+        except Exception as e:
+            logger.debug(f"Could not log browser_config: {e}")
+
+        if self.watch.has_browser_steps:
+            fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
+            fetcher.browser_steps_screenshot_path = os.path.join(self.datastore.datastore_path, self.watch.get('uuid'))
+
+        # Configurable per-watch or global extra delay before extracting text (for webDriver types)
+        system_webdriver_delay = self.datastore.data['settings']['application'].get('webdriver_delay', None)
+        if self.watch.get('webdriver_delay'):
+            fetcher.render_extract_delay = self.watch.get('webdriver_delay')
+        elif system_webdriver_delay is not None:
+            fetcher.render_extract_delay = system_webdriver_delay
+
+        if self.watch.get('webdriver_js_execute_code') is not None and self.watch.get('webdriver_js_execute_code').strip():
+            fetcher.webdriver_js_execute_code = self.watch.get('webdriver_js_execute_code')
+
+        return fetcher
 
     @staticmethod
     def _resolve_watch_config_path(data_dir, filename):

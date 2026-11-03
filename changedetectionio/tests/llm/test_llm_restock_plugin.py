@@ -341,11 +341,37 @@ class TestLLMRestockPluginHTMLStripping:
         assert '&nbsp;' not in result
         assert 'in stock' in result
 
+    def test_strip_html_keeps_page_when_a_wrapper_looks_like_chrome(self):
+        # A page-wide wrapper with a chrome-looking class would take the whole product with it
+        from changedetectionio.processors.restock_diff.plugins.llm_restock import _strip_html
+        html = ('<html><body><div id="page" class="layout has-sidebar"><nav>Menu</nav>'
+                '<h1>Trail shoe</h1><span>$49.99</span> Add to cart</div></body></html>')
+        result = _strip_html(html)
+        assert '$49.99' in result and 'Add to cart' in result
+
+    def test_strip_html_still_removes_chrome_normally(self):
+        from changedetectionio.processors.restock_diff.plugins.llm_restock import _strip_html
+        html = ('<html><body><div class="mega-menu">Shop Men Women Kids Sale</div>'
+                '<main><h1>Trail shoe</h1><p>Lightweight trail running shoe with a grippy outsole.</p>'
+                '<span>$49.99</span> Add to cart</main></body></html>')
+        result = _strip_html(html)
+        assert '$49.99' in result and 'Shop Men Women' not in result
+
     def test_strip_html_truncates_long_content(self):
         from changedetectionio.processors.restock_diff.plugins.llm_restock import _strip_html, _MAX_CONTENT_CHARS
         long_html = '<p>' + 'x' * (_MAX_CONTENT_CHARS * 2) + '</p>'
         result = _strip_html(long_html)
         assert len(result) <= _MAX_CONTENT_CHARS
+
+    def test_strip_html_keeps_page_when_root_class_looks_like_chrome(self):
+        # Amazon sets class="... mn-nav-stripe-moved" on <html>, which matches \bnav\b
+        from changedetectionio.processors.restock_diff.plugins.llm_restock import _strip_html
+        html = ('<!DOCTYPE html><html class="a-js mn-nav-stripe-moved"><body class="sidebar-layout">'
+                '<nav>Menu</nav><span>$49.99</span> Add to cart</body></html>')
+        result = _strip_html(html)
+        assert '$49.99' in result
+        assert 'Add to cart' in result
+        assert 'Menu' not in result
 
 
 class TestLLMRestockReusableHelpers:
