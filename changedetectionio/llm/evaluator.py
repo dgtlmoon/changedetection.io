@@ -97,6 +97,12 @@ def _thinking_extra_body(model: str, budget: int, llm_cfg: dict | None = None) -
     "does this model think?" decision. That picks up new Gemini variants and
     rolling aliases (`gemini-flash-latest`, etc.) as litellm's registry tracks
     them, without us hardcoding model names here.
+
+    Claude 5.x thinks by default and has no token budget any more (budget_tokens is a 400), so for Anthropic
+    only Off (0) does anything: thinking={'type': 'disabled'} on Haiku/Sonnet 5.x, or 'between_tools' on
+    Sonnet 5.5 which rejects 'disabled'. Left alone: Opus 5 (with thinking disabled it can leak <thinking>
+    tags into the answer), Opus 5.5 / Fable (thinking can't be switched off) and 4.x (no thinking unless asked).
+    client.completion() lifts 'thinking' out of extra_body, Anthropic rejects unknown body fields.
     """
     llm_cfg = llm_cfg or {}
     if llm_cfg.get('local_thinking_off'):
@@ -104,6 +110,20 @@ def _thinking_extra_body(model: str, budget: int, llm_cfg: dict | None = None) -
             return {'think': False}
         if llm_cfg.get('provider_kind') == 'openai_compatible':
             return {'chat_template_kwargs': {'enable_thinking': False}}
+    if model.startswith('claude') or model.startswith('anthropic/'):
+        if budget or not any(k in model.lower() for k in ('haiku-5', 'sonnet-5')):
+            return None
+        # litellm's registry has no flag for which models take 'between_tools'
+        if 'sonnet-5-5' in model.lower():
+            return {'thinking': {'type': 'between_tools'}}
+        try:
+            import litellm
+            info = litellm.get_model_info(model)
+            if not info.get('supports_adaptive_thinking') or info.get('thinking_always_on'):
+                return None
+        except Exception:
+            return None
+        return {'thinking': {'type': 'disabled'}}
     if not model.startswith('gemini/'):
         return None
     if 'flash-lite' in model.lower():
