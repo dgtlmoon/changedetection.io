@@ -19,6 +19,7 @@ import os
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.blueprint import plaintext_response
 from changedetectionio.flask_app import login_optionally_required
+from changedetectionio.content_fetchers.exceptions import BrowserConnectError
 from changedetectionio.validate_url import validate_fetch_url_async
 from loguru import logger
 
@@ -133,44 +134,36 @@ async def _close_session_resources(session_data, label=''):
             logger.warning(f"Error stopping playwright context{label}: {e}")
 
 
-async def acquire_browser_for_fetcher(fetcher_name, proxy=None, keepalive_ms=None):
-    """Acquire a Playwright browser for the given fetcher backend.
+async def acquire_browser_for_fetcher(fetcher_name, proxy=None, keepalive_ms=None, browser_config=None):
+    """The live Playwright browser to step/preview with, from the engine the watch fetches with.
 
-    Mirrors normal fetching: fetchers that launch their own browser (e.g. CloakBrowser)
-    provide get_browsersteps_browser(); otherwise we connect over CDP to the configured
-    Playwright/sockpuppetbrowser driver. Returns (browser, playwright_context).
+    The engine decides how: it either launches its own (get_browsersteps_browser) or names the
+    CDP endpoint to connect to (browser_steps_connection_url). An engine that cannot drive a live
+    session says so via supports_browser_steps and is refused - previewing a watch with a browser
+    it does not check with would show the operator something untrue.
     """
     from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.base import FetcherCapabilities
     from playwright.async_api import async_playwright
 
-    logger.debug(f"acquire_browser_for_fetcher: requested fetcher='{fetcher_name}', proxy={'yes' if proxy else 'no'}, keepalive_ms={keepalive_ms}")
-
-    browser = None
-    playwright_context = None
-
-    # If the fetcher has its own browser launch (runs locally rather than via CDP), use it.
     fetcher_class = getattr(content_fetchers, fetcher_name, None) if fetcher_name else None
-    if fetcher_class and hasattr(fetcher_class, 'get_browsersteps_browser'):
-        logger.debug(f"acquire_browser_for_fetcher: fetcher '{fetcher_name}' provides its own browser, launching locally")
+    if not FetcherCapabilities.from_fetcher(fetcher_class).supports_browser_steps:
+        raise BrowserConnectError(msg=f"'{fetcher_name}' cannot drive a live browser session "
+                                      f"(browser steps / visual selector) - choose a browser that can.")
+
+    # Engines that run their own browser locally hand one back themselves.
+    if hasattr(fetcher_class, 'get_browsersteps_browser'):
         result = await fetcher_class.get_browsersteps_browser(proxy=proxy, keepalive_ms=keepalive_ms)
         if result is not None:
-            browser, playwright_context = result
-            logger.info(f"acquire_browser_for_fetcher: using fetcher-specific browser for '{fetcher_name}'")
-        else:
-            logger.debug(f"acquire_browser_for_fetcher: '{fetcher_name}' returned no browser, falling back to CDP")
-    else:
-        logger.debug(f"acquire_browser_for_fetcher: fetcher '{fetcher_name}' has no get_browsersteps_browser(), using CDP")
+            logger.debug(f"acquire_browser_for_fetcher: '{fetcher_name}' supplied its own browser")
+            return result
 
-    # Default: connect to the remote Playwright/sockpuppetbrowser via CDP
-    if browser is None:
-        base_url = os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
-        logger.debug(f"acquire_browser_for_fetcher: connecting over CDP to '{base_url}' for fetcher '{fetcher_name}'")
-        playwright_context = await async_playwright().start()
-        a = "?" if '?' not in base_url else '&'
-        connect_url = base_url + a + f"timeout={keepalive_ms}"
-        browser = await playwright_context.chromium.connect_over_cdp(connect_url, timeout=keepalive_ms)
-        logger.info(f"acquire_browser_for_fetcher: connected over CDP for fetcher '{fetcher_name}'")
-
+    base_url = fetcher_class.browser_steps_connection_url(browser_config)
+    logger.debug(f"acquire_browser_for_fetcher: connecting over CDP for '{fetcher_name}'")
+    playwright_context = await async_playwright().start()
+    a = "?" if '?' not in base_url else '&'
+    browser = await playwright_context.chromium.connect_over_cdp(base_url + a + f"timeout={keepalive_ms}",
+                                                                 timeout=keepalive_ms)
     return browser, playwright_context
 
 
@@ -250,23 +243,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         browsersteps_start_session = {'start_time': time.time()}
 
-        # Build proxy dict first — needed by both the CDP path and fetcher-specific launchers
         proxy_id = datastore.get_preferred_proxy_for_watch(uuid=watch_uuid)
-        proxy = None
-        if proxy_id:
-            proxy_url = datastore.proxy_list.get(proxy_id, {}).get('url')
-            if proxy_url:
-                from changedetectionio.proxy_url import proxy_credentials, redact_proxy_url
-                username, password = proxy_credentials(proxy_url)
-                proxy = {'server': proxy_url}
-                if username:
-                    proxy['username'] = username
-                if password:
-                    proxy['password'] = password
-                logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {redact_proxy_url(proxy_url)}")
+        proxy_url = datastore.proxy_list.get(proxy_id, {}).get('url') if proxy_id else None
 
         # Resolve the fetcher backend for this watch so we can ask it to launch its own browser
-        # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP)
+        # if it supports that (e.g. CloakBrowser, which runs locally rather than via CDP).
         watch = datastore.data['watching'][watch_uuid]
 
         # Live preview sessions also return rendered screenshots to the caller and never pass
@@ -275,11 +256,48 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # time but happily previewed (and exfiltrated) here.
         await validate_fetch_url_async(watch.link)
 
-        fetcher_name = watch.get_fetch_backend or 'system'
-        if fetcher_name == 'system':
-            fetcher_name = datastore.data['settings']['application'].get('fetch_backend', 'html_requests')
+        # get_fetch_backend is the fully-resolved SELECTOR (group override / watch / 'system' ->
+        # global default) - but it may be a browser-config id, not an engine name. Map it to the
+        # concrete engine (for launching) AND its FetcherConfig (viewport/locale/timezone) so the
+        # live browser-steps session matches what the watch actually fetches with.
+        _entry, fetcher_name, browser_config = datastore.browser_config_store.engine_and_config(watch.get_fetch_backend)
 
-        browser, playwright_context = await acquire_browser_for_fetcher(fetcher_name, proxy=proxy, keepalive_ms=keepalive_ms)
+        # The same plugin hook a real check gets (purpose='browser_steps'), so a plugin's headers,
+        # cookies and proxy apply to the live session too - see changedetectionio/browser_lifecycle.py
+        from requests.structures import CaseInsensitiveDict
+        from changedetectionio import content_fetchers
+        from changedetectionio.browser_lifecycle import BrowserRequest, apply_browser_request_alter
+        fetcher_class = getattr(content_fetchers, fetcher_name, None)
+        browser_request = BrowserRequest(
+            url=watch.link,
+            fetcher_name=fetcher_name,
+            fetcher_class=fetcher_class,
+            browser_config=browser_config,
+            headers=CaseInsensitiveDict(watch.get('headers') or {}),
+            proxy_url=proxy_url,
+            method=watch.get('method'),
+            body=watch.get('body'),
+            watch_uuid=watch_uuid,
+            purpose='browser_steps',
+        )
+        await apply_browser_request_alter(browser_request, watch=watch, datastore=datastore)
+
+        # Proxy dict for both the CDP path and fetcher-specific launchers. Same rule as a check: an
+        # engine that uses someone else's browser service handles its own egress.
+        proxy = None
+        proxy_url = browser_request.proxy_url
+        if proxy_url and not getattr(fetcher_class, 'ignores_proxy_setting', False):
+            from changedetectionio.proxy_url import proxy_credentials, redact_proxy_url
+            username, password = proxy_credentials(proxy_url)
+            proxy = {'server': proxy_url}
+            if username:
+                proxy['username'] = username
+            if password:
+                proxy['password'] = password
+            logger.debug(f"Browser Steps: UUID {watch_uuid} selected proxy {redact_proxy_url(proxy_url)}")
+
+        browser, playwright_context = await acquire_browser_for_fetcher(
+            fetcher_name, proxy=proxy, keepalive_ms=keepalive_ms, browser_config=browser_config)
 
         browsersteps_start_session['browser'] = browser
         browsersteps_start_session['playwright_context'] = playwright_context
@@ -288,7 +306,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             playwright_browser=browser,
             proxy=proxy,
             start_url=watch.link,
-            headers=watch.get('headers')
+            headers=dict(browser_request.headers),
+            browser_config=browser_config,
+            cookies=browser_request.cookies_for_browser(),
+            browser_request=browser_request,
+            watch=watch,
+            datastore=datastore,
         )
         await browserstepper.connect(proxy=proxy)
         browsersteps_start_session['browserstepper'] = browserstepper

@@ -115,6 +115,62 @@
   {{ field(**kwargs)|safe }}
 {% endmacro %}
 
+{% macro render_browser_choice_field(field, variation_ids) %}
+  {# A Browser RadioField rendered exactly like WTForms' own ListWidget, except that a browser the
+     user added as a variation gets its name linked to its edit page (WTForms can't put markup in
+     a radio label). `variation_ids` comes from list_user_variation_ids(), {id: engine short name};
+     only the browser's own name is the link, not the "Local Playwright: " in front of it.
+     kwargs go on the <ul>, as they do with field(**kwargs). #}
+  <div {% if field.errors %} class="error" {% endif %}>{{ field.label }}</div>
+  <div {% if field.errors %} class="error" {% endif %}>
+    <ul id="{{ field.id }}"{% for k, v in kwargs.items() %} {{ k }}="{{ v }}"{% endfor %}>
+      {% for option in field %}
+        <li>{{ option() }} <label for="{{ option.id }}">
+          {%- if option.data in variation_ids and not browser_config_locked() -%}
+            {%- set prefix = variation_ids[option.data] ~ ': ' -%}
+            {%- set label_text = option.label.text | string -%}
+            {%- if label_text.startswith(prefix) -%}{{ prefix }}{%- set label_text = label_text[prefix|length:] -%}{%- endif -%}
+            <a href="{{ url_for('ui.browser_config.browser_config_edit', config_id=option.data) }}" title="{{ _('Edit this browser') }}">{{ label_text }}</a>
+          {%- else -%}
+            {{ option.label.text }}
+          {%- endif -%}
+        </label></li>
+      {% endfor %}
+    </ul>
+    {% if field.errors %}
+      <ul class=errors>
+        {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro render_plugin_settings_sections(form, sections) %}
+  {# Sections plugins added to a watch / group / system settings page (hook settings_form_section):
+     the plugin's own template if it gave one, otherwise each field of its sub-form #}
+  {% for section in sections or [] %}
+  {% set subform = form[section.field_name] %}
+  <fieldset class="plugin-settings-section plugin-settings-{{ section.plugin_id }}">
+    <legend>{{ section.label }}</legend>
+    {% if section.description %}<p class="pure-form-message-inline">{{ section.description }}</p>{% endif %}
+    {% if section.template %}
+      {% include section.template %}
+    {% else %}
+      {% for field in subform %}
+        {% if field.type in ('CSRFTokenField', 'HiddenField') %}
+          {{ field() }}
+        {% else %}
+        <div class="pure-control-group{% if field.type == 'RadioField' %} inline-radio{% endif %}">
+          {% if field.type == 'BooleanField' %}{{ render_checkbox_field(field) }}{% else %}{{ render_field(field) }}{% endif %}
+          {% if field.description %}<span class="pure-form-message-inline">{{ field.description }}</span>{% endif %}
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </fieldset>
+  {% endfor %}
+{% endmacro %}
+
 {% macro render_fieldlist_with_inline_errors(fieldlist) %}
   {# Specialized macro for FieldList(FormField(...)) that renders errors inline with each field #}
   <div {% if fieldlist.errors %} class="error" {% endif %}>{{ _(fieldlist.label.text | string) }}</div>

@@ -82,6 +82,14 @@ def _validate_common(datastore, data):
             proxy_list_str = ', '.join(plist) if plist else 'none configured'
             raise ApiError(f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'")
 
+    # The browser to check with. Valid values are per-install (engines + saved browsers on
+    # the Browsers page), so the schema can only bound the string - this is the real gate.
+    if 'fetch_backend' in data:
+        from changedetectionio.model.browser_config import is_valid_browser_selector
+        if not is_valid_browser_selector(data['fetch_backend'], datastore, allow_empty=False):
+            raise ApiError(f"Invalid fetch_backend '{data['fetch_backend']}' - use 'system', an "
+                           f"installed browser engine, or the id of a browser from the Browsers page")
+
     # Validate time_between_check when not using defaults
     error = validate_time_between_check_required(data)
     if error:

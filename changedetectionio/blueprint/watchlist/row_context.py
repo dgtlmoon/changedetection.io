@@ -6,8 +6,8 @@ Both MUST build their context here — if they build it separately the pushed ro
 drifts from the server-rendered one, which is the bug class this exists to prevent.
 
 Only names the row cannot get for itself belong here. Anything registered app-wide
-(`is_checking_now` template global, `fetcher_status_icons` filter, `url_for`, `_()`) is
-already available in any render and is deliberately NOT listed.
+(`is_checking_now` template global, the `watch_browser_status_icon` filter, `url_for`, `_()`)
+is already available in any render and is deliberately NOT listed.
 """
 
 from changedetectionio import processors
@@ -38,6 +38,5 @@ def watch_row_context(datastore, active_tag_uuid=None, queued_uuids=None):
         'has_proxies': datastore.proxy_list,
         'processor_descriptions': processors.get_processor_descriptions(),
         'queued_uuids': queued_uuids,
-        'system_default_fetcher': datastore.data['settings']['application'].get('fetch_backend'),
         'ui_settings': datastore.data['settings']['application']['ui'],
     }

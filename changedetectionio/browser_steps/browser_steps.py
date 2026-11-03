@@ -392,13 +392,24 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     browser_type = os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').strip('"')
 
-    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None):
+    def __init__(self, playwright_browser, proxy=None, headers=None, start_url=None, browser_config=None,
+                 cookies=None, browser_request=None, watch=None, datastore=None):
         self.headers = headers or {}
         self.age_start = time.time()
         self.playwright_browser = playwright_browser
         self.start_url = start_url
         self._is_cleaned_up = False
         self.proxy = proxy
+        # Optional resolved FetcherConfig (viewport / locale / timezone ...) so the live session
+        # matches the browser profile the user picked; None = engine defaults. Applied in connect().
+        self.browser_config = browser_config
+        # Plugin lifecycle (changedetectionio/browser_lifecycle.py): cookies from
+        # browser_request_alter(), and the request handed to browser_request_finished() on cleanup
+        self.cookies = cookies or []
+        self.browser_request = browser_request
+        self.watch = watch
+        self.datastore = datastore
+        self._lifecycle_finished = False
         # Note: connect() is now async and must be called separately
 
     def __del__(self):
@@ -412,8 +423,16 @@ class browsersteps_live_ui(steppable_browser_interface):
         keep_open = 1000 * 60 * 5
         now = time.time()
 
+        # The profile's User-Agent (its own, else the emulated device's) under the watch's headers,
+        # the same order a real check uses, so a per-watch User-Agent still wins
+        from requests.structures import CaseInsensitiveDict
+        ua_headers = CaseInsensitiveDict()
+        if self.browser_config is not None:
+            self.browser_config.apply_user_agent(ua_headers)
+        ua_headers.update(self.headers)
+
         # @todo handle multiple contexts, bind a unique id from the browser on each req?
-        self.context = await self.playwright_browser.new_context(
+        context_kwargs = dict(
             accept_downloads=False,  # Should never be needed
             bypass_csp=get_playwright_bypass_csp(),
             extra_http_headers=self.headers,
@@ -421,8 +440,17 @@ class browsersteps_live_ui(steppable_browser_interface):
             proxy=proxy,
             service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'),
             # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
-            user_agent=manage_user_agent(headers=self.headers),
+            user_agent=manage_user_agent(headers=ua_headers),
         )
+        # Apply the picked browser profile (viewport / locale / timezone) so the live preview
+        # matches what a saved watch would fetch. Same single source of truth the real fetch uses.
+        if self.browser_config is not None:
+            context_kwargs.update(self.browser_config.browser_context_kwargs())
+
+        self.context = await self.playwright_browser.new_context(**context_kwargs)
+        if self.cookies:
+            await self.context.add_cookies(self.cookies)
+            logger.debug(f"Browser Steps: added {len(self.cookies)} cookie(s) to the live session")
 
         self.page = await self.context.new_page()
 
@@ -444,6 +472,13 @@ class browsersteps_live_ui(steppable_browser_interface):
 
     async def cleanup(self):
         """Properly clean up all resources to prevent memory leaks"""
+        # Before the early return: closing the page marks the session cleaned up already, and
+        # plugins must still hear that it ended
+        if self.browser_request is not None and not self._lifecycle_finished:
+            self._lifecycle_finished = True
+            from changedetectionio.browser_lifecycle import apply_browser_request_finished
+            await apply_browser_request_finished(self.browser_request, fetcher=None, error=None,
+                                                 watch=self.watch, datastore=self.datastore)
         if self._is_cleaned_up:
             return
             

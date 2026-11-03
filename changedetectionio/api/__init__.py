@@ -28,16 +28,8 @@ def build_merged_spec_dict():
     with open(spec_path, 'r', encoding='utf-8') as f:
         spec_dict = yaml.safe_load(f)
 
-    # The static spec's fetch_backend pattern only knows the built-in fetchers, accept every installed one (plugins too)
-    try:
-        import re
-        from changedetectionio import content_fetchers
-        fetcher_names = sorted(name for name, _description in content_fetchers.available_fetchers())
-        if fetcher_names:
-            spec_dict['components']['schemas']['WatchBase']['properties']['fetch_backend']['pattern'] = \
-                '^(system|extra_browser_.+|' + '|'.join(re.escape(n) for n in fetcher_names) + ')$'
-    except Exception as e:
-        logger.warning(f"Failed to add installed fetchers to the API spec: {e}")
+    # fetch_backend is deliberately only bounded by the spec: the valid values are per-install (engines,
+    # plugin engines and the saved browsers on the Browsers page), is_valid_browser_selector() is the gate
 
     try:
         from changedetectionio.processors import find_processors, get_parent_module

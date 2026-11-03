@@ -9,6 +9,16 @@ from changedetectionio.flask_app import login_optionally_required
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config, is_llm_features_disabled
 
 
+def _browser_config_choices(datastore):
+    """Browsers the group can override with: exactly what a watch can pick, minus 'system'.
+
+    No 'None'/'system' entry: the enabler checkbox (browser_config_overrides_watch) is what
+    turns the override on/off, and the select is disabled when it's unchecked."""
+    from changedetectionio.model.browser_config import list_watch_browser_choices
+    return [(value, label) for value, label in list_watch_browser_choices(datastore)
+            if value != 'system']
+
+
 def construct_blueprint(datastore: ChangeDetectionStore):
     tags_blueprint = Blueprint('tags', __name__, template_folder="templates")
 
@@ -161,12 +171,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("Tag not found"), "error")
             return redirect(url_for('watchlist.index'))
 
-        form = group_restock_settings_form(
+        # Plugin sections (hook settings_form_section, scope 'tag'), saved in plugin_settings
+        from changedetectionio.plugin_settings import form_class_with_sections, form_data_with_sections, get_settings_sections
+        plugin_sections = get_settings_sections('tag')
+        form = form_class_with_sections(group_restock_settings_form, plugin_sections)(
                                        formdata=request.form if request.method == 'POST' else None,
-                                       data=default,
+                                       data=form_data_with_sections(default, plugin_sections, default.get('plugin_settings'))
+                                            if plugin_sections else default,
                                        extra_notification_tokens=datastore.get_unique_notification_tokens_available(),
                                        default_system_settings = datastore.data['settings'],
                                        )
+        form.browser_config.choices = _browser_config_choices(datastore)
 
         # Bridge API-stored processor_config_* values into the form's FormField sub-forms.
         # The API stores processor_config_restock_diff in the tag dict; find the matching
@@ -233,6 +248,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  llm_features_disabled=is_llm_features_disabled(),
                                  matching_watches=matching_watches,
                                  settings_application=datastore.data['settings']['application'],
+                                 plugin_settings_sections=plugin_sections,
                                  **template_args
                                  )
 
@@ -248,10 +264,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         tag = datastore.data['settings']['application']['tags'].get(uuid)
 
-        form = group_restock_settings_form(formdata=request.form if request.method == 'POST' else None,
+        from changedetectionio.plugin_settings import form_class_with_sections, get_settings_sections, save_sections
+        plugin_sections = get_settings_sections('tag')
+        form = form_class_with_sections(group_restock_settings_form, plugin_sections)(
+                               formdata=request.form if request.method == 'POST' else None,
                                data=tag,
                                extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                )
+        form.browser_config.choices = _browser_config_choices(datastore)
         # @todo subclass form so validation works
         #if not form.validate():
 #            for widget, l in form.errors.items():
@@ -266,6 +286,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return redirect(url_for('tags.form_tag_edit', uuid=uuid))
 
         tag.update(form.data)
+        # Plugin sections go into plugin_settings, not next to the group's own fields
+        problem = save_sections(form, plugin_sections, tag)
+        if problem:
+            flash(problem, 'error')
         tag['processor'] = 'restock_diff'
         tag.commit()
 

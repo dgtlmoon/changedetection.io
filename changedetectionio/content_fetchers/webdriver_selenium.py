@@ -10,6 +10,7 @@ class fetcher(Fetcher):
         fetcher_description = f"WebDriver Chrome/Javascript via \"{os.getenv('WEBDRIVER_URL', '')}\""
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
+    fetcher_short_description = "Chrome (WebDriver)"
 
     proxy = None
     proxy_url = None

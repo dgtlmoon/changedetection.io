@@ -15,6 +15,11 @@ from changedetectionio.validate_url import is_fetch_url_allowed, is_private_host
 # "html_requests" is listed as the default fetcher in store.py!
 class fetcher(Fetcher):
     fetcher_description = _l("Basic fast Plaintext/HTTP Client")
+    fetcher_short_description = _l("Plain HTTP")
+    supports_cookies = True
+    # Only the plain client honours a per-profile request timeout (browsers use their own
+    # navigation timeouts). The per-profile User-Agent is honoured by all fetchers (base class).
+    supports_request_timeout = True
     supports_pdf = True
 
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
@@ -43,6 +48,19 @@ class fetcher(Fetcher):
         if self.browser_steps:
             raise BrowserStepsInUnsupportedFetcher(url=url)
 
+        # Per-profile request timeout from the selected browser config overrides the caller's
+        # default (requests-only; the User-Agent is already applied to request_headers upstream).
+        if self.browser_config:
+            timeout = self.browser_config.effective_timeout(timeout)
+
+        # Fall back to a browser-like default User-Agent when nothing upstream set one (a browser
+        # config, a per-watch header, or the fetch-time headers). Preserves the old behaviour that
+        # lived in settings.requests.default_ua['html_requests'] - sites often block the bare
+        # python-requests UA.
+        if not any(k.lower() == 'user-agent' for k in request_headers.keys()):
+            from changedetectionio.model.App import DEFAULT_SETTINGS_HEADERS_USERAGENT
+            request_headers['User-Agent'] = os.getenv("DEFAULT_SETTINGS_HEADERS_USERAGENT", DEFAULT_SETTINGS_HEADERS_USERAGENT)
+
         proxies = {}
 
         # Allows override the proxy on a per-request basis
@@ -58,6 +76,14 @@ class fetcher(Fetcher):
                 proxies['https'] = self.system_https_proxy
 
         session = requests.Session()
+        # Cookies from plugins; the jar sends each only to its own domain, also across redirects
+        for cookie in self.cookies or []:
+            domain = cookie.get('domain') or urlparse(cookie.get('url') or url).hostname
+            session.cookies.set(cookie['name'], cookie.get('value', ''), domain=domain,
+                                path=cookie.get('path') or '/', secure=bool(cookie.get('secure')))
+        if self.cookies:
+            logger.debug(f"Added {len(self.cookies)} cookie(s) to the request session: "
+                         f"{', '.join(c['name'] for c in self.cookies)}")
 
         # Configure retry adapter for low-level network errors only
         # Retries connection timeouts, read timeouts, connection resets - not HTTP status codes
