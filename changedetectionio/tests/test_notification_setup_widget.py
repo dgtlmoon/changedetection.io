@@ -48,6 +48,11 @@ def test_notification_setup_widget_on_pages(client, live_server, measure_memory_
     # Labels for the JS are passed as escaped JSON in an attribute
     assert b'data-i18n="{&#34;' in res.data
     assert b'notification-setup.js' in res.data
+    # The popular services as one-click icons, the search box is for the rest
+    for schema in (b'discord', b'tgram', b'ntfys', b'slack', b'mailtos',
+                   b'matrixs', b'pover', b'workflow', b'hassios', b'gotifys'):
+        assert b'class="ns-quick-btn" data-schema="' + schema + b'"' in res.data
+    assert b'+ Search over 140 other services' in res.data
     # The existing textarea is still there, the widget only appends to it
     assert b'name="notification_urls"' in res.data
 
@@ -65,3 +70,22 @@ def test_notification_setup_widget_on_pages(client, live_server, measure_memory_
 
     client.post(url_for('tags.delete_all'), follow_redirects=True)
     delete_all_watches(client)
+
+
+def test_mail_button_prefix_swaps_the_email_icon(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """With NOTIFICATION_MAIL_BUTTON_PREFIX there's an "Add email notification" row already, a plain
+    e-mail icon next to it would be confusing, so that slot offers the webhook / custom HTTP one."""
+    email_icon = b'class="ns-quick-btn" data-schema="mailtos"'
+    webhook_icon = b'class="ns-quick-btn" data-schema="custom-http"'
+
+    res = client.get(url_for('settings.notifications.apprise'))
+    assert email_icon in res.data and webhook_icon not in res.data
+
+    datastore = live_server.app.config['DATASTORE']
+    uuid = datastore.add_watch(url='https://example.com/', extras={'paused': True})
+
+    monkeypatch.setenv('NOTIFICATION_MAIL_BUTTON_PREFIX', 'abc123')
+    for url in (url_for('settings.notifications.apprise'), url_for('ui.ui_edit.edit_page', uuid=uuid)):
+        res = client.get(url)
+        assert b'id="notification-add-email-preset"' in res.data, url
+        assert webhook_icon in res.data and email_icon not in res.data, url

@@ -4644,8 +4644,21 @@ msgid "Add a notification service:"
 msgstr "알림 서비스 추가:"
 
 #: changedetectionio/templates/_common_fields-notification.html
-msgid "Discord, Telegram, ntfy, Slack, email…"
-msgstr "Discord, Telegram, ntfy, Slack, 이메일…"
+msgid "Webhook / API"
+msgstr "웹훅 / API"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "E-mail"
+msgstr "이메일"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Popular services"
+msgstr "인기 서비스"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "+ Search over %(count)d other services"
+msgstr "+ %(count)d개 이상의 다른 서비스 검색"
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "List all"

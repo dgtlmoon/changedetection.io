@@ -4711,8 +4711,21 @@ msgid "Add a notification service:"
 msgstr "Bildirim hizmeti ekle:"
 
 #: changedetectionio/templates/_common_fields-notification.html
-msgid "Discord, Telegram, ntfy, Slack, email…"
-msgstr "Discord, Telegram, ntfy, Slack, e-posta…"
+msgid "Webhook / API"
+msgstr "Webhook / API"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "E-mail"
+msgstr "E-posta"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Popular services"
+msgstr "Popüler servisler"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "+ Search over %(count)d other services"
+msgstr "+ %(count)d üzeri diğer serviste ara"
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "List all"

@@ -17,8 +17,33 @@
      }|tojson|forceescape }}">
     <label for="ns-search">{{ _('Add a notification service:') }}</label>
     <div class="ns-search-wrap">
+        {# The most used services, one click opens their form. Apprise isn't imported to count the
+           rest (it's loaded lazily), 152 are listed at the time of writing, so "over 140" holds.
+           With NOTIFICATION_MAIL_BUTTON_PREFIX set there's already an "Add email notification" row
+           (a hosted mail service), a second, plain e-mail button next to it would be confusing. #}
+        {%- set ns_quick = [('discord', 'Discord', 'discord-logo.svg'),
+                            ('tgram', 'Telegram', 'telegram_logo.svg'),
+                            ('ntfys', 'ntfy', 'ntfy-mark.svg'),
+                            ('slack', 'Slack', 'slack-mark.svg')] %}
+        {%- if emailprefix %}
+            {%- set ns_quick = ns_quick + [('custom-http', _('Webhook / API'), 'webhook-mark.svg')] %}
+        {%- else %}
+            {%- set ns_quick = ns_quick + [('mailtos', _('E-mail'), 'email-envelope.svg')] %}
+        {%- endif %}
+        {%- set ns_quick = ns_quick + [('matrixs', 'Matrix', 'matrix-mark.svg'),
+                                       ('pover', 'Pushover', 'pushover-mark.svg'),
+                                       ('workflow', 'Microsoft Teams (Workflows)', 'teams-workflow-mark.svg'),
+                                       ('hassios', 'Home Assistant', 'homeassistant-mark.svg'),
+                                       ('gotifys', 'Gotify', 'gotify-mark.svg')] %}
+        <div class="ns-quick" role="group" aria-label="{{ _('Popular services') }}">
+            {%- for schema, name, icon in ns_quick %}
+            <button type="button" class="ns-quick-btn" data-schema="{{ schema }}" title="{{ name }}" aria-label="{{ name }}">
+                <img src="{{ url_for('static_content', group='images', filename=icon) }}" alt="">
+            </button>
+            {%- endfor %}
+        </div>
         <input type="search" id="ns-search" autocomplete="off" spellcheck="false"
-               placeholder="{{ _('Discord, Telegram, ntfy, Slack, email…') }}"
+               placeholder="{{ _('+ Search over %(count)d other services', count=140) }}"
                role="combobox" aria-expanded="false" aria-controls="ns-results" aria-autocomplete="list">
         <ul id="ns-results" class="ns-results" role="listbox" hidden></ul>
         <details class="ns-all">

@@ -89,12 +89,67 @@
 }
 
 // Notification setup widget (templates/_common_fields-notification.html, js/notification-setup.js)
+$ns-quick-size: 2.1rem;
+
 .notification-setup {
   padding-bottom: $common-gap;
 
   > label {
     display: block;
     margin-bottom: 0.25rem;
+  }
+
+  // Popular services as one-click icons, above the search box
+  .ns-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.45rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .ns-quick-btn {
+    width: $ns-quick-size;
+    height: $ns-quick-size;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: var(--color-background);
+    // Transparent so hover/active can colour it without the row shifting
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    animation: ns-quick-in 0.25s ease-out both;
+
+    @for $i from 1 through 10 {
+      &:nth-child(#{$i}) { animation-delay: #{($i - 1) * 0.03}s; }
+    }
+
+    img {
+      width: 1.2rem;
+      height: 1.2rem;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: var(--color-background-button-primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-background-button-primary);
+      outline-offset: 2px;
+    }
+
+    // The service whose form is open below
+    &.is-active {
+      border-color: var(--color-background-button-primary);
+      box-shadow: inset 0 0 0 1px var(--color-background-button-primary);
+    }
   }
 
   .ns-search-wrap {
@@ -348,13 +403,19 @@
   }
 }
 
+@keyframes ns-quick-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+
 @keyframes ns-card-in {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .notification-setup .ns-card { animation: none; }
+  .notification-setup .ns-card,
+  .notification-setup .ns-quick-btn { animation: none; transition: none; }
 }
 
 // The e-mail quick-add and the setup widget share one grid, labels | inputs | button or message, so their
@@ -380,11 +441,11 @@
       margin: 0;
     }
 
-    // The search cell is taller than one row ("List all" sits under the input), so line the label up
-    // with the input rather than the middle of the cell. The padding matches the input's own padding + border.
+    // The search cell is several rows (popular icons, the input, "List all"), so the label sits at
+    // the top, centred on the icon row
     > .notification-setup > label {
       align-self: start;
-      padding-top: calc(0.5em + 1px);
+      line-height: $ns-quick-size;
     }
 
     #add-email-input {
