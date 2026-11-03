@@ -1330,7 +1330,9 @@ msgstr "Ubah token akses"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
-msgstr "Tidak ada yang dicentang: semua monitor. Dicentang: hanya monitor di grup tersebut, misalnya satu grup per kasus atau pelanggan."
+msgstr ""
+"Tidak ada yang dicentang: semua monitor. Dicentang: hanya monitor di grup tersebut, misalnya satu grup per kasus atau"
+" pelanggan."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "There are no groups yet. Add some to limit a token to them."

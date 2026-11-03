@@ -1350,7 +1350,9 @@ msgstr "Edytuj token dostępu"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
-msgstr "Nic nie zaznaczono: wszystkie monitory. Zaznaczone: tylko monitory w tych grupach, np. jedna grupa na sprawę lub klienta."
+msgstr ""
+"Nic nie zaznaczono: wszystkie monitory. Zaznaczone: tylko monitory w tych grupach, np. jedna grupa na sprawę lub "
+"klienta."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "There are no groups yet. Add some to limit a token to them."

@@ -1275,7 +1275,9 @@ msgstr "Upravit přístupový token"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
-msgstr "Nic nezaškrtnuto: všechny monitory. Zaškrtnuto: jen monitory v těchto skupinách, např. jedna skupina na případ nebo zákazníka."
+msgstr ""
+"Nic nezaškrtnuto: všechny monitory. Zaškrtnuto: jen monitory v těchto skupinách, např. jedna skupina na případ nebo "
+"zákazníka."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "There are no groups yet. Add some to limit a token to them."

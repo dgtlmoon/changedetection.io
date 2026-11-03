@@ -1285,7 +1285,9 @@ msgstr "Modifier le jeton d'accès"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
-msgstr "Aucun coché : tous les moniteurs. Cochés : seulement les moniteurs de ces groupes, par exemple un groupe par dossier ou client."
+msgstr ""
+"Aucun coché : tous les moniteurs. Cochés : seulement les moniteurs de ces groupes, par exemple un groupe par dossier "
+"ou client."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "There are no groups yet. Add some to limit a token to them."
