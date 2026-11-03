@@ -79,7 +79,7 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     tools = {t['name']: t for t in res.json['result']['tools']}
     read_only = {'list_watches', 'get_watch', 'list_tags', 'get_changes', 'get_diff', 'get_snapshot',
                  'get_system_info', 'list_notifications', 'notification_services',
-                 'list_snapshots', 'find_change', 'get_history', 'line_timeline',
+                 'list_snapshots', 'find_change', 'get_history', 'line_timeline', 'get_screenshot',
                  # From the built-in restock_diff plugin (register_mcp_tools, see test_mcp_plugin_tools.py)
                  'restock_status'}
     # update_* can replace settings (e.g. the whole notification URL list), so they count as destructive too
@@ -670,3 +670,119 @@ def test_find_change_regex_timeout(client, live_server, measure_memory_usage, da
         datastore.data['watching'][uuid].find_change('(a|aa)+$', regex=True)
 
     delete_all_watches(client)
+
+
+def test_mcp_fetcher_and_proxy(client, live_server, measure_memory_usage, datastore_path):
+    """create_watch / update_watch choose the fetcher and proxy (by name, as the user sees it), and say what a check
+    will actually use. Proxy URLs hold passwords: they're never shown."""
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    requests_settings = datastore.data['settings']['requests']
+    requests_settings['extra_proxies'] = [{'proxy_name': 'Czech exit', 'proxy_url': 'http://agent:s3cret@cz.example.com:3128'}]
+    requests_settings['extra_browsers'] = [{'browser_name': 'stealth', 'browser_connection_url': 'ws://browser.example.com:3000'}]
+    try:
+        info = _call(client, api_key, 'get_system_info')
+        data = info['structuredContent']
+        assert {'id': 'ui-0Czech exit', 'label': 'Czech exit'} in data['proxies']
+        assert 'html_requests' in data['fetchers'] and 'extra_browser_stealth' in data['fetchers']
+        assert 's3cret' not in json.dumps(info) and 'browser.example.com' not in json.dumps(info)
+
+        result = _call(client, api_key, 'create_watch', url='https://shop.example.com/', proxy='czech exit',
+                       fetch_backend='html_requests', paused=True)
+        assert not result['isError'], result
+        data = result['structuredContent']
+        assert (data['proxy'], data['effective_proxy'], data['effective_fetcher']) == ('ui-0Czech exit', 'Czech exit', 'html_requests')
+        assert 'through the proxy Czech exit' in result['content'][0]['text'] and 's3cret' not in json.dumps(result)
+        uuid = data['uuid']
+        assert datastore.data['watching'][uuid]['proxy'] == 'ui-0Czech exit'
+
+        # get_watch says what a check uses; 'system' goes back to the defaults
+        assert _call(client, api_key, 'get_watch', watch=uuid)['structuredContent']['effective_fetcher'] == 'html_requests'
+        result = _call(client, api_key, 'update_watch', watch=uuid, proxy='system', fetch_backend='system')
+        assert not result['isError'], result
+        assert not datastore.data['watching'][uuid].get('proxy')
+        assert result['structuredContent']['fetch_backend'] == 'system'
+
+        # Mistakes name what's available, never a URL
+        result = _call(client, api_key, 'create_watch', url='https://shop.example.com/2', proxy='Mars exit')
+        assert result['isError'] and 'Czech exit (ui-0Czech exit)' in result['content'][0]['text']
+        assert 's3cret' not in result['content'][0]['text']
+        result = _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='extra_browser_nope')
+        assert result['isError'] and 'stealth' in result['content'][0]['text']
+        assert not _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='extra_browser_stealth')['isError']
+    finally:
+        requests_settings['extra_proxies'] = []
+        requests_settings['extra_browsers'] = []
+        delete_all_watches(client)
+
+
+def test_mcp_screenshot_and_hashes(client, live_server, measure_memory_usage, datastore_path):
+    """get_screenshot returns a readable slice of the (possibly very tall) latest screenshot as image content, and
+    get_snapshot / get_history give each snapshot's SHA-256."""
+    import base64
+    import hashlib
+    from io import BytesIO
+    from PIL import Image
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    uuid = _menu_history(datastore)
+    w = datastore.data['watching'][uuid]
+
+    # No screenshot yet: says why
+    result = _call(client, api_key, 'get_screenshot', watch=uuid)
+    assert result['isError'] and 'browser fetchers' in result['content'][0]['text']
+
+    # A tall full-page capture, 2048 x 6000: scaled to 1024 wide (3000 tall), sent 1568 at a time
+    tall = BytesIO()
+    Image.new('RGB', (2048, 6000), (200, 30, 30)).save(tall, 'PNG')
+    w.save_screenshot(tall.getvalue())
+    result = _call(client, api_key, 'get_screenshot', watch=uuid)
+    assert not result['isError'], result
+    data = result['structuredContent']
+    assert (data['width'], data['height'], data['offset'], data['part_height'], data['next_offset']) == (1024, 3000, 0, 1568, 1568)
+    image = result['content'][1]
+    assert image['type'] == 'image' and image['mimeType'] == 'image/jpeg'
+    with Image.open(BytesIO(base64.b64decode(image['data']))) as img:
+        assert img.size == (1024, 1568)
+    assert 'call again with offset=1568' in result['content'][0]['text']
+    data = _call(client, api_key, 'get_screenshot', watch=uuid, offset=1568)['structuredContent']
+    assert (data['offset'], data['part_height'], data['next_offset']) == (1568, 1432, None)
+    result = _call(client, api_key, 'get_screenshot', watch=uuid, which='error')
+    assert result['isError'] and 'failed check' in result['content'][0]['text']
+
+    # Hashes: the same as hashing the text yourself
+    snap = _call(client, api_key, 'get_snapshot', watch=uuid, timestamp=T0 + 100)['structuredContent']
+    assert snap['sha256'] == hashlib.sha256(w.get_history_snapshot(timestamp=str(T0 + 100)).encode()).hexdigest()
+    hist = _call(client, api_key, 'get_history', watch=uuid, timestamps=[T0, T0 + 100])['structuredContent']
+    assert hist['patches'][0]['sha256'] == snap['sha256'] and len(hist['base']['sha256']) == 64
+
+    delete_all_watches(client)
+
+
+def test_mcp_recheck_wait(client, live_server, measure_memory_usage, datastore_path):
+    """recheck_watches wait=true: waits for the check and says how it went, instead of 'look later'."""
+    from flask import url_for
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    with open(os.path.join(datastore_path, 'endpoint-content.txt'), 'w') as f:
+        f.write('<html><body>Hello there</body></html>')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'title': 'Endpoint'})
+
+    result = _call(client, api_key, 'recheck_watches', watches=[uuid], wait=True, wait_seconds=30)
+    assert not result['isError'], result
+    check = result['structuredContent']['checks'][0]
+    assert check['state'] == 'checked', result['content'][0]['text']
+    assert '1 of 1 checked' in result['content'][0]['text']
+    # Without wait: the old answer
+    assert 'wait=true' in _call(client, api_key, 'recheck_watches', watches=[uuid])['content'][0]['text']
+    delete_all_watches(client)
+
+
+def test_queue_positions():
+    """The queue's order for 'queued, position 2 of 3': lowest priority value first."""
+    from changedetectionio import queuedWatchMetaData
+    from changedetectionio.queue_handlers import RecheckPriorityQueue
+    q = RecheckPriorityQueue()
+    for uuid, priority in (('a', 5), ('b', 1), ('c', 3)):
+        q.put(queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}))
+    assert q.get_queue_positions() == {'b': 1, 'c': 2, 'a': 3}

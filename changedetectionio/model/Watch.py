@@ -1145,6 +1145,31 @@ class model(EntityPersistenceMixin, watch_base):
             logger.error(f"Error creating thumbnail for {self.get('uuid')}: {str(e)}")
             return None
 
+    def get_screenshot_part(self, which='latest', offset=0, max_width=1024, max_height=1568, quality=70):
+        """A readable slice of a screenshot, as JPEG bytes, for an AI model or anything else that can't take a
+        20000 pixel tall full-page capture: scaled to at most max_width wide, then max_height of it from `offset`
+        (in pixels of the scaled image) down. Page through a long capture by raising offset.
+
+        :param which: 'latest' (last-screenshot.png) or 'error' (the one taken when the last check failed)
+        :return: (jpeg_bytes, info) or (None, None) without that screenshot. info: {'width', 'height' (the scaled
+                 full capture), 'offset', 'part_height', 'taken' (unix seconds)}
+        """
+        path = self.get_screenshot() if which == 'latest' else self.get_error_snapshot()
+        if not path:
+            return None, None
+        from io import BytesIO
+        from PIL import Image
+        with Image.open(path) as img:
+            img = img.convert('RGB')
+            if img.width > max_width:
+                img = img.resize((max_width, max(1, round(img.height * max_width / img.width))), Image.BILINEAR)
+            offset = max(0, min(int(offset or 0), max(0, img.height - 1)))
+            part = img.crop((0, offset, img.width, min(img.height, offset + max_height)))
+            out = BytesIO()
+            part.save(out, 'JPEG', quality=quality, optimize=True)
+            return out.getvalue(), {'width': img.width, 'height': img.height, 'offset': offset,
+                                    'part_height': part.height, 'taken': int(os.path.getmtime(path))}
+
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.data_dir, filename)
         if os.path.isfile(fname):

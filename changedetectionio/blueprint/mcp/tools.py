@@ -43,10 +43,40 @@ class ToolError(Exception):
 
 
 class Context:
-    """What a tool needs from the app."""
-    def __init__(self, datastore, update_q=None):
+    """What a tool needs from the app, and what the request's access token may see.
+
+    tags: None when the token sees every monitor, else the uuids of the tags (groups) it's limited to: it only sees,
+    changes and creates monitors in one of them, e.g. one group per case or customer. Set per request from the token
+    (scoped()), so the same rule holds whichever way the token was issued. Every core tool finds its monitors and
+    tags through in_scope() / watches() / _resolve_watch() / _resolve_tag(), and so should plugin tools.
+    """
+    def __init__(self, datastore, update_q=None, tags=None):
         self.datastore = datastore
         self.update_q = update_q
+        # An empty list is "not limited"; a list whose tags have all been deleted since still limits (to nothing)
+        self.tags = frozenset(tags) if tags else None
+
+    def scoped(self, tags):
+        """This context for a token limited to `tags` (None or [] for every monitor)."""
+        return Context(self.datastore, self.update_q, tags)
+
+    @property
+    def limited(self):
+        return self.tags is not None
+
+    def in_scope(self, watch):
+        return self.tags is None or bool(self.tags & set(watch.get('tags') or []))
+
+    def tag_in_scope(self, tag_uuid):
+        return self.tags is None or tag_uuid in self.tags
+
+    def watches(self):
+        """The monitors this request may see."""
+        return [w for w in self.datastore.data['watching'].values() if self.in_scope(w)]
+
+    def tag_names(self):
+        tags = self.datastore.data['settings']['application']['tags']
+        return [tags[t].get('title') for t in sorted(self.tags or ()) if t in tags]
 
 
 def _int(args, name, default, minimum, maximum):
@@ -67,16 +97,23 @@ def _list(args, name):
     return [str(v).strip() for v in value if str(v).strip()]
 
 
-def _resolve_watch(datastore, ref):
-    """A watch from its uuid, or from part of its title or URL when exactly one matches."""
+def _ctx(ctx_or_datastore):
+    """A Context from a Context, or from a datastore (callers from before scoped tokens: everything is visible)."""
+    return ctx_or_datastore if isinstance(ctx_or_datastore, Context) else Context(ctx_or_datastore)
+
+
+def _resolve_watch(ctx, ref):
+    """A watch from its uuid, or from part of its title or URL when exactly one matches. Only monitors the token may
+    see: one outside its groups is "not found", so a limited token can't even learn that it exists."""
+    ctx = _ctx(ctx)
     ref = (str(ref) if ref is not None else '').strip()
     if not ref:
         raise ToolError("Say which monitor: its uuid, or part of its title or URL")
-    watching = datastore.data['watching']
-    if ref in watching:
+    watching = ctx.datastore.data['watching']
+    if ref in watching and ctx.in_scope(watching[ref]):
         return watching[ref]
     needle = ref.lower()
-    matches = [w for w in watching.values()
+    matches = [w for w in ctx.watches()
                if needle in (w.get('url') or '').lower() or needle in (w.label or '').lower()]
     if len(matches) == 1:
         return matches[0]
@@ -87,30 +124,74 @@ def _resolve_watch(datastore, ref):
     raise ToolError(f"{len(matches)} monitors match '{ref}', say which one by uuid:\n{listed}{more}")
 
 
-def _resolve_tag(datastore, ref):
-    """A tag uuid from its uuid or name."""
+def _resolve_tag(ctx, ref):
+    """A tag uuid from its uuid or name, only the tags the token may see."""
+    ctx = _ctx(ctx)
     ref = (str(ref) if ref is not None else '').strip()
-    tags = datastore.data['settings']['application']['tags']
-    if ref in tags:
-        return ref
-    uuid = datastore.tag_uuid_for_title(ref) if ref else None
-    if not uuid:
+    tags = ctx.datastore.data['settings']['application']['tags']
+    uuid = ref if ref in tags else (ctx.datastore.tag_uuid_for_title(ref) if ref else None)
+    if not uuid or not ctx.tag_in_scope(uuid):
         raise ToolError(f"No tag/group called '{ref}'. Use list_tags to see them.")
     return uuid
 
 
-def _tag_names(datastore, watch):
-    tags = datastore.data['settings']['application']['tags']
-    return [tags[t].get('title') for t in (watch.get('tags') or []) if t in tags]
+def _select(ctx, tag=None, uuids=None):
+    """select_watches() for this request: a tag (that the token may see), uuids, or all, within its scope."""
+    if tag:
+        _resolve_tag(ctx, tag)
+    try:
+        watches = select_watches(ctx.datastore, tag=tag, uuids=uuids)
+    except LookupError as e:
+        raise ToolError(str(e))
+    return [w for w in watches if ctx.in_scope(w)]
 
 
-def _summary(datastore, watch):
+def _refuse_if_limited(ctx, what):
+    if ctx.limited:
+        raise ToolError(f"This access token is limited to the groups {', '.join(ctx.tag_names()) or '(none left)'}, so "
+                        f"it can't {what}. Tell the user it can be changed on the 'Access tokens' sub-tab of the 'MCP "
+                        f"Server' settings.")
+
+
+def _tags_for_new_monitor(ctx, names):
+    """The tag names a new monitor gets. A limited token's new monitor has to land in one of its groups (it couldn't
+    see it otherwise): with none given and only one group, that one; with several, the assistant has to say which."""
+    names = _scoped_tag_names(ctx, names)
+    if ctx.limited and not names:
+        allowed = ctx.tag_names()
+        if len(allowed) != 1:
+            raise ToolError(f"This access token is limited to the groups {', '.join(allowed) or '(none left)'}: say "
+                            f"which one the new monitor goes in with 'tags'.")
+        names = allowed
+    return names
+
+
+def _scoped_tag_names(ctx, names):
+    """For a limited token: the tag names must all be groups it may see (it can't create or reach others)."""
+    if not ctx.limited:
+        return names
+    allowed = {n.lower() for n in ctx.tag_names()}
+    outside = [n for n in names if n.lower() not in allowed]
+    if outside:
+        raise ToolError(f"This access token is limited to the groups {', '.join(ctx.tag_names())}, so it can't use "
+                        f"{', '.join(outside)}.")
+    return names
+
+
+def _tag_names(ctx, watch):
+    """The watch's tag names, only those the token may see (a limited token doesn't learn other groups' names)."""
+    ctx = _ctx(ctx)
+    tags = ctx.datastore.data['settings']['application']['tags']
+    return [tags[t].get('title') for t in (watch.get('tags') or []) if t in tags and ctx.tag_in_scope(t)]
+
+
+def _summary(ctx, watch):
     last_changed = watch.last_changed
     return {
         'uuid': watch.get('uuid'),
         'title': watch.label,
         'url': watch.get('url'),
-        'tags': _tag_names(datastore, watch),
+        'tags': _tag_names(ctx, watch),
         'processor': watch.get('processor'),
         'paused': bool(watch.get('paused')),
         'notification_muted': bool(watch.get('notification_muted')),
@@ -169,10 +250,7 @@ def _api_call(fn, *args):
 
 def list_watches(ctx, args):
     datastore = ctx.datastore
-    try:
-        watches = select_watches(datastore, tag=args.get('tag'))
-    except LookupError as e:
-        raise ToolError(str(e))
+    watches = _select(ctx, tag=args.get('tag'))
     search = (args.get('search') or '').strip().lower()
     if search:
         watches = [w for w in watches if search in (w.get('url') or '').lower() or search in (w.label or '').lower()]
@@ -182,7 +260,7 @@ def list_watches(ctx, args):
 
     limit = _int(args, 'limit', 50, 1, 500)
     offset = _int(args, 'offset', 0, 0, 10_000_000)
-    page = [_summary(datastore, w) for w in watches[offset:offset + limit]]
+    page = [_summary(ctx, w) for w in watches[offset:offset + limit]]
 
     lines = [f"{len(watches)} monitors, showing {offset + 1 if page else 0}-{offset + len(page)} (most recently changed first)"]
     for w in page:
@@ -226,14 +304,14 @@ def _watch_notes(watch, keys):
 
 def get_watch(ctx, args):
     datastore = ctx.datastore
-    watch = _resolve_watch(datastore, args.get('watch'))
-    info = _summary(datastore, watch)
+    watch = _resolve_watch(ctx, args.get('watch'))
+    info = _summary(ctx, watch)
     keys = sorted(int(k) for k in (watch.history or {}).keys())
     info.update({
         'snapshots': len(keys),
         'first_snapshot': _iso(keys[0]) if keys else None,
         'recent_snapshots': [_iso(k) for k in keys[-10:]],
-        'fetch_backend': watch.get('fetch_backend'),
+        **_fetch_settings(ctx, watch),
         'check_interval': watch.get('time_between_check'),
         'include_filters': watch.get('include_filters') or [],
         'subtractive_selectors': watch.get('subtractive_selectors') or [],
@@ -265,7 +343,8 @@ def get_watch(ctx, args):
 
     out = [f"{info['title']} - {info['url']}", f"uuid: {info['uuid']}"] + [f"NOTE: {n}" for n in notes]
     for key in ('tags', 'processor', 'paused', 'notification_muted', 'last_checked', 'last_changed', 'last_error',
-                'snapshots', 'first_snapshot', 'fetch_backend', 'include_filters', 'ignore_text', 'trigger_text',
+                'snapshots', 'first_snapshot', 'fetch_backend', 'effective_fetcher', 'proxy', 'effective_proxy',
+                'include_filters', 'ignore_text', 'trigger_text',
                 'notification_urls_count', *processor_fields):
         if info.get(key) not in (None, [], {}, '', False):
             out.append(f"{key}: {info[key]}")
@@ -280,11 +359,12 @@ def list_tags(ctx, args):
     datastore = ctx.datastore
     tags = datastore.data['settings']['application']['tags']
     counts = {}
-    for watch in datastore.data['watching'].values():
+    for watch in ctx.watches():
         for t in watch.get('tags') or []:
             counts[t] = counts.get(t, 0) + 1
     result = sorted(({'uuid': uuid, 'title': t.get('title'), 'monitors': counts.get(uuid, 0),
-                      'notification_muted': bool(t.get('notification_muted'))} for uuid, t in tags.items()),
+                      'notification_muted': bool(t.get('notification_muted'))} for uuid, t in tags.items()
+                     if ctx.tag_in_scope(uuid)),
                     key=lambda t: (t['title'] or '').lower())
     lines = [f"{len(result)} tags/groups"] + [f"- {t['title']} | uuid {t['uuid']} | {t['monitors']} monitors"
                                                + (' | muted' if t['notification_muted'] else '') for t in result]
@@ -303,11 +383,8 @@ def get_changes(ctx, args):
     if mode not in MODES:
         raise ToolError(f"'mode' must be one of: {', '.join(MODES)}")
     refs = _list(args, 'watches')
-    uuids = [_resolve_watch(ctx.datastore, r).get('uuid') for r in refs]
-    try:
-        watches = select_watches(ctx.datastore, tag=args.get('tag'), uuids=uuids)
-    except LookupError as e:
-        raise ToolError(str(e))
+    uuids = [_resolve_watch(ctx, r).get('uuid') for r in refs]
+    watches = _select(ctx, tag=args.get('tag'), uuids=uuids)
 
     report = group_changes(watches, from_ts, to_ts, mode=mode,
                            context=_int(args, 'context', 1, 0, 10),
@@ -319,7 +396,7 @@ def get_changes(ctx, args):
 
 
 def get_diff(ctx, args):
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    watch = _resolve_watch(ctx, args.get('watch'))
     to_key = _snapshot_key(watch, args.get('to'), 'latest')
     from_key = _snapshot_key(watch, args.get('from'), 'previous')
     if from_key >= to_key:
@@ -362,22 +439,29 @@ def _original_text(watch, key):
     return text, source
 
 
+def _sha256(text):
+    """SHA-256 of a snapshot's text (UTF-8), as hex. Computed when read: it shows two reads are the same text."""
+    import hashlib
+    return hashlib.sha256((text or '').encode('utf-8')).hexdigest()
+
+
 def _snapshot_of(watch, args, max_chars, unfiltered):
     key = _snapshot_key(watch, args.get('timestamp'), 'latest')
     if unfiltered:
         content, source = _original_text(watch, key)
     else:
         content, source = watch.get_history_snapshot(timestamp=str(key)) or '', 'filtered'
+    sha256 = _sha256(content)
     truncated = len(content) > max_chars
     if truncated:
         content = content[:max_chars] + f"\n... {len(content) - max_chars} more characters, ask for a higher max_chars"
-    header = f"### {watch.label} - {watch.get('url')}\nsnapshot: {_iso(key)}"
+    header = f"### {watch.label} - {watch.get('url')}\nsnapshot: {_iso(key)} | sha256 {sha256}"
     if source == 'snapshot':
         header += "\n(the whole page is only kept for the newest two snapshots, this is the filtered text)"
     elif unfiltered:
         header += "\n(the whole page, before filters and triggers)"
     return f"{header}\n{content}", {'uuid': watch.get('uuid'), 'title': watch.label, 'timestamp': key, 'content': content,
-                                   'truncated': truncated, 'source': source}
+                                   'truncated': truncated, 'source': source, 'sha256': sha256}
 
 
 def get_snapshot(ctx, args):
@@ -387,15 +471,12 @@ def get_snapshot(ctx, args):
     if many == bool(args.get('watch')):
         raise ToolError("Give either 'watch' (one monitor) or 'watches' / 'tag' (several)")
     if not many:
-        watch = _resolve_watch(ctx.datastore, args.get('watch'))
+        watch = _resolve_watch(ctx, args.get('watch'))
         text, item = _snapshot_of(watch, args, _int(args, 'max_chars', 20000, 100, 200000), unfiltered)
         return f"{UNTRUSTED_NOTE}\n{text}", item
 
-    uuids = [_resolve_watch(ctx.datastore, r).get('uuid') for r in _list(args, 'watches')]
-    try:
-        watches = select_watches(ctx.datastore, tag=args.get('tag'), uuids=uuids)
-    except LookupError as e:
-        raise ToolError(str(e))
+    uuids = [_resolve_watch(ctx, r).get('uuid') for r in _list(args, 'watches')]
+    watches = _select(ctx, tag=args.get('tag'), uuids=uuids)
     watches = sorted((w for w in watches if w.history), key=lambda w: (w.label or '').lower())
     limit = _int(args, 'limit', 10, 1, SNAPSHOT_BATCH_MAX)
     offset = _int(args, 'offset', 0, 0, 10_000_000)
@@ -486,7 +567,7 @@ def _row(row):
 
 def list_snapshots(ctx, args):
     import statistics
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    watch = _resolve_watch(ctx, args.get('watch'))
     from_ts, to_ts = _range(args)
     rows = _snapshot_rows(watch)
     total = len(rows)
@@ -540,7 +621,7 @@ def _regex_timeout_error():
 
 def find_change(ctx, args):
     import time
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    watch = _resolve_watch(ctx, args.get('watch'))
     from_ts, to_ts = _range(args)
     text = args.get('text') or ''
     group_by = args.get('group_by')
@@ -595,7 +676,7 @@ def find_change(ctx, args):
 
 def line_timeline(ctx, args):
     import time
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    watch = _resolve_watch(ctx, args.get('watch'))
     from_ts, to_ts = _range(args)
     try:
         found = watch.line_timeline(from_ts=from_ts, to_ts=to_ts, deadline=time.monotonic() + CHANGES_TIME_BUDGET,
@@ -652,7 +733,7 @@ def _sample(keys, n):
 
 
 def get_history(ctx, args):
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    watch = _resolve_watch(ctx, args.get('watch'))
     history = watch.history or {}
     keys = sorted(int(k) for k in history.keys())
     if not keys:
@@ -684,6 +765,7 @@ def get_history(ctx, args):
     if any(not isinstance(text, str) for _, text in snapshots):
         raise ToolError("This monitor's history isn't text (images or PDFs), use list_snapshots for its dates")
     result = snapshots_as_patches(snapshots, relative_to=relative_to, context=_int(args, 'context', 0, 0, 10))
+    hashes = {k: _sha256(text) for k, text in snapshots}
 
     max_chars = _int(args, 'max_chars', HISTORY_DEFAULT_MAX_CHARS, 100, 200000)
     base = result['base']
@@ -707,13 +789,42 @@ def get_history(ctx, args):
     header = (f"### {watch.label} - {watch.get('url')}\n{len(chosen)} of {len(keys)} snapshots, the first in full, "
               f"then each one as a diff from the {'one before it' if relative_to == 'previous' else 'first'}")
     structured = {'uuid': watch.get('uuid'), 'snapshots_total': len(keys), 'relative_to': relative_to,
-                  'base': {'date': _iso(base['timestamp']), 'text': base['text'], 'truncated': base_truncated},
-                  'patches': [{'date': _iso(p['timestamp']), 'against': _iso(p['against']), 'diff': p['diff'],
+                  'base': {'date': _iso(base['timestamp']), 'sha256': hashes[base['timestamp']], 'text': base['text'],
+                           'truncated': base_truncated},
+                  'patches': [{'date': _iso(p['timestamp']), 'sha256': hashes[p['timestamp']], 'against': _iso(p['against']),
+                               'diff': p['diff'],
                                **({'unchanged': True} if p['unchanged'] else {})} for p in result['patches']],
                   'truncated': truncated or base_truncated}
     if notes:
         structured['notes'] = notes
     return '\n'.join(notes + [UNTRUSTED_NOTE, header, render_patches(result)]), structured
+
+
+def get_screenshot(ctx, args):
+    import base64
+    watch = _resolve_watch(ctx, args.get('watch'))
+    which = args.get('which') or 'latest'
+    if which not in ('latest', 'error'):
+        raise ToolError("'which' must be 'latest' or 'error'")
+    try:
+        jpeg, info = watch.get_screenshot_part(which=which, offset=_int(args, 'offset', 0, 0, 1_000_000))
+    except Exception as e:
+        logger.warning(f"MCP: couldn't read the screenshot of {watch.get('uuid')}: {e}")
+        raise ToolError("The screenshot couldn't be read")
+    if not jpeg:
+        hint = ("Screenshots are only taken by the browser fetchers (html_webdriver or a custom browser): this monitor "
+                f"is fetched with {_fetch_settings(ctx, watch)['effective_fetcher']}." if which == 'latest'
+                else "There's no screenshot of a failed check (the last check didn't fail, or it failed before one could be taken).")
+        raise ToolError(f"No {'' if which == 'latest' else 'error '}screenshot for {watch.label}. {hint}")
+    end = info['offset'] + info['part_height']
+    text = (f"### {watch.label} - {watch.get('url')}\n{'Screenshot' if which == 'latest' else 'Screenshot of the failed check'} "
+            f"taken {_iso(info['taken'])}, shown {info['width']} px wide: pixels {info['offset']}-{end} of {info['height']}"
+            + (f". More below: call again with offset={end}." if end < info['height'] else '.')
+            + " Only the latest screenshot is kept, not one per snapshot.")
+    structured = {'uuid': watch.get('uuid'), 'which': which, 'taken': _iso(info['taken']), 'width': info['width'],
+                  'height': info['height'], 'offset': info['offset'], 'part_height': info['part_height'],
+                  'next_offset': end if end < info['height'] else None}
+    return text, structured, [{'type': 'image', 'data': base64.b64encode(jpeg).decode('ascii'), 'mimeType': 'image/jpeg'}]
 
 
 def get_system_info(ctx, args):
@@ -723,19 +834,26 @@ def get_system_info(ctx, args):
     app = datastore.data['settings']['application']
 
     from changedetectionio.api.operations import checking_now
-    running = checking_now(datastore)
+    # A limited token sees the counts and the queue of its own groups' monitors only
+    visible = {w.get('uuid') for w in ctx.watches()}
+    running = [r for r in checking_now(datastore) if r['uuid'] in visible]
 
     # The same rule as /api/v1/systeminfo (paused watches, and everything while "pause all" is on, are never overdue)
     from changedetectionio.api.SystemInfo import overdue_watch_uuids
-    overdue = len(overdue_watch_uuids(datastore))
+    overdue = len([u for u in overdue_watch_uuids(datastore) if u in visible])
+    watches = ctx.watches()
+    queue_size = None
+    if ctx.update_q is not None:
+        queue_size = ctx.update_q.qsize() if not ctx.limited else \
+            len([u for u in ctx.update_q.get_queued_uuids() if u in visible])
 
     info = {
         'version': __version__,
-        'watch_count': len(datastore.data['watching']),
-        'tag_count': len(app.get('tags', {})),
-        'watches_with_errors': sum(1 for w in datastore.data['watching'].values() if w.get('last_error')),
-        'paused_watches': sum(1 for w in datastore.data['watching'].values() if w.get('paused')),
-        'queue_size': ctx.update_q.qsize() if ctx.update_q is not None else None,
+        'watch_count': len(watches),
+        'tag_count': len([t for t in app.get('tags', {}) if ctx.tag_in_scope(t)]),
+        'watches_with_errors': sum(1 for w in watches if w.get('last_error')),
+        'paused_watches': sum(1 for w in watches if w.get('paused')),
+        'queue_size': queue_size,
         'fetch_workers': worker_pool.get_worker_count(),
         'checking_now': len(running),
         'overdue_watches': overdue,
@@ -743,6 +861,17 @@ def get_system_info(ctx, args):
         'all_muted': bool(app.get('all_muted')),
         'uptime_seconds': round(time.time() - datastore.start_time) if getattr(datastore, 'start_time', None) else None,
     }
+    if ctx.limited:
+        info['limited_to_groups'] = ctx.tag_names()
+    # What create_watch / update_watch can choose from: fetcher names and proxy names, never proxy URLs
+    from changedetectionio.content_fetchers import available_fetchers
+    proxies = datastore.proxy_list or {}
+    info['fetchers'] = [name for name, _ in available_fetchers()] + \
+        [f"extra_browser_{b.get('browser_name')}" for b in datastore.data['settings']['requests'].get('extra_browsers') or []]
+    info['default_fetcher'] = app.get('fetch_backend')
+    info['proxies'] = [{'id': key, 'label': p.get('label')} for key, p in proxies.items()]
+    default_proxy = datastore.data['settings']['requests'].get('proxy')
+    info['default_proxy'] = (proxies.get(default_proxy) or {}).get('label') if default_proxy else None
     lines = [f"{k}: {v}" for k, v in info.items()]
     if running:
         lines.append('checking now:')
@@ -755,11 +884,12 @@ def _notification_target(ctx, args):
     """(label, list of URLs, object to commit or None for the global settings) for the scope in args."""
     datastore = ctx.datastore
     if args.get('watch'):
-        watch = _resolve_watch(datastore, args['watch'])
+        watch = _resolve_watch(ctx, args['watch'])
         return f"monitor '{watch.label}'", watch.setdefault('notification_urls', []), watch
     if args.get('tag'):
-        tag = datastore.data['settings']['application']['tags'][_resolve_tag(datastore, args['tag'])]
+        tag = datastore.data['settings']['application']['tags'][_resolve_tag(ctx, args['tag'])]
         return f"tag '{tag.get('title')}'", tag.setdefault('notification_urls', []), tag
+    _refuse_if_limited(ctx, "see or change the global notification settings (give 'watch' or 'tag' instead)")
     return 'global settings', datastore.data['settings']['application'].setdefault('notification_urls', []), None
 
 
@@ -861,13 +991,58 @@ def _interval(args):
     return {k: int(value.get(k) or 0) for k in ('weeks', 'days', 'hours', 'minutes', 'seconds')}
 
 
+def _proxy_key(ctx, value):
+    """A proxy id from its id or its label (what the user sees). None for '' or 'system': the system proxy. Proxy
+    URLs are never taken or shown, they hold credentials."""
+    value = (str(value) if value is not None else '').strip()
+    if value in ('', 'system'):
+        return None
+    proxies = ctx.datastore.proxy_list or {}
+    if value in proxies:
+        return value
+    by_label = {(p.get('label') or '').strip().lower(): key for key, p in proxies.items()}
+    if value.lower() in by_label:
+        return by_label[value.lower()]
+    known = ', '.join(f"{p.get('label')} ({key})" for key, p in proxies.items()) or 'none are configured'
+    raise ToolError(f"No proxy called '{value}'. The proxies are: {known}.")
+
+
+def _check_fetch_backend(ctx, value):
+    if value and value.startswith('extra_browser_'):
+        names = [b.get('browser_name') for b in ctx.datastore.data['settings']['requests'].get('extra_browsers') or []]
+        if value[len('extra_browser_'):] not in names:
+            raise ToolError(f"No custom browser called '{value[len('extra_browser_'):]}'. The custom browsers are: "
+                            f"{', '.join(names) or 'none are configured'} (as extra_browser_<name>).")
+    return value
+
+
+def _fetch_settings(ctx, watch):
+    """What the monitor is set to and what a check actually uses, from the same resolvers as the fetch itself
+    (resolve_content_fetcher, get_preferred_proxy_for_watch), so a group or system default is accounted for."""
+    from changedetectionio.content_fetchers import resolve_content_fetcher
+    try:
+        _, effective_fetcher, _ = resolve_content_fetcher(watch=watch, datastore=ctx.datastore)
+    except Exception as e:
+        logger.debug(f"MCP: couldn't resolve the fetcher of {watch.get('uuid')}: {e}")
+        effective_fetcher = None
+    proxies = ctx.datastore.proxy_list or {}
+    proxy_id = ctx.datastore.get_preferred_proxy_for_watch(watch.get('uuid')) if proxies else None
+    return {'fetch_backend': watch.get('fetch_backend') or 'system', 'effective_fetcher': effective_fetcher,
+            'proxy': watch.get('proxy') or 'system',
+            'effective_proxy': (proxies.get(proxy_id) or {}).get('label') if proxy_id else None}
+
+
 def create_watch(ctx, args):
     from changedetectionio.api.operations import create_watch as op
     data = {'url': (args.get('url') or '').strip()}
     for key in ('title', 'processor', 'include_filters', 'paused'):
         if args.get(key) not in (None, '', []):
             data[key] = args[key]
-    tags = _list(args, 'tags')
+    if args.get('fetch_backend'):
+        data['fetch_backend'] = _check_fetch_backend(ctx, args['fetch_backend'])
+    if args.get('proxy') not in (None, ''):
+        data['proxy'] = _proxy_key(ctx, args['proxy'])
+    tags = _tags_for_new_monitor(ctx, _list(args, 'tags'))
     if tags:
         data['tag'] = ','.join(tags)
     interval = _interval(args)
@@ -875,8 +1050,10 @@ def create_watch(ctx, args):
         data.update({'time_between_check': interval, 'time_between_check_use_default': False})
     uuid = _api_call(op, ctx.datastore, data)
     watch = ctx.datastore.data['watching'][uuid]
-    return (f"Created monitor {watch.label} | {watch.get('url')} | uuid {uuid}. "
-            f"It will be checked shortly by the scheduler."), _summary(ctx.datastore, watch)
+    fetch = _fetch_settings(ctx, watch)
+    return (f"Created monitor {watch.label} | {watch.get('url')} | uuid {uuid}, fetched with "
+            f"{fetch['effective_fetcher']}" + (f" through the proxy {fetch['effective_proxy']}" if fetch['effective_proxy'] else '')
+            + ". It will be checked shortly by the scheduler."), dict(_summary(ctx, watch), **fetch)
 
 
 def import_watches(ctx, args):
@@ -886,7 +1063,7 @@ def import_watches(ctx, args):
         raise ToolError("'urls' must list at least one URL")
     if len(urls) > IMPORT_MAX_URLS:
         raise ToolError(f"At most {IMPORT_MAX_URLS} URLs per call, this had {len(urls)}. Split it into several calls.")
-    tags = _list(args, 'tags')
+    tags = _tags_for_new_monitor(ctx, _list(args, 'tags'))
     created, failed = [], []
     for url in urls:
         data = {'url': url}
@@ -905,13 +1082,18 @@ def import_watches(ctx, args):
 
 
 UPDATE_FIELDS = ('title', 'url', 'paused', 'notification_muted', 'include_filters', 'subtractive_selectors',
-                 'ignore_text', 'trigger_text', 'processor', 'fetch_backend', 'notification_urls')
+                 'ignore_text', 'trigger_text', 'processor', 'fetch_backend', 'proxy', 'notification_urls')
 
 
 def update_watch(ctx, args):
     from changedetectionio.api.operations import update_watch as op
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    watch = _resolve_watch(ctx, args.get('watch'))
     data = {k: args[k] for k in UPDATE_FIELDS if k in args}
+    if 'proxy' in data:
+        # '' or 'system' goes back to the system proxy
+        data['proxy'] = _proxy_key(ctx, data['proxy'])
+    if data.get('fetch_backend'):
+        _check_fetch_backend(ctx, data['fetch_backend'])
     interval = _interval(args)
     if interval:
         data.update({'time_between_check': interval, 'time_between_check_use_default': False})
@@ -919,7 +1101,54 @@ def update_watch(ctx, args):
         raise ToolError(f"Nothing to change, give at least one of: {', '.join(UPDATE_FIELDS + ('check_interval',))}")
     _api_call(op, ctx.datastore, watch.get('uuid'), data)
     changed = sorted(data.keys() - {'time_between_check_use_default'})
-    return f"Updated {watch.label}: {', '.join(changed)}", _summary(ctx.datastore, watch)
+    text = f"Updated {watch.label}: {', '.join(changed)}"
+    structured = _summary(ctx, watch)
+    if {'fetch_backend', 'proxy'} & set(data):
+        fetch = _fetch_settings(ctx, watch)
+        structured.update(fetch)
+        text += f". It's now fetched with {fetch['effective_fetcher']}" + \
+                (f" through the proxy {fetch['effective_proxy']}" if fetch['effective_proxy'] else ' without a proxy')
+    return text, structured
+
+
+# recheck_watches wait=true: at most this many seconds (under MCP clients' tool timeouts), for at most this many monitors
+RECHECK_WAIT_MAX_SECONDS = 60
+RECHECK_WAIT_MAX_MONITORS = 20
+
+
+def _check_states(ctx, watches, since):
+    """Where each check is: 'checked' (with whether it changed and any error), 'checking' or 'queued' (position)."""
+    import time
+    from changedetectionio import worker_pool
+    positions = ctx.update_q.get_queue_positions() if ctx.update_q is not None and hasattr(ctx.update_q, 'get_queue_positions') else {}
+    queued_total = len(positions)
+    running = set(worker_pool.get_running_uuids())
+    states = []
+    for w in watches:
+        uuid = w.get('uuid')
+        state = {'uuid': uuid, 'title': w.label}
+        if uuid in running:
+            started = worker_pool.get_uuid_started_at(uuid)
+            state.update(state='checking', running_seconds=round(time.time() - started) if started else None)
+        elif uuid in positions:
+            state.update(state='queued', position=positions[uuid], queued_total=queued_total)
+        elif (w.get('last_checked') or 0) >= since:
+            state.update(state='checked', last_checked=_iso(w['last_checked']),
+                         changed=bool(w.last_changed and w.last_changed >= since), error=w.get('last_error') or None)
+        else:
+            state.update(state='not queued')
+        states.append(state)
+    return states
+
+
+def _describe_state(s):
+    if s['state'] == 'checked':
+        return (f"checked, {'CHANGED' if s['changed'] else 'no change'}" + (f", error: {s['error']}" if s['error'] else ''))
+    if s['state'] == 'checking':
+        return f"checking now ({s['running_seconds']}s so far)"
+    if s['state'] == 'queued':
+        return f"queued, position {s['position']} of {s['queued_total']}"
+    return 'not queued'
 
 
 def recheck_watches(ctx, args):
@@ -927,12 +1156,10 @@ def recheck_watches(ctx, args):
     datastore = ctx.datastore
     refs = _list(args, 'watches')
     if refs:
-        watches = [_resolve_watch(datastore, r) for r in refs]
+        watches = [_resolve_watch(ctx, r) for r in refs]
     elif args.get('tag') or args.get('with_errors') or args.get('all'):
-        try:
-            watches = select_watches(datastore, tag=args.get('tag'))
-        except LookupError as e:
-            raise ToolError(str(e))
+        # all=true with a limited token is every monitor in its groups
+        watches = _select(ctx, tag=args.get('tag'))
         if args.get('with_errors'):
             watches = [w for w in watches if w.get('last_error')]
     else:
@@ -940,18 +1167,44 @@ def recheck_watches(ctx, args):
     # Same as the UI "Recheck all": never paused watches, unless they were asked for by name
     if not refs:
         watches = [w for w in watches if not w.get('paused')]
+    import time
+    started = int(time.time())
     queued, skipped = queue_rechecks(ctx.update_q, [w.get('uuid') for w in watches])
-    text = (f"Queued {queued} monitors for a recheck" + (f" ({skipped} already queued or running)" if skipped else '') +
-            ". This doesn't wait for the checks: look at last_checked with get_watch or list_watches later.")
-    return text, {'queued': queued, 'skipped': skipped}
+    text = f"Queued {queued} monitors for a recheck" + (f" ({skipped} already queued or running)" if skipped else '')
+    structured = {'queued': queued, 'skipped': skipped}
+    if not args.get('wait'):
+        return text + ". This doesn't wait for the checks: look at last_checked with get_watch or list_watches later, " \
+                      "or call again with wait=true.", structured
+    if len(watches) > RECHECK_WAIT_MAX_MONITORS:
+        return text + f". Not waiting: wait=true is for at most {RECHECK_WAIT_MAX_MONITORS} monitors.", structured
+
+    # Waiting holds only this request: the checks run in the fetch workers, and the short sleeps let other requests
+    # (and greenlets, in gevent mode) run in the meantime
+    deadline = time.monotonic() + _int(args, 'wait_seconds', 30, 1, RECHECK_WAIT_MAX_SECONDS)
+    while True:
+        states = _check_states(ctx, watches, started)
+        # 'not queued' right after queueing can be a worker that has taken it but not yet marked it running, so it
+        # only counts as settled after a few seconds
+        settled = ('checked', 'not queued') if time.time() - started > 3 else ('checked',)
+        if all(s['state'] in settled for s in states) or time.monotonic() >= deadline:
+            break
+        time.sleep(0.5)
+    done = sum(1 for s in states if s['state'] == 'checked')
+    lines = [text + f". {done} of {len(states)} checked" + ('' if done == len(states) else ', the rest are still going: '
+                                                            'call again with wait=true, or look later with get_watch')]
+    lines += [f"- {s['title']} | {_describe_state(s)} | uuid {s['uuid']}" for s in states]
+    structured['checks'] = states
+    return '\n'.join(lines), structured
 
 
 def add_tags(ctx, args):
     datastore = ctx.datastore
-    watches = [_resolve_watch(datastore, r) for r in _list(args, 'watches')]
+    watches = [_resolve_watch(ctx, r) for r in _list(args, 'watches')]
     names = _list(args, 'tags')
     if not watches or not names:
         raise ToolError("Give 'watches' and 'tags'")
+    # A limited token can only tag with its own groups, not create new ones (it couldn't see them afterwards)
+    _scoped_tag_names(ctx, names)
     tag_uuids = []
     for name in names:
         uuid = datastore.add_tag(title=name)  # returns the existing tag when the name is taken
@@ -973,12 +1226,18 @@ def add_tags(ctx, args):
 
 
 def remove_tags(ctx, args):
-    datastore = ctx.datastore
-    watches = [_resolve_watch(datastore, r) for r in _list(args, 'watches')]
+    watches = [_resolve_watch(ctx, r) for r in _list(args, 'watches')]
     names = _list(args, 'tags')
     if not watches or not names:
         raise ToolError("Give 'watches' and 'tags'")
-    tag_uuids = [_resolve_tag(datastore, n) for n in names]
+    tag_uuids = [_resolve_tag(ctx, n) for n in names]
+    if ctx.limited:
+        # Taking a monitor out of the token's last group would make it lose sight of the monitor for good
+        orphaned = [w.label for w in watches
+                    if not ctx.in_scope({'tags': [t for t in (w.get('tags') or []) if t not in tag_uuids]})]
+        if orphaned:
+            raise ToolError(f"That would take {', '.join(orphaned)} out of every group this access token may see. "
+                            f"Add one of {', '.join(ctx.tag_names())} first, or ask the user to do it in the UI.")
     changed = 0
     for watch in watches:
         if any(t in (watch.get('tags') or []) for t in tag_uuids):
@@ -993,6 +1252,7 @@ def remove_tags(ctx, args):
 
 def create_tag(ctx, args):
     from changedetectionio.api.operations import create_tag as op
+    _refuse_if_limited(ctx, "create groups")
     data = {'title': (args.get('title') or '').strip()}
     if 'notification_muted' in args:
         data['notification_muted'] = bool(args['notification_muted'])
@@ -1002,7 +1262,7 @@ def create_tag(ctx, args):
 
 def update_tag(ctx, args):
     from changedetectionio.api.operations import update_tag as op
-    uuid = _resolve_tag(ctx.datastore, args.get('tag'))
+    uuid = _resolve_tag(ctx, args.get('tag'))
     data = {k: args[k] for k in ('title', 'notification_muted', 'notification_urls') if k in args}
     if not data:
         raise ToolError("Nothing to change, give 'title', 'notification_muted' or 'notification_urls'")
@@ -1048,21 +1308,22 @@ def delete_watch(ctx, args):
     ref = str(args.get('watch') or '').strip()
     if ref.lower() == 'all':
         raise ToolError("Deleting every monitor at once isn't possible here, delete them one by one by uuid")
-    watch = _resolve_watch(ctx.datastore, ref)
+    watch = _resolve_watch(ctx, ref)
     uuid, label = watch.get('uuid'), watch.label
     ctx.datastore.delete(uuid)
     return f"Deleted monitor {label} ({uuid}) and its history", {'deleted': uuid}
 
 
 def clear_history(ctx, args):
-    watch = _resolve_watch(ctx.datastore, args.get('watch'))
+    watch = _resolve_watch(ctx, args.get('watch'))
     ctx.datastore.clear_watch_history(watch.get('uuid'))
     return f"Cleared the history of {watch.label} ({watch.get('uuid')})", {'cleared': watch.get('uuid')}
 
 
 def delete_tag(ctx, args):
     from changedetectionio.api.operations import delete_tag as op
-    uuid = _resolve_tag(ctx.datastore, args.get('tag'))
+    _refuse_if_limited(ctx, "delete groups")
+    uuid = _resolve_tag(ctx, args.get('tag'))
     title = ctx.datastore.data['settings']['application']['tags'][uuid].get('title')
     _api_call(op, ctx.datastore, uuid)
     return f"Deleted tag '{title}' ({uuid}), its monitors are kept", {'deleted': uuid}
@@ -1259,6 +1520,14 @@ TOOLS = {
                                'description': 'The first snapshot is cut at this'},
                  'max_lines': {'type': 'integer', 'minimum': 1, 'maximum': 20000, 'default': HISTORY_DEFAULT_MAX_LINES,
                                'description': 'All the diffs together are cut at this'}}, ['watch'])),
+    'get_screenshot': (get_screenshot, READ_ONLY, 'Screenshot of a page',
+        "The latest screenshot of a monitor's page as an image (or of its last failed check with which='error'), "
+        "for what the text can't show: layout, images, a banner, a cookie wall, a block page. Full pages are long, "
+        "so it's a slice: page down with offset. Only the browser fetchers take screenshots, and only the latest "
+        "one is kept.",
+        _schema({'watch': _WATCH, 'which': {'type': 'string', 'enum': ['latest', 'error'], 'default': 'latest'},
+                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0,
+                            'description': 'Pixels from the top to start at, from the previous answer'}}, ['watch'])),
     'get_system_info': (get_system_info, READ_ONLY, 'System info',
         "Health and load: how many monitors (failing, paused, overdue for a check), the check queue size, how many "
         "fetch workers there are and which monitors they're checking right now and for how long. Use it for 'why "
@@ -1274,11 +1543,18 @@ TOOLS = {
         _schema({'search': {'type': 'string', 'description': "A service name or scheme, e.g. 'slack' or 'tgram'"}})),
 
     'create_watch': (create_watch, dict(WRITE, openWorldHint=True), 'Add a monitor',
-        "Start monitoring a web page. The first check happens shortly, done by the scheduler.",
+        "Start monitoring a web page. The first check happens shortly, done by the scheduler. Optionally choose how "
+        "it's fetched (fetch_backend) and through which proxy, from what get_system_info lists.",
         _schema({'url': _spec('url', 'http(s) URL of the page'), 'title': _spec('title'), 'tags': _TAGS,
                  'processor': _spec('processor', "'text_json_diff' (default, any text change) or 'restock_diff' (back in stock alerts and price drops for one product page, then set its alerts with restock_set_rules)"),
                  'include_filters': _spec('include_filters', 'CSS or XPath selectors, only this part of the page is watched'),
-                 'paused': _spec('paused'), 'check_interval': _INTERVAL}, ['url'])),
+                 'paused': _spec('paused'), 'check_interval': _INTERVAL,
+                 'fetch_backend': _spec('fetch_backend', "'system' (the system default), 'html_requests' (fast, no "
+                                        "JavaScript), 'html_webdriver' (a real browser) or extra_browser_<name>; see "
+                                        "get_system_info for what's available"),
+                 'proxy': {'type': 'string', 'maxLength': 200,
+                           'description': "A proxy by its name or id from get_system_info, 'system' for the system default"}},
+                ['url'])),
     'import_watches': (import_watches, dict(WRITE, openWorldHint=True), 'Add many monitors',
         f"Add up to {IMPORT_MAX_URLS} monitors in one call, optionally all in the same tags.",
         _schema({'urls': dict(_TEXT_LIST, description='http(s) URLs'), 'tags': _TAGS}, ['urls'])),
@@ -1286,12 +1562,19 @@ TOOLS = {
     'update_watch': (update_watch, dict(WRITE, destructiveHint=True), 'Change a monitor',
         "Change a monitor's settings: pause or unpause it, mute its notifications, filters, check interval, "
         "notification URLs (replaces the list), URL or title.",
-        _schema({'watch': _WATCH, **{f: _spec(f) for f in UPDATE_FIELDS}, 'check_interval': _INTERVAL}, ['watch'])),
+        _schema({'watch': _WATCH, **{f: _spec(f) for f in UPDATE_FIELDS}, 'check_interval': _INTERVAL,
+                 'proxy': _spec('proxy', "A proxy by its name or id from get_system_info, 'system' for the system default")},
+                ['watch'])),
     'recheck_watches': (recheck_watches, dict(WRITE, idempotentHint=True, openWorldHint=True), 'Recheck monitors',
         "Queue monitors to be checked now: by name/uuid, a whole tag, the ones with errors, or all. Returns at once, "
-        "it doesn't wait for the checks. Paused monitors are skipped unless named.",
+        "or with wait=true waits up to wait_seconds and says for each whether it changed, is being checked, or its "
+        "place in the queue. Paused monitors are skipped unless named.",
         _schema({'watches': _WATCHES, 'tag': _TAG, 'with_errors': {'type': 'boolean'},
-                 'all': {'type': 'boolean', 'description': 'Every monitor that isn\'t paused'}})),
+                 'all': {'type': 'boolean', 'description': 'Every monitor that isn\'t paused'},
+                 'wait': {'type': 'boolean', 'default': False,
+                          'description': f'Wait for the checks (at most {RECHECK_WAIT_MAX_MONITORS} monitors) and say how each went, '
+                                         'or where it is in the queue'},
+                 'wait_seconds': {'type': 'integer', 'minimum': 1, 'maximum': RECHECK_WAIT_MAX_SECONDS, 'default': 30}})),
     'add_tags': (add_tags, dict(WRITE, idempotentHint=True), 'Tag monitors',
         'Add tags/groups to monitors by name. Tags that don\'t exist yet are created.',
         _schema({'watches': _WATCHES, 'tags': _TAGS}, ['watches', 'tags'])),
@@ -1345,7 +1628,7 @@ def _wrap_plugin_handler(name, spec):
     def handler(ctx, args):
         watch = None
         if args.get('watch') not in (None, ''):
-            watch = _resolve_watch(ctx.datastore, args['watch'])
+            watch = _resolve_watch(ctx, args['watch'])
             uses = watch.get('processor') or 'text_json_diff'
             if processor and uses != processor:
                 raise ToolError(f"'{name}' only works on {processor} monitors, '{watch.label}' uses {uses}")
@@ -1494,7 +1777,10 @@ def call(ctx, name, arguments):
         return {'content': [{'type': 'text', 'text': 'Invalid arguments:\n' + '\n'.join(f'- {e}' for e in errors)}],
                 'isError': True}
     try:
-        text, structured = handler(ctx, arguments)
+        # (text, structured) or (text, structured, [more content items, e.g. an image])
+        answer = handler(ctx, arguments)
     except ToolError as e:
         return {'content': [{'type': 'text', 'text': str(e)}], 'isError': True}
-    return {'content': [{'type': 'text', 'text': text}], 'structuredContent': structured, 'isError': False}
+    text, structured = answer[0], answer[1]
+    extra = list(answer[2]) if len(answer) > 2 and answer[2] else []
+    return {'content': [{'type': 'text', 'text': text}] + extra, 'structuredContent': structured, 'isError': False}

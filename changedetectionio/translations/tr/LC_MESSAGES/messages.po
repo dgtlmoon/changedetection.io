@@ -551,6 +551,14 @@ msgid "Never used"
 msgstr "Hiç kullanılmadı"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Only"
+msgstr "Yalnızca"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "deleted groups"
+msgstr "silinmiş gruplar"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
@@ -1273,6 +1281,16 @@ msgstr "Bu şekilde bağlanan asistanlar burada listelenecek ve bağlantıların
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "Erişim anahtarını düzenle"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
+msgstr ""
+"Hiçbiri işaretli değil: tüm monitörler. İşaretli: yalnızca bu gruplardaki monitörler, örneğin dava veya müşteri "
+"başına bir grup."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "There are no groups yet. Add some to limit a token to them."
+msgstr "Henüz grup yok. Bir belirteci sınırlamak için grup ekleyin."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Access token created"
@@ -4183,6 +4201,10 @@ msgstr "Gruplar (etiketler)"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "Sistem bilgisi"
+
+#: changedetectionio/forms.py
+msgid "Only these groups"
+msgstr "Yalnızca bu gruplar"
 
 #: changedetectionio/forms.py
 msgid "RegEx to extract"

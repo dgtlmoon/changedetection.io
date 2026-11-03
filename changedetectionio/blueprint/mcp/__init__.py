@@ -102,6 +102,13 @@ def construct_blueprint(datastore, update_q=None):
         return tools.permissions(g.mcp_token.get('permissions'),
                                  read_only=readonly_address() if read_only is None else read_only)
 
+    def limited_instructions():
+        names = ctx.scoped(g.mcp_token.get('tags')).tag_names() if g.mcp_token.get('tags') else None
+        if names is None:
+            return ''
+        return (f" This access token is limited to the monitors in the groups {', '.join(names) or '(none left)'}: "
+                f"others are not visible, and new monitors go in one of these groups.")
+
     def refusal(text):
         """A tool error, not a protocol error, so the assistant reads it and can tell the user why (clients may still
         have an older tool list cached)."""
@@ -174,7 +181,8 @@ def construct_blueprint(datastore, update_q=None):
                 'protocolVersion': version,
                 'capabilities': {'tools': {'listChanged': False}},
                 'serverInfo': {'name': 'changedetection.io', 'title': 'changedetection.io', 'version': __version__},
-                'instructions': INSTRUCTIONS + (READ_ONLY_INSTRUCTIONS if tools.WRITE_ACCESS not in permissions().values() else ''),
+                'instructions': INSTRUCTIONS + (READ_ONLY_INSTRUCTIONS if tools.WRITE_ACCESS not in permissions().values() else '')
+                                + limited_instructions(),
             })
         if method == 'ping':
             return _result(msg_id, {})
@@ -200,7 +208,8 @@ def construct_blueprint(datastore, update_q=None):
             import time
             started = time.monotonic()
             try:
-                result = tools.call(ctx, name, arguments)
+                # The token's groups, if it's limited to some: every tool then only sees those monitors
+                result = tools.call(ctx.scoped(g.mcp_token.get('tags')), name, arguments)
                 logger.debug(f"MCP tool '{name}' took {time.monotonic() - started:.2f}s"
                              + (" (tool error)" if result.get('isError') else ''))
                 return _result(msg_id, result)

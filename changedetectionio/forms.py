@@ -29,6 +29,7 @@ from wtforms import (
     PasswordField,
     RadioField,
     SelectField,
+    SelectMultipleField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -1406,6 +1407,9 @@ class MCPTokenForm(Form):
     perm_tags = RadioField(_l('Groups (tags)'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
     perm_notifications = RadioField(_l('Notifications'), default='read', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
     perm_system = RadioField(_l('System info'), default='read', choices=[('none', _l('None')), ('read', _l('Read'))])
+    # The groups (tags) the token is limited to, none ticked for every monitor. Choices are the tags, set by the routes
+    tags = SelectMultipleField(_l('Only these groups'), choices=[], validate_choice=True,
+                               widget=widgets.ListWidget(prefix_label=False), option_widget=widgets.CheckboxInput())
 
 
 class extractDataForm(Form):

@@ -464,6 +464,10 @@ class ChangeDetectionSpec:
             processor:    optional processor name its `watch` argument must use, e.g. 'restock_diff'
             handler:      handler(ctx, args, watch) -> (text, structured_dict). ctx.datastore and
                           ctx.update_q, args as validated, watch the resolved Watch or None.
+                          An access token can be limited to some tags (groups): list monitors with
+                          ctx.watches() (or check ctx.in_scope(watch)), never datastore.data['watching']
+                          directly, and resolve tags with tools._resolve_tag(ctx, ...). The `watch`
+                          argument is already resolved within the token's groups.
 
         Text that comes from monitored pages should start with tools.UNTRUSTED_NOTE.
 

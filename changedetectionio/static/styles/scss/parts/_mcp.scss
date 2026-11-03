@@ -373,6 +373,38 @@
       cursor: default;
       font-size: 0.74rem;
     }
+
+    // "Only <groups>": a limit, so it reads differently from the access levels next to it
+    .mcp-chip-groups {
+      border-style: dashed;
+      border-color: var(--color-background-button-primary);
+    }
+  }
+
+  // The token overlay's group checkboxes: a wrapping row, so a dozen groups don't make the dialog scroll
+  .mcp-token-groups {
+    margin-top: 1rem;
+    border: 0;
+    padding: 0;
+
+    legend {
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .mcp-token-group-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 1rem;
+      list-style: none;
+      margin: 0 0 0.4rem;
+      padding: 0;
+
+      label {
+        display: inline;
+        margin-left: 0.25rem;
+      }
+    }
   }
 
   .mcp-token-actions {
