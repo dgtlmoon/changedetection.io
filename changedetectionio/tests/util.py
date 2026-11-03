@@ -476,6 +476,16 @@ def new_live_server_setup(live_server):
             resp.headers['Content-Type'] = 'application/pdf'
             return resp
 
+    @live_server.app.route('/download/<filename>')
+    def test_binary_endpoint(filename):
+        """Serves endpoint-binary.bin from the datastore, as ?content_type= (and as an attachment)"""
+        datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
+        with open(os.path.join(datastore_path, "endpoint-binary.bin"), "rb") as f:
+            resp = make_response(f.read(), 200)
+            resp.headers['Content-Type'] = request.args.get('content_type', 'application/octet-stream')
+            resp.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return resp
+
     @live_server.app.route('/test-interactive-html-endpoint')
     def test_interactive_html_endpoint():
         header_text=""

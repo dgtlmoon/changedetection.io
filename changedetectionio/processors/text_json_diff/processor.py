@@ -484,6 +484,15 @@ class perform_site_check(difference_detection_processor):
         # Avoid creating unnecessary intermediate string copies by reassigning only when needed
         content = self.fetcher.content
 
+        # Binary files (see content_types.py) that have no text of their own - the snapshot is a
+        # description of the file itself, so any change to the bytes is a change
+        binary = self.fetcher.binary
+        if binary and not (watch.is_pdf or stream_content_type.is_pdf):
+            content = binary.snapshot_text()
+            for flag in ('is_json', 'is_html', 'is_rss', 'is_csv', 'is_xml', 'is_yaml'):
+                setattr(stream_content_type, flag, False)
+            stream_content_type.is_plaintext = True
+
         # RSS preprocessing
         if stream_content_type.is_rss:
             content = content_processor.preprocess_rss(content)
