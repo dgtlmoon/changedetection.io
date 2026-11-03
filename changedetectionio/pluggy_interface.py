@@ -58,6 +58,55 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec(firstresult=True)
+    def select_fetch_backend(watch, datastore, backend_name, failed_fetch):
+        """Pick a different content fetcher for this one check, without changing the watch's settings.
+        Plugin API 0.6.0+.
+
+        Called twice at most per check:
+          - before fetching, with failed_fetch=None: return a fetcher name to use instead of backend_name
+          - when that fetch raised, with the exception as failed_fetch: return a fetcher name to retry
+            with once, straight away. A Non200ErrorCodeReceived has the site's answer in .status_code.
+            If the retry fails too, its error is what the watch shows.
+
+        For example: fall back to a scraping service when the site answers 403, see
+        example_plugins/fetcher/fallback_fetcher. The first plugin to return a name wins.
+
+        Args:
+            watch: The watch being checked
+            datastore: The application datastore
+            backend_name: The fetcher that would be used (or was used, when failed_fetch is set),
+                          e.g. 'html_requests'
+            failed_fetch: None before the fetch, the exception after a failed one
+
+        Returns:
+            str or None: A registered fetcher name (starting with 'html_'), or None to leave it.
+                         Unknown names, and fetchers that can't fetch a PDF watch, are ignored.
+        """
+        pass
+
+    @hookspec(firstresult=True)
+    def recheck_seconds_override(watch, datastore, seconds):
+        """Override how often a watch is rechecked, the last word after system settings -> group -> watch.
+        Plugin API 0.6.0+.
+
+        For a plugin that has taken a watch "under its control", for example one that moved it to a paid
+        fetcher after repeated 403s and wants it checked every 12 hours instead of every 30 minutes.
+        Explain it to the user with watch_list_extra_text.
+
+        Called by the scheduler for every watch on every pass (about once a second), so stay in memory:
+        no disk, network or other slow work. The first plugin to return a number wins.
+
+        Args:
+            watch: The watch
+            datastore: The application datastore
+            seconds: The recheck time it would have without plugins
+
+        Returns:
+            int or None: Seconds between checks for this watch, or None to leave it.
+        """
+        pass
+
     @hookspec
     def fetcher_status_icon(fetcher_name):
         """Return the status icon shown in the watch list for a content fetcher.
@@ -1078,6 +1127,36 @@ def get_plugin_template_paths():
                 logger.debug(f"Added plugin template path: {templates_dir}")
 
     return template_paths
+
+
+async def select_fetch_backend(watch, datastore, backend_name, failed_fetch=None):
+    """The fetcher name a plugin picked for this check (see the select_fetch_backend hook), or None."""
+    from changedetectionio.plugin_api import await_me_maybe
+    choice = await await_me_maybe(plugin_manager.hook.select_fetch_backend(
+        watch=watch, datastore=datastore, backend_name=backend_name, failed_fetch=failed_fetch))
+    if not choice or choice == backend_name:
+        return None
+    if not isinstance(choice, str):
+        logger.warning(f"select_fetch_backend returned {choice!r}, expected a fetcher name")
+        return None
+    return choice
+
+
+def apply_recheck_seconds_override(watch, datastore, seconds):
+    """The recheck time for this watch after plugins had their say (recheck_seconds_override hook)."""
+    hook = plugin_manager.hook.recheck_seconds_override
+    # The scheduler asks for every watch every second, skip the hook machinery when no plugin implements it
+    if not hook.get_hookimpls():
+        return seconds
+    override = hook(watch=watch, datastore=datastore, seconds=seconds)
+    if override is None:
+        return seconds
+    try:
+        override = int(override)
+    except (TypeError, ValueError):
+        logger.warning(f"recheck_seconds_override returned {override!r}, expected seconds")
+        return seconds
+    return override if override > 0 else seconds
 
 
 def apply_update_handler_alter(update_handler, watch, datastore):

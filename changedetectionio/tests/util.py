@@ -459,6 +459,19 @@ def new_live_server_setup(live_server):
     def test_return_query():
         return request.query_string
 
+    # A stand-in scraping API with the JSON contract of example_plugins/fetcher/fallback_fetcher
+    @live_server.app.route('/test-scrape-api', methods=['POST'])
+    def test_scrape_api():
+        body = request.get_json()
+        one_pixel_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        return {
+            'status_code': int(request.args.get('status_code', 200)),
+            'content': f"<html><body><p>Fetched by the scraping API</p><p>url:{body.get('url')}</p>"
+                       f"<p>key:{request.headers.get('X-Api-Key')}</p></body></html>",
+            'content_type': 'text/html',
+            'screenshot': one_pixel_png if body.get('screenshot') else None,
+        }
+
 
     @live_server.app.route('/endpoint-test.pdf')
     def test_pdf_endpoint():

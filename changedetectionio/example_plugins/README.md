@@ -6,7 +6,7 @@ active until you install it.
 To install one, run `pip install .` from its directory, in the same Python environment that runs
 changedetection.io, then restart changedetection.io. Plugins are picked up through the `changedetectionio`
 entry point in their `pyproject.toml`. They need plugin API 0.3.0 or newer
-(`changedetectionio.plugin_api.PLUGIN_API_VERSION`), the hello world example 0.5.0 or newer.
+(`changedetectionio.plugin_api.PLUGIN_API_VERSION`), the hello world example 0.5.0 or newer, the fallback fetcher 0.6.0 or newer.
 
 Plugins import only from `changedetectionio.plugin_api`, everything else in the package is internal and
 may change between releases. If you need something that isn't exported there, ask for it.
@@ -68,6 +68,41 @@ pip install .
 for example `https://api.example.com/fetch?url={url}`, and your key (sent as `X-Api-Key`). Then pick
 "Example browser fetcher" as a watch's fetch method, or `"fetch_backend": "html_example_browser_fetcher"`
 in the API.
+
+---
+
+## Fallback fetcher - `fetcher/fallback_fetcher`
+
+A fetch method that gets pages from a scraping API, used for every check of a watch that picks it, or only
+when a site blocks the normal fetch. With "Fall back on these status codes" set (e.g. `403, 429`), a check
+that gets one of those is retried once, straight away, through the scraping API, so the watch doesn't show
+an error. The watch is then "under control" of the plugin for a while ("Then keep using it for", 24h by
+default): its checks go straight to the fallback, no more often than every 12h ("Meanwhile check no more
+often than every", a minimum, so a watch already checked every 3 days stays at 3 days), and the watch list
+says so. After that the normal fetch is tried again. "Only for these groups" limits it to some groups.
+
+**Hooks**
+- `register_content_fetcher` - adds the `html_example_fallback_fetcher` fetch method
+- `select_fetch_backend` - picks the fallback for one check: before it (still under control) or as a retry
+  after the normal fetch failed with one of the status codes (plugin API 0.6.0+)
+- `recheck_seconds_override` - the longer recheck time while under control, the last word after the
+  system, group and watch settings (plugin API 0.6.0+)
+- `watch_list_extra_text` - "Blocked with HTTP 403, using the fallback fetcher, ..." under the watch
+- `plugin_settings_tab`, `fetcher_status_icon`, `plugin_static_path` - as in the example browser fetcher
+
+**Also shows** the JSON contract it expects from the scraping API, at the top of `fetcher.py`. Most
+services take something close to it, adapt `_fetch()` to yours. Which watches are under control is kept
+in memory (`recheck_seconds_override` runs for every watch every second, so it must not read files), so
+after a restart the first check tries the normal fetch again.
+
+**Install**
+```bash
+cd changedetectionio/example_plugins/fetcher/fallback_fetcher
+pip install .
+```
+
+**Try it:** in Settings > "Fallback fetcher", set the scraping API URL and key, and `403` under "Fall back
+on these status codes". A watch whose site answers 403 is then fetched through the API on its next check.
 
 ---
 
