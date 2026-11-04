@@ -42,7 +42,9 @@
     </div>
     {% endif %}
 
-    <form class="pure-form pure-form-stacked" method="POST" action="{{ request.full_path }}">
+    {# url_for, not request.full_path: behind a proxy at a sub-path (/big-balls/) full_path leaves the prefix out, and
+       the answer would go to the host root. The OAuth request itself rides along in the query string #}
+    <form class="pure-form pure-form-stacked" method="POST" action="{{ url_for('mcp_oauth.authorize') }}?{{ request.query_string.decode() }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="pure-control-group">
         {{ form.name.label }}
