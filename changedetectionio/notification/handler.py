@@ -494,16 +494,19 @@ def process_notification(n_object: NotificationContextData, datastore):
                 # One Apprise instance per URL. A single notify() after the loop sent
                 # only the last URL's body and format to every service (#4619).
                 url_apobj = apprise.Apprise(debug=True, asset=apprise_asset)
-                url_apobj.add(url)
-                url_apobj.notify(
-                    title=n_title,
-                    body=notify_body,
-                    # `body_format` Tell apprise what format the INPUT is in, specify a wrong/bad type and it will force skip conversion in apprise
-                    # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
-                    body_format=apprise_input_format,
-                    # False is not an option for AppRise, must be type None
-                    attach=n_object.get('screenshot', None)
-                )
+                # add() already logs an ERROR for a URL it cannot load (picked up by LogCapture below),
+                # calling notify() on the empty instance would only add a misleading
+                # "There are no service(s) to notify" warning.
+                if url_apobj.add(url):
+                    url_apobj.notify(
+                        title=n_title,
+                        body=notify_body,
+                        # `body_format` Tell apprise what format the INPUT is in, specify a wrong/bad type and it will force skip conversion in apprise
+                        # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
+                        body_format=apprise_input_format,
+                        # False is not an option for AppRise, must be type None
+                        attach=n_object.get('screenshot', None)
+                    )
 
         # Returns empty string if nothing found, multi-line string otherwise
         log_value = logs.getvalue()
