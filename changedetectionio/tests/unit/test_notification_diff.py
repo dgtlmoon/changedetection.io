@@ -522,6 +522,27 @@ Line 3 with tabs and spaces"""
         self.assertEqual(lines[cap + 1], f'{CHANGED_INTO_PLACEMARKER_OPEN}item 0 new{CHANGED_INTO_PLACEMARKER_CLOSED}')
         self.assertNotIn(REMOVED_PLACEMARKER_OPEN, over_cap)
 
+    def test_word_diff_paired_lines_budget_is_per_document(self):
+        """The cap covers the whole document, not each block: once it is used up, later blocks keep
+        the whole-block view, so many small blocks can't add up to an unbounded number of calls.
+        A single replaced line is still word-diffed after the budget is spent."""
+        block = diff.WORD_DIFF_MAX_PAIRED_LINES // 2 + 1
+        before = [f"first {i} old" for i in range(block)] + ["separator one"] + \
+                 [f"second {i} old" for i in range(block)] + ["separator two", "price 10"]
+        after = [f"first {i} new" for i in range(block)] + ["separator one"] + \
+                [f"second {i} new" for i in range(block)] + ["separator two", "price 12"]
+
+        lines = diff.render_diff("\n".join(before), "\n".join(after), word_diff=True).split("\n")
+
+        # First block fits in the budget and is paired: one line per row, no block markers
+        self.assertEqual(len(lines), block + 2 * block + 1)
+        self.assertNotIn(CHANGED_PLACEMARKER_OPEN, "\n".join(lines[:block]))
+        # Second block would exceed what is left, so it is the old rows then the new rows
+        self.assertEqual(lines[block], f'{CHANGED_PLACEMARKER_OPEN}second 0 old{CHANGED_PLACEMARKER_CLOSED}')
+        self.assertEqual(lines[2 * block], f'{CHANGED_INTO_PLACEMARKER_OPEN}second 0 new{CHANGED_INTO_PLACEMARKER_CLOSED}')
+        # The trailing one-line change is inline, exactly as it renders on its own
+        self.assertEqual(lines[-1], diff.render_diff("price 10", "price 12", word_diff=True))
+
     def test_word_diff_multiline_replace_unequal_lengths_falls_back(self):
         """Different line counts on each side keep the whole-block rendering."""
         before = "alpha one\nbeta two"

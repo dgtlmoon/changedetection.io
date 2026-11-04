@@ -46,8 +46,9 @@ CHANGED_INTO_PLACEMARKER_CLOSED = '@changed_into_PLACEMARKER_CLOSED'
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
 
-# Word-diffing a same-size replaced block costs one diff_main() call per line, so above this
-# many lines fall back to the whole-block view to keep the worst case bounded.
+# Word-diffing a same-size replaced block costs one diff_main() call per line, so at most this
+# many lines are paired per document; blocks past it keep the whole-block view, which keeps the
+# worst case bounded however long the document is. Single replaced lines don't count against it.
 WORD_DIFF_MAX_PAIRED_LINES = 300
 # A paired line is only word-diffed when it still resembles the line it replaced; otherwise
 # (e.g. a row inserted at the top and another dropped at the bottom) the lines are unrelated.
@@ -395,6 +396,8 @@ def customSequenceMatcher(
                         for line_num in range(next_alo, context_end):
                             included_equal_ranges.add(line_num)
 
+    paired_lines_budget = WORD_DIFF_MAX_PAIRED_LINES
+
     # Remember! gmail, outlook etc dont support <style> must be inline.
     # Gmail: strips <ins> and <del> tags entirely.
     for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
@@ -417,7 +420,9 @@ def customSequenceMatcher(
 
             # With word_diff, a block with the same number of lines on both sides (one changed line, or
             # e.g. a ranked table where every row moved) is paired up in order and word-diffed line by line
-            if word_diff and len(before_lines) == len(after_lines) <= WORD_DIFF_MAX_PAIRED_LINES:
+            if word_diff and len(before_lines) == len(after_lines) and (len(before_lines) == 1 or len(before_lines) <= paired_lines_budget):
+                if len(before_lines) > 1:
+                    paired_lines_budget -= len(before_lines)
                 paired = []
                 # Consecutive pairs that don't resemble each other, kept in the old-lines-then-new-lines view
                 unrelated_before = []
