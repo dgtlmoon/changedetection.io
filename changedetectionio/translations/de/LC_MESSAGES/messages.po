@@ -4937,10 +4937,12 @@ msgstr ""
 msgid "Changes in price should trigger a notification"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value."
 msgstr ""
@@ -4950,6 +4952,8 @@ msgstr ""
 msgid "Price must change more than this % since the previous check to trigger a change."
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency and adjust both figures, as long as the 2% relationship is
+#. preserved.
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid ""
 "For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change "
@@ -5701,6 +5705,7 @@ msgstr ""
 msgid "From group '%(name)s': %(value)s"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes."
 msgstr ""
@@ -5713,6 +5718,7 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Only notify if the price drops below $200, or a limited-time deal is added"
 msgstr ""
