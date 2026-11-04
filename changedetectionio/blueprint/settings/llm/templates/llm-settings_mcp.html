@@ -205,7 +205,7 @@
   {%- set ext = '" target="_blank" rel="noopener">' -%}
   <p class="stab-section-title">Claude (claude.ai)</p>
   <ol class="mcp-connect-steps">
-    <li>{{ _('Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai.', link_start='<a href="https://claude.ai/customize/connectors' ~ ext, link_end='</a>')|safe }}</li>
+    <li>{{ _('Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai.', link_start='<a href="https://claude.ai/new#customize/connectors/yours' ~ ext, link_end='</a>')|safe }}</li>
     <li>{{ _('Click the add button, then "Add custom connector".') }}</li>
     <li>{{ _('Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:') }} {{ copyable(mcp_url, 'mcp-oauth-url-claude') }}</li>
     <li>{{ _('Leave the sign-in setting as Claude detects it, then click Add.') }}</li>
