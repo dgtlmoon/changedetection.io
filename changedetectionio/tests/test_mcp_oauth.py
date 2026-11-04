@@ -358,3 +358,20 @@ def test_discovery_under_a_sub_path(client, live_server, measure_memory_usage, d
 def _ping_at(client, base):
     return client.post('/mcp/v1', base_url=base + '/', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}),
                        content_type='application/json')
+
+
+def test_consent_form_keeps_the_sub_path(client, live_server, measure_memory_usage, datastore_path, logged_in):
+    # Behind a proxy at /big-balls/, the consent form must post back under /big-balls/, not to the host root (a 404)
+    import re
+    client_id = _register(client)
+    verifier, challenge = _pkce()
+    html = client.get(_authorize_url(client_id, challenge, MCP_URL), base_url='http://localhost/big-balls/').get_data(as_text=True)
+    action = re.search(r'<form class="pure-form pure-form-stacked" method="POST" action="([^"]+)"', html).group(1)
+    assert action.startswith('/big-balls/oauth/authorize?') and 'code_challenge=' in action
+    # And the answer, posted there, still works
+    res = client.post(action.replace('&amp;', '&').removeprefix('/big-balls'), data=dict(GRID, name='x', decision='approve'),
+                      base_url='http://localhost/big-balls/')
+    assert res.status_code == 302 and 'code=' in res.location
+    # A crafted link with bytes that aren't UTF-8 is just another request, not a 500
+    res = client.get(_authorize_url(client_id, challenge, MCP_URL) + '&x=%FF%FE', base_url='http://localhost/big-balls/')
+    assert res.status_code in (200, 400)
