@@ -96,7 +96,7 @@ def test_llm_features_enabled_by_default(client, live_server, monkeypatch):
     assert res.status_code == 200
     # Its tabs are links to their own pages (not #anchors), the current one marked active by the server
     assert f'<li class="tab active"><a href="{llm_page}">'.encode() in res.data
-    assert f'href="{url_for("settings.llm.mcp_settings_page")}"'.encode() in res.data
+    assert f'href="{url_for("settings.llm.mcp_settings_page")}#overview"'.encode() in res.data
     assert b'id="ai"' in res.data
     assert b'name="llm-model"' in res.data
 
