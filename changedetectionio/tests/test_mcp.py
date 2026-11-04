@@ -201,7 +201,9 @@ def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
     assert _call(client, api_key, 'list_watches', tag='nope')['isError'] is True
 
     # History stats for every monitor in one call, and sorting by them: "which monitors have years of history?"
-    old = datastore.add_watch(url='https://example.com/old', extras={'title': 'Old page', 'paused': True})
+    from flask import url_for
+    old = datastore.add_watch(url=url_for('test_endpoint', _external=True, id='old'),
+                              extras={'title': 'Old page', 'paused': True})
     for i, day in enumerate((-800, -400, -10)):
         datastore.data['watching'][old].save_history_blob(f'version {i}', T0 + day * 86400, f'o{i}')
     rows = {w['uuid']: w for w in _call(client, api_key, 'list_watches')['structuredContent']['watches']}
