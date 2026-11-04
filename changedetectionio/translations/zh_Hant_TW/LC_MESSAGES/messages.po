@@ -618,7 +618,6 @@ msgid "Copy the command or config for your assistant."
 msgstr "複製適用於你的助理的指令或設定。"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Connect"
 msgstr "連線"
 
@@ -1134,6 +1133,15 @@ msgid "The MCP server is switched off on this installation."
 msgstr "此安裝已關閉 MCP 伺服器。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Connect: %(method)s"
+msgstr "連線：%(method)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/_common_fields.html
+msgid "Token"
+msgstr "權杖"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
 "use other applications as tools."
@@ -1309,6 +1317,64 @@ msgstr "登入需要密碼保護：%(link_start)s設定密碼%(link_end)s（設�
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Switch on the MCP server (Overview) to allow sign-in."
 msgstr "開啟 MCP 伺服器（概覽）以允許登入。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai."
+msgstr "在 claude.ai 上開啟 %(link_start)sCustomize > Connectors%(link_end)s。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click the add button, then \"Add custom connector\"."
+msgstr "點擊新增按鈕，然後選擇「Add custom connector」。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:"
+msgstr "填寫名稱（例如 changedetection.io），並把這個位址貼上為遠端 MCP 伺服器 URL："
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Leave the sign-in setting as Claude detects it, then click Add."
+msgstr "登入設定保留 Claude 偵測到的選項，然後點擊 Add。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click Connect: you come here to log in, choose what Claude may do and click Allow, then you are sent back to Claude."
+msgstr "點擊 Connect：你會來到這裡登入，選擇 Claude 可以做什麼並點擊「允許」，然後被送回 Claude。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"On Team and Enterprise plans an Owner adds it under Organization settings > Connectors, then each member clicks "
+"Connect."
+msgstr "在 Team 與 Enterprise 方案中，由 Owner 在 Organization settings > Connectors 新增，然後每位成員點擊 Connect。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "%(link_start)sClaude help: custom connectors%(link_end)s"
+msgstr "%(link_start)sClaude 說明：自訂連接器%(link_end)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"In ChatGPT, open Settings > Apps & Connectors > Advanced settings and switch on Developer mode. On some accounts it "
+"is under Settings > Security."
+msgstr "在 ChatGPT 中開啟 Settings > Apps & Connectors > Advanced settings，並開啟 Developer mode。部分帳戶在 Settings > Security 中。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Back in Apps & Connectors, click Create (or \"Add custom connector\")."
+msgstr "回到 Apps & Connectors，點擊 Create（或「Add custom connector」）。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, paste this as the MCP server URL and choose OAuth as the authentication:"
+msgstr "填寫名稱，把這個位址貼上為 MCP 伺服器 URL，並選擇 OAuth 作為驗證方式："
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Confirm and click Create: you come here to log in, choose what ChatGPT may do and click Allow."
+msgstr "確認並點擊 Create：你會來到這裡登入，選擇 ChatGPT 可以做什麼並點擊「允許」。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "In a chat, click +, choose Developer mode and pick the connector."
+msgstr "在對話中點擊 +，選擇 Developer mode 並選取該連接器。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Custom connectors need a paid ChatGPT plan; on Business and Enterprise plans an admin may need to allow them first."
+msgstr "自訂連接器需要付費的 ChatGPT 方案；在 Business 與 Enterprise 方案中可能需要管理員先允許。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Signed in"
@@ -4841,10 +4907,6 @@ msgstr "在通知標題、內文和 URL 中使用範本，以及下方的權杖�
 #: changedetectionio/templates/_common_fields.html
 msgid "Show token/placeholders"
 msgstr "顯示權杖 / 預留位置"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Token"
-msgstr "權杖"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Description"

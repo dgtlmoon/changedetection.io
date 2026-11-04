@@ -33,8 +33,8 @@
   {% call stab_shell('mcp-settings', [
       {'id': 'overview', 'label': _('Overview'), 'icon': 'info'},
       {'id': 'tokens', 'label': _('Access tokens'), 'icon': 'key'},
-      {'id': 'connect', 'label': _('Connect'), 'icon': 'link'},
-      {'id': 'oauth', 'label': 'OAuth', 'icon': 'log-in'},
+      {'id': 'connect', 'label': _('Connect: %(method)s', method=_('Token')), 'icon': 'link'},
+      {'id': 'oauth', 'label': _('Connect: %(method)s', method='OAuth'), 'icon': 'log-in'},
   ]) %}
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}
@@ -200,6 +200,30 @@
   {% else %}
   <p class="mcp-hint">{{ _('Switch on the MCP server (Overview) to allow sign-in.') }}</p>
   {% endif %}
+  {#- Step by step for the two assistants people ask about. Menu names change, so the steps say where to look and
+      link the assistant's own help. Links are put in by the template, translations only carry placeholders #}
+  {%- set ext = '" target="_blank" rel="noopener">' -%}
+  <p class="stab-section-title">Claude (claude.ai)</p>
+  <ol class="mcp-connect-steps">
+    <li>{{ _('Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai.', link_start='<a href="https://claude.ai/new#customize/connectors/yours' ~ ext, link_end='</a>')|safe }}</li>
+    <li>{{ _('Click the add button, then "Add custom connector".') }}</li>
+    <li>{{ _('Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:') }} {{ copyable(mcp_url, 'mcp-oauth-url-claude') }}</li>
+    <li>{{ _('Leave the sign-in setting as Claude detects it, then click Add.') }}</li>
+    <li>{{ _('Click Connect: you come here to log in, choose what Claude may do and click Allow, then you are sent back to Claude.') }}</li>
+  </ol>
+  <p class="mcp-hint">{{ _('On Team and Enterprise plans an Owner adds it under Organization settings > Connectors, then each member clicks Connect.') }}
+    {{ _('%(link_start)sClaude help: custom connectors%(link_end)s', link_start='<a href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp' ~ ext, link_end='</a>')|safe }}</p>
+
+  <p class="stab-section-title">ChatGPT (OpenAI)</p>
+  <ol class="mcp-connect-steps">
+    <li>{{ _('In ChatGPT, open Settings > Apps & Connectors > Advanced settings and switch on Developer mode. On some accounts it is under Settings > Security.') }}</li>
+    <li>{{ _('Back in Apps & Connectors, click Create (or "Add custom connector").') }}</li>
+    <li>{{ _('Give it a name, paste this as the MCP server URL and choose OAuth as the authentication:') }} {{ copyable(mcp_url, 'mcp-oauth-url-chatgpt') }}</li>
+    <li>{{ _('Confirm and click Create: you come here to log in, choose what ChatGPT may do and click Allow.') }}</li>
+    <li>{{ _('In a chat, click +, choose Developer mode and pick the connector.') }}</li>
+  </ol>
+  <p class="mcp-hint">{{ _('Custom connectors need a paid ChatGPT plan; on Business and Enterprise plans an admin may need to allow them first.') }}</p>
+
   <p class="stab-section-title">{{ _('Signed in') }}</p>
   <div id="mcp-oauth-grants"
        data-revoke-title="{{ _('Revoke this sign-in?') }}"
