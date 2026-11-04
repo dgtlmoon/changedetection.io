@@ -163,14 +163,11 @@ class TestParseEvalResponse:
         assert result['important'] is True
         assert result['summary'] == 'Price dropped by $20'
 
-    def test_malformed_json_falls_back_to_safe_default(self):
-        result = parse_eval_response('this is not json at all')
-        assert result['important'] is False
-        assert result['summary'] == ''
-
-    def test_empty_string_falls_back(self):
-        result = parse_eval_response('')
-        assert result['important'] is False
+    @pytest.mark.parametrize('raw', ['', 'this is not json at all', '{"important": true, "summ', '[1, 2]'])
+    def test_unusable_response_raises(self, raw):
+        """No important=False fallback: that would suppress the notification. evaluator.py fails open."""
+        with pytest.raises(ValueError):
+            parse_eval_response(raw)
 
     def test_truthy_integer_coerced_to_bool(self):
         raw = '{"important": 1, "summary": "yes"}'
