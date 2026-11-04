@@ -200,6 +200,23 @@ def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
     assert _call(client, api_key, 'list_watches', search='broken')['structuredContent']['total'] == 1
     assert _call(client, api_key, 'list_watches', tag='nope')['isError'] is True
 
+    # History stats for every monitor in one call, and sorting by them: "which monitors have years of history?"
+    old = datastore.add_watch(url='https://example.com/old', extras={'title': 'Old page', 'paused': True})
+    for i, day in enumerate((-800, -400, -10)):
+        datastore.data['watching'][old].save_history_blob(f'version {i}', T0 + day * 86400, f'o{i}')
+    rows = {w['uuid']: w for w in _call(client, api_key, 'list_watches')['structuredContent']['watches']}
+    assert (rows[policy]['snapshots'], rows[policy]['history_days']) == (2, 0.0)
+    assert rows[old]['snapshots'] == 3 and rows[old]['history_days'] == 790.0
+    assert rows[old]['first_snapshot'] == _iso(T0 - 800 * 86400)
+    assert rows[broken]['snapshots'] == 0 and rows[broken]['first_snapshot'] is None
+    for sort, order in (('first_snapshot', [old, policy, broken]), ('snapshots', [old, policy, broken]),
+                        ('history_span', [old, policy, broken])):
+        result = _call(client, api_key, 'list_watches', sort=sort)
+        assert [w['uuid'] for w in result['structuredContent']['watches']] == order, sort
+    assert '3 snapshots since' in result['content'][0]['text'] and 'longest history first' in result['content'][0]['text']
+    assert _call(client, api_key, 'list_watches', sort='bogus')['isError'] is True
+    datastore.delete(old)
+
     result = _call(client, api_key, 'list_tags')
     assert result['structuredContent']['tags'] == [{'uuid': group, 'title': 'competitors', 'monitors': 1,
                                                     'notification_muted': False}]
