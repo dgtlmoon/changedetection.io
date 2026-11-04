@@ -1322,8 +1322,8 @@ msgstr ""
 "escolhe o que o assistente pode fazer."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
-msgstr "Adicione este endereço como conector personalizado no assistente, ele precisa ser acessível por HTTPS://:"
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://"
+msgstr "Adicione este endereço como conector personalizado no assistente, ele precisa ser acessível por HTTPS://"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 #, python-format

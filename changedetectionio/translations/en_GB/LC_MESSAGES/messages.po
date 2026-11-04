@@ -1287,7 +1287,7 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html

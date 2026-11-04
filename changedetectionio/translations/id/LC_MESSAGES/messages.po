@@ -1370,8 +1370,8 @@ msgstr ""
 "apa yang boleh dilakukan asisten."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
-msgstr "Tambahkan alamat ini sebagai konektor kustom di asisten, alamat ini harus bisa dijangkau lewat HTTPS://:"
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://"
+msgstr "Tambahkan alamat ini sebagai konektor kustom di asisten, alamat ini harus bisa dijangkau lewat HTTPS://"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 #, python-format

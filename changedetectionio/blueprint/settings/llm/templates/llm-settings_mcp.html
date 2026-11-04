@@ -188,7 +188,7 @@
   <p class="stab-section-title">{{ _('OAuth connections') }}</p>
   <p class="mcp-hint">{{ _('ChatGPT and claude.ai in the browser connect with sign-in (OAuth) instead of an access token: you log in here and choose what the assistant may do.') }}</p>
   {% if mcp_oauth_available %}
-  <p class="mcp-hint">{{ _('Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:') }}</p>
+  <p class="mcp-hint">{{ _('Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://') }}</p>
   {{ copyable(mcp_url, 'mcp-oauth-url') }}
   {% elif not mcp_password_set %}
   <div class="stab-overview-disclaimer">

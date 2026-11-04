@@ -1291,8 +1291,8 @@ msgid ""
 msgstr "ブラウザーの ChatGPT と claude.ai はアクセストークンではなくサインイン（OAuth）で接続します。ここでログインし、アシスタントに許可する操作を選びます。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
-msgstr "このアドレスをアシスタントのカスタムコネクターとして追加してください。HTTPS:// でアクセスできる必要があります："
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://"
+msgstr "このアドレスをアシスタントのカスタムコネクターとして追加してください。HTTPS:// でアクセスできる必要があります"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 #, python-format

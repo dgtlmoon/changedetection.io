@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.60.10\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-04 13:32+0100\n"
+"POT-Creation-Date: 2026-11-04 13:34+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1286,7 +1286,7 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html

@@ -1323,8 +1323,8 @@ msgstr ""
 "fare l'assistente."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
-msgstr "Aggiungi questo indirizzo come connettore personalizzato nell'assistente, deve essere raggiungibile via HTTPS://:"
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://"
+msgstr "Aggiungi questo indirizzo come connettore personalizzato nell'assistente, deve essere raggiungibile via HTTPS://"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 #, python-format
