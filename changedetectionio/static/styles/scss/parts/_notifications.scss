@@ -123,13 +123,9 @@ $ns-quick-size: 2.1rem;
     transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
     animation: ns-quick-in 0.25s ease-out both;
 
-    @for $i from 1 through 10 {
-      &:nth-child(#{$i}) { animation-delay: #{($i - 1) * 0.03}s; }
-    }
-
     img {
-      width: 1.2rem;
-      height: 1.2rem;
+      width: 1.5rem;
+      height: 1.5rem;
       object-fit: contain;
       pointer-events: none;
     }
