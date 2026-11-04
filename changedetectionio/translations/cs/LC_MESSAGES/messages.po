@@ -387,13 +387,13 @@ msgid "Sign-in failed"
 msgstr "Přihlášení selhalo"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-#, python-format
-msgid "Allow %(name)s to use changedetection.io?"
-msgstr "Povolit %(name)s používat changedetection.io?"
+msgid "OAuth authentication request needs your permission"
+msgstr "Žádost o ověření OAuth potřebuje vaše svolení"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Assistant"
-msgstr "Asistent"
+#, python-format
+msgid "%(name)s wants to use your changedetection.io"
+msgstr "%(name)s chce používat váš changedetection.io"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #, python-format
@@ -405,14 +405,6 @@ msgid "The name is what the assistant says about itself, it is not verified."
 msgstr "Název je to, co o sobě asistent tvrdí, není ověřený."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Sends you back to"
-msgstr "Vrátí vás na"
-
-#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Connects to"
-msgstr "Připojí se k"
-
-#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid ""
 "This assistant only sends you back to this computer (localhost). Only allow it if you started this sign-in yourself, "
 "from an app on this computer."
@@ -421,12 +413,16 @@ msgstr ""
 " aplikace na tomto počítači."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
-msgstr "Zobrazí se na podzáložce OAuth v nastavení serveru MCP, kde ho lze odvolat."
+msgid "It will be able to"
+msgstr "Bude moci"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "What it may do"
-msgstr "Co smí"
+msgid "Change what it can do"
+msgstr "Změnit, co smí"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
+msgstr "Zobrazí se na podzáložce OAuth v nastavení serveru MCP, kde ho lze odvolat."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
@@ -436,12 +432,24 @@ msgstr ""
 "zákazníka."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Allow"
-msgstr "Povolit"
+msgid "Connects to"
+msgstr "Připojí se k"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Deny"
-msgstr "Zamítnout"
+#, python-format
+msgid "You will be sent back to %(host)s."
+msgstr "Budete vráceni na %(host)s."
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "Zrušit"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Allow"
+msgstr "Povolit"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Expand on hover"
@@ -856,12 +864,6 @@ msgstr "Toto odstraní uloženého poskytovatele AI, model a API klíč."
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove"
 msgstr "Odstranit"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "Zrušit"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove provider"
@@ -4202,18 +4204,21 @@ msgstr "např. Claude Code, notebook"
 msgid "Monitors"
 msgstr "Monitory"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Write"
 msgstr "Zápis"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "None"
 msgstr "Žádné"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html

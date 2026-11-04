@@ -392,13 +392,13 @@ msgid "Sign-in failed"
 msgstr "Не удалось войти"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-#, python-format
-msgid "Allow %(name)s to use changedetection.io?"
-msgstr "Разрешить %(name)s использовать changedetection.io?"
+msgid "OAuth authentication request needs your permission"
+msgstr "Запрос аутентификации OAuth требует вашего разрешения"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Assistant"
-msgstr "Ассистент"
+#, python-format
+msgid "%(name)s wants to use your changedetection.io"
+msgstr "%(name)s хочет использовать ваш changedetection.io"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #, python-format
@@ -410,14 +410,6 @@ msgid "The name is what the assistant says about itself, it is not verified."
 msgstr "Имя — это то, что ассистент говорит о себе, оно не проверено."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Sends you back to"
-msgstr "Возвращает на"
-
-#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Connects to"
-msgstr "Подключается к"
-
-#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid ""
 "This assistant only sends you back to this computer (localhost). Only allow it if you started this sign-in yourself, "
 "from an app on this computer."
@@ -426,12 +418,16 @@ msgstr ""
 "приложения на этом компьютере."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
-msgstr "Показывается на подвкладке OAuth в настройках сервера MCP, там его можно отозвать."
+msgid "It will be able to"
+msgstr "Сможет"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "What it may do"
-msgstr "Что разрешено"
+msgid "Change what it can do"
+msgstr "Изменить, что разрешено"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
+msgstr "Показывается на подвкладке OAuth в настройках сервера MCP, там его можно отозвать."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
@@ -439,12 +435,24 @@ msgid "None ticked: every monitor. Ticked: only the monitors in those groups, fo
 msgstr "Ничего не отмечено: все мониторы. Отмечено: только мониторы в этих группах, например одна группа на дело или клиента."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Allow"
-msgstr "Разрешить"
+msgid "Connects to"
+msgstr "Подключается к"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Deny"
-msgstr "Отклонить"
+#, python-format
+msgid "You will be sent back to %(host)s."
+msgstr "Вы вернётесь на %(host)s."
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "Отмена"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Allow"
+msgstr "Разрешить"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Expand on hover"
@@ -898,12 +906,6 @@ msgstr "Это приведет к удалению сохраненного п�
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove"
 msgstr "Удалять"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "Отмена"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove provider"
@@ -4310,18 +4312,21 @@ msgstr "напр. Claude Code, ноутбук"
 msgid "Monitors"
 msgstr "Мониторы"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Write"
 msgstr "Запись"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "None"
 msgstr "Нет"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html

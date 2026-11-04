@@ -387,13 +387,13 @@ msgid "Sign-in failed"
 msgstr "로그인 실패"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-#, python-format
-msgid "Allow %(name)s to use changedetection.io?"
-msgstr "%(name)s에 changedetection.io 사용을 허용할까요?"
+msgid "OAuth authentication request needs your permission"
+msgstr "OAuth 인증 요청에 권한이 필요합니다"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Assistant"
-msgstr "어시스턴트"
+#, python-format
+msgid "%(name)s wants to use your changedetection.io"
+msgstr "%(name)s이(가) changedetection.io 사용을 요청합니다"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #, python-format
@@ -405,26 +405,22 @@ msgid "The name is what the assistant says about itself, it is not verified."
 msgstr "이름은 어시스턴트가 스스로 밝힌 것이며 확인되지 않았습니다."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Sends you back to"
-msgstr "돌아갈 곳"
-
-#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Connects to"
-msgstr "연결 대상"
-
-#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid ""
 "This assistant only sends you back to this computer (localhost). Only allow it if you started this sign-in yourself, "
 "from an app on this computer."
 msgstr "이 어시스턴트는 이 컴퓨터(localhost)로만 돌려보냅니다. 이 컴퓨터의 앱에서 직접 로그인을 시작한 경우에만 허용하세요."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
-msgstr "MCP 서버 설정의 OAuth 하위 탭에 표시되며, 거기서 취소할 수 있습니다."
+msgid "It will be able to"
+msgstr "할 수 있는 작업"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "What it may do"
-msgstr "허용할 작업"
+msgid "Change what it can do"
+msgstr "할 수 있는 작업 변경"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
+msgstr "MCP 서버 설정의 OAuth 하위 탭에 표시되며, 거기서 취소할 수 있습니다."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
@@ -432,12 +428,24 @@ msgid "None ticked: every monitor. Ticked: only the monitors in those groups, fo
 msgstr "선택 안 함: 모든 모니터. 선택: 해당 그룹의 모니터만 (예: 사건 또는 고객별로 그룹 하나)."
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Allow"
-msgstr "허용"
+msgid "Connects to"
+msgstr "연결 대상"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Deny"
-msgstr "거부"
+#, python-format
+msgid "You will be sent back to %(host)s."
+msgstr "%(host)s(으)로 돌아갑니다."
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "취소"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Allow"
+msgstr "허용"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Expand on hover"
@@ -858,12 +866,6 @@ msgstr "저장된 AI 프로바이더, 모델, API 키가 제거됩니다."
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove"
 msgstr "제거"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "취소"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove provider"
@@ -4180,18 +4182,21 @@ msgstr "예: Claude Code, 노트북"
 msgid "Monitors"
 msgstr "모니터"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Write"
 msgstr "쓰기"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "None"
 msgstr "없음"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
