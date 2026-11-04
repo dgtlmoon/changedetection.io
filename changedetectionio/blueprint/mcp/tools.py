@@ -248,6 +248,11 @@ def _api_call(fn, *args):
 
 # ---- read ----
 
+# list_watches' sort orders, and how its answer describes each
+LIST_SORTS = {'last_changed': 'most recently changed', 'first_snapshot': 'oldest history',
+              'snapshots': 'most snapshots', 'history_span': 'longest history'}
+
+
 def list_watches(ctx, args):
     datastore = ctx.datastore
     watches = _select(ctx, tag=args.get('tag'))
@@ -256,15 +261,43 @@ def list_watches(ctx, args):
         watches = [w for w in watches if search in (w.get('url') or '').lower() or search in (w.label or '').lower()]
     if args.get('with_errors'):
         watches = [w for w in watches if w.get('last_error')]
-    watches.sort(key=lambda w: w.last_changed or 0, reverse=True)
+    sort = args.get('sort') or 'last_changed'
+    if sort not in LIST_SORTS:
+        raise ToolError(f"'sort' must be one of {', '.join(LIST_SORTS)}")
+
+    # One history read per monitor (snapshot count and first/last date), so "which monitors have years of history?"
+    # is one call instead of a get_watch per monitor
+    keys = {}
+    for w in watches:
+        k = sorted(int(t) for t in (w.history or {}).keys())
+        keys[w.get('uuid')] = (len(k), k[0], k[-1]) if k else (0, None, None)
+
+    def by(w):
+        n, first, last = keys[w.get('uuid')]
+        if sort == 'first_snapshot':
+            # Oldest first, monitors without snapshots last
+            return -(first or float('inf'))
+        if sort == 'snapshots':
+            return n
+        if sort == 'history_span':
+            return (last - first) if n else -1
+        return w.last_changed or 0
+    watches.sort(key=by, reverse=True)
 
     limit = _int(args, 'limit', 50, 1, 500)
     offset = _int(args, 'offset', 0, 0, 10_000_000)
-    page = [_summary(ctx, w) for w in watches[offset:offset + limit]]
+    page = []
+    for w in watches[offset:offset + limit]:
+        n, first, last = keys[w.get('uuid')]
+        page.append({**_summary(ctx, w), 'snapshots': n,
+                     'first_snapshot': _iso(first) if n else None, 'last_snapshot': _iso(last) if n else None,
+                     'history_days': round((last - first) / 86400, 1) if n else None})
 
-    lines = [f"{len(watches)} monitors, showing {offset + 1 if page else 0}-{offset + len(page)} (most recently changed first)"]
+    lines = [f"{len(watches)} monitors, showing {offset + 1 if page else 0}-{offset + len(page)} ({LIST_SORTS[sort]} first)"]
     for w in page:
         extra = [f"last changed {w['last_changed']}" if w['last_changed'] else 'no changes yet']
+        if w['snapshots']:
+            extra.append(f"{w['snapshots']} snapshots since {w['first_snapshot']} ({w['history_days']:g} days)")
         if w['tags']:
             extra.append('tags: ' + ', '.join(w['tags']))
         if w['paused']:
@@ -1409,10 +1442,15 @@ def _schema(properties, required=None):
 
 TOOLS = {
     'list_watches': (list_watches, READ_ONLY, 'List monitors',
-        "List the web page monitors (watches), most recently changed first, with uuid, URL, tags, last change and "
-        "any error.",
+        "List the web page monitors (watches) with uuid, URL, tags, last change, any error, and their history: "
+        "number of snapshots, first and last snapshot date and how many days it spans. Sort by first_snapshot, "
+        "snapshots or history_span to answer 'which monitors have the longest history?' in one call.",
         _schema({'tag': _TAG, 'search': {'type': 'string', 'description': 'Only monitors whose URL or title contains this'},
                  'with_errors': {'type': 'boolean', 'description': 'Only monitors whose last check failed'},
+                 'sort': {'type': 'string', 'enum': list(LIST_SORTS), 'default': 'last_changed',
+                          'description': 'last_changed: most recently changed first, first_snapshot: oldest history '
+                                         'first, snapshots: most snapshots first, history_span: longest time between '
+                                         'first and last snapshot first'},
                  'limit': {'type': 'integer', 'minimum': 1, 'maximum': 500, 'default': 50},
                  'offset': {'type': 'integer', 'minimum': 0, 'default': 0}})),
     'get_watch': (get_watch, READ_ONLY, 'Monitor details',

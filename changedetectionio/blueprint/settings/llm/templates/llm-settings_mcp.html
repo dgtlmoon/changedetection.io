@@ -39,8 +39,8 @@
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}
   {% call stab_pane('overview') %}
-  <img class="mcp-infographic" src="{{url_for('static_content', group='images', filename='mcp-infographic.jpg')}}"
-       alt="MCP - A way for AI Assistants to interact with changedetection.io">
+  <a title="MCP with Changedetection.io overview" href="https://changedetection.io/MCP"><img class="mcp-infographic" src="{{url_for('static_content', group='images', filename='mcp-infographic.jpg')}}"
+       alt="MCP - A way for AI Assistants to interact with changedetection.io"></a>
   <div class="stab-overview-hero">
     <h3><span class="stab-overview-glyph"><i data-feather="cpu"></i></span> {{ _('Connect AI assistants with MCP') }}</h3>
     <p>{{ _('MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code use other applications as tools.') }}</p>
