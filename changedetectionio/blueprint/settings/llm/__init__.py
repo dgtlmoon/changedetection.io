@@ -101,6 +101,7 @@ def mcp_template_context(datastore):
         mcp_url=mcp_url,
         token_form=mcp_token_form(datastore),
         **mcp_tokens_context(datastore),
+        **mcp_oauth_context(datastore),
     )
 
 
@@ -111,6 +112,21 @@ def mcp_token_form(datastore, formdata=None):
     tags = datastore.data['settings']['application'].get('tags') or {}
     form.tags.choices = sorted(((uuid, t.get('title') or uuid) for uuid, t in tags.items()), key=lambda c: c[1].lower())
     return form
+
+
+def mcp_oauth_context(datastore):
+    """What the OAuth sub-tab (_mcp-oauth-grants.html) needs: the assistants signed in with OAuth, and whether sign-in
+    is offered at all (it needs MCP on and a password, blueprint/mcp/oauth)."""
+    from changedetectionio.blueprint.mcp import oauth
+    from changedetectionio.blueprint.mcp.oauth.store import grants
+    from changedetectionio.blueprint.mcp.tools import permissions
+    all_tags = datastore.data['settings']['application'].get('tags') or {}
+    listed = [dict(grant, id=grant_id, levels=permissions(grant.get('permissions')),
+                   group_names=[all_tags[t].get('title') for t in grant.get('tags') or [] if t in all_tags])
+              for grant_id, grant in grants(datastore.data['settings']['application']).items()]
+    listed.sort(key=lambda t: t.get('created') or 0)
+    return dict(mcp_oauth_grants=listed, mcp_oauth_available=oauth.oauth_available(datastore),
+                mcp_password_set=oauth.password_set(datastore))
 
 
 def mcp_tokens_context(datastore):
@@ -278,6 +294,17 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         del datastore.data['settings']['application']['mcp_tokens'][token_id]
         datastore.commit()
         return jsonify(mcp_tokens_html())
+
+    @llm_blueprint.route("/mcp/oauth/<string:grant_id>/revoke", methods=['POST'])
+    @login_optionally_required
+    def mcp_oauth_revoke(grant_id):
+        """An assistant signed in with OAuth loses access at once (both its tokens); it can sign in again."""
+        from changedetectionio.blueprint.mcp.oauth.store import revoke
+        mcp_ai_enabled_or_404()
+        if not revoke(datastore.data['settings']['application'], grant_id):
+            abort(404)
+        datastore.commit()
+        return jsonify({'html': render_template("_mcp-oauth-grants.html", **mcp_oauth_context(datastore))})
 
     @llm_blueprint.route("/llm/models", methods=['GET'])
     @login_optionally_required

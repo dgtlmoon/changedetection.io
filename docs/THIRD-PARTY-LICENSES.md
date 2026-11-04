@@ -4,7 +4,7 @@ Generated 2026-11-04 from the built container.
 **Do not edit by hand** - run `.github/scripts/generate-third-party-licenses.sh`.
 
 Every third-party Python package bundled in the distributed image
-(174 packages). This exists to satisfy attribution requirements and to
+(176 packages). This exists to satisfy attribution requirements and to
 answer procurement and due-diligence questions without a manual audit.
 
 For copyright ownership and our licence elections, see `NOTICE`.
@@ -22,6 +22,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [apprise](https://appriseit.com) | 2.1.0 | BSD-2-Clause |
 | [arrow](https://github.com/arrow-py/arrow) | 1.4.0 | Apache Software License |
 | [attrs](https://www.attrs.org/en/stable/changelog.html) | 26.1.0 | MIT |
+| [Authlib](https://github.com/authlib/authlib) | 1.9.4 | BSD License |
 | [babel](https://babel.pocoo.org/) | 2.18.0 | BSD License |
 | [backports.zstd](https://github.com/rogdham/backports.zstd) | 1.8.0 | PSF-2.0 |
 | [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/bs4/) | 4.15.0 | MIT License |
@@ -80,6 +81,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [Jinja2](https://github.com/pallets/jinja/) | 3.1.6 | BSD License |
 | [jiter](https://github.com/pydantic/jiter/) | 0.18.0 | MIT |
 | [jmespath](https://github.com/jmespath/jmespath.py) | 1.1.0 | MIT License |
+| [joserfc](https://github.com/authlib/joserfc) | 1.8.0 | BSD License |
 | [jq](https://github.com/mwilliamson/jq.py) | 1.13.0 | BSD-2-Clause |
 | [jsonpath-ng](https://github.com/jsonpath-ng/jsonpath-ng) | 1.14.0 | Apache-2.0 |
 | [jsonschema](https://github.com/python-jsonschema/jsonschema) | 4.26.0 | MIT |

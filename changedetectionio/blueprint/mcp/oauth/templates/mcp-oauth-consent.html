@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% from '_mcp-permissions-grid.html' import permissions_grid %}
+{#
+  The OAuth consent screen, /oauth/authorize (blueprint/mcp/oauth), behind the instance's login.
+  Requires template context: error, or form (forms.MCPTokenForm), client (oauth/server.Client), redirect_host,
+  localhost_only, mcp_url.
+  A client's name is whatever it says about itself, so the screen shows what is real next to it: a CIMD client's
+  hostname (its client_id URL), and where the browser will be sent back to.
+#}
+{% block content %}
+<div class="edit-form">
+  <div class="box-wrap inner mcp-oauth-consent">
+    {% if error %}
+    <h2>{{ _('Sign-in failed') }}</h2>
+    <div class="stab-overview-disclaimer">
+      <div class="stab-disclaimer-icon"><i data-feather="alert-triangle"></i></div>
+      <div class="stab-disclaimer-body"><p>{{ error }}</p></div>
+    </div>
+    {% else %}
+    <h2>{{ _('Allow %(name)s to use changedetection.io?', name=client.client_name) }}</h2>
+    <dl class="mcp-fields">
+      <dt>{{ _('Assistant') }}</dt>
+      <dd>
+        <strong>{{ client.client_name }}</strong>
+        {% if client.host %}
+        <span class="mcp-hint">{{ _('from %(host)s', host=client.host) }}</span>
+        {% else %}
+        <span class="mcp-hint">{{ _('The name is what the assistant says about itself, it is not verified.') }}</span>
+        {% endif %}
+      </dd>
+      <dt>{{ _('Sends you back to') }}</dt>
+      <dd><code class="mcp-value">{{ redirect_host }}</code></dd>
+      <dt>{{ _('Connects to') }}</dt>
+      <dd><code class="mcp-value">{{ mcp_url }}</code></dd>
+    </dl>
+    {% if localhost_only %}
+    <div class="stab-overview-disclaimer">
+      <div class="stab-disclaimer-icon"><i data-feather="alert-triangle"></i></div>
+      <div class="stab-disclaimer-body">
+        <p>{{ _('This assistant only sends you back to this computer (localhost). Only allow it if you started this sign-in yourself, from an app on this computer.') }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <form class="pure-form pure-form-stacked" method="POST" action="{{ request.full_path }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="pure-control-group">
+        {{ form.name.label }}
+        {{ form.name(class='pure-input-1-2') }}
+        <p class="mcp-hint">{{ _('Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked.') }}</p>
+        {% if form.errors %}<ul class="errors">{% for errors in form.errors.values() %}{% for e in errors %}<li>{{ e }}</li>{% endfor %}{% endfor %}</ul>{% endif %}
+      </div>
+      <p class="stab-section-title">{{ _('What it may do') }}</p>
+      {{ permissions_grid(form) }}
+      {% if form.tags.choices %}
+      <fieldset class="mcp-token-groups">
+        <legend>{{ form.tags.label.text }}</legend>
+        {{ form.tags(class='mcp-token-group-list') }}
+        <span class="pure-form-message-inline">{{ _('None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer.') }}</span>
+      </fieldset>
+      {% endif %}
+      <div class="pure-control-group">
+        <button type="submit" name="decision" value="approve" class="pure-button pure-button-primary">{{ _('Allow') }}</button>
+        <button type="submit" name="decision" value="deny" class="pure-button button-cancel">{{ _('Deny') }}</button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

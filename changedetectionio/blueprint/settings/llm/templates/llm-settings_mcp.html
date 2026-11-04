@@ -15,36 +15,7 @@
     <code id="{{ id }}" class="click-to-copy mcp-value" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code>
     {%- endif -%}
 {%- endmacro %}
-{# The None / Read / Write grid, one row per perm_<area> field of forms.MCPTokenForm #}
-{% macro permissions_grid(form) -%}
-  {% set rows = [
-      (form.perm_monitors, _('Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete.')),
-      (form.perm_tags, _('Read: list. Write: create, rename and delete.')),
-      (form.perm_notifications, _('Read: list them (secrets hidden) and look up services. Write: add, remove and mute.')),
-      (form.perm_system, _('Health, the check queue and what is being checked right now.')),
-  ] %}
-  <table class="mcp-perms">
-    <thead>
-      <tr>
-        <th scope="col"></th>
-        <th scope="col">{{ _('None') }}</th>
-        <th scope="col">{{ _('Read') }}</th>
-        <th scope="col">{{ _('Write') }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for field, description in rows %}
-      <tr>
-        <th scope="row"><span class="mcp-perm-name">{{ field.label.text }}</span><span class="mcp-perm-desc">{{ description }}</span></th>
-        {% for option in field %}
-        <td><label class="mcp-perm-choice" title="{{ field.label.text }}: {{ option.label.text }}">{{ option() }}<span class="sr-only">{{ option.label.text }}</span></label></td>
-        {% endfor %}
-        {% if field.choices|length < 3 %}<td class="mcp-perm-na" aria-hidden="true">&ndash;</td>{% endif %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{%- endmacro %}
+{% from '_mcp-permissions-grid.html' import permissions_grid %}
         <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.mcp_settings_page') }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <div class="tab-pane-inner tab-pane-current" id="mcp">
@@ -215,11 +186,25 @@
   {# ── OAuth connections ─────────────────────────────────────────────────── #}
   {% call stab_pane('oauth') %}
   <p class="stab-section-title">{{ _('OAuth connections') }}</p>
-  <div class="mcp-empty">
-    <i data-feather="key"></i>
-    <p><strong>{{ _('Sign in with OAuth is coming soon') }}</strong></p>
-    <p class="mcp-hint">{{ _('ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not offer yet.') }}</p>
-    <p class="mcp-hint">{{ _('Assistants you connect that way will be listed here, and you can disconnect them.') }}</p>
+  <p class="mcp-hint">{{ _('ChatGPT and claude.ai in the browser connect with sign-in (OAuth) instead of an access token: you log in here and choose what the assistant may do.') }}</p>
+  {% if mcp_oauth_available %}
+  <p class="mcp-hint">{{ _('Add this address as a custom connector in the assistant, it needs to be reachable over https:') }}</p>
+  {{ copyable(mcp_url, 'mcp-oauth-url') }}
+  {% elif not mcp_password_set %}
+  <div class="stab-overview-disclaimer">
+    <div class="stab-disclaimer-icon"><i data-feather="lock"></i></div>
+    <div class="stab-disclaimer-body"><p>{{ _('Sign-in needs a login to sit behind: set a password (Settings > General) to allow it.') }}</p></div>
+  </div>
+  {% else %}
+  <p class="mcp-hint">{{ _('Switch on the MCP server (Overview) to allow sign-in.') }}</p>
+  {% endif %}
+  <p class="stab-section-title">{{ _('Signed in') }}</p>
+  <div id="mcp-oauth-grants"
+       data-revoke-title="{{ _('Revoke this sign-in?') }}"
+       data-revoke-message="{{ _('The assistant is disconnected at once, it can sign in again.') }}"
+       data-revoke-button="{{ _('Revoke') }}"
+       data-error="{{ _('Something went wrong, please try again.') }}">
+    {% include '_mcp-oauth-grants.html' %}
   </div>
   {% endcall %}
 

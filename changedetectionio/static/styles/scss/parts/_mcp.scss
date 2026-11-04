@@ -10,7 +10,8 @@
 
 // The token overlay sits outside #mcp (it's a <dialog> after the page's form), so it shares these styles
 #mcp,
-.mcp-token-dialog {
+.mcp-token-dialog,
+.mcp-oauth-consent {
   --mcp-line: rgba(0, 0, 0, 0.08);
   --mcp-soft: rgba(0, 0, 0, 0.025);
   --mcp-on: #27ae60;
@@ -596,6 +597,19 @@
   }
 }
 
+// The OAuth consent screen (blueprint/mcp/oauth/templates/mcp-oauth-consent.html)
+.mcp-oauth-consent {
+  max-width: 48rem;
+
+  h2 {
+    margin-top: 0;
+  }
+
+  .mcp-fields dd .mcp-hint {
+    display: block;
+  }
+}
+
 // The overlay itself: wider than a confirm dialog, for the grid
 .mcp-token-dialog {
   width: min(44rem, calc(100vw - 2rem));
@@ -642,7 +656,8 @@
 
 @include dark-mode {
   #mcp,
-  .mcp-token-dialog {
+  .mcp-token-dialog,
+  .mcp-oauth-consent {
     --mcp-line: rgba(255, 255, 255, 0.08);
     --mcp-soft: rgba(255, 255, 255, 0.03);
 

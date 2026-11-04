@@ -139,7 +139,7 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
     settings = datastore.data['settings']['application']
     settings.pop('mcp_tokens', None)
     # A fresh install has none, so nothing can connect until one is added
-    assert _rpc(client, 'ping', api_key='').status_code == 403
+    assert _rpc(client, 'ping', api_key='').status_code == 401
     token = new_mcp_token(client, name='Claude Code, laptop')
     assert token.startswith('cdio_mcp_') and token != settings.get('api_access_token')
     # Only its hash is stored, never the token itself
@@ -147,11 +147,13 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
     assert token not in str(settings['mcp_tokens']) and stored['hint'] == token[:13]
     assert stored['last_used'] is None
 
-    assert _rpc(client, 'ping').status_code == 403
-    assert _rpc(client, 'ping', api_key='wrong').status_code == 403
+    res = _rpc(client, 'ping')
+    # 401 with a Bearer challenge (MCP spec), so an OAuth client knows to sign in; a wrong Origin stays 403
+    assert res.status_code == 401 and res.headers['WWW-Authenticate'].startswith('Bearer ')
+    assert _rpc(client, 'ping', api_key='wrong').status_code == 401
     # The REST API key is not an MCP token
-    assert _rpc(client, 'ping', api_key=settings.get('api_access_token')).status_code == 403
-    assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {settings.get("api_access_token")}'}).status_code == 403
+    assert _rpc(client, 'ping', api_key=settings.get('api_access_token')).status_code == 401
+    assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {settings.get("api_access_token")}'}).status_code == 401
     # Bearer (what the copyable configs use) or x-api-key
     assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {token}'}).status_code == 200
     assert _rpc(client, 'ping', api_key=token).status_code == 200
@@ -170,7 +172,7 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
     # Required even with "API access requires key" off, there is no open mode
     settings['api_access_token_enabled'] = False
     try:
-        assert _rpc(client, 'ping').status_code == 403
+        assert _rpc(client, 'ping').status_code == 401
         # and a password-protected UI never sends an assistant to the login page
         settings['password'] = 'something'
         assert _rpc(client, 'ping', api_key=token).status_code == 200
@@ -180,7 +182,7 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
 
     # Revoked: refused at once
     settings['mcp_tokens'].clear()
-    assert _rpc(client, 'ping', api_key=token).status_code == 403
+    assert _rpc(client, 'ping', api_key=token).status_code == 401
 
 
 def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
