@@ -1,4 +1,5 @@
 import time
+import pytest
 from flask import url_for
 from email import message_from_string
 from email.policy import default as email_policy
@@ -778,3 +779,59 @@ def test_check_html_notification_with_apprise_format_is_html(client, live_server
     # GHSA-q8xq-qg4x-wphg: apostrophes in diff content are escaped (&#39;) for HTML notifications.
     assert '(added) So let&#39;s see what happens.<br>' in html_content  # the html part
     delete_all_watches(client)
+
+@pytest.mark.parametrize("mail_first", [True, False])
+def test_markdown_to_html_is_applied_per_notification_url(mail_first, live_server, datastore_path):
+    """#4619 - Markdown-to-HTML and the monospaced email wrapper are per notification URL.
+
+    Previously the first URL rewrote the shared format to html, so a later URL skipped the
+    conversion, and a single notify() after the loop sent the last URL's body to every URL.
+    """
+    import json
+    from changedetectionio.notification.handler import process_notification
+
+    markdown_body = "**bold change**\n\nsecond line"
+    converted_html = "<p><strong>bold change</strong></p>"
+    # The echo server only keeps the last message, so make sure we read back this run's email
+    title = f"Markdown notice mail_first={mail_first}"
+
+    mail_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
+    json_url = live_server.url("/test_notification_endpoint?status_code=204").replace("http://", "json://", 1)
+
+    n_object = NotificationContextData(
+        initial_data={
+            "notification_urls": [mail_url, json_url] if mail_first else [json_url, mail_url],
+            "notification_title": title,
+            "notification_body": markdown_body,
+            "notification_format": "markdown",
+            "watch_url": "https://example.com/watched",
+        }
+    )
+
+    sent = process_notification(n_object, live_server.app.config["DATASTORE"])
+
+    with open(os.path.join(datastore_path, "notification.txt")) as f:
+        json_message = json.loads(f.read())["message"]
+
+    msg = message_from_string(get_last_message_from_smtp_server(), policy=email_policy)
+    assert msg['subject'] == title
+    email_html = next(p.get_content() for p in msg.walk() if p.get_content_type() == 'text/html')
+
+    # Both services receive converted HTML, not the original Markdown
+    assert converted_html in json_message
+    assert "**bold change**" not in json_message
+    assert converted_html in email_html
+    assert "**bold change**" not in email_html
+
+    # The monospaced email document is only for mail URLs
+    assert "<!DOCTYPE html>" in email_html
+    assert "<pre" in email_html
+    assert "<!DOCTYPE html>" not in json_message
+
+    # Logged body stays the converted HTML, the email wrapper only goes to Apprise
+    assert len(sent) == 2
+    by_scheme = {entry["url"].split("://", 1)[0]: entry for entry in sent}
+    for scheme in ("mailto", "json"):
+        assert converted_html in by_scheme[scheme]["body"]
+        assert "<!DOCTYPE html>" not in by_scheme[scheme]["body"]
+        assert by_scheme[scheme]["title"] == title
