@@ -419,8 +419,8 @@ Line 3 with tabs and spaces"""
         """A block where every line changed (e.g. a ranked table after a week of games) is
         word-diffed line by line when both sides have the same number of lines, instead of
         dumping the whole old block followed by the whole new block."""
-        before = "1 Miami (59) 7-0 1735\n2 Ohio State (10) 6-1 1681\n3 Georgia 6-1 1511"
-        after  = "1 Miami (62) 8-0 1740\n2 Georgia (7) 7-1 1648\n3 Utah (1) 8-0 1540"
+        before = "1 Miami (59) 7-0 1735\n2 Ohio State (10) 6-1 1681\n3 Oregon 6-1 1511"
+        after  = "1 Miami (62) 8-0 1740\n2 Georgia (7) 7-1 1648\n3 Oregon (1) 7-1 1540"
 
         raw = diff.render_diff(before, after, word_diff=True)
         lines = raw.split("\n")
@@ -451,6 +451,76 @@ Line 3 with tabs and spaces"""
         lines = raw.split("\n")
         self.assertEqual(lines[0], f'row 0 {REMOVED_PLACEMARKER_OPEN}old{REMOVED_PLACEMARKER_CLOSED}{ADDED_PLACEMARKER_OPEN}new{ADDED_PLACEMARKER_CLOSED}')
         self.assertEqual(lines[1], '')
+
+    def test_diff_changed_from_to_identical_line_inside_paired_block(self):
+        """An identical line left inside a paired block is not a change, so it must not
+        leak into {{diff_changed_from}} / {{diff_changed_to}}."""
+        before = "\n".join(f"row {i} old\n" for i in range(150))
+        after  = "\n".join(f"row {i} new\n" for i in range(150))
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertIn("\n\n", raw, "Blank lines land inside the replace block")
+        self.assertEqual(extract_changed_from(raw), "\n".join(["old"] * 150))
+        self.assertEqual(extract_changed_to(raw),   "\n".join(["new"] * 150))
+
+    def test_word_diff_multiline_replace_unrelated_lines_keep_block_view(self):
+        """Same line count doesn't mean line i became line i. A row inserted at the top and
+        another dropped at the bottom shifts every row (the numbering doesn't move, so no line
+        matches), and no pair resembles its partner, so the block keeps the
+        old-lines-then-new-lines view instead of word-diffing neighbours."""
+        before = "1 Mango smoothie recipe\n2 Kale salad with walnuts\n3 Lentil soup for winter"
+        after  = "1 Banana bread in an hour\n2 Mango smoothie recipe\n3 Kale salad with walnuts"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(raw.split("\n"), [
+            f'{CHANGED_PLACEMARKER_OPEN}1 Mango smoothie recipe{CHANGED_PLACEMARKER_CLOSED}',
+            f'{CHANGED_PLACEMARKER_OPEN}2 Kale salad with walnuts{CHANGED_PLACEMARKER_CLOSED}',
+            f'{CHANGED_PLACEMARKER_OPEN}3 Lentil soup for winter{CHANGED_PLACEMARKER_CLOSED}',
+            f'{CHANGED_INTO_PLACEMARKER_OPEN}1 Banana bread in an hour{CHANGED_INTO_PLACEMARKER_CLOSED}',
+            f'{CHANGED_INTO_PLACEMARKER_OPEN}2 Mango smoothie recipe{CHANGED_INTO_PLACEMARKER_CLOSED}',
+            f'{CHANGED_INTO_PLACEMARKER_OPEN}3 Kale salad with walnuts{CHANGED_INTO_PLACEMARKER_CLOSED}',
+        ])
+
+    def test_word_diff_multiline_replace_mixed_similar_and_unrelated(self):
+        """Similar pairs are word-diffed in place; an unrelated pair between them keeps
+        the line view at its own position."""
+        before = "Price $99\nMango smoothie recipe\nTax $5"
+        after  = "Price $149\nKale salad with walnuts\nTax $12"
+
+        raw = diff.render_diff(before, after, word_diff=True)
+
+        self.assertEqual(raw.split("\n"), [
+            f'Price {REMOVED_PLACEMARKER_OPEN}$99{REMOVED_PLACEMARKER_CLOSED}{ADDED_PLACEMARKER_OPEN}$149{ADDED_PLACEMARKER_CLOSED}',
+            f'{CHANGED_PLACEMARKER_OPEN}Mango smoothie recipe{CHANGED_PLACEMARKER_CLOSED}',
+            f'{CHANGED_INTO_PLACEMARKER_OPEN}Kale salad with walnuts{CHANGED_INTO_PLACEMARKER_CLOSED}',
+            f'Tax {REMOVED_PLACEMARKER_OPEN}$5{REMOVED_PLACEMARKER_CLOSED}{ADDED_PLACEMARKER_OPEN}$12{ADDED_PLACEMARKER_CLOSED}',
+        ])
+
+    def test_word_diff_single_line_replace_ignores_similarity(self):
+        """A single replaced line is word-diffed however different it is, as before."""
+        raw = diff.render_diff("1 Mango smoothie recipe", "1 Banana bread in an hour", word_diff=True)
+
+        self.assertNotIn(CHANGED_PLACEMARKER_OPEN, raw)
+        self.assertTrue(raw.startswith(f'1 {REMOVED_PLACEMARKER_OPEN}Mango{REMOVED_PLACEMARKER_CLOSED}{ADDED_PLACEMARKER_OPEN}Banana{ADDED_PLACEMARKER_CLOSED}'))
+
+    def test_word_diff_multiline_replace_over_cap_falls_back(self):
+        """Blocks larger than WORD_DIFF_MAX_PAIRED_LINES keep the whole-block view, so a page
+        where thousands of lines change doesn't cost thousands of diff_main() calls."""
+        cap = diff.WORD_DIFF_MAX_PAIRED_LINES
+        at_cap = diff.render_diff("\n".join(f"item {i} old" for i in range(cap)),
+                                  "\n".join(f"item {i} new" for i in range(cap)), word_diff=True)
+        self.assertNotIn(CHANGED_PLACEMARKER_OPEN, at_cap)
+        self.assertEqual(len(at_cap.split("\n")), cap)
+
+        over_cap = diff.render_diff("\n".join(f"item {i} old" for i in range(cap + 1)),
+                                    "\n".join(f"item {i} new" for i in range(cap + 1)), word_diff=True)
+        lines = over_cap.split("\n")
+        self.assertEqual(len(lines), 2 * (cap + 1))
+        self.assertEqual(lines[0], f'{CHANGED_PLACEMARKER_OPEN}item 0 old{CHANGED_PLACEMARKER_CLOSED}')
+        self.assertEqual(lines[cap + 1], f'{CHANGED_INTO_PLACEMARKER_OPEN}item 0 new{CHANGED_INTO_PLACEMARKER_CLOSED}')
+        self.assertNotIn(REMOVED_PLACEMARKER_OPEN, over_cap)
 
     def test_word_diff_multiline_replace_unequal_lengths_falls_back(self):
         """Different line counts on each side keep the whole-block rendering."""
