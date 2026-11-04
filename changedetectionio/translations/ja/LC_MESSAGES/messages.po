@@ -384,6 +384,63 @@ msgstr "再チェック時間（分）"
 msgid "Import"
 msgstr "インポート"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Sign-in failed"
+msgstr "サインインに失敗しました"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#, python-format
+msgid "Allow %(name)s to use changedetection.io?"
+msgstr "%(name)s に changedetection.io の使用を許可しますか？"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Assistant"
+msgstr "アシスタント"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#, python-format
+msgid "from %(host)s"
+msgstr "%(host)s から"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "The name is what the assistant says about itself, it is not verified."
+msgstr "名前はアシスタントが自称しているもので、確認されていません。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Sends you back to"
+msgstr "戻り先"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Connects to"
+msgstr "接続先"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid ""
+"This assistant only sends you back to this computer (localhost). Only allow it if you started this sign-in yourself, "
+"from an app on this computer."
+msgstr "このアシスタントはこのコンピューター（localhost）にしか戻しません。このコンピューター上のアプリから自分でサインインを始めた場合だけ許可してください。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
+msgstr "MCP サーバー設定の「OAuth」サブタブに表示され、そこで取り消せます。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "What it may do"
+msgstr "許可する操作"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
+msgstr "未選択: すべてのモニター。選択: そのグループのモニターのみ（例: 案件や顧客ごとに1グループ）。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Allow"
+msgstr "許可"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Deny"
+msgstr "拒否"
+
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Expand on hover"
 msgstr "ホバーで展開"
@@ -491,6 +548,27 @@ msgstr "AI / LLM の設定を削除しました。"
 msgid "AI summary cache cleared ({} file(s) removed)."
 msgstr "AI 要約のキャッシュを削除しました（{} 件のファイル）。"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#, python-format
+msgid "Last used %(when)s"
+msgstr "最終使用 %(when)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Never used"
+msgstr "未使用"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Revoke"
+msgstr "取り消す"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+msgid "No assistant has signed in yet."
+msgstr "まだサインインしたアシスタントはいません。"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Access tokens"
@@ -537,15 +615,6 @@ msgid "Connect"
 msgstr "接続"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#, python-format
-msgid "Last used %(when)s"
-msgstr "最終使用 %(when)s"
-
-#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-msgid "Never used"
-msgstr "未使用"
-
-#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 msgid "Only"
 msgstr "のみ"
 
@@ -558,11 +627,6 @@ msgstr "削除されたグループ"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "編集"
-
-#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Revoke"
-msgstr "取り消す"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 msgid "Add your first access token"
@@ -1055,22 +1119,6 @@ msgid "copied"
 msgstr "コピーしました"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
-msgstr "読み取り：一覧、変更、差分、スナップショット。書き込み：追加、変更、再チェック、タグ付け、削除。"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Read: list. Write: create, rename and delete."
-msgstr "読み取り：一覧。書き込み：作成、名前の変更、削除。"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
-msgstr "読み取り：一覧（秘密情報は非表示）とサービスの検索。書き込み：追加、削除、ミュート。"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Health, the check queue and what is being checked right now."
-msgstr "状態、チェックキュー、現在チェック中のもの。"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Connect AI assistants with MCP"
 msgstr "MCP で AI アシスタントを接続"
 
@@ -1237,26 +1285,39 @@ msgid "OAuth connections"
 msgstr "OAuth 接続"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Sign in with OAuth is coming soon"
-msgstr "OAuth によるサインインは近日対応"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
-"ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not "
-"offer yet."
-msgstr "ブラウザ版の ChatGPT と claude.ai はサインイン（OAuth）のあるサーバーにしか接続できず、この MCP サーバーはまだそれに対応していません。"
+"ChatGPT and claude.ai in the browser connect with sign-in (OAuth) instead of an access token: you log in here and "
+"choose what the assistant may do."
+msgstr "ブラウザーの ChatGPT と claude.ai はアクセストークンではなくサインイン（OAuth）で接続します。ここでログインし、アシスタントに許可する操作を選びます。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Assistants you connect that way will be listed here, and you can disconnect them."
-msgstr "その方法で接続したアシスタントはここに表示され、接続を解除できます。"
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://"
+msgstr "このアドレスをアシスタントのカスタムコネクターとして追加してください。HTTPS:// でアクセスできる必要があります"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Sign-in needs a login to sit behind: %(link_start)sset a password%(link_end)s (Settings > General) to allow it."
+msgstr "サインインにはログインが必要です。%(link_start)sパスワードを設定%(link_end)sしてください（設定 > 一般）。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Switch on the MCP server (Overview) to allow sign-in."
+msgstr "サインインを許可するには MCP サーバーをオンにしてください（概要）。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Signed in"
+msgstr "サインイン済み"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Revoke this sign-in?"
+msgstr "このサインインを取り消しますか？"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "The assistant is disconnected at once, it can sign in again."
+msgstr "アシスタントはすぐに切断されます。もう一度サインインできます。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "アクセストークンを編集"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
-msgstr "未選択: すべてのモニター。選択: そのグループのモニターのみ（例: 案件や顧客ごとに1グループ）。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "There are no groups yet. Add some to limit a token to them."
@@ -3808,6 +3869,7 @@ msgstr "フィルタがページで見つからなくなったときに通知を
 msgid "On"
 msgstr "オン"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
@@ -4120,29 +4182,35 @@ msgstr "MCP と OAuth のエンドポイントをオンにする"
 msgid "e.g. Claude Code, laptop"
 msgstr "例：Claude Code、ノート PC"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Monitors"
 msgstr "モニター"
 
-#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+#: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Write"
 msgstr "書き込み"
 
-#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+#: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "None"
 msgstr "なし"
 
-#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+#: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read"
 msgstr "読み取り"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Groups (tags)"
 msgstr "グループ（タグ）"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "システム情報"
@@ -5162,6 +5230,22 @@ msgstr "ブロックされたテキスト"
 #: changedetectionio/templates/_helpers.html changedetectionio/templates/base.html
 msgid "No change-detection will occur because this text exists."
 msgstr "このテキストが存在するため、変更検知は実行されません。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
+msgstr "読み取り：一覧、変更、差分、スナップショット。書き込み：追加、変更、再チェック、タグ付け、削除。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Read: list. Write: create, rename and delete."
+msgstr "読み取り：一覧。書き込み：作成、名前の変更、削除。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
+msgstr "読み取り：一覧（秘密情報は非表示）とサービスの検索。書き込み：追加、削除、ミュート。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Health, the check queue and what is being checked right now."
+msgstr "状態、チェックキュー、現在チェック中のもの。"
 
 #: changedetectionio/templates/_stab.html
 msgid "Settings sections"

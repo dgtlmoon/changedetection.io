@@ -138,12 +138,25 @@ def construct_blueprint(datastore, update_q=None):
         authorization = request.headers.get('Authorization', '')
         given = authorization[7:].strip() if authorization.lower().startswith('bearer ') else ''
         token = find_token(datastore.data['settings']['application'], given or request.headers.get('x-api-key') or '')
+        from changedetectionio.blueprint.mcp import oauth
+        if not token and given and oauth.oauth_available(datastore):
+            # A token from an OAuth sign-in (oauth/store.py, plain hashing, no Authlib), for this server only
+            from changedetectionio.blueprint.mcp.oauth.store import find_by_access_token
+            token = find_by_access_token(datastore.data['settings']['application'], given, oauth.resource(datastore))
         if token:
             g.mcp_token = token
             if mark_used(token):
                 datastore.commit()
             return None
-        return make_response(jsonify({'error': 'Invalid access - MCP access token invalid.'}), 403)
+        # 401, not 403: the MCP spec says a missing or invalid token "MUST receive a HTTP 401 response", with a
+        # WWW-Authenticate challenge, which is how an OAuth client learns that it should sign in
+        response = make_response(jsonify({'error': 'Invalid access - MCP access token invalid.'}), 401)
+        challenge = 'Bearer realm="changedetection.io MCP"'
+        if oauth.oauth_available(datastore):
+            # Where to find the sign-in (RFC 9728), only when it's offered
+            challenge += f', resource_metadata="{oauth.resource_metadata_url(datastore)}", scope="{oauth.SCOPE}"'
+        response.headers['WWW-Authenticate'] = challenge
+        return response
 
     def handle(message, protocol_version):
         """Answer one JSON-RPC message. None for notifications, which get no answer."""
