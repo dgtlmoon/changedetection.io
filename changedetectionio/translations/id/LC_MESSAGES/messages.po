@@ -1370,12 +1370,15 @@ msgstr ""
 "apa yang boleh dilakukan asisten."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over https:"
-msgstr "Tambahkan alamat ini sebagai konektor kustom di asisten, alamat ini harus bisa dijangkau lewat https:"
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
+msgstr "Tambahkan alamat ini sebagai konektor kustom di asisten, alamat ini harus bisa dijangkau lewat HTTPS://:"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Sign-in needs a login to sit behind: set a password (Settings > General) to allow it."
-msgstr "Masuk memerlukan kata sandi di baliknya: atur kata sandi (Pengaturan > Umum) untuk mengizinkannya."
+#, python-format
+msgid "Sign-in needs a login to sit behind: %(link_start)sset a password%(link_end)s (Settings > General) to allow it."
+msgstr ""
+"Masuk memerlukan kata sandi di baliknya: %(link_start)satur kata sandi%(link_end)s (Pengaturan > Umum) untuk "
+"mengizinkannya."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Switch on the MCP server (Overview) to allow sign-in."

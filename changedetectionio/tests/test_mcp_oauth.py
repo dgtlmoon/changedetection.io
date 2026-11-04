@@ -68,6 +68,9 @@ def test_only_offered_with_mcp_on_and_a_password(client, live_server, measure_me
         assert client.get(path).status_code == 404, path
     res = _ping(client)
     assert res.status_code == 401 and 'resource_metadata' not in res.headers['WWW-Authenticate']
+    # The OAuth sub-tab says why, linking to where the password is set (the link comes from the template, not the translation)
+    html = client.get(url_for('settings.llm.mcp_settings_page')).get_data(as_text=True)
+    assert f'<a href="{url_for("settings.settings_page")}#general">set a password</a>' in html
 
     # MCP switched off: everything is a 404, like /mcp/v1 itself
     settings['password'] = 'something'

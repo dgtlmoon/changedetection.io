@@ -1316,12 +1316,13 @@ msgstr ""
 "дозволено асистенту."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over https:"
-msgstr "Додайте цю адресу як власний конектор в асистенті, вона має бути доступна через https:"
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
+msgstr "Додайте цю адресу як власний конектор в асистенті, вона має бути доступна через HTTPS://:"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Sign-in needs a login to sit behind: set a password (Settings > General) to allow it."
-msgstr "Для входу потрібен пароль: задайте його (Налаштування > Загальні), щоб дозволити вхід."
+#, python-format
+msgid "Sign-in needs a login to sit behind: %(link_start)sset a password%(link_end)s (Settings > General) to allow it."
+msgstr "Для входу потрібен пароль: %(link_start)sзадайте його%(link_end)s (Налаштування > Загальні), щоб дозволити вхід."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Switch on the MCP server (Overview) to allow sign-in."

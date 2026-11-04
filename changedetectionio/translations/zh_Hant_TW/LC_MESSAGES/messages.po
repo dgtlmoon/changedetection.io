@@ -1296,12 +1296,13 @@ msgid ""
 msgstr "瀏覽器中的 ChatGPT 與 claude.ai 透過登入（OAuth）而非存取權杖連線：你在這裡登入並選擇助理可以做什麼。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Add this address as a custom connector in the assistant, it needs to be reachable over https:"
-msgstr "在助理中把這個位址新增為自訂連接器，它需要能透過 https 存取："
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://:"
+msgstr "在助理中把這個位址新增為自訂連接器，它需要能透過 HTTPS:// 存取："
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-msgid "Sign-in needs a login to sit behind: set a password (Settings > General) to allow it."
-msgstr "登入需要密碼保護：設定密碼（設定 > 一般）以允許登入。"
+#, python-format
+msgid "Sign-in needs a login to sit behind: %(link_start)sset a password%(link_end)s (Settings > General) to allow it."
+msgstr "登入需要密碼保護：%(link_start)s設定密碼%(link_end)s（設定 > 一般）以允許登入。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Switch on the MCP server (Overview) to allow sign-in."
