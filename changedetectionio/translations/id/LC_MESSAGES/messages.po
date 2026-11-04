@@ -920,11 +920,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
-"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
-"Off if summaries are being cut short."
+"For Gemini 2.5+ models. For Claude Haiku 5.5, Sonnet 5 and Sonnet 5.5, Off switches thinking off and any other value "
+"keeps the model default. Thinking tokens improve reasoning quality but count against the output budget. Set to Off if"
+" summaries are being cut short."
 msgstr ""
-"Khusus model Gemini 2.5+. Token thinking meningkatkan kualitas reasoning tetapi mengurangi anggaran output. Atur ke "
-"Nonaktif jika ringkasan terpotong."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid ""
