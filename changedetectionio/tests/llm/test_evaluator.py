@@ -354,6 +354,20 @@ class TestEvaluateChange:
         assert result['important'] is True
         assert result['summary'] == ''
 
+    def test_empty_llm_answer_passes_through_and_is_not_cached(self):
+        """Empty content (e.g. a reasoning model hitting max_tokens) is no verdict: fail open, don't cache."""
+        from changedetectionio.llm.evaluator import evaluate_change
+
+        ds = _make_datastore(llm_cfg={'model': 'gpt-4o-mini', 'api_key': 'sk-test'})
+        watch = _make_watch(llm_intent='flag price drops')
+
+        with patch('changedetectionio.llm.client.completion', return_value=('', 400)):
+            result = evaluate_change(watch, ds, diff='- $500\n+ $400')
+
+        assert result == {'important': True, 'summary': ''}
+        assert not watch.get('llm_evaluation_cache')
+        assert watch.get('llm_tokens_used_cumulative') == 400
+
     def test_unimportant_result_from_llm(self):
         from changedetectionio.llm.evaluator import evaluate_change
 

@@ -949,7 +949,6 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0
         output_tokens = _resp[3] if len(_resp) > 3 else 0
-        result = parse_eval_response(raw)
     except Exception as e:
         logger.warning(f"LLM evaluation failed for {watch.get('uuid')}: {e}")
         # On failure: don't suppress the notification — pass through as important
@@ -963,6 +962,14 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
                              input_tokens=input_tokens,
                              output_tokens=output_tokens,
                              model=cfg['model'])
+
+    try:
+        result = parse_eval_response(raw)
+    except ValueError as e:
+        # Empty/unparsable answer (e.g. cut off at max_tokens) is no verdict: pass the change
+        # through like the other failures, and don't cache it as one.
+        logger.warning(f"LLM evaluation for {watch.get('uuid')} returned no usable answer ({e}) — passing change through as important")
+        return {'important': True, 'summary': ''}
 
     # Store in cache
     if 'llm_evaluation_cache' not in watch or watch['llm_evaluation_cache'] is None:
