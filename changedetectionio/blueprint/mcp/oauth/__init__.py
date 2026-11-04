@@ -86,6 +86,11 @@ def construct_blueprint(datastore):
         })
 
     @oauth_blueprint.route('/.well-known/oauth-authorization-server', methods=['GET'])
+    # The same document where clients look when the issuer has a path (behind a proxy at /some-prefix, like every
+    # hosted instance): RFC 8414's place for that is at the host root, /.well-known/oauth-authorization-server/
+    # some-prefix, which never reaches this instance. Clients then try {issuer}/.well-known/openid-configuration, which
+    # does (MCP spec, authorization server discovery). No openid scope is offered, so it's no OpenID provider
+    @oauth_blueprint.route('/.well-known/openid-configuration', methods=['GET'])
     def authorization_server_metadata():
         # RFC 8414. Public clients only (CIMD forbids client secrets), authorization code with PKCE S256, refresh tokens
         base = issuer(datastore)

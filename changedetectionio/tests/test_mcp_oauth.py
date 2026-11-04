@@ -47,6 +47,10 @@ def test_discovery(client, live_server, measure_memory_usage, datastore_path):
     assert meta['authorization_response_iss_parameter_supported'] is True
     assert meta['authorization_endpoint'] == f'{base}/oauth/authorize' and meta['token_endpoint'] == f'{base}/oauth/token'
 
+    # Also at {issuer}/.well-known/openid-configuration: behind a path prefix (/big-balls/mcp/v1), RFC 8414's address is
+    # at the host root and never reaches the instance, and this is where clients look next
+    assert client.get('/.well-known/openid-configuration').json == meta
+
     # Behind a proxy, the Base URL setting is the address clients see
     settings['base_url'] = 'https://cd.example.com/instance/'
     try:
@@ -60,7 +64,7 @@ def test_discovery(client, live_server, measure_memory_usage, datastore_path):
 def test_only_offered_with_mcp_on_and_a_password(client, live_server, measure_memory_usage, datastore_path):
     settings = client.application.config['DATASTORE'].data['settings']['application']
     paths = ('/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp/v1',
-             '/.well-known/oauth-authorization-server')
+             '/.well-known/oauth-authorization-server', '/.well-known/openid-configuration')
 
     # No password: no login to sit behind, so no sign-in, and the 401 doesn't point at one
     settings['password'] = False
@@ -317,3 +321,40 @@ def test_cimd_url_and_address_rules():
     for private in ('127.0.0.1', '10.0.0.5', '192.168.1.1', '169.254.169.254', '::1', 'fd00::1', '::ffff:127.0.0.1', '0.0.0.0'):
         assert not is_public_address(private), private
     assert is_public_address('104.18.32.47') and is_public_address('2606:4700::6810:2c2f')
+
+
+def test_endpoints_called_by_the_assistant_skip_csrf(client, live_server, measure_memory_usage, datastore_path, logged_in):
+    # The tests switch CSRF off; the assistant's server posts to /oauth/register and /oauth/token without a CSRF
+    # token, so check those really are exempt with it on (and the consent form isn't)
+    client.application.config['WTF_CSRF_ENABLED'] = True
+    try:
+        res = client.post('/oauth/register', json={'client_name': 'Claude', 'redirect_uris': [CALLBACK],
+                                                    'grant_types': ['authorization_code', 'refresh_token'],
+                                                    'response_types': ['code'], 'token_endpoint_auth_method': 'none'})
+        assert res.status_code == 201, res.get_data(as_text=True)[:300]
+        res = client.post('/oauth/token', data={'grant_type': 'refresh_token', 'refresh_token': 'x', 'client_id': 'y'})
+        assert res.status_code != 400 or res.is_json, "refused by CSRF, not by OAuth"
+        verifier, challenge = _pkce()
+        res = client.post(_authorize_url(_register(client), challenge, MCP_URL), data=dict(GRID, name='x', decision='approve'))
+        assert res.status_code == 400 and 'CSRF' in res.get_data(as_text=True)
+    finally:
+        client.application.config['WTF_CSRF_ENABLED'] = False
+
+
+def test_discovery_under_a_sub_path(client, live_server, measure_memory_usage, datastore_path):
+    # Installs at / and at a sub-path (site.com/changedetection/) both get found: everything is built from the issuer,
+    # which includes the sub-path, and the metadata is also at {issuer}/.well-known/openid-configuration, where clients
+    # look when RFC 8414's host-root address (outside the sub-path) doesn't reach the instance
+    base = 'http://localhost/changedetection'
+    challenge = _ping_at(client, base).headers['WWW-Authenticate']
+    assert f'resource_metadata="{base}/.well-known/oauth-protected-resource/mcp/v1"' in challenge
+    resource_meta = client.get('/.well-known/oauth-protected-resource/mcp/v1', base_url=base + '/').json
+    assert resource_meta == {**resource_meta, 'resource': f'{base}/mcp/v1', 'authorization_servers': [base]}
+    meta = client.get('/.well-known/openid-configuration', base_url=base + '/').json
+    assert meta['issuer'] == base and meta['authorization_endpoint'] == f'{base}/oauth/authorize'
+    assert meta['registration_endpoint'] == f'{base}/oauth/register' and meta['token_endpoint'] == f'{base}/oauth/token'
+
+
+def _ping_at(client, base):
+    return client.post('/mcp/v1', base_url=base + '/', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}),
+                       content_type='application/json')
