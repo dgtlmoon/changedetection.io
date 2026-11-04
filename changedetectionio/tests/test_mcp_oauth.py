@@ -372,3 +372,6 @@ def test_consent_form_keeps_the_sub_path(client, live_server, measure_memory_usa
     res = client.post(action.replace('&amp;', '&').removeprefix('/big-balls'), data=dict(GRID, name='x', decision='approve'),
                       base_url='http://localhost/big-balls/')
     assert res.status_code == 302 and 'code=' in res.location
+    # A crafted link with bytes that aren't UTF-8 is just another request, not a 500
+    res = client.get(_authorize_url(client_id, challenge, MCP_URL) + '&x=%FF%FE', base_url='http://localhost/big-balls/')
+    assert res.status_code in (200, 400)
