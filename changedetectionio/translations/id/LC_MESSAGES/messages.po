@@ -627,7 +627,6 @@ msgid "Copy the command or config for your assistant."
 msgstr "Salin perintah atau konfigurasi untuk asisten Anda."
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Connect"
 msgstr "Hubungkan"
 
@@ -1184,6 +1183,15 @@ msgid "The MCP server is switched off on this installation."
 msgstr "Server MCP dimatikan di instalasi ini."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Connect: %(method)s"
+msgstr "Hubungkan: %(method)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/_common_fields.html
+msgid "Token"
+msgstr "Token"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
 "use other applications as tools."
@@ -1385,6 +1393,74 @@ msgstr ""
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Switch on the MCP server (Overview) to allow sign-in."
 msgstr "Aktifkan server MCP (Ringkasan) untuk mengizinkan masuk."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai."
+msgstr "Buka %(link_start)sCustomize > Connectors%(link_end)s di claude.ai."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click the add button, then \"Add custom connector\"."
+msgstr "Klik tombol tambah, lalu \"Add custom connector\"."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:"
+msgstr "Beri nama, misalnya changedetection.io, dan tempel ini sebagai URL server MCP jarak jauh:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Leave the sign-in setting as Claude detects it, then click Add."
+msgstr "Biarkan pengaturan masuk seperti yang dideteksi Claude, lalu klik Add."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click Connect: you come here to log in, choose what Claude may do and click Allow, then you are sent back to Claude."
+msgstr ""
+"Klik Connect: Anda datang ke sini untuk masuk, memilih apa yang boleh dilakukan Claude dan klik Izinkan, lalu "
+"dikembalikan ke Claude."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"On Team and Enterprise plans an Owner adds it under Organization settings > Connectors, then each member clicks "
+"Connect."
+msgstr ""
+"Pada paket Team dan Enterprise, seorang Owner menambahkannya di Organization settings > Connectors, lalu setiap "
+"anggota klik Connect."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "%(link_start)sClaude help: custom connectors%(link_end)s"
+msgstr "%(link_start)sBantuan Claude: konektor kustom%(link_end)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"In ChatGPT, open Settings > Apps & Connectors > Advanced settings and switch on Developer mode. On some accounts it "
+"is under Settings > Security."
+msgstr ""
+"Di ChatGPT, buka Settings > Apps & Connectors > Advanced settings dan aktifkan Developer mode. Di beberapa akun "
+"letaknya di Settings > Security."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Back in Apps & Connectors, click Create (or \"Add custom connector\")."
+msgstr "Kembali di Apps & Connectors, klik Create (atau \"Add custom connector\")."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, paste this as the MCP server URL and choose OAuth as the authentication:"
+msgstr "Beri nama, tempel ini sebagai URL server MCP dan pilih OAuth sebagai autentikasi:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Confirm and click Create: you come here to log in, choose what ChatGPT may do and click Allow."
+msgstr ""
+"Konfirmasi dan klik Create: Anda datang ke sini untuk masuk, memilih apa yang boleh dilakukan ChatGPT dan klik "
+"Izinkan."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "In a chat, click +, choose Developer mode and pick the connector."
+msgstr "Di obrolan, klik +, pilih Developer mode dan pilih konektornya."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Custom connectors need a paid ChatGPT plan; on Business and Enterprise plans an admin may need to allow them first."
+msgstr ""
+"Konektor kustom memerlukan paket ChatGPT berbayar; pada paket Business dan Enterprise mungkin admin perlu "
+"mengizinkannya dulu."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Signed in"
@@ -4971,10 +5047,6 @@ msgstr "templating pada judul, isi, dan URL notifikasi, serta token dari bawah."
 #: changedetectionio/templates/_common_fields.html
 msgid "Show token/placeholders"
 msgstr "Tampilkan token/placeholder"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Token"
-msgstr "Token"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Description"

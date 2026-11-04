@@ -619,7 +619,6 @@ msgid "Copy the command or config for your assistant."
 msgstr "Скопіюйте команду або конфігурацію для свого асистента."
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Connect"
 msgstr "Підключення"
 
@@ -1130,6 +1129,15 @@ msgid "The MCP server is switched off on this installation."
 msgstr "Сервер MCP вимкнено в цій установці."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Connect: %(method)s"
+msgstr "Підключення: %(method)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/_common_fields.html
+msgid "Token"
+msgstr "Токен"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
 "use other applications as tools."
@@ -1329,6 +1337,72 @@ msgstr "Для входу потрібен пароль: %(link_start)sзада�
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Switch on the MCP server (Overview) to allow sign-in."
 msgstr "Увімкніть сервер MCP (Огляд), щоб дозволити вхід."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai."
+msgstr "Відкрийте %(link_start)sCustomize > Connectors%(link_end)s на claude.ai."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click the add button, then \"Add custom connector\"."
+msgstr "Натисніть кнопку додавання, потім «Add custom connector»."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:"
+msgstr "Дайте назву, наприклад changedetection.io, і вставте це як URL віддаленого сервера MCP:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Leave the sign-in setting as Claude detects it, then click Add."
+msgstr "Залиште налаштування входу таким, як його визначив Claude, і натисніть Add."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click Connect: you come here to log in, choose what Claude may do and click Allow, then you are sent back to Claude."
+msgstr ""
+"Натисніть Connect: ви потрапите сюди, увійдете, виберете, що дозволено Claude, натиснете «Дозволити» і повернетеся до"
+" Claude."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"On Team and Enterprise plans an Owner adds it under Organization settings > Connectors, then each member clicks "
+"Connect."
+msgstr ""
+"У планах Team і Enterprise Owner додає його в Organization settings > Connectors, потім кожен учасник натискає "
+"Connect."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "%(link_start)sClaude help: custom connectors%(link_end)s"
+msgstr "%(link_start)sДовідка Claude: власні конектори%(link_end)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"In ChatGPT, open Settings > Apps & Connectors > Advanced settings and switch on Developer mode. On some accounts it "
+"is under Settings > Security."
+msgstr ""
+"У ChatGPT відкрийте Settings > Apps & Connectors > Advanced settings і ввімкніть Developer mode. В деяких облікових "
+"записах він у Settings > Security."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Back in Apps & Connectors, click Create (or \"Add custom connector\")."
+msgstr "Поверніться в Apps & Connectors і натисніть Create (або «Add custom connector»)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, paste this as the MCP server URL and choose OAuth as the authentication:"
+msgstr "Дайте назву, вставте це як URL сервера MCP і виберіть OAuth для автентифікації:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Confirm and click Create: you come here to log in, choose what ChatGPT may do and click Allow."
+msgstr "Підтвердьте й натисніть Create: ви потрапите сюди, увійдете, виберете, що дозволено ChatGPT, і натиснете «Дозволити»."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "In a chat, click +, choose Developer mode and pick the connector."
+msgstr "У чаті натисніть +, виберіть Developer mode і конектор."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Custom connectors need a paid ChatGPT plan; on Business and Enterprise plans an admin may need to allow them first."
+msgstr ""
+"Власні конектори потребують платного плану ChatGPT; у планах Business і Enterprise їх, можливо, спершу має дозволити "
+"адміністратор."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Signed in"
@@ -4890,10 +4964,6 @@ msgstr "шаблонізацію в заголовку, тілі та URL спо
 #: changedetectionio/templates/_common_fields.html
 msgid "Show token/placeholders"
 msgstr "Показати токени/заповнювачі"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Token"
-msgstr "Токен"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Description"

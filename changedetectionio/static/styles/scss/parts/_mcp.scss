@@ -492,6 +492,23 @@
     }
   }
 
+  // ── OAuth sub-tab: how to add it in claude.ai and ChatGPT ──
+  .mcp-connect-steps {
+    max-width: 46rem;
+    margin: 0.4rem 0 0.6rem;
+    padding-left: 1.4rem;
+
+    li {
+      margin: 0.35rem 0;
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .click-to-copy-inline {
+      margin-top: 0.25rem;
+    }
+  }
+
   // ── No tokens yet: the next step, so a blue call to action rather than an empty-state note ──
   .mcp-token-cta {
     display: flex;
