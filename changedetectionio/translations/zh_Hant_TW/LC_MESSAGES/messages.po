@@ -389,13 +389,13 @@ msgid "Sign-in failed"
 msgstr "登入失敗"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-#, python-format
-msgid "Allow %(name)s to use changedetection.io?"
-msgstr "允許 %(name)s 使用 changedetection.io？"
+msgid "OAuth authentication request needs your permission"
+msgstr "OAuth 驗證請求需要你的許可"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Assistant"
-msgstr "助理"
+#, python-format
+msgid "%(name)s wants to use your changedetection.io"
+msgstr "%(name)s 想使用你的 changedetection.io"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #, python-format
@@ -407,26 +407,22 @@ msgid "The name is what the assistant says about itself, it is not verified."
 msgstr "名稱是助理對自己的描述，未經驗證。"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Sends you back to"
-msgstr "返回到"
-
-#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Connects to"
-msgstr "連線到"
-
-#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid ""
 "This assistant only sends you back to this computer (localhost). Only allow it if you started this sign-in yourself, "
 "from an app on this computer."
 msgstr "此助理只會把你送回這台電腦（localhost）。只有在你自己從這台電腦上的應用程式發起此登入時才允許。"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
-msgstr "顯示在 MCP 伺服器設定的「OAuth」子分頁中，可在那裡撤銷。"
+msgid "It will be able to"
+msgstr "它將能夠"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "What it may do"
-msgstr "允許做什麼"
+msgid "Change what it can do"
+msgstr "變更它可以做什麼"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
+msgstr "顯示在 MCP 伺服器設定的「OAuth」子分頁中，可在那裡撤銷。"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
@@ -434,12 +430,24 @@ msgid "None ticked: every monitor. Ticked: only the monitors in those groups, fo
 msgstr "不勾選：所有監視器。勾選：僅這些群組中的監視器，例如每個案件或客戶一個群組。"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Allow"
-msgstr "允許"
+msgid "Connects to"
+msgstr "連線到"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
-msgid "Deny"
-msgstr "拒絕"
+#, python-format
+msgid "You will be sent back to %(host)s."
+msgstr "你將被送回 %(host)s。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "取消"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Allow"
+msgstr "允許"
 
 #: changedetectionio/blueprint/menu_modes.py
 msgid "Expand on hover"
@@ -859,12 +867,6 @@ msgstr "這將會移除您儲存的 AI 供應商、模型和 API 金鑰。"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove"
 msgstr "移除"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "取消"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove provider"
@@ -4179,18 +4181,21 @@ msgstr "例如 Claude Code，筆電"
 msgid "Monitors"
 msgstr "監視器"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Write"
 msgstr "寫入"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "None"
 msgstr "無"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html

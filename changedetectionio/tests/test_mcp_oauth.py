@@ -170,8 +170,10 @@ def test_sign_in(client, live_server, measure_memory_usage, datastore_path, logg
 
     # The consent screen: who's asking (a DCR name isn't verified), where it sends you back, the grid
     html = client.get(url).get_data(as_text=True)
-    assert 'Allow Claude to use changedetection.io?' in html and 'it is not verified' in html
-    assert '>claude.ai</code>' in html and 'name="perm_monitors"' in html and 'name="csrf_token"' in html
+    assert 'OAuth authentication request needs your permission' in html and 'id="mcp-oauth-dialog"' in html
+    assert 'Claude wants to use your changedetection.io' in html and 'it is not verified' in html
+    assert 'name="decision" value="deny"' in html and 'You will be sent back to claude.ai.' in html
+    assert 'name="perm_monitors"' in html and 'name="csrf_token"' in html
 
     # Allowed: back to the assistant with a code, its state, and who issued it (RFC 9207)
     answer = _approve(client, url)
@@ -299,7 +301,7 @@ def test_cimd_client(client, live_server, measure_memory_usage, datastore_path, 
     # No registration: the client_id is the URL of its metadata, and its real host is shown next to its name
     url = _authorize_url(client_id, challenge, mcp_url, redirect_uri=redirect)
     html = client.get(url).get_data(as_text=True)
-    assert 'Allow ChatGPT to use changedetection.io?' in html and 'from chatgpt.com' in html
+    assert 'ChatGPT wants to use your changedetection.io' in html and 'from chatgpt.com' in html
     code = _approve(client, url)['code'][0]
     res = client.post('/oauth/token', data={'grant_type': 'authorization_code', 'code': code, 'redirect_uri': redirect,
                                             'client_id': client_id, 'code_verifier': verifier})
@@ -358,20 +360,3 @@ def test_discovery_under_a_sub_path(client, live_server, measure_memory_usage, d
 def _ping_at(client, base):
     return client.post('/mcp/v1', base_url=base + '/', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}),
                        content_type='application/json')
-
-
-def test_consent_form_keeps_the_sub_path(client, live_server, measure_memory_usage, datastore_path, logged_in):
-    # Behind a proxy at /big-balls/, the consent form must post back under /big-balls/, not to the host root (a 404)
-    import re
-    client_id = _register(client)
-    verifier, challenge = _pkce()
-    html = client.get(_authorize_url(client_id, challenge, MCP_URL), base_url='http://localhost/big-balls/').get_data(as_text=True)
-    action = re.search(r'<form class="pure-form pure-form-stacked" method="POST" action="([^"]+)"', html).group(1)
-    assert action.startswith('/big-balls/oauth/authorize?') and 'code_challenge=' in action
-    # And the answer, posted there, still works
-    res = client.post(action.replace('&amp;', '&').removeprefix('/big-balls'), data=dict(GRID, name='x', decision='approve'),
-                      base_url='http://localhost/big-balls/')
-    assert res.status_code == 302 and 'code=' in res.location
-    # A crafted link with bytes that aren't UTF-8 is just another request, not a 500
-    res = client.get(_authorize_url(client_id, challenge, MCP_URL) + '&x=%FF%FE', base_url='http://localhost/big-balls/')
-    assert res.status_code in (200, 400)

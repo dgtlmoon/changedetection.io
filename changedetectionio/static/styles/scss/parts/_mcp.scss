@@ -597,16 +597,57 @@
   }
 }
 
-// The OAuth consent screen (blueprint/mcp/oauth/templates/mcp-oauth-consent.html)
+// The OAuth consent dialog (blueprint/mcp/oauth/templates/mcp-oauth-consent.html), the token overlay's look
 .mcp-oauth-consent {
-  max-width: 48rem;
+  .mcp-oauth-who {
+    margin: 0 0 1rem;
 
-  h2 {
-    margin-top: 0;
+    strong {
+      display: block;
+      font-size: 1.05rem;
+    }
   }
 
-  .mcp-fields dd .mcp-hint {
-    display: block;
+  .mcp-perm-summary {
+    margin: 0 0 1rem;
+  }
+
+  .mcp-chip {
+    cursor: default;
+  }
+
+  // The lock, top left in the header, in the MCP page's incoming (teal) accent; amber when sign-in failed
+  .modal-header .mcp-oauth-lock {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: var(--color-ai-incoming-soft);
+    color: var(--color-ai-incoming);
+
+    svg {
+      width: 1.2rem;
+      height: 1.2rem;
+      stroke: currentColor;
+      fill: none;
+    }
+
+    &.failed {
+      background: rgba(255, 180, 0, 0.12);
+      color: #c07800;
+    }
+  }
+
+  .mcp-oauth-change {
+    margin: 0 0 1rem;
+
+    summary {
+      cursor: pointer;
+      color: var(--color-link);
+      margin-bottom: 0.6rem;
+    }
   }
 }
 
