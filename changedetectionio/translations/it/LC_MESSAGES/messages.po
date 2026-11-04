@@ -620,7 +620,6 @@ msgid "Copy the command or config for your assistant."
 msgstr "Copia il comando o la configurazione per il tuo assistente."
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Connect"
 msgstr "Connetti"
 
@@ -1131,6 +1130,15 @@ msgid "The MCP server is switched off on this installation."
 msgstr "Il server MCP è disattivato su questa installazione."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Connect: %(method)s"
+msgstr "Connetti: %(method)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/_common_fields.html
+msgid "Token"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
 "use other applications as tools."
@@ -1338,6 +1346,72 @@ msgstr ""
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Switch on the MCP server (Overview) to allow sign-in."
 msgstr "Attiva il server MCP (Panoramica) per consentire l'accesso."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai."
+msgstr "Apri %(link_start)sCustomize > Connectors%(link_end)s su claude.ai."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click the add button, then \"Add custom connector\"."
+msgstr "Fai clic sul pulsante di aggiunta, poi su \"Add custom connector\"."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:"
+msgstr "Dagli un nome, ad esempio changedetection.io, e incolla questo come URL del server MCP remoto:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Leave the sign-in setting as Claude detects it, then click Add."
+msgstr "Lascia l'impostazione di accesso come la rileva Claude, poi fai clic su Add."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click Connect: you come here to log in, choose what Claude may do and click Allow, then you are sent back to Claude."
+msgstr ""
+"Fai clic su Connect: arrivi qui per accedere, scegliere cosa può fare Claude e fare clic su Consenti, poi torni a "
+"Claude."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"On Team and Enterprise plans an Owner adds it under Organization settings > Connectors, then each member clicks "
+"Connect."
+msgstr ""
+"Con i piani Team ed Enterprise un Owner lo aggiunge in Organization settings > Connectors, poi ogni membro fa clic su"
+" Connect."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "%(link_start)sClaude help: custom connectors%(link_end)s"
+msgstr "%(link_start)sGuida di Claude: connettori personalizzati%(link_end)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"In ChatGPT, open Settings > Apps & Connectors > Advanced settings and switch on Developer mode. On some accounts it "
+"is under Settings > Security."
+msgstr ""
+"In ChatGPT apri Settings > Apps & Connectors > Advanced settings e attiva Developer mode. Su alcuni account si trova "
+"in Settings > Security."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Back in Apps & Connectors, click Create (or \"Add custom connector\")."
+msgstr "Tornato in Apps & Connectors, fai clic su Create (o \"Add custom connector\")."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, paste this as the MCP server URL and choose OAuth as the authentication:"
+msgstr "Dagli un nome, incolla questo come URL del server MCP e scegli OAuth come autenticazione:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Confirm and click Create: you come here to log in, choose what ChatGPT may do and click Allow."
+msgstr "Conferma e fai clic su Create: arrivi qui per accedere, scegliere cosa può fare ChatGPT e fare clic su Consenti."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "In a chat, click +, choose Developer mode and pick the connector."
+msgstr "In una chat fai clic su +, scegli Developer mode e seleziona il connettore."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Custom connectors need a paid ChatGPT plan; on Business and Enterprise plans an admin may need to allow them first."
+msgstr ""
+"I connettori personalizzati richiedono un piano ChatGPT a pagamento; con Business ed Enterprise un amministratore "
+"potrebbe doverli consentire prima."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Signed in"
@@ -4867,10 +4941,6 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Show token/placeholders"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Token"
 msgstr ""
 
 #: changedetectionio/templates/_common_fields.html

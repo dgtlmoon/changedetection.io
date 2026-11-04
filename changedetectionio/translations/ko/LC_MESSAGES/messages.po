@@ -616,7 +616,6 @@ msgid "Copy the command or config for your assistant."
 msgstr "어시스턴트용 명령이나 설정을 복사하세요."
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Connect"
 msgstr "연결"
 
@@ -1133,6 +1132,15 @@ msgid "The MCP server is switched off on this installation."
 msgstr "이 설치에서는 MCP 서버가 꺼져 있습니다."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Connect: %(method)s"
+msgstr "연결: %(method)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/_common_fields.html
+msgid "Token"
+msgstr "토큰"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
 "use other applications as tools."
@@ -1310,6 +1318,66 @@ msgstr "로그인하려면 비밀번호가 필요합니다. %(link_start)s비밀
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Switch on the MCP server (Overview) to allow sign-in."
 msgstr "로그인을 허용하려면 MCP 서버를 켜세요(개요)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai."
+msgstr "claude.ai에서 %(link_start)sCustomize > Connectors%(link_end)s를 여세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click the add button, then \"Add custom connector\"."
+msgstr "추가 버튼을 클릭한 다음 \"Add custom connector\"를 선택하세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:"
+msgstr "이름(예: changedetection.io)을 입력하고 원격 MCP 서버 URL로 이것을 붙여넣으세요:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Leave the sign-in setting as Claude detects it, then click Add."
+msgstr "로그인 설정은 Claude가 감지한 대로 두고 Add를 클릭하세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click Connect: you come here to log in, choose what Claude may do and click Allow, then you are sent back to Claude."
+msgstr "Connect를 클릭하면 여기서 로그인하고 Claude에 허용할 작업을 고른 뒤 허용을 클릭하면 Claude로 돌아갑니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"On Team and Enterprise plans an Owner adds it under Organization settings > Connectors, then each member clicks "
+"Connect."
+msgstr "Team 및 Enterprise 플랜에서는 Owner가 Organization settings > Connectors에서 추가한 뒤 각 구성원이 Connect를 클릭합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "%(link_start)sClaude help: custom connectors%(link_end)s"
+msgstr "%(link_start)sClaude 도움말: 사용자 지정 커넥터%(link_end)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"In ChatGPT, open Settings > Apps & Connectors > Advanced settings and switch on Developer mode. On some accounts it "
+"is under Settings > Security."
+msgstr ""
+"ChatGPT에서 Settings > Apps & Connectors > Advanced settings를 열고 Developer mode를 켜세요. 일부 계정에서는 Settings > Security에 "
+"있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Back in Apps & Connectors, click Create (or \"Add custom connector\")."
+msgstr "Apps & Connectors로 돌아가 Create(또는 \"Add custom connector\")를 클릭하세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, paste this as the MCP server URL and choose OAuth as the authentication:"
+msgstr "이름을 입력하고 MCP 서버 URL로 이것을 붙여넣은 뒤 인증으로 OAuth를 선택하세요:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Confirm and click Create: you come here to log in, choose what ChatGPT may do and click Allow."
+msgstr "확인하고 Create를 클릭하면 여기서 로그인하고 ChatGPT에 허용할 작업을 고른 뒤 허용을 클릭합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "In a chat, click +, choose Developer mode and pick the connector."
+msgstr "채팅에서 +를 클릭하고 Developer mode를 선택한 뒤 커넥터를 고르세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Custom connectors need a paid ChatGPT plan; on Business and Enterprise plans an admin may need to allow them first."
+msgstr "사용자 지정 커넥터는 유료 ChatGPT 플랜이 필요합니다. Business 및 Enterprise 플랜에서는 관리자가 먼저 허용해야 할 수 있습니다."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Signed in"
@@ -4842,10 +4910,6 @@ msgstr "알림 제목, 본문, URL에 아래 토큰과 함께 템플릿을 사�
 #: changedetectionio/templates/_common_fields.html
 msgid "Show token/placeholders"
 msgstr "토큰/자리표시자 보기"
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Token"
-msgstr "토큰"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Description"
