@@ -1030,7 +1030,14 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
     def extra_tab_content(self):
         return None
 
+    def extra_form_template(self):
+        # Template name (on the Flask loader) for the processor's extra tab, rendered with render_template()
+        # so its text is translatable. Preferred over extra_form_content().
+        return None
+
     def extra_form_content(self):
+        # Legacy: raw Jinja2 source for the extra tab, kept for third-party processor plugins.
+        # Text in a Python string is never extracted by Babel, use extra_form_template() instead.
         return None
 
     def validate(self, **kwargs):
