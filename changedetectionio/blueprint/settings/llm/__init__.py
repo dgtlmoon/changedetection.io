@@ -107,6 +107,19 @@ def mcp_template_context(datastore):
     )
 
 
+def limit_permission_choices(form, cap):
+    """Take the levels above cap ({area: level}) out of a permissions grid's rows, and lower a row set above it. The
+    server checks the levels again, this is so the grid only offers what can be had."""
+    from changedetectionio.blueprint.mcp.tools import LEVELS
+    for area, top in cap.items():
+        field = form[f'perm_{area}'] if f'perm_{area}' in form else None
+        if field is None:
+            continue
+        field.choices = [c for c in field.choices if c[0] in LEVELS and LEVELS.index(c[0]) <= LEVELS.index(top)]
+        if field.data not in [c[0] for c in field.choices]:
+            field.data = top
+
+
 def mcp_token_form(datastore, formdata=None):
     """The add / edit token form, its group checkboxes being the tags that exist now."""
     from changedetectionio import forms
@@ -204,19 +217,28 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     def mcp_settings_page():
         """The "MCP Server" tab: the on/off switch, the address, the access tokens and how to connect assistants."""
         from changedetectionio import forms
+        from changedetectionio.blueprint.mcp import calls_per_minute
+        from changedetectionio.blueprint.mcp.tools import PERMISSION_DEFAULTS, highest_levels, oauth_cap
         from changedetectionio.llm.evaluator import is_llm_features_disabled
         if is_llm_features_disabled():
             abort(404)
         app_settings = datastore.data['settings']['application']
         form = forms.globalMCPSettingsPageForm(formdata=request.form if request.method == 'POST' else None,
                                                data={'enabled': bool(app_settings.get('mcp_enabled')),
-                                                     'note': app_settings.get('mcp_note') or ''})
+                                                     'note': app_settings.get('mcp_note') or '',
+                                                     'calls_per_minute': calls_per_minute(app_settings),
+                                                     'oauth_cap': {f'perm_{a}': level for a, level in oauth_cap(app_settings).items()}})
+        # The cap's rows only go as high as each row can (System info: read)
+        limit_permission_choices(form.oauth_cap.form, highest_levels())
         if request.method == 'POST' and form.validate():
             was_enabled = bool(app_settings.get('mcp_enabled'))
             enabled = bool(form.enabled.data)
             app_settings['mcp_enabled'] = enabled
             # Line endings as the browser sends them (\r\n) would reach the assistant as they are
             app_settings['mcp_note'] = (form.note.data or '').replace('\r\n', '\n').strip()
+            if form.calls_per_minute.data is not None:
+                app_settings['mcp_calls_per_minute'] = int(form.calls_per_minute.data)
+            app_settings['mcp_oauth_max_permissions'] = {a: form.oauth_cap[f'perm_{a}'].data for a in PERMISSION_DEFAULTS}
             if enabled == was_enabled:
                 message = gettext("MCP settings saved.")
             elif enabled:

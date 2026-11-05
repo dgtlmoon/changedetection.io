@@ -1413,6 +1413,24 @@ msgid "Read-only tokens, and tokens limited to some groups, are always told that
 msgstr "只读令牌和仅限部分分组的令牌，总会在此说明之后被告知这一点。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Sign-in limits"
+msgstr "登录限制"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The most a sign-in (OAuth, e.g. ChatGPT or claude.ai) may choose on its consent screen. For example Read everywhere, "
+"on a demo whose password you share. Lowering it also applies to sign-ins made before. Access tokens are not affected."
+msgstr "登录（OAuth，例如 ChatGPT 或 claude.ai）在授权页面上最多可选择的权限。例如在共享密码的演示中全部设为“读取”。降低后也适用于之前的登录。不影响访问令牌。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Rate limit"
+msgstr "调用限制"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Each access token and sign-in on its own, 0 for no limit. An assistant over it is told how long to wait."
+msgstr "每个访问令牌和每次登录分别计算，0 表示不限制。超过限制的助手会被告知需等待多久。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "编辑访问令牌"
 
@@ -4257,18 +4275,6 @@ msgstr ""
 msgid "Changes since you last viewed the watch"
 msgstr ""
 
-#: changedetectionio/forms.py
-msgid "Switch on the MCP and OAuth endpoints"
-msgstr "开启 MCP 和 OAuth 端点"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
-msgid "MCP Note"
-msgstr "MCP 说明"
-
-#: changedetectionio/forms.py
-msgid "e.g. Claude Code, laptop"
-msgstr "例如 Claude Code，笔记本电脑"
-
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Monitors"
@@ -4304,6 +4310,22 @@ msgstr "分组（标签）"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "系统信息"
+
+#: changedetectionio/forms.py
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "开启 MCP 和 OAuth 端点"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "MCP 说明"
+
+#: changedetectionio/forms.py
+msgid "Tool calls per minute, per token"
+msgstr "每个令牌每分钟的工具调用次数"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "例如 Claude Code，笔记本电脑"
 
 #: changedetectionio/forms.py
 msgid "Only these groups"

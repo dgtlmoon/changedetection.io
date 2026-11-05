@@ -1468,6 +1468,29 @@ msgstr ""
 "Hinweis."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Sign-in limits"
+msgstr "Anmelde-Grenzen"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The most a sign-in (OAuth, e.g. ChatGPT or claude.ai) may choose on its consent screen. For example Read everywhere, "
+"on a demo whose password you share. Lowering it also applies to sign-ins made before. Access tokens are not affected."
+msgstr ""
+"Das Höchste, was eine Anmeldung (OAuth, z. B. ChatGPT oder claude.ai) auf ihrer Zustimmungsseite wählen darf. Zum "
+"Beispiel überall Lesen, bei einer Demo, deren Passwort Sie weitergeben. Eine Senkung gilt auch für frühere "
+"Anmeldungen. Zugriffstoken sind nicht betroffen."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Rate limit"
+msgstr "Ratenlimit"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Each access token and sign-in on its own, 0 for no limit. An assistant over it is told how long to wait."
+msgstr ""
+"Für jedes Zugriffstoken und jede Anmeldung einzeln, 0 für kein Limit. Ein Assistent darüber erfährt, wie lange er "
+"warten muss."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "Zugriffstoken bearbeiten"
 
@@ -4363,18 +4386,6 @@ msgstr ""
 msgid "Changes since you last viewed the watch"
 msgstr ""
 
-#: changedetectionio/forms.py
-msgid "Switch on the MCP and OAuth endpoints"
-msgstr "MCP- und OAuth-Endpunkte einschalten"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
-msgid "MCP Note"
-msgstr "MCP-Hinweis"
-
-#: changedetectionio/forms.py
-msgid "e.g. Claude Code, laptop"
-msgstr "z. B. Claude Code, Laptop"
-
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Monitors"
@@ -4410,6 +4421,22 @@ msgstr "Gruppen (Tags)"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "Systeminfo"
+
+#: changedetectionio/forms.py
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "MCP- und OAuth-Endpunkte einschalten"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "MCP-Hinweis"
+
+#: changedetectionio/forms.py
+msgid "Tool calls per minute, per token"
+msgstr "Tool-Aufrufe pro Minute, pro Token"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "z. B. Claude Code, Laptop"
 
 #: changedetectionio/forms.py
 msgid "Only these groups"

@@ -1507,6 +1507,29 @@ msgid "Read-only tokens, and tokens limited to some groups, are always told that
 msgstr "Token hanya-baca dan token yang dibatasi ke beberapa grup selalu diberi tahu hal itu setelah catatan ini."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Sign-in limits"
+msgstr "Batas masuk"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The most a sign-in (OAuth, e.g. ChatGPT or claude.ai) may choose on its consent screen. For example Read everywhere, "
+"on a demo whose password you share. Lowering it also applies to sign-ins made before. Access tokens are not affected."
+msgstr ""
+"Batas tertinggi yang boleh dipilih sebuah proses masuk (OAuth, mis. ChatGPT atau claude.ai) di layar persetujuannya. "
+"Misalnya Baca di semua, pada demo yang kata sandinya Anda bagikan. Menurunkannya juga berlaku untuk proses masuk "
+"sebelumnya. Token akses tidak terpengaruh."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Rate limit"
+msgstr "Batas panggilan"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Each access token and sign-in on its own, 0 for no limit. An assistant over it is told how long to wait."
+msgstr ""
+"Setiap token akses dan proses masuk masing-masing, 0 untuk tanpa batas. Asisten yang melewatinya diberi tahu berapa "
+"lama harus menunggu."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "Ubah token akses"
 
@@ -4406,18 +4429,6 @@ msgstr "Versi sebelumnya (kedua terakhir vs terbaru)"
 msgid "Changes since you last viewed the watch"
 msgstr "Perubahan sejak terakhir Anda melihat monitor"
 
-#: changedetectionio/forms.py
-msgid "Switch on the MCP and OAuth endpoints"
-msgstr "Aktifkan endpoint MCP dan OAuth"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
-msgid "MCP Note"
-msgstr "Catatan MCP"
-
-#: changedetectionio/forms.py
-msgid "e.g. Claude Code, laptop"
-msgstr "mis. Claude Code, laptop"
-
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Monitors"
@@ -4453,6 +4464,22 @@ msgstr "Grup (tag)"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "Info sistem"
+
+#: changedetectionio/forms.py
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "Aktifkan endpoint MCP dan OAuth"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "Catatan MCP"
+
+#: changedetectionio/forms.py
+msgid "Tool calls per minute, per token"
+msgstr "Panggilan alat per menit, per token"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "mis. Claude Code, laptop"
 
 #: changedetectionio/forms.py
 msgid "Only these groups"

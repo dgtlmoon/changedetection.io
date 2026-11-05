@@ -1420,6 +1420,26 @@ msgid "Read-only tokens, and tokens limited to some groups, are always told that
 msgstr "읽기 전용 토큰과 일부 그룹으로 제한된 토큰에는 이 안내 뒤에 항상 그 사실이 전달됩니다."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Sign-in limits"
+msgstr "로그인 제한"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The most a sign-in (OAuth, e.g. ChatGPT or claude.ai) may choose on its consent screen. For example Read everywhere, "
+"on a demo whose password you share. Lowering it also applies to sign-ins made before. Access tokens are not affected."
+msgstr ""
+"로그인(OAuth, 예: ChatGPT 또는 claude.ai)이 동의 화면에서 고를 수 있는 최대 권한. 예를 들어 비밀번호를 공유하는 데모에서는 모두 읽기로 둡니다. 낮추면 이전 로그인에도 적용됩니다. "
+"액세스 토큰에는 영향이 없습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Rate limit"
+msgstr "호출 제한"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Each access token and sign-in on its own, 0 for no limit. An assistant over it is told how long to wait."
+msgstr "액세스 토큰과 로그인마다 따로, 0이면 제한 없음. 넘긴 어시스턴트에게는 얼마나 기다릴지 알려 줍니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "액세스 토큰 편집"
 
@@ -4265,18 +4285,6 @@ msgstr ""
 msgid "Changes since you last viewed the watch"
 msgstr ""
 
-#: changedetectionio/forms.py
-msgid "Switch on the MCP and OAuth endpoints"
-msgstr "MCP 및 OAuth 엔드포인트 켜기"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
-msgid "MCP Note"
-msgstr "MCP 안내"
-
-#: changedetectionio/forms.py
-msgid "e.g. Claude Code, laptop"
-msgstr "예: Claude Code, 노트북"
-
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Monitors"
@@ -4312,6 +4320,22 @@ msgstr "그룹(태그)"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
 msgstr "시스템 정보"
+
+#: changedetectionio/forms.py
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "MCP 및 OAuth 엔드포인트 켜기"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "MCP 안내"
+
+#: changedetectionio/forms.py
+msgid "Tool calls per minute, per token"
+msgstr "토큰당 분당 도구 호출 수"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "예: Claude Code, 노트북"
 
 #: changedetectionio/forms.py
 msgid "Only these groups"

@@ -360,3 +360,96 @@ def test_discovery_under_a_sub_path(client, live_server, measure_memory_usage, d
 def _ping_at(client, base):
     return client.post('/mcp/v1', base_url=base + '/', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}),
                        content_type='application/json')
+
+
+def _sign_in(client, grid):
+    """A whole sign-in with this grid on the consent screen, the access token."""
+    client_id = _register(client)
+    verifier, challenge = _pkce()
+    url = _authorize_url(client_id, challenge, MCP_URL)
+    code = _approve(client, url, grid=grid)['code'][0]
+    res = client.post('/oauth/token', data={'grant_type': 'authorization_code', 'code': code, 'redirect_uri': CALLBACK,
+                                            'client_id': client_id, 'code_verifier': verifier, 'resource': MCP_URL})
+    assert res.status_code == 200, res.json
+    return res.json['access_token']
+
+
+def test_sign_in_cap(client, live_server, measure_memory_usage, datastore_path, logged_in):
+    """The most a sign-in may choose (Settings sub-tab): the consent screen only offers that, a higher answer is
+    lowered, and lowering it later also lowers sign-ins made before. Access tokens are left alone."""
+    from .util import new_mcp_token
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    write_everything = {'perm_monitors': 'write', 'perm_tags': 'write', 'perm_notifications': 'write', 'perm_system': 'read'}
+    try:
+        # No cap: Write is there to choose, and is what it gets
+        token = _sign_in(client, write_everything)
+        assert 'create_watch' in _tools(client, token)[1]
+
+        # Saved on the settings page: everything Read
+        res = client.post(url_for('settings.llm.mcp_settings_page'),
+                          data={'enabled': 'y', 'calls_per_minute': '60', 'oauth_cap-perm_monitors': 'read',
+                                'oauth_cap-perm_tags': 'read', 'oauth_cap-perm_notifications': 'read',
+                                'oauth_cap-perm_system': 'read'}, follow_redirects=True)
+        assert res.status_code == 200
+        assert settings['mcp_oauth_max_permissions'] == {'monitors': 'read', 'tags': 'read', 'notifications': 'read',
+                                                         'system': 'read'}
+        html = client.get(url_for('settings.llm.mcp_settings_page')).get_data(as_text=True)
+        assert 'name="oauth_cap-perm_monitors" type="radio" value="read"' in html and 'Sign-in limits' in html
+
+        # The earlier sign-in is lowered at once, and told where the limit is
+        status, tools = _tools(client, token)
+        assert 'create_watch' not in tools and 'list_watches' in tools
+        res = client.post('/mcp/v1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
+                                                      'params': {'name': 'create_watch', 'arguments': {'url': 'https://x.test'}}}),
+                          content_type='application/json', headers={'Authorization': f'Bearer {token}'})
+        assert "'Settings' sub-tab" in res.json['result']['content'][0]['text']
+
+        # The consent screen no longer offers Write, and a Write sent anyway is lowered to Read
+        client_id = _register(client)
+        verifier, challenge = _pkce()
+        html = client.get(_authorize_url(client_id, challenge, MCP_URL)).get_data(as_text=True)
+        assert 'name="perm_monitors" type="radio" value="write"' not in html
+        assert 'name="perm_monitors" type="radio" value="read"' in html
+        token = _sign_in(client, write_everything)
+        assert 'create_watch' not in _tools(client, token)[1]
+        # Saved lowered too, not only lowered when used
+        newest = list(settings['mcp_oauth']['grants'].values())[-1]
+        assert newest['permissions']['monitors'] == 'read' and newest['permissions']['notifications'] == 'read'
+
+        # Access tokens made on the settings page aren't sign-ins, the cap doesn't apply
+        assert 'create_watch' in _tools(client, new_mcp_token(client))[1]
+    finally:
+        settings.pop('mcp_oauth_max_permissions', None)
+        settings.pop('mcp_tokens', None)
+
+
+def test_calls_per_minute(client, live_server, measure_memory_usage, datastore_path, logged_in):
+    from changedetectionio.blueprint import mcp
+    from .util import new_mcp_token
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    mcp._calls.clear()
+    settings['mcp_calls_per_minute'] = 3
+    try:
+        token, other = new_mcp_token(client), new_mcp_token(client, name='other')
+
+        def call(t):
+            res = client.post('/mcp/v1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
+                                                          'params': {'name': 'list_tags', 'arguments': {}}}),
+                              content_type='application/json', headers={'Authorization': f'Bearer {t}'})
+            return res.json['result']
+
+        assert not any(call(token)['isError'] for _ in range(3))
+        refused = call(token)
+        assert refused['isError'] and 'Too many calls' in refused['content'][0]['text'] and 'Wait' in refused['content'][0]['text']
+        # Per token: another one isn't held up
+        assert not call(other)['isError']
+        # tools/list and the like aren't counted
+        assert _tools(client, token)[0] == 200
+
+        # 0 is no limit
+        settings['mcp_calls_per_minute'] = 0
+        assert not call(token)['isError']
+    finally:
+        settings.pop('mcp_calls_per_minute', None)
+        settings.pop('mcp_tokens', None)
+        mcp._calls.clear()
