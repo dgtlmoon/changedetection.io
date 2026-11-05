@@ -4368,6 +4368,10 @@ msgstr "Lesen"
 msgid "Groups (tags)"
 msgstr "Gruppen (Tags)"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "Browser-Schritte & JavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5384,6 +5388,10 @@ msgstr "Lesen: auflisten. Schreiben: erstellen, umbenennen und löschen."
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "Lesen: auflisten (Geheimnisse verborgen) und Dienste nachschlagen. Schreiben: hinzufügen, entfernen und stummschalten."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "Browser-Schritte und JavaScript laufen im Browser, der die Seiten abruft. Schreiben: bei Monitoren festlegen."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."

@@ -533,5 +533,5 @@ def new_mcp_token(client, name='test', tags=None, **permissions):
     tags: the tag uuids it's limited to, None for every monitor."""
     from changedetectionio.blueprint.mcp.tokens import add_token
     settings = client.application.config['DATASTORE'].data['settings']['application']
-    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'system': 'read', **permissions}
+    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'browser': 'write', 'system': 'read', **permissions}
     return add_token(settings, name, levels, tags)[1]

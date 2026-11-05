@@ -4413,6 +4413,10 @@ msgstr "Baca"
 msgid "Groups (tags)"
 msgstr "Grup (tag)"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "Langkah browser & JavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5433,6 +5437,10 @@ msgstr "Baca: daftar. Tulis: buat, ganti nama, dan hapus."
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "Baca: daftarnya (rahasia disembunyikan) dan cari layanan. Tulis: tambah, hapus, dan bisukan."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "Langkah browser dan JavaScript berjalan di browser yang mengambil halaman. Tulis: atur pada monitor."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."

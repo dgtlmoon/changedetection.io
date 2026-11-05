@@ -48,7 +48,7 @@
       <p class="stab-section-title">{{ _('It will be able to') }}</p>
       {# Follows the grid below as it's changed (script at the end) #}
       <div class="mcp-perm-summary" id="mcp-oauth-summary">
-        {% for field in (form.perm_monitors, form.perm_tags, form.perm_notifications, form.perm_system) %}
+        {% for field in (form.perm_monitors, form.perm_tags, form.perm_notifications, form.perm_browser, form.perm_system) %}
         <span class="mcp-chip level-{{ field.data }}" data-area="{{ field.name }}">{{ field.label.text }} <strong>{{ level_labels[field.data] }}</strong></span>
         {% endfor %}
       </div>

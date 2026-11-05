@@ -4298,6 +4298,10 @@ msgstr "Čtení"
 msgid "Groups (tags)"
 msgstr "Skupiny (štítky)"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "Kroky prohlížeče a JavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5312,6 +5316,10 @@ msgstr "Čtení: výpis. Zápis: vytvořit, přejmenovat a smazat."
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "Čtení: výpis (tajné údaje skryté) a vyhledání služeb. Zápis: přidat, odebrat a ztlumit."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "Kroky prohlížeče a JavaScript běží v prohlížeči, který stahuje stránky. Zápis: nastavit je u monitorů."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."

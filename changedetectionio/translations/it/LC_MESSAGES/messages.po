@@ -4308,6 +4308,10 @@ msgstr "Lettura"
 msgid "Groups (tags)"
 msgstr "Gruppi (tag)"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "Passaggi browser e JavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5324,6 +5328,10 @@ msgstr "Lettura: elenco. Scrittura: creare, rinominare ed eliminare."
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "Lettura: elencarle (segreti nascosti) e cercare servizi. Scrittura: aggiungere, rimuovere e silenziare."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "I passaggi del browser e il JavaScript vengono eseguiti nel browser che scarica le pagine. Scrittura: impostarli sui monitor."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."
