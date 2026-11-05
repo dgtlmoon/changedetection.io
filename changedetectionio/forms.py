@@ -1419,6 +1419,8 @@ class globalMCPSettingsPageForm(Form):
     access tokens have their own form, MCPTokenForm."""
     # Also the switch for the OAuth endpoints once they exist (MCP-config.md, point 3)
     enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
+    # Empty for the built-in note (blueprint/mcp INSTRUCTIONS, shown as the placeholder), stored as mcp_note
+    note = TextAreaField(_l('MCP Note'), validators=[validators.Optional(), validators.Length(max=4000)])
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 
@@ -1430,6 +1432,7 @@ class MCPTokenForm(Form):
     perm_monitors = RadioField(_l('Monitors'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
     perm_tags = RadioField(_l('Groups (tags)'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
     perm_notifications = RadioField(_l('Notifications'), default='read', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_browser = RadioField(_l('Browser steps & JavaScript'), default='none', choices=[('none', _l('None')), ('write', _l('Write'))])
     perm_system = RadioField(_l('System info'), default='read', choices=[('none', _l('None')), ('read', _l('Read'))])
     # The groups (tags) the token is limited to, none ticked for every monitor. Choices are the tags, set by the routes
     tags = SelectMultipleField(_l('Only these groups'), choices=[], validate_choice=True,

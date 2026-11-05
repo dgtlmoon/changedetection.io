@@ -1141,6 +1141,10 @@ msgstr "連線：%(method)s"
 msgid "Token"
 msgstr "權杖"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "設定"
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1387,6 +1391,30 @@ msgstr "撤銷此登入？"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "助理會立即中斷連線，它可以重新登入。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr "每個助理連線時收到的內容：此伺服器的用途以及如何使用其工具。留空則使用灰色顯示的內建說明。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "要用內建說明取代 MCP 說明中的內容嗎？"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "取代現有的 MCP 說明"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr "將內建說明複製到文字框中，以便修改。例如在示範中，說明如何註冊或在哪裡下載。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr "唯讀權杖和僅限部分群組的權杖，一律會在此說明之後被告知這一點。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
@@ -4293,6 +4321,10 @@ msgstr "自您上次檢視該監測任務以來的變更"
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "開啟 MCP 與 OAuth 端點"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "MCP 說明"
+
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
 msgstr "例如 Claude Code，筆電"
@@ -4327,6 +4359,10 @@ msgstr "讀取"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Groups (tags)"
 msgstr "群組（標籤）"
+
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "瀏覽器步驟與 JavaScript"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
@@ -5344,6 +5380,10 @@ msgid "Read: list them (secrets hidden) and look up services. Write: add, remove
 msgstr "讀取：列出（隱藏機密）並查詢服務。寫入：新增、移除與靜音。"
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "瀏覽器步驟與 JavaScript 在擷取頁面的瀏覽器中執行。寫入：在監控項目上設定。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."
 msgstr "運作狀態、檢查佇列以及目前正在檢查的項目。"
 
@@ -5850,10 +5890,6 @@ msgstr "警報開啟"
 #: changedetectionio/templates/menu.html
 msgid "Log out"
 msgstr "登出"
-
-#: changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "設定"
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"

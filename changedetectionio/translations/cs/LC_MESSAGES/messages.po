@@ -1138,6 +1138,10 @@ msgstr "Připojit: %(method)s"
 msgid "Token"
 msgstr "Token"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "Nastavení"
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1408,6 +1412,34 @@ msgstr "Odvolat toto přihlášení?"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "Asistent se okamžitě odpojí, může se přihlásit znovu."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr ""
+"Co se každý asistent dozví při připojení: k čemu tento server slouží a jak používat jeho nástroje. Nechte prázdné pro"
+" vestavěnou poznámku, zobrazenou šedě."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "Nahradit obsah poznámky MCP vestavěnou poznámkou?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "Nahradit stávající poznámku MCP"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr ""
+"Zkopíruje vestavěnou poznámku do pole, abyste ji mohli upravit. Například u ukázky napište, jak se zaregistrovat nebo"
+" kde ho stáhnout."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr "Tokenům jen pro čtení a tokenům omezeným na některé skupiny se to po této poznámce sdělí vždy."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
@@ -4318,6 +4350,10 @@ msgstr ""
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "Zapnout koncové body MCP a OAuth"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "Poznámka MCP"
+
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
 msgstr "např. Claude Code, notebook"
@@ -4352,6 +4388,10 @@ msgstr "Čtení"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Groups (tags)"
 msgstr "Skupiny (štítky)"
+
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "Kroky prohlížeče a JavaScript"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
@@ -5369,6 +5409,10 @@ msgid "Read: list them (secrets hidden) and look up services. Write: add, remove
 msgstr "Čtení: výpis (tajné údaje skryté) a vyhledání služeb. Zápis: přidat, odebrat a ztlumit."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "Kroky prohlížeče a JavaScript běží v prohlížeči, který stahuje stránky. Zápis: nastavit je u monitorů."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."
 msgstr "Stav, fronta kontrol a co se právě kontroluje."
 
@@ -5865,10 +5909,6 @@ msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Log out"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html

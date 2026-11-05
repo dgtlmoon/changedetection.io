@@ -8,6 +8,7 @@
       (form.perm_monitors, _('Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete.')),
       (form.perm_tags, _('Read: list. Write: create, rename and delete.')),
       (form.perm_notifications, _('Read: list them (secrets hidden) and look up services. Write: add, remove and mute.')),
+      (form.perm_browser, _('Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors.')),
       (form.perm_system, _('Health, the check queue and what is being checked right now.')),
   ] %}
   <table class="mcp-perms">
@@ -23,10 +24,15 @@
       {% for field, description in rows %}
       <tr>
         <th scope="row"><span class="mcp-perm-name">{{ field.label.text }}</span><span class="mcp-perm-desc">{{ description }}</span></th>
-        {% for option in field %}
+        {# One cell per column, a dash where this row doesn't have that level #}
+        {% for level in ('none', 'read', 'write') %}
+        {% set option = field|selectattr('data', 'equalto', level)|first %}
+        {% if option %}
         <td><label class="mcp-perm-choice" title="{{ field.label.text }}: {{ option.label.text }}">{{ option() }}<span class="sr-only">{{ option.label.text }}</span></label></td>
+        {% else %}
+        <td class="mcp-perm-na" aria-hidden="true">&ndash;</td>
+        {% endif %}
         {% endfor %}
-        {% if field.choices|length < 3 %}<td class="mcp-perm-na" aria-hidden="true">&ndash;</td>{% endif %}
       </tr>
       {% endfor %}
     </tbody>

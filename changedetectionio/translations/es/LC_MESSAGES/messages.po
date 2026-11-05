@@ -1150,6 +1150,10 @@ msgstr "Conectar: %(method)s"
 msgid "Token"
 msgstr "Token"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "Ajustes"
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1436,6 +1440,34 @@ msgstr "¿Revocar este inicio de sesión?"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "El asistente se desconecta de inmediato, puede volver a iniciar sesión."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr ""
+"Lo que se le dice a cada asistente al conectarse: para qué sirve este servidor y cómo usar sus herramientas. Déjelo "
+"vacío para usar la nota integrada, mostrada en gris."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "¿Reemplazar el contenido de la nota MCP por la nota integrada?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "Reemplazar la nota MCP existente"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr ""
+"Copia la nota integrada en el cuadro para que pueda modificarla. Por ejemplo, en una demo, indique cómo registrarse o"
+" dónde descargarlo."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr "A los tokens de solo lectura y a los limitados a algunos grupos siempre se les indica después de esta nota."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
@@ -4409,6 +4441,10 @@ msgstr ""
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "Activar los endpoints de MCP y OAuth"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "Nota MCP"
+
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
 msgstr "p. ej. Claude Code, portátil"
@@ -4443,6 +4479,10 @@ msgstr "Lectura"
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Groups (tags)"
 msgstr "Grupos (etiquetas)"
+
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "Pasos del navegador y JavaScript"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
@@ -5464,6 +5504,12 @@ msgid "Read: list them (secrets hidden) and look up services. Write: add, remove
 msgstr "Lectura: listarlas (secretos ocultos) y consultar servicios. Escritura: añadir, quitar y silenciar."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr ""
+"Los pasos del navegador y JavaScript se ejecutan en el navegador que obtiene las páginas. Escritura: configurarlos en"
+" los monitores."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."
 msgstr "Estado, la cola de comprobaciones y qué se está comprobando ahora."
 
@@ -5970,10 +6016,6 @@ msgstr "Alertas activadas"
 #: changedetectionio/templates/menu.html
 msgid "Log out"
 msgstr "Cerrar sesión"
-
-#: changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "Ajustes"
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
