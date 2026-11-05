@@ -13,9 +13,8 @@ import urllib.request
 
 import pytest
 from flask import Flask
-from loguru import logger
 
-from changedetectionio.guard import init_guard
+from changedetectionio.guard import MCP_SIGN_IN_PATHS, init_guard
 
 # flaskapi-guard is optional and not in requirements.txt (EXTRA_PACKAGES=flaskapi-guard==4.4.0), tests that need it skip without it
 needs_guard = pytest.mark.skipif(importlib.util.find_spec('flaskapi_guard') is None, reason='flaskapi-guard is not installed')
@@ -47,6 +46,9 @@ def make_app(monkeypatch, **env):
     @app.route('/login', methods=['GET', 'POST'])
     @app.route('/other', methods=['GET'])
     @app.route('/mcp/v1', methods=['GET', 'POST'], strict_slashes=False)
+    @app.route('/oauth/authorize', methods=['GET', 'POST'])
+    @app.route('/oauth/token', methods=['POST'])
+    @app.route('/oauth/register', methods=['POST'])
     def index():
         return 'ok'
 
@@ -307,4 +309,28 @@ def test_mcp_budget_is_shared_by_both_spellings(monkeypatch):
     client = app.test_client()
     codes = [client.post(path, environ_overrides={'REMOTE_ADDR': ip}).status_code for path in ['/mcp/v1', '/mcp/v1/'] * 3]
     assert codes == [200] * 3 + [429] * 3
+
+
+@needs_guard
+@pytest.mark.parametrize('path', MCP_SIGN_IN_PATHS)
+def test_mcp_sign_in_routes_have_the_login_budget(monkeypatch, path):
+    app = make_app(monkeypatch)
+    ip = unique_ip()
+    client = app.test_client()
+    codes = [client.post(path, environ_overrides={'REMOTE_ADDR': ip}).status_code for _ in range(32)]
+    assert codes == [200] * 30 + [429] * 2
+    # each sign-in route keeps its own count, and the rest of the app its general budget
+    other = next(p for p in MCP_SIGN_IN_PATHS if p != path)
+    assert client.post(other, environ_overrides={'REMOTE_ADDR': ip}).status_code == 200
+    assert get(app, ip, '/other').status_code == 200
+
+
+@needs_guard
+def test_mcp_register_keeps_the_general_budget(monkeypatch):
+    # /oauth/register has its own tighter limit per address in the app, so the guard adds no endpoint budget there
+    app = make_app(monkeypatch)
+    ip = unique_ip()
+    client = app.test_client()
+    codes = [client.post('/oauth/register', environ_overrides={'REMOTE_ADDR': ip}).status_code for _ in range(31)]
+    assert codes == [200] * 31
 

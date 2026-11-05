@@ -18,8 +18,8 @@ Environment variables (all optional except the switch):
   FLASKAPI_GUARD_ALLOWED_IPS      comma separated IPs/CIDRs, when set ONLY these clients may connect (and are not rate limited)
 
 Scanning skips /api (it has its own API key check, the guard's ban list, allow list and rate limit still apply there)
-and /language/auto-detect. /login has its own budget, see LOGIN_RATE_LIMIT, and so has the MCP server, see
-DEFAULT_MCP_RATE_LIMIT.
+and /language/auto-detect. /login has its own budget, see LOGIN_RATE_LIMIT, the MCP sign-in routes get the same one,
+see MCP_SIGN_IN_PATHS, and the MCP server has its own, see DEFAULT_MCP_RATE_LIMIT.
 
 Request bodies are never scanned (watch settings, filters and notification templates are free text), and
 Redis, response security headers, the guard's own CORS handling and the telemetry agent are all disabled.
@@ -36,6 +36,10 @@ DEFAULT_RATE_LIMIT = 600
 # is a POST plus the GET of the redirect back to the form, so this allows about 10 wrong passwords then the right one,
 # while an attacker gets about 15 guesses per 5 minutes per IP.
 LOGIN_RATE_LIMIT = (30, 300)
+# The MCP OAuth sign-in routes (blueprint/mcp/oauth) get the /login budget, each path counted on its own. /oauth/token
+# takes a code or a refresh token from anyone, and one sign-in calls each of them once or twice. /oauth/register is not
+# here because it has its own, tighter limit per address (REGISTER_PER_HOUR in blueprint/mcp/oauth).
+MCP_SIGN_IN_PATHS = ('/oauth/authorize', '/oauth/token')
 # Requests per client IP per 60 seconds to /mcp/v1, half the general budget. Every MCP message is its own short POST
 # (stateless Streamable HTTP) and a client can send several a second (tests/test_mcp*.py send more than 120 a minute
 # from one IP), so 5 a second fits a busy assistant or script while a client flooding the tools is stopped.
@@ -91,7 +95,11 @@ def init_guard(app):
         # Setting this REPLACES the library defaults, so they are repeated. Prefix match on whole path segments.
         # /api has its own key check (a bad key gets the app's 403). Bans, allow list and rate limit still apply there.
         exclude_paths=DEFAULT_EXCLUDE_PATHS + ['/api', '/language/auto-detect'],
-        endpoint_rate_limits={'/login': LOGIN_RATE_LIMIT, '/mcp/v1': (mcp_rate_limit, 60)},
+        endpoint_rate_limits={
+            '/login': LOGIN_RATE_LIMIT,
+            **dict.fromkeys(MCP_SIGN_IN_PATHS, LOGIN_RATE_LIMIT),
+            '/mcp/v1': (mcp_rate_limit, 60),
+        },
         rate_limit=int(os.getenv('FLASKAPI_GUARD_RATE_LIMIT', DEFAULT_RATE_LIMIT)),
         rate_limit_window=60,
         trusted_proxies=trusted_proxies(),
