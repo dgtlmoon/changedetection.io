@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.70.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-05 17:32+0100\n"
+"POT-Creation-Date: 2026-11-05 18:19+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4293,6 +4293,7 @@ msgid "Monitors"
 msgstr ""
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4300,6 +4301,7 @@ msgid "Write"
 msgstr ""
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4307,6 +4309,7 @@ msgid "None"
 msgstr ""
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4318,7 +4321,7 @@ msgstr ""
 msgid "Groups (tags)"
 msgstr ""
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Browser steps & JavaScript"
 msgstr ""
 

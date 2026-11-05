@@ -225,7 +225,7 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
     result = _rpc(client, token, 'tools/call', {'name': 'delete_watch', 'arguments': {'watch': uuid}}).json['result']
     assert result['isError'] is True
     text = result['content'][0]['text']
-    assert "('Claude Code') has 'read' access to monitors" in text and 'Access tokens' in text
+    assert "('Claude Code') has 'read' access to 'Monitors'" in text and 'Access tokens' in text
     assert uuid in datastore.data['watching']
     assert _rpc(client, token, 'tools/call', {'name': 'list_watches', 'arguments': {}}).json['result']['isError'] is False
 
@@ -235,7 +235,7 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
     tools = _tool_names(client, other)
     assert not {'list_tags', 'create_tag', 'delete_tag', 'get_system_info'} & tools and 'create_watch' in tools
     result = _rpc(client, other, 'tools/call', {'name': 'list_tags', 'arguments': {}}).json['result']
-    assert result['isError'] is True and "has 'none' access to tags" in result['content'][0]['text']
+    assert result['isError'] is True and "has 'none' access to 'Groups (tags)'" in result['content'][0]['text']
     assert 'list_tags' in _tool_names(client, token), "the first token is unchanged"
 
     # System info can't be write, even by hand in the datastore; ?readonly=1 caps every row at read for one connector

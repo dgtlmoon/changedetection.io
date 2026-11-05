@@ -2022,10 +2022,11 @@ TOOLS = {
 WATCH_ARGUMENT = _WATCH
 _PLUGIN_KINDS = {'read': READ_ONLY, 'write': WRITE, 'destructive': DESTRUCTIVE}
 _PLUGIN_TOOL_NAME = re.compile(r'[a-z][a-z0-9_]{0,63}')
+_PLUGIN_ROW_NAME = re.compile(r'[a-z][a-z0-9_]{0,31}')
 # A plugin tool's text is cut at this, so one can't blow the assistant's context
 PLUGIN_TOOL_MAX_CHARS = 100_000
-# (the registered plugins, their tools), rebuilt when the plugins change
-_plugin_tools_cache = (None, {})
+# (the registered plugins, their tools, {tool: permission row}, their permission rows), rebuilt when the plugins change
+_plugin_cache = (None, {}, {}, {})
 
 
 def _wrap_plugin_handler(name, spec):
@@ -2046,18 +2047,41 @@ def _wrap_plugin_handler(name, spec):
     return handler
 
 
-def _plugin_tools():
-    """{name: tool} from every plugin's register_mcp_tools(), the ones that are valid."""
-    global _plugin_tools_cache
+def _plugin_permission_rows(plugin_manager):
+    """{name: {label, description}} from every plugin's register_mcp_permission_rows(), the ones that are valid."""
+    rows = {}
+    for result in plugin_manager.hook.register_mcp_permission_rows():
+        for row in result or []:
+            name = row.get('name') if isinstance(row, dict) else None
+            problem = None
+            if not isinstance(name, str) or not _PLUGIN_ROW_NAME.fullmatch(name):
+                problem = "name must be a-z, 0-9 and _, at most 32 characters, starting with a letter"
+            elif name in PERMISSION_DEFAULTS or name in rows:
+                problem = "that name is already taken"
+            elif not row.get('label'):
+                problem = "label is required"
+            if problem:
+                logger.warning(f"MCP: skipping plugin permission row {name!r}: {problem}")
+                continue
+            rows[name] = {'label': str(row['label']), 'description': str(row.get('description') or '')}
+    return rows
+
+
+def _load_plugins():
+    """(registered plugins, {name: tool}, {tool: permission row}, {row: {label, description, levels}}) from the
+    register_mcp_tools and register_mcp_permission_rows hooks, cached until the plugins change."""
+    global _plugin_cache
     from changedetectionio.pluggy_interface import plugin_manager
     registered = frozenset(id(p) for p in plugin_manager.get_plugins())
-    if _plugin_tools_cache[0] == registered:
-        return _plugin_tools_cache[1]
+    if _plugin_cache[0] == registered:
+        return _plugin_cache
 
-    found = {}
+    rows = _plugin_permission_rows(plugin_manager)
+    found, areas = {}, {}
     for result in plugin_manager.hook.register_mcp_tools():
         for spec in result or []:
             name = spec.get('name') if isinstance(spec, dict) else None
+            area = (spec.get('area') or 'monitors') if isinstance(spec, dict) else None
             problem = None
             if not isinstance(name, str) or not _PLUGIN_TOOL_NAME.fullmatch(name):
                 problem = "name must be a-z, 0-9 and _, at most 64 characters, starting with a letter"
@@ -2069,13 +2093,43 @@ def _plugin_tools():
                 problem = "title, description and handler are required"
             elif not isinstance(spec.get('input_schema') or {}, dict):
                 problem = "input_schema must be a dict of JSON Schema properties"
+            elif area not in PERMISSION_DEFAULTS and area not in rows:
+                problem = f"area {area!r} is not a permission row (core's, or one from register_mcp_permission_rows)"
+            elif area in READ_ONLY_AREAS and spec['kind'] != 'read':
+                problem = f"the {area!r} row only goes up to read, it can't hold a {spec['kind']} tool"
             if problem:
                 logger.warning(f"MCP: skipping plugin tool {name!r}: {problem}")
                 continue
-            found[name] = (_wrap_plugin_handler(name, spec), _PLUGIN_KINDS[spec['kind']], str(spec['title']),
+            annotations = dict(_PLUGIN_KINDS[spec['kind']])
+            if spec.get('open_world'):
+                # It reaches outside this instance (another service, a payment provider...), clients may ask first
+                annotations['openWorldHint'] = True
+            found[name] = (_wrap_plugin_handler(name, spec), annotations, str(spec['title']),
                            str(spec['description']), _schema(dict(spec.get('input_schema') or {}), spec.get('required')))
-    _plugin_tools_cache = (registered, found)
-    return found
+            areas[name] = area
+
+    # A plugin row offers read when one of its tools only reads, write when one changes something
+    for name, area in areas.items():
+        if area in rows:
+            rows[area].setdefault('levels', {NONE}).add(READ if found[name][1]['readOnlyHint'] else WRITE_ACCESS)
+    for row in [r for r in rows if not rows[r].get('levels')]:
+        logger.warning(f"MCP: skipping plugin permission row {row!r}: no tool uses it")
+        del rows[row]
+    for row in rows.values():
+        row['levels'] = tuple(level for level in LEVELS if level in row['levels'])
+
+    _plugin_cache = (registered, found, areas, rows)
+    return _plugin_cache
+
+
+def _plugin_tools():
+    """{name: tool} from every plugin's register_mcp_tools(), the ones that are valid."""
+    return _load_plugins()[1]
+
+
+def plugin_permission_rows():
+    """The permission rows plugins added, {name: {label, description, levels}}, after core's in the grid."""
+    return _load_plugins()[3]
 
 
 def get_tools():
@@ -2088,13 +2142,13 @@ def get_tools():
 
 NONE, READ, WRITE_ACCESS = 'none', 'read', 'write'
 LEVELS = (NONE, READ, WRITE_ACCESS)
-# Each row of the grid and its default
+# Each row of the grid and its default. Plugins can add rows (register_mcp_permission_rows), always None by default
 PERMISSION_DEFAULTS = {'monitors': WRITE_ACCESS, 'tags': WRITE_ACCESS, 'notifications': READ, 'browser': NONE,
                        'system': READ}
 # Rows without write tools, they only go up to read
 READ_ONLY_AREAS = {'system'}
 # Rows that are only about arguments of other rows' tools (ARGUMENT_AREAS), none or write
-# The row each tool belongs to, everything else (plugin tools too, they act on a monitor) is 'monitors'
+# The row each tool belongs to; everything else is 'monitors', plugin tools too unless they give their own 'area'
 TOOL_AREAS = {'list_tags': 'tags', 'create_tag': 'tags', 'update_tag': 'tags', 'delete_tag': 'tags',
               'list_notifications': 'notifications', 'notification_services': 'notifications',
               'add_notification': 'notifications', 'remove_notification': 'notifications',
@@ -2115,21 +2169,35 @@ AREA_LABELS = {'monitors': 'Monitors', 'tags': 'Groups (tags)', 'notifications':
                'browser': 'Browser steps & JavaScript', 'system': 'System info'}
 
 
+def permission_defaults():
+    """{row: default level}, core's rows then the plugins' (None until the owner allows them)."""
+    rows = plugin_permission_rows()
+    return {**PERMISSION_DEFAULTS, **{row: NONE for row in rows}} if rows else PERMISSION_DEFAULTS
+
+
+def area_label(area):
+    """A row's name as shown in the grid, for messages."""
+    row = plugin_permission_rows().get(area)
+    return row['label'] if row else AREA_LABELS.get(area, area)
+
+
 def permissions(stored=None, read_only=False):
     """{area: level} from the saved grid, the defaults for anything not saved; read_only (?readonly=1) caps every
     row at read."""
     stored = stored if isinstance(stored, dict) else {}
+    plugin_rows = plugin_permission_rows()
     result = {}
-    for area, default in PERMISSION_DEFAULTS.items():
+    for area, default in permission_defaults().items():
         level = stored.get(area) if stored.get(area) in LEVELS else default
-        if level == WRITE_ACCESS and (read_only or area in READ_ONLY_AREAS):
+        tops_at_read = area in READ_ONLY_AREAS or (area in plugin_rows and WRITE_ACCESS not in plugin_rows[area]['levels'])
+        if level == WRITE_ACCESS and (read_only or tops_at_read):
             level = READ
         result[area] = level
     return result
 
 
 def tool_area(name):
-    return TOOL_AREAS.get(name, 'monitors')
+    return TOOL_AREAS.get(name) or _load_plugins()[2].get(name, 'monitors')
 
 
 def is_read_only(name):

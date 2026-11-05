@@ -159,9 +159,9 @@ def construct_blueprint(datastore):
                 return with_issuer(auth_server.create_authorization_response(grant_user=None, grant=grant))
             form = mcp_token_form(datastore, request.form)
             if form.validate():
-                from changedetectionio.blueprint.mcp.tools import PERMISSION_DEFAULTS
+                from changedetectionio.blueprint.mcp.tools import permission_defaults
                 g.mcp_oauth_consent = {'name': form.name.data.strip(),
-                                       'permissions': {a: form[f'perm_{a}'].data for a in PERMISSION_DEFAULTS},
+                                       'permissions': {a: form[f'perm_{a}'].data for a in permission_defaults()},
                                        'tags': list(form.tags.data or [])}
                 return with_issuer(auth_server.create_authorization_response(grant_user=oauth_server.OWNER,
                                                                              grant=grant))

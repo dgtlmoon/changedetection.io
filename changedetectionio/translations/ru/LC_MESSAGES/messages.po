@@ -4451,6 +4451,7 @@ msgid "Monitors"
 msgstr "Мониторы"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4458,6 +4459,7 @@ msgid "Write"
 msgstr "Запись"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4465,6 +4467,7 @@ msgid "None"
 msgstr "Нет"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4476,7 +4479,7 @@ msgstr "Чтение"
 msgid "Groups (tags)"
 msgstr "Группы (теги)"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Browser steps & JavaScript"
 msgstr "Шаги браузера и JavaScript"
 
