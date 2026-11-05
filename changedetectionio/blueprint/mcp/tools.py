@@ -1669,8 +1669,21 @@ _WHEN = "'latest', 'previous', unix seconds, or an ISO date/datetime (uses the s
 _INTERVAL = {'type': 'object', 'description': 'How often to check, e.g. {"hours": 6}', 'additionalProperties': False,
              'properties': {k: {'type': 'integer', 'minimum': 0} for k in ('weeks', 'days', 'hours', 'minutes', 'seconds')}}
 _TEXT_LIST = {'type': 'array', 'items': {'type': 'string'}}
-_SCOPE = {'watch': {'type': 'string', 'description': 'A monitor (uuid or part of title/URL), instead of the global settings'},
-          'tag': {'type': 'string', 'description': 'A tag/group (name or uuid), instead of the global settings'}}
+# Paging, the same on every tool that lists: the answer gives the total, or the offset to call again with
+_OFFSET = {'type': 'integer', 'minimum': 0, 'default': 0,
+           'description': 'Skip this many, for the next page: the answer says how many there are, or which offset to '
+                          'call again with'}
+
+
+def _limit(maximum, default, what):
+    return {'type': 'integer', 'minimum': 1, 'maximum': maximum, 'default': default,
+            'description': f'How many {what} in this call, at most {maximum}'}
+
+
+_SCOPE = {'watch': {'type': 'string', 'description': "A monitor (uuid or part of title/URL): its own notification "
+                                                     "URLs, instead of the global settings"},
+          'tag': {'type': 'string', 'description': "A tag/group (name or uuid): its own notification URLs, instead of "
+                                                   "the global settings"}}
 
 
 # Value constraints copied from the API spec's WatchBase, so MCP and REST can't drift apart and the model sees the
@@ -1805,14 +1818,17 @@ TOOLS = {
                           'description': 'last_changed: most recently changed first, first_snapshot: oldest history '
                                          'first, snapshots: most snapshots first, history_span: longest time between '
                                          'first and last snapshot first'},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 500, 'default': 50},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}})),
+                 'limit': _limit(500, 50, 'monitors'), 'offset': _OFFSET})),
     'get_watch': (get_watch, READ_ONLY, 'Monitor details',
         "One monitor's settings, status, last error, price/stock if it has one, and its latest change as a diff. "
         "Answers 'what changed on X?' in one call.",
         _schema({'watch': _WATCH}, ['watch'])),
     'list_tags': (list_tags, READ_ONLY, 'List tags/groups',
-        'The tags (groups) monitors are organised in, with how many monitors each has.', _schema({})),
+        "List every tag (group) with its uuid, how many monitors it has and whether its notifications are muted. A "
+        "monitor can be in several tags; a tag can hold its own notification URLs and settings for its monitors. "
+        "Call it to find a tag's exact name or uuid before using 'tag' on another tool (list_watches, get_changes, "
+        "restock_status...) or before create_tag, so you don't make a duplicate. For the monitors in one tag, use "
+        "list_watches with 'tag'.", _schema({})),
     'get_changes': (get_changes, READ_ONLY, 'What changed',
         "Every change across many monitors between two dates, in one call, as unified diffs under a header per "
         "monitor. Use it for 'what changed on my competitor pages this month?'. Monitors without changes are left "
@@ -1824,8 +1840,7 @@ TOOLS = {
                  'mode': {'type': 'string', 'enum': list(MODES), 'default': 'net_change'},
                  'context': {'type': 'integer', 'minimum': 0, 'maximum': 10, 'default': 1},
                  'max_lines_per_watch': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 200},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['from'])),
+                 'limit': _limit(200, 50, 'monitors with changes'), 'offset': _OFFSET}, ['from'])),
     'get_diff': (get_diff, READ_ONLY, 'Diff of one monitor',
         "Unified diff of one monitor between two of its snapshots, by default the previous and the latest; "
         "word_diff=true marks the changed words instead.",
@@ -1851,9 +1866,7 @@ TOOLS = {
                                          "selector for include_filters (kept for the newest two snapshots)"},
                  'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 200000,
                                'description': 'Per monitor: default 20000 for one, 5000 (at most 50000) each for several'},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': SNAPSHOT_BATCH_MAX, 'default': 10,
-                           'description': 'Several monitors: how many in this call'},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}})),
+                 'limit': _limit(SNAPSHOT_BATCH_MAX, 10, 'monitors (with several)'), 'offset': _OFFSET})),
     'list_snapshots': (list_snapshots, READ_ONLY, 'List snapshots',
         "The snapshot dates of one monitor (one is saved each time the page changed) and their size on disk. With "
         f"more than {SNAPSHOT_LIST_SUMMARY_OVER} it gives a summary: date range, snapshots per month, sizes, and only "
@@ -1863,8 +1876,8 @@ TOOLS = {
                  'from': {'type': ['string', 'integer'], 'description': 'Only snapshots at or after this: unix seconds or an ISO date'},
                  'to': {'type': ['string', 'integer'], 'description': 'Only snapshots at or before this'},
                  'full': {'type': 'boolean', 'default': False, 'description': 'Every snapshot, not the summary'},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 200},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['watch'])),
+                 'limit': _limit(2000, 200, 'snapshots (with full=true or up to the summary size)'),
+                 'offset': _OFFSET}, ['watch'])),
     'find_change': (find_change, READ_ONLY, 'When did this text appear',
         "When a text was on a monitor's page, searching every snapshot line by line in one call: every different "
         "line that matched with when it was first and last seen, and the periods with a match (when it went away). "
@@ -1897,8 +1910,7 @@ TOOLS = {
                                  'description': 'Only lines still on the page (true) or that went away (false)'},
                  'from': {'type': ['string', 'integer'], 'description': 'Only snapshots at or after this: unix seconds or an ISO date'},
                  'to': {'type': ['string', 'integer'], 'description': 'Only snapshots at or before this'},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 200},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['watch'])),
+                 'limit': _limit(2000, 200, 'lines'), 'offset': _OFFSET}, ['watch'])),
     'get_history': (get_history, READ_ONLY, 'Several snapshots as diffs',
         "Several snapshots of one monitor in one call, compactly: the first in full, then each of the others only as "
         "a diff, so text that stays the same is sent once. Use it for 'how did this page/its prices change over "
@@ -1932,13 +1944,18 @@ TOOLS = {
         "fetch workers there are and which monitors they're checking right now and for how long. Use it for 'why "
         "are my monitors slow / not being checked?'.", _schema({})),
     'list_notifications': (list_notifications, READ_ONLY, 'List notifications',
-        "The notification URLs (Apprise) on the global settings, a tag or a monitor, with their secrets hidden and a "
-        "position number for remove_notification, and that level's notification format, title and body.",
+        "List the notification URLs (Apprise) already set up in one place: the global settings by default, or one "
+        "tag or one monitor with 'tag'/'watch'. Each URL comes with its secrets hidden and a position number (what "
+        "remove_notification takes), followed by that place's notification format, title and body if set. An empty "
+        "list on a monitor or tag means it has none of its own and uses its tags' or the global ones; an unknown "
+        "tag or monitor is an error. To set up a new service (Slack, email...), use notification_services for its "
+        "URL format instead.",
         _schema(dict(_SCOPE))),
     'notification_services': (notification_services, READ_ONLY, 'Notification services',
-        "How to set up a notification service (Slack, Discord, Telegram, email, ntfy, Teams and 140 more): its URL "
-        "forms and the tokens it needs, which ones are secrets, and where the user gets them. Without 'search', the "
-        "list of services.",
+        "How to write the notification URL for a service (Slack, Discord, Telegram, email, ntfy, Teams and 140 "
+        "more): its URL forms and the tokens it needs, which ones are secrets, and where the user gets them. "
+        "Without 'search', the list of services. It describes services, not what is set up here: for that, use "
+        "list_notifications.",
         _schema({'search': {'type': 'string', 'description': "A service name or scheme, e.g. 'slack' or 'tgram'"}})),
 
     'create_watch': (create_watch, dict(WRITE, openWorldHint=True), 'Add a monitor',
