@@ -4366,6 +4366,10 @@ msgstr "Читання"
 msgid "Groups (tags)"
 msgstr "Групи (теги)"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "Кроки браузера та JavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5380,6 +5384,10 @@ msgstr "Читання: список. Запис: створити, перейм
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "Читання: список (секрети приховано) і пошук сервісів. Запис: додати, вилучити й вимкнути звук."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "Кроки браузера та JavaScript виконуються в браузері, який завантажує сторінки. Запис: задавати їх для моніторів."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."

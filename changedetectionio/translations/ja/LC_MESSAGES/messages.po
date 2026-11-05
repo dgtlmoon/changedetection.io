@@ -4315,6 +4315,10 @@ msgstr "読み取り"
 msgid "Groups (tags)"
 msgstr "グループ（タグ）"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "ブラウザステップとJavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5343,6 +5347,10 @@ msgstr "読み取り：一覧。書き込み：作成、名前の変更、削除
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "読み取り：一覧（秘密情報は非表示）とサービスの検索。書き込み：追加、削除、ミュート。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "ブラウザステップとJavaScriptは、ページを取得するブラウザで実行されます。書き込み: モニターに設定します。"
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."

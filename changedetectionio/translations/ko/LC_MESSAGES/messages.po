@@ -4308,6 +4308,10 @@ msgstr "읽기"
 msgid "Groups (tags)"
 msgstr "그룹(태그)"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "브라우저 단계 및 JavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5322,6 +5326,10 @@ msgstr "읽기: 목록. 쓰기: 생성, 이름 변경, 삭제."
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "읽기: 목록(비밀 정보 숨김) 및 서비스 조회. 쓰기: 추가, 제거, 음소거."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "브라우저 단계와 JavaScript는 페이지를 가져오는 브라우저에서 실행됩니다. 쓰기: 모니터에 설정합니다."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."

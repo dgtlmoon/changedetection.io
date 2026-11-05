@@ -4389,6 +4389,10 @@ msgstr "Okuma"
 msgid "Groups (tags)"
 msgstr "Gruplar (etiketler)"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "Tarayıcı adımları ve JavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5405,6 +5409,10 @@ msgstr "Okuma: listeleme. Yazma: oluşturma, yeniden adlandırma ve silme."
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "Okuma: listeleme (gizli bilgiler saklı) ve servis arama. Yazma: ekleme, kaldırma ve sessize alma."
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "Tarayıcı adımları ve JavaScript, sayfaları getiren tarayıcıda çalışır. Yazma: monitörlerde ayarlama."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."

@@ -350,8 +350,15 @@ def get_watch(ctx, args):
         'subtractive_selectors': watch.get('subtractive_selectors') or [],
         'ignore_text': watch.get('ignore_text') or [],
         'trigger_text': watch.get('trigger_text') or [],
+        'conditions': watch.get('conditions') or [],
+        'conditions_match_logic': watch.get('conditions_match_logic') if watch.get('conditions') else None,
+        'llm_intent': watch.get('llm_intent') or '',
+        'browser_steps': [s for s in watch.get('browser_steps') or [] if s.get('operation') not in (None, '', 'Choose one')],
+        'webdriver_delay': watch.get('webdriver_delay'),
+        'webdriver_js_execute_code': watch.get('webdriver_js_execute_code') or '',
         # How many, never the URLs themselves: they hold tokens and passwords
         'notification_urls_count': len(watch.get('notification_urls') or []),
+        **{k: watch.get(k) for k in ('notification_title', 'notification_body', 'notification_format') if watch.get(k)},
     })
     # The processor's own settings and state, the same as the REST API's GET (processor_config_{name},
     # processor_state_{name} from the get_api_watch_processor_state hook), e.g. restock_diff's stock and price
@@ -377,8 +384,9 @@ def get_watch(ctx, args):
     out = [f"{info['title']} - {info['url']}", f"uuid: {info['uuid']}"] + [f"NOTE: {n}" for n in notes]
     for key in ('tags', 'processor', 'paused', 'notification_muted', 'last_checked', 'last_changed', 'last_error',
                 'snapshots', 'first_snapshot', 'fetch_backend', 'effective_fetcher', 'proxy', 'effective_proxy',
-                'include_filters', 'ignore_text', 'trigger_text',
-                'notification_urls_count', *processor_fields):
+                'include_filters', 'ignore_text', 'trigger_text', 'conditions', 'conditions_match_logic', 'llm_intent',
+                'browser_steps', 'webdriver_delay', 'webdriver_js_execute_code', 'notification_urls_count',
+                'notification_title', 'notification_body', 'notification_format', *processor_fields):
         if info.get(key) not in (None, [], {}, '', False):
             out.append(f"{key}: {info[key]}")
     if info['recent_snapshots']:
@@ -434,9 +442,10 @@ def get_diff(ctx, args):
     from_key = _snapshot_key(watch, args.get('from'), 'previous')
     if from_key >= to_key:
         raise ToolError("'from' must be an earlier snapshot than 'to'")
-    lines = _unified(watch.get_history_snapshot(timestamp=str(from_key)) or '',
-                     watch.get_history_snapshot(timestamp=str(to_key)) or '',
-                     from_key, to_key, _int(args, 'context', 3, 0, 20))
+    before = watch.get_history_snapshot(timestamp=str(from_key)) or ''
+    after = watch.get_history_snapshot(timestamp=str(to_key)) or ''
+    context = _int(args, 'context', 3, 0, 20)
+    lines = _word_diff(before, after, context) if args.get('word_diff') else _unified(before, after, from_key, to_key, context)
     max_lines = _int(args, 'max_lines', 400, 1, 5000)
     truncated = len(lines) > max_lines
     if truncated:
@@ -445,6 +454,18 @@ def get_diff(ctx, args):
     text = f"{UNTRUSTED_NOTE}\n### {watch.label} - {watch.get('url')}\nuuid: {watch.get('uuid')}\n{diff}"
     return text, {'uuid': watch.get('uuid'), 'from_timestamp': from_key, 'to_timestamp': to_key,
                   'diff': diff, 'truncated': truncated}
+
+
+def _word_diff(before, after, context):
+    """Core's word diff (the same as the diff page's "words" view) as lines, with the changed words marked the way
+    git --word-diff does: [-removed-] {+added+}."""
+    from changedetectionio import diff
+    text = diff.render_diff(before, after, include_equal=False, word_diff=True, context_lines=context)
+    for kind, mark in (('REMOVED', ('[-', '-]')), ('CHANGED', ('[-', '-]')), ('ADDED', ('{+', '+}')),
+                       ('CHANGED_INTO', ('{+', '+}'))):
+        text = text.replace(getattr(diff, f'{kind}_PLACEMARKER_OPEN'), mark[0])
+        text = text.replace(getattr(diff, f'{kind}_PLACEMARKER_CLOSED'), mark[1])
+    return text.splitlines() if text.strip() else []
 
 
 # get_snapshot over many monitors (watches / tag): at most this many per call, paged with offset
@@ -480,7 +501,12 @@ def _sha256(text):
 
 def _snapshot_of(watch, args, max_chars, unfiltered):
     key = _snapshot_key(watch, args.get('timestamp'), 'latest')
-    if unfiltered:
+    if args.get('html'):
+        content, source = watch.get_fetched_html(key) or '', 'html_source'
+        if not content:
+            raise ToolError(f"There's no saved HTML for {watch.label} at {_iso(key)}: only the newest two snapshots "
+                            f"keep it, and only for pages fetched as HTML")
+    elif unfiltered:
         content, source = _original_text(watch, key)
     else:
         content, source = watch.get_history_snapshot(timestamp=str(key)) or '', 'filtered'
@@ -491,6 +517,8 @@ def _snapshot_of(watch, args, max_chars, unfiltered):
     header = f"### {watch.label} - {watch.get('url')}\nsnapshot: {_iso(key)} | sha256 {sha256}"
     if source == 'snapshot':
         header += "\n(the whole page is only kept for the newest two snapshots, this is the filtered text)"
+    elif source == 'html_source':
+        header += "\n(the page's HTML source as fetched)"
     elif unfiltered:
         header += "\n(the whole page, before filters and triggers)"
     return f"{header}\n{content}", {'uuid': watch.get('uuid'), 'title': watch.label, 'timestamp': key, 'content': content,
@@ -1065,28 +1093,147 @@ def _fetch_settings(ctx, watch):
             'effective_proxy': (proxies.get(proxy_id) or {}).get('label') if proxy_id else None}
 
 
-def create_watch(ctx, args):
-    from changedetectionio.api.operations import create_watch as op
-    data = {'url': (args.get('url') or '').strip()}
-    for key in ('title', 'processor', 'include_filters', 'paused'):
-        if args.get(key) not in (None, '', []):
-            data[key] = args[key]
+# ---- browser steps, conditions and the other watch settings create_watch / update_watch take ----
+
+BROWSER_STEPS_MAX = 20
+_STEP_TEXT_MAX = 5000
+
+
+def _template_error(value):
+    """Why a Jinja2 value won't render, or None."""
+    from changedetectionio.model.browser_steps import _template_error as error
+    return error(value)
+
+
+def _browser_steps(value):
+    from changedetectionio.model.browser_steps import validate_steps
+    try:
+        return validate_steps(value, BROWSER_STEPS_MAX)
+    except ValueError as e:
+        raise ToolError(f"browser_steps: {e}")
+
+
+def _choices(choices):
+    return {str(k): str(v) for k, v in choices if k}
+
+
+# Operators that take a number as their value
+_NUMBER_OPERATORS = {'>', '<', '>=', '<=', 'length_min', 'length_max'}
+_REGEX_OPERATORS = {'contains_regex', '!contains_regex'}
+CONDITIONS_MAX = 20
+
+
+def _conditions(value):
+    """Conditions as the watch stores them, [{field, operator, value}], with fields and operators from the same
+    lists as the edit form (plugins add to both), a number where the operator compares numbers, and a regex that
+    compiles. Raises ToolError naming the condition. An empty list removes them."""
+    from changedetectionio.conditions import get_field_choices, get_operator_choices
+    if not isinstance(value, list):
+        raise ToolError("'conditions' must be a list like [{\"field\": \"extracted_number\", \"operator\": \"<\", \"value\": \"450\"}]")
+    if len(value) > CONDITIONS_MAX:
+        raise ToolError(f"At most {CONDITIONS_MAX} conditions, this had {len(value)}")
+    fields, operators = _choices(get_field_choices()), _choices(get_operator_choices())
+    rules = []
+    for n, rule in enumerate(value, 1):
+        where = f"conditions {n}"
+        if not isinstance(rule, dict) or set(rule) != {'field', 'operator', 'value'}:
+            raise ToolError(f"{where}: must be an object with exactly 'field', 'operator' and 'value'")
+        field, operator, item = rule['field'], rule['operator'], rule['value']
+        if field not in fields:
+            raise ToolError(f"{where}: field must be one of: " + ', '.join(f"{k} ({v})" for k, v in fields.items()))
+        if operator not in operators:
+            raise ToolError(f"{where}: operator must be one of: " + ', '.join(f"{k} ({v})" for k, v in operators.items()))
+        if isinstance(item, bool) or not isinstance(item, (str, int, float)) or not str(item).strip():
+            raise ToolError(f"{where}: 'value' must be text or a number")
+        item = str(item).strip()
+        if len(item) > _STEP_TEXT_MAX:
+            raise ToolError(f"{where}: 'value' is longer than {_STEP_TEXT_MAX} characters")
+        if operator in _NUMBER_OPERATORS:
+            try:
+                float(item)
+            except ValueError:
+                raise ToolError(f"{where}: '{operator}' compares numbers, 'value' must be a number")
+        if operator in _REGEX_OPERATORS:
+            try:
+                re.compile(item)
+            except re.error as e:
+                raise ToolError(f"{where}: 'value' isn't a valid regex: {e}")
+        rules.append({'field': field, 'operator': operator, 'value': item})
+    return rules
+
+
+# Settings both create_watch and update_watch take as they are (the API spec checks their values)
+WATCH_FIELDS = ('title', 'paused', 'notification_muted', 'include_filters', 'subtractive_selectors', 'ignore_text',
+                'trigger_text', 'processor', 'conditions_match_logic', 'llm_intent', 'notification_title',
+                'notification_body', 'notification_format', 'webdriver_delay', 'webdriver_js_execute_code')
+
+
+def _watch_settings(ctx, args):
+    """The watch fields in args, checked and as the API stores them, for create_watch and update_watch."""
+    data = {k: args[k] for k in WATCH_FIELDS if k in args}
+    if 'browser_steps' in args:
+        data['browser_steps'] = _browser_steps(args['browser_steps'])
+    if 'conditions' in args:
+        data['conditions'] = _conditions(args['conditions'])
+    if 'webdriver_js_execute_code' in data:
+        data['webdriver_js_execute_code'] = str(data['webdriver_js_execute_code'] or '')
+    for key in ('notification_title', 'notification_body'):
+        error = _template_error(data.get(key))
+        if error:
+            raise ToolError(f"'{key}' is a template that doesn't render: {error}")
+    if 'proxy' in args:
+        data['proxy'] = _proxy_key(ctx, args['proxy'])
     if args.get('fetch_backend'):
         data['fetch_backend'] = _check_fetch_backend(ctx, args['fetch_backend'])
-    if args.get('proxy') not in (None, ''):
-        data['proxy'] = _proxy_key(ctx, args['proxy'])
-    tags = _tags_for_new_monitor(ctx, _list(args, 'tags'))
-    if tags:
-        data['tag'] = ','.join(tags)
     interval = _interval(args)
     if interval:
         data.update({'time_between_check': interval, 'time_between_check_use_default': False})
+    return data
+
+
+def _setting_notes(ctx, watch, changed):
+    """What the assistant should tell the user about settings that were saved but won't do anything yet."""
+    notes = []
+    if watch.get('browser_steps') and {'browser_steps', 'fetch_backend'} & set(changed):
+        from changedetectionio.content_fetchers import resolve_content_fetcher
+        try:
+            fetcher, name, _ = resolve_content_fetcher(watch=watch, datastore=ctx.datastore)
+        except Exception:
+            fetcher, name = None, None
+        if not getattr(fetcher, 'supports_browser_steps', False):
+            notes.append(f"Its browser steps only run with a browser fetcher that supports them (Playwright or "
+                         f"Puppeteer); it's fetched with {name or 'an unknown fetcher'}, so set fetch_backend to one "
+                         f"from get_system_info.")
+    if watch.get('llm_intent') and {'llm_intent'} & set(changed):
+        from changedetectionio.llm.evaluator import get_llm_config, get_llm_settings
+        if not get_llm_config(ctx.datastore) or not get_llm_settings(ctx.datastore).enabled:
+            notes.append("AI isn't set up (or is switched off) on this changedetection.io, so llm_intent filters "
+                         "nothing until it is: Settings > AI.")
+        elif watch.get('llm_backend_profile') is False:
+            notes.append("AI is switched off for this monitor, so llm_intent filters nothing until it's on.")
+    return notes
+
+
+def create_watch(ctx, args):
+    from changedetectionio.api.operations import create_watch as op
+    data = {'url': (args.get('url') or '').strip()}
+    settings = _watch_settings(ctx, args)
+    # Empty values are the defaults on a new monitor anyway
+    data.update({k: v for k, v in settings.items() if v not in (None, '', [])})
+    tags = _tags_for_new_monitor(ctx, _list(args, 'tags'))
+    if tags:
+        data['tag'] = ','.join(tags)
     uuid = _api_call(op, ctx.datastore, data)
     watch = ctx.datastore.data['watching'][uuid]
     fetch = _fetch_settings(ctx, watch)
-    return (f"Created monitor {watch.label} | {watch.get('url')} | uuid {uuid}, fetched with "
+    notes = _setting_notes(ctx, watch, data)
+    text = (f"Created monitor {watch.label} | {watch.get('url')} | uuid {uuid}, fetched with "
             f"{fetch['effective_fetcher']}" + (f" through the proxy {fetch['effective_proxy']}" if fetch['effective_proxy'] else '')
-            + ". It will be checked shortly by the scheduler."), dict(_summary(ctx, watch), **fetch)
+            + ". It will be checked shortly by the scheduler.") + ''.join(f"\nNOTE: {n}" for n in notes)
+    structured = dict(_summary(ctx, watch), **fetch)
+    if notes:
+        structured['notes'] = notes
+    return text, structured
 
 
 def import_watches(ctx, args):
@@ -1114,24 +1261,17 @@ def import_watches(ctx, args):
     return '\n'.join(lines), {'created': created, 'failed': failed}
 
 
-UPDATE_FIELDS = ('title', 'url', 'paused', 'notification_muted', 'include_filters', 'subtractive_selectors',
-                 'ignore_text', 'trigger_text', 'processor', 'fetch_backend', 'proxy', 'notification_urls')
+# What update_watch takes besides WATCH_FIELDS
+UPDATE_ONLY_FIELDS = ('url', 'notification_urls')
 
 
 def update_watch(ctx, args):
     from changedetectionio.api.operations import update_watch as op
     watch = _resolve_watch(ctx, args.get('watch'))
-    data = {k: args[k] for k in UPDATE_FIELDS if k in args}
-    if 'proxy' in data:
-        # '' or 'system' goes back to the system proxy
-        data['proxy'] = _proxy_key(ctx, data['proxy'])
-    if data.get('fetch_backend'):
-        _check_fetch_backend(ctx, data['fetch_backend'])
-    interval = _interval(args)
-    if interval:
-        data.update({'time_between_check': interval, 'time_between_check_use_default': False})
+    data = _watch_settings(ctx, args)
+    data.update({k: args[k] for k in UPDATE_ONLY_FIELDS if k in args})
     if not data:
-        raise ToolError(f"Nothing to change, give at least one of: {', '.join(UPDATE_FIELDS + ('check_interval',))}")
+        raise ToolError(f"Nothing to change, give at least one of: {', '.join(sorted(_UPDATE_ARGUMENTS))}")
     _api_call(op, ctx.datastore, watch.get('uuid'), data)
     changed = sorted(data.keys() - {'time_between_check_use_default'})
     text = f"Updated {watch.label}: {', '.join(changed)}"
@@ -1141,6 +1281,10 @@ def update_watch(ctx, args):
         structured.update(fetch)
         text += f". It's now fetched with {fetch['effective_fetcher']}" + \
                 (f" through the proxy {fetch['effective_proxy']}" if fetch['effective_proxy'] else ' without a proxy')
+    notes = _setting_notes(ctx, watch, data)
+    if notes:
+        structured['notes'] = notes
+        text += ''.join(f"\nNOTE: {n}" for n in notes)
     return text, structured
 
 
@@ -1230,6 +1374,47 @@ def recheck_watches(ctx, args):
     return '\n'.join(lines), structured
 
 
+def pause_watches(ctx, args):
+    """Pause or unpause monitors (by name/uuid, a tag, or all), or the scheduler of the whole instance."""
+    if 'paused' not in args:
+        raise ToolError("Say 'paused': true to pause, false to unpause")
+    paused = bool(args['paused'])
+    app = ctx.datastore.data['settings']['application']
+    if args.get('scheduler'):
+        if args.get('watches') or args.get('tag') or args.get('all'):
+            raise ToolError("'scheduler' is the whole instance, give it on its own")
+        # The UI's "pause all" (settings.toggle_all_paused): no checks are queued, monitors keep their own paused
+        _refuse_if_limited(ctx, "pause or resume checking for the whole instance")
+        changed = bool(app.get('all_paused')) != paused
+        app['all_paused'] = paused
+        ctx.datastore.commit()
+        state = "paused: no checks are queued for any monitor" if paused else "running: checks are queued as normal"
+        return (f"Scheduling for the whole instance is {state}" + ('' if changed else ' (it already was)')
+                + ('. Monitors paused on their own stay paused.' if not paused else '.'),
+                {'scheduler_paused': paused, 'changed': changed})
+
+    refs = _list(args, 'watches')
+    if refs:
+        watches = [_resolve_watch(ctx, r) for r in refs]
+    elif args.get('tag') or args.get('all'):
+        # all=true with a limited token is every monitor in its groups
+        watches = _select(ctx, tag=args.get('tag'))
+    else:
+        raise ToolError("Say what to pause or unpause: 'watches', a 'tag', all=true, or scheduler=true for the "
+                        "whole instance")
+    changed = [w for w in watches if bool(w.get('paused')) != paused]
+    for watch in changed:
+        watch['paused'] = paused
+        watch.commit()
+    verb = 'Paused' if paused else 'Unpaused'
+    text = f"{verb} {len(changed)} monitors" + (f" ({len(watches) - len(changed)} already were)" if len(changed) < len(watches) else '')
+    if not paused and app.get('all_paused'):
+        text += (". Note: scheduling is paused for the whole instance, so nothing is checked until it's resumed "
+                 "(scheduler=true, paused=false, or the pause button in the UI).")
+    return text, {'changed': [w.get('uuid') for w in changed], 'unchanged': len(watches) - len(changed),
+                  'paused': paused, 'scheduler_paused': bool(app.get('all_paused'))}
+
+
 def add_tags(ctx, args):
     datastore = ctx.datastore
     watches = [_resolve_watch(ctx, r) for r in _list(args, 'watches')]
@@ -1283,24 +1468,52 @@ def remove_tags(ctx, args):
     return text, {'watches': [w.get('uuid') for w in watches], 'changed': changed}
 
 
+# Tag settings create_tag / update_tag take as they are
+TAG_FIELDS = ('notification_muted', 'overrides_watch', 'url_match_pattern', 'notification_title', 'notification_body',
+              'notification_format')
+
+
+def _tag_settings(ctx, args):
+    data = {k: args[k] for k in TAG_FIELDS if k in args}
+    if 'url_match_pattern' in data:
+        # It adds the group's settings and notifications to every matching monitor, the token's groups or not
+        _refuse_if_limited(ctx, "set url_match_pattern (it applies the group to monitors outside this token's groups)")
+        data['url_match_pattern'] = str(data['url_match_pattern'] or '').strip()
+    for key in ('notification_title', 'notification_body'):
+        error = _template_error(data.get(key))
+        if error:
+            raise ToolError(f"'{key}' is a template that doesn't render: {error}")
+    return data
+
+
+def _matching_monitors(ctx, uuid):
+    tag = ctx.datastore.data['settings']['application']['tags'][uuid]
+    return sum(1 for w in ctx.watches() if uuid not in (w.get('tags') or []) and tag.matches_url(w.get('url') or ''))
+
+
 def create_tag(ctx, args):
     from changedetectionio.api.operations import create_tag as op
     _refuse_if_limited(ctx, "create groups")
-    data = {'title': (args.get('title') or '').strip()}
-    if 'notification_muted' in args:
-        data['notification_muted'] = bool(args['notification_muted'])
+    data = {'title': (args.get('title') or '').strip(), **_tag_settings(ctx, args)}
     uuid = _api_call(op, ctx.datastore, data)
-    return f"Tag '{data['title']}' is uuid {uuid}", {'uuid': uuid, 'title': data['title']}
+    text = f"Tag '{data['title']}' is uuid {uuid}"
+    if data.get('url_match_pattern'):
+        text += f", it applies to {_matching_monitors(ctx, uuid)} more monitors by their URL"
+    return text, {'uuid': uuid, 'title': data['title']}
 
 
 def update_tag(ctx, args):
     from changedetectionio.api.operations import update_tag as op
     uuid = _resolve_tag(ctx, args.get('tag'))
-    data = {k: args[k] for k in ('title', 'notification_muted', 'notification_urls') if k in args}
+    data = _tag_settings(ctx, args)
+    data.update({k: args[k] for k in ('title', 'notification_urls') if k in args})
     if not data:
-        raise ToolError("Nothing to change, give 'title', 'notification_muted' or 'notification_urls'")
+        raise ToolError(f"Nothing to change, give at least one of: {', '.join(('title', 'notification_urls') + TAG_FIELDS)}")
     _api_call(op, ctx.datastore, uuid, data)
-    return f"Updated tag {uuid}: {', '.join(sorted(data))}", {'uuid': uuid}
+    text = f"Updated tag {uuid}: {', '.join(sorted(data))}"
+    if data.get('url_match_pattern'):
+        text += f". It applies to {_matching_monitors(ctx, uuid)} more monitors by their URL"
+    return text, {'uuid': uuid}
 
 
 def _url_from_tokens(service, tokens):
@@ -1333,6 +1546,80 @@ def add_notification(ctx, args):
     urls.append(url)
     (owner or ctx.datastore).commit()
     return f"Added a notification URL to {label}: {_mask_notification_url(url)}", {'scope': label, 'added': True}
+
+
+def _redact(text, urls):
+    """text with every notification URL, and each part of them that could be a secret, hidden."""
+    from urllib.parse import urlsplit
+    for url in sorted(urls, key=len, reverse=True):
+        text = text.replace(url, _mask_notification_url(url))
+        try:
+            parts = urlsplit(url)
+            pieces = [parts.username, parts.password, parts.hostname] + parts.path.split('/') + re.split(r'[&=]', parts.query)
+        except ValueError:
+            pieces = re.split(r'[/:@?&=]', url)
+        for piece in sorted((p for p in pieces if p and len(p) >= 4), key=len, reverse=True):
+            text = text.replace(piece, '****')
+    return text
+
+
+def send_test_notification(ctx, args):
+    """A test notification, through the same code as a real one, to what a real one from that level would use."""
+    from changedetectionio.notification.handler import process_notification
+    from changedetectionio.notification_service import (NotificationContextData, _check_cascading_vars,
+                                                        set_basic_notification_vars)
+    datastore = ctx.datastore
+    app = datastore.data['settings']['application']
+    label, urls, owner = _notification_target(ctx, args)
+    if args.get('watch'):
+        watch = owner
+        # What a change on it would actually be sent to: its own, else its groups', else the global ones
+        urls = _check_cascading_vars(datastore, 'notification_urls', watch) or []
+        level = {k: _check_cascading_vars(datastore, k, watch) for k in ('notification_title', 'notification_body', 'notification_format')}
+    else:
+        level = {k: (owner or {}).get(k) or app.get(k) for k in ('notification_title', 'notification_body', 'notification_format')}
+        tag_uuid = _resolve_tag(ctx, args['tag']) if owner is not None else None
+        candidates = [w for w in ctx.watches() if tag_uuid is None or tag_uuid in (w.get('tags') or [])]
+        # One with history gives a real example
+        watch = next((w for w in candidates if len(w.history) > 1), candidates[0] if candidates else None)
+        if watch is None:
+            raise ToolError(f"A test needs a monitor for its example text, and {label} has none")
+    urls = [u for u in urls if str(u).strip()]
+    if not urls:
+        raise ToolError(f"No notification URLs would be used for {label}, add one with add_notification first")
+    for key in ('notification_title', 'notification_body', 'notification_format'):
+        if args.get(key):
+            level[key] = args[key]
+    for key in ('notification_title', 'notification_body'):
+        error = _template_error(level.get(key))
+        if error:
+            raise ToolError(f"'{key}' is a template that doesn't render: {error}")
+    from changedetectionio.notification import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH, default_notification_format
+    if not level.get('notification_format') or level['notification_format'] == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:
+        level['notification_format'] = app.get('notification_format') or default_notification_format
+
+    dates = list(watch.history.keys())
+    previous = "Example text: example test\nExample text: change detection is cool\n"
+    current = "Example text: example test\nExample text: change detection is fantastic\n"
+    if len(dates) > 1:
+        previous = watch.get_history_snapshot(timestamp=dates[-2])
+        current = watch.get_history_snapshot(timestamp=dates[-1])
+    n_object = NotificationContextData({'watch_url': watch.get('url'), 'watch_open_url': watch.open_link_override or watch.get('url'),
+                                        'notification_urls': urls,
+                                        'notification_title': level.get('notification_title') or 'Test title',
+                                        'notification_body': level.get('notification_body') or 'Test body',
+                                        'notification_format': level['notification_format']})
+    n_object['as_async'] = False
+    n_object.update(set_basic_notification_vars(current_snapshot=current, prev_snapshot=previous, watch=watch,
+                                                triggered_text='', timestamp_changed=dates[-1] if dates else None))
+    try:
+        process_notification(n_object, datastore)
+    except Exception as e:
+        # Apprise's log of what went wrong, without the URLs and their tokens
+        detail = _redact(str(e), urls).strip()[:1500]
+        raise ToolError(f"The test notification for {label} failed:\n{detail}")
+    return (f"Sent a test notification for {label} to {len(urls)} URL(s), using {watch.label}'s latest change as the "
+            f"example. Ask the user whether it arrived."), {'scope': label, 'sent_to': [_mask_notification_url(u) for u in urls]}
 
 
 # ---- destructive ----
@@ -1427,7 +1714,9 @@ def _tool_schema(name, tools=None):
     if cached and cached[0] is spec_properties and cached[2] is tool:
         return cached[1]
     schema = dict(tool[4])
-    schema['properties'] = {k: (_from_spec(v) if 'x-from-spec' in v else v) for k, v in schema['properties'].items()}
+    # A callable is a schema built from lists that only exist at runtime (browser step operations, condition fields)
+    schema['properties'] = {k: (v() if callable(v) else _from_spec(v) if 'x-from-spec' in v else v)
+                            for k, v in schema['properties'].items()}
     _tool_schemas[name] = (spec_properties, schema, tool)
     return schema
 
@@ -1438,6 +1727,71 @@ def _schema(properties, required=None):
     if required:
         schema['required'] = required
     return schema
+
+
+def _browser_steps_schema():
+    from changedetectionio.model.browser_steps import json_schema
+    return json_schema(BROWSER_STEPS_MAX)
+
+
+def _conditions_schema():
+    from changedetectionio.conditions import get_field_choices, get_operator_choices
+    fields, operators = _choices(get_field_choices()), _choices(get_operator_choices())
+    return {'type': 'array', 'maxItems': CONDITIONS_MAX,
+            'description': "Only count a change when these hold, e.g. [{\"field\": \"extracted_number\", \"operator\": "
+                           "\"<\", \"value\": \"450\"}] for 'the price went under 450'; all or any of them as "
+                           "conditions_match_logic says; [] removes them. Fields: " +
+                           ', '.join(f"{k} ({v})" for k, v in fields.items()),
+            'items': {'type': 'object', 'additionalProperties': False, 'required': ['field', 'operator', 'value'],
+                      'properties': {'field': {'type': 'string', 'enum': list(fields)},
+                                     'operator': {'type': 'string', 'enum': list(operators)},
+                                     'value': {'type': ['string', 'number']}}}}
+
+
+_TEMPLATE = " Jinja2, e.g. {{watch_title}}, {{watch_url}}, {{diff}}, {{diff_added}}, {{current_snapshot}}."
+_NOTIFICATION_TEMPLATES = {
+    'notification_title': _spec('notification_title', 'Notification title template.' + _TEMPLATE),
+    'notification_body': _spec('notification_body', 'Notification body template.' + _TEMPLATE),
+    'notification_format': _spec('notification_format'),
+}
+
+# What create_watch and update_watch both take
+_WATCH_SETTINGS = {
+    'title': _spec('title'), 'paused': _spec('paused'), 'notification_muted': _spec('notification_muted'),
+    'processor': _spec('processor', "'text_json_diff' (default, any text change) or 'restock_diff' (back in stock alerts and price drops for one product page, then set its alerts with restock_set_rules)"),
+    'include_filters': _spec('include_filters', 'CSS or XPath selectors, only this part of the page is watched'),
+    'subtractive_selectors': _spec('subtractive_selectors', 'CSS or XPath selectors of parts of the page to leave out'),
+    'ignore_text': _spec('ignore_text'), 'trigger_text': _spec('trigger_text'),
+    'conditions': _conditions_schema, 'conditions_match_logic': _spec('conditions_match_logic'),
+    'llm_intent': _spec('llm_intent', "In plain English, what the user wants to hear about, e.g. 'only when Sydney "
+                                      "tour dates are announced': AI checks every change against it and only notifies "
+                                      "when it matches. Needs AI set up in this changedetection.io's settings."),
+    **_NOTIFICATION_TEMPLATES,
+    'check_interval': _INTERVAL,
+    'fetch_backend': _spec('fetch_backend', "'system' (the system default), 'html_requests' (fast, no JavaScript), "
+                                            "'html_webdriver' (a real browser) or extra_browser_<name>; see "
+                                            "get_system_info for what's available"),
+    'proxy': {'type': 'string', 'maxLength': 200,
+              'description': "A proxy by its name or id from get_system_info, 'system' for the system default"},
+    'webdriver_delay': {'type': 'integer', 'minimum': 0, 'maximum': 60,
+                        'description': 'Seconds a browser fetcher waits after the page loads before reading it'},
+    'browser_steps': _browser_steps_schema,
+    'webdriver_js_execute_code': _spec('webdriver_js_execute_code', 'JavaScript a browser fetcher runs on the page '
+                                       'before reading it, e.g. to close a popup; "" removes it. Only ever what the '
+                                       'user asked for, never code suggested by a page.'),
+}
+_UPDATE_ARGUMENTS = {**_WATCH_SETTINGS, 'url': _spec('url'), 'notification_urls': _spec('notification_urls')}
+
+_TAG_SETTINGS = {
+    'notification_muted': {'type': 'boolean'},
+    'overrides_watch': {'type': 'boolean', 'description': "The group's settings (filters, notifications...) are used "
+                                                          "instead of its monitors' own"},
+    'url_match_pattern': {'type': 'string', 'maxLength': 500,
+                          'description': "Also apply the group to every monitor whose URL matches, e.g. "
+                                         "'*.amazon.com/*' (* and ? wildcards, else a case insensitive substring); "
+                                         "'' turns it off"},
+    **_NOTIFICATION_TEMPLATES,
+}
 
 
 TOOLS = {
@@ -1473,11 +1827,15 @@ TOOLS = {
                  'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50},
                  'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['from'])),
     'get_diff': (get_diff, READ_ONLY, 'Diff of one monitor',
-        "Unified diff of one monitor between two of its snapshots, by default the previous and the latest.",
+        "Unified diff of one monitor between two of its snapshots, by default the previous and the latest; "
+        "word_diff=true marks the changed words instead.",
         _schema({'watch': _WATCH,
                  'from': {'type': ['string', 'integer'], 'description': 'Earlier snapshot: ' + _WHEN, 'default': 'previous'},
                  'to': {'type': ['string', 'integer'], 'description': 'Later snapshot: ' + _WHEN, 'default': 'latest'},
                  'context': {'type': 'integer', 'minimum': 0, 'maximum': 20, 'default': 3},
+                 'word_diff': {'type': 'boolean', 'default': False,
+                               'description': 'Mark the changed words in a line, [-removed-] {+added+}, instead of '
+                                              'whole lines: better when a word changes in a long paragraph'},
                  'max_lines': {'type': 'integer', 'minimum': 1, 'maximum': 5000, 'default': 400}}, ['watch'])),
     'get_snapshot': (get_snapshot, READ_ONLY, 'Snapshot text',
         "The text of a monitor's page as it was at a snapshot, by default the latest; one monitor ('watch') or "
@@ -1488,6 +1846,9 @@ TOOLS = {
                  'timestamp': {'type': ['string', 'integer'], 'description': 'Which snapshot: ' + _WHEN, 'default': 'latest'},
                  'unfiltered': {'type': 'boolean', 'default': False,
                                 'description': 'The whole page, before the include/exclude filters and triggers'},
+                 'html': {'type': 'boolean', 'default': False,
+                          'description': "The page's HTML source as fetched instead of text, e.g. to write a CSS "
+                                         "selector for include_filters (kept for the newest two snapshots)"},
                  'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 200000,
                                'description': 'Per monitor: default 20000 for one, 5000 (at most 50000) each for several'},
                  'limit': {'type': 'integer', 'minimum': 1, 'maximum': SNAPSHOT_BATCH_MAX, 'default': 10,
@@ -1581,28 +1942,19 @@ TOOLS = {
         _schema({'search': {'type': 'string', 'description': "A service name or scheme, e.g. 'slack' or 'tgram'"}})),
 
     'create_watch': (create_watch, dict(WRITE, openWorldHint=True), 'Add a monitor',
-        "Start monitoring a web page. The first check happens shortly, done by the scheduler. Optionally choose how "
-        "it's fetched (fetch_backend) and through which proxy, from what get_system_info lists.",
-        _schema({'url': _spec('url', 'http(s) URL of the page'), 'title': _spec('title'), 'tags': _TAGS,
-                 'processor': _spec('processor', "'text_json_diff' (default, any text change) or 'restock_diff' (back in stock alerts and price drops for one product page, then set its alerts with restock_set_rules)"),
-                 'include_filters': _spec('include_filters', 'CSS or XPath selectors, only this part of the page is watched'),
-                 'paused': _spec('paused'), 'check_interval': _INTERVAL,
-                 'fetch_backend': _spec('fetch_backend', "'system' (the system default), 'html_requests' (fast, no "
-                                        "JavaScript), 'html_webdriver' (a real browser) or extra_browser_<name>; see "
-                                        "get_system_info for what's available"),
-                 'proxy': {'type': 'string', 'maxLength': 200,
-                           'description': "A proxy by its name or id from get_system_info, 'system' for the system default"}},
-                ['url'])),
+        "Start monitoring a web page. The first check happens shortly, done by the scheduler. Optionally set how "
+        "it's fetched (fetch_backend, proxy, browser_steps), what counts as a change (filters, conditions, "
+        "llm_intent) and how its notifications read, in the same call.",
+        _schema({'url': _spec('url', 'http(s) URL of the page'), 'tags': _TAGS, **_WATCH_SETTINGS}, ['url'])),
     'import_watches': (import_watches, dict(WRITE, openWorldHint=True), 'Add many monitors',
         f"Add up to {IMPORT_MAX_URLS} monitors in one call, optionally all in the same tags.",
         _schema({'urls': dict(_TEXT_LIST, description='http(s) URLs'), 'tags': _TAGS}, ['urls'])),
     # Destructive: it can replace settings, e.g. the whole notification URL list
     'update_watch': (update_watch, dict(WRITE, destructiveHint=True), 'Change a monitor',
-        "Change a monitor's settings: pause or unpause it, mute its notifications, filters, check interval, "
-        "notification URLs (replaces the list), URL or title.",
-        _schema({'watch': _WATCH, **{f: _spec(f) for f in UPDATE_FIELDS}, 'check_interval': _INTERVAL,
-                 'proxy': _spec('proxy', "A proxy by its name or id from get_system_info, 'system' for the system default")},
-                ['watch'])),
+        "Change a monitor's settings: pause or unpause it, mute its notifications, filters, conditions, llm_intent, "
+        "check interval, how it's fetched (fetch_backend, proxy, browser_steps), notification URLs (replaces the "
+        "list) and templates, URL or title. Lists given replace the old ones, [] clears them.",
+        _schema({'watch': _WATCH, **_UPDATE_ARGUMENTS}, ['watch'])),
     'recheck_watches': (recheck_watches, dict(WRITE, idempotentHint=True, openWorldHint=True), 'Recheck monitors',
         "Queue monitors to be checked now: by name/uuid, a whole tag, the ones with errors, or all. Returns at once, "
         "or with wait=true waits up to wait_seconds and says for each whether it changed, is being checked, or its "
@@ -1613,6 +1965,15 @@ TOOLS = {
                           'description': f'Wait for the checks (at most {RECHECK_WAIT_MAX_MONITORS} monitors) and say how each went, '
                                          'or where it is in the queue'},
                  'wait_seconds': {'type': 'integer', 'minimum': 1, 'maximum': RECHECK_WAIT_MAX_SECONDS, 'default': 30}})),
+    'pause_watches': (pause_watches, dict(WRITE, idempotentHint=True), 'Pause or unpause monitors',
+        "Pause or unpause monitors in one call: by name/uuid, every monitor in a tag/group, or all of them. "
+        "scheduler=true instead pauses or resumes checking for the whole instance (the pause button in the UI), "
+        "leaving each monitor's own paused setting as it is.",
+        _schema({'paused': {'type': 'boolean', 'description': 'true to pause, false to unpause'},
+                 'watches': _WATCHES, 'tag': _TAG,
+                 'all': {'type': 'boolean', 'description': 'Every monitor this access token can see'},
+                 'scheduler': {'type': 'boolean', 'description': 'The whole instance: no checks are queued at all '
+                                                                 'while paused'}}, ['paused'])),
     'add_tags': (add_tags, dict(WRITE, idempotentHint=True), 'Tag monitors',
         'Add tags/groups to monitors by name. Tags that don\'t exist yet are created.',
         _schema({'watches': _WATCHES, 'tags': _TAGS}, ['watches', 'tags'])),
@@ -1620,12 +1981,13 @@ TOOLS = {
         'Remove tags/groups from monitors. The tags themselves are kept.',
         _schema({'watches': _WATCHES, 'tags': _TAGS}, ['watches', 'tags'])),
     'create_tag': (create_tag, dict(WRITE, idempotentHint=True), 'Create a tag/group',
-        'Create a tag/group. If one with that name exists, its uuid is returned.',
-        _schema({'title': {'type': 'string'}, 'notification_muted': {'type': 'boolean'}}, ['title'])),
+        'Create a tag/group, optionally applied by URL pattern and with its own notification templates. If one with '
+        'that name exists, its uuid is returned.',
+        _schema({'title': {'type': 'string'}, **_TAG_SETTINGS}, ['title'])),
     'update_tag': (update_tag, dict(WRITE, destructiveHint=True), 'Change a tag/group',
-        "Rename a tag/group, mute its notifications, or set its notification URLs (replaces the list).",
-        _schema({'tag': _TAG, 'title': {'type': 'string'}, 'notification_muted': {'type': 'boolean'},
-                 'notification_urls': _TEXT_LIST}, ['tag'])),
+        "Rename a tag/group, mute its notifications, set its notification URLs (replaces the list) or templates, "
+        "apply it by URL pattern, or have its settings override its monitors' own.",
+        _schema({'tag': _TAG, 'title': {'type': 'string'}, 'notification_urls': _TEXT_LIST, **_TAG_SETTINGS}, ['tag'])),
     'add_notification': (add_notification, WRITE, 'Add a notification',
         "Add a notification to the global settings, a tag or one monitor: a whole Apprise URL (e.g. "
         "'discord://...'), or 'service' and 'tokens' from notification_services, and the URL is built for you. Ask "
@@ -1634,6 +1996,12 @@ TOOLS = {
         _schema(dict(_SCOPE, url={'type': 'string', 'description': 'A whole Apprise URL'},
                      service={'type': 'string', 'description': "A scheme from notification_services, e.g. 'slack'"},
                      tokens={'type': 'object', 'description': "That service's tokens by key, e.g. {\"token_a\": \"...\", \"targets\": [\"#sales\"]}"}))),
+    'send_test_notification': (send_test_notification, dict(WRITE, openWorldHint=True), 'Send a test notification',
+        "Send a test notification the way a real one would go: for a monitor, to the URLs a change on it would use "
+        "(its own, else its groups', else the global ones); for a tag or the global settings, to theirs. Its example "
+        "is the monitor's latest change. Use it after add_notification or a template change, then ask the user "
+        "whether it arrived. Give notification_title/body/format to try a template before saving it.",
+        _schema(dict(_SCOPE, **_NOTIFICATION_TEMPLATES))),
 
     'delete_watch': (delete_watch, DESTRUCTIVE, 'Delete a monitor',
         'Delete one monitor and all its history. Cannot be undone.', _schema({'watch': _WATCH}, ['watch'])),
@@ -1721,19 +2089,30 @@ def get_tools():
 NONE, READ, WRITE_ACCESS = 'none', 'read', 'write'
 LEVELS = (NONE, READ, WRITE_ACCESS)
 # Each row of the grid and its default
-PERMISSION_DEFAULTS = {'monitors': WRITE_ACCESS, 'tags': WRITE_ACCESS, 'notifications': READ, 'system': READ}
+PERMISSION_DEFAULTS = {'monitors': WRITE_ACCESS, 'tags': WRITE_ACCESS, 'notifications': READ, 'browser': NONE,
+                       'system': READ}
 # Rows without write tools, they only go up to read
 READ_ONLY_AREAS = {'system'}
+# Rows that are only about arguments of other rows' tools (ARGUMENT_AREAS), none or write
 # The row each tool belongs to, everything else (plugin tools too, they act on a monitor) is 'monitors'
 TOOL_AREAS = {'list_tags': 'tags', 'create_tag': 'tags', 'update_tag': 'tags', 'delete_tag': 'tags',
               'list_notifications': 'notifications', 'notification_services': 'notifications',
               'add_notification': 'notifications', 'remove_notification': 'notifications',
-              'get_system_info': 'system'}
-# Arguments of other rows' tools that change notifications, so they need notifications: write. A page an assistant
-# reads could try to get it to send alerts, and the page text in them, somewhere else, or to mute them
-NOTIFICATION_ARGUMENTS = {'update_watch': ('notification_urls', 'notification_muted'),
-                          'update_tag': ('notification_urls', 'notification_muted'),
-                          'create_tag': ('notification_muted',)}
+              'send_test_notification': 'notifications', 'get_system_info': 'system'}
+# Arguments of other rows' tools that also need that row's write access, {tool: {argument: row}}:
+# - notifications: what changes where alerts go, what they say, or whether they're sent. A page an assistant reads
+#   could try to get it to send alerts, and the page text in them, somewhere else, or to mute them.
+# - browser: browser steps and JavaScript, which run in the browser fetcher and can do anything a user there could.
+_NOTIFY = {k: 'notifications' for k in ('notification_muted', 'notification_title', 'notification_body',
+                                         'notification_format')}
+_BROWSER = {k: 'browser' for k in ('browser_steps', 'webdriver_js_execute_code')}
+ARGUMENT_AREAS = {'create_watch': {**_NOTIFY, **_BROWSER},
+                  'update_watch': {**_NOTIFY, **_BROWSER, 'notification_urls': 'notifications'},
+                  # url_match_pattern adds the group's notifications to every monitor it matches
+                  'create_tag': {**_NOTIFY, 'url_match_pattern': 'notifications'},
+                  'update_tag': {**_NOTIFY, 'url_match_pattern': 'notifications', 'notification_urls': 'notifications'}}
+AREA_LABELS = {'monitors': 'Monitors', 'tags': 'Groups (tags)', 'notifications': 'Notifications',
+               'browser': 'Browser steps & JavaScript', 'system': 'System info'}
 
 
 def permissions(stored=None, read_only=False):
@@ -1763,10 +2142,12 @@ def tool_allowed(perms, name):
 
 
 def blocked_arguments(perms, name, arguments):
-    """The arguments of this call that change notifications while notifications aren't writable."""
-    if perms['notifications'] == WRITE_ACCESS:
-        return []
-    return [a for a in NOTIFICATION_ARGUMENTS.get(name, ()) if a in (arguments or {})]
+    """{row: [arguments]} of this call that need write access to a row this token doesn't have."""
+    blocked = {}
+    for argument, area in ARGUMENT_AREAS.get(name, {}).items():
+        if argument in (arguments or {}) and perms.get(area) != WRITE_ACCESS:
+            blocked.setdefault(area, []).append(argument)
+    return blocked
 
 
 def definitions(perms=None):
@@ -1777,10 +2158,11 @@ def definitions(perms=None):
         if not tool_allowed(perms, name):
             continue
         input_schema = _tool_schema(name, tools)
-        if perms['notifications'] != WRITE_ACCESS and name in NOTIFICATION_ARGUMENTS:
-            # Not offered at all while notifications aren't writable, so the assistant doesn't try
+        hidden = {a for a, area in ARGUMENT_AREAS.get(name, {}).items() if perms.get(area) != WRITE_ACCESS}
+        if hidden:
+            # Not offered at all without write access to their row, so the assistant doesn't try
             input_schema = dict(input_schema, properties={k: v for k, v in input_schema['properties'].items()
-                                                          if k not in NOTIFICATION_ARGUMENTS[name]})
+                                                          if k not in hidden})
         out.append({'name': name, 'title': title, 'description': description, 'inputSchema': input_schema,
                     'annotations': dict(annotations, title=title)})
     return out

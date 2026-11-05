@@ -224,11 +224,13 @@ def construct_blueprint(datastore, update_q=None):
                 return _error(msg_id, INVALID_PARAMS, "'arguments' must be an object")
             blocked = tools.blocked_arguments(perms, name, arguments)
             if blocked:
+                rows = ' and '.join(f"'{tools.AREA_LABELS.get(a, a)}'" for a in blocked)
+                arguments_named = ', '.join(a for args in blocked.values() for a in args)
                 return _result(msg_id, refusal(
-                    f"Changing notifications ({', '.join(blocked)}) is not allowed for this "
-                    f"access token, nothing was changed. Tell the user that Notifications can be set to 'Write' for it "
-                    f"on the 'Access tokens' sub-tab of the 'MCP Server' settings, or that they can change it in the UI. "
-                    f"Call it again without {', '.join(blocked)} for the other changes."))
+                    f"Changing {arguments_named} is not allowed for this access token, nothing was changed. Tell the "
+                    f"user that {rows} can be set to 'Write' for it on the 'Access tokens' sub-tab of the 'MCP Server' "
+                    f"settings, or that they can change it in the UI. Call it again without {arguments_named} for the "
+                    f"other changes."))
             import time
             started = time.monotonic()
             try:

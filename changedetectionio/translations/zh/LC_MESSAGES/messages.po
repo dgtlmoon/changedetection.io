@@ -4300,6 +4300,10 @@ msgstr "读取"
 msgid "Groups (tags)"
 msgstr "分组（标签）"
 
+#: changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "浏览器步骤和 JavaScript"
+
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "System info"
@@ -5316,6 +5320,10 @@ msgstr "读取：列表。写入：创建、重命名和删除。"
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
 msgstr "读取：列出（隐藏密钥）并查询服务。写入：添加、移除和静音。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "浏览器步骤和 JavaScript 在抓取页面的浏览器中运行。写入：在监控项上设置。"
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."
