@@ -1417,6 +1417,34 @@ msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "Асистента буде відразу відключено, він може увійти знову."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr ""
+"Що повідомляється кожному асистенту під час підключення: для чого цей сервер і як користуватися його інструментами. "
+"Залиште порожнім, щоб використати вбудовану нотатку, показану сірим."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "Замінити вміст нотатки MCP вбудованою нотаткою?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "Замінити наявну нотатку MCP"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr ""
+"Копіює вбудовану нотатку в поле, щоб її можна було змінити. Наприклад, для демо напишіть, як зареєструватися або де "
+"завантажити."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr "Токенам лише для читання і токенам, обмеженим деякими групами, це завжди повідомляється після цієї нотатки."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "Редагувати токен доступу"
 
@@ -4294,6 +4322,10 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "Увімкнути кінцеві точки MCP і OAuth"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "Нотатка MCP"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"

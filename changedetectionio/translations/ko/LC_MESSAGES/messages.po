@@ -1392,6 +1392,30 @@ msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "어시스턴트는 즉시 연결이 끊기며, 다시 로그인할 수 있습니다."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr "연결할 때 모든 어시스턴트에게 전달되는 내용: 이 서버의 용도와 도구 사용법. 비워 두면 회색으로 표시된 기본 안내가 사용됩니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "MCP 안내의 내용을 기본 안내로 바꿀까요?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "기존 MCP 안내 바꾸기"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr "기본 안내를 입력란에 복사해 수정할 수 있게 합니다. 예를 들어 데모라면 가입 방법이나 다운로드 위치를 적으세요."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr "읽기 전용 토큰과 일부 그룹으로 제한된 토큰에는 이 안내 뒤에 항상 그 사실이 전달됩니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "액세스 토큰 편집"
 
@@ -4240,6 +4264,10 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "MCP 및 OAuth 엔드포인트 켜기"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "MCP 안내"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"

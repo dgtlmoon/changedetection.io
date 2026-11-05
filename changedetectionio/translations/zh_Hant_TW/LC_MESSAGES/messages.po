@@ -1389,6 +1389,30 @@ msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "助理會立即中斷連線，它可以重新登入。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr "每個助理連線時收到的內容：此伺服器的用途以及如何使用其工具。留空則使用灰色顯示的內建說明。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "要用內建說明取代 MCP 說明中的內容嗎？"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "取代現有的 MCP 說明"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr "將內建說明複製到文字框中，以便修改。例如在示範中，說明如何註冊或在哪裡下載。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr "唯讀權杖和僅限部分群組的權杖，一律會在此說明之後被告知這一點。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "編輯存取權杖"
 
@@ -4237,6 +4261,10 @@ msgstr "自您上次檢視該監測任務以來的變更"
 #: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "開啟 MCP 與 OAuth 端點"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "MCP 說明"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"

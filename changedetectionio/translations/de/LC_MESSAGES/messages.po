@@ -1434,6 +1434,36 @@ msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "Der Assistent wird sofort getrennt, er kann sich erneut anmelden."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr ""
+"Was jeder Assistent beim Verbinden erfährt: wofür dieser Server da ist und wie seine Tools zu nutzen sind. Leer "
+"lassen für den eingebauten Hinweis, grau angezeigt."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "Den Inhalt des MCP-Hinweises durch den eingebauten Hinweis ersetzen?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "Bestehenden MCP-Hinweis ersetzen"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr ""
+"Kopiert den eingebauten Hinweis in das Feld, damit Sie ihn ändern können. Zum Beispiel bei einer Demo: wie man sich "
+"anmeldet oder wo man es herunterlädt."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr ""
+"Token mit Nur-Lese-Zugriff und Token, die auf bestimmte Gruppen beschränkt sind, erfahren das immer nach diesem "
+"Hinweis."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
 msgstr "Zugriffstoken bearbeiten"
 
@@ -4332,6 +4362,10 @@ msgstr ""
 #: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "MCP- und OAuth-Endpunkte einschalten"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "MCP-Hinweis"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
