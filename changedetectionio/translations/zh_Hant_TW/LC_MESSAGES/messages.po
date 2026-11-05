@@ -1410,6 +1410,22 @@ msgid ""
 msgstr "MCP 伺服器位於此位址後加 /mcp/v1。變更後，透過登入（OAuth）連線的助理會被登出，需要重新連線。存取權杖繼續有效。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "免登入存取"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr "任何知道 MCP 位址的人都可以不用權杖或密碼，列出你的監控並讀取其變更、快照和截圖，例如用於公開示範。通知、系統資訊和任何變更仍需登入或存取權杖。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "免登入時，每個位址每分鐘可呼叫工具 %(count)s 次。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
 "use the built-in note, shown in grey."
@@ -4290,6 +4306,10 @@ msgstr "開啟 MCP 與 OAuth 端點"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "MCP Note"
 msgstr "MCP 說明"
+
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "允許免登入的唯讀存取"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "Public MCP address"

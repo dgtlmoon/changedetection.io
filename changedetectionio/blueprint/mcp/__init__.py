@@ -55,6 +55,49 @@ def server_note(app_settings):
     return (app_settings.get('mcp_note') or '').strip() or INSTRUCTIONS
 
 
+# "Allow read-only access without sign-in" (settings.application.mcp_anonymous_read, MCP Server > Settings): a request
+# with no credentials at all gets this grid instead of a 401, e.g. a public demo. Never notifications (they can hold
+# secrets), browser steps or system info, and plugin rows stay None
+ANONYMOUS_PERMISSIONS = {'monitors': 'read', 'tags': 'read', 'notifications': 'none', 'browser': 'none', 'system': 'none'}
+# Tool calls a minute from one address without a token (MCP_ANONYMOUS_CALLS_PER_MINUTE, 0 for no limit)
+ANONYMOUS_CALLS_PER_MINUTE_DEFAULT = 30
+_anonymous_calls = {}
+_anonymous_calls_lock = None
+
+
+def anonymous_token():
+    """A fresh, never stored, token for a request without credentials."""
+    return {'name': 'anonymous', 'anonymous': True, 'permissions': dict(ANONYMOUS_PERMISSIONS)}
+
+
+def anonymous_rate_limited(address, now=None):
+    """Seconds to wait when this address has used up its tool calls for the minute, else 0 (and the call is counted)."""
+    import threading
+    import time
+    global _anonymous_calls_lock
+    try:
+        limit = int(os.getenv('MCP_ANONYMOUS_CALLS_PER_MINUTE', ANONYMOUS_CALLS_PER_MINUTE_DEFAULT))
+    except ValueError:
+        limit = ANONYMOUS_CALLS_PER_MINUTE_DEFAULT
+    if limit <= 0:
+        return 0
+    if _anonymous_calls_lock is None:
+        _anonymous_calls_lock = threading.Lock()
+    now = time.monotonic() if now is None else now
+    with _anonymous_calls_lock:
+        if len(_anonymous_calls) > 10_000:
+            # Forget the quiet ones, so many addresses can't grow this without end
+            for key in [k for k, v in _anonymous_calls.items() if not v or now - v[-1] >= 60]:
+                del _anonymous_calls[key]
+        recent = [t for t in _anonymous_calls.get(address, []) if now - t < 60]
+        if len(recent) >= limit:
+            _anonymous_calls[address] = recent
+            return max(1, int(60 - (now - recent[0])) + 1)
+        recent.append(now)
+        _anonymous_calls[address] = recent
+        return 0
+
+
 READ_ONLY_INSTRUCTIONS = (
     " This server is read-only: it can look things up but cannot add, change or delete anything. If the user "
     "asks for a change, say that the MCP permissions don't allow it."
@@ -127,6 +170,9 @@ def construct_blueprint(datastore, update_q=None):
 
     def permission_refusal(name):
         area = tools.tool_area(name)
+        if g.mcp_token.get('anonymous'):
+            return refusal(f"'{name}' is not available without signing in: this server lets anyone read, but changes "
+                           f"need an access token or sign-in (OAuth). Tell the user to connect with sign-in to do this.")
         if readonly_address() and permissions(read_only=False)[area] == tools.WRITE_ACCESS:
             return refusal(f"This connection is read-only (its address ends with ?readonly=1), so '{name}' (which "
                            f"changes data) is not available. Tell the user to connect without ?readonly=1 to allow "
@@ -143,8 +189,8 @@ def construct_blueprint(datastore, update_q=None):
         if origin and urlsplit(origin).netloc != request.host:
             return make_response(jsonify({'error': 'Origin not allowed'}), 403)
 
-        # Always one of its own named tokens (tokens.py), never the REST API key: MCP can create and delete monitors,
-        # so there is no "open" mode
+        # One of its own named tokens (tokens.py), never the REST API key: MCP can create and delete monitors. The only
+        # "open" mode is read-only, and only when the owner switches it on (mcp_anonymous_read)
         from changedetectionio.blueprint.mcp.tokens import find_token, mark_used
         authorization = request.headers.get('Authorization', '')
         given = authorization[7:].strip() if authorization.lower().startswith('bearer ') else ''
@@ -158,6 +204,11 @@ def construct_blueprint(datastore, update_q=None):
             g.mcp_token = token
             if mark_used(token):
                 datastore.commit()
+            return None
+        if not authorization and not request.headers.get('x-api-key') \
+                and datastore.data['settings']['application'].get('mcp_anonymous_read'):
+            # No credentials at all: read-only. A wrong or expired token still gets the 401 below, so it's noticed
+            g.mcp_token = anonymous_token()
             return None
         # 401, not 403: the MCP spec says a missing or invalid token "MUST receive a HTTP 401 response", with a
         # WWW-Authenticate challenge, which is how an OAuth client learns that it should sign in
@@ -199,7 +250,7 @@ def construct_blueprint(datastore, update_q=None):
         if method == 'initialize':
             from changedetectionio.blueprint.mcp.tokens import mark_used
             client = (params.get('clientInfo') or {}).get('name')
-            if isinstance(client, str) and mark_used(g.mcp_token, client):
+            if isinstance(client, str) and not g.mcp_token.get('anonymous') and mark_used(g.mcp_token, client):
                 datastore.commit()
             return _result(msg_id, {
                 'protocolVersion': version,
@@ -219,6 +270,13 @@ def construct_blueprint(datastore, update_q=None):
             perms = permissions()
             if not tools.tool_allowed(perms, name):
                 return _result(msg_id, permission_refusal(name))
+            if g.mcp_token.get('anonymous'):
+                # Without a token, per address (behind proxies, see USE_X_SETTINGS_PROXY_COUNT)
+                wait = anonymous_rate_limited(request.remote_addr or 'unknown')
+                if wait:
+                    return _result(msg_id, refusal(
+                        f"Too many calls from this address without signing in. Wait {wait} seconds before the next "
+                        f"one, or sign in for more."))
             arguments = params.get('arguments') or {}
             if not isinstance(arguments, dict):
                 return _error(msg_id, INVALID_PARAMS, "'arguments' must be an object")

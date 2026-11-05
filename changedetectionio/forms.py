@@ -1423,6 +1423,9 @@ class globalMCPSettingsPageForm(Form):
     enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
     # Empty for the built-in note (blueprint/mcp INSTRUCTIONS, shown as the placeholder), stored as mcp_note
     note = TextAreaField(_l('MCP Note'), validators=[validators.Optional(), validators.Length(max=4000)])
+    # Stored as mcp_anonymous_read: a request with no credentials gets read-only access (blueprint/mcp
+    # ANONYMOUS_PERMISSIONS) instead of a 401
+    anonymous_read = BooleanField(_l('Allow read-only access without sign-in'), default=False)
     # Empty to build it from each request, stored as mcp_base_url (blueprint/mcp/oauth issuer()). Not the notification
     # Base URL: that one is only for links in notifications
     public_url = StringField(_l('Public MCP address'), validators=[validators.Optional(), validators.Length(max=500),

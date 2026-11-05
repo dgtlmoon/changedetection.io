@@ -432,3 +432,52 @@ def test_mcp_public_address_upgrade(client, live_server, measure_memory_usage, d
         settings['base_url'] = None
         settings.pop('mcp_base_url', None)
         settings.pop('mcp_oauth', None)
+
+
+def test_mcp_anonymous_read(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """"Allow read-only access without sign-in": no credentials gets read-only tools, a wrong token still a 401."""
+    from changedetectionio.blueprint import mcp
+    datastore = client.application.config['DATASTORE']
+    settings = datastore.data['settings']['application']
+    page = url_for('settings.llm.mcp_settings_page')
+
+    def rpc(method, params=None, headers=None):
+        return client.post('/mcp/v1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': method, 'params': params or {}}),
+                           content_type='application/json', headers=headers or {})
+
+    datastore.add_watch(url='https://example.com/public', extras={'title': 'Public page', 'paused': True})
+    assert rpc('tools/list').status_code == 401, "off by default"
+
+    client.post(page, data={'enabled': 'y', 'anonymous_read': 'y'}, follow_redirects=True)
+    assert settings['mcp_anonymous_read'] is True
+    assert 'Allow read-only access without sign-in' in client.get(page).get_data(as_text=True)
+    try:
+        listed = {t['name'] for t in rpc('tools/list').json['result']['tools']}
+        assert {'list_watches', 'get_changes', 'list_tags'} <= listed
+        assert not listed & {'create_watch', 'delete_watch', 'list_notifications', 'get_system_info', 'update_watch'}
+        result = rpc('tools/call', {'name': 'list_watches', 'arguments': {}}).json['result']
+        assert result['isError'] is False and 'Public page' in result['content'][0]['text']
+        refused = rpc('tools/call', {'name': 'create_watch', 'arguments': {'url': 'https://example.com/x'}}).json['result']
+        assert refused['isError'] is True and 'not available without signing in' in refused['content'][0]['text']
+        instructions = rpc('initialize', {'protocolVersion': '2025-06-18', 'capabilities': {},
+                                          'clientInfo': {'name': 'someone', 'version': '1'}}).json['result']['instructions']
+        assert mcp.READ_ONLY_INSTRUCTIONS in instructions
+        assert not any(t.get('name') == 'anonymous' for t in (settings.get('mcp_tokens') or {}).values()), "never stored"
+
+        # A wrong token is still refused, so it's noticed, and a real one still gets its own grid
+        assert rpc('tools/list', headers={'Authorization': 'Bearer cdio_mcp_wrong'}).status_code == 401
+        token = new_mcp_token(client)
+        listed = {t['name'] for t in rpc('tools/list', headers={'Authorization': f'Bearer {token}'}).json['result']['tools']}
+        assert 'create_watch' in listed
+
+        # Tool calls are limited per address
+        monkeypatch.setenv('MCP_ANONYMOUS_CALLS_PER_MINUTE', '2')
+        mcp._anonymous_calls.clear()
+        call = lambda: rpc('tools/call', {'name': 'list_tags', 'arguments': {}}).json['result']
+        assert call()['isError'] is False and call()['isError'] is False
+        limited = call()
+        assert limited['isError'] is True and 'Too many calls from this address' in limited['content'][0]['text']
+        assert 'can make 2 tool calls a minute' in client.get(page).get_data(as_text=True)
+    finally:
+        settings['mcp_anonymous_read'] = False
+        mcp._anonymous_calls.clear()
