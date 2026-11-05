@@ -72,7 +72,7 @@ jobs:
               --fail-on="GPL-2.0;GPL-3.0;AGPL;GNU General Public License;GNU Affero General Public License"
           '
 
-      - name: License compliance - docs/THIRD-PARTY-LICENSES.md is up to date
+      - name: License compliance - docs/THIRD-PARTY-LICENSES.md is up to date (warning only)
         run: |
           # Only the image built with the Dockerfile's default Python is the one that ships;
           # other matrix versions pull in different backports and would always differ.
@@ -101,14 +101,13 @@ jobs:
 
           if ! diff -u <(normalise /tmp/THIRD-PARTY-LICENSES.committed.md) <(normalise docs/THIRD-PARTY-LICENSES.md); then
             echo ""
-            echo "::error file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md is out of date - a bundled package was added, removed, or changed its licence (see the diff above, '-' is committed, '+' is what the image actually ships)."
+            # A warning, not a failure: requirements are unpinned, so an upstream release (not this PR) is the usual
+            # cause, and a local rebuild can resolve differently from this one. third-party-licenses.yml regenerates the
+            # file weekly and on every release, and opens a PR. The copyleft gate above is what fails a build.
+            echo "::warning file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md has drifted - a bundled package was added, removed, or changed its licence (see the diff above, '-' is committed, '+' is what the image actually ships). The weekly and release runs of third-party-licenses.yml open a PR to update it."
             echo ""
-            echo "To fix, rebuild the image and regenerate the file, then commit it:"
-            echo "    docker build . -t test-changedetectionio"
-            echo "    ./.github/scripts/generate-third-party-licenses.sh"
-            echo ""
-            echo "If a new package is multi-licensed, also record which licence we elect in NOTICE."
-            exit 1
+            echo "If a new package is multi-licensed, record which licence we elect in NOTICE."
+            exit 0
           fi
           echo "docs/THIRD-PARTY-LICENSES.md matches the packages and licences in the shipped image"
 
