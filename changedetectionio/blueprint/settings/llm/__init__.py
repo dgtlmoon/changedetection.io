@@ -92,23 +92,55 @@ def mcp_template_context(datastore):
     mcp_disabled = is_mcp_disabled()
     mcp_url = None
     if not mcp_disabled:
-        # The configured Base URL is the instance's public address when set; otherwise build it from this request,
-        # which already includes the X-Forwarded-Prefix/Host/Proto of a reverse proxy (USE_X_SETTINGS)
-        base_url = (app_settings.get('base_url') or os.getenv('BASE_URL') or '').strip()
-        mcp_url = base_url.rstrip('/') + '/mcp/v1' if base_url else url_for('mcp.endpoint', _external=True)
+        # The same address OAuth uses: the "Public MCP address" setting, otherwise built from this request, which
+        # already includes the X-Forwarded-Prefix/Host/Proto of a reverse proxy (USE_X_SETTINGS)
+        from changedetectionio.blueprint.mcp.oauth import resource
+        mcp_url = resource(datastore)
+    from changedetectionio.blueprint.mcp import INSTRUCTIONS
     return dict(
         mcp_disabled=mcp_disabled,
         mcp_url=mcp_url,
-        token_form=forms.MCPTokenForm(),
+        # What the address is when the setting is empty, shown as its placeholder
+        mcp_request_address=request.url_root.rstrip('/'),
+        mcp_builtin_note=INSTRUCTIONS,
+        token_form=mcp_token_form(datastore),
         **mcp_tokens_context(datastore),
+        **mcp_oauth_context(datastore),
     )
+
+
+def mcp_token_form(datastore, formdata=None):
+    """The add / edit token form, its group checkboxes being the tags that exist now."""
+    from changedetectionio import forms
+    form = forms.MCPTokenForm(formdata=formdata)
+    tags = datastore.data['settings']['application'].get('tags') or {}
+    form.tags.choices = sorted(((uuid, t.get('title') or uuid) for uuid, t in tags.items()), key=lambda c: c[1].lower())
+    return form
+
+
+def mcp_oauth_context(datastore):
+    """What the OAuth sub-tab (_mcp-oauth-grants.html) needs: the assistants signed in with OAuth, and whether sign-in
+    is offered at all (it needs MCP on and a password, blueprint/mcp/oauth)."""
+    from changedetectionio.blueprint.mcp import oauth
+    from changedetectionio.blueprint.mcp.oauth.store import grants
+    from changedetectionio.blueprint.mcp.tools import permissions
+    all_tags = datastore.data['settings']['application'].get('tags') or {}
+    listed = [dict(grant, id=grant_id, levels=permissions(grant.get('permissions')),
+                   group_names=[all_tags[t].get('title') for t in grant.get('tags') or [] if t in all_tags])
+              for grant_id, grant in grants(datastore.data['settings']['application']).items()]
+    listed.sort(key=lambda t: t.get('created') or 0)
+    return dict(mcp_oauth_grants=listed, mcp_oauth_available=oauth.oauth_available(datastore),
+                mcp_password_set=oauth.password_set(datastore))
 
 
 def mcp_tokens_context(datastore):
     """What the access token list (_mcp-tokens.html) needs, also rendered on its own after every ajax change."""
     from changedetectionio.blueprint.mcp.tools import permissions
     tokens = datastore.data['settings']['application'].get('mcp_tokens') or {}
-    listed = [dict(token, id=token_id, levels=permissions(token.get('permissions')))
+    all_tags = datastore.data['settings']['application'].get('tags') or {}
+    listed = [dict(token, id=token_id, levels=permissions(token.get('permissions')),
+                   tags=[t for t in token.get('tags') or []],
+                   group_names=[all_tags[t].get('title') for t in token.get('tags') or [] if t in all_tags])
               for token_id, token in tokens.items()]
     listed.sort(key=lambda t: t.get('created') or 0)
     return dict(mcp_tokens=listed, mcp_enabled=bool(datastore.data['settings']['application'].get('mcp_enabled')))
@@ -179,11 +211,19 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             abort(404)
         app_settings = datastore.data['settings']['application']
         form = forms.globalMCPSettingsPageForm(formdata=request.form if request.method == 'POST' else None,
-                                               data={'enabled': bool(app_settings.get('mcp_enabled'))})
+                                               data={'enabled': bool(app_settings.get('mcp_enabled')),
+                                                     'note': app_settings.get('mcp_note') or '',
+                                                     'public_url': app_settings.get('mcp_base_url') or ''})
         if request.method == 'POST' and form.validate():
             was_enabled = bool(app_settings.get('mcp_enabled'))
             enabled = bool(form.enabled.data)
             app_settings['mcp_enabled'] = enabled
+            # Line endings as the browser sends them (\r\n) would reach the assistant as they are
+            app_settings['mcp_note'] = (form.note.data or '').replace('\r\n', '\n').strip()
+            # The OAuth issuer: grants are bound to {address}/mcp/v1, so a new address signs every connection out
+            public_url = forms.normalise_mcp_public_url(form.public_url.data)
+            address_changed = public_url != (app_settings.get('mcp_base_url') or '')
+            app_settings['mcp_base_url'] = public_url
             if enabled == was_enabled:
                 message = gettext("MCP settings saved.")
             elif enabled:
@@ -192,6 +232,8 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 message = gettext("MCP server switched off.")
             datastore.commit()
             flash(message, 'notice')
+            if address_changed and (app_settings.get('mcp_oauth') or {}).get('grants'):
+                flash(gettext("The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."), 'notice')
             return redirect(url_for('settings.llm.mcp_settings_page'))
         return render_template("llm-settings.html", form=form, active_tab='mcp', plugin_tabs=get_plugin_settings_tabs(),
                                **mcp_template_context(datastore))
@@ -234,28 +276,27 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
     @login_optionally_required
     def mcp_token_add():
         """A new access token. The token itself is in this answer only, it's stored hashed."""
-        from changedetectionio import forms
         from changedetectionio.blueprint.mcp.tokens import add_token
         mcp_ai_enabled_or_404()
-        form = forms.MCPTokenForm(formdata=request.form)
+        form = mcp_token_form(datastore, request.form)
         if not form.validate():
             return mcp_token_form_errors(form)
         token_id, token = add_token(datastore.data['settings']['application'], form.name.data.strip(),
-                                    mcp_token_permissions(form))
+                                    mcp_token_permissions(form), form.tags.data)
         datastore.commit()
         return jsonify({'id': token_id, 'token': token, **mcp_tokens_html()})
 
     @llm_blueprint.route("/mcp/tokens/<string:token_id>", methods=['POST'])
     @login_optionally_required
     def mcp_token_update(token_id):
-        """A token's new name and permissions, the token itself stays the same."""
-        from changedetectionio import forms
+        """A token's new name, permissions and groups, the token itself stays the same."""
         token = mcp_token_or_404(token_id)
-        form = forms.MCPTokenForm(formdata=request.form)
+        form = mcp_token_form(datastore, request.form)
         if not form.validate():
             return mcp_token_form_errors(form)
         token['name'] = form.name.data.strip()
         token['permissions'] = mcp_token_permissions(form)
+        token['tags'] = list(form.tags.data or [])
         datastore.commit()
         return jsonify({'id': token_id, **mcp_tokens_html()})
 
@@ -267,6 +308,17 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         del datastore.data['settings']['application']['mcp_tokens'][token_id]
         datastore.commit()
         return jsonify(mcp_tokens_html())
+
+    @llm_blueprint.route("/mcp/oauth/<string:grant_id>/revoke", methods=['POST'])
+    @login_optionally_required
+    def mcp_oauth_revoke(grant_id):
+        """An assistant signed in with OAuth loses access at once (both its tokens); it can sign in again."""
+        from changedetectionio.blueprint.mcp.oauth.store import revoke
+        mcp_ai_enabled_or_404()
+        if not revoke(datastore.data['settings']['application'], grant_id):
+            abort(404)
+        datastore.commit()
+        return jsonify({'html': render_template("_mcp-oauth-grants.html", **mcp_oauth_context(datastore))})
 
     @llm_blueprint.route("/llm/models", methods=['GET'])
     @login_optionally_required

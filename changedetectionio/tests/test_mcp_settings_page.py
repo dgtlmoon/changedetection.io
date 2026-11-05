@@ -39,7 +39,7 @@ def test_mcp_settings_page(client, live_server, measure_memory_usage, datastore_
     assert res.status_code == 200
     html = res.get_data(as_text=True)
     # Its own page, "MCP Server" marked active by the server in the AI pages' switch
-    assert (f'<a href="{url_for("settings.llm.mcp_settings_page")}" class="settings-subtab subtab-incoming active" '
+    assert (f'<a href="{url_for("settings.llm.mcp_settings_page")}#overview" class="settings-subtab subtab-incoming active" '
             f'aria-current="page">') in html
     assert 'id="mcp"' in html and 'id="ai"' not in html
     assert 'Model Context Protocol' in html
@@ -79,13 +79,13 @@ def test_mcp_settings_page(client, live_server, measure_memory_usage, datastore_
     assert 'copilot mcp add --transport http' in block('mcp-copilot-cli')
     assert 'mcp-remote' in block('mcp-other')
 
-    # The configured Base URL is the public address when it's set
-    settings['base_url'] = 'https://lemonade.example.com/instance-url/'
+    # The Public MCP address (Settings sub-tab) is the address shown when it's set
+    settings['mcp_base_url'] = 'https://lemonade.example.com/instance-url'
     try:
         html = client.get(url_for('settings.llm.mcp_settings_page')).get_data(as_text=True)
         assert '>https://lemonade.example.com/instance-url/mcp/v1</code>' in html
     finally:
-        settings['base_url'] = ''
+        settings.pop('mcp_base_url', None)
 
 
 def test_mcp_on_off_switch(client, live_server, measure_memory_usage, datastore_path):
@@ -248,7 +248,7 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
     res = client.post(url_for('settings.llm.mcp_token_revoke', token_id=token_id))
     assert res.status_code == 200 and 'Claude Code' not in res.json['html'] and 'Tags off' in res.json['html']
     assert 'Claude Code' not in res.json['overview_html'] and 'Tags off' in res.json['overview_html']
-    assert _ping(client, token).status_code == 403 and _ping(client, other).status_code == 200
+    assert _ping(client, token).status_code == 401 and _ping(client, other).status_code == 200
     assert client.post(url_for('settings.llm.mcp_token_revoke', token_id=token_id)).status_code == 404
     assert client.post(url_for('settings.llm.mcp_token_update', token_id='nope'), data=dict(GRID, name='x')).status_code == 404
     # The last one revoked: "Get started" is back on Overview straight away
@@ -278,7 +278,8 @@ def test_ai_pages_settings_tab_row(client, live_server, measure_memory_usage, da
     settings_page = url_for('settings.settings_page')
     llm_page = url_for('settings.llm.llm_settings_page')
     mcp_page = url_for('settings.llm.mcp_settings_page')
-    ai_tab = f'<a href="{llm_page}">AI / LLM / MCP</a>'
+    # Lands on the Overview sub-tab
+    ai_tab = f'<a href="{llm_page}#overview">AI / LLM / MCP</a>'
 
     html = client.get(settings_page).get_data(as_text=True)
     # On /settings the tabs stay in-page #anchors for tabs.js, the AI tab is a link and not active
@@ -292,7 +293,7 @@ def test_ai_pages_settings_tab_row(client, live_server, measure_memory_usage, da
         for anchor in ('general', 'fetching', 'filters', 'ui-options', 'api', 'rss', 'timedate', 'proxies', 'info'):
             assert f'<li class="tab"><a href="{settings_page}#{anchor}">' in html, (page, anchor)
         assert f'href="{url_for("backups.create")}"' in html
-        assert f'<a href="{active_switch}" class="settings-subtab subtab-{direction} active" aria-current="page">' in html, page
+        assert f'<a href="{active_switch}#overview" class="settings-subtab subtab-{direction} active" aria-current="page">' in html, page
 
 
 def test_ai_settings_csrf(client, live_server, measure_memory_usage, datastore_path):
@@ -326,3 +327,108 @@ def test_ai_settings_csrf(client, live_server, measure_memory_usage, datastore_p
     finally:
         app.config['WTF_CSRF_ENABLED'] = False
         settings.pop('mcp_tokens', None)
+
+
+def _initialize(client, token):
+    res = client.post('/mcp/v1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
+                                                  'params': {'protocolVersion': '2025-06-18', 'capabilities': {},
+                                                             'clientInfo': {'name': 'test', 'version': '1'}}}),
+                      content_type='application/json', headers={'Authorization': f'Bearer {token}'})
+    return res.json['result']['instructions']
+
+
+def test_mcp_note(client, live_server, measure_memory_usage, datastore_path):
+    """The MCP Note sub-tab: the built-in note is the placeholder, a saved note replaces it on initialize, and the
+    read-only sentence is still added after it."""
+    from markupsafe import escape
+    from changedetectionio.blueprint.mcp import INSTRUCTIONS, READ_ONLY_INSTRUCTIONS
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    settings.pop('mcp_note', None)
+    token = new_mcp_token(client)
+    page = url_for('settings.llm.mcp_settings_page')
+
+    html = client.get(page).get_data(as_text=True)
+    assert f'placeholder="{escape(INSTRUCTIONS)}"' in html
+    assert 'data-mcp-note-copy="note"' in html and 'Replace existing MCP Note' in html and 'mcp-note.js' in html
+    assert _initialize(client, token) == INSTRUCTIONS
+
+    note = "This is the changedetection.io demo.\r\nTo watch your own pages, sign up at https://changedetection.io"
+    res = client.post(page, data={'enabled': 'y', 'note': note}, follow_redirects=True)
+    assert res.status_code == 200
+    assert settings['mcp_note'] == note.replace('\r\n', '\n')
+    assert _initialize(client, token) == note.replace('\r\n', '\n')
+    # (new_mcp_token's tags= is the groups it's limited to, not the Tags row)
+    from changedetectionio.blueprint.mcp.tokens import add_token
+    readonly = add_token(settings, 'ro', {'monitors': 'read', 'tags': 'read', 'notifications': 'read', 'system': 'read'}, None)[1]
+    assert _initialize(client, readonly) == note.replace('\r\n', '\n') + READ_ONLY_INSTRUCTIONS
+
+    # Too long is refused and not saved
+    res = client.post(page, data={'enabled': 'y', 'note': 'x' * 4001})
+    assert settings['mcp_note'] == note.replace('\r\n', '\n')
+
+    # Emptied: the built-in note again
+    client.post(page, data={'enabled': 'y', 'note': '  '}, follow_redirects=True)
+    assert settings['mcp_note'] == '' and _initialize(client, token) == INSTRUCTIONS
+
+
+def test_mcp_public_address(client, live_server, measure_memory_usage, datastore_path):
+    """The "Public MCP address" (Settings sub-tab, mcp_base_url) is the MCP / OAuth address, and the notification
+    Base URL has nothing to do with it."""
+    from changedetectionio.blueprint.mcp.oauth import issuer
+    datastore = client.application.config['DATASTORE']
+    settings = datastore.data['settings']['application']
+    page = url_for('settings.llm.mcp_settings_page')
+    settings['base_url'] = 'https://notify.example.com'
+    try:
+        # Empty: built from the request, the notification Base URL is ignored
+        from flask import request
+        with client.application.test_request_context('/'):
+            request_address = request.url_root.rstrip('/')
+            assert issuer(datastore) == request_address
+        html = client.get(page).get_data(as_text=True)
+        assert 'notify.example.com' not in html and f'{request_address}/mcp/v1' in html
+        assert f'placeholder="{request_address}"' in html
+
+        # Saved without a trailing slash, and as the instance's address when the MCP endpoint is pasted
+        client.post(page, data={'enabled': 'y', 'public_url': 'https://changedetection.io/mcp-demo/mcp/v1/'}, follow_redirects=True)
+        assert settings['mcp_base_url'] == 'https://changedetection.io/mcp-demo'
+        assert 'https://changedetection.io/mcp-demo/mcp/v1' in client.get(page).get_data(as_text=True)
+        with client.application.test_request_context('/'):
+            assert issuer(datastore) == 'https://changedetection.io/mcp-demo'
+
+        # Not an address: refused, the saved one kept
+        for bad in ('changedetection.io/mcp-demo', 'ftp://changedetection.io', 'https://changedetection.io/?x=1'):
+            res = client.post(page, data={'enabled': 'y', 'public_url': bad})
+            assert 'Use a full http:// or https:// address' in res.get_data(as_text=True), bad
+            assert settings['mcp_base_url'] == 'https://changedetection.io/mcp-demo'
+
+        # Emptied: back to the request's address
+        client.post(page, data={'enabled': 'y', 'public_url': ''}, follow_redirects=True)
+        assert settings['mcp_base_url'] == ''
+    finally:
+        settings['base_url'] = None
+        settings.pop('mcp_base_url', None)
+
+
+def test_mcp_public_address_upgrade(client, live_server, measure_memory_usage, datastore_path):
+    """update_34: sign-ins made through the notification Base URL (0.70.1) stay connected, nothing else is carried over."""
+    datastore = client.application.config['DATASTORE']
+    settings = datastore.data['settings']['application']
+    try:
+        settings['base_url'] = 'https://cd.example.com/me/'
+        settings.pop('mcp_base_url', None)
+        settings['mcp_oauth'] = {'grants': {}}
+        datastore.update_34()
+        assert not settings.get('mcp_base_url'), "no sign-ins to keep, nothing carried over"
+
+        settings['mcp_oauth'] = {'grants': {'g1': {'resource': 'https://cd.example.com/me/mcp/v1'}}}
+        datastore.update_34()
+        assert settings['mcp_base_url'] == 'https://cd.example.com/me'
+
+        settings['mcp_base_url'] = 'https://elsewhere.example.com'
+        datastore.update_34()
+        assert settings['mcp_base_url'] == 'https://elsewhere.example.com', "a set address is never replaced"
+    finally:
+        settings['base_url'] = None
+        settings.pop('mcp_base_url', None)
+        settings.pop('mcp_oauth', None)

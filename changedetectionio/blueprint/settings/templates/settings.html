@@ -427,6 +427,9 @@ nav
                                 {% else %}
                             {{ render_field(field) }}
                                 {% endif %}
+                                {% if field.description %}
+                            <span class="pure-form-message-inline">{{ field.description }}</span>
+                                {% endif %}
                         </div>
                             {% endif %}
                         {% endfor %}

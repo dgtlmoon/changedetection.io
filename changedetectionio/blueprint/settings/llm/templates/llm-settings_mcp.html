@@ -15,36 +15,7 @@
     <code id="{{ id }}" class="click-to-copy mcp-value" data-copy-label="{{ _('copy') }}" data-copied-label="{{ _('copied') }}">{{ text }}</code>
     {%- endif -%}
 {%- endmacro %}
-{# The None / Read / Write grid, one row per perm_<area> field of forms.MCPTokenForm #}
-{% macro permissions_grid(form) -%}
-  {% set rows = [
-      (form.perm_monitors, _('Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete.')),
-      (form.perm_tags, _('Read: list. Write: create, rename and delete.')),
-      (form.perm_notifications, _('Read: list them (secrets hidden) and look up services. Write: add, remove and mute.')),
-      (form.perm_system, _('Health, the check queue and what is being checked right now.')),
-  ] %}
-  <table class="mcp-perms">
-    <thead>
-      <tr>
-        <th scope="col"></th>
-        <th scope="col">{{ _('None') }}</th>
-        <th scope="col">{{ _('Read') }}</th>
-        <th scope="col">{{ _('Write') }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for field, description in rows %}
-      <tr>
-        <th scope="row"><span class="mcp-perm-name">{{ field.label.text }}</span><span class="mcp-perm-desc">{{ description }}</span></th>
-        {% for option in field %}
-        <td><label class="mcp-perm-choice" title="{{ field.label.text }}: {{ option.label.text }}">{{ option() }}<span class="sr-only">{{ option.label.text }}</span></label></td>
-        {% endfor %}
-        {% if field.choices|length < 3 %}<td class="mcp-perm-na" aria-hidden="true">&ndash;</td>{% endif %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{%- endmacro %}
+{% from '_mcp-permissions-grid.html' import permissions_grid %}
         <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.mcp_settings_page') }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <div class="tab-pane-inner tab-pane-current" id="mcp">
@@ -62,14 +33,15 @@
   {% call stab_shell('mcp-settings', [
       {'id': 'overview', 'label': _('Overview'), 'icon': 'info'},
       {'id': 'tokens', 'label': _('Access tokens'), 'icon': 'key'},
-      {'id': 'connect', 'label': _('Connect'), 'icon': 'link'},
-      {'id': 'oauth', 'label': 'OAuth', 'icon': 'log-in'},
+      {'id': 'connect', 'label': _('Connect: %(method)s', method=_('Token')), 'icon': 'link'},
+      {'id': 'oauth', 'label': _('Connect: %(method)s', method='OAuth'), 'icon': 'log-in'},
+      {'id': 'settings', 'label': _('Settings'), 'icon': 'sliders'},
   ]) %}
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}
   {% call stab_pane('overview') %}
-  <img class="mcp-infographic" src="{{url_for('static_content', group='images', filename='mcp-infographic.jpg')}}"
-       alt="MCP - A way for AI Assistants to interact with changedetection.io">
+  <a title="MCP with Changedetection.io overview" href="https://changedetection.io/MCP"><img class="mcp-infographic" src="{{url_for('static_content', group='images', filename='mcp-infographic.jpg')}}"
+       alt="MCP - A way for AI Assistants to interact with changedetection.io"></a>
   <div class="stab-overview-hero">
     <h3><span class="stab-overview-glyph"><i data-feather="cpu"></i></span> {{ _('Connect AI assistants with MCP') }}</h3>
     <p>{{ _('MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code use other applications as tools.') }}</p>
@@ -215,12 +187,74 @@
   {# ── OAuth connections ─────────────────────────────────────────────────── #}
   {% call stab_pane('oauth') %}
   <p class="stab-section-title">{{ _('OAuth connections') }}</p>
-  <div class="mcp-empty">
-    <i data-feather="key"></i>
-    <p><strong>{{ _('Sign in with OAuth is coming soon') }}</strong></p>
-    <p class="mcp-hint">{{ _('ChatGPT and claude.ai in the browser only connect to servers with sign-in (OAuth), which this MCP server does not offer yet.') }}</p>
-    <p class="mcp-hint">{{ _('Assistants you connect that way will be listed here, and you can disconnect them.') }}</p>
+  <p class="mcp-hint">{{ _('ChatGPT and claude.ai in the browser connect with sign-in (OAuth) instead of an access token: you log in here and choose what the assistant may do.') }}</p>
+  {% if mcp_oauth_available %}
+  <p class="mcp-hint">{{ _('Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://') }}</p>
+  {{ copyable(mcp_url, 'mcp-oauth-url') }}
+  {% elif not mcp_password_set %}
+  <div class="stab-overview-disclaimer">
+    <div class="stab-disclaimer-icon"><i data-feather="lock"></i></div>
+    {# The link is put in by the template, translations only carry its placeholders, never HTML #}
+    <div class="stab-disclaimer-body"><p>{{ _('Sign-in needs a login to sit behind: %(link_start)sset a password%(link_end)s (Settings > General) to allow it.',
+        link_start='<a href="%s#general">'|format(url_for('settings.settings_page')|e), link_end='</a>')|safe }}</p></div>
   </div>
+  {% else %}
+  <p class="mcp-hint">{{ _('Switch on the MCP server (Overview) to allow sign-in.') }}</p>
+  {% endif %}
+  {#- Step by step for the two assistants people ask about. Menu names change, so the steps say where to look and
+      link the assistant's own help. Links are put in by the template, translations only carry placeholders #}
+  {%- set ext = '" target="_blank" rel="noopener">' -%}
+  <p class="stab-section-title">Claude (claude.ai)</p>
+  <ol class="mcp-connect-steps">
+    <li>{{ _('Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai.', link_start='<a href="https://claude.ai/new#customize/connectors/yours' ~ ext, link_end='</a>')|safe }}</li>
+    <li>{{ _('Click the add button, then "Add custom connector".') }}</li>
+    <li>{{ _('Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:') }} {{ copyable(mcp_url, 'mcp-oauth-url-claude') }}</li>
+    <li>{{ _('Leave the sign-in setting as Claude detects it, then click Add.') }}</li>
+    <li>{{ _('Click Connect: you come here to log in, choose what Claude may do and click Allow, then you are sent back to Claude.') }}</li>
+  </ol>
+  <p class="mcp-hint">{{ _('On Team and Enterprise plans an Owner adds it under Organization settings > Connectors, then each member clicks Connect.') }}
+    {{ _('%(link_start)sClaude help: custom connectors%(link_end)s', link_start='<a href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp' ~ ext, link_end='</a>')|safe }}</p>
+
+  <p class="stab-section-title">ChatGPT (OpenAI)</p>
+  <ol class="mcp-connect-steps">
+    <li>{{ _('In ChatGPT, open Settings > Apps & Connectors > Advanced settings and switch on Developer mode. On some accounts it is under Settings > Security.') }}</li>
+    <li>{{ _('Back in Apps & Connectors, click Create (or "Add custom connector").') }}</li>
+    <li>{{ _('Give it a name, paste this as the MCP server URL and choose OAuth as the authentication:') }} {{ copyable(mcp_url, 'mcp-oauth-url-chatgpt') }}</li>
+    <li>{{ _('Confirm and click Create: you come here to log in, choose what ChatGPT may do and click Allow.') }}</li>
+    <li>{{ _('In a chat, click +, choose Developer mode and pick the connector.') }}</li>
+  </ol>
+  <p class="mcp-hint">{{ _('Custom connectors need a paid ChatGPT plan; on Business and Enterprise plans an admin may need to allow them first.') }}</p>
+
+  <p class="stab-section-title">{{ _('Signed in') }}</p>
+  <div id="mcp-oauth-grants"
+       data-revoke-title="{{ _('Revoke this sign-in?') }}"
+       data-revoke-message="{{ _('The assistant is disconnected at once, it can sign in again.') }}"
+       data-revoke-button="{{ _('Revoke') }}"
+       data-error="{{ _('Something went wrong, please try again.') }}">
+    {% include '_mcp-oauth-grants.html' %}
+  </div>
+  {% endcall %}
+
+  {# ── Settings (the MCP Note, more to come) ─────────────────────────────── #}
+  {% call stab_pane('settings') %}
+  <p class="stab-section-title">{{ _('Public MCP address') }}</p>
+  <p class="mcp-hint">{{ _('The address assistants reach this instance on, for example when it is served through another domain or proxy. Sign-in (OAuth) hands this address out, so it must be the one assistants connect to. Leave it empty to use the address of each request, shown in grey.') }}</p>
+  <div class="pure-control-group">
+    {{ form.public_url(class='pure-input-1', placeholder=mcp_request_address, maxlength=500) }}
+    {% if form.public_url.errors %}<ul class="errors">{% for error in form.public_url.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+  <p class="mcp-hint">{{ _('The MCP server is then at this address followed by /mcp/v1. Changing it signs out assistants connected with sign-in (OAuth), they need to connect again. Access tokens keep working.') }}</p>
+
+  <p class="stab-section-title">{{ _('MCP Note') }}</p>
+  <p class="mcp-hint">{{ _('What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to use the built-in note, shown in grey.') }}</p>
+  <div class="pure-control-group">
+    {{ form.note(class='pure-input-1 mcp-note', rows=12, placeholder=mcp_builtin_note, maxlength=4000) }}
+    {% if form.note.errors %}<ul class="errors">{% for error in form.note.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+  <button type="button" class="cdio-btn button-small" data-mcp-note-copy="{{ form.note.id }}"
+          data-confirm="{{ _('Replace what is in the MCP Note with the built-in note?') }}">{{ _('Replace existing MCP Note') }}</button>
+  <p class="mcp-hint">{{ _('Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to download it.') }}</p>
+  <p class="mcp-hint">{{ _('Read-only tokens, and tokens limited to some groups, are always told that after this note.') }}</p>
   {% endcall %}
 
   {% endcall %}
@@ -253,6 +287,15 @@
         <ul class="errors mcp-token-errors" hidden></ul>
       </div>
       {{ permissions_grid(token_form) }}
+      <fieldset class="mcp-token-groups">
+        <legend>{{ token_form.tags.label.text }}</legend>
+        {% if token_form.tags.choices %}
+        {{ token_form.tags(class='mcp-token-group-list') }}
+        <span class="pure-form-message-inline">{{ _('None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer.') }}</span>
+        {% else %}
+        <span class="pure-form-message-inline">{{ _('There are no groups yet. Add some to limit a token to them.') }}</span>
+        {% endif %}
+      </fieldset>
     </div>
     <div class="modal-footer">
       <button type="button" class="modal-btn-cancel pure-button" data-mcp-dialog-close>{{ _('Cancel') }}</button>
