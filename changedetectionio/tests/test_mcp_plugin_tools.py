@@ -161,3 +161,70 @@ def test_plugin_tool_rules(client, live_server, measure_memory_usage, datastore_
         plugin_manager.unregister(plugin)
     assert 'example_long_answer' not in _tools(client), "gone with the plugin"
     delete_all_watches(client)
+
+
+class _AccountPlugin:
+    """A plugin with its own permission row, like a sign-up tool on a demo: not about monitors at all."""
+
+    @hookimpl
+    def register_mcp_permission_rows(self):
+        return [{'name': 'account', 'label': 'Account & billing', 'description': 'Write: start a subscription.'},
+                {'name': 'unused', 'label': 'No tool uses this'},
+                {'name': 'monitors', 'label': "Core's name, refused"}]
+
+    @hookimpl
+    def register_mcp_tools(self):
+        return [{'name': 'example_signup', 'title': 'Start a subscription', 'kind': 'write', 'area': 'account',
+                 'open_world': True, 'description': 'A checkout link for a new account.',
+                 'input_schema': {'account': {'type': 'string'}}, 'required': ['account'],
+                 'handler': lambda ctx, args, watch: (f"https://pay.example.com/{args['account']}", {'ok': True})},
+                {'name': 'example_bad_area', 'title': 'Bad', 'kind': 'read', 'area': 'nowhere', 'description': 'x',
+                 'handler': lambda ctx, args, watch: ('', {})},
+                {'name': 'example_system_write', 'title': 'Bad', 'kind': 'write', 'area': 'system', 'description': 'x',
+                 'handler': lambda ctx, args, watch: ('', {})}]
+
+
+def test_plugin_permission_rows(client, live_server, measure_memory_usage, datastore_path):
+    from flask import url_for
+    from changedetectionio.blueprint.mcp import tools as mcp_tools
+    plugin = _AccountPlugin()
+    plugin_manager.register(plugin, 'test_mcp_account')
+    try:
+        rows = mcp_tools.plugin_permission_rows()
+        assert list(rows) == ['account'], "a row no tool uses, and a core row's name, are left out"
+        assert rows['account']['levels'] == ('none', 'write'), "only the levels its tools need"
+        assert 'example_bad_area' not in mcp_tools.get_tools() and 'example_system_write' not in mcp_tools.get_tools()
+
+        # A token from before the row existed, or one left at the default: None, even with everything else at write
+        assert _call(client, 'example_signup', account='acme')['isError'] is True
+        assert 'example_signup' not in _tools(client)
+        refused = _call(client, 'example_signup', account='acme')['content'][0]['text']
+        assert "'Account & billing'" in refused
+
+        # Read on monitors, Write on the plugin's row: the demo case
+        settings = client.application.config['DATASTORE'].data['settings']['application']
+        client.application.config['MCP_TEST_TOKEN'] = new_mcp_token(client, monitors='read', tags='read', account='write')
+        listed = _tools(client)
+        assert 'example_signup' in listed and 'create_watch' not in listed
+        assert listed['example_signup']['annotations']['openWorldHint'] is True
+        assert listed['example_signup']['annotations']['readOnlyHint'] is False
+        result = _call(client, 'example_signup', account='acme')
+        assert result['isError'] is False and result['content'][0]['text'] == 'https://pay.example.com/acme'
+        assert 'example_signup' not in _tools(client, read_only=True), "?readonly=1 still caps it"
+
+        # The grid and the token list show the row
+        html = client.get(url_for('settings.llm.mcp_settings_page')).get_data(as_text=True)
+        assert 'Account &amp; billing' in html and 'name="perm_account"' in html and 'Write: start a subscription.' in html
+        res = client.post(url_for('settings.llm.mcp_token_add'), data={'name': 'with account', 'perm_monitors': 'read',
+                          'perm_tags': 'read', 'perm_notifications': 'none', 'perm_browser': 'none',
+                          'perm_system': 'none', 'perm_account': 'write'})
+        assert res.status_code == 200, res.data
+        saved = [t for t in settings['mcp_tokens'].values() if t['name'] == 'with account'][0]
+        assert saved['permissions']['account'] == 'write'
+        token_list = ''.join(v for v in res.json.values() if isinstance(v, str))
+        assert 'Account &amp; billing <strong>' in token_list
+        assert 'Browser steps &amp; JavaScript <strong>' in token_list, "core's browser row has its label in the list too"
+    finally:
+        plugin_manager.unregister(plugin)
+        client.application.config['MCP_TEST_TOKEN'] = new_mcp_token(client)
+    assert 'account' not in mcp_tools.plugin_permission_rows(), "gone with the plugin"

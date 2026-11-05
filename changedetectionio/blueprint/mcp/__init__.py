@@ -132,7 +132,7 @@ def construct_blueprint(datastore, update_q=None):
                            f"changes data) is not available. Tell the user to connect without ?readonly=1 to allow "
                            f"changes.")
         return refusal(f"'{name}' is not allowed: this access token ('{g.mcp_token.get('name')}') has "
-                       f"'{permissions()[area]}' access to {area}. Tell the user it can be changed on the 'Access "
+                       f"'{permissions()[area]}' access to '{tools.area_label(area)}'. Tell the user it can be changed on the 'Access "
                        f"tokens' sub-tab of the 'MCP Server' settings.")
 
     def access_denied():
@@ -224,7 +224,7 @@ def construct_blueprint(datastore, update_q=None):
                 return _error(msg_id, INVALID_PARAMS, "'arguments' must be an object")
             blocked = tools.blocked_arguments(perms, name, arguments)
             if blocked:
-                rows = ' and '.join(f"'{tools.AREA_LABELS.get(a, a)}'" for a in blocked)
+                rows = ' and '.join(f"'{tools.area_label(a)}'" for a in blocked)
                 arguments_named = ', '.join(a for args in blocked.values() for a in args)
                 return _result(msg_id, refusal(
                     f"Changing {arguments_named} is not allowed for this access token, nothing was changed. Tell the "
