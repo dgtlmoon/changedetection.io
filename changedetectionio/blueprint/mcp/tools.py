@@ -1736,17 +1736,35 @@ NOTIFICATION_ARGUMENTS = {'update_watch': ('notification_urls', 'notification_mu
                           'create_tag': ('notification_muted',)}
 
 
-def permissions(stored=None, read_only=False):
+def permissions(stored=None, read_only=False, cap=None):
     """{area: level} from the saved grid, the defaults for anything not saved; read_only (?readonly=1) caps every
-    row at read."""
+    row at read; cap ({area: level}, e.g. oauth_cap()) caps each row at its level."""
     stored = stored if isinstance(stored, dict) else {}
     result = {}
     for area, default in PERMISSION_DEFAULTS.items():
         level = stored.get(area) if stored.get(area) in LEVELS else default
         if level == WRITE_ACCESS and (read_only or area in READ_ONLY_AREAS):
             level = READ
+        if cap and LEVELS.index(level) > LEVELS.index(cap.get(area, level)):
+            level = cap[area]
         result[area] = level
     return result
+
+
+def highest_levels():
+    """{area: the highest level that row has}: write, or read for the rows without write tools."""
+    return {area: READ if area in READ_ONLY_AREAS else WRITE_ACCESS for area in PERMISSION_DEFAULTS}
+
+
+def oauth_cap(app_settings):
+    """{area: level}, the most an OAuth sign-in may have (settings.application.mcp_oauth_max_permissions, set on the
+    "Settings" sub-tab), the highest level for any row not set. Applied on the consent screen and again on every
+    request, so lowering it also lowers sign-ins made before."""
+    stored = app_settings.get('mcp_oauth_max_permissions')
+    stored = stored if isinstance(stored, dict) else {}
+    highest = highest_levels()
+    return {area: (stored[area] if stored.get(area) in LEVELS and LEVELS.index(stored[area]) <= LEVELS.index(top)
+                   else top) for area, top in highest.items()}
 
 
 def tool_area(name):

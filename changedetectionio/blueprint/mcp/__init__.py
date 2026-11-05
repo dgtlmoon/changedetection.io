@@ -28,6 +28,7 @@ http://localhost:5000/mcp/v1?readonly=1 for a connector that may only look, neve
 """
 import hmac
 import os
+import threading
 from urllib.parse import urlsplit
 
 from flask import Blueprint, g, jsonify, make_response, request
@@ -53,6 +54,39 @@ MCP_NOTE_MAX = 4000
 def server_note(app_settings):
     """The note every assistant is given when it connects: the instance's own MCP Note, else the built-in one."""
     return (app_settings.get('mcp_note') or '').strip() or INSTRUCTIONS
+
+
+# Tool calls per minute, per access token or sign-in (settings.application.mcp_calls_per_minute, 0 for no limit). Tools
+# run in the app process, some for up to CHANGES_TIME_BUDGET seconds, so one token can't tie it up
+CALLS_PER_MINUTE_DEFAULT = 60
+_calls = {}
+_calls_lock = threading.Lock()
+
+
+def calls_per_minute(app_settings):
+    value = app_settings.get('mcp_calls_per_minute')
+    return CALLS_PER_MINUTE_DEFAULT if value is None else max(0, int(value))
+
+
+def rate_limited(key, limit):
+    """Seconds to wait before the next call when `key` has made `limit` calls in the last minute, else 0 (and the
+    call is counted)."""
+    import time
+    if not limit:
+        return 0
+    now = time.monotonic()
+    with _calls_lock:
+        recent = [t for t in _calls.get(key, ()) if now - t < 60]
+        if len(recent) >= limit:
+            _calls[key] = recent
+            return max(1, int(60 - (now - recent[0])) + 1)
+        recent.append(now)
+        _calls[key] = recent
+        # Tokens that stopped calling are dropped now and then, so this never grows
+        if len(_calls) > 1000:
+            for k in [k for k, v in _calls.items() if not v or now - v[-1] >= 60]:
+                del _calls[k]
+    return 0
 
 
 READ_ONLY_INSTRUCTIONS = (
@@ -108,10 +142,15 @@ def construct_blueprint(datastore, update_q=None):
         # /mcp/v1?readonly=1 - every row capped at read, for a connector that should only look
         return request.args.get('readonly', '').lower() in ('1', 'true', 'yes')
 
+    def is_sign_in():
+        # A token from an OAuth sign-in (oauth/store.py grants) rather than an access token made on the settings page
+        return 'client_id' in g.mcp_token
+
     def permissions(read_only=None):
-        # The None / Read / Write grid of the token this request came with
+        # The None / Read / Write grid of the token this request came with, a sign-in's capped by the Settings sub-tab
         return tools.permissions(g.mcp_token.get('permissions'),
-                                 read_only=readonly_address() if read_only is None else read_only)
+                                 read_only=readonly_address() if read_only is None else read_only,
+                                 cap=tools.oauth_cap(datastore.data['settings']['application']) if is_sign_in() else None)
 
     def limited_instructions():
         names = ctx.scoped(g.mcp_token.get('tags')).tag_names() if g.mcp_token.get('tags') else None
@@ -131,6 +170,11 @@ def construct_blueprint(datastore, update_q=None):
             return refusal(f"This connection is read-only (its address ends with ?readonly=1), so '{name}' (which "
                            f"changes data) is not available. Tell the user to connect without ?readonly=1 to allow "
                            f"changes.")
+        if is_sign_in():
+            return refusal(f"'{name}' is not allowed: this sign-in ('{g.mcp_token.get('name')}') has "
+                           f"'{permissions()[area]}' access to {area}. Tell the user that sign-ins are limited on the "
+                           f"'Settings' sub-tab of the 'MCP Server' settings, and that they can sign in again to "
+                           f"choose more, up to that limit.")
         return refusal(f"'{name}' is not allowed: this access token ('{g.mcp_token.get('name')}') has "
                        f"'{permissions()[area]}' access to {area}. Tell the user it can be changed on the 'Access "
                        f"tokens' sub-tab of the 'MCP Server' settings.")
@@ -219,6 +263,15 @@ def construct_blueprint(datastore, update_q=None):
             perms = permissions()
             if not tools.tool_allowed(perms, name):
                 return _result(msg_id, permission_refusal(name))
+            limit = calls_per_minute(datastore.data['settings']['application'])
+            # Per token: its stored hash, or for a sign-in its grant (the access token itself rotates hourly)
+            key = g.mcp_token.get('hash') or f"grant:{g.mcp_token.get('client_id')}:{g.mcp_token.get('created')}"
+            wait = rate_limited(key, limit)
+            if wait:
+                return _result(msg_id, refusal(
+                    f"Too many calls: this access token may make {limit} tool calls a minute. Wait {wait} seconds "
+                    f"before the next one. Fewer, bigger calls go further, e.g. get_changes over a tag instead of "
+                    f"get_watch for each monitor."))
             arguments = params.get('arguments') or {}
             if not isinstance(arguments, dict):
                 return _error(msg_id, INVALID_PARAMS, "'arguments' must be an object")

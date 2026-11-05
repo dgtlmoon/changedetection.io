@@ -1397,6 +1397,15 @@ class globalLLMSettingsPageForm(Form):
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 
+class MCPPermissionsForm(Form):
+    """The None / Read / Write grid, one perm_<area> field per row (blueprint/mcp/tools.py PERMISSION_DEFAULTS): an
+    access token's, a sign-in's (the consent screen) and the most a sign-in may choose (the "Settings" sub-tab)."""
+    perm_monitors = RadioField(_l('Monitors'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_tags = RadioField(_l('Groups (tags)'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_notifications = RadioField(_l('Notifications'), default='read', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_system = RadioField(_l('System info'), default='read', choices=[('none', _l('None')), ('read', _l('Read'))])
+
+
 class globalMCPSettingsPageForm(Form):
     """The /settings/ai/mcp page ("MCP Server" tab), stored in datastore['settings']['application']['mcp_enabled']. The
     access tokens have their own form, MCPTokenForm."""
@@ -1404,18 +1413,19 @@ class globalMCPSettingsPageForm(Form):
     enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
     # Empty for the built-in note (blueprint/mcp INSTRUCTIONS, shown as the placeholder), stored as mcp_note
     note = TextAreaField(_l('MCP Note'), validators=[validators.Optional(), validators.Length(max=4000)])
+    # Stored as mcp_calls_per_minute, 0 for no limit (blueprint/mcp CALLS_PER_MINUTE_DEFAULT when not set)
+    calls_per_minute = IntegerField(_l('Tool calls per minute, per token'), default=60,
+                                    validators=[validators.Optional(), validators.NumberRange(min=0, max=10000)])
+    # The most an OAuth sign-in may choose, stored as mcp_oauth_max_permissions (tools.oauth_cap())
+    oauth_cap = FormField(MCPPermissionsForm)
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 
-class MCPTokenForm(Form):
-    """Add or edit one MCP access token (the overlay on the "Access tokens" sub-tab, sent with ajax): its name and its
-    None / Read / Write grid, one perm_<area> field per row (see blueprint/mcp/tools.py)."""
+class MCPTokenForm(MCPPermissionsForm):
+    """Add or edit one MCP access token (the overlay on the "Access tokens" sub-tab, sent with ajax), or a sign-in on
+    the consent screen: its name, its None / Read / Write grid (MCPPermissionsForm) and its groups."""
     name = StringField(_l('Name'), validators=[validators.DataRequired(), validators.Length(max=64)],
                        render_kw={'placeholder': _l('e.g. Claude Code, laptop'), 'maxlength': 64})
-    perm_monitors = RadioField(_l('Monitors'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
-    perm_tags = RadioField(_l('Groups (tags)'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
-    perm_notifications = RadioField(_l('Notifications'), default='read', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
-    perm_system = RadioField(_l('System info'), default='read', choices=[('none', _l('None')), ('read', _l('Read'))])
     # The groups (tags) the token is limited to, none ticked for every monitor. Choices are the tags, set by the routes
     tags = SelectMultipleField(_l('Only these groups'), choices=[], validate_choice=True,
                                widget=widgets.ListWidget(prefix_label=False), option_widget=widgets.CheckboxInput())

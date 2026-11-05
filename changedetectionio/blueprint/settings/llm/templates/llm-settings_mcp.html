@@ -247,6 +247,18 @@
           data-confirm="{{ _('Replace what is in the MCP Note with the built-in note?') }}">{{ _('Replace existing MCP Note') }}</button>
   <p class="mcp-hint">{{ _('Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to download it.') }}</p>
   <p class="mcp-hint">{{ _('Read-only tokens, and tokens limited to some groups, are always told that after this note.') }}</p>
+
+  <p class="stab-section-title">{{ _('Sign-in limits') }}</p>
+  <p class="mcp-hint">{{ _('The most a sign-in (OAuth, e.g. ChatGPT or claude.ai) may choose on its consent screen. For example Read everywhere, on a demo whose password you share. Lowering it also applies to sign-ins made before. Access tokens are not affected.') }}</p>
+  {{ permissions_grid(form.oauth_cap) }}
+
+  <p class="stab-section-title">{{ _('Rate limit') }}</p>
+  <div class="pure-control-group">
+    {{ form.calls_per_minute.label }}
+    {{ form.calls_per_minute(type='number', min=0, max=10000, class='mcp-calls-per-minute') }}
+    {% if form.calls_per_minute.errors %}<ul class="errors">{% for error in form.calls_per_minute.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    <span class="pure-form-message-inline">{{ _('Each access token and sign-in on its own, 0 for no limit. An assistant over it is told how long to wait.') }}</span>
+  </div>
   {% endcall %}
 
   {% endcall %}

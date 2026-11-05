@@ -152,19 +152,25 @@ def construct_blueprint(datastore):
         client = grant.request.client
         redirect_uri = grant.request.payload.redirect_uri or client.get_default_redirect_uri()
         redirect_host = urlsplit(redirect_uri or '').hostname or ''
+        # The grid only offers what the "Settings" sub-tab allows a sign-in, and what's saved is capped again
+        from changedetectionio.blueprint.mcp.tools import PERMISSION_DEFAULTS, oauth_cap, permissions
+        from changedetectionio.blueprint.settings.llm import limit_permission_choices
+        cap = oauth_cap(datastore.data['settings']['application'])
         if request.method == 'POST':
             if request.form.get('decision') != 'approve':
                 return with_issuer(auth_server.create_authorization_response(grant_user=None, grant=grant))
             form = mcp_token_form(datastore, request.form)
+            limit_permission_choices(form, cap)
             if form.validate():
-                from changedetectionio.blueprint.mcp.tools import PERMISSION_DEFAULTS
+                chosen = {a: form[f'perm_{a}'].data for a in PERMISSION_DEFAULTS}
                 g.mcp_oauth_consent = {'name': form.name.data.strip(),
-                                       'permissions': {a: form[f'perm_{a}'].data for a in PERMISSION_DEFAULTS},
+                                       'permissions': permissions(chosen, cap=cap),
                                        'tags': list(form.tags.data or [])}
                 return with_issuer(auth_server.create_authorization_response(grant_user=oauth_server.OWNER,
                                                                              grant=grant))
         else:
             form = mcp_token_form(datastore)
+            limit_permission_choices(form, cap)
             form.name.data = client.client_name
         return consent_page(form=form, client=client, redirect_host=redirect_host,
                             localhost_only=redirect_host in ('localhost', '127.0.0.1', '::1'),
