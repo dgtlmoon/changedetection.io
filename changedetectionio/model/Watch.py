@@ -433,7 +433,8 @@ class model(EntityPersistenceMixin, watch_base):
             # Skip processor config files
             if item.name in processor_config_files:
                 continue
-            os.unlink(item)
+            # A save or check running now may rename its .tmp file away between glob() and here
+            item.unlink(missing_ok=True)
 
         _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
 
