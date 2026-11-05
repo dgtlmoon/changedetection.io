@@ -150,13 +150,18 @@ def create_watch(datastore, data):
         raise ApiError(f"Watch limit reached ({current_watch_count}/{datastore.watch_limit} watches). "
                        f"Cannot add more watches.", 429)
 
-    new_uuid = datastore.add_watch(url=url, extras=extras, tag=tags)
+    # With processor config, add it paused until the config is saved: the scheduler picks up a new watch on its
+    # next pass, and a first check before the config file exists would run with the processor's defaults
+    paused_for_config = bool(processor_config_data) and not extras.get('paused')
+    new_uuid = datastore.add_watch(url=url, extras=dict(extras, paused=True) if paused_for_config else extras, tag=tags)
     if not new_uuid:
         raise ApiError("Invalid or unsupported URL")
 
     # Save processor config to separate JSON file
     if processor_config_data:
         processors.save_processor_config(datastore, new_uuid, processor_config_data)
+    if paused_for_config:
+        datastore.update_watch(uuid=new_uuid, update_obj={'paused': False})
     return new_uuid
 
 
