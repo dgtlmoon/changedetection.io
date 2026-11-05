@@ -27,8 +27,12 @@ $(document).ready(function () {
         alert($list.data('error'));
     }
 
-    function open(title, url, name, permissions) {
+    function open(title, url, name, permissions, tags) {
         $form[0].reset();
+        $form.find('[name="tags"]').prop('checked', false);
+        $.each(tags || [], function (_, tag) {
+            $form.find('[name="tags"][value="' + tag + '"]').prop('checked', true);
+        });
         $.each(defaults, function (_, field) {
             if (field.name.indexOf('perm_') === 0) $form.find('[name="' + field.name + '"][value="' + field.value + '"]').prop('checked', true);
         });
@@ -50,7 +54,7 @@ $(document).ready(function () {
 
     $list.on('click', '[data-mcp-token-edit]', function () {
         var $token = $(this).closest('.mcp-token');
-        open($form.data('title-edit'), $token.data('update-url'), $token.data('name'), $token.data('permissions'));
+        open($form.data('title-edit'), $token.data('update-url'), $token.data('name'), $token.data('permissions'), $token.data('tags'));
     });
 
     $list.on('click', '[data-mcp-token-revoke]', function () {
@@ -62,6 +66,23 @@ $(document).ready(function () {
             confirmText: $list.data('revoke-button'),
             onConfirm: function () {
                 $.post($token.data('revoke-url')).done(function (data) { refresh(data); }).fail(failed);
+            }
+        });
+    });
+
+    // Assistants signed in with OAuth (the OAuth sub-tab): only Revoke, they sign in again from the assistant
+    var $grants = $('#mcp-oauth-grants');
+    $grants.on('click', '[data-mcp-oauth-revoke]', function () {
+        var $grant = $(this).closest('.mcp-token');
+        ModalDialog.confirm({
+            type: 'danger',
+            title: $grants.data('revoke-title'),
+            message: '<p><strong>' + _modalEscapeHTML(String($grant.data('name'))) + '</strong></p><p>' + _modalEscapeHTML($grants.data('revoke-message')) + '</p>',
+            confirmText: $grants.data('revoke-button'),
+            onConfirm: function () {
+                $.post($grant.data('revoke-url')).done(function (data) {
+                    $grants.html(data.html);
+                }).fail(function () { alert($grants.data('error')); });
             }
         });
     });

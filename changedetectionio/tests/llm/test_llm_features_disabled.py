@@ -89,14 +89,14 @@ def test_llm_features_enabled_by_default(client, live_server, monkeypatch):
     res = client.get(url_for('settings.settings_page'))
     assert res.status_code == 200
     assert b'href="#ai"' not in res.data
-    assert f'<li class="tab"><a href="{llm_page}">AI / LLM / MCP</a></li>'.encode() in res.data
+    assert f'<li class="tab"><a href="{llm_page}'.encode() in res.data
     assert b'title="AI / LLM settings"' not in client.get(url_for('watchlist.index')).data, "not in the sidebar"
 
     res = client.get(llm_page)
     assert res.status_code == 200
     # Its tabs are links to their own pages (not #anchors), the current one marked active by the server
-    assert f'<li class="tab active"><a href="{llm_page}">'.encode() in res.data
-    assert f'href="{url_for("settings.llm.mcp_settings_page")}"'.encode() in res.data
+    assert f'<li class="tab active"><a href="{llm_page}'.encode() in res.data
+    assert f'href="{url_for("settings.llm.mcp_settings_page")}#overview"'.encode() in res.data
     assert b'id="ai"' in res.data
     assert b'name="llm-model"' in res.data
 

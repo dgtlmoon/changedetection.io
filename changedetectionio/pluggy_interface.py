@@ -59,6 +59,58 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
+    def select_fetch_backend(watch, datastore, backend_name, failed_fetch, tried):
+        """Offer a different content fetcher for this one check, without changing the watch's settings.
+        Plugin API 0.6.0+.
+
+        Asked before fetching (failed_fetch=None, swap the fetcher before it runs), and again each time a fetch
+        raised (retry straight away with another one). Every plugin can offer, core tries the offers in priority
+        order, lowest first, skipping fetchers already tried in this check, up to FETCH_FALLBACK_MAX_ATTEMPTS
+        retries (default 3). So fallbacks chain: a preferred scraping service at priority 1, another at 2 when
+        the first fails or is out of quota. If every attempt fails, the last error is what the watch shows.
+
+        Don't offer what can't work, for example over your own daily quota, so the next fetcher gets the
+        attempt. See example_plugins/fetcher/fallback_fetcher.
+
+        Args:
+            watch: The watch being checked
+            datastore: The application datastore
+            backend_name: The fetcher that would be used (or just failed, when failed_fetch is set),
+                          e.g. 'html_requests'
+            failed_fetch: None before the fetch, the exception after a failed one. A Non200ErrorCodeReceived
+                          has the site's answer in .status_code
+            tried: Fetcher names already tried in this check, in order
+
+        Returns:
+            None, a registered fetcher name (starting with 'html_'), or {'backend': name, 'priority': int}.
+            A plain name has priority 0. Unknown names, fetchers already tried, and fetchers that can't
+            fetch a PDF watch are skipped.
+        """
+        pass
+
+    @hookspec(firstresult=True)
+    def recheck_seconds_override(watch, datastore, seconds):
+        """Override how often a watch is rechecked, the last word after system settings -> group -> watch.
+        Plugin API 0.6.0+.
+
+        For a plugin that has taken a watch "under its control", for example one that moved it to a paid
+        fetcher after repeated 403s and wants it checked every 12 hours instead of every 30 minutes.
+        Explain it to the user with watch_list_extra_text.
+
+        Called by the scheduler for every watch on every pass (about once a second), so stay in memory:
+        no disk, network or other slow work. The first plugin to return a number wins.
+
+        Args:
+            watch: The watch
+            datastore: The application datastore
+            seconds: The recheck time it would have without plugins
+
+        Returns:
+            int or None: Seconds between checks for this watch, or None to leave it.
+        """
+        pass
+
+    @hookspec
     def fetcher_status_icon(fetcher_name):
         """Return the status icon shown in the watch list for a content fetcher.
 
@@ -410,8 +462,18 @@ class ChangeDetectionSpec:
                           arguments are refused.
             required:     optional list of required argument names
             processor:    optional processor name its `watch` argument must use, e.g. 'restock_diff'
+            area:         optional row of the None / Read / Write permission grid the tool belongs to:
+                          one of core's ('monitors', the default, 'tags', 'notifications', 'browser',
+                          'system') or one a plugin adds with register_mcp_permission_rows. An access
+                          token only gets the tool with Read (for 'read' tools) or Write on that row.
+            open_world:   optional, True when it reaches outside this instance (another service, a
+                          payment provider...), so clients may ask the user first (MCP openWorldHint)
             handler:      handler(ctx, args, watch) -> (text, structured_dict). ctx.datastore and
                           ctx.update_q, args as validated, watch the resolved Watch or None.
+                          An access token can be limited to some tags (groups): list monitors with
+                          ctx.watches() (or check ctx.in_scope(watch)), never datastore.data['watching']
+                          directly, and resolve tags with tools._resolve_tag(ctx, ...). The `watch`
+                          argument is already resolved within the token's groups.
 
         Text that comes from monitored pages should start with tools.UNTRUSTED_NOTE.
 
@@ -421,6 +483,26 @@ class ChangeDetectionSpec:
                 return [{'name': 'restock_status', 'title': 'Stock and prices', 'kind': 'read',
                          'description': 'Which product monitors are in stock, and their prices.',
                          'input_schema': {'tag': {'type': 'string'}}, 'handler': restock_status}]
+
+        Returns:
+            list of dict, or None
+        """
+        pass
+
+    @hookspec
+    def register_mcp_permission_rows():
+        """Add rows to the MCP None / Read / Write permission grid (access tokens and the OAuth consent screen),
+        for plugin tools that aren't about monitors, e.g. an 'account' row for a sign-up tool. A tool joins a row
+        with its `area` (see register_mcp_tools).
+
+        A row is None for every existing token until the owner changes it, and only offers the levels its
+        tools need: Read when one of them is 'read', Write when one changes something. A row no tool uses is
+        left out.
+
+        Each dict:
+            name:        a-z, 0-9 and _, at most 32 characters, starting with a letter; not one of core's rows
+            label:       shown in the grid, e.g. 'Account & billing'
+            description: optional, one line under the label: what Read / Write let an assistant do
 
         Returns:
             list of dict, or None
@@ -1078,6 +1160,51 @@ def get_plugin_template_paths():
                 logger.debug(f"Added plugin template path: {templates_dir}")
 
     return template_paths
+
+
+async def select_fetch_backends(watch, datastore, backend_name, failed_fetch=None, tried=()):
+    """The fetcher names plugins offered for this check (see the select_fetch_backend hook), best first."""
+    from changedetectionio.plugin_api import gather_hook_results
+    offers = await gather_hook_results(plugin_manager.hook.select_fetch_backend(
+        watch=watch, datastore=datastore, backend_name=backend_name, failed_fetch=failed_fetch, tried=list(tried)))
+    ranked = []
+    for offer in offers:
+        if isinstance(offer, str):
+            name, priority = offer, 0
+        elif isinstance(offer, dict) and isinstance(offer.get('backend'), str):
+            name = offer['backend']
+            try:
+                priority = int(offer.get('priority') or 0)
+            except (TypeError, ValueError):
+                priority = 0
+        else:
+            logger.warning(f"select_fetch_backend returned {offer!r}, expected a fetcher name or {{'backend': .., 'priority': ..}}")
+            continue
+        if name != backend_name and name not in tried:
+            ranked.append((priority, name))
+    # sorted() is stable, equal priorities keep the plugins' order
+    names = []
+    for _, name in sorted(ranked, key=lambda r: r[0]):
+        if name not in names:
+            names.append(name)
+    return names
+
+
+def apply_recheck_seconds_override(watch, datastore, seconds):
+    """The recheck time for this watch after plugins had their say (recheck_seconds_override hook)."""
+    hook = plugin_manager.hook.recheck_seconds_override
+    # The scheduler asks for every watch every second, skip the hook machinery when no plugin implements it
+    if not hook.get_hookimpls():
+        return seconds
+    override = hook(watch=watch, datastore=datastore, seconds=seconds)
+    if override is None:
+        return seconds
+    try:
+        override = int(override)
+    except (TypeError, ValueError):
+        logger.warning(f"recheck_seconds_override returned {override!r}, expected seconds")
+        return seconds
+    return override if override > 0 else seconds
 
 
 def apply_update_handler_alter(update_handler, watch, datastore):

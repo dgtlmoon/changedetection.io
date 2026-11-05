@@ -83,6 +83,8 @@ class Fetcher():
     browser_steps_screenshot_path = None
     content = None
     error = None
+    # Set when this fetcher is a retry after another one failed (the select_fetch_backend hook): the failed one's name
+    fallback_from = None
     fetcher_description = "No description"
     headers = {}
     favicon_blob = None

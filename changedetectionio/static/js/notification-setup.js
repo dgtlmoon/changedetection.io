@@ -23,7 +23,7 @@ $(function () {
     }
 
     // Shown before anything is typed
-    var POPULAR = ['mailtos', 'discord', 'tgram', 'slack', 'ntfys', 'jsons', 'workflow', 'matrixs', 'gotifys', 'pover'];
+    var POPULAR = ['mailtos', 'discord', 'tgram', 'slack', 'ntfys', 'custom-http', 'workflow', 'matrixs', 'gotifys', 'pover'];
 
     // 0 = name starts with it, 1 = a word in the name or the scheme starts with it (punctuation ignored,
     // so "email" finds "Custom e-mail"), 2 = anywhere in the name
@@ -100,6 +100,27 @@ $(function () {
     });
     $search.on('blur', function () { setTimeout(hideResults, 100); });
 
+    // "List all", every service as "schema://  -  Name", sorted by the schema, filled in on first open
+    var $all = $w.find('.ns-all'), $allList = $all.find('.ns-all-list');
+    function allLabel(s) { return s.hint || s.schema + '://'; }
+    $all.on('toggle', function () {
+        if (!$all.prop('open') || $allList.children().length) return;
+        loadServices(function () {
+            var sorted = services.slice().sort(function (a, b) { return allLabel(a).localeCompare(allLabel(b)); });
+            $.each(sorted, function (i, s) {
+                $('<li></li>').append(
+                    $('<a href="#"></a>').attr('data-schema', s.schema)
+                        .append($('<code></code>').text(allLabel(s)), $('<span></span>').text(s.name))
+                ).appendTo($allList);
+            });
+        });
+    });
+    $allList.on('click', 'a[data-schema]', function (e) {
+        e.preventDefault();
+        $all.prop('open', false);
+        pick($(this).data('schema'));
+    });
+
     // ---- Service form ----
 
     function pick(schema) {
@@ -139,6 +160,7 @@ $(function () {
 
     function renderCard(form) {
         current = form;
+        markQuick(form.schema);
         builtUrl = null;
         $card.find('.ns-name').text(form.name);
         $card.find('.ns-schema').text(form.schema === 'custom-http' ? '' : form.schema + '://');
@@ -238,6 +260,7 @@ $(function () {
         $card.prop('hidden', true);
         $search.val('');
         current = builtUrl = null;
+        markQuick(null);
         $msg.text('');
         $w.find('.ns-added').remove();
         $('<span class="ns-added"></span>').text(t.added || 'Added to the list below')
@@ -248,5 +271,16 @@ $(function () {
         e.preventDefault();
         $card.prop('hidden', true);
         current = builtUrl = null;
+        markQuick(null);
     });
+
+    // The popular-service icons above the search box
+    var $quick = $w.find('.ns-quick-btn');
+    function markQuick(schema) {
+        $quick.each(function () {
+            var on = $(this).data('schema') === schema;
+            $(this).toggleClass('is-active', on).attr('aria-pressed', on ? 'true' : 'false');
+        });
+    }
+    $quick.on('click', function () { pick($(this).data('schema')); });
 });

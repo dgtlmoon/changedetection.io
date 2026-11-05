@@ -938,6 +938,10 @@ def changedetection_app(config=None, datastore_o=None):
             # MCP server - its own access token (blueprint/mcp/__init__.py)
             elif request.blueprint == 'mcp':
                 return None
+            # MCP OAuth - discovery and the token endpoint are called by the assistant's server, not a browser with a
+            # session; the authorize endpoint is the one that needs the login (blueprint/mcp/oauth)
+            elif request.blueprint == 'mcp_oauth' and request.endpoint != 'mcp_oauth.authorize':
+                return None
             else:
                 return login_manager.unauthorized()
 
@@ -1426,6 +1430,13 @@ def changedetection_app(config=None, datastore_o=None):
         # /mcp/v1 versions our tool contract (names, arguments, results), not the MCP protocol, which is negotiated
         # per session. Additive changes stay in v1; only a breaking change would get a /mcp/v2.
         app.register_blueprint(mcp_blueprint, url_prefix='/mcp/v1')
+        # OAuth sign-in for it (blueprint/mcp/oauth): /.well-known/oauth-* and /oauth/*, 404 unless offered. Only the
+        # routes register here, nothing of Authlib loads until a sign-in happens
+        import changedetectionio.blueprint.mcp.oauth as mcp_oauth
+        app.register_blueprint(mcp_oauth.construct_blueprint(datastore))
+        # Called by the assistant's server, not from a page with a form; /oauth/authorize keeps its CSRF token
+        csrf.exempt('changedetectionio.blueprint.mcp.oauth.token')
+        csrf.exempt('changedetectionio.blueprint.mcp.oauth.register')
 
     import changedetectionio.blueprint.pwa as pwa
 
@@ -1727,6 +1738,7 @@ def notification_runner(worker_id=0):
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
+    from changedetectionio.pluggy_interface import apply_recheck_seconds_override
 
     proxy_last_called_time = {}
     last_health_check = 0
@@ -1862,6 +1874,8 @@ def ticker_thread_check_time_launch_checks():
                 if watch.get('time_between_check_use_default')
                 else watch.threshold_seconds() or recheck_time_system_seconds
             )
+            # A plugin that has the watch under its control has the last word
+            threshold = apply_recheck_seconds_override(watch, datastore, threshold)
 
             # #580 - Jitter plus/minus amount of time to make the check seem more random to the server
             jitter = datastore.data['settings']['requests'].get('jitter_seconds', 0)
@@ -1899,13 +1913,18 @@ def ticker_thread_check_time_launch_checks():
                                 # Record the last used time
                                 proxy_last_called_time[watch_proxy] = int(time.time())
 
+                    # running_uuids / queued_uuids are from the start of this pass: a worker may have taken it since
+                    if worker_pool.is_watch_running(uuid) or uuid in update_q.get_queued_uuids():
+                        continue
+
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
 
-                    # Into the queue with you
+                    # Into the queue with you. scheduled_at lets a worker drop it when the watch was checked since
+                    # (a worker between taking it off the queue and claiming it is in neither list above)
                     queued_successfully = worker_pool.queue_item_async_safe(
                         update_q,
-                        queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}),
+                        queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'scheduled_at': now}),
                     )
                     if queued_successfully:
                         logger.debug(
