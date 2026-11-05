@@ -48,6 +48,16 @@ BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRE
 # Keyed by data_dir so it survives Watch object recreation, deepcopy, and concurrent requests.
 # Invalidated explicitly when the favicon is saved or the watch history is cleared.
 _FAVICON_FILENAME_CACHE: dict = {}
+# Held while looking a favicon up and while forgetting one, so a lookup that globbed before a save can't store its
+# stale "no favicon" after the save cleared the cache
+import threading as _threading
+_FAVICON_FILENAME_LOCK = _threading.Lock()
+_MISSING = object()
+
+
+def _forget_favicon_filename(data_dir):
+    with _FAVICON_FILENAME_LOCK:
+        _FAVICON_FILENAME_CACHE.pop(data_dir, None)
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
@@ -436,7 +446,7 @@ class model(EntityPersistenceMixin, watch_base):
             # A save or check running now may rename its .tmp file away between glob() and here
             item.unlink(missing_ok=True)
 
-        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+        _forget_favicon_filename(self.data_dir)
 
         # Force the attr to recalculate
         bump = self.history
@@ -1036,7 +1046,7 @@ class model(EntityPersistenceMixin, watch_base):
                     logger.debug(f"UUID: {self.get('uuid')} could not remove {stale}: {e}")
 
             # Invalidate module-level favicon filename cache for this watch
-            _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+            _forget_favicon_filename(self.data_dir)
 
             # A signal that could trigger the socket server to update the browser also
             watch_check_update = signal('watch_favicon_bump')
@@ -1060,7 +1070,7 @@ class model(EntityPersistenceMixin, watch_base):
                 os.unlink(fname)
             except OSError as e:
                 logger.warning(f"UUID: {self.get('uuid')} could not remove favicon {fname}: {e}")
-        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+        _forget_favicon_filename(self.data_dir)
 
     def get_favicon_filename(self) -> str | None:
         """
@@ -1073,13 +1083,15 @@ class model(EntityPersistenceMixin, watch_base):
         Returns:
             str: Basename of the favicon file, or None if not found.
         """
-        if self.data_dir in _FAVICON_FILENAME_CACHE:
-            return _FAVICON_FILENAME_CACHE[self.data_dir]
+        cached = _FAVICON_FILENAME_CACHE.get(self.data_dir, _MISSING)
+        if cached is not _MISSING:
+            return cached
 
         import glob
-        files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
-        fname = os.path.basename(files[0]) if files else None
-        _FAVICON_FILENAME_CACHE[self.data_dir] = fname
+        with _FAVICON_FILENAME_LOCK:
+            files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
+            fname = os.path.basename(files[0]) if files else None
+            _FAVICON_FILENAME_CACHE[self.data_dir] = fname
         return fname
 
     def get_screenshot_as_thumbnail(self, max_age=3200):
