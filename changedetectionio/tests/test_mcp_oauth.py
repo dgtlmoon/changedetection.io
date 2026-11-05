@@ -312,6 +312,52 @@ def test_cimd_client(client, live_server, measure_memory_usage, datastore_path, 
     assert res.status_code == 400 and "name its own URL as client_id" in res.get_data(as_text=True)
 
 
+def test_cimd_client_on_this_computer_any_port(client, live_server, measure_memory_usage, datastore_path, logged_in, monkeypatch):
+    # Claude Code's metadata lists loopback redirect URIs without a port, and signs in on whatever port it got
+    from changedetectionio.blueprint.mcp.oauth import cimd
+    client_id = 'https://claude.ai/oauth/claude-code-client-metadata'
+    documents = {client_id: {'client_id': client_id, 'client_name': 'Claude Code',
+                             'redirect_uris': ['http://localhost/callback', 'http://127.0.0.1/callback']}}
+    monkeypatch.setattr(cimd, '_fetch_document', lambda url: json.dumps(documents[url]).encode())
+    cimd._cache.clear()
+    verifier, challenge = _pkce()
+
+    redirect = 'http://localhost:53228/callback'
+    url = _authorize_url(client_id, challenge, MCP_URL, redirect_uri=redirect)
+    assert client.get(url).status_code == 200
+    answer = _approve(client, url)
+    res = client.post('/oauth/token', data={'grant_type': 'authorization_code', 'code': answer['code'][0],
+                                            'redirect_uri': redirect, 'client_id': client_id, 'code_verifier': verifier})
+    assert res.status_code == 200 and _tools(client, res.json['access_token'])[0] == 200
+
+    # Only the port is free: another path, host or scheme is still refused
+    for other in ('http://localhost:53228/other', 'http://127.0.0.1.example.com:53228/callback',
+                  'https://localhost:53228/callback', 'http://example.com:53228/callback'):
+        res = client.get(_authorize_url(client_id, challenge, MCP_URL, redirect_uri=other))
+        assert res.status_code == 400 and "be used" in res.get_data(as_text=True), other
+
+
+def test_redirect_uri_matches():
+    from changedetectionio.blueprint.mcp.oauth.server import redirect_uri_matches
+    # Exact, and loopback http on any port (RFC 8252 7.3)
+    for registered, given in (('https://claude.ai/api/mcp/auth_callback', 'https://claude.ai/api/mcp/auth_callback'),
+                              ('http://localhost/callback', 'http://localhost:53228/callback'),
+                              ('http://127.0.0.1/callback', 'http://127.0.0.1:1/callback'),
+                              ('http://127.0.0.1:33418/callback', 'http://127.0.0.1:40000/callback'),
+                              ('http://[::1]/callback', 'http://[::1]:8080/callback')):
+        assert redirect_uri_matches(registered, given), (registered, given)
+    # Not loopback, or anything but the port differs
+    for registered, given in (('https://claude.ai/api/mcp/auth_callback', 'https://claude.ai:8443/api/mcp/auth_callback'),
+                              ('http://localhost/callback', 'http://localhost:53228/callback/'),
+                              ('http://localhost/callback', 'http://localhost:53228/callback?x=1'),
+                              ('http://localhost/callback', 'http://localhost:53228/callback#x'),
+                              ('http://localhost/callback', 'http://127.0.0.1:53228/callback'),
+                              ('http://localhost/callback', 'http://user@localhost:53228/callback'),
+                              ('http://localhost/callback', 'http://localhost:99999/callback'),
+                              ('http://localhost/callback', 'https://localhost:53228/callback')):
+        assert not redirect_uri_matches(registered, given), (registered, given)
+
+
 def test_cimd_url_and_address_rules():
     from changedetectionio.blueprint.mcp.oauth.cimd import CIMDError, is_public_address, validate_client_id_url
     validate_client_id_url('https://chatgpt.com/oauth/client.json')

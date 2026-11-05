@@ -7,16 +7,36 @@ PKCE S256 required, and refresh tokens that rotate on every use (OAuth 2.1). Tok
 (store.py) and bound to this instance's /mcp/v1 (resource / audience). What a token may do is the None / Read / Write
 grid picked on the consent screen, carried on the authorization code into the grant.
 """
+from urllib.parse import urlsplit
+
 from authlib.integrations.flask_oauth2 import AuthorizationServer
 from authlib.oauth2.rfc6749 import AuthorizationCodeMixin, ClientMixin, TokenMixin, grants
 from authlib.oauth2.rfc7636 import CodeChallenge
 from flask import current_app, g
-from urllib.parse import urlsplit
 
 from . import SCOPE, cimd, store
 
 # There is one user, the instance's owner (its password)
 OWNER = 'owner'
+
+LOOPBACK_HOSTS = ('localhost', '127.0.0.1', '::1')
+
+
+def redirect_uri_matches(registered, given):
+    """Exact match, except that an http redirect URI on this computer (loopback) matches on any port, RFC 8252 7.3.
+    Apps on the user's computer (Claude Code, Cursor...) listen on a port picked at sign-in time, so their metadata
+    lists http://localhost/callback and the request names http://localhost:53228/callback."""
+    if given == registered:
+        return True
+    reg, req = urlsplit(registered), urlsplit(given)
+    if reg.scheme != 'http' or req.scheme != 'http' or reg.hostname not in LOOPBACK_HOSTS:
+        return False
+    try:
+        _ = req.port  # an invalid port raises ValueError
+    except ValueError:
+        return False
+    return (req.hostname == reg.hostname and req.path == reg.path and req.query == reg.query
+            and not req.fragment and req.username is None and req.password is None)
 
 
 class Client(ClientMixin):
@@ -38,8 +58,8 @@ class Client(ClientMixin):
         return SCOPE
 
     def check_redirect_uri(self, redirect_uri):
-        # Exact match only
-        return redirect_uri in self.redirect_uris
+        # Exact match, any port on loopback (redirect_uri_matches)
+        return any(redirect_uri_matches(registered, redirect_uri) for registered in self.redirect_uris)
 
     def check_client_secret(self, client_secret):
         return False
