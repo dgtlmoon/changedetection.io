@@ -245,6 +245,15 @@
   </div>
   <p class="mcp-hint">{{ _('The MCP server is then at this address followed by /mcp/v1. Changing it signs out assistants connected with sign-in (OAuth), they need to connect again. Access tokens keep working.') }}</p>
 
+  <p class="stab-section-title">{{ _('Access without sign-in') }}</p>
+  <div class="pure-control-group">
+    <label class="pure-checkbox">{{ form.anonymous_read() }} {{ form.anonymous_read.label.text }}</label>
+  </div>
+  <p class="mcp-hint">{{ _('Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an access token.') }}</p>
+  {% if mcp_anonymous_calls_per_minute > 0 %}
+  <p class="mcp-hint">{{ _('Without sign-in, each address can make %(count)s tool calls a minute.', count=mcp_anonymous_calls_per_minute) }}</p>
+  {% endif %}
+
   <p class="stab-section-title">{{ _('MCP Note') }}</p>
   <p class="mcp-hint">{{ _('What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to use the built-in note, shown in grey.') }}</p>
   <div class="pure-control-group">

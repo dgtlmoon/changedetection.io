@@ -1452,6 +1452,25 @@ msgstr ""
 "con accesso (OAuth), dovranno ricollegarsi. I token di accesso continuano a funzionare."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "Accesso senza login"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr ""
+"Chiunque abbia l'indirizzo MCP può elencare i tuoi monitor e leggerne modifiche, snapshot e screenshot, senza token "
+"né password, ad esempio per una demo pubblica. Notifiche, info di sistema e qualsiasi modifica richiedono comunque il"
+" login o un token di accesso."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "Senza login, ogni indirizzo può fare %(count)s chiamate agli strumenti al minuto."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
 "use the built-in note, shown in grey."
@@ -4334,6 +4353,10 @@ msgstr "Attiva gli endpoint MCP e OAuth"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "MCP Note"
 msgstr "Nota MCP"
+
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "Consenti l'accesso in sola lettura senza login"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "Public MCP address"

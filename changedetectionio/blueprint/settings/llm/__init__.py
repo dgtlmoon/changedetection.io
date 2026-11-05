@@ -103,10 +103,19 @@ def mcp_template_context(datastore):
         # What the address is when the setting is empty, shown as its placeholder
         mcp_request_address=request.url_root.rstrip('/'),
         mcp_builtin_note=INSTRUCTIONS,
+        mcp_anonymous_calls_per_minute=anonymous_calls_per_minute(),
         token_form=mcp_token_form(datastore),
         **mcp_tokens_context(datastore),
         **mcp_oauth_context(datastore),
     )
+
+
+def anonymous_calls_per_minute():
+    from changedetectionio.blueprint.mcp import ANONYMOUS_CALLS_PER_MINUTE_DEFAULT
+    try:
+        return int(os.getenv('MCP_ANONYMOUS_CALLS_PER_MINUTE', ANONYMOUS_CALLS_PER_MINUTE_DEFAULT))
+    except ValueError:
+        return ANONYMOUS_CALLS_PER_MINUTE_DEFAULT
 
 
 def mcp_token_form(datastore, formdata=None):
@@ -227,6 +236,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         form = forms.globalMCPSettingsPageForm(formdata=request.form if request.method == 'POST' else None,
                                                data={'enabled': bool(app_settings.get('mcp_enabled')),
                                                      'note': app_settings.get('mcp_note') or '',
+                                                     'anonymous_read': bool(app_settings.get('mcp_anonymous_read')),
                                                      'public_url': app_settings.get('mcp_base_url') or ''})
         if request.method == 'POST' and form.validate():
             was_enabled = bool(app_settings.get('mcp_enabled'))
@@ -234,6 +244,7 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             app_settings['mcp_enabled'] = enabled
             # Line endings as the browser sends them (\r\n) would reach the assistant as they are
             app_settings['mcp_note'] = (form.note.data or '').replace('\r\n', '\n').strip()
+            app_settings['mcp_anonymous_read'] = bool(form.anonymous_read.data)
             # The OAuth issuer: grants are bound to {address}/mcp/v1, so a new address signs every connection out
             public_url = forms.normalise_mcp_public_url(form.public_url.data)
             address_changed = public_url != (app_settings.get('mcp_base_url') or '')

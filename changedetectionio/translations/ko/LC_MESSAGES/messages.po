@@ -1415,6 +1415,24 @@ msgid ""
 msgstr "MCP 서버는 이 주소 뒤에 /mcp/v1을 붙인 곳이 됩니다. 변경하면 로그인(OAuth)으로 연결된 어시스턴트가 로그아웃되어 다시 연결해야 합니다. 액세스 토큰은 계속 작동합니다."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "로그인 없이 접근"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr ""
+"MCP 주소를 아는 누구나 토큰이나 비밀번호 없이 모니터 목록과 변경 사항, 스냅샷, 스크린샷을 볼 수 있게 됩니다. 예: 공개 데모. 알림, 시스템 정보, 모든 변경은 여전히 로그인 또는 액세스 토큰이 "
+"필요합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "로그인 없이 각 주소는 분당 %(count)s번 도구를 호출할 수 있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
 "use the built-in note, shown in grey."
@@ -4295,6 +4313,10 @@ msgstr "MCP 및 OAuth 엔드포인트 켜기"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "MCP Note"
 msgstr "MCP 안내"
+
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "로그인 없이 읽기 전용 접근 허용"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "Public MCP address"
