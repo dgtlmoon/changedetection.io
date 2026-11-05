@@ -334,7 +334,7 @@ def is_llm_api_base_safe(api_base):
     Call this from EVERY write path that accepts `llm.api_base` from the user —
     form validation, AJAX endpoints, and any future REST/import endpoint. The
     existing call sites are forms.py (validateLLMApiBaseSafe) and
-    blueprint/settings/llm.py (both /models and /test).
+    blueprint/settings/llm/__init__.py (both /models and /test).
     """
     import os
     from changedetectionio.strtobool import strtobool

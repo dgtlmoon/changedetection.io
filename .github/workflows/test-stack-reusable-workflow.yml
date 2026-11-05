@@ -72,7 +72,7 @@ jobs:
               --fail-on="GPL-2.0;GPL-3.0;AGPL;GNU General Public License;GNU Affero General Public License"
           '
 
-      - name: License compliance - docs/THIRD-PARTY-LICENSES.md is up to date
+      - name: License compliance - docs/THIRD-PARTY-LICENSES.md is up to date (warning only)
         run: |
           # Only the image built with the Dockerfile's default Python is the one that ships;
           # other matrix versions pull in different backports and would always differ.
@@ -101,14 +101,13 @@ jobs:
 
           if ! diff -u <(normalise /tmp/THIRD-PARTY-LICENSES.committed.md) <(normalise docs/THIRD-PARTY-LICENSES.md); then
             echo ""
-            echo "::error file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md is out of date - a bundled package was added, removed, or changed its licence (see the diff above, '-' is committed, '+' is what the image actually ships)."
+            # A warning, not a failure: requirements are unpinned, so an upstream release (not this PR) is the usual
+            # cause, and a local rebuild can resolve differently from this one. third-party-licenses.yml regenerates the
+            # file weekly and on every release, and opens a PR. The copyleft gate above is what fails a build.
+            echo "::warning file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md has drifted - a bundled package was added, removed, or changed its licence (see the diff above, '-' is committed, '+' is what the image actually ships). The weekly and release runs of third-party-licenses.yml open a PR to update it."
             echo ""
-            echo "To fix, rebuild the image and regenerate the file, then commit it:"
-            echo "    docker build . -t test-changedetectionio"
-            echo "    ./.github/scripts/generate-third-party-licenses.sh"
-            echo ""
-            echo "If a new package is multi-licensed, also record which licence we elect in NOTICE."
-            exit 1
+            echo "If a new package is multi-licensed, record which licence we elect in NOTICE."
+            exit 0
           fi
           echo "docs/THIRD-PARTY-LICENSES.md matches the packages and licences in the shipped image"
 
@@ -560,6 +559,66 @@ jobs:
 
           echo "✓ API tests through nginx subpath completed successfully"
 
+      - name: Test MCP OAuth discovery through reverse proxy, at root and subpath
+        run: |
+          echo "=== MCP OAuth discovery at / and /changedet-sub/ ==="
+          # OAuth is only offered with MCP switched on and a password set: set both in the datastore, then restart
+          docker stop changedet-app
+          docker cp changedet-app:/datastore/changedetection.json /tmp/changedetection.json
+          python3 - <<'PYEOF'
+          import base64, hashlib, json, os
+          path = '/tmp/changedetection.json'
+          data = json.load(open(path))
+          app = data['settings']['application']
+          app['mcp_enabled'] = True
+          salt = os.urandom(32)
+          app['password'] = base64.b64encode(salt + hashlib.pbkdf2_hmac('sha256', b'test', salt, 100000)).decode()
+          json.dump(data, open(path, 'w'))
+          PYEOF
+          docker cp /tmp/changedetection.json changedet-app:/datastore/changedetection.json
+          docker start changedet-app
+          sleep 3
+
+          fail() { echo "ERROR: $1"; exit 1; }
+
+          for PREFIX in "" "/changedet-sub"; do
+            BASE="http://localhost:8080${PREFIX}"
+            echo "--- ${BASE} ---"
+            # A request without a token is told where the sign-in is (RFC 9728), under the same prefix
+            curl --retry-connrefused --retry 6 -s -o /dev/null -D /tmp/mcp-401.txt -X POST "${BASE}/mcp/v1" \
+              -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"ping"}'
+            grep -q '^HTTP/[0-9.]* 401' /tmp/mcp-401.txt || fail "no 401 from ${PREFIX}/mcp/v1"
+            grep -i '^WWW-Authenticate:' /tmp/mcp-401.txt | grep -q "${PREFIX}/.well-known/oauth-protected-resource/mcp/v1\"" \
+              || fail "WWW-Authenticate doesn't point at ${PREFIX}/.well-known/oauth-protected-resource/mcp/v1"
+            echo "✓ 401 with resource_metadata under '${PREFIX:-/}'"
+
+            curl -s -o /tmp/mcp-resource.json "${BASE}/.well-known/oauth-protected-resource/mcp/v1"
+            jq -e --arg p "$PREFIX" '.resource | endswith($p + "/mcp/v1")' /tmp/mcp-resource.json >/dev/null \
+              || fail "resource metadata doesn't name ${PREFIX}/mcp/v1"
+            ISSUER=$(jq -r '.authorization_servers[0]' /tmp/mcp-resource.json)
+            [[ "$ISSUER" == *"localhost${PREFIX}" ]] || fail "issuer '${ISSUER}' doesn't end in localhost${PREFIX}"
+            echo "✓ resource metadata, issuer ${ISSUER}"
+
+            # {issuer}/.well-known/openid-configuration is where clients look for a sub-path issuer (RFC 8414's
+            # host-root address never reaches an instance behind a prefix); at / the RFC 8414 address works too
+            for WELL_KNOWN in openid-configuration oauth-authorization-server; do
+              curl -s -o /tmp/mcp-meta.json "${BASE}/.well-known/${WELL_KNOWN}"
+              jq -e --arg i "$ISSUER" --arg p "$PREFIX" \
+                '.issuer == $i and (.registration_endpoint | endswith($p + "/oauth/register")) and .code_challenge_methods_supported == ["S256"]' \
+                /tmp/mcp-meta.json >/dev/null || fail "${PREFIX}/.well-known/${WELL_KNOWN}: $(head -c 300 /tmp/mcp-meta.json)"
+              echo "✓ ${PREFIX}/.well-known/${WELL_KNOWN}"
+            done
+
+            # DCR, the way claude.ai registers
+            STATUS=$(curl -s -o /tmp/mcp-register.json -w '%{http_code}' -X POST "${BASE}/oauth/register" \
+              -H 'Content-Type: application/json' \
+              -d '{"client_name":"CI","redirect_uris":["https://claude.ai/api/mcp/auth_callback"],"token_endpoint_auth_method":"none"}')
+            [ "$STATUS" = 201 ] && jq -e .client_id /tmp/mcp-register.json >/dev/null \
+              || fail "${PREFIX}/oauth/register gave ${STATUS}: $(head -c 300 /tmp/mcp-register.json)"
+            echo "✓ ${PREFIX}/oauth/register"
+          done
+          echo "✓ MCP OAuth discovery works at root and through the subpath"
+
       - name: Cleanup nginx test
         if: always()
         run: |
@@ -673,6 +732,14 @@ jobs:
       - name: Plugin get_html_head_extras hook injects into base.html
         run: |
           docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_html_head_extras.py'
+
+      - name: Plugin register_blueprints hook mounts plugin routes
+        run: |
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_register_blueprints.py'
+
+      - name: Plugin register_sidebar_items hook adds left sidebar links
+        run: |
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_sidebar_items.py'
 
   # Container startup tests
   container-tests:

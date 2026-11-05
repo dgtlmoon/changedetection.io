@@ -13,6 +13,10 @@
  *
  * Any element inside the shell with data-stab-goto="tab-id" triggers
  * navigation to that pane when clicked (for CTA buttons etc.).
+ *
+ * The URL hash names the tab, e.g. /settings/ai/llm#prompts or /settings/ai/mcp#connect: on load it wins over the
+ * remembered tab, switching tabs updates it (replaceState, so Back isn't filled with tab clicks), and editing it or
+ * going Back/Forward switches the tab.
  */
 
 (function () {
@@ -29,8 +33,11 @@
 
     var validIds = btns.map(function (b) { return b.dataset.stab; });
 
-    function activate(tabId) {
+    function activate(tabId, updateHash) {
       if (validIds.indexOf(tabId) === -1) return;
+      if (updateHash && window.location.hash !== '#' + tabId && window.history.replaceState) {
+        window.history.replaceState(null, '', '#' + tabId);
+      }
 
       btns.forEach(function (b) {
         b.classList.toggle('active', b.dataset.stab === tabId);
@@ -46,7 +53,7 @@
 
     // Nav button clicks
     btns.forEach(function (btn) {
-      btn.addEventListener('click', function () { activate(btn.dataset.stab); });
+      btn.addEventListener('click', function () { activate(btn.dataset.stab, true); });
     });
 
     // data-stab-goto navigation from CTA buttons anywhere inside the shell
@@ -54,16 +61,27 @@
       var el = e.target.closest('[data-stab-goto]');
       if (el && shell.contains(el)) {
         e.preventDefault();
-        activate(el.dataset.stabGoto);
+        activate(el.dataset.stabGoto, true);
       }
     });
 
-    // Restore persisted tab or fall back to first tab
+    function hashTab() {
+      var id = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+      return validIds.indexOf(id) !== -1 ? id : null;
+    }
+
+    // Edited by hand, or Back / Forward
+    window.addEventListener('hashchange', function () {
+      var id = hashTab();
+      if (id) activate(id);
+    });
+
+    // The tab in the URL, else the remembered one, else the first
     var stored = null;
     if (storageKey) {
       try { stored = localStorage.getItem(storageKey); } catch (e) {}
     }
-    activate(stored && validIds.indexOf(stored) !== -1 ? stored : validIds[0]);
+    activate(hashTab() || (stored && validIds.indexOf(stored) !== -1 ? stored : validIds[0]));
   }
 
   function initAll() {

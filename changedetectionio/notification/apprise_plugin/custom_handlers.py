@@ -159,12 +159,16 @@ def _get_params(parsed_url: dict) -> CaseInsensitiveDict:
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
     # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
     # but here we are making straight requests, so we need todo convert this against apprise's logic
+    # Apprise lowercases the keys in "qsd" but keeps the case in "qsd+"/"qsd-", so compare lowercased,
+    # otherwise a header like ?+X-Key=secret is also sent as a query parameter (and lands in server logs)
+    header_keys = {k.lower() for k in parsed_url["qsd+"]}
+    ignored_keys = {k.lower() for k in parsed_url["qsd-"]}
     params = CaseInsensitiveDict(
         {
             unquote_plus(k): unquote_plus(v)
             for k, v in parsed_url["qsd"].items()
-            if k.strip("-") not in parsed_url["qsd-"]
-            and k.strip("+") not in parsed_url["qsd+"]
+            if k.strip("-").lower() not in ignored_keys
+            and k.strip("+").lower() not in header_keys
         }
     )
 

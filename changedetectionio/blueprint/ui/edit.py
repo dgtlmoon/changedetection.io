@@ -395,7 +395,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             }
 
             included_content = None
-            if form.extra_form_content():
+            extra_form_template = getattr(form, 'extra_form_template', lambda: None)()
+            if extra_form_template:
+                # Real template file on the Flask loader, so its text gets extracted for translation (#4612)
+                included_content = render_template(extra_form_template, **template_args)
+            elif form.extra_form_content():
+                # Legacy raw Jinja2 string from a third-party processor plugin
                 # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
                 # And then render the code from the module
                 templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))

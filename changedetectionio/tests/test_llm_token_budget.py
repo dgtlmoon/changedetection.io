@@ -101,8 +101,8 @@ def test_api_cannot_reset_token_counters_via_watch_put(
 def test_api_watch_put_llm_readonly_fields_are_ignored(
         client, live_server, measure_memory_usage, datastore_path):
     """
-    llm_prefilter, llm_evaluation_cache, llm_last_tokens_used,
-    llm_tokens_used_cumulative are all readOnly in the API spec.
+    llm_evaluation_cache, llm_last_tokens_used and llm_tokens_used_cumulative
+    are all readOnly in the API spec.
     Sending them in a PUT must not raise an error (they should be silently
     stripped) and must not modify the watch's stored values.
     """
@@ -128,7 +128,6 @@ def test_api_watch_put_llm_readonly_fields_are_ignored(
             "url": test_url,
             "llm_tokens_used_cumulative": 999999,
             "llm_last_tokens_used": 888888,
-            "llm_prefilter": "div.hacked",
             "llm_evaluation_cache": {"fake_key": {"important": True}},
         }),
     )
@@ -165,7 +164,7 @@ def test_settings_form_preserves_token_counters(
 
     # Submit settings form with a different model — simulates a normal settings save
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             # LLM sub-form fields
             'llm-model': 'gpt-4o',
@@ -219,7 +218,7 @@ def test_settings_form_blank_llm_integer_fields_preserve_stored_values(
     }
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             'llm-api_key': '',
@@ -282,7 +281,7 @@ def test_settings_form_cannot_inject_fake_token_counts(
 
     # Attempt to inject inflated or zeroed counters via form POST
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o-mini',
             'llm-api_key': 'sk-test',
@@ -544,7 +543,7 @@ def test_cost_fields_are_tamper_proof_via_settings_form(
     }
 
     client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             'llm-api_key': 'sk-test',

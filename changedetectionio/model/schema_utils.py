@@ -25,7 +25,7 @@ SYSTEM_MANAGED_NON_SPEC_FIELDS = frozenset({
     '_llm_result',                 # LLM runtime — populated by evaluator
     '_llm_intent',
     '_llm_change_summary',
-    'llm_prefilter',
+    'llm_prefilter',               # Legacy: never set or read any more, but older watches still have it stored
     'llm_evaluation_cache',
     'llm_last_tokens_used',
     'llm_tokens_used_cumulative',

@@ -6,7 +6,7 @@ active until you install it.
 To install one, run `pip install .` from its directory, in the same Python environment that runs
 changedetection.io, then restart changedetection.io. Plugins are picked up through the `changedetectionio`
 entry point in their `pyproject.toml`. They need plugin API 0.3.0 or newer
-(`changedetectionio.plugin_api.PLUGIN_API_VERSION`).
+(`changedetectionio.plugin_api.PLUGIN_API_VERSION`), the hello world example 0.5.0 or newer, the fallback fetcher 0.6.0 or newer.
 
 Plugins import only from `changedetectionio.plugin_api`, everything else in the package is internal and
 may change between releases. If you need something that isn't exported there, ask for it.
@@ -71,6 +71,57 @@ in the API.
 
 ---
 
+## Fallback fetcher - `fetcher/fallback_fetcher`
+
+A fetch method that gets pages from a scraping API, used for every check of a watch that picks it, or only
+when a site blocks the normal fetch. With "Fall back on these status codes" set (e.g. `403, 429`), a check
+that gets one of those is retried once, straight away, through the scraping API, so the watch doesn't show
+an error. The watch is then "under control" of the plugin for a while ("Then keep using it for", 24h by
+default): its checks go straight to the fallback, no more often than every 12h ("Meanwhile check no more
+often than every", a minimum, so a watch already checked every 3 days stays at 3 days), and the watch list
+says so. After that the normal fetch is tried again. "Only for these groups" limits it to some groups.
+"Most successful calls in 24 hours" caps the cost: over it, checks that need the fallback fail with an error
+saying when the next call is possible, without calling the API. A "Fetch stats" icon in the left sidebar
+opens a page with the calls per hour, the limit, and the watches it has taken over.
+
+Several fallback fetchers chain: each offers itself with its own "Priority" (lowest first, this one defaults
+to 10), and when the first fails, or is over its daily limit and so doesn't offer itself, the next is tried
+in the same check, up to `FETCH_FALLBACK_MAX_ATTEMPTS` retries (default 3). The watch shows an error only
+when they all fail. Set `EXAMPLE_FETCHER_HELLOWORLD_TIME_BETWEEN_RECHECK_MINIMUM_SECONDS` to fix the minimum
+recheck time for the whole install, the settings widget then shows it read-only.
+
+**Hooks**
+- `register_content_fetcher` - adds the `html_example_fallback_fetcher` fetch method
+- `select_fetch_backend` - offers the fallback for one check, at its priority: before it (still under
+  control) or as a retry after the normal fetch, or a fallback before it, failed (plugin API 0.6.0+)
+- `recheck_seconds_override` - the longer recheck time while under control, the last word after the
+  system, group and watch settings (plugin API 0.6.0+)
+- `watch_list_extra_text` - "Blocked with HTTP 403, using the fallback fetcher, ..." under the watch
+- `register_blueprints`, `register_sidebar_items` - the fetch stats page and its sidebar icon
+- `plugin_settings_tab`, `fetcher_status_icon`, `plugin_static_path` - as in the example browser fetcher
+
+**Also shows**
+- the JSON contract it expects from the scraping API, at the top of `fetcher.py`. Most services take
+  something close to it, adapt `_fetch()` to yours
+- the same recheck time widget as the rest of the app in a settings form: `FormField(TimeBetweenCheckForm,
+  render_kw={'class': 'time-check-widget'})`, read back with `time_between_check_to_seconds()`
+- the plugin keeping its own state, `{datastore}/cdio_example_fallback_fetcher-state.json` (see `state.py`):
+  the times of the successful calls in the last 24 hours, read once and kept in memory, written atomically
+
+Which watches are under control is kept in memory only (`recheck_seconds_override` runs for every watch
+every second, so it must not read files), so after a restart the first check tries the normal fetch again.
+
+**Install**
+```bash
+cd changedetectionio/example_plugins/fetcher/fallback_fetcher
+pip install .
+```
+
+**Try it:** in Settings > "Fallback fetcher", set the scraping API URL and key, and `403` under "Fall back
+on these status codes". A watch whose site answers 403 is then fetched through the API on its next check.
+
+---
+
 ## Check stats - `lifecycle/check_stats`
 
 Times every check. Shows "Last check took 1.23s" under each watch in the watch list, and a small table on
@@ -91,6 +142,28 @@ pip install .
 ```
 
 **Try it:** open the watch list after the next checks have run.
+
+---
+
+## Hello world - `ui/hello_world`
+
+Its own page at `/hello-world`, shown inside the normal app layout (header, menu, styles), with a
+"Hello world!" box and how many monitors you have, and a link to it in the left sidebar.
+
+**Hooks**
+- `register_blueprints` - mounts the plugin's Flask blueprint at `/hello-world`
+- `register_sidebar_items` - the "Hello world" link in the left sidebar, highlighted while on the page
+
+**Also shows** a template that extends `base.html`, kept under `templates/cdio_example_hello_world/` so
+its path can't clash with a core template. The page needs the same login as the rest of the UI.
+
+**Install**
+```bash
+cd changedetectionio/example_plugins/ui/hello_world
+pip install .
+```
+
+**Try it:** open `http://localhost:5000/hello-world/`.
 
 ---
 
@@ -122,6 +195,10 @@ Copy an example's directory, then rename the package directory and its `name` / 
 `pyproject.toml`. Once installed, it's listed under Settings > Info with the first line of its docstring. For a processor, also change `PROCESSOR_NAME` and the two schema names in `api.yaml`.
 Every hook and its arguments are documented on `ChangeDetectionSpec` in
 [`pluggy_interface.py`](../pluggy_interface.py).
+
+Plugins can add their own pages and endpoints with the `register_blueprints` hook: return a Flask
+`Blueprint` (or `{'blueprint': bp, 'url_prefix': '/my-plugin'}`). Its routes need the same login as the
+rest of the UI unless you return `'login_required': False` and secure them yourself.
 
 In Docker, add your published package to the `EXTRA_PACKAGES` environment variable instead of
 running `pip install` yourself.

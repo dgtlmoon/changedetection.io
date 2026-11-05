@@ -60,9 +60,37 @@
         });
     }
 
+    // Prices in the page's language with the currency's own decimal places (ISO 4217, e.g. JPY 0, USD 2), the
+    // same as the server-side format_price filter (flask_app.py) so the watch list, history page and graph agree.
+    // Without a known currency code: the number with two decimals, then whatever currency text there was.
+    const PAGE_LANG = document.documentElement.lang || undefined;
+    const priceFormats = {};
+
+    function priceFormat(currency) {
+        if (!(currency in priceFormats)) {
+            const code = (currency || '').trim().toUpperCase();
+            let fmt = null;
+            try {
+                fmt = code ? new Intl.NumberFormat(PAGE_LANG, {style: 'currency', currency: code}) : null;
+            } catch (e) {
+                fmt = null;  // Not an ISO 4217 code
+            }
+            if (!fmt) {
+                try {
+                    fmt = new Intl.NumberFormat(PAGE_LANG, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                } catch (e) {
+                    fmt = new Intl.NumberFormat(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
+                fmt.suffix = currency ? ' ' + currency : '';
+            }
+            priceFormats[currency] = fmt;
+        }
+        return priceFormats[currency];
+    }
+
     function fmtPrice(v, currency) {
-        const n = Math.round(v * 100) / 100;
-        return (currency || '') + (Number.isInteger(n) ? n : n.toFixed(2));
+        const fmt = priceFormat(currency || '');
+        return fmt.format(Number(v)) + (fmt.suffix || '');
     }
 
     // Thin a large price series down to ~target points for drawing (you can't perceive more

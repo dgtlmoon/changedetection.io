@@ -107,74 +107,24 @@ class Tag(Resource):
     @validate_openapi_request('deleteTag')
     def delete(self, uuid):
         """Delete a tag/group and remove it from all watches."""
-        if not self.datastore.data['settings']['application']['tags'].get(uuid):
-            abort(400, message='No tag exists with the UUID of {}'.format(uuid))
-
-        # Delete the tag, and any tag reference
-        del self.datastore.data['settings']['application']['tags'][uuid]
-
-        # Remove tag from all watches
-        for watch_uuid, watch in self.datastore.data['watching'].items():
-            if watch.get('tags') and uuid in watch['tags']:
-                watch['tags'].remove(uuid)
-                watch.commit()
-
+        from changedetectionio.api.operations import ApiError, delete_tag
+        try:
+            delete_tag(self.datastore, uuid)
+        except ApiError as e:
+            abort(e.status, message=e.message)
         return 'OK', 204
 
     @auth.check_token
     @validate_openapi_request('updateTag')
     def put(self, uuid):
         """Update tag information."""
-        tag = self.datastore.data['settings']['application']['tags'].get(uuid)
-        if not tag:
+        from changedetectionio.api.operations import ApiError, update_tag
+        if not self.datastore.data['settings']['application']['tags'].get(uuid):
             abort(404, message='No tag exists with the UUID of {}'.format(uuid))
-
-        # Make a mutable copy of request.json for modification.
-        # Silently discard `__`-prefixed transient/internal keys (not part of the public schema).
-        json_data = strip_internal_api_fields(dict(request.json))
-
-        # Validate notification_urls if provided
-        if 'notification_urls' in json_data:
-            from wtforms import ValidationError
-            from changedetectionio.api.Notifications import validate_notification_urls
-            try:
-                notification_urls = json_data.get('notification_urls', [])
-                validate_notification_urls(notification_urls)
-            except ValidationError as e:
-                return str(e), 400
-
-        # Filter out readOnly fields (extracted from OpenAPI spec Tag schema)
-        # These are system-managed fields that should never be user-settable
-        from . import get_readonly_tag_fields
-        readonly_fields = get_readonly_tag_fields()
-
-        # Tag model inherits from watch_base but has no @property attributes of its own
-        # So we only need to filter readOnly fields
-        for field in readonly_fields:
-            json_data.pop(field, None)
-
-        # Validate remaining fields - reject truly unknown fields
-        # Get valid fields from Tag schema
-        from . import get_tag_schema_properties
-        valid_fields = set(get_tag_schema_properties().keys())
-
-        # Check for unknown fields
-        unknown_fields = set(json_data.keys()) - valid_fields
-        if unknown_fields:
-            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
-
-        colour_error = validate_tag_colour(json_data)
-        if colour_error:
-            return colour_error, 400
-
-        tag.update(json_data)
-        tag.commit()
-
-        # Clear checksums for all watches using this tag to force reprocessing
-        # Tag changes affect inherited configuration
-        cleared_count = self.datastore.clear_checksums_for_tag(uuid)
-        logger.info(f"Tag {uuid} updated via API, cleared {cleared_count} watch checksums")
-
+        try:
+            update_tag(self.datastore, uuid, request.json)
+        except ApiError as e:
+            return e.message, e.status
         return "OK", 200
 
 
@@ -182,37 +132,12 @@ class Tag(Resource):
     @validate_openapi_request('createTag')
     def post(self):
         """Create a single tag/group."""
-
-        # Silently discard `__`-prefixed transient/internal keys (not part of the public schema).
-        json_data = strip_internal_api_fields(request.get_json())
-        title = json_data.get("title",'').strip()
-
-        # Validate that only valid fields are provided
-        # Get valid fields from Tag schema
-        from . import get_tag_schema_properties
-        valid_fields = set(get_tag_schema_properties().keys())
-
-        # Check for unknown fields
-        unknown_fields = set(json_data.keys()) - valid_fields
-        if unknown_fields:
-            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
-
-        colour_error = validate_tag_colour(json_data)
-        if colour_error:
-            return colour_error, 400
-
-        new_uuid = self.datastore.add_tag(title=title)
-        if new_uuid:
-            # Apply any extra fields (e.g. processor_config_restock_diff) beyond just title
-            extra = {k: v for k, v in json_data.items() if k != 'title'}
-            if extra:
-                tag = self.datastore.data['settings']['application']['tags'].get(new_uuid)
-                if tag:
-                    tag.update(extra)
-                    tag.commit()
-            return {'uuid': new_uuid}, 201
-        else:
-            return "Invalid or unsupported tag", 400
+        from changedetectionio.api.operations import ApiError, create_tag
+        try:
+            new_uuid = create_tag(self.datastore, request.get_json())
+        except ApiError as e:
+            return e.message, e.status
+        return {'uuid': new_uuid}, 201
 
 class Tags(Resource):
     def __init__(self, **kwargs):

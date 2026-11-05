@@ -58,6 +58,7 @@ from changedetectionio.api import (
     WatchSingleHistory,
 )
 from changedetectionio.api.Search import Search
+from changedetectionio.api.Changes import Changes
 from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.favicon_utils import get_favicon_mime_type
 from changedetectionio.languages import (
@@ -482,12 +483,21 @@ def _get_html_head_extras():
     return collect_html_head_extras()
 
 
-@app.template_filter('format_number_locale')
-def _jinja2_filter_format_number_locale(value: float) -> str:
-    "Formats for example 4000.10 to the local locale default of 4,000.10"
-    # Format the number with two decimal places (locale format string will return 6 decimal)
-    formatted_value = locale.format_string("%.2f", value, grouping=True)
-    return formatted_value
+@app.template_filter('format_price')
+def _jinja2_filter_format_price(value: float, currency: str = '') -> str:
+    """A price in the visitor's language with the currency's own decimal places (ISO 4217, #4615),
+    e.g. 12345 JPY -> ¥12,345, 1234.5 USD -> $1,234.50, 1234.5 EUR in German -> 1.234,50 €.
+
+    The visitor's UI language, not the server's locale, which is one setting for everyone on the instance.
+    Without a known ISO 4217 code (empty, or something odd the page had) it's the number with two decimals,
+    followed by whatever currency text there was. static/js/restock-price-graph.js fmtPrice() does the same."""
+    from babel.numbers import format_currency, format_decimal, is_currency
+    ui_locale = get_locale() or app.config['BABEL_DEFAULT_LOCALE']
+    code = (currency or '').strip().upper()
+    if code and is_currency(code):
+        return format_currency(value, code, locale=ui_locale)
+    number = format_decimal(value, format='#,##0.00', locale=ui_locale)
+    return f"{number} {currency}" if currency else number
 
 
 @app.template_filter('format_int_locale')
@@ -834,7 +844,9 @@ def changedetection_app(config=None, datastore_o=None):
         # 2. Fall back to Accept-Language header
         browser_locale = request.accept_languages.best_match(_locale_match_list)
         # 3. Map browser locale to our internal locale if needed
-        return _locale_aliases.get(browser_locale, browser_locale)
+        # 4. Nothing matched: the default, which Babel would use anyway. Never None, templates print this
+        #    (<html lang="None">, the language flag) and the price formatting reads it
+        return _locale_aliases.get(browser_locale, browser_locale) or app.config['BABEL_DEFAULT_LOCALE']
 
     # Initialize Babel with locale selector
     babel = Babel(app, locale_selector=get_locale)
@@ -852,6 +864,13 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio.llm.evaluator import is_llm_features_disabled
 
         return dict(llm_features_disabled=is_llm_features_disabled())
+
+    @app.context_processor
+    def inject_sidebar_items():
+        # Links plugins add to the left sidebar (register_sidebar_items hook), see sidebar-nav.html
+        from changedetectionio.pluggy_interface import collect_sidebar_items
+
+        return dict(plugin_sidebar_items=collect_sidebar_items(datastore))
 
     @app.context_processor
     def inject_has_visual_browser():
@@ -915,6 +934,13 @@ def changedetection_app(config=None, datastore_o=None):
                 return None
             # API routes - use their own auth mechanism (@auth.check_token)
             elif request.path.startswith('/api/'):
+                return None
+            # MCP server - its own access token (blueprint/mcp/__init__.py)
+            elif request.blueprint == 'mcp':
+                return None
+            # MCP OAuth - discovery and the token endpoint are called by the assistant's server, not a browser with a
+            # session; the authorize endpoint is the one that needs the login (blueprint/mcp/oauth)
+            elif request.blueprint == 'mcp_oauth' and request.endpoint != 'mcp_oauth.authorize':
                 return None
             else:
                 return login_manager.unauthorized()
@@ -996,6 +1022,8 @@ def changedetection_app(config=None, datastore_o=None):
     )
 
     watch_api.add_resource(Search, '/api/v1/search', resource_class_kwargs={'datastore': datastore})
+
+    watch_api.add_resource(Changes, '/api/v1/changes', resource_class_kwargs={'datastore': datastore})
 
     watch_api.add_resource(
         Notifications, '/api/v1/notifications', resource_class_kwargs={'datastore': datastore}
@@ -1392,6 +1420,24 @@ def changedetection_app(config=None, datastore_o=None):
         )
     )
 
+    # MCP server for AI assistants, JSON-RPC with its own access token, so no CSRF token.
+    # Not registered at all with LLM_FEATURES_DISABLED or DISABLE_MCP=true.
+    import changedetectionio.blueprint.mcp as mcp
+
+    if not mcp.is_mcp_disabled():
+        mcp_blueprint = mcp.construct_blueprint(datastore, update_q)
+        csrf.exempt(mcp_blueprint)
+        # /mcp/v1 versions our tool contract (names, arguments, results), not the MCP protocol, which is negotiated
+        # per session. Additive changes stay in v1; only a breaking change would get a /mcp/v2.
+        app.register_blueprint(mcp_blueprint, url_prefix='/mcp/v1')
+        # OAuth sign-in for it (blueprint/mcp/oauth): /.well-known/oauth-* and /oauth/*, 404 unless offered. Only the
+        # routes register here, nothing of Authlib loads until a sign-in happens
+        import changedetectionio.blueprint.mcp.oauth as mcp_oauth
+        app.register_blueprint(mcp_oauth.construct_blueprint(datastore))
+        # Called by the assistant's server, not from a page with a form; /oauth/authorize keeps its CSRF token
+        csrf.exempt('changedetectionio.blueprint.mcp.oauth.token')
+        csrf.exempt('changedetectionio.blueprint.mcp.oauth.register')
+
     import changedetectionio.blueprint.pwa as pwa
 
     # url_prefix='' is required, not cosmetic - see the blueprint docstring
@@ -1405,6 +1451,11 @@ def changedetection_app(config=None, datastore_o=None):
         ),
         url_prefix='',
     )
+
+    # After the built-in blueprints, so a plugin can't take over a core blueprint name
+    from changedetectionio.pluggy_interface import register_plugin_blueprints
+
+    register_plugin_blueprints(app, datastore)
 
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = (
@@ -1687,6 +1738,7 @@ def notification_runner(worker_id=0):
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
+    from changedetectionio.pluggy_interface import apply_recheck_seconds_override
 
     proxy_last_called_time = {}
     last_health_check = 0
@@ -1822,6 +1874,8 @@ def ticker_thread_check_time_launch_checks():
                 if watch.get('time_between_check_use_default')
                 else watch.threshold_seconds() or recheck_time_system_seconds
             )
+            # A plugin that has the watch under its control has the last word
+            threshold = apply_recheck_seconds_override(watch, datastore, threshold)
 
             # #580 - Jitter plus/minus amount of time to make the check seem more random to the server
             jitter = datastore.data['settings']['requests'].get('jitter_seconds', 0)
@@ -1859,13 +1913,18 @@ def ticker_thread_check_time_launch_checks():
                                 # Record the last used time
                                 proxy_last_called_time[watch_proxy] = int(time.time())
 
+                    # running_uuids / queued_uuids are from the start of this pass: a worker may have taken it since
+                    if worker_pool.is_watch_running(uuid) or uuid in update_q.get_queued_uuids():
+                        continue
+
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
 
-                    # Into the queue with you
+                    # Into the queue with you. scheduled_at lets a worker drop it when the watch was checked since
+                    # (a worker between taking it off the queue and claiming it is in neither list above)
                     queued_successfully = worker_pool.queue_item_async_safe(
                         update_q,
-                        queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}),
+                        queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'scheduled_at': now}),
                     )
                     if queued_successfully:
                         logger.debug(
