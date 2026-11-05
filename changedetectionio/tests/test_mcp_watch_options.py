@@ -201,3 +201,42 @@ def test_mcp_word_diff_and_html(client, live_server, measure_memory_usage, datas
     assert not result['isError'] and '<p id="policy">' in result['structuredContent']['content']
     result = _call(client, token, 'get_snapshot', watch=uuid, html=True, timestamp=T0)
     assert result['isError'] and 'newest two snapshots' in result['content'][0]['text']
+
+
+def test_mcp_pause_watches(client, live_server, measure_memory_usage, datastore_path):
+    datastore = client.application.config['DATASTORE']
+    app = datastore.data['settings']['application']
+    token = new_mcp_token(client)
+    shops = datastore.add_tag('shops')
+    a = datastore.add_watch(url=_url('pause-a'), extras={'title': 'Shop A', 'tags': [shops]})
+    b = datastore.add_watch(url=_url('pause-b'), extras={'title': 'Shop B', 'tags': [shops]})
+    c = datastore.add_watch(url=_url('pause-c'), extras={'title': 'News', 'paused': True})
+    watching = datastore.data['watching']
+    try:
+        # A whole group, then again (nothing to do)
+        result = _call(client, token, 'pause_watches', tag='shops', paused=True)
+        assert not result['isError'] and watching[a]['paused'] and watching[b]['paused'] and 'Paused 2' in result['content'][0]['text']
+        assert 'already were' in _call(client, token, 'pause_watches', tag='shops', paused=True)['content'][0]['text']
+        # One by name, and all
+        _call(client, token, 'pause_watches', watches=['Shop A'], paused=False)
+        assert not watching[a]['paused'] and watching[b]['paused']
+        _call(client, token, 'pause_watches', all=True, paused=False)
+        assert not any(watching[u]['paused'] for u in (a, b, c))
+        assert _call(client, token, 'pause_watches', paused=True)['isError']
+
+        # The whole instance's scheduler, leaving each monitor's own setting alone
+        result = _call(client, token, 'pause_watches', scheduler=True, paused=True)
+        assert not result['isError'] and app['all_paused'] is True and not watching[a]['paused']
+        assert 'whole instance' in _call(client, token, 'pause_watches', watches=[a], paused=False)['content'][0]['text']
+        assert _call(client, token, 'pause_watches', scheduler=True, tag='shops', paused=False)['isError']
+        _call(client, token, 'pause_watches', scheduler=True, paused=False)
+        assert app['all_paused'] is False
+
+        # A token limited to a group: only its monitors, and never the whole instance
+        limited = new_mcp_token(client, name='limited', tags=[shops])
+        result = _call(client, limited, 'pause_watches', all=True, paused=True)
+        assert 'Paused 2' in result['content'][0]['text'] and watching[a]['paused'] and not watching[c]['paused']
+        result = _call(client, limited, 'pause_watches', scheduler=True, paused=True)
+        assert result['isError'] and not app.get('all_paused')
+    finally:
+        app['all_paused'] = False

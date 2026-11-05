@@ -1374,6 +1374,47 @@ def recheck_watches(ctx, args):
     return '\n'.join(lines), structured
 
 
+def pause_watches(ctx, args):
+    """Pause or unpause monitors (by name/uuid, a tag, or all), or the scheduler of the whole instance."""
+    if 'paused' not in args:
+        raise ToolError("Say 'paused': true to pause, false to unpause")
+    paused = bool(args['paused'])
+    app = ctx.datastore.data['settings']['application']
+    if args.get('scheduler'):
+        if args.get('watches') or args.get('tag') or args.get('all'):
+            raise ToolError("'scheduler' is the whole instance, give it on its own")
+        # The UI's "pause all" (settings.toggle_all_paused): no checks are queued, monitors keep their own paused
+        _refuse_if_limited(ctx, "pause or resume checking for the whole instance")
+        changed = bool(app.get('all_paused')) != paused
+        app['all_paused'] = paused
+        ctx.datastore.commit()
+        state = "paused: no checks are queued for any monitor" if paused else "running: checks are queued as normal"
+        return (f"Scheduling for the whole instance is {state}" + ('' if changed else ' (it already was)')
+                + ('. Monitors paused on their own stay paused.' if not paused else '.'),
+                {'scheduler_paused': paused, 'changed': changed})
+
+    refs = _list(args, 'watches')
+    if refs:
+        watches = [_resolve_watch(ctx, r) for r in refs]
+    elif args.get('tag') or args.get('all'):
+        # all=true with a limited token is every monitor in its groups
+        watches = _select(ctx, tag=args.get('tag'))
+    else:
+        raise ToolError("Say what to pause or unpause: 'watches', a 'tag', all=true, or scheduler=true for the "
+                        "whole instance")
+    changed = [w for w in watches if bool(w.get('paused')) != paused]
+    for watch in changed:
+        watch['paused'] = paused
+        watch.commit()
+    verb = 'Paused' if paused else 'Unpaused'
+    text = f"{verb} {len(changed)} monitors" + (f" ({len(watches) - len(changed)} already were)" if len(changed) < len(watches) else '')
+    if not paused and app.get('all_paused'):
+        text += (". Note: scheduling is paused for the whole instance, so nothing is checked until it's resumed "
+                 "(scheduler=true, paused=false, or the pause button in the UI).")
+    return text, {'changed': [w.get('uuid') for w in changed], 'unchanged': len(watches) - len(changed),
+                  'paused': paused, 'scheduler_paused': bool(app.get('all_paused'))}
+
+
 def add_tags(ctx, args):
     datastore = ctx.datastore
     watches = [_resolve_watch(ctx, r) for r in _list(args, 'watches')]
@@ -1924,6 +1965,15 @@ TOOLS = {
                           'description': f'Wait for the checks (at most {RECHECK_WAIT_MAX_MONITORS} monitors) and say how each went, '
                                          'or where it is in the queue'},
                  'wait_seconds': {'type': 'integer', 'minimum': 1, 'maximum': RECHECK_WAIT_MAX_SECONDS, 'default': 30}})),
+    'pause_watches': (pause_watches, dict(WRITE, idempotentHint=True), 'Pause or unpause monitors',
+        "Pause or unpause monitors in one call: by name/uuid, every monitor in a tag/group, or all of them. "
+        "scheduler=true instead pauses or resumes checking for the whole instance (the pause button in the UI), "
+        "leaving each monitor's own paused setting as it is.",
+        _schema({'paused': {'type': 'boolean', 'description': 'true to pause, false to unpause'},
+                 'watches': _WATCHES, 'tag': _TAG,
+                 'all': {'type': 'boolean', 'description': 'Every monitor this access token can see'},
+                 'scheduler': {'type': 'boolean', 'description': 'The whole instance: no checks are queued at all '
+                                                                 'while paused'}}, ['paused'])),
     'add_tags': (add_tags, dict(WRITE, idempotentHint=True), 'Tag monitors',
         'Add tags/groups to monitors by name. Tags that don\'t exist yet are created.',
         _schema({'watches': _WATCHES, 'tags': _TAGS}, ['watches', 'tags'])),
