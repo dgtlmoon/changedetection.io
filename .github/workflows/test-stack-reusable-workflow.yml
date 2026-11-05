@@ -250,9 +250,11 @@ jobs:
           docker load -i /tmp/test-changedetectionio.tar
 
       - name: Test built container with Pytest, flaskapi-guard installed and enabled
+        # The MCP tests send more than 300 MCP calls a minute when they land on the same pytest worker, so the MCP
+        # budget gets the same margin as the general one (the default stays 300, test_guard.py covers the limit itself)
         run: |
           docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
-          docker run --name test-cdio-basic-tests-guard --network changedet-network -e EXTRA_PACKAGES=flaskapi-guard==4.4.0 -e FLASKAPI_GUARD_ENABLED=true -e FLASKAPI_GUARD_RATE_LIMIT=600 -e FLASKAPI_GUARD_TRUSTED_PROXIES=127.0.0.1,::1 test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+          docker run --name test-cdio-basic-tests-guard --network changedet-network -e EXTRA_PACKAGES=flaskapi-guard==4.4.0 -e FLASKAPI_GUARD_ENABLED=true -e FLASKAPI_GUARD_RATE_LIMIT=600 -e FLASKAPI_GUARD_MCP_RATE_LIMIT=600 -e FLASKAPI_GUARD_TRUSTED_PROXIES=127.0.0.1,::1 test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
 
       - name: Extract memory report and logs
         if: always()
