@@ -42,9 +42,11 @@ def oauth_available(datastore):
 
 
 def issuer(datastore):
-    """This instance's public address, the issuer of its tokens: the Base URL setting when set (behind a proxy that's
-    the address clients see), otherwise built from the request, X-Forwarded-Prefix/Host/Proto included."""
-    base = (datastore.data['settings']['application'].get('base_url') or os.getenv('BASE_URL') or '').strip()
+    """This instance's public address for MCP, the issuer of its tokens: the "Public MCP address" setting
+    (settings.application.mcp_base_url, MCP Server > Settings) when set, otherwise built from the request,
+    X-Forwarded-Prefix/Host/Proto included. Separate from the notification Base URL on purpose: changing it signs out
+    every OAuth connection, since grants are bound to {issuer}/mcp/v1."""
+    base = (datastore.data['settings']['application'].get('mcp_base_url') or '').strip()
     return (base or request.url_root).rstrip('/')
 
 
@@ -131,8 +133,8 @@ def construct_blueprint(datastore):
         from . import server as oauth_server
 
         if not secure_issuer(datastore):
-            return consent_page(error="Sign-in needs https. Set the Base URL (Settings > General) to this instance's "
-                                      "https address.", status=400)
+            return consent_page(error="Sign-in needs https. Set the Public MCP address (AI > MCP Server > Settings) to "
+                                      "this instance's https address.", status=400)
         # Authlib's PKCE accepts no challenge, or "plain": MCP requires S256
         if request.args.get('code_challenge_method') != 'S256' or not request.args.get('code_challenge'):
             return consent_page(error="This sign-in needs PKCE with code_challenge_method=S256.", status=400)

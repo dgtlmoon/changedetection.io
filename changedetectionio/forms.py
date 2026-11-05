@@ -1397,6 +1397,25 @@ class globalLLMSettingsPageForm(Form):
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 
+def normalise_mcp_public_url(value):
+    """The "Public MCP address" as stored (settings.application.mcp_base_url): no trailing slash, and the instance's
+    address rather than its MCP endpoint when someone pastes .../mcp/v1."""
+    value = (value or '').strip().rstrip('/')
+    if value.endswith('/mcp/v1'):
+        value = value[:-len('/mcp/v1')].rstrip('/')
+    return value
+
+
+def validate_mcp_public_url(form, field):
+    from urllib.parse import urlsplit
+    value = normalise_mcp_public_url(field.data)
+    if not value:
+        return
+    parts = urlsplit(value)
+    if parts.scheme not in ('http', 'https') or not parts.hostname or parts.query or parts.fragment or parts.username:
+        raise ValidationError(_l('Use a full http:// or https:// address, without ?query or #fragment.'))
+
+
 class globalMCPSettingsPageForm(Form):
     """The /settings/ai/mcp page ("MCP Server" tab), stored in datastore['settings']['application']['mcp_enabled']. The
     access tokens have their own form, MCPTokenForm."""
@@ -1404,6 +1423,10 @@ class globalMCPSettingsPageForm(Form):
     enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
     # Empty for the built-in note (blueprint/mcp INSTRUCTIONS, shown as the placeholder), stored as mcp_note
     note = TextAreaField(_l('MCP Note'), validators=[validators.Optional(), validators.Length(max=4000)])
+    # Empty to build it from each request, stored as mcp_base_url (blueprint/mcp/oauth issuer()). Not the notification
+    # Base URL: that one is only for links in notifications
+    public_url = StringField(_l('Public MCP address'), validators=[validators.Optional(), validators.Length(max=500),
+                                                                   validate_mcp_public_url])
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 

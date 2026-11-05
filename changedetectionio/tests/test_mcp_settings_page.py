@@ -79,13 +79,13 @@ def test_mcp_settings_page(client, live_server, measure_memory_usage, datastore_
     assert 'copilot mcp add --transport http' in block('mcp-copilot-cli')
     assert 'mcp-remote' in block('mcp-other')
 
-    # The configured Base URL is the public address when it's set
-    settings['base_url'] = 'https://lemonade.example.com/instance-url/'
+    # The Public MCP address (Settings sub-tab) is the address shown when it's set
+    settings['mcp_base_url'] = 'https://lemonade.example.com/instance-url'
     try:
         html = client.get(url_for('settings.llm.mcp_settings_page')).get_data(as_text=True)
         assert '>https://lemonade.example.com/instance-url/mcp/v1</code>' in html
     finally:
-        settings['base_url'] = ''
+        settings.pop('mcp_base_url', None)
 
 
 def test_mcp_on_off_switch(client, live_server, measure_memory_usage, datastore_path):
@@ -369,3 +369,66 @@ def test_mcp_note(client, live_server, measure_memory_usage, datastore_path):
     # Emptied: the built-in note again
     client.post(page, data={'enabled': 'y', 'note': '  '}, follow_redirects=True)
     assert settings['mcp_note'] == '' and _initialize(client, token) == INSTRUCTIONS
+
+
+def test_mcp_public_address(client, live_server, measure_memory_usage, datastore_path):
+    """The "Public MCP address" (Settings sub-tab, mcp_base_url) is the MCP / OAuth address, and the notification
+    Base URL has nothing to do with it."""
+    from changedetectionio.blueprint.mcp.oauth import issuer
+    datastore = client.application.config['DATASTORE']
+    settings = datastore.data['settings']['application']
+    page = url_for('settings.llm.mcp_settings_page')
+    settings['base_url'] = 'https://notify.example.com'
+    try:
+        # Empty: built from the request, the notification Base URL is ignored
+        from flask import request
+        with client.application.test_request_context('/'):
+            request_address = request.url_root.rstrip('/')
+            assert issuer(datastore) == request_address
+        html = client.get(page).get_data(as_text=True)
+        assert 'notify.example.com' not in html and f'{request_address}/mcp/v1' in html
+        assert f'placeholder="{request_address}"' in html
+
+        # Saved without a trailing slash, and as the instance's address when the MCP endpoint is pasted
+        client.post(page, data={'enabled': 'y', 'public_url': 'https://changedetection.io/mcp-demo/mcp/v1/'}, follow_redirects=True)
+        assert settings['mcp_base_url'] == 'https://changedetection.io/mcp-demo'
+        assert 'https://changedetection.io/mcp-demo/mcp/v1' in client.get(page).get_data(as_text=True)
+        with client.application.test_request_context('/'):
+            assert issuer(datastore) == 'https://changedetection.io/mcp-demo'
+
+        # Not an address: refused, the saved one kept
+        for bad in ('changedetection.io/mcp-demo', 'ftp://changedetection.io', 'https://changedetection.io/?x=1'):
+            res = client.post(page, data={'enabled': 'y', 'public_url': bad})
+            assert 'Use a full http:// or https:// address' in res.get_data(as_text=True), bad
+            assert settings['mcp_base_url'] == 'https://changedetection.io/mcp-demo'
+
+        # Emptied: back to the request's address
+        client.post(page, data={'enabled': 'y', 'public_url': ''}, follow_redirects=True)
+        assert settings['mcp_base_url'] == ''
+    finally:
+        settings['base_url'] = None
+        settings.pop('mcp_base_url', None)
+
+
+def test_mcp_public_address_upgrade(client, live_server, measure_memory_usage, datastore_path):
+    """update_34: sign-ins made through the notification Base URL (0.70.1) stay connected, nothing else is carried over."""
+    datastore = client.application.config['DATASTORE']
+    settings = datastore.data['settings']['application']
+    try:
+        settings['base_url'] = 'https://cd.example.com/me/'
+        settings.pop('mcp_base_url', None)
+        settings['mcp_oauth'] = {'grants': {}}
+        datastore.update_34()
+        assert not settings.get('mcp_base_url'), "no sign-ins to keep, nothing carried over"
+
+        settings['mcp_oauth'] = {'grants': {'g1': {'resource': 'https://cd.example.com/me/mcp/v1'}}}
+        datastore.update_34()
+        assert settings['mcp_base_url'] == 'https://cd.example.com/me'
+
+        settings['mcp_base_url'] = 'https://elsewhere.example.com'
+        datastore.update_34()
+        assert settings['mcp_base_url'] == 'https://elsewhere.example.com', "a set address is never replaced"
+    finally:
+        settings['base_url'] = None
+        settings.pop('mcp_base_url', None)
+        settings.pop('mcp_oauth', None)

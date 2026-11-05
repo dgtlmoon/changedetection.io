@@ -540,6 +540,10 @@ msgid "MCP server switched off."
 msgstr "MCP 서버를 껐습니다."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."
+msgstr "공개 MCP 주소가 변경되었습니다: 로그인(OAuth)으로 연결된 어시스턴트는 다시 연결해야 합니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -1394,6 +1398,21 @@ msgstr "이 로그인을 취소할까요?"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "어시스턴트는 즉시 연결이 끊기며, 다시 로그인할 수 있습니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The address assistants reach this instance on, for example when it is served through another domain or proxy. Sign-in"
+" (OAuth) hands this address out, so it must be the one assistants connect to. Leave it empty to use the address of "
+"each request, shown in grey."
+msgstr ""
+"어시스턴트가 이 인스턴스에 접속하는 주소입니다. 예: 다른 도메인이나 프록시를 통해 제공할 때. 로그인(OAuth)이 이 주소를 전달하므로 어시스턴트가 접속하는 주소와 같아야 합니다. 비워 두면 각 요청의 "
+"주소(회색 표시)를 사용합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The MCP server is then at this address followed by /mcp/v1. Changing it signs out assistants connected with sign-in "
+"(OAuth), they need to connect again. Access tokens keep working."
+msgstr "MCP 서버는 이 주소 뒤에 /mcp/v1을 붙인 곳이 됩니다. 변경하면 로그인(OAuth)으로 연결된 어시스턴트가 로그아웃되어 다시 연결해야 합니다. 액세스 토큰은 계속 작동합니다."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
@@ -4266,12 +4285,20 @@ msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Use a full http:// or https:// address, without ?query or #fragment."
+msgstr "?쿼리나 #프래그먼트 없이 전체 http:// 또는 https:// 주소를 입력하세요."
+
+#: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "MCP 및 OAuth 엔드포인트 켜기"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "MCP Note"
 msgstr "MCP 안내"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "Public MCP address"
+msgstr "공개 MCP 주소"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
