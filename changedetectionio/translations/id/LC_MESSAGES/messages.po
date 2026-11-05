@@ -2754,6 +2754,25 @@ msgid "Not supported by Selenium browser"
 msgstr "Tidak didukung oleh browser Selenium"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "OAuth 2.0 bearer token"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"For APIs that want a bearer token: each check first gets an access token from the token URL with the client "
+"credentials grant, and sends it as an Authorization header. Tokens are reused until they expire. An Authorization "
+"header set above takes its place."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "(saved - leave empty to keep it)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Only for providers that ask for one, such as Auth0"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Turn on text finder"
 msgstr "Aktifkan pencari teks"
 
@@ -4010,6 +4029,38 @@ msgid "Request method"
 msgstr "Metode permintaan"
 
 #: changedetectionio/forms.py
+msgid "OAuth 2.0 token URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Client ID"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Client secret"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Scope"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Audience"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Send the client credentials"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "As HTTP Basic authentication"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "In the request body"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Ignore status codes (process non-2xx status codes as normal)"
 msgstr "Abaikan kode status (proses kode status non-2xx seperti biasa)"
 
@@ -4105,6 +4156,10 @@ msgstr "Gunakan <title> halaman dalam daftar"
 #: changedetectionio/forms.py
 msgid "Number of history items per watch to keep"
 msgstr "Jumlah item riwayat per monitor yang disimpan"
+
+#: changedetectionio/forms.py
+msgid "A client ID is needed with an OAuth 2.0 token URL"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
