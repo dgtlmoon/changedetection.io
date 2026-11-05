@@ -79,13 +79,13 @@ def test_mcp_settings_page(client, live_server, measure_memory_usage, datastore_
     assert 'copilot mcp add --transport http' in block('mcp-copilot-cli')
     assert 'mcp-remote' in block('mcp-other')
 
-    # The configured Base URL is the public address when it's set
-    settings['base_url'] = 'https://lemonade.example.com/instance-url/'
+    # The Public MCP address (Settings sub-tab) is the address shown when it's set
+    settings['mcp_base_url'] = 'https://lemonade.example.com/instance-url'
     try:
         html = client.get(url_for('settings.llm.mcp_settings_page')).get_data(as_text=True)
         assert '>https://lemonade.example.com/instance-url/mcp/v1</code>' in html
     finally:
-        settings['base_url'] = ''
+        settings.pop('mcp_base_url', None)
 
 
 def test_mcp_on_off_switch(client, live_server, measure_memory_usage, datastore_path):
@@ -225,7 +225,7 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
     result = _rpc(client, token, 'tools/call', {'name': 'delete_watch', 'arguments': {'watch': uuid}}).json['result']
     assert result['isError'] is True
     text = result['content'][0]['text']
-    assert "('Claude Code') has 'read' access to monitors" in text and 'Access tokens' in text
+    assert "('Claude Code') has 'read' access to 'Monitors'" in text and 'Access tokens' in text
     assert uuid in datastore.data['watching']
     assert _rpc(client, token, 'tools/call', {'name': 'list_watches', 'arguments': {}}).json['result']['isError'] is False
 
@@ -235,7 +235,7 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
     tools = _tool_names(client, other)
     assert not {'list_tags', 'create_tag', 'delete_tag', 'get_system_info'} & tools and 'create_watch' in tools
     result = _rpc(client, other, 'tools/call', {'name': 'list_tags', 'arguments': {}}).json['result']
-    assert result['isError'] is True and "has 'none' access to tags" in result['content'][0]['text']
+    assert result['isError'] is True and "has 'none' access to 'Groups (tags)'" in result['content'][0]['text']
     assert 'list_tags' in _tool_names(client, token), "the first token is unchanged"
 
     # System info can't be write, even by hand in the datastore; ?readonly=1 caps every row at read for one connector
@@ -248,7 +248,7 @@ def test_mcp_access_tokens(client, live_server, measure_memory_usage, datastore_
     res = client.post(url_for('settings.llm.mcp_token_revoke', token_id=token_id))
     assert res.status_code == 200 and 'Claude Code' not in res.json['html'] and 'Tags off' in res.json['html']
     assert 'Claude Code' not in res.json['overview_html'] and 'Tags off' in res.json['overview_html']
-    assert _ping(client, token).status_code == 403 and _ping(client, other).status_code == 200
+    assert _ping(client, token).status_code == 401 and _ping(client, other).status_code == 200
     assert client.post(url_for('settings.llm.mcp_token_revoke', token_id=token_id)).status_code == 404
     assert client.post(url_for('settings.llm.mcp_token_update', token_id='nope'), data=dict(GRID, name='x')).status_code == 404
     # The last one revoked: "Get started" is back on Overview straight away
@@ -278,7 +278,8 @@ def test_ai_pages_settings_tab_row(client, live_server, measure_memory_usage, da
     settings_page = url_for('settings.settings_page')
     llm_page = url_for('settings.llm.llm_settings_page')
     mcp_page = url_for('settings.llm.mcp_settings_page')
-    ai_tab = f'<a href="{llm_page}">AI / LLM / MCP</a>'
+    # Lands on the Overview sub-tab
+    ai_tab = f'<a href="{llm_page}#overview">AI / LLM / MCP</a>'
 
     html = client.get(settings_page).get_data(as_text=True)
     # On /settings the tabs stay in-page #anchors for tabs.js, the AI tab is a link and not active
@@ -326,3 +327,157 @@ def test_ai_settings_csrf(client, live_server, measure_memory_usage, datastore_p
     finally:
         app.config['WTF_CSRF_ENABLED'] = False
         settings.pop('mcp_tokens', None)
+
+
+def _initialize(client, token):
+    res = client.post('/mcp/v1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
+                                                  'params': {'protocolVersion': '2025-06-18', 'capabilities': {},
+                                                             'clientInfo': {'name': 'test', 'version': '1'}}}),
+                      content_type='application/json', headers={'Authorization': f'Bearer {token}'})
+    return res.json['result']['instructions']
+
+
+def test_mcp_note(client, live_server, measure_memory_usage, datastore_path):
+    """The MCP Note sub-tab: the built-in note is the placeholder, a saved note replaces it on initialize, and the
+    read-only sentence is still added after it."""
+    from markupsafe import escape
+    from changedetectionio.blueprint.mcp import INSTRUCTIONS, READ_ONLY_INSTRUCTIONS
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    settings.pop('mcp_note', None)
+    token = new_mcp_token(client)
+    page = url_for('settings.llm.mcp_settings_page')
+
+    html = client.get(page).get_data(as_text=True)
+    assert f'placeholder="{escape(INSTRUCTIONS)}"' in html
+    assert 'data-mcp-note-copy="note"' in html and 'Replace existing MCP Note' in html and 'mcp-note.js' in html
+    assert _initialize(client, token) == INSTRUCTIONS
+
+    note = "This is the changedetection.io demo.\r\nTo watch your own pages, sign up at https://changedetection.io"
+    res = client.post(page, data={'enabled': 'y', 'note': note}, follow_redirects=True)
+    assert res.status_code == 200
+    assert settings['mcp_note'] == note.replace('\r\n', '\n')
+    assert _initialize(client, token) == note.replace('\r\n', '\n')
+    # (new_mcp_token's tags= is the groups it's limited to, not the Tags row)
+    from changedetectionio.blueprint.mcp.tokens import add_token
+    readonly = add_token(settings, 'ro', {'monitors': 'read', 'tags': 'read', 'notifications': 'read', 'system': 'read'}, None)[1]
+    assert _initialize(client, readonly) == note.replace('\r\n', '\n') + READ_ONLY_INSTRUCTIONS
+
+    # Too long is refused and not saved
+    res = client.post(page, data={'enabled': 'y', 'note': 'x' * 4001})
+    assert settings['mcp_note'] == note.replace('\r\n', '\n')
+
+    # Emptied: the built-in note again
+    client.post(page, data={'enabled': 'y', 'note': '  '}, follow_redirects=True)
+    assert settings['mcp_note'] == '' and _initialize(client, token) == INSTRUCTIONS
+
+
+def test_mcp_public_address(client, live_server, measure_memory_usage, datastore_path):
+    """The "Public MCP address" (Settings sub-tab, mcp_base_url) is the MCP / OAuth address, and the notification
+    Base URL has nothing to do with it."""
+    from changedetectionio.blueprint.mcp.oauth import issuer
+    datastore = client.application.config['DATASTORE']
+    settings = datastore.data['settings']['application']
+    page = url_for('settings.llm.mcp_settings_page')
+    settings['base_url'] = 'https://notify.example.com'
+    try:
+        # Empty: built from the request, the notification Base URL is ignored
+        from flask import request
+        with client.application.test_request_context('/'):
+            request_address = request.url_root.rstrip('/')
+            assert issuer(datastore) == request_address
+        html = client.get(page).get_data(as_text=True)
+        assert 'notify.example.com' not in html and f'{request_address}/mcp/v1' in html
+        assert f'placeholder="{request_address}"' in html
+
+        # Saved without a trailing slash, and as the instance's address when the MCP endpoint is pasted
+        client.post(page, data={'enabled': 'y', 'public_url': 'https://changedetection.io/mcp-demo/mcp/v1/'}, follow_redirects=True)
+        assert settings['mcp_base_url'] == 'https://changedetection.io/mcp-demo'
+        assert 'https://changedetection.io/mcp-demo/mcp/v1' in client.get(page).get_data(as_text=True)
+        with client.application.test_request_context('/'):
+            assert issuer(datastore) == 'https://changedetection.io/mcp-demo'
+
+        # Not an address: refused, the saved one kept
+        for bad in ('changedetection.io/mcp-demo', 'ftp://changedetection.io', 'https://changedetection.io/?x=1'):
+            res = client.post(page, data={'enabled': 'y', 'public_url': bad})
+            assert 'Use a full http:// or https:// address' in res.get_data(as_text=True), bad
+            assert settings['mcp_base_url'] == 'https://changedetection.io/mcp-demo'
+
+        # Emptied: back to the request's address
+        client.post(page, data={'enabled': 'y', 'public_url': ''}, follow_redirects=True)
+        assert settings['mcp_base_url'] == ''
+    finally:
+        settings['base_url'] = None
+        settings.pop('mcp_base_url', None)
+
+
+def test_mcp_public_address_upgrade(client, live_server, measure_memory_usage, datastore_path):
+    """update_34: sign-ins made through the notification Base URL (0.70.1) stay connected, nothing else is carried over."""
+    datastore = client.application.config['DATASTORE']
+    settings = datastore.data['settings']['application']
+    try:
+        settings['base_url'] = 'https://cd.example.com/me/'
+        settings.pop('mcp_base_url', None)
+        settings['mcp_oauth'] = {'grants': {}}
+        datastore.update_34()
+        assert not settings.get('mcp_base_url'), "no sign-ins to keep, nothing carried over"
+
+        settings['mcp_oauth'] = {'grants': {'g1': {'resource': 'https://cd.example.com/me/mcp/v1'}}}
+        datastore.update_34()
+        assert settings['mcp_base_url'] == 'https://cd.example.com/me'
+
+        settings['mcp_base_url'] = 'https://elsewhere.example.com'
+        datastore.update_34()
+        assert settings['mcp_base_url'] == 'https://elsewhere.example.com', "a set address is never replaced"
+    finally:
+        settings['base_url'] = None
+        settings.pop('mcp_base_url', None)
+        settings.pop('mcp_oauth', None)
+
+
+def test_mcp_anonymous_read(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """"Allow read-only access without sign-in": no credentials gets read-only tools, a wrong token still a 401."""
+    from changedetectionio.blueprint import mcp
+    datastore = client.application.config['DATASTORE']
+    settings = datastore.data['settings']['application']
+    page = url_for('settings.llm.mcp_settings_page')
+
+    def rpc(method, params=None, headers=None):
+        return client.post('/mcp/v1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': method, 'params': params or {}}),
+                           content_type='application/json', headers=headers or {})
+
+    datastore.add_watch(url='https://example.com/public', extras={'title': 'Public page', 'paused': True})
+    assert rpc('tools/list').status_code == 401, "off by default"
+
+    client.post(page, data={'enabled': 'y', 'anonymous_read': 'y'}, follow_redirects=True)
+    assert settings['mcp_anonymous_read'] is True
+    assert 'Allow read-only access without sign-in' in client.get(page).get_data(as_text=True)
+    try:
+        listed = {t['name'] for t in rpc('tools/list').json['result']['tools']}
+        assert {'list_watches', 'get_changes', 'list_tags'} <= listed
+        assert not listed & {'create_watch', 'delete_watch', 'list_notifications', 'get_system_info', 'update_watch'}
+        result = rpc('tools/call', {'name': 'list_watches', 'arguments': {}}).json['result']
+        assert result['isError'] is False and 'Public page' in result['content'][0]['text']
+        refused = rpc('tools/call', {'name': 'create_watch', 'arguments': {'url': 'https://example.com/x'}}).json['result']
+        assert refused['isError'] is True and 'not available without signing in' in refused['content'][0]['text']
+        instructions = rpc('initialize', {'protocolVersion': '2025-06-18', 'capabilities': {},
+                                          'clientInfo': {'name': 'someone', 'version': '1'}}).json['result']['instructions']
+        assert mcp.READ_ONLY_INSTRUCTIONS in instructions
+        assert not any(t.get('name') == 'anonymous' for t in (settings.get('mcp_tokens') or {}).values()), "never stored"
+
+        # A wrong token is still refused, so it's noticed, and a real one still gets its own grid
+        assert rpc('tools/list', headers={'Authorization': 'Bearer cdio_mcp_wrong'}).status_code == 401
+        token = new_mcp_token(client)
+        listed = {t['name'] for t in rpc('tools/list', headers={'Authorization': f'Bearer {token}'}).json['result']['tools']}
+        assert 'create_watch' in listed
+
+        # Tool calls are limited per address
+        monkeypatch.setenv('MCP_ANONYMOUS_CALLS_PER_MINUTE', '2')
+        mcp._anonymous_calls.clear()
+        call = lambda: rpc('tools/call', {'name': 'list_tags', 'arguments': {}}).json['result']
+        assert call()['isError'] is False and call()['isError'] is False
+        limited = call()
+        assert limited['isError'] is True and 'Too many calls from this address' in limited['content'][0]['text']
+        assert 'can make 2 tool calls a minute' in client.get(page).get_data(as_text=True)
+    finally:
+        settings['mcp_anonymous_read'] = False
+        mcp._anonymous_calls.clear()

@@ -4,7 +4,7 @@
   Requires template context: mcp_tokens (see mcp_tokens_context()).
 #}
 {% set level_labels = {'none': _('None'), 'read': _('Read'), 'write': _('Write')} %}
-{% set area_labels = {'monitors': _('Monitors'), 'tags': _('Groups (tags)'), 'notifications': _('Notifications'), 'system': _('System info')} %}
+{% set area_labels = {'monitors': _('Monitors'), 'tags': _('Groups (tags)'), 'notifications': _('Notifications'), 'browser': _('Browser steps & JavaScript'), 'system': _('System info')} %}
 {% if mcp_tokens %}
 <ul class="mcp-token-list">
   {% for token in mcp_tokens %}
@@ -21,7 +21,7 @@
       </span>
     </div>
     <div class="mcp-token-levels">
-      {% for area, level in token.levels.items() %}<span class="mcp-chip level-{{ level }}">{{ area_labels[area] }} <strong>{{ level_labels[level] }}</strong></span>{% endfor %}
+      {% for area, level in token.levels.items() %}<span class="mcp-chip level-{{ level }}">{{ area_labels[area] or (mcp_plugin_area_labels or {}).get(area, area) }} <strong>{{ level_labels[level] }}</strong></span>{% endfor %}
       {%- if token.tags %}<span class="mcp-chip mcp-chip-groups">{{ _('Only') }} <strong>{{ token.group_names|join(', ') if token.group_names else _('deleted groups') }}</strong></span>{% endif %}
     </div>
     <div class="mcp-token-actions">

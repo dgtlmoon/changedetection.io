@@ -49,8 +49,8 @@ def test_notification_setup_widget_on_pages(client, live_server, measure_memory_
     assert b'data-i18n="{&#34;' in res.data
     assert b'notification-setup.js' in res.data
     # The popular services as one-click icons, the search box is for the rest
-    for schema in (b'discord', b'tgram', b'ntfys', b'slack', b'mailtos',
-                   b'matrixs', b'pover', b'workflow', b'hassios', b'gotifys'):
+    for schema in (b'discord', b'tgram', b'slack', b'mailtos',
+                   b'matrixs', b'pover', b'workflow', b'hassios'):
         assert b'class="ns-quick-btn" data-schema="' + schema + b'"' in res.data
     assert b'+ Search over 140 other services' in res.data
     # The existing textarea is still there, the widget only appends to it

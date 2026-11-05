@@ -11,6 +11,12 @@ from .util import delete_all_watches, new_mcp_token, wait_for_all_checks
 T0 = 1700000000  # 2023-11-14T22:13:20Z
 
 
+def _url(name):
+    """A local test endpoint URL, distinct per name, so nothing ever fetches an outside host."""
+    from flask import url_for
+    return url_for('test_endpoint', _external=True, id=name)
+
+
 @pytest.fixture(autouse=True)
 def mcp_switched_on(client):
     """The MCP server is off until the switch on its settings tab is on, these tests are about it being on, with
@@ -38,12 +44,12 @@ def _call(client, api_key, tool, **arguments):
 
 def _setup(datastore):
     group = datastore.add_tag('competitors')
-    policy = datastore.add_watch(url='https://example.com/privacy',
+    policy = datastore.add_watch(url=_url('privacy'),
                                  extras={'title': 'Privacy Policy', 'paused': True, 'tags': [group]})
     w = datastore.data['watching'][policy]
     w.save_history_blob('Intro\nWe may share data with\nour payment processor.\nOutro', T0, 'a')
     w.save_history_blob('Intro\nWe may share data with\nour payment processor and advertising partners.\nOutro', T0 + 100, 'b')
-    broken = datastore.add_watch(url='https://example.com/broken', extras={'title': 'Broken page', 'paused': True})
+    broken = datastore.add_watch(url=_url('broken'), extras={'title': 'Broken page', 'paused': True})
     datastore.data['watching'][broken]['last_error'] = 'Connection refused'
     return group, policy, broken
 
@@ -139,7 +145,7 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
     settings = datastore.data['settings']['application']
     settings.pop('mcp_tokens', None)
     # A fresh install has none, so nothing can connect until one is added
-    assert _rpc(client, 'ping', api_key='').status_code == 403
+    assert _rpc(client, 'ping', api_key='').status_code == 401
     token = new_mcp_token(client, name='Claude Code, laptop')
     assert token.startswith('cdio_mcp_') and token != settings.get('api_access_token')
     # Only its hash is stored, never the token itself
@@ -147,11 +153,13 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
     assert token not in str(settings['mcp_tokens']) and stored['hint'] == token[:13]
     assert stored['last_used'] is None
 
-    assert _rpc(client, 'ping').status_code == 403
-    assert _rpc(client, 'ping', api_key='wrong').status_code == 403
+    res = _rpc(client, 'ping')
+    # 401 with a Bearer challenge (MCP spec), so an OAuth client knows to sign in; a wrong Origin stays 403
+    assert res.status_code == 401 and res.headers['WWW-Authenticate'].startswith('Bearer ')
+    assert _rpc(client, 'ping', api_key='wrong').status_code == 401
     # The REST API key is not an MCP token
-    assert _rpc(client, 'ping', api_key=settings.get('api_access_token')).status_code == 403
-    assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {settings.get("api_access_token")}'}).status_code == 403
+    assert _rpc(client, 'ping', api_key=settings.get('api_access_token')).status_code == 401
+    assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {settings.get("api_access_token")}'}).status_code == 401
     # Bearer (what the copyable configs use) or x-api-key
     assert _rpc(client, 'ping', headers={'Authorization': f'Bearer {token}'}).status_code == 200
     assert _rpc(client, 'ping', api_key=token).status_code == 200
@@ -170,7 +178,7 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
     # Required even with "API access requires key" off, there is no open mode
     settings['api_access_token_enabled'] = False
     try:
-        assert _rpc(client, 'ping').status_code == 403
+        assert _rpc(client, 'ping').status_code == 401
         # and a password-protected UI never sends an assistant to the login page
         settings['password'] = 'something'
         assert _rpc(client, 'ping', api_key=token).status_code == 200
@@ -180,7 +188,7 @@ def test_mcp_auth(client, live_server, measure_memory_usage, datastore_path):
 
     # Revoked: refused at once
     settings['mcp_tokens'].clear()
-    assert _rpc(client, 'ping', api_key=token).status_code == 403
+    assert _rpc(client, 'ping', api_key=token).status_code == 401
 
 
 def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
@@ -191,12 +199,29 @@ def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
     result = _call(client, api_key, 'list_watches')
     assert result['isError'] is False and result['structuredContent']['total'] == 2
     text = result['content'][0]['text']
-    assert f'Privacy Policy | https://example.com/privacy | uuid {policy}' in text
+    assert f"Privacy Policy | {_url('privacy')} | uuid {policy}" in text
     assert 'tags: competitors' in text and 'error: Connection refused' in text
     assert [w['uuid'] for w in _call(client, api_key, 'list_watches', with_errors=True)['structuredContent']['watches']] == [broken]
     assert _call(client, api_key, 'list_watches', tag='competitors')['structuredContent']['total'] == 1
     assert _call(client, api_key, 'list_watches', search='broken')['structuredContent']['total'] == 1
     assert _call(client, api_key, 'list_watches', tag='nope')['isError'] is True
+
+    # History stats for every monitor in one call, and sorting by them: "which monitors have years of history?"
+    old = datastore.add_watch(url=_url('old'), extras={'title': 'Old page', 'paused': True})
+    for i, day in enumerate((-800, -400, -10)):
+        datastore.data['watching'][old].save_history_blob(f'version {i}', T0 + day * 86400, f'o{i}')
+    rows = {w['uuid']: w for w in _call(client, api_key, 'list_watches')['structuredContent']['watches']}
+    assert (rows[policy]['snapshots'], rows[policy]['history_days']) == (2, 0.0)
+    assert rows[old]['snapshots'] == 3 and rows[old]['history_days'] == 790.0
+    assert rows[old]['first_snapshot'] == _iso(T0 - 800 * 86400)
+    assert rows[broken]['snapshots'] == 0 and rows[broken]['first_snapshot'] is None
+    for sort, order in (('first_snapshot', [old, policy, broken]), ('snapshots', [old, policy, broken]),
+                        ('history_span', [old, policy, broken])):
+        result = _call(client, api_key, 'list_watches', sort=sort)
+        assert [w['uuid'] for w in result['structuredContent']['watches']] == order, sort
+    assert '3 snapshots since' in result['content'][0]['text'] and 'longest history first' in result['content'][0]['text']
+    assert _call(client, api_key, 'list_watches', sort='bogus')['isError'] is True
+    datastore.delete(old)
 
     result = _call(client, api_key, 'list_tags')
     assert result['structuredContent']['tags'] == [{'uuid': group, 'title': 'competitors', 'monitors': 1,
@@ -213,7 +238,7 @@ def test_mcp_tools(client, live_server, measure_memory_usage, datastore_path):
     assert '+our payment processor and advertising partners.' in result['structuredContent']['latest_change']['diff']
     assert UNTRUSTED_NOTE in result['content'][0]['text']
     # Ambiguous: the candidates come back to choose from
-    ambiguous = _call(client, api_key, 'get_watch', watch='example.com')
+    ambiguous = _call(client, api_key, 'get_watch', watch='test-endpoint')
     assert ambiguous['isError'] is True and policy in ambiguous['content'][0]['text'] and broken in ambiguous['content'][0]['text']
 
     result = _call(client, api_key, 'get_changes', **{'from': T0, 'to': T0 + 200, 'tag': 'competitors'})
@@ -249,7 +274,7 @@ def test_mcp_write_tools(client, live_server, measure_memory_usage, datastore_pa
     watching = datastore.data['watching']
 
     # Create, with validation shared with the REST API
-    result = _call(client, api_key, 'create_watch', url='https://example.com/new-page', title='New page',
+    result = _call(client, api_key, 'create_watch', url=_url('new-page'), title='New page',
                    tags=['Shops'], check_interval={'hours': 6})
     assert result['isError'] is False
     new = result['structuredContent']['uuid']
@@ -258,10 +283,10 @@ def test_mcp_write_tools(client, live_server, measure_memory_usage, datastore_pa
     assert bad['isError'] is True and 'Invalid or unsupported URL' in bad['content'][0]['text']
 
     # Import, capped per call
-    result = _call(client, api_key, 'import_watches', urls=['https://example.com/a', 'https://example.com/b', 'ftp:/nope'],
+    result = _call(client, api_key, 'import_watches', urls=[_url('a'), _url('b'), 'ftp:/nope'],
                    tags=['Bulk'])
     assert len(result['structuredContent']['created']) == 2 and len(result['structuredContent']['failed']) == 1
-    too_many = _call(client, api_key, 'import_watches', urls=[f'https://example.com/{i}' for i in range(101)])
+    too_many = _call(client, api_key, 'import_watches', urls=[_url(i) for i in range(101)])
     assert too_many['isError'] is True and 'At most 100' in too_many['content'][0]['text']
 
     # Update by name: pause, mute, interval; unknown/invalid values come back as errors
@@ -273,7 +298,7 @@ def test_mcp_write_tools(client, live_server, measure_memory_usage, datastore_pa
     assert _call(client, api_key, 'update_watch', watch=new)['isError'] is True  # nothing to change
 
     # Tags by name, created when missing
-    result = _call(client, api_key, 'add_tags', watches=[new, 'example.com/a'], tags=['Competitors', 'Shops'])
+    result = _call(client, api_key, 'add_tags', watches=[new, 'id=a'], tags=['Competitors', 'Shops'])
     assert result['isError'] is False
     assert set(_call(client, api_key, 'get_watch', watch=new)['structuredContent']['tags']) == {'Shops', 'Competitors'}
     _call(client, api_key, 'remove_tags', watches=[new], tags=['Shops'])
@@ -313,7 +338,7 @@ def test_mcp_write_tools(client, live_server, measure_memory_usage, datastore_pa
         refused = _call(client, api_key, 'delete_watch', watch=ref)
         assert refused['isError'] is True and "isn't possible" in refused['content'][0]['text']
     assert len(watching) == count, "nothing was deleted"
-    assert _call(client, api_key, 'delete_watch', watch='example.com')['isError'] is True  # ambiguous
+    assert _call(client, api_key, 'delete_watch', watch='test-endpoint')['isError'] is True  # ambiguous
     assert len(watching) == count
 
     watching[new].save_history_blob('one', T0, 'one')
@@ -332,7 +357,7 @@ def test_mcp_argument_validation(client, live_server, measure_memory_usage, data
     """Bad arguments come back as a tool error listing every problem (the model can fix them), never silently ignored."""
     datastore = client.application.config['DATASTORE']
     api_key = new_mcp_token(client)
-    uuid = datastore.add_watch(url='https://example.com/validate', extras={'paused': False})
+    uuid = datastore.add_watch(url=_url('validate'), extras={'paused': False})
 
     # A typo'd argument is an error, and nothing is changed
     result = _call(client, api_key, 'update_watch', watch=uuid, pausd=True, title='Changed')
@@ -399,14 +424,14 @@ def test_mcp_snapshot_unfiltered(client, live_server, measure_memory_usage, data
             '<div id="food">Fried cheese $12</div></body></html>')
     uuids = []
     for n, name in enumerate(('Bistro', 'Cafe', 'Diner')):
-        uuid = datastore.add_watch(url=f'https://{name.lower()}.example.com/menu',
+        uuid = datastore.add_watch(url=_url(f'{name.lower()}-menu'),
                                    extras={'title': name, 'paused': True, 'tags': [menus], 'include_filters': ['#beer']})
         w = datastore.data['watching'][uuid]
         w.save_history_blob('Pale ale $8', T0 + n, 'a')
         w.save_last_fetched_html(timestamp=T0 + n, contents=page)
         uuids.append(uuid)
     # A JSON one: no HTML to convert, given as it was fetched
-    api = datastore.add_watch(url='https://api.example.com/menu.json', extras={'title': 'Api', 'paused': True})
+    api = datastore.add_watch(url=_url('api-menu-json'), extras={'title': 'Api', 'paused': True})
     datastore.data['watching'][api]['content-type'] = 'application/json'
     datastore.data['watching'][api].save_history_blob('{"beer": 8}', T0, 'j')
     datastore.data['watching'][api].save_last_fetched_html(timestamp=T0, contents='{"beer": 8, "fried_cheese": 12}')
@@ -455,7 +480,7 @@ def test_mcp_snapshot_unfiltered(client, live_server, measure_memory_usage, data
 
 def _menu_history(datastore):
     """A restaurant menu whose prices go up, then a broken capture: the history the three history tools are for."""
-    uuid = datastore.add_watch(url='https://bistro.example.com/menu', extras={'title': 'Bistro menu', 'paused': True})
+    uuid = datastore.add_watch(url=_url('bistro-menu'), extras={'title': 'Bistro menu', 'paused': True})
     w = datastore.data['watching'][uuid]
     menu = 'Soups\nBeef broth 79\nMains\nSchnitzel 239\nGoulash 249\n' + 'Opening hours Mon-Sun 11-22\n' * 40
     w.save_history_blob(menu, T0, 'a')
@@ -547,7 +572,7 @@ def test_mcp_line_timeline(client, live_server, measure_memory_usage, datastore_
     """line_timeline: what was added to a list and when, each line once, even when the page flips between layouts."""
     datastore = client.application.config['DATASTORE']
     api_key = new_mcp_token(client)
-    uuid = datastore.add_watch(url='https://band.example.com/tour', extras={'title': 'Band tour', 'paused': True})
+    uuid = datastore.add_watch(url=_url('band-tour'), extras={'title': 'Band tour', 'paused': True})
     w = datastore.data['watching'][uuid]
     header = 'Tour Dates\nTickets\n'
     w.save_history_blob(header + 'Oct 9 Manchester\nOct 29 Prague', T0, 'a')
@@ -585,7 +610,7 @@ def test_mcp_history_summaries(client, live_server, measure_memory_usage, datast
     from changedetectionio.blueprint.mcp import tools
     datastore = client.application.config['DATASTORE']
     api_key = new_mcp_token(client)
-    uuid = datastore.add_watch(url='https://news.example.com/', extras={'title': 'News', 'paused': True})
+    uuid = datastore.add_watch(url=_url('news'), extras={'title': 'News', 'paused': True})
     w = datastore.data['watching'][uuid]
     import random
     rng = random.Random(1)
@@ -658,7 +683,7 @@ def test_find_change_regex_timeout(client, live_server, measure_memory_usage, da
     from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
     datastore = client.application.config['DATASTORE']
     api_key = new_mcp_token(client)
-    uuid = datastore.add_watch(url='https://example.com/redos', extras={'title': 'ReDoS', 'paused': True})
+    uuid = datastore.add_watch(url=_url('redos'), extras={'title': 'ReDoS', 'paused': True})
     datastore.data['watching'][uuid].save_history_blob('a' * 40 + '!', T0, 'a')
     monkeypatch.setattr(regex_plugin, 'REGEX_TIMEOUT_SECONDS', 0.2)
     # (the regex package optimises the textbook (a+)+$ away, (a|aa)+$ still backtracks)
@@ -687,7 +712,7 @@ def test_mcp_fetcher_and_proxy(client, live_server, measure_memory_usage, datast
         assert 'html_requests' in data['fetchers'] and 'extra_browser_stealth' in data['fetchers']
         assert 's3cret' not in json.dumps(info) and 'browser.example.com' not in json.dumps(info)
 
-        result = _call(client, api_key, 'create_watch', url='https://shop.example.com/', proxy='czech exit',
+        result = _call(client, api_key, 'create_watch', url=_url('shop'), proxy='czech exit',
                        fetch_backend='html_requests', paused=True)
         assert not result['isError'], result
         data = result['structuredContent']
@@ -704,7 +729,7 @@ def test_mcp_fetcher_and_proxy(client, live_server, measure_memory_usage, datast
         assert result['structuredContent']['fetch_backend'] == 'system'
 
         # Mistakes name what's available, never a URL
-        result = _call(client, api_key, 'create_watch', url='https://shop.example.com/2', proxy='Mars exit')
+        result = _call(client, api_key, 'create_watch', url=_url('shop-2'), proxy='Mars exit')
         assert result['isError'] and 'Czech exit (ui-0Czech exit)' in result['content'][0]['text']
         assert 's3cret' not in result['content'][0]['text']
         result = _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='extra_browser_nope')
