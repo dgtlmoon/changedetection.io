@@ -545,6 +545,10 @@ msgid "MCP server switched off."
 msgstr "Servidor MCP desativado."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."
+msgstr "O endereço público do MCP mudou: assistentes conectados por login (OAuth) precisam se conectar de novo."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -1425,6 +1429,24 @@ msgstr "Revogar este login?"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "O assistente é desconectado na hora, ele pode fazer login de novo."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The address assistants reach this instance on, for example when it is served through another domain or proxy. Sign-in"
+" (OAuth) hands this address out, so it must be the one assistants connect to. Leave it empty to use the address of "
+"each request, shown in grey."
+msgstr ""
+"O endereço pelo qual os assistentes acessam esta instância, por exemplo quando ela é servida por outro domínio ou "
+"proxy. O login (OAuth) informa este endereço, então ele deve ser o mesmo ao qual os assistentes se conectam. Deixe "
+"vazio para usar o endereço de cada requisição, mostrado em cinza."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The MCP server is then at this address followed by /mcp/v1. Changing it signs out assistants connected with sign-in "
+"(OAuth), they need to connect again. Access tokens keep working."
+msgstr ""
+"O servidor MCP fica então neste endereço seguido de /mcp/v1. Alterá-lo desconecta os assistentes conectados por login"
+" (OAuth), eles precisam se conectar de novo. Os tokens de acesso continuam funcionando."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
@@ -4344,12 +4366,20 @@ msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Use a full http:// or https:// address, without ?query or #fragment."
+msgstr "Use um endereço completo http:// ou https://, sem ?consulta ou #fragmento."
+
+#: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "Ativar os endpoints MCP e OAuth"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "MCP Note"
 msgstr "Nota MCP"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "Public MCP address"
+msgstr "Endereço público do MCP"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"

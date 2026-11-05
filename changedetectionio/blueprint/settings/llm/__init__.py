@@ -92,14 +92,16 @@ def mcp_template_context(datastore):
     mcp_disabled = is_mcp_disabled()
     mcp_url = None
     if not mcp_disabled:
-        # The configured Base URL is the instance's public address when set; otherwise build it from this request,
-        # which already includes the X-Forwarded-Prefix/Host/Proto of a reverse proxy (USE_X_SETTINGS)
-        base_url = (app_settings.get('base_url') or os.getenv('BASE_URL') or '').strip()
-        mcp_url = base_url.rstrip('/') + '/mcp/v1' if base_url else url_for('mcp.endpoint', _external=True)
+        # The same address OAuth uses: the "Public MCP address" setting, otherwise built from this request, which
+        # already includes the X-Forwarded-Prefix/Host/Proto of a reverse proxy (USE_X_SETTINGS)
+        from changedetectionio.blueprint.mcp.oauth import resource
+        mcp_url = resource(datastore)
     from changedetectionio.blueprint.mcp import INSTRUCTIONS
     return dict(
         mcp_disabled=mcp_disabled,
         mcp_url=mcp_url,
+        # What the address is when the setting is empty, shown as its placeholder
+        mcp_request_address=request.url_root.rstrip('/'),
         mcp_builtin_note=INSTRUCTIONS,
         token_form=mcp_token_form(datastore),
         **mcp_tokens_context(datastore),
@@ -210,13 +212,18 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         app_settings = datastore.data['settings']['application']
         form = forms.globalMCPSettingsPageForm(formdata=request.form if request.method == 'POST' else None,
                                                data={'enabled': bool(app_settings.get('mcp_enabled')),
-                                                     'note': app_settings.get('mcp_note') or ''})
+                                                     'note': app_settings.get('mcp_note') or '',
+                                                     'public_url': app_settings.get('mcp_base_url') or ''})
         if request.method == 'POST' and form.validate():
             was_enabled = bool(app_settings.get('mcp_enabled'))
             enabled = bool(form.enabled.data)
             app_settings['mcp_enabled'] = enabled
             # Line endings as the browser sends them (\r\n) would reach the assistant as they are
             app_settings['mcp_note'] = (form.note.data or '').replace('\r\n', '\n').strip()
+            # The OAuth issuer: grants are bound to {address}/mcp/v1, so a new address signs every connection out
+            public_url = forms.normalise_mcp_public_url(form.public_url.data)
+            address_changed = public_url != (app_settings.get('mcp_base_url') or '')
+            app_settings['mcp_base_url'] = public_url
             if enabled == was_enabled:
                 message = gettext("MCP settings saved.")
             elif enabled:
@@ -225,6 +232,8 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 message = gettext("MCP server switched off.")
             datastore.commit()
             flash(message, 'notice')
+            if address_changed and (app_settings.get('mcp_oauth') or {}).get('grants'):
+                flash(gettext("The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."), 'notice')
             return redirect(url_for('settings.llm.mcp_settings_page'))
         return render_template("llm-settings.html", form=form, active_tab='mcp', plugin_tabs=get_plugin_settings_tabs(),
                                **mcp_template_context(datastore))

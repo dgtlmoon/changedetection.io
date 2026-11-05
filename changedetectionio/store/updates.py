@@ -871,4 +871,16 @@ class DatastoreUpdatesMixin:
             restock.pop('prev_price', None)
             watch.commit()
 
-
+    def update_34(self):
+        """MCP sign-in (OAuth) took its issuer from the notification Base URL (settings.application.base_url, else
+        the BASE_URL env var) in 0.70.1. It has its own setting now, mcp_base_url ("Public MCP address", MCP Server > Settings), and the
+        notification one only does notifications. Grants are bound to {issuer}/mcp/v1, so when existing sign-ins were
+        made through the Base URL, carry it over once to keep them connected. Nothing else ties the two together."""
+        application = self.data['settings']['application']
+        base = (application.get('base_url') or os.getenv('BASE_URL') or '').strip().rstrip('/')
+        grants = (application.get('mcp_oauth') or {}).get('grants') or {}
+        if application.get('mcp_base_url') or not base:
+            return
+        if any(isinstance(g, dict) and g.get('resource') == base + '/mcp/v1' for g in grants.values()):
+            application['mcp_base_url'] = base
+            logger.info(f"update_34: kept existing MCP sign-ins working, Public MCP address set to {base}")

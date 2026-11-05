@@ -51,14 +51,14 @@ def test_discovery(client, live_server, measure_memory_usage, datastore_path):
     # at the host root and never reaches the instance, and this is where clients look next
     assert client.get('/.well-known/openid-configuration').json == meta
 
-    # Behind a proxy, the Base URL setting is the address clients see
-    settings['base_url'] = 'https://cd.example.com/instance/'
+    # Behind a proxy, the Public MCP address setting is the address clients see
+    settings['mcp_base_url'] = 'https://cd.example.com/instance/'
     try:
         meta = client.get('/.well-known/oauth-authorization-server').json
         assert meta['issuer'] == 'https://cd.example.com/instance'
         assert 'https://cd.example.com/instance/.well-known/oauth-protected-resource/mcp/v1' in _ping(client).headers['WWW-Authenticate']
     finally:
-        settings['base_url'] = ''
+        settings['mcp_base_url'] = ''
 
 
 def test_only_offered_with_mcp_on_and_a_password(client, live_server, measure_memory_usage, datastore_path):
@@ -153,11 +153,11 @@ def logged_in(client):
     from changedetectionio.blueprint.mcp import oauth
     settings = client.application.config['DATASTORE'].data['settings']['application']
     oauth._register_log.clear()
-    settings['base_url'] = BASE
+    settings['mcp_base_url'] = BASE
     client.application.config['LOGIN_DISABLED'] = True
     yield
     client.application.config['LOGIN_DISABLED'] = False
-    settings['base_url'] = ''
+    settings['mcp_base_url'] = ''
     settings.pop('mcp_oauth', None)
 
 
@@ -257,11 +257,11 @@ def test_sign_in_refused(client, live_server, measure_memory_usage, datastore_pa
 
     # https only: plain http (other than localhost) is refused, with what to do about it
     settings = client.application.config['DATASTORE'].data['settings']['application']
-    settings['base_url'] = 'http://cd.example.com'
+    settings['mcp_base_url'] = 'http://cd.example.com'
     res = client.get(_authorize_url(client_id, challenge, 'http://cd.example.com/mcp/v1'))
     assert res.status_code == 400 and 'Sign-in needs https' in res.get_data(as_text=True)
     assert client.post('/oauth/token', data={'grant_type': 'refresh_token'}).status_code == 400
-    settings['base_url'] = BASE
+    settings['mcp_base_url'] = BASE
 
     # Behind the login: logged out, the consent screen sends you to /login first
     client.application.config['LOGIN_DISABLED'] = False
