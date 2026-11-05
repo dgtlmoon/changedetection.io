@@ -1138,6 +1138,10 @@ msgstr "Connetti: %(method)s"
 msgid "Token"
 msgstr ""
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "Impostazioni"
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1424,6 +1428,34 @@ msgstr "Revocare questo accesso?"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "L'assistente viene disconnesso subito, può accedere di nuovo."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr ""
+"Ciò che viene detto a ogni assistente quando si connette: a cosa serve questo server e come usarne gli strumenti. "
+"Lasciare vuoto per usare la nota integrata, mostrata in grigio."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "Sostituire il contenuto della nota MCP con la nota integrata?"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "Sostituisci la nota MCP esistente"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr ""
+"Copia la nota integrata nel campo, così puoi modificarla. Ad esempio, su una demo, indica come registrarsi o dove "
+"scaricarlo."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr "Ai token di sola lettura e ai token limitati ad alcuni gruppi viene sempre detto dopo questa nota."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "Edit access token"
@@ -4273,6 +4305,10 @@ msgstr ""
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "Attiva gli endpoint MCP e OAuth"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "Nota MCP"
+
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
 msgstr "es. Claude Code, portatile"
@@ -5822,10 +5858,6 @@ msgstr ""
 
 #: changedetectionio/templates/menu.html
 msgid "Log out"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "Settings"
 msgstr ""
 
 #: changedetectionio/templates/menu.html

@@ -96,9 +96,11 @@ def mcp_template_context(datastore):
         # which already includes the X-Forwarded-Prefix/Host/Proto of a reverse proxy (USE_X_SETTINGS)
         base_url = (app_settings.get('base_url') or os.getenv('BASE_URL') or '').strip()
         mcp_url = base_url.rstrip('/') + '/mcp/v1' if base_url else url_for('mcp.endpoint', _external=True)
+    from changedetectionio.blueprint.mcp import INSTRUCTIONS
     return dict(
         mcp_disabled=mcp_disabled,
         mcp_url=mcp_url,
+        mcp_builtin_note=INSTRUCTIONS,
         token_form=mcp_token_form(datastore),
         **mcp_tokens_context(datastore),
         **mcp_oauth_context(datastore),
@@ -207,11 +209,14 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             abort(404)
         app_settings = datastore.data['settings']['application']
         form = forms.globalMCPSettingsPageForm(formdata=request.form if request.method == 'POST' else None,
-                                               data={'enabled': bool(app_settings.get('mcp_enabled'))})
+                                               data={'enabled': bool(app_settings.get('mcp_enabled')),
+                                                     'note': app_settings.get('mcp_note') or ''})
         if request.method == 'POST' and form.validate():
             was_enabled = bool(app_settings.get('mcp_enabled'))
             enabled = bool(form.enabled.data)
             app_settings['mcp_enabled'] = enabled
+            # Line endings as the browser sends them (\r\n) would reach the assistant as they are
+            app_settings['mcp_note'] = (form.note.data or '').replace('\r\n', '\n').strip()
             if enabled == was_enabled:
                 message = gettext("MCP settings saved.")
             elif enabled:
