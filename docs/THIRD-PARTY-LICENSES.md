@@ -28,8 +28,8 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/bs4/) | 4.15.0 | MIT License |
 | [bidict](https://github.com/jab/bidict) | 0.24.1 | MPL-2.0 |
 | [blinker](https://github.com/pallets-eco/blinker/) | 1.9.0 | MIT License |
-| [boto3](https://github.com/boto/boto3) | 1.43.124 | Apache-2.0 |
-| [botocore](https://github.com/boto/botocore) | 1.43.124 | Apache-2.0 |
+| [boto3](https://github.com/boto/boto3) | 1.43.125 | Apache-2.0 |
+| [botocore](https://github.com/boto/botocore) | 1.43.125 | Apache-2.0 |
 | [brotli](https://github.com/google/brotli) | 1.2.1 | MIT |
 | [certifi](https://github.com/certifi/python-certifi) | 2026.10.23 | Mozilla Public License 2.0 (MPL 2.0) |
 | [cffi](https://cffi.readthedocs.io/en/latest/whatsnew.html) | 2.1.1 | MIT-0 |
@@ -95,7 +95,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [loguru](https://github.com/Delgan/loguru) | 0.7.3 | MIT License |
 | [lxml](https://lxml.de/) | 6.1.3 | BSD-3-Clause |
 | [lxml_html_clean](https://github.com/fedora-python/lxml_html_clean/) | 0.4.6 | BSD-3-Clause |
-| [Markdown](https://Python-Markdown.github.io/) | 3.11.2 | BSD-3-Clause |
+| [Markdown](https://Python-Markdown.github.io/) | 3.11.3 | BSD-3-Clause |
 | [MarkupSafe](https://github.com/pallets/markupsafe/) | 3.0.4 | BSD-3-Clause |
 | [mcp-types](https://modelcontextprotocol.io) | 2.3.0 | MIT License |
 | mf2py | 2.0.2 | MIT License |
