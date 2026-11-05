@@ -7,9 +7,15 @@ from loguru import logger
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.auth_decorator import login_optionally_required
 
+# Checkboxes llm-settings_llm.html shows only in some states. An unticked checkbox posts nothing, and WTForms reads
+# a missing one as False, so a save from a page that didn't show the checkbox would switch its setting off
+SHOWN_ONLY_WITH_A_MODEL = ('override_diff_with_summary', 'restock_use_fallback_extract')
+SHOWN_ONLY_WITHOUT_ENV_CONFIG = ('local_thinking_off', 'debug')
+
 
 def save_llm_form(datastore, llm_form_data):
     """Merge the submitted AI / LLM form over the stored settings (settings.application.llm)."""
+    from changedetectionio.llm.evaluator import get_llm_config, llm_configured_via_env
     from changedetectionio.model.LLMSettings import LLMSettings
 
     # LLM config lives under settings.application.llm.* (post update_31).
@@ -27,6 +33,16 @@ def save_llm_form(datastore, llm_form_data):
     # them through would fail validation. Treat None like the
     # absent-key case: keep the stored value, don't merge.
     llm_form_input = {k: v for k, v in llm_form_input.items() if v is not None}
+
+    # Checkboxes the page didn't show keep their stored value. The page was drawn from the settings as stored, so
+    # check the same conditions against those (e.g. no model yet after "Remove provider", then a new one is saved)
+    not_shown = []
+    if not (get_llm_config(datastore) or {}).get('model'):
+        not_shown += SHOWN_ONLY_WITH_A_MODEL
+    if llm_configured_via_env():
+        not_shown += SHOWN_ONLY_WITHOUT_ENV_CONFIG
+    for name in not_shown:
+        llm_form_input.pop(name, None)
 
     # PasswordField never re-renders, so a blank submitted value means
     # "keep stored key" — drop it from the merge.
