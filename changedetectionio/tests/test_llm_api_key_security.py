@@ -487,6 +487,8 @@ def test_provider_and_key_are_editable_when_nothing_is_stored(
     script = (APP_BASE / 'static' / 'js' / 'global-settings.js').read_bytes()
     assert b'data-unlock-on-interact' in script and b"removeAttr('readonly')" in script, \
         "a readonly field that nothing unlocks is just a broken field"
+    assert b'global-settings.js' in page, \
+        "the AI settings page must load the script that unlocks the field, or the key can't be typed in"
 
 
 # ---------------------------------------------------------------------------
