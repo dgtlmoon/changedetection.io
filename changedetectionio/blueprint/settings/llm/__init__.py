@@ -119,9 +119,22 @@ def anonymous_calls_per_minute():
 
 
 def mcp_token_form(datastore, formdata=None):
-    """The add / edit token form, its group checkboxes being the tags that exist now."""
+    """The add / edit token form, its group checkboxes being the tags that exist now, plus a perm_<row> field for each
+    permission row a plugin added (register_mcp_permission_rows), listed in form.plugin_rows for the grid."""
+    from flask_babel import lazy_gettext as _l
+    from wtforms import RadioField
     from changedetectionio import forms
-    form = forms.MCPTokenForm(formdata=formdata)
+    from changedetectionio.blueprint.mcp.tools import plugin_permission_rows
+    rows = plugin_permission_rows()
+    form_class = forms.MCPTokenForm
+    if rows:
+        level_labels = {'none': _l('None'), 'read': _l('Read'), 'write': _l('Write')}
+        form_class = type('MCPTokenFormWithPluginRows', (forms.MCPTokenForm,), {
+            f'perm_{name}': RadioField(row['label'], default='none',
+                                       choices=[(level, level_labels[level]) for level in row['levels']])
+            for name, row in rows.items()})
+    form = form_class(formdata=formdata)
+    form.plugin_rows = [(form[f'perm_{name}'], row['description']) for name, row in rows.items()]
     tags = datastore.data['settings']['application'].get('tags') or {}
     form.tags.choices = sorted(((uuid, t.get('title') or uuid) for uuid, t in tags.items()), key=lambda c: c[1].lower())
     return form
@@ -144,7 +157,7 @@ def mcp_oauth_context(datastore):
 
 def mcp_tokens_context(datastore):
     """What the access token list (_mcp-tokens.html) needs, also rendered on its own after every ajax change."""
-    from changedetectionio.blueprint.mcp.tools import permissions
+    from changedetectionio.blueprint.mcp.tools import permissions, plugin_permission_rows
     tokens = datastore.data['settings']['application'].get('mcp_tokens') or {}
     all_tags = datastore.data['settings']['application'].get('tags') or {}
     listed = [dict(token, id=token_id, levels=permissions(token.get('permissions')),
@@ -152,7 +165,8 @@ def mcp_tokens_context(datastore):
                    group_names=[all_tags[t].get('title') for t in token.get('tags') or [] if t in all_tags])
               for token_id, token in tokens.items()]
     listed.sort(key=lambda t: t.get('created') or 0)
-    return dict(mcp_tokens=listed, mcp_enabled=bool(datastore.data['settings']['application'].get('mcp_enabled')))
+    return dict(mcp_tokens=listed, mcp_enabled=bool(datastore.data['settings']['application'].get('mcp_enabled')),
+                mcp_plugin_area_labels={name: row['label'] for name, row in plugin_permission_rows().items()})
 
 
 # Sent as the API key when the connection test goes to an address that isn't the saved one and no key is saved:
@@ -274,8 +288,8 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
         return jsonify({'errors': {name: [str(e) for e in errors] for name, errors in form.errors.items()}}), 400
 
     def mcp_token_permissions(form):
-        from changedetectionio.blueprint.mcp.tools import PERMISSION_DEFAULTS
-        return {area: form[f'perm_{area}'].data for area in PERMISSION_DEFAULTS}
+        from changedetectionio.blueprint.mcp.tools import permission_defaults
+        return {area: form[f'perm_{area}'].data for area in permission_defaults()}
 
     @llm_blueprint.route("/mcp/tokens", methods=['GET'])
     @login_optionally_required
