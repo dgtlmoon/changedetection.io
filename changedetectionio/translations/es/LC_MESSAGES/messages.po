@@ -5414,7 +5414,9 @@ msgstr "Lectura: listarlas (secretos ocultos) y consultar servicios. Escritura: 
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
-msgstr "Los pasos del navegador y JavaScript se ejecutan en el navegador que obtiene las páginas. Escritura: configurarlos en los monitores."
+msgstr ""
+"Los pasos del navegador y JavaScript se ejecutan en el navegador que obtiene las páginas. Escritura: configurarlos en"
+" los monitores."
 
 #: changedetectionio/templates/_mcp-permissions-grid.html
 msgid "Health, the check queue and what is being checked right now."
