@@ -1136,6 +1136,10 @@ msgstr "接続：%(method)s"
 msgid "Token"
 msgstr "トークン"
 
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "設定"
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -5848,10 +5852,6 @@ msgstr "アラートオン"
 #: changedetectionio/templates/menu.html
 msgid "Log out"
 msgstr "ログアウト"
-
-#: changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "設定"
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"

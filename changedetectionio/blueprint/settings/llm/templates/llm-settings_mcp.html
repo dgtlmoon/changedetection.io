@@ -35,7 +35,7 @@
       {'id': 'tokens', 'label': _('Access tokens'), 'icon': 'key'},
       {'id': 'connect', 'label': _('Connect: %(method)s', method=_('Token')), 'icon': 'link'},
       {'id': 'oauth', 'label': _('Connect: %(method)s', method='OAuth'), 'icon': 'log-in'},
-      {'id': 'note', 'label': _('MCP Note'), 'icon': 'message-square'},
+      {'id': 'settings', 'label': _('Settings'), 'icon': 'sliders'},
   ]) %}
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}
@@ -235,8 +235,8 @@
   </div>
   {% endcall %}
 
-  {# ── MCP Note ──────────────────────────────────────────────────────────── #}
-  {% call stab_pane('note') %}
+  {# ── Settings (the MCP Note, more to come) ─────────────────────────────── #}
+  {% call stab_pane('settings') %}
   <p class="stab-section-title">{{ _('MCP Note') }}</p>
   <p class="mcp-hint">{{ _('What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to use the built-in note, shown in grey.') }}</p>
   <div class="pure-control-group">
