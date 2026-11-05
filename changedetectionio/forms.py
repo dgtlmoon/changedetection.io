@@ -1402,6 +1402,8 @@ class globalMCPSettingsPageForm(Form):
     access tokens have their own form, MCPTokenForm."""
     # Also the switch for the OAuth endpoints once they exist (MCP-config.md, point 3)
     enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
+    # Empty for the built-in note (blueprint/mcp INSTRUCTIONS, shown as the placeholder), stored as mcp_note
+    note = TextAreaField(_l('MCP Note'), validators=[validators.Optional(), validators.Length(max=4000)])
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 

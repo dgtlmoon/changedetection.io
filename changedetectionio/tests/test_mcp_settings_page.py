@@ -327,3 +327,45 @@ def test_ai_settings_csrf(client, live_server, measure_memory_usage, datastore_p
     finally:
         app.config['WTF_CSRF_ENABLED'] = False
         settings.pop('mcp_tokens', None)
+
+
+def _initialize(client, token):
+    res = client.post('/mcp/v1', data=json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
+                                                  'params': {'protocolVersion': '2025-06-18', 'capabilities': {},
+                                                             'clientInfo': {'name': 'test', 'version': '1'}}}),
+                      content_type='application/json', headers={'Authorization': f'Bearer {token}'})
+    return res.json['result']['instructions']
+
+
+def test_mcp_note(client, live_server, measure_memory_usage, datastore_path):
+    """The MCP Note sub-tab: the built-in note is the placeholder, a saved note replaces it on initialize, and the
+    read-only sentence is still added after it."""
+    from markupsafe import escape
+    from changedetectionio.blueprint.mcp import INSTRUCTIONS, READ_ONLY_INSTRUCTIONS
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    settings.pop('mcp_note', None)
+    token = new_mcp_token(client)
+    page = url_for('settings.llm.mcp_settings_page')
+
+    html = client.get(page).get_data(as_text=True)
+    assert f'placeholder="{escape(INSTRUCTIONS)}"' in html
+    assert 'data-mcp-note-copy="note"' in html and 'Replace existing MCP Note' in html and 'mcp-note.js' in html
+    assert _initialize(client, token) == INSTRUCTIONS
+
+    note = "This is the changedetection.io demo.\r\nTo watch your own pages, sign up at https://changedetection.io"
+    res = client.post(page, data={'enabled': 'y', 'note': note}, follow_redirects=True)
+    assert res.status_code == 200
+    assert settings['mcp_note'] == note.replace('\r\n', '\n')
+    assert _initialize(client, token) == note.replace('\r\n', '\n')
+    # (new_mcp_token's tags= is the groups it's limited to, not the Tags row)
+    from changedetectionio.blueprint.mcp.tokens import add_token
+    readonly = add_token(settings, 'ro', {'monitors': 'read', 'tags': 'read', 'notifications': 'read', 'system': 'read'}, None)[1]
+    assert _initialize(client, readonly) == note.replace('\r\n', '\n') + READ_ONLY_INSTRUCTIONS
+
+    # Too long is refused and not saved
+    res = client.post(page, data={'enabled': 'y', 'note': 'x' * 4001})
+    assert settings['mcp_note'] == note.replace('\r\n', '\n')
+
+    # Emptied: the built-in note again
+    client.post(page, data={'enabled': 'y', 'note': '  '}, follow_redirects=True)
+    assert settings['mcp_note'] == '' and _initialize(client, token) == INSTRUCTIONS
