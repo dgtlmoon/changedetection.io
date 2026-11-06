@@ -2029,7 +2029,7 @@ msgstr "タグ名"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag-extra-form.html
 msgid "Used for watches in \"Restock & Price detection\" mode"
-msgstr ""
+msgstr "「再入荷＆価格検知」モードのウォッチで使用されます"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
@@ -4840,30 +4840,37 @@ msgstr "グラフを描くにはまだ価格データが足りません。監視
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Note! A Group tag overrides the restock and price detection here."
-msgstr ""
+msgstr "注意！グループタグがここでの再入荷・価格検知を上書きします。"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Changes in price should trigger a notification"
-msgstr ""
+msgstr "価格が変化したら通知をトリガーします"
 
+# 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value."
-msgstr ""
+msgstr "最小金額：価格がこの値を<strong>下回った</strong>ときに変更/通知をトリガーします。"
 
+# 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value."
-msgstr ""
+msgstr "最大金額：価格がこの値を<strong>上回った</strong>ときに変更/通知をトリガーします。"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 #, python-format
 msgid "Price must change more than this % since the previous check to trigger a change."
 msgstr ""
 
+# 訳注: 原文はUSD建ての例だが、日本向けに円建て（10万円→2,000円）に置き換え、2%の関係を保っている。
+#. Amounts are illustrative. You may localise the currency and adjust both figures, as long as the 2% relationship is
+#. preserved.
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid ""
 "For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change "
 "more than $20 since then."
-msgstr ""
+msgstr "例えば、前回のチェックで商品価格が10万円だった場合、<strong>2%</strong> はそれ以降 2,000円 を超えて変化する必要があることを意味します。"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "This tool will extract text data from all of the watch history."
@@ -5617,6 +5624,7 @@ msgstr ""
 msgid "From group '%(name)s': %(value)s"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes."
 msgstr ""
@@ -5629,6 +5637,7 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Only notify if the price drops below $200, or a limited-time deal is added"
 msgstr ""
