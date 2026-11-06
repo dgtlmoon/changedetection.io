@@ -9,6 +9,7 @@ import difflib
 from typing import List, Iterator, Union
 from loguru import logger
 import diff_match_patch as dmp_module
+from rapidfuzz.distance.Indel import normalized_similarity
 import re
 import time
 
@@ -44,6 +45,16 @@ CHANGED_INTO_PLACEMARKER_CLOSED = '@changed_into_PLACEMARKER_CLOSED'
 
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
+
+# Word-diffing a same-size replaced block costs one diff_main() call per line, and that call's cost
+# grows with the line's length, so the budget is counted in characters (both sides of every paired
+# line) across the whole document. A block that would go past it keeps the whole-block view, which
+# keeps the worst case bounded however many or however long the lines are. ~200k characters is about
+# 1,000 table rows or 10 lines of 10k characters. Single replaced lines don't count against it.
+WORD_DIFF_MAX_PAIRED_CHARS = 200_000
+# A paired line is only word-diffed when it still resembles the line it replaced; otherwise
+# (e.g. a row inserted at the top and another dropped at the bottom) the lines are unrelated.
+WORD_DIFF_MIN_LINE_SIMILARITY = 0.5
 
 # Regexes built from the constants above — no brittle hardcoded strings
 _EXTRACT_REMOVED_RE = re.compile(
@@ -306,6 +317,13 @@ def same_slicer(lst: List[str], start: int, end: int) -> List[str]:
     """Return a slice of the list, or a single element if start == end."""
     return lst[start:end] if start != end else [lst[start]]
 
+def _line_level_replace(before_lines: List[str], after_lines: List[str], include_change_type_prefix: bool) -> List[str]:
+    """Render replaced lines as the whole old lines followed by the whole new lines."""
+    if include_change_type_prefix:
+        return [f'{CHANGED_PLACEMARKER_OPEN}{line}{CHANGED_PLACEMARKER_CLOSED}' for line in before_lines] + \
+               [f'{CHANGED_INTO_PLACEMARKER_OPEN}{line}{CHANGED_INTO_PLACEMARKER_CLOSED}' for line in after_lines]
+    return before_lines + after_lines
+
 def customSequenceMatcher(
     before: List[str],
     after: List[str],
@@ -380,6 +398,8 @@ def customSequenceMatcher(
                         for line_num in range(next_alo, context_end):
                             included_equal_ranges.add(line_num)
 
+    paired_chars_budget = WORD_DIFF_MAX_PAIRED_CHARS
+
     # Remember! gmail, outlook etc dont support <style> must be inline.
     # Gmail: strips <ins> and <del> tags entirely.
     for tag, alo, ahi, blo, bhi in cruncher.get_opcodes():
@@ -400,21 +420,41 @@ def customSequenceMatcher(
             before_lines = same_slicer(before, alo, ahi)
             after_lines = same_slicer(after, blo, bhi)
 
-            # Use inline word-level diff for single line replacements when word_diff is enabled
-            if word_diff and len(before_lines) == 1 and len(after_lines) == 1:
-                inline_diff, has_changes = render_inline_word_diff(before_lines[0], after_lines[0], ignore_junk=ignore_junk, tokenizer=tokenizer, include_change_type_prefix=include_change_type_prefix)
-                # Check if there are any actual changes (not just whitespace when ignore_junk is enabled)
-                if ignore_junk and not has_changes:
-                    # No real changes, skip this line
-                    continue
-                yield [inline_diff]
+            # With word_diff, a block with the same number of lines on both sides (one changed line, or
+            # e.g. a ranked table where every row moved) is paired up in order and word-diffed line by line
+            block_chars = sum(map(len, before_lines)) + sum(map(len, after_lines)) if len(before_lines) > 1 else 0
+            if word_diff and len(before_lines) == len(after_lines) and block_chars <= paired_chars_budget:
+                paired_chars_budget -= block_chars
+                paired = []
+                # Consecutive pairs that don't resemble each other, kept in the old-lines-then-new-lines view
+                unrelated_before = []
+                unrelated_after = []
+                for before_line, after_line in zip(before_lines, after_lines):
+                    compare_before_line = prepare_line(before_line)
+                    compare_after_line = prepare_line(after_line)
+                    # A single replaced line is always word-diffed, as before
+                    if (len(before_lines) > 1 and compare_before_line != compare_after_line
+                            and normalized_similarity(compare_before_line, compare_after_line) < WORD_DIFF_MIN_LINE_SIMILARITY):
+                        unrelated_before.append(before_line)
+                        unrelated_after.append(after_line)
+                        continue
+                    paired.extend(_line_level_replace(unrelated_before, unrelated_after, include_change_type_prefix))
+                    unrelated_before, unrelated_after = [], []
+                    # The matcher can leave identical lines (often blank ones) inside a replace block
+                    if compare_before_line == compare_after_line:
+                        paired.append(after_line)
+                        continue
+                    inline_diff, has_changes = render_inline_word_diff(before_line, after_line, ignore_junk=ignore_junk, tokenizer=tokenizer, include_change_type_prefix=include_change_type_prefix)
+                    # Skip pairs with no real changes (only whitespace when ignore_junk is enabled)
+                    if ignore_junk and not has_changes:
+                        continue
+                    paired.append(inline_diff)
+                paired.extend(_line_level_replace(unrelated_before, unrelated_after, include_change_type_prefix))
+                if paired:
+                    yield paired
             else:
                 # Fall back to line-level diff for multi-line changes
-                if include_change_type_prefix:
-                    yield [f'{CHANGED_PLACEMARKER_OPEN}{line}{CHANGED_PLACEMARKER_CLOSED}' for line in before_lines] + \
-                          [f'{CHANGED_INTO_PLACEMARKER_OPEN}{line}{CHANGED_INTO_PLACEMARKER_CLOSED}' for line in after_lines]
-                else:
-                    yield before_lines + after_lines
+                yield _line_level_replace(before_lines, after_lines, include_change_type_prefix)
         elif include_added and tag == 'insert':
             if include_change_type_prefix:
                 yield [f'{ADDED_PLACEMARKER_OPEN}{line}{ADDED_PLACEMARKER_CLOSED}' for line in same_slicer(after, blo, bhi)]
