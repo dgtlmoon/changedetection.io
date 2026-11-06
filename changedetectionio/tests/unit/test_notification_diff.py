@@ -505,32 +505,49 @@ Line 3 with tabs and spaces"""
         self.assertNotIn(CHANGED_PLACEMARKER_OPEN, raw)
         self.assertTrue(raw.startswith(f'1 {REMOVED_PLACEMARKER_OPEN}Mango{REMOVED_PLACEMARKER_CLOSED}{ADDED_PLACEMARKER_OPEN}Banana{ADDED_PLACEMARKER_CLOSED}'))
 
-    def test_word_diff_multiline_replace_over_cap_falls_back(self):
-        """Blocks larger than WORD_DIFF_MAX_PAIRED_LINES keep the whole-block view, so a page
-        where thousands of lines change doesn't cost thousands of diff_main() calls."""
-        cap = diff.WORD_DIFF_MAX_PAIRED_LINES
-        at_cap = diff.render_diff("\n".join(f"item {i} old" for i in range(cap)),
-                                  "\n".join(f"item {i} new" for i in range(cap)), word_diff=True)
-        self.assertNotIn(CHANGED_PLACEMARKER_OPEN, at_cap)
-        self.assertEqual(len(at_cap.split("\n")), cap)
+    @staticmethod
+    def _rows(prefix, count, suffix, width=100):
+        """`count` lines of exactly `width` characters, e.g. 'item 000007 old xxxx...'"""
+        return [f"{prefix} {i:06d} {suffix} ".ljust(width, "x") for i in range(count)]
 
-        over_cap = diff.render_diff("\n".join(f"item {i} old" for i in range(cap + 1)),
-                                    "\n".join(f"item {i} new" for i in range(cap + 1)), word_diff=True)
+    def test_word_diff_multiline_replace_over_cap_falls_back(self):
+        """A block whose lines add up to more than WORD_DIFF_MAX_PAIRED_CHARS keeps the whole-block
+        view, so a page where thousands of lines change doesn't cost thousands of diff_main() calls."""
+        rows = diff.WORD_DIFF_MAX_PAIRED_CHARS // 200  # 100 characters on each side of every pair
+        at_cap = diff.render_diff("\n".join(self._rows("item", rows, "old")),
+                                  "\n".join(self._rows("item", rows, "new")), word_diff=True)
+        self.assertNotIn(CHANGED_PLACEMARKER_OPEN, at_cap)
+        self.assertEqual(len(at_cap.split("\n")), rows)
+
+        over_cap = diff.render_diff("\n".join(self._rows("item", rows + 1, "old")),
+                                    "\n".join(self._rows("item", rows + 1, "new")), word_diff=True)
         lines = over_cap.split("\n")
-        self.assertEqual(len(lines), 2 * (cap + 1))
-        self.assertEqual(lines[0], f'{CHANGED_PLACEMARKER_OPEN}item 0 old{CHANGED_PLACEMARKER_CLOSED}')
-        self.assertEqual(lines[cap + 1], f'{CHANGED_INTO_PLACEMARKER_OPEN}item 0 new{CHANGED_INTO_PLACEMARKER_CLOSED}')
+        self.assertEqual(len(lines), 2 * (rows + 1))
+        self.assertEqual(lines[0], f'{CHANGED_PLACEMARKER_OPEN}{self._rows("item", 1, "old")[0]}{CHANGED_PLACEMARKER_CLOSED}')
+        self.assertEqual(lines[rows + 1], f'{CHANGED_INTO_PLACEMARKER_OPEN}{self._rows("item", 1, "new")[0]}{CHANGED_INTO_PLACEMARKER_CLOSED}')
         self.assertNotIn(REMOVED_PLACEMARKER_OPEN, over_cap)
 
-    def test_word_diff_paired_lines_budget_is_per_document(self):
-        """The cap covers the whole document, not each block: once it is used up, later blocks keep
+    def test_word_diff_budget_counts_characters_not_lines(self):
+        """Two very long lines cost far more to word-diff than two table rows, so a short block of
+        long lines can use up the budget on its own and keep the whole-block view."""
+        width = diff.WORD_DIFF_MAX_PAIRED_CHARS // 4 + 1  # two pairs of these are just over budget
+        before = self._rows("para", 2, "old", width)
+        after = self._rows("para", 2, "new", width)
+
+        lines = diff.render_diff("\n".join(before), "\n".join(after), word_diff=True).split("\n")
+
+        self.assertEqual(lines, [f'{CHANGED_PLACEMARKER_OPEN}{line}{CHANGED_PLACEMARKER_CLOSED}' for line in before] +
+                                [f'{CHANGED_INTO_PLACEMARKER_OPEN}{line}{CHANGED_INTO_PLACEMARKER_CLOSED}' for line in after])
+
+    def test_word_diff_paired_budget_is_per_document(self):
+        """The budget covers the whole document, not each block: once it is used up, later blocks keep
         the whole-block view, so many small blocks can't add up to an unbounded number of calls.
         A single replaced line is still word-diffed after the budget is spent."""
-        block = diff.WORD_DIFF_MAX_PAIRED_LINES // 2 + 1
-        before = [f"first {i} old" for i in range(block)] + ["separator one"] + \
-                 [f"second {i} old" for i in range(block)] + ["separator two", "price 10"]
-        after = [f"first {i} new" for i in range(block)] + ["separator one"] + \
-                [f"second {i} new" for i in range(block)] + ["separator two", "price 12"]
+        block = diff.WORD_DIFF_MAX_PAIRED_CHARS // 400 + 1  # each block is just over half the budget
+        before = self._rows("first", block, "old") + ["separator one"] + \
+                 self._rows("second", block, "old") + ["separator two", "price 10"]
+        after = self._rows("first", block, "new") + ["separator one"] + \
+                self._rows("second", block, "new") + ["separator two", "price 12"]
 
         lines = diff.render_diff("\n".join(before), "\n".join(after), word_diff=True).split("\n")
 
@@ -538,8 +555,8 @@ Line 3 with tabs and spaces"""
         self.assertEqual(len(lines), block + 2 * block + 1)
         self.assertNotIn(CHANGED_PLACEMARKER_OPEN, "\n".join(lines[:block]))
         # Second block would exceed what is left, so it is the old rows then the new rows
-        self.assertEqual(lines[block], f'{CHANGED_PLACEMARKER_OPEN}second 0 old{CHANGED_PLACEMARKER_CLOSED}')
-        self.assertEqual(lines[2 * block], f'{CHANGED_INTO_PLACEMARKER_OPEN}second 0 new{CHANGED_INTO_PLACEMARKER_CLOSED}')
+        self.assertEqual(lines[block], f'{CHANGED_PLACEMARKER_OPEN}{before[block + 1]}{CHANGED_PLACEMARKER_CLOSED}')
+        self.assertEqual(lines[2 * block], f'{CHANGED_INTO_PLACEMARKER_OPEN}{after[block + 1]}{CHANGED_INTO_PLACEMARKER_CLOSED}')
         # The trailing one-line change is inline, exactly as it renders on its own
         self.assertEqual(lines[-1], diff.render_diff("price 10", "price 12", word_diff=True))
 

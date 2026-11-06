@@ -46,10 +46,12 @@ CHANGED_INTO_PLACEMARKER_CLOSED = '@changed_into_PLACEMARKER_CLOSED'
 # Compiled regex patterns for performance
 WHITESPACE_NORMALIZE_RE = re.compile(r'\s+')
 
-# Word-diffing a same-size replaced block costs one diff_main() call per line, so at most this
-# many lines are paired per document; blocks past it keep the whole-block view, which keeps the
-# worst case bounded however long the document is. Single replaced lines don't count against it.
-WORD_DIFF_MAX_PAIRED_LINES = 300
+# Word-diffing a same-size replaced block costs one diff_main() call per line, and that call's cost
+# grows with the line's length, so the budget is counted in characters (both sides of every paired
+# line) across the whole document. A block that would go past it keeps the whole-block view, which
+# keeps the worst case bounded however many or however long the lines are. ~200k characters is about
+# 1,000 table rows or 10 lines of 10k characters. Single replaced lines don't count against it.
+WORD_DIFF_MAX_PAIRED_CHARS = 200_000
 # A paired line is only word-diffed when it still resembles the line it replaced; otherwise
 # (e.g. a row inserted at the top and another dropped at the bottom) the lines are unrelated.
 WORD_DIFF_MIN_LINE_SIMILARITY = 0.5
@@ -396,7 +398,7 @@ def customSequenceMatcher(
                         for line_num in range(next_alo, context_end):
                             included_equal_ranges.add(line_num)
 
-    paired_lines_budget = WORD_DIFF_MAX_PAIRED_LINES
+    paired_chars_budget = WORD_DIFF_MAX_PAIRED_CHARS
 
     # Remember! gmail, outlook etc dont support <style> must be inline.
     # Gmail: strips <ins> and <del> tags entirely.
@@ -420,9 +422,9 @@ def customSequenceMatcher(
 
             # With word_diff, a block with the same number of lines on both sides (one changed line, or
             # e.g. a ranked table where every row moved) is paired up in order and word-diffed line by line
-            if word_diff and len(before_lines) == len(after_lines) and (len(before_lines) == 1 or len(before_lines) <= paired_lines_budget):
-                if len(before_lines) > 1:
-                    paired_lines_budget -= len(before_lines)
+            block_chars = sum(map(len, before_lines)) + sum(map(len, after_lines)) if len(before_lines) > 1 else 0
+            if word_diff and len(before_lines) == len(after_lines) and block_chars <= paired_chars_budget:
+                paired_chars_budget -= block_chars
                 paired = []
                 # Consecutive pairs that don't resemble each other, kept in the old-lines-then-new-lines view
                 unrelated_before = []
