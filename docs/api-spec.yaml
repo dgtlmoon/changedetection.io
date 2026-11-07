@@ -386,6 +386,31 @@ components:
           type: [string, 'null']
           description: HTTP request body
           maxLength: 5000
+        oauth2_token_url:
+          type: string
+          description: "OAuth 2.0 token URL. With a client ID, each check first gets an access token with the client credentials grant and sends it as `Authorization: Bearer`, unless `headers` already has an Authorization header."
+          maxLength: 5000
+        oauth2_client_id:
+          type: string
+          description: OAuth 2.0 client ID
+          maxLength: 1000
+        oauth2_client_secret:
+          type: string
+          description: OAuth 2.0 client secret. Write-only; never returned.
+          maxLength: 1000
+          writeOnly: true
+        oauth2_scope:
+          type: string
+          description: Scopes to ask for, separated by spaces (optional)
+          maxLength: 1000
+        oauth2_audience:
+          type: string
+          description: Audience to ask for, for providers that need one, such as Auth0 (optional)
+          maxLength: 1000
+        oauth2_client_auth:
+          type: string
+          enum: [basic, body]
+          description: How the client authenticates to the token URL; `basic` (HTTP Basic, the default) or `body` (client_id and client_secret in the form body)
         proxy:
           type: [string, 'null']
           description: Proxy configuration
