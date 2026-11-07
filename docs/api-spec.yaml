@@ -588,6 +588,10 @@ components:
           type: boolean
           default: true
           description: Send notification when filters fail to match content
+        filter_failure_notification_once:
+          type: boolean
+          default: true
+          description: Queue only one filter-failure notification until a successful filter check; false repeats at the configured failure threshold
 
         # History & Display
         use_page_title_in_list:
@@ -785,6 +789,14 @@ components:
             consecutive_filter_failures:
               type: integer
               description: Counter for consecutive filter match failures
+              readOnly: true
+            consecutive_browser_step_failures:
+              type: integer
+              description: Counter for consecutive browser-step failures, separate from filter match failures
+              readOnly: true
+            filter_failure_notification_sent:
+              type: boolean
+              description: A filter-failure notification was queued during the current incident; resets after a successful filter check
               readOnly: true
             last_notification_error:
               type: [string, 'null']

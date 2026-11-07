@@ -4075,6 +4075,10 @@ msgstr "Proxy"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "Enviar uma notificação quando o filtro não puder mais ser encontrado na página"
 
+#: changedetectionio/forms.py
+msgid "Notify only once until the filter matches again"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "On"
 msgstr "Ligado"

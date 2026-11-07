@@ -92,6 +92,7 @@ class Tag(Resource):
         # These come from watch_base inheritance but currently have no meaningful value for Tags
         watch_only_fields = {
             'browser_steps_last_error_step', 'check_count', 'consecutive_filter_failures',
+            'consecutive_browser_step_failures', 'filter_failure_notification_sent',
             'content-type', 'fetch_time', 'last_changed', 'last_checked', 'last_error',
             'last_notification_error', 'last_viewed', 'notification_alert_count',
             'page_title', 'previous_md5', 'remote_server_reply'

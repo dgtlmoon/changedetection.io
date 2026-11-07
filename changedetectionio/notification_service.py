@@ -476,12 +476,13 @@ class NotificationService:
 
     def send_filter_failure_notification(self, watch_uuid):
         """
-        Send notification when CSS/XPath filters fail consecutively
+        Queue a notification when CSS/XPath filters fail consecutively.
+        Return whether it was queued, not whether a remote service delivered it.
         """
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
         watch = self.datastore.data['watching'].get(watch_uuid)
         if not watch:
-            return
+            return False
 
         filter_list = ", ".join(watch['include_filters'])
         # @todo - This could be a markdown template on the disk, apprise will convert the markdown to HTML+Plaintext parts in the email, and then 'markup_text_links_to_html_links' is not needed
@@ -517,10 +518,15 @@ Thanks - Your omniscient changedetection.io installation.
                 'uuid': watch_uuid,
                 'screenshot': None
             })
-            self.notification_q.put(n_object)
-            logger.debug(f"Sent filter not found notification for {watch_uuid}")
+            # NotificationQueue returns False when globally muted or queueing fails.
+            # Standard queue.Queue.put() returns None on success, and is also supported.
+            if self.notification_q.put(n_object) is False:
+                return False
+            logger.debug(f"Queued filter not found notification for {watch_uuid}")
+            return True
         else:
             logger.debug(f"NOT sending filter not found notification for {watch_uuid} - no notification URLs")
+            return False
 
     def send_step_failure_notification(self, watch_uuid, step_n):
         """

@@ -185,6 +185,7 @@ class watch_base(dict):
             'check_count': 0,
             'check_unique_lines': False,  # On change-detected, compare against all history if its something new
             'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
+            'consecutive_browser_step_failures': 0,
             # LLM intent-based evaluation
             'content-type': None,
             'date_created': None,
@@ -193,6 +194,8 @@ class watch_base(dict):
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
+            'filter_failure_notification_once': True,
+            'filter_failure_notification_sent': False,
             'filter_text_added': True,
             'filter_text_removed': True,
             'filter_text_replaced': True,

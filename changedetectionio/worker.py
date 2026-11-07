@@ -303,24 +303,29 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         e.xpath_data = None  # Free memory immediately
 
                     # Only when enabled, send the notification
+                    failure_update = {'consecutive_browser_step_failures': 0}
                     if watch.get('filter_failure_notification_send', False):
                         c = watch.get('consecutive_filter_failures', 0)
                         c += 1
                         # Send notification if we reached the threshold?
                         threshold = datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
                         logger.debug(f"FilterNotFoundInResponse - Filter for {uuid} not found, consecutive_filter_failures: {c} of threshold {threshold}")
-                        if c >= threshold:
+                        already_notified = watch.get('filter_failure_notification_sent', False)
+                        notify_once = watch.get('filter_failure_notification_once', True)
+                        if c >= threshold and (not notify_once or not already_notified):
                             if not watch.get('notification_muted'):
                                 logger.debug(f"FilterNotFoundInResponse - Sending filter failed notification for {uuid}")
-                                await send_filter_failure_notification(uuid, notification_q, datastore)
-                            c = 0
-                            logger.debug(f"FilterNotFoundInResponse - Reset filter failure count back to zero")
+                                if await send_filter_failure_notification(uuid, notification_q, datastore):
+                                    failure_update['filter_failure_notification_sent'] = True
+                                    c = 0
                         else:
                             logger.debug(f"FilterNotFoundInResponse - {c} of threshold {threshold}..")
 
-                        datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
+                        failure_update['consecutive_filter_failures'] = c
                     else:
                         logger.trace(f"FilterNotFoundInResponse - {uuid} - filter_failure_notification_send not enabled, skipping")
+
+                    datastore.update_watch(uuid=uuid, update_obj=failure_update)
 
                     process_changedetection_results = False
 
@@ -332,7 +337,10 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # Reset the edited flag since we successfully completed the check
                     watch.reset_watch_edited_flag()
                     # Page was fetched successfully - clear any previous error state
-                    datastore.update_watch(uuid=uuid, update_obj={'last_error': False})
+                    # An unchanged raw document does not prove that a missing filter recovered.
+                    # Text and restock processors bypass this shortcut while a filter incident is active.
+                    datastore.update_watch(uuid=uuid, update_obj={'last_error': False,
+                                                                'consecutive_browser_step_failures': 0})
                     cleanup_error_artifacts(uuid, datastore)
                     
                 except content_fetchers_exceptions.BrowserConnectError as e:
@@ -369,17 +377,17 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                    'browser_steps_last_error_step': error_step})
 
                     if watch.get('filter_failure_notification_send', False):
-                        c = watch.get('consecutive_filter_failures', 0)
+                        c = watch.get('consecutive_browser_step_failures', 0)
                         c += 1
                         # Send notification if we reached the threshold?
                         threshold = datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
-                        logger.error(f"Step for {uuid} not found, consecutive_filter_failures: {c}")
+                        logger.error(f"Step for {uuid} not found, consecutive_browser_step_failures: {c}")
                         if threshold > 0 and c >= threshold:
                             if not watch.get('notification_muted'):
                                 await send_step_failure_notification(watch_uuid=uuid, step_n=e.step_n, notification_q=notification_q, datastore=datastore)
                             c = 0
 
-                        datastore.update_watch(uuid=uuid, update_obj={'consecutive_filter_failures': c})
+                        datastore.update_watch(uuid=uuid, update_obj={'consecutive_browser_step_failures': c})
 
                     process_changedetection_results = False
 
@@ -440,6 +448,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     # Any successful check breaks the failure streak, "Ignore status codes" only affects HTTP status handling
                     update_obj['consecutive_filter_failures'] = 0
+                    update_obj['consecutive_browser_step_failures'] = 0
+                    update_obj['filter_failure_notification_sent'] = False
 
                     update_obj['last_error'] = False
                     cleanup_error_artifacts(uuid, datastore)
@@ -831,9 +841,10 @@ async def send_filter_failure_notification(watch_uuid, notification_q, datastore
         # Create notification service instance
         notification_service = create_notification_service(datastore, notification_q)
         
-        notification_service.send_filter_failure_notification(watch_uuid)
+        return notification_service.send_filter_failure_notification(watch_uuid)
     except Exception as e:
         logger.error(f"Error sending filter failure notification for {watch_uuid}: {e}")
+        return False
 
 
 async def send_step_failure_notification(watch_uuid, step_n, notification_q, datastore):

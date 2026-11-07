@@ -1017,6 +1017,7 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
     proxy = RadioField(_l('Proxy'))
     # filter_failure_notification_send @todo make ternary
     filter_failure_notification_send = BooleanField(_l('Send a notification when the filter can no longer be found on the page'), default=False)
+    filter_failure_notification_once = BooleanField(_l('Notify only once until the filter matches again'), default=True)
     notification_muted = TernaryNoneBooleanField(_l('Notifications'), default=None, yes_text=_l("Muted"), no_text=_l("On"))
     notification_screenshot = BooleanField(_l('Attach screenshot to notification (where possible)'), default=False)
 

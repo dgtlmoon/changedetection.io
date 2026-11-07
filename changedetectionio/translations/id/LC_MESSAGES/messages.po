@@ -4138,6 +4138,10 @@ msgstr "Proksi"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "Kirim notifikasi saat filter tidak lagi ditemukan di halaman"
 
+#: changedetectionio/forms.py
+msgid "Notify only once until the filter matches again"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "On"
 msgstr "Aktif"

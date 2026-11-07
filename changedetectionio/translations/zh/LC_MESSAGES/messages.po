@@ -3981,6 +3981,10 @@ msgstr "代理"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "当页面上找不到该过滤器时发送通知"
 
+#: changedetectionio/forms.py
+msgid "Notify only once until the filter matches again"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "On"
 msgstr "开启"

@@ -477,6 +477,10 @@ class perform_site_check(difference_detection_processor):
         # separate checks for trigger_text or other processing rules.
         if (not force_reprocess and
             not watch.was_edited and
+            # The checksum is saved before the user's price filters run. An active
+            # filter incident must be checked again until the selector really matches.
+            not watch.get('consecutive_filter_failures') and
+            not watch.get('filter_failure_notification_sent') and
             self.last_raw_content_checksum and
             not raw_changed):
             logger.debug(f"{watch.get('uuid')} restock - raw document unchanged since last fetch, skipping reprocessing")

@@ -4178,6 +4178,10 @@ msgstr "Serwer proxy"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "Wyślij powiadomienie, gdy filtr nie będzie już widoczny na stronie"
 
+#: changedetectionio/forms.py
+msgid "Notify only once until the filter matches again"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "On"
 msgstr "W dniu"

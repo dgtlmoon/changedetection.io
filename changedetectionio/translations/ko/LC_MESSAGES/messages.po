@@ -3993,6 +3993,10 @@ msgstr "프록시"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "페이지에서 필터를 더 이상 찾을 수 없으면 알림 보내기"
 
+#: changedetectionio/forms.py
+msgid "Notify only once until the filter matches again"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "On"
 msgstr "켜짐"

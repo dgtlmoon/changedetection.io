@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.70.2\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-05 23:54+0100\n"
+"POT-Creation-Date: 2026-11-07 09:21+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3972,6 +3972,10 @@ msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Send a notification when the filter can no longer be found on the page"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Notify only once until the filter matches again"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py

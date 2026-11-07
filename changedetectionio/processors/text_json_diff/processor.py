@@ -520,6 +520,10 @@ class perform_site_check(difference_detection_processor):
         # last_filter_config_hash being False means first run or upgrade: don't skip.
         if (not force_reprocess and
             not watch.was_edited and
+            # The raw checksum is saved before filters run. A previously failing filter
+            # must run again, even on identical HTML, until it actually matches.
+            not watch.get('consecutive_filter_failures') and
+            not watch.get('filter_failure_notification_sent') and
             self.last_raw_content_checksum and
             self.last_raw_content_checksum == current_raw_document_checksum and
             watch.get('last_filter_config_hash') and
