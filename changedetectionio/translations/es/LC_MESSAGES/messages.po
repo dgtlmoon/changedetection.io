@@ -3459,7 +3459,7 @@ msgstr "OK"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear history"
-msgstr ""
+msgstr "Borrar historial"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
@@ -3496,19 +3496,19 @@ msgstr "Reabastecimiento y precio"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page watches configured"
-msgstr ""
+msgstr "No hay monitores de páginas web configurados"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Monitor websites for visual changes, price drops, restocks, or content updates."
-msgstr ""
+msgstr "Supervise sitios web para detectar cambios visuales, bajadas de precio, reposiciones o actualizaciones de contenido."
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add URL above"
-msgstr ""
+msgstr "Añadir URL arriba"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Import a list"
-msgstr ""
+msgstr "Importar una lista"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"

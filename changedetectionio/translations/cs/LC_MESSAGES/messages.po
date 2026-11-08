@@ -3368,7 +3368,7 @@ msgstr "OK"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear history"
-msgstr ""
+msgstr "Vymazat historii"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
@@ -3403,19 +3403,19 @@ msgstr "Doplnění zásob a cena"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page watches configured"
-msgstr ""
+msgstr "Nejsou nastavena žádná sledování webových stránek"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Monitor websites for visual changes, price drops, restocks, or content updates."
-msgstr ""
+msgstr "Sledujte weby kvůli vizuálním změnám, poklesům cen, naskladnění nebo změnám obsahu."
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add URL above"
-msgstr ""
+msgstr "Přidat URL výše"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Import a list"
-msgstr ""
+msgstr "Importovat seznam"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"

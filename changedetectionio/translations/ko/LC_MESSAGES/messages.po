@@ -3340,7 +3340,7 @@ msgstr "확인"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear history"
-msgstr ""
+msgstr "기록 지우기"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
@@ -3375,19 +3375,19 @@ msgstr "재입고 및 가격"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page watches configured"
-msgstr ""
+msgstr "설정된 웹 페이지 모니터가 없습니다"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Monitor websites for visual changes, price drops, restocks, or content updates."
-msgstr ""
+msgstr "웹사이트의 시각적 변경, 가격 인하, 재입고 또는 콘텐츠 업데이트를 모니터링하세요."
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add URL above"
-msgstr ""
+msgstr "위에서 URL 추가"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Import a list"
-msgstr ""
+msgstr "목록 가져오기"
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"
