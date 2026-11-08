@@ -268,7 +268,7 @@ def _is_local_llm_endpoint(llm_cfg: dict) -> bool:
         from urllib.parse import urlparse
         from changedetectionio.validate_url import is_private_hostname
         host = urlparse(api_base).hostname
-        return bool(host) and is_private_hostname(host)
+        return bool(host) and is_private_hostname(host, classify_only=True)
     except Exception:
         # Never let timeout resolution break an LLM call — fall back to "not local".
         return False
