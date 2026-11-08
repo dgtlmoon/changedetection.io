@@ -20,6 +20,9 @@ from urllib.parse import urlsplit
 
 from flask import Blueprint, abort, g, jsonify, render_template, request
 
+# Signing algorithms accepted for private_key_jwt: asymmetric only, the key is the client's public one
+ASSERTION_ALGORITHMS = ['RS256', 'RS384', 'RS512', 'PS256', 'PS384', 'PS512', 'ES256', 'ES384', 'ES512', 'EdDSA']
+
 # The scope every token gets; what it may do is the token's None / Read / Write grid, picked on the consent screen
 SCOPE = 'mcp'
 
@@ -94,7 +97,8 @@ def construct_blueprint(datastore):
     # does (MCP spec, authorization server discovery). No openid scope is offered, so it's no OpenID provider
     @oauth_blueprint.route('/.well-known/openid-configuration', methods=['GET'])
     def authorization_server_metadata():
-        # RFC 8414. Public clients only (CIMD forbids client secrets), authorization code with PKCE S256, refresh tokens
+        # RFC 8414. No client secrets (CIMD forbids them): public clients, or clients signing with their own key
+        # (private_key_jwt, CIMD only). Authorization code with PKCE S256, refresh tokens
         base = issuer(datastore)
         return jsonify({
             'issuer': base,
@@ -105,7 +109,8 @@ def construct_blueprint(datastore):
             'response_types_supported': ['code'],
             'grant_types_supported': ['authorization_code', 'refresh_token'],
             'code_challenge_methods_supported': ['S256'],
-            'token_endpoint_auth_methods_supported': ['none'],
+            'token_endpoint_auth_methods_supported': ['none', 'private_key_jwt'],
+            'token_endpoint_auth_signing_alg_values_supported': ASSERTION_ALGORITHMS,
             # A client_id can be an https URL to the client's own metadata (CIMD), no registration needed
             'client_id_metadata_document_supported': True,
             # RFC 9207, ChatGPT needs it for its stable redirect URI
@@ -186,7 +191,9 @@ def construct_blueprint(datastore):
     @oauth_blueprint.route('/oauth/register', methods=['POST'])
     def register():
         """DCR (RFC 7591), for clients that don't do CIMD yet. Open to anyone, so: small, rate limited, public clients
-        only, and the name it gives is shown as unverified on the consent screen."""
+        only, and the name it gives is shown as unverified on the consent screen. A client asking for another
+        token_endpoint_auth_method gets 'none' in the answer (RFC 7591 3.2.1): signing with a key from a jwks_uri anyone
+        could register would make this server fetch from wherever it's told."""
         from . import store
 
         def refuse(error, description, status=400):
@@ -212,8 +219,6 @@ def construct_blueprint(datastore):
             loopback = parts is not None and parts.scheme == 'http' and parts.hostname in ('localhost', '127.0.0.1', '::1')
             if not parts or parts.fragment or not (parts.scheme == 'https' and parts.hostname or loopback):
                 return refuse('invalid_redirect_uri', f'{uri!r} must be an https URI, or http on localhost')
-        if body.get('token_endpoint_auth_method', 'none') != 'none':
-            return refuse('invalid_client_metadata', "Only public clients (token_endpoint_auth_method 'none')")
         if not set(body.get('grant_types') or ['authorization_code']) <= {'authorization_code', 'refresh_token'}:
             return refuse('invalid_client_metadata', 'Only the authorization_code and refresh_token grant types')
         name = body.get('client_name')
