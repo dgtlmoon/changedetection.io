@@ -3208,10 +3208,6 @@ msgid "Could not load price history."
 msgstr "無法載入價格歷史記錄。"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Web page URL"
-msgstr "網頁 URL"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr "已選取 %(count)s 筆記錄"
@@ -3336,8 +3332,8 @@ msgid "OK"
 msgstr "確定"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear/reset history"
-msgstr "清除 / 重設歷史記錄"
+msgid "Clear history"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
@@ -3370,14 +3366,21 @@ msgstr "網頁"
 msgid "Restock & Price"
 msgstr "補貨與價格"
 
-#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "No web page change detection watches configured, please add a URL in the box above, or"
-msgstr "未設定網站監測任務，請在上方欄位新增 URL，或"
+msgid "No web page watches configured"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "import a list"
-msgstr "匯入列表"
+msgid "Monitor websites for visual changes, price drops, restocks, or content updates."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Add URL above"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Import a list"
+msgstr ""
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"

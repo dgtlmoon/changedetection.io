@@ -3215,10 +3215,6 @@ msgid "Could not load price history."
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Web page URL"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3343,8 +3339,8 @@ msgid "OK"
 msgstr "확인"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear/reset history"
-msgstr "기록 지우기/재설정"
+msgid "Clear history"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
@@ -3377,14 +3373,21 @@ msgstr ""
 msgid "Restock & Price"
 msgstr "재입고 및 가격"
 
-#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "No web page change detection watches configured, please add a URL in the box above, or"
-msgstr "설정된 웹페이지 변경 감지 모니터링이 없습니다. 위 입력란에 URL을 추가하거나"
+msgid "No web page watches configured"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "import a list"
-msgstr "목록 가져오기"
+msgid "Monitor websites for visual changes, price drops, restocks, or content updates."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Add URL above"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Import a list"
+msgstr ""
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"

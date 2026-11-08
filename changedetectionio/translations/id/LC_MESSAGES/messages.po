@@ -3356,10 +3356,6 @@ msgid "Could not load price history."
 msgstr "Tidak dapat memuat riwayat harga."
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Web page URL"
-msgstr "URL halaman web"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr "%(count)s rekaman dipilih"
@@ -3484,8 +3480,8 @@ msgid "OK"
 msgstr "OK"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear/reset history"
-msgstr "Hapus/reset riwayat"
+msgid "Clear history"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Delete Watches?"
@@ -3518,14 +3514,21 @@ msgstr "Halaman web"
 msgid "Restock & Price"
 msgstr "Stok Kembali & Harga"
 
-#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "No web page change detection watches configured, please add a URL in the box above, or"
-msgstr "Belum ada monitor deteksi perubahan halaman web yang dikonfigurasi, silakan tambahkan URL pada kotak di atas, atau"
+msgid "No web page watches configured"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "import a list"
-msgstr "impor daftar"
+msgid "Monitor websites for visual changes, price drops, restocks, or content updates."
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Add URL above"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Import a list"
+msgstr ""
 
 #: changedetectionio/conditions/__init__.py
 msgid "Choose one - Operator"
