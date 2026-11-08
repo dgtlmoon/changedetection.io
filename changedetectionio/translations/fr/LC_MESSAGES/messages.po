@@ -5026,6 +5026,11 @@ msgid "List all"
 msgstr "Tout afficher"
 
 #: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Notifications are use the wonderful <a href=\"%(url)s\" target=\"_blank\">Apprise notification library</a>."
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"
 msgstr "Comment les obtenir ?"
 

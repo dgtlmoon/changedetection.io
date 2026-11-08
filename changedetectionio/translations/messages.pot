@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.70.2\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-05 23:54+0100\n"
+"POT-Creation-Date: 2026-11-08 18:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4949,6 +4949,11 @@ msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "List all"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Notifications are use the wonderful <a href=\"%(url)s\" target=\"_blank\">Apprise notification library</a>."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
