@@ -591,11 +591,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         if html is None:
             abort(404, description=f"Processor '{processor_name}' does not provide this chart")
 
-        # The watch list roll-down stands in for the History page, so opening it counts as viewing
-        # the watch, as the LLM summary roll-down does
-        if request.args.get('context') == 'watchlist':
-            _mark_viewed(uuid)
-
         response = make_response(html)
         response.headers['Content-Type'] = 'text/html; charset=utf-8'
         response.headers['Cache-Control'] = 'no-cache'
