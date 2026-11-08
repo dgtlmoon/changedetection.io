@@ -168,7 +168,7 @@ pydantic>=2.14.2,<3.0
 # (starlette/uvicorn). ~15MB once loaded, so only imported on the first authenticated /mcp request.
 mcp-types>=2.3.0,<3.0
 # For MCP LLM server
-authlib>=1.9.4,<2.0
+authlib>=1.9.5,<2.0
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 
