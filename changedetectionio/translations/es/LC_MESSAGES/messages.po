@@ -5095,7 +5095,7 @@ msgstr "Ver todos"
 
 #: changedetectionio/templates/_common_fields-notification.html
 #, python-format
-msgid "Notifications are use the wonderful <a href=\"%(url)s\" target=\"_blank\">Apprise notification library</a>."
+msgid "Notification services <a href=\"%(url)s\" target=\"_blank\">powered by Apprise</a>."
 msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
