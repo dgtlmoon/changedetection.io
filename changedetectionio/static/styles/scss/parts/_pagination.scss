@@ -1,35 +1,59 @@
+@use "../settings" as *;
+
 .pagination-page-info {
   text-transform: capitalize;
+  font-size: 0.85rem;
+  color: var(--color-text-input-description);
+  margin-bottom: 0.5rem;
 }
 
 .pagination.menu {
-  > * {
-    display: inline-block;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0 0.5rem 0;
 
   li {
-    display: inline-block;
+    display: inline-flex;
   }
 
-  a {
-    padding: 0.65rem;
-    margin: 3px;
-    border: none;
-    background: #444;
-    border-radius: 2px;
-    color: var(--color-text-button);
+  a, span {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--common-round-border);
+    border: 1px solid var(--color-border-table-cell);
+    background: var(--color-background);
+    color: var(--color-text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    transition: all 0.15s ease;
+
     &.disabled {
       display: none;
     }
-    &.active {
-      font-weight: bold;
-      background: #888;
+
+    &:hover:not(.active) {
+      border-color: var(--color-link);
+      color: var(--color-link);
+      background: rgba(27, 152, 248, 0.05);
     }
 
-    &:hover {
-      background: #999;
+    &.active {
+      font-weight: 700;
+      background: var(--color-background-button-primary);
+      border-color: var(--color-background-button-primary);
+      color: var(--color-text-button);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     }
   }
-
-
 }

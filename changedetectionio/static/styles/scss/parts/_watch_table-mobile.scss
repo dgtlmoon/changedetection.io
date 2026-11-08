@@ -113,14 +113,16 @@ $watch-table-mobile-max: 767px;
         &:hover > td {
           background-color: inherit !important;
         }
-        padding-inline: 12px;
-        padding-top: 12px;
-        padding-bottom: 12px;
-        margin-bottom: 1rem;
+        padding: 12px;
+        margin-bottom: 0.85rem;
         display: grid;
         grid-template-columns: $grid-col-checkbox 1fr $grid-col-watch;
         grid-template-rows: auto auto auto auto;
         gap: $grid-gap;
+        border: 1px solid var(--color-table-line);
+        border-radius: var(--common-round-border);
+        background: var(--color-table-background);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 
         .counter-i {
           display: none;

@@ -73,7 +73,7 @@ a,
 body {
   color: var(--color-text);
   background: var(--color-background-page);
-  font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 // Page-level layout primitive: holds the fixed left rail and the main content
@@ -1057,21 +1057,37 @@ ul {
 }
 
 .restock-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+
   &.in-stock {
-    background-color: #7a0cc5;
-    color: #fff;
+    background-color: rgba(16, 185, 129, 0.14);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
   }
   &.not-in-stock {
-    background-color: var(--color-background-button-cancel);
-    color: #777;
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.25);
   }
   &.error {
-    background-color: var(--color-background-button-error);
-    color: #fff;
-    opacity: 0.7;
+    background-color: rgba(202, 60, 60, 0.12);
+    color: var(--color-background-button-error);
+    border: 1px solid rgba(202, 60, 60, 0.3);
   }
   &.price {
-    border: 1px solid var(--color-background-button-cancel);
+    background: var(--color-background-code);
+    color: var(--color-text);
+    border: 1px solid var(--color-border-table-cell);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    margin-left: 4px;
   }
 
   svg {
@@ -1085,17 +1101,36 @@ ul {
 .price-change {
   white-space: nowrap;
   font-weight: 700;
-  font-size: 90%;
+  font-size: 0.74rem;
   margin-left: 4px;
   vertical-align: middle;
+  padding: 2px 6px;
+  border-radius: 4px;
 
   /* Price dropped = good for a shopper = green; price rose = red */
   &.down {
-    color: var(--color-background-button-green);
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
   }
 
   &.up {
-    color: var(--color-background-button-error);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+  }
+}
+
+@include dark-mode {
+  .restock-label.in-stock {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.4);
+  }
+  .restock-label.not-in-stock {
+    background-color: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.4);
   }
 }
 

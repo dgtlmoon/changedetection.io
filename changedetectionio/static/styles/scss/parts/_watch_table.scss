@@ -74,40 +74,83 @@ body.has-queue {
 
 #checkbox-operations {
   background: var(--color-background-checkbox-operations);
-  padding: 1em;
-  border-radius: 10px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-table-cell);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
   max-width: 100%;
   position: sticky;
-  top: 20px;
-  // Hidden until watches are selected; shown via body.watch-selection-active (toggled in
-  // watch-overview.js, replaces the old jQuery slideUp/slideDown).
+  top: 16px;
+  z-index: 50;
   display: none;
-  button {
-    /* some space if they wrap the page */
-    margin-bottom: 3px;
-    margin-top: 3px;
-    /* vertically center icon and text */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+
+  .bulk-ops-group {
     display: inline-flex;
     align-items: center;
-    background: #00125b;
-    font-weight: bold;
+    flex-wrap: wrap;
+    gap: 5px;
   }
-    i,svg {
-    width: 16px;
-    height: 16px;
-    stroke: white;
+
+  .bulk-ops-meta {
+    padding-right: 0.6rem;
+    border-right: 1px solid var(--color-border-table-cell);
+  }
+
+  .bulk-ops-actions {
+    flex: 1 1 auto;
+  }
+
+  .bulk-ops-danger {
+    margin-left: auto;
+    padding-left: 0.6rem;
+    border-left: 1px solid var(--color-border-table-cell);
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+  }
+
+  .bulk-op-cancel {
+    background: transparent;
+    color: var(--color-text);
+    border-color: var(--color-border-table-cell);
+    &:hover {
+      background: rgba(125, 125, 125, 0.12);
+    }
+  }
+
+  .bulk-op-danger {
+    color: var(--color-background-button-error);
+    border-color: rgba(202, 60, 60, 0.3);
+    background: rgba(202, 60, 60, 0.08);
+
+    &:hover {
+      background: var(--color-background-button-error);
+      color: var(--color-white);
+      border-color: var(--color-background-button-error);
+      svg {
+        stroke: var(--color-white);
+      }
+    }
   }
 }
 
 body.watch-selection-active #checkbox-operations {
-  display: block;
+  display: flex;
 }
 
 // Watch-list-specific styling layered on top of the shared .cdio-table base.
 .watch-table {
   td,th {
     padding-block: $common-gap; /* top/bottom*/
-    padding-inline: $common-gap/2; /*side to side */
+    padding-inline: calc($common-gap / 2); /*side to side */
     &:first-child {
       padding-left: 1rem;
     }
@@ -130,7 +173,8 @@ body.watch-selection-active #checkbox-operations {
   }
 
   #th-webpage {
-    text-align: center;
+    text-align: left;
+    padding-left: 0.5rem;
   }
   tbody tr {
     &.unviewed {
@@ -158,7 +202,26 @@ body.watch-selection-active #checkbox-operations {
         align-items: center;
         gap: $common-gap;
 
-        > .favicon        { grid-column: 1; }
+        > .favicon {
+          grid-column: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+          height: 30px;
+          border-radius: 6px;
+          background: rgba(125, 125, 125, 0.08);
+          border: 1px solid var(--color-border-table-cell);
+          flex-shrink: 0;
+          overflow: hidden;
+
+          img.favicon {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            border-radius: 2px;
+          }
+        }
         > .watch-text-info { grid-column: 2; }
         > .status-icons   { grid-column: 3; }
         > .restock-info-wrap { grid-column: 4; }
@@ -177,6 +240,8 @@ body.watch-selection-active #checkbox-operations {
       display: inline-flex;
       align-items: center;
       gap: .25rem;
+      font-weight: 600;
+      color: var(--color-text);
 
       > * {
         display: inline-flex;
@@ -184,13 +249,19 @@ body.watch-selection-active #checkbox-operations {
       }
 
       a.external {
-        width: 18px;
-        height: 18px;
-        margin-bottom: 4px;
+        width: 16px;
+        height: 16px;
+        margin-bottom: 2px;
+        opacity: 0.45;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        &:hover {
+          opacity: 1;
+          transform: translateY(-1px);
+        }
       }
     }
     .watch-tag-list {
-      margin-left: 10px;
+      margin-left: 8px;
     }
 
     .watch-text-info {
@@ -198,19 +269,7 @@ body.watch-selection-active #checkbox-operations {
     }
     /* Row with 'checking-now' */
     &.checking-now {
-      td:first-child {
-        position: relative;
-      }
-
-      td:first-child::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 3px;
-        background-color: #293eff;
-      }
+      background-color: rgba(41, 62, 255, 0.05);
 
       td.last-checked {
         .spinner-wrapper {
@@ -218,7 +277,7 @@ body.watch-selection-active #checkbox-operations {
           white-space: nowrap !important;
         }
         .spinner {
-          margin-right: $common-gap/2;
+          margin-right: calc($common-gap / 2);
         }
 
         .innertext {
@@ -300,19 +359,16 @@ body.watch-selection-active #checkbox-operations {
     &.buttons {
       font-size: 12px;
       white-space: nowrap;
-      // Per-row actions are hidden at rest and revealed on row hover/focus (see
-      // the .watch-table tbody tr:hover rule above). Opacity (not display) keeps
-      // the column width stable so the table doesn't shift on hover.
-
-      // The actions live in a wrapper div — lay them out as an evenly-spaced row.
+      // Per-row actions have subtle rest opacity and brighten fully on hover/focus
+      // Opacity keeps the column width stable so the table doesn't shift on hover.
       > div {
         display: inline-flex;
         align-items: center;
         gap: 6px;
         @media (min-width: 767px) {
           > * {
-            opacity: 0.2;
-            transition: opacity 0.12s ease;
+            opacity: 0.75;
+            transition: opacity 0.15s ease, transform 0.15s ease;
           }
         }
       }
@@ -464,15 +520,30 @@ body.has-any-unviewed #post-list-mark-views {
   display: inline-block; /* so the tabs at the bottom align */
   width: 100%; /* so the table always grows to the tab sizes if theres lots of tabs and full is OK too */
 
-  /* toolbar row: status-filter segmented control + list actions, left-aligned */
+  /* toolbar row: status-filter segmented control + list actions */
   #list-related-buttons {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     flex-wrap: wrap;
     gap: $common-gap;
     margin: 0;
-    padding: $common-gap*2 0 $common-gap 0;
+    padding: $common-gap * 2 0 $common-gap 0;
+
+    .toolbar-filters {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: $common-gap;
+    }
+
+    .toolbar-actions {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: $common-gap;
+      margin-left: auto;
+    }
   }
 
   /* post list dynamically on/off stuff */
@@ -496,13 +567,50 @@ body.has-any-unviewed #post-list-mark-views {
   }
 
   #tag-lister {
-    #tag-all {
-      opacity: 1.0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0.5rem;
+
+    .button-tag {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      line-height: 1.4;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+      }
+
+      &.active {
+        box-shadow: 0 0 0 2px var(--color-link), 0 2px 6px rgba(0, 0, 0, 0.15);
+        font-weight: 700;
+      }
     }
+
+    #tag-all {
+      background: var(--color-background-subtabs);
+      color: var(--color-text);
+      border: 1px solid var(--color-border-table-cell);
+
+      &.active {
+        background: var(--color-background-button-primary);
+        color: var(--color-text-button);
+        border-color: var(--color-background-button-primary);
+      }
+    }
+
     &.active-tag {
-      .button-tag {
-        opacity: 0.35;
-        &.active, &:hover {
+      .button-tag:not(.active) {
+        opacity: 0.65;
+        &:hover {
           opacity: 1;
         }
       }
@@ -535,80 +643,266 @@ body.has-any-unviewed #post-list-mark-views {
 
 
 
-// Watchlist page: quick-add box above the list.
-body.blueprint-watchlist {
-  #add-watch-ui {
-    margin-bottom: $common-gap*2;
-    padding: 0; /* override */
-  }
-  #add-watch-url-row {
-    margin-bottom: 0 !important;
+// Empty watchlist state styling
+.empty-watchlist-row {
+  td {
+    padding: 3.5rem 1.5rem !important;
+    text-align: center;
   }
 
-  #quick-watch-llm-intent {
-    margin-top: $common-gap;
-  }
+  .empty-watchlist-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 480px;
+    margin: 0 auto;
 
-  #quick-watch-processor-type {
-    span.label {
-      display: none;
-    }
-
-    label {
-      font-weight: normal;
-      font-size: .9rem;
-      margin: 0;
-    }
-
-    ul {
-      list-style: none;
-      margin-left: 0;
-      padding-left: 0;
-    }
-
-    li {
-      list-style: none;
-      font-size: .9rem;
-      display: grid;
-      grid-template-columns: auto 1fr;
+    .empty-state-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(27, 152, 248, 0.12);
+      display: flex;
       align-items: center;
-      gap: .5rem;
+      justify-content: center;
+      margin-bottom: 1.25rem;
 
-      input[type="radio"] {
-        flex: 0 0 auto;
-      }
-
-      > label {
-        font-weight: normal;
+      svg {
+        width: 26px;
+        height: 26px;
+        stroke: var(--color-link);
       }
     }
 
-    li + li { /* gap between */
-      margin-top: .75rem;
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 0 0 0.4rem 0;
     }
 
+    p {
+      font-size: 0.9rem;
+      color: var(--color-text-input-description);
+      line-height: 1.5;
+      margin: 0 0 1.5rem 0;
+    }
+
+    .empty-state-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+
+      .cdio-btn {
+        height: 36px;
+        padding: 0 16px;
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
+
+// Watchlist page: clean card styling and quick-add command surface
+body.blueprint-watchlist {
+  .box {
+    border-style: solid;
+    border-color: var(--color-table-line);
+    background: var(--color-table-background);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    border-radius: var(--common-round-border);
   }
 
-  // Let the URL field grow with what's typed, from a compact minimum up to 80% of
-  // the row, instead of always filling it. `field-sizing: content` is the pure-CSS
-  // auto-grow (Chromium 123+); other browsers fall back to the min-width below.
-  #url {
+  #add-watch-ui {
+    margin-bottom: $common-gap * 2;
+    padding: 1.1rem 1.35rem;
 
-    width: auto;
-    @media only screen and (min-width: $desktop-wide-breakpoint) {
-      /*field-sizing: content;*/ // <-- removed, buggy
-      min-width: 32rem;
-      // Cap against the viewport, not just the parent: with field-sizing:content the parent is
-      // shrink-to-fit, so "80%" is effectively the input's own width and a long URL would grow
-      // it past the viewport edge (horizontal scroll). min(80%, 80vw) keeps it on-screen.
-      max-width: min(80%, 80vw);
-      box-sizing: border-box;
+    #new-watch-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    #add-watch-url-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0 !important;
+      width: 100%;
+    }
+
+    .quick-add-input-wrapper {
+      position: relative;
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+
+      .quick-add-icon {
+        position: absolute;
+        left: 12px;
+        width: 17px;
+        height: 17px;
+        color: var(--color-text-input-description);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      #url {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        height: 40px;
+        padding-left: 36px;
+        padding-right: 48px;
+        border-radius: var(--common-round-border);
+        border: 1px solid var(--color-border-table-cell);
+        background: var(--color-background-input);
+        color: var(--color-text-input);
+        font-size: 0.92rem;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+        &:focus {
+          outline: none;
+          border-color: var(--color-link);
+          box-shadow: 0 0 0 3px rgba(27, 152, 248, 0.15);
+        }
+
+        &::placeholder {
+          color: var(--color-text-input-placeholder);
+          opacity: 0.8;
+        }
+      }
+
+      .quick-add-hint {
+        position: absolute;
+        right: 12px;
+        pointer-events: none;
+        display: inline-flex;
+        align-items: center;
+
+        kbd {
+          font-family: inherit;
+          font-size: 0.7rem;
+          font-weight: 600;
+          padding: 2px 5px;
+          border-radius: 4px;
+          background: var(--color-background-code);
+          color: var(--color-text-input-description);
+          border: 1px solid var(--color-border-table-cell);
+        }
+      }
+    }
+
+    #add-watch-go {
+      height: 40px;
+      padding: 0 18px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: var(--common-round-border);
+      flex-shrink: 0;
+
+      svg {
+        width: 15px;
+        height: 15px;
+      }
+    }
+
+    #quick-watch-llm-intent {
+      label {
+        font-size: 0.8rem;
+        color: var(--color-text-input-description);
+        margin-bottom: 0.35rem;
+        display: block;
+      }
+
+      textarea {
+        border-radius: var(--common-round-border);
+        border: 1px solid var(--color-border-table-cell);
+        background: var(--color-background-input);
+        color: var(--color-text-input);
+        padding: 9px 12px;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        resize: vertical;
+        min-height: 54px;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+        &:focus {
+          outline: none;
+          border-color: var(--color-link);
+          box-shadow: 0 0 0 3px rgba(27, 152, 248, 0.15);
+        }
+      }
+    }
+
+    #quick-watch-processor-type {
+      span.label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--color-text-input-description);
+        margin-bottom: 0.4rem;
+      }
+
+      ul#processor {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        li {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 8px 12px;
+          border-radius: var(--common-round-border);
+          border: 1px solid var(--color-border-table-cell);
+          background: var(--color-background-subtabs);
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            border-color: var(--color-link);
+            background: rgba(27, 152, 248, 0.06);
+          }
+
+          &:has(input[type="radio"]:checked) {
+            border-color: var(--color-link);
+            background: rgba(27, 152, 248, 0.1);
+            font-weight: 600;
+          }
+
+          input[type="radio"] {
+            margin: 0;
+            accent-color: var(--color-link);
+            cursor: pointer;
+          }
+
+          label {
+            cursor: pointer;
+            font-size: 0.84rem;
+            color: var(--color-text);
+            margin: 0;
+          }
+        }
+      }
     }
   }
 
-  // Reveal the "intent" + "processor type" options only once a URL has been typed
-  // — pure CSS, no JS. :placeholder-shown is true while the box is empty (the
-  // placeholder is visible); :has() lets the form react to the nested #url input.
+  // Reveal the options only once a URL is entered
   #quick-watch-llm-intent,
   #quick-watch-processor-type {
     display: none;
@@ -616,9 +910,5 @@ body.blueprint-watchlist {
   #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-llm-intent,
   #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-processor-type {
     display: block;
-  }
-
-  #add-watch-url-row {
-
   }
 }
