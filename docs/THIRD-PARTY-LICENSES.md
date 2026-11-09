@@ -1,6 +1,6 @@
 # Third-party licences
 
-Generated 2026-11-05 from the built container.
+Generated 2026-11-09 from the built container.
 **Do not edit by hand** - run `.github/scripts/generate-third-party-licenses.sh`.
 
 Every third-party Python package bundled in the distributed image
@@ -19,7 +19,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [annotated-types](https://github.com/annotated-types/annotated-types) | 0.8.0 | MIT |
 | [anyio](https://anyio.readthedocs.io/en/stable/versionhistory.html) | 4.16.0 | MIT |
 | [appdirs](http://github.com/ActiveState/appdirs) | 1.4.4 | MIT License |
-| [apprise](https://appriseit.com) | 2.1.0 | BSD-2-Clause |
+| [apprise](https://appriseit.com) | 2.2.0 | BSD-2-Clause |
 | [arrow](https://github.com/arrow-py/arrow) | 1.4.0 | Apache Software License |
 | [attrs](https://www.attrs.org/en/stable/changelog.html) | 26.1.0 | MIT |
 | [Authlib](https://github.com/authlib/authlib) | 1.9.5 | BSD License |
@@ -28,14 +28,14 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/bs4/) | 4.15.0 | MIT License |
 | [bidict](https://github.com/jab/bidict) | 0.24.1 | MPL-2.0 |
 | [blinker](https://github.com/pallets-eco/blinker/) | 1.9.0 | MIT License |
-| [boto3](https://github.com/boto/boto3) | 1.43.124 | Apache-2.0 |
-| [botocore](https://github.com/boto/botocore) | 1.43.124 | Apache-2.0 |
+| [boto3](https://github.com/boto/boto3) | 1.43.126 | Apache-2.0 |
+| [botocore](https://github.com/boto/botocore) | 1.43.126 | Apache-2.0 |
 | [brotli](https://github.com/google/brotli) | 1.2.1 | MIT |
 | [certifi](https://github.com/certifi/python-certifi) | 2026.10.23 | Mozilla Public License 2.0 (MPL 2.0) |
 | [cffi](https://cffi.readthedocs.io/en/latest/whatsnew.html) | 2.1.1 | MIT-0 |
 | [chardet](https://github.com/chardet/chardet) | 7.7.0 | 0BSD |
 | [charset-normalizer](https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md) | 3.5.2 | MIT |
-| [click](https://github.com/pallets/click/) | 8.5.0 | BSD-3-Clause |
+| [click](https://github.com/pallets/click/) | 8.5.1 | BSD-3-Clause |
 | [cryptography](https://github.com/pyca/cryptography) | 50.0.2 | Apache-2.0 OR BSD-3-Clause |
 | [diff-match-patch](https://github.com/diff-match-patch-python/diff-match-patch/blob/main/CHANGELOG.md) | 20241021 | Apache Software License |
 | [elementpath](https://github.com/sissaschool/elementpath) | 5.1.4 | MIT |
@@ -46,7 +46,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [feedgen](https://lkiesow.github.io/python-feedgen) | 1.0.0 | BSD License; GNU Lesser General Public License v3 or later (LGPLv3+) |
 | [feedparser](https://github.com/kurtmckee/feedparser) | 6.0.14 | BSD-2-Clause |
 | [feedparser-sgmllib](https://github.com/python-syndication/feedparser-sgmllib) | 2.1.0 | PSF-2.0 |
-| [filelock](https://github.com/tox-dev/py-filelock) | 3.32.7 | MIT |
+| [filelock](https://github.com/tox-dev/filelock) | 4.2.9 | MIT |
 | [Flask](https://github.com/pallets/flask/) | 3.1.3 | BSD-3-Clause |
 | [flask-babel](https://github.com/python-babel/flask-babel) | 4.0.0 | BSD License |
 | [Flask-Compress](https://github.com/colour-science/flask-compress) | 1.26 | MIT License |
@@ -80,22 +80,22 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [isodate](https://github.com/gweis/isodate/) | 0.7.2 | BSD License |
 | [itsdangerous](https://github.com/pallets/itsdangerous/) | 2.2.0 | BSD License |
 | [Jinja2](https://github.com/pallets/jinja/) | 3.1.6 | BSD License |
-| [jiter](https://github.com/pydantic/jiter/) | 0.18.0 | MIT |
+| [jiter](https://github.com/pydantic/jiter/) | 0.19.0 | MIT |
 | [jmespath](https://github.com/jmespath/jmespath.py) | 1.1.0 | MIT License |
 | [joserfc](https://github.com/authlib/joserfc) | 1.8.0 | BSD License |
 | [jq](https://github.com/mwilliamson/jq.py) | 1.13.0 | BSD-2-Clause |
-| [jsonpath-ng](https://github.com/jsonpath-ng/jsonpath-ng) | 1.14.0 | Apache-2.0 |
+| [jsonpath-ng](https://github.com/jsonpath-ng/jsonpath-ng) | 1.16.0 | Apache-2.0 |
 | [jsonschema](https://github.com/python-jsonschema/jsonschema) | 4.26.0 | MIT |
 | [jsonschema-path](https://github.com/p1c2u/jsonschema-path) | 0.4.6 | Apache Software License |
 | [jsonschema-specifications](https://github.com/python-jsonschema/jsonschema-specifications) | 2025.9.1 | MIT |
 | [jstyleson](https://github.com/linjackson78/jstyleson) | 0.0.2 | MIT License |
 | [lazy-object-proxy](https://python-lazy-object-proxy.readthedocs.io/en/latest/changelog.html) | 1.13.0 | BSD-2-Clause |
 | [linkify-it-py](https://github.com/tsutsu3/linkify-it-py) | 2.2.0 | MIT License |
-| [litellm](https://litellm.ai) | 1.108.0 | MIT |
+| [litellm](https://litellm.ai) | 1.108.3 | MIT |
 | [loguru](https://github.com/Delgan/loguru) | 0.7.3 | MIT License |
 | [lxml](https://lxml.de/) | 6.1.3 | BSD-3-Clause |
 | [lxml_html_clean](https://github.com/fedora-python/lxml_html_clean/) | 0.4.6 | BSD-3-Clause |
-| [Markdown](https://Python-Markdown.github.io/) | 3.11.2 | BSD-3-Clause |
+| [Markdown](https://Python-Markdown.github.io/) | 3.11.3 | BSD-3-Clause |
 | [MarkupSafe](https://github.com/pallets/markupsafe/) | 3.0.4 | BSD-3-Clause |
 | [mcp-types](https://modelcontextprotocol.io) | 2.3.0 | MIT License |
 | mf2py | 2.0.2 | MIT License |
@@ -150,7 +150,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [RapidFuzz](https://github.com/rapidfuzz/RapidFuzz) | 3.14.6 | MIT |
 | [rdflib](https://github.com/RDFLib/rdflib) | 7.6.0 | BSD License |
 | [referencing](https://github.com/python-jsonschema/referencing) | 0.37.0 | MIT |
-| [regex](https://github.com/mrabarnett/mrab-regex) | 2026.9.29 | Apache-2.0 AND CNRI-Python |
+| [regex](https://github.com/mrabarnett/mrab-regex) | 2026.11.9 | Apache-2.0 AND CNRI-Python |
 | [requests](https://github.com/psf/requests) | 2.34.2 | Apache Software License |
 | [requests-file](https://codeberg.org/dashea/requests-file) | 3.0.1 | Apache Software License |
 | [requests-oauthlib](https://github.com/requests/requests-oauthlib) | 2.0.0 | BSD License |
@@ -158,7 +158,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [rpds-py](https://github.com/crate-py/rpds) | 2026.9.1 | MIT |
 | [s3transfer](https://github.com/boto/s3transfer) | 0.19.3 | Apache Software License |
 | [segno](https://github.com/heuer/segno/) | 1.6.6 | BSD License |
-| [selenium](https://www.selenium.dev) | 4.51.0 | Apache-2.0 |
+| [selenium](https://www.selenium.dev) | 4.52.0 | Apache-2.0 |
 | [simple-websocket](https://github.com/miguelgrinberg/simple-websocket) | 1.1.0 | MIT License |
 | [six](https://github.com/benjaminp/six) | 1.17.0 | MIT License |
 | [sniffio](https://github.com/python-trio/sniffio) | 1.3.1 | Apache Software License; MIT License |
