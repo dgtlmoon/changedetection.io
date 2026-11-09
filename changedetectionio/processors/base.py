@@ -232,6 +232,22 @@ class difference_detection_processor():
             request_body = jinja_render(template_str=request_body)
 
         request_method = self.watch.get('method')
+
+        # Plugins have the last word on the request, e.g. an Authorization header (fetch_request_alter hook)
+        from changedetectionio.pluggy_interface import apply_fetch_request_alter
+        plugin_request = {
+            'headers': request_headers,
+            'method': request_method,
+            'body': request_body,
+            'url': url,
+            'proxy_url': self.fetcher.selected_proxy_url,
+            'fetcher': prefer_fetch_backend,
+        }
+        await apply_fetch_request_alter(self.watch, self.datastore, plugin_request)
+        request_headers = plugin_request['headers']
+        request_method = plugin_request['method']
+        request_body = plugin_request['body']
+
         ignore_status_codes = self.watch.get('ignore_status_codes', False)
 
         # Requests for PDF's, images etc should be passwd the is_binary flag
@@ -352,6 +368,8 @@ class difference_detection_processor():
         # Stamp the resolved backend name so downstream consumers (processors, plugins)
         # can read it directly instead of re-deriving it from the fetcher class name.
         fetcher.backend_name = backend_name
+        # and the proxy, for plugins that send their own requests for this check (fetch_request_alter hook)
+        fetcher.selected_proxy_url = proxy_url
 
         if self.watch.has_browser_steps:
             fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))
