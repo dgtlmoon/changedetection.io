@@ -1,0 +1,16 @@
+{% from '_helpers.html' import render_field, render_checkbox_field %}
+<fieldset>
+    <legend>API key (example plugin)</legend>
+    <div class="pure-control-group">
+        {{ render_field(plugin_form.header_name) }}
+    </div>
+    <div class="pure-control-group">
+        {{ render_field(plugin_form.api_key, autocomplete="new-password") }}
+        <div class="pure-form-message-inline">
+            Sent with every check of this monitor. Once saved it isn't shown again, leave this empty to keep it.
+        </div>
+    </div>
+    <div class="pure-control-group">
+        {{ render_checkbox_field(plugin_form.remove_key) }}
+    </div>
+</fieldset>

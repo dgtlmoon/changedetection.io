@@ -2308,6 +2308,11 @@ msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Res
 msgstr "已達到每月 %(budget)s 權杖的 AI 權杖配額（已使用 %(used)s）。將於下個月重設。"
 
 #: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not save the '{}' settings, see the log."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
 msgid "No watches to edit"
 msgstr "沒有可編輯的監測任務"
 
