@@ -209,31 +209,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'llm_group_edit': True,
         }
 
-        included_content = {}
-        if form.extra_form_content():
-            # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
-            # And then render the code from the module
-            from jinja2 import Environment, FileSystemLoader
-            import importlib.resources
-            templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
-            env = Environment(loader=FileSystemLoader(templates_dir))
-            template_str = """{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
-        <script>        
-            $(document).ready(function () {
-                toggleOpacity('#overrides_watch', '#restock-fieldset-price-group', true);
-            });
-        </script>            
-                <fieldset>
-                    <div class="pure-control-group">
-                        <fieldset class="pure-group">
-                        {{ render_checkbox_field(form.overrides_watch) }}
-                        <span class="pure-form-message-inline">Used for watches in "Restock & Price detection" mode</span>
-                        </fieldset>
-                </fieldset>
-                """
-            template_str += form.extra_form_content()
-            template = env.from_string(template_str)
-            included_content = template.render(**template_args)
+        # The group form is always the restock form, rendered as real template files so its text is translatable (#4612)
+        included_content = render_template("edit-tag-extra-form.html",
+                                           extra_form_template=form.extra_form_template(),
+                                           **template_args)
 
         # Watches whose URL currently matches this tag's pattern
         matching_watches = {

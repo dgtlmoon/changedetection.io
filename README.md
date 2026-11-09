@@ -34,6 +34,8 @@ We've got a quick tutorial here - [Bring your own LLM/AI Key to changedetection.
 
 [<img src="./docs/LLM-change-summary.jpeg" style="max-width:100%;" alt="AI-powered website change detection — plain language change summaries and smart alert rules"  title="AI website change detection with LLM change summaries and intelligent alert filtering" />](https://changedetection.io?src=github)
 
+Yes - Even MCP is supported [https://changedetection.io/MCP](https://changedetection.io/MCP) - Easily connect Claude.AI / OpenAi and others to your changedetection.io dashboard - Now your web page changes become a resource for easily asking questions and building on.
+
 ### Target specific parts of the webpage using the Visual Selector tool.
 
 Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)

@@ -9,7 +9,7 @@ run() body (browser steps, screenshots, xpath, stitching) is shared.
 
 Base-only (ready_to_use=False): the bare engine has nothing to connect to, so you create one
 browser config ("variation") per endpoint. That list of endpoints is exactly what
-settings.requests.extra_browsers used to be, and update_36 migrates them here.
+settings.requests.extra_browsers used to be, and update_37 migrates them here.
 
 Why this exists as its own engine rather than a string prefix: an 'extra_browser_<name>' URL was
 handed to whatever html_webdriver resolved to at import time, so the SAME wss:// endpoint was

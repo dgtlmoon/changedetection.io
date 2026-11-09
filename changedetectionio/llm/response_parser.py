@@ -66,16 +66,20 @@ def parse_eval_response(raw: str) -> dict:
     """
     Parse a diff evaluation response.
     Returns {'important': bool, 'summary': str}.
-    Falls back to important=False on any parse error.
+
+    Raises:
+        ValueError: the response is empty or holds no JSON object (e.g. truncated at
+            max_tokens). That is no decision at all, so unlike the preview parser there is
+            no important=False fallback - it would silently suppress the notification.
+            evaluator.py catches this and passes the change through instead.
     """
-    try:
-        data = json.loads(_extract_json(raw))
-        return {
-            'important': _to_bool(data.get('important'), default=False),
-            'summary': str(data.get('summary', '')).strip(),
-        }
-    except (json.JSONDecodeError, AttributeError):
-        return {'important': False, 'summary': ''}
+    data = json.loads(_extract_json(raw))  # JSONDecodeError is a ValueError
+    if not isinstance(data, dict):
+        raise ValueError('LLM evaluation response is not a JSON object')
+    return {
+        'important': _to_bool(data.get('important'), default=False),
+        'summary': str(data.get('summary', '')).strip(),
+    }
 
 
 def parse_preview_response(raw: str) -> dict:

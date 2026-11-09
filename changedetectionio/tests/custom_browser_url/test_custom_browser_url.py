@@ -26,7 +26,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
     assert b"Settings updated." in res.data
 
     # A second browser, running somewhere else. This used to be a settings.requests.extra_browsers
-    # row; it is now an ordinary browser config based on the External CDP engine (update_36
+    # row; it is now an ordinary browser config based on the External CDP engine (update_37
     # migrates the old rows to exactly this). Keyed by the legacy selector so that migrated
     # installs and this test name the browser the same way.
     res = client.post(

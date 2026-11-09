@@ -43,7 +43,7 @@ except ImportError:
 # call time: the old settings.requests.timeout was baked once at startup, and resolving it lazily
 # per-fetch made tests (which set DEFAULT_SETTINGS_REQUESTS_TIMEOUT low) time out on slow endpoints.
 # A user who wants a different value sets it per-browser on the /browsers tab; upgrades preserve the
-# old global value via update_35.
+# old global value via update_36.
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 45
 
 
@@ -124,7 +124,7 @@ class FetcherConfig(BaseModel):
     # Defaults to DEFAULT_REQUEST_TIMEOUT_SECONDS (45s) so a fresh install / built-in html_requests
     # config has a sane, browser-like read timeout without relying on any global setting. An
     # existing install's previous settings.requests.timeout is carried onto its html_requests
-    # config by update_35 (the migration hook), so upgrades keep whatever the user had.
+    # config by update_36 (the migration hook), so upgrades keep whatever the user had.
     timeout: Optional[int] = _needs('supports_request_timeout', default=DEFAULT_REQUEST_TIMEOUT_SECONDS)   # request timeout in seconds
     # connection_url: the endpoint of an external browser this profile talks to (capability
     # supports_connection_url). CDP over a WebSocket, e.g. a Bright Data / Oxylabs Scraping
@@ -587,7 +587,7 @@ def is_valid_browser_selector(value, datastore, allow_empty=True):
 
     That is: 'system' (follow the global default), an installed engine name (built-in or
     plugin-provided), or the id of a saved browser config - which is what a migrated
-    'extra_browser_<name>' endpoint is since update_36.
+    'extra_browser_<name>' endpoint is since update_37.
 
     THE one answer to this question. The API (create/update/import), the quick-add form
     validator and the bulk "set browser" operation each used to keep their own copy, which is how
@@ -620,7 +620,7 @@ def list_watch_browser_choices(datastore):
     system default, the always-present built-in engine browsers, then the user's saved browsers.
 
     Deduplicated by value, because a saved config legitimately shares a built-in engine's id -
-    update_35 migrated the old per-engine request timeout / User-Agent into configs keyed
+    update_36 migrated the old per-engine request timeout / User-Agent into configs keyed
     'html_requests' and 'html_webdriver' - and listing one browser twice is not a choice. The
     saved label wins: it is the same browser, and that is the name the user can change.
     """

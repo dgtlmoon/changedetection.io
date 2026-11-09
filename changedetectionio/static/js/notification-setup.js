@@ -160,6 +160,7 @@ $(function () {
 
     function renderCard(form) {
         current = form;
+        markQuick(form.schema);
         builtUrl = null;
         $card.find('.ns-name').text(form.name);
         $card.find('.ns-schema').text(form.schema === 'custom-http' ? '' : form.schema + '://');
@@ -259,6 +260,7 @@ $(function () {
         $card.prop('hidden', true);
         $search.val('');
         current = builtUrl = null;
+        markQuick(null);
         $msg.text('');
         $w.find('.ns-added').remove();
         $('<span class="ns-added"></span>').text(t.added || 'Added to the list below')
@@ -269,5 +271,16 @@ $(function () {
         e.preventDefault();
         $card.prop('hidden', true);
         current = builtUrl = null;
+        markQuick(null);
     });
+
+    // The popular-service icons above the search box
+    var $quick = $w.find('.ns-quick-btn');
+    function markQuick(schema) {
+        $quick.each(function () {
+            var on = $(this).data('schema') === schema;
+            $(this).toggleClass('is-active', on).attr('aria-pressed', on ? 'true' : 'false');
+        });
+    }
+    $quick.on('click', function () { pick($(this).data('schema')); });
 });

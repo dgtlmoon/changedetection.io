@@ -2,7 +2,7 @@
 
 # Read more https://github.com/dgtlmoon/changedetection.io/wiki
 # Semver means never use .01, or 00. Should be .1.
-__version__ = '0.60.10'
+__version__ = '0.70.2'
 
 from changedetectionio.strtobool import strtobool
 from json.decoder import JSONDecodeError
@@ -679,9 +679,15 @@ def main():
     if os.getenv('USE_X_SETTINGS'):
         logger.info("USE_X_SETTINGS is ENABLED")
         from werkzeug.middleware.proxy_fix import ProxyFix
+        # How many proxies in front of this one add to X-Forwarded-For, so the client's address is the right one
+        # (e.g. 2 for another site -> a hosting proxy -> here). Too high lets a client pick its own address.
+        try:
+            proxy_count = max(1, int(os.getenv('USE_X_SETTINGS_PROXY_COUNT', '1')))
+        except ValueError:
+            proxy_count = 1
         app.wsgi_app = ProxyFix(
             app.wsgi_app,
-            x_for=1,      # X-Forwarded-For (client IP)
+            x_for=proxy_count,  # X-Forwarded-For (client IP)
             x_proto=1,    # X-Forwarded-Proto (http/https)
             x_host=1,     # X-Forwarded-Host (original host)
             x_port=1,     # X-Forwarded-Port (original port)

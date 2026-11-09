@@ -873,6 +873,20 @@ class DatastoreUpdatesMixin:
             watch.commit()
 
     def update_34(self):
+        """MCP sign-in (OAuth) took its issuer from the notification Base URL (settings.application.base_url, else
+        the BASE_URL env var) in 0.70.1. It has its own setting now, mcp_base_url ("Public MCP address", MCP Server > Settings), and the
+        notification one only does notifications. Grants are bound to {issuer}/mcp/v1, so when existing sign-ins were
+        made through the Base URL, carry it over once to keep them connected. Nothing else ties the two together."""
+        application = self.data['settings']['application']
+        base = (application.get('base_url') or os.getenv('BASE_URL') or '').strip().rstrip('/')
+        grants = (application.get('mcp_oauth') or {}).get('grants') or {}
+        if application.get('mcp_base_url') or not base:
+            return
+        if any(isinstance(g, dict) and g.get('resource') == base + '/mcp/v1' for g in grants.values()):
+            application['mcp_base_url'] = base
+            logger.info(f"update_34: kept existing MCP sign-ins working, Public MCP address set to {base}")
+
+    def update_35(self):
         """Make the global 'Default browser' a concrete, valid selection for the /browsers tab.
 
         All browser choice is managed on /browsers now; the default is
@@ -893,7 +907,7 @@ class DatastoreUpdatesMixin:
         def _is_valid_default(value):
             if not value or value == 'system':
                 return False
-            # A saved browser config? (which is what a migrated extra browser is - update_36)
+            # A saved browser config? (which is what a migrated extra browser is - update_37)
             if self.browser_config_store.get(value):
                 return True
             # A built-in engine that actually exists in this build?
@@ -906,10 +920,10 @@ class DatastoreUpdatesMixin:
         default = os.getenv('DEFAULT_FETCH_BACKEND', 'html_requests') or 'html_requests'
         app['fetch_backend'] = default
         logger.info(
-            f"update_34: normalised global Default browser (fetch_backend) from '{current}' to '{default}'"
+            f"update_35: normalised global Default browser (fetch_backend) from '{current}' to '{default}'"
         )
 
-    def update_35(self):
+    def update_36(self):
         """Migrate the per-engine request timeout + default User-Agent out of global settings into
         browser configs keyed by the engine name (html_requests / html_webdriver), so all fetch
         behaviour lives on the /browsers tab.
@@ -939,16 +953,16 @@ class DatastoreUpdatesMixin:
                 bc.setdefault(k, v)  # never clobber a value a user already set on the config
             label = (existing or {}).get('label') or str(descriptions.get(engine, engine))
             store.upsert(engine, label=label, base_fetcher=engine, browser_config=bc)
-            logger.info(f"update_35: migrated {sorted(updates)} into browser config '{engine}'")
+            logger.info(f"update_36: migrated {sorted(updates)} into browser config '{engine}'")
 
         _merge('html_requests', {'timeout': timeout, 'user_agent': default_ua.get('html_requests')})
         _merge('html_webdriver', {'user_agent': default_ua.get('html_webdriver')})
 
         req.pop('timeout', None)
         req.pop('default_ua', None)
-        logger.info("update_35: removed migrated requests.timeout / requests.default_ua from settings")
+        logger.info("update_36: removed migrated requests.timeout / requests.default_ua from settings")
 
-    def update_36(self):
+    def update_37(self):
         """Migrate settings.requests.extra_browsers into browser configs on the /browsers tab.
 
         Each 'extra browser' was a name + a ws(s):// endpoint, selected by a watch as the magic
@@ -960,7 +974,7 @@ class DatastoreUpdatesMixin:
 
         Keyed by the SAME 'extra_browser_<name>' string the watches already hold, so no watch,
         group override, API value or global default needs rewriting - the legacy selector simply
-        becomes a real browser-config id (update_35 set the precedent of non-uuid keys; anything
+        becomes a real browser-config id (update_36 set the precedent of non-uuid keys; anything
         created from the UI afterwards is a uuid).
 
         Idempotent: gated on the settings key still being there.
@@ -984,7 +998,7 @@ class DatastoreUpdatesMixin:
             config_id = f"extra_browser_{name}"
             if config_id in seen:
                 # Two rows could share a name; the old resolver just took the first match.
-                logger.warning(f"update_36: ignoring duplicate extra browser '{name}'")
+                logger.warning(f"update_37: ignoring duplicate extra browser '{name}'")
                 continue
             seen.add(config_id)
             if store.get(config_id):
@@ -1009,15 +1023,13 @@ class DatastoreUpdatesMixin:
                 # hand-edited or restored from anywhere) must not take the whole update chain -
                 # and with it startup - down. Say so loudly and carry on; the operator can add
                 # the browser on the Browsers page.
-                logger.error(f"update_36: could not migrate extra browser '{name}' "
+                logger.error(f"update_37: could not migrate extra browser '{name}' "
                              f"(endpoint rejected: {e}) - add it on the Browsers page instead")
                 continue
             migrated += 1
-            logger.info(f"update_36: migrated extra browser '{name}' to browser config "
+            logger.info(f"update_37: migrated extra browser '{name}' to browser config "
                         f"'{config_id}' (label '{label}')")
 
         req.pop('extra_browsers', None)
-        logger.info(f"update_36: migrated {migrated} extra browser(s) and removed "
+        logger.info(f"update_37: migrated {migrated} extra browser(s) and removed "
                     f"settings.requests.extra_browsers")
-
-

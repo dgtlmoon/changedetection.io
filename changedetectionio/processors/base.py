@@ -288,7 +288,7 @@ class difference_detection_processor():
         self.fetcher = self._new_fetcher(fetcher_obj, prefer_fetch_backend, custom_browser_connection_url, **fetcher_setup)
 
         # Requests timeout now lives on the plain client's browser config (FetcherConfig.timeout,
-        # default DEFAULT_REQUEST_TIMEOUT_SECONDS; existing installs migrated by update_35), and the
+        # default DEFAULT_REQUEST_TIMEOUT_SECONDS; existing installs migrated by update_36), and the
         # requests fetcher applies that via effective_timeout(). This is only a defensive base value
         # for the unusual case where no browser config is resolved at all; browsers ignore it (they
         # use their own navigation timeouts).

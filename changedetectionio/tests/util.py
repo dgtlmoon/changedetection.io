@@ -239,6 +239,26 @@ def wait_for_all_checks(client=None):
     """
     from changedetectionio.flask_app import update_q as global_update_q
     from changedetectionio import worker_pool
+    done = worker_pool.wait_for_all_checks(global_update_q, timeout=150)
+    if client is None:
+        return done
+
+    # A monitor that was just added (an import, the API) isn't queued by that request, the scheduler finds it on its
+    # next pass, up to a second later. Until then the queue is empty and the workers idle, so the wait above can return
+    # before its first check has even started, and the test changes the page under it. Wait for the scheduler to pick
+    # up every unpaused monitor that was never checked, a few seconds at most (a time schedule may keep one waiting).
+    datastore = client.application.config.get('DATASTORE')
+    if not datastore or datastore.data['settings']['application'].get('all_paused'):
+        return done
+    deadline = time.time() + 5
+    while time.time() < deadline:
+        unchecked = [w for w in list(datastore.data['watching'].values())
+                     if not w.get('paused') and not w.get('last_checked')]
+        if not unchecked:
+            break
+        time.sleep(0.2)
+    else:
+        return done
     return worker_pool.wait_for_all_checks(global_update_q, timeout=150)
 
 
@@ -533,5 +553,5 @@ def new_mcp_token(client, name='test', tags=None, **permissions):
     tags: the tag uuids it's limited to, None for every monitor."""
     from changedetectionio.blueprint.mcp.tokens import add_token
     settings = client.application.config['DATASTORE'].data['settings']['application']
-    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'system': 'read', **permissions}
+    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'browser': 'write', 'system': 'read', **permissions}
     return add_token(settings, name, levels, tags)[1]

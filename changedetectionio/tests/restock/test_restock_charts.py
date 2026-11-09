@@ -53,6 +53,53 @@ def test_restock_default_charts(client, live_server, measure_memory_usage, datas
     delete_all_watches(client)
 
 
+def test_watchlist_chart_marks_watch_viewed(client, live_server, measure_memory_usage, datastore_path):
+    """For restock rows the watch list's History button rolls down the chart instead of opening the History page,
+    so the roll-down has to save the view, or the row turns unviewed again on the next check (#4697)."""
+    uuid = add_restock_watch_with_two_prices(client, datastore_path)
+    watch = client.application.config.get('DATASTORE').data['watching'][uuid]
+    assert watch.has_unviewed
+    assert watch['last_viewed'] == 0
+
+    assert chart(client, uuid, 'history').status_code == 200
+    assert watch['last_viewed'] == 0, "The history page's own chart leaves that to the page"
+
+    assert chart(client, uuid, 'watchlist').status_code == 200
+    assert watch['last_viewed'] > 0
+
+    delete_all_watches(client)
+
+
+def test_mark_viewed_hook_replaces_the_builtin(client, live_server, measure_memory_usage, datastore_path):
+    """A plugin returning a result from restock_diff_mark_watch_viewed replaces the built-in that saves the view,
+    for both the watch list chart and the history page."""
+    from changedetectionio.pluggy_interface import plugin_manager, hookimpl
+
+    viewed = []
+
+    class OwnViewTracking:
+        @hookimpl
+        def restock_diff_mark_watch_viewed(self, watch):
+            viewed.append(watch.get('uuid'))
+            return True
+
+    uuid = add_restock_watch_with_two_prices(client, datastore_path)
+    watch = client.application.config.get('DATASTORE').data['watching'][uuid]
+    plugin_manager.register(OwnViewTracking(), 'test_own_view_tracking')
+    try:
+        assert chart(client, uuid, 'watchlist').status_code == 200
+        assert client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid)).status_code == 200
+        assert viewed == [uuid, uuid]
+        assert watch['last_viewed'] == 0, "The plugin took over, the built-in didn't run"
+    finally:
+        plugin_manager.unregister(name='test_own_view_tracking')
+
+    assert client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid)).status_code == 200
+    assert watch['last_viewed'] > 0, "Back to the built-in"
+
+    delete_all_watches(client)
+
+
 def test_restock_chart_hook_replaces_only_its_chart(client, live_server, measure_memory_usage, datastore_path):
     """A plugin implementing only the history page hook replaces that chart, the watch list one stays built-in."""
     from changedetectionio.pluggy_interface import plugin_manager, hookimpl

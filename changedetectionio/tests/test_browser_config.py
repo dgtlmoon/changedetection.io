@@ -520,42 +520,42 @@ def test_watch_get_fetch_backend_resolution_chain(client, live_server, measure_m
     assert watch.get_fetch_backend == 'html_webdriver'
 
 
-def test_update_34_normalises_default_browser(client, live_server, measure_memory_usage, datastore_path):
-    """update_34 turns a blank/'system'/dangling global default into a concrete built-in engine,
+def test_update_35_normalises_default_browser(client, live_server, measure_memory_usage, datastore_path):
+    """update_35 turns a blank/'system'/dangling global default into a concrete built-in engine,
     but leaves an already-valid default (engine name or saved config id) untouched."""
     datastore = client.application.config.get('DATASTORE')
     app = datastore.data['settings']['application']
 
     # Blank -> concrete default
     app['fetch_backend'] = ''
-    datastore.update_34()
+    datastore.update_35()
     assert app['fetch_backend'] in ('html_requests', 'html_webdriver')
 
     # 'system' at the global level is invalid (it IS the system default) -> normalised
     app['fetch_backend'] = 'system'
-    datastore.update_34()
+    datastore.update_35()
     assert app['fetch_backend'] != 'system'
 
     # A dangling browser-config id -> normalised to a concrete engine
     app['fetch_backend'] = 'deleted-id-9999'
-    datastore.update_34()
+    datastore.update_35()
     assert app['fetch_backend'] != 'deleted-id-9999'
 
     # A valid built-in engine is left untouched (idempotent)
     app['fetch_backend'] = 'html_webdriver'
-    datastore.update_34()
+    datastore.update_35()
     assert app['fetch_backend'] == 'html_webdriver'
 
     # A valid saved browser-config id is left untouched
     _add_browser(client, label="Keeper", viewport_width=800)
     cid = list(datastore.browser_config_store.all())[0]
     app['fetch_backend'] = cid
-    datastore.update_34()
+    datastore.update_35()
     assert app['fetch_backend'] == cid
 
 
-def test_update_35_migrates_timeout_and_default_ua(client, live_server, measure_memory_usage, datastore_path):
-    """update_35 moves settings.requests.timeout + default_ua into engine-keyed browser configs
+def test_update_36_migrates_timeout_and_default_ua(client, live_server, measure_memory_usage, datastore_path):
+    """update_36 moves settings.requests.timeout + default_ua into engine-keyed browser configs
     (html_requests: timeout + UA; html_webdriver: UA) and removes the old settings keys."""
     datastore = client.application.config.get('DATASTORE')
     req = datastore.data['settings']['requests']
@@ -564,7 +564,7 @@ def test_update_35_migrates_timeout_and_default_ua(client, live_server, measure_
     req['timeout'] = 33
     req['default_ua'] = {'html_requests': 'ReqUA/1', 'html_webdriver': 'ChromeUA/2'}
 
-    datastore.update_35()
+    datastore.update_36()
 
     # Old settings removed
     assert 'timeout' not in req
@@ -578,7 +578,7 @@ def test_update_35_migrates_timeout_and_default_ua(client, live_server, measure_
     assert wd['user_agent'] == 'ChromeUA/2'
 
     # Idempotent - a second run with nothing to migrate is a no-op
-    datastore.update_35()
+    datastore.update_36()
     assert datastore.browser_config_store.get('html_requests')['browser_config']['timeout'] == 33
 
 
@@ -884,8 +884,8 @@ def test_plugin_can_supply_a_whole_new_browser_base(client, live_server, measure
     assert cid in {v for v, _ in add_watch_browsers.list_visual_browser_choices(datastore)}
 
 
-def test_update_36_migrates_extra_browsers(client, live_server, measure_memory_usage, datastore_path):
-    """update_36 turns each settings.requests.extra_browsers row into an External CDP browser.
+def test_update_37_migrates_extra_browsers(client, live_server, measure_memory_usage, datastore_path):
+    """update_37 turns each settings.requests.extra_browsers row into an External CDP browser.
 
     The point of keying them by their legacy 'extra_browser_<name>' selector is that NOTHING else
     has to be rewritten, so this asserts the watch / group override / global default that already
@@ -916,7 +916,7 @@ def test_update_36_migrates_extra_browsers(client, live_server, measure_memory_u
     grouped_uuid = datastore.add_watch(url="https://example.com/grouped", tag_uuids=[tag_uuid])
     datastore.data['settings']['application']['fetch_backend'] = 'extra_browser_BrightData'
 
-    datastore.update_36()
+    datastore.update_37()
 
     # The old settings key is gone, and each row is now a browser config on the new engine
     assert 'extra_browsers' not in req
@@ -949,7 +949,7 @@ def test_update_36_migrates_extra_browsers(client, live_server, measure_memory_u
 
     # Idempotent, and a re-run must not clobber a rename the user made afterwards
     datastore.browser_config_store.update('extra_browser_Oxylabs', label='My Oxylabs')
-    datastore.update_36()
+    datastore.update_37()
     assert datastore.browser_config_store.get('extra_browser_Oxylabs')['label'] == 'My Oxylabs'
 
 
@@ -1015,7 +1015,7 @@ def test_external_cdp_live_session_uses_its_own_endpoint(client, live_server, me
         engine.browser_steps_connection_url(FetcherConfig())
 
 
-def test_update_36_survives_an_unusable_legacy_endpoint(client, live_server, measure_memory_usage, datastore_path):
+def test_update_37_survives_an_unusable_legacy_endpoint(client, live_server, measure_memory_usage, datastore_path):
     """A legacy endpoint the model rejects must not take startup down with it.
 
     settings.json could be hand-edited or restored from anywhere, so one bad row logs and is
@@ -1028,7 +1028,7 @@ def test_update_36_survives_an_unusable_legacy_endpoint(client, live_server, mea
         {'browser_name': 'Good', 'browser_connection_url': 'wss://good.example:9222'},
     ]
 
-    datastore.update_36()
+    datastore.update_37()
 
     assert 'extra_browsers' not in req
     assert datastore.browser_config_store.get('extra_browser_Broken') is None
@@ -1039,7 +1039,7 @@ def test_update_36_survives_an_unusable_legacy_endpoint(client, live_server, mea
 def test_browser_picker_lists_each_browser_once(client, live_server, measure_memory_usage, datastore_path):
     """A saved config that shares a built-in engine's id must not appear twice in the picker.
 
-    update_35 migrates the old per-engine request timeout / User-Agent into configs keyed
+    update_36 migrates the old per-engine request timeout / User-Agent into configs keyed
     'html_requests' / 'html_webdriver', so on any upgraded install those ids exist in BOTH the
     built-in engine list and browsers.json - which rendered the same browser as two radios on the
     watch edit page (and in the group override select).
@@ -1047,7 +1047,7 @@ def test_browser_picker_lists_each_browser_once(client, live_server, measure_mem
     from changedetectionio.model.browser_config import list_watch_browser_choices
     datastore = client.application.config.get('DATASTORE')
 
-    # Exactly what an upgraded install looks like after update_35
+    # Exactly what an upgraded install looks like after update_36
     datastore.browser_config_store.upsert('html_requests', label='Basic fast Plaintext/HTTP Client',
                                           base_fetcher='html_requests', browser_config={'timeout': 33})
 

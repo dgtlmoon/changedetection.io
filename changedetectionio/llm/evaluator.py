@@ -97,6 +97,12 @@ def _thinking_extra_body(model: str, budget: int, llm_cfg: dict | None = None) -
     "does this model think?" decision. That picks up new Gemini variants and
     rolling aliases (`gemini-flash-latest`, etc.) as litellm's registry tracks
     them, without us hardcoding model names here.
+
+    Claude 5.x thinks by default and has no token budget any more (budget_tokens is a 400), so for Anthropic
+    only Off (0) does anything: thinking={'type': 'disabled'} on Haiku/Sonnet 5.x, or 'between_tools' on
+    Sonnet 5.5 which rejects 'disabled'. Left alone: Opus 5 (with thinking disabled it can leak <thinking>
+    tags into the answer), Opus 5.5 / Fable (thinking can't be switched off) and 4.x (no thinking unless asked).
+    client.completion() lifts 'thinking' out of extra_body, Anthropic rejects unknown body fields.
     """
     llm_cfg = llm_cfg or {}
     if llm_cfg.get('local_thinking_off'):
@@ -104,6 +110,20 @@ def _thinking_extra_body(model: str, budget: int, llm_cfg: dict | None = None) -
             return {'think': False}
         if llm_cfg.get('provider_kind') == 'openai_compatible':
             return {'chat_template_kwargs': {'enable_thinking': False}}
+    if model.startswith('claude') or model.startswith('anthropic/'):
+        if budget or not any(k in model.lower() for k in ('haiku-5', 'sonnet-5')):
+            return None
+        # litellm's registry has no flag for which models take 'between_tools'
+        if 'sonnet-5-5' in model.lower():
+            return {'thinking': {'type': 'between_tools'}}
+        try:
+            import litellm
+            info = litellm.get_model_info(model)
+            if not info.get('supports_adaptive_thinking') or info.get('thinking_always_on'):
+                return None
+        except Exception:
+            return None
+        return {'thinking': {'type': 'disabled'}}
     if not model.startswith('gemini/'):
         return None
     if 'flash-lite' in model.lower():
@@ -176,7 +196,9 @@ def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS
 # Models that emit chain-of-thought before the answer, on any provider. Reasoning tokens are
 # billed and counted against max_tokens, so these need headroom or the answer never lands.
 # Kept in step with client._NO_TEMPERATURE_MODEL_KEYWORDS - reasoning is what drives both.
-REASONING_MODEL_KEYWORDS = ('o1', 'o3', 'o4', 'gpt-5', 'thinking-exp')
+# Claude 5.x (haiku/sonnet/opus) thinks by default and Fable always does: same empty content on
+# the 400 cap as gpt-5. The keywords don't match claude-*-4-5 or claude-3-5-*.
+REASONING_MODEL_KEYWORDS = ('o1', 'o3', 'o4', 'gpt-5', 'thinking-exp', 'haiku-5', 'sonnet-5', 'opus-5', 'fable-5')
 
 
 def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
@@ -246,7 +268,7 @@ def _is_local_llm_endpoint(llm_cfg: dict) -> bool:
         from urllib.parse import urlparse
         from changedetectionio.validate_url import is_private_hostname
         host = urlparse(api_base).hostname
-        return bool(host) and is_private_hostname(host)
+        return bool(host) and is_private_hostname(host, classify_only=True)
     except Exception:
         # Never let timeout resolution break an LLM call — fall back to "not local".
         return False
@@ -927,7 +949,6 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0
         output_tokens = _resp[3] if len(_resp) > 3 else 0
-        result = parse_eval_response(raw)
     except Exception as e:
         logger.warning(f"LLM evaluation failed for {watch.get('uuid')}: {e}")
         # On failure: don't suppress the notification — pass through as important
@@ -941,6 +962,14 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
                              input_tokens=input_tokens,
                              output_tokens=output_tokens,
                              model=cfg['model'])
+
+    try:
+        result = parse_eval_response(raw)
+    except ValueError as e:
+        # Empty/unparsable answer (e.g. cut off at max_tokens) is no verdict: pass the change
+        # through like the other failures, and don't cache it as one.
+        logger.warning(f"LLM evaluation for {watch.get('uuid')} returned no usable answer ({e}) — passing change through as important")
+        return {'important': True, 'summary': ''}
 
     # Store in cache
     if 'llm_evaluation_cache' not in watch or watch['llm_evaluation_cache'] is None:

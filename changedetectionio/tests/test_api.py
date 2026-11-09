@@ -296,6 +296,11 @@ def test_api_simple(client, live_server, measure_memory_usage, datastore_path):
     assert isinstance(res.json.get('checking_now'), list)
     for running in res.json['checking_now']:
         assert set(running) == {'uuid', 'title', 'url', 'running_seconds'}
+    # Enabled processors, so the browser extension can offer them
+    processor_names = [p['name'] for p in res.json.get('processors')]
+    assert 'text_json_diff' in processor_names
+    assert 'restock_diff' in processor_names
+    assert all(p.get('description') for p in res.json['processors'])
 
     ######################################################
     # Mute and Pause, check it worked

@@ -101,6 +101,16 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 worker_pool.queue_item_async_safe(q, deferred_item, silent=True)
                 continue
 
+            # A scheduled check (the ticker stamps scheduled_at) for a monitor that was checked since it was scheduled:
+            # the ticker can queue it again while a worker has taken it off the queue but not claimed it yet, and that
+            # second copy is also re-queued above until the first check is done. One check is enough.
+            scheduled_at = queued_item_data.item.get('scheduled_at')
+            checked_watch = datastore.data['watching'].get(uuid)
+            if scheduled_at and checked_watch is not None and checked_watch.get('last_checked', 0) >= int(scheduled_at):
+                logger.debug(f"Worker {worker_id} skipping scheduled check of {uuid}, already checked since it was queued")
+                worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
+                continue
+
         except asyncio.TimeoutError:
             # No jobs available - check if we should restart based on time while idle
             runtime = time.time() - start_time

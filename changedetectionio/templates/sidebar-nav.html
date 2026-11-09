@@ -95,16 +95,12 @@
            title="{{ _('Queue') }}">
             <i data-feather="list" class="action-icon"></i>
             <span class="action-label">{{ _('Queue') }}</span>
-
-
             <span class="action-badge action-badge--count  queue-size-int">{{ queue_size }}</span>
-
-
         </a>
     </li>
     <li class="action-sidebar-li">
         <a href="{{ url_for('settings.notifications.apprise') }}"
-           class="action-sidebar-item"
+           class="action-sidebar-item {% if ep.startswith('settings.notifications') %}active{% endif %}"
            title="{{ _('Notifications') }}">
             <i data-feather="bell" class="action-icon"></i>
             <span class="action-label">{{ _('Notifications') }}</span>

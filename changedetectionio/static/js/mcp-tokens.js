@@ -70,6 +70,23 @@ $(document).ready(function () {
         });
     });
 
+    // Assistants signed in with OAuth (the OAuth sub-tab): only Revoke, they sign in again from the assistant
+    var $grants = $('#mcp-oauth-grants');
+    $grants.on('click', '[data-mcp-oauth-revoke]', function () {
+        var $grant = $(this).closest('.mcp-token');
+        ModalDialog.confirm({
+            type: 'danger',
+            title: $grants.data('revoke-title'),
+            message: '<p><strong>' + _modalEscapeHTML(String($grant.data('name'))) + '</strong></p><p>' + _modalEscapeHTML($grants.data('revoke-message')) + '</p>',
+            confirmText: $grants.data('revoke-button'),
+            onConfirm: function () {
+                $.post($grant.data('revoke-url')).done(function (data) {
+                    $grants.html(data.html);
+                }).fail(function () { alert($grants.data('error')); });
+            }
+        });
+    });
+
     $form.on('submit', function (e) {
         e.preventDefault();
         var adding = $form.attr('action') === $form.data('add-url');

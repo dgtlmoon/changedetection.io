@@ -42,6 +42,7 @@ class SystemInfo(Resource):
         overdue_watches = overdue_watch_uuids(self.datastore)
         from changedetectionio import __version__ as main_version, worker_pool
         from changedetectionio.api.operations import checking_now
+        from changedetectionio.processors import available_processors
         return {
             'checking_now': checking_now(self.datastore),
             'fetch_workers': worker_pool.get_worker_count(),
@@ -50,6 +51,8 @@ class SystemInfo(Resource):
             'base_url': self.datastore.data['settings']['application']['base_url'],
             'new_version_available': self.new_version_available,
             'overdue_watches': overdue_watches,
+            # Enabled processors in UI order, so clients (like the browser extension) can offer them
+            'processors': [{'name': name, 'description': description} for name, description in available_processors()],
             'queue_size': self.update_q.qsize(),
             'tag_count': len(self.datastore.data['settings']['application'].get('tags', {})),
             'uptime': round(time.time() - self.datastore.start_time, 2),

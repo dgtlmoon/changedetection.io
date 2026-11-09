@@ -36,47 +36,13 @@ class processor_settings_form(processor_text_json_diff_form):
     def extra_tab_content(self):
         return _l('Restock & Price Detection')
 
-    def extra_form_content(self):
-        output = ""
+    def extra_form_template(self):
+        # Rendered with Flask's render_template() so the help text is extracted for translation (#4612)
+        return 'restock_diff/edit-extras.html'
 
-        if getattr(self, 'watch', None) and getattr(self, 'datastore'):
-            for tag_uuid in self.watch.get('tags'):
-                tag = self.datastore.data['settings']['application']['tags'].get(tag_uuid, {})
-                if tag.get('overrides_watch'):
-                    # @todo - Quick and dirty, cant access 'url_for' here because its out of scope somehow
-                    output = f"""<p><strong>Note! A Group tag overrides the restock and price detection here.</strong></p><style>#restock-fieldset-price-group {{ opacity: 0.6; }}</style>"""
-
-        output += """
-        {% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
-        <script>
-            $(document).ready(function () {
-                toggleOpacity('#processor_config_restock_diff-follow_price_changes', '.price-change-minmax', true);
-            });
-        </script>
-
-        <fieldset id="restock-fieldset-price-group">
-            <div class="pure-control-group">
-                <fieldset class="pure-group inline-radio">
-                    {{ render_field(form.processor_config_restock_diff.in_stock_processing) }}
-                </fieldset>
-                <fieldset class="pure-group">
-                    {{ render_checkbox_field(form.processor_config_restock_diff.follow_price_changes) }}
-                    <span class="pure-form-message-inline">Changes in price should trigger a notification</span>
-                </fieldset>
-                <fieldset class="pure-group price-change-minmax">
-                    {{ render_field(form.processor_config_restock_diff.price_change_min, placeholder=watch.get('restock', {}).get('price')) }}
-                    <span class="pure-form-message-inline">Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value.</span>
-                </fieldset>
-                <fieldset class="pure-group price-change-minmax">
-                    {{ render_field(form.processor_config_restock_diff.price_change_max, placeholder=watch.get('restock', {}).get('price')) }}
-                    <span class="pure-form-message-inline">Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value.</span>
-                </fieldset>
-                <fieldset class="pure-group price-change-minmax">
-                    {{ render_field(form.processor_config_restock_diff.price_change_threshold_percent) }}
-                    <span class="pure-form-message-inline">Price must change more than this % since the previous check to trigger a change.</span><br>
-                    <span class="pure-form-message-inline">For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change more than $20 since then.</span><br>
-                </fieldset>
-            </div>
-        </fieldset>
-        """
-        return output
+    def tag_overrides_restock(self):
+        """True when one of this watch's group tags overrides its restock/price settings."""
+        if getattr(self, 'watch', None) and getattr(self, 'datastore', None):
+            tags = self.datastore.data['settings']['application']['tags']
+            return any(tags.get(tag_uuid, {}).get('overrides_watch') for tag_uuid in self.watch.get('tags', []))
+        return False
