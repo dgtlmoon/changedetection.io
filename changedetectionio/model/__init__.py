@@ -222,6 +222,13 @@ class watch_base(dict):
             'notification_screenshot': False,  # Include the latest screenshot if available and supported by the apprise URL
             'notification_title': None,
             'notification_urls': [],  # List of URLs to add to the notification Queue (Usually AppRise)
+            # OAuth 2.0 client credentials, for APIs that want a bearer token (#375)
+            'oauth2_audience': '',
+            'oauth2_client_auth': 'basic',  # 'basic' (HTTP Basic, the default in RFC 6749) or 'body'
+            'oauth2_client_id': '',
+            'oauth2_client_secret': '',
+            'oauth2_scope': '',
+            'oauth2_token_url': '',
             'page_title': None, # <title> from the page
             'paused': False,
             'previous_md5': False,

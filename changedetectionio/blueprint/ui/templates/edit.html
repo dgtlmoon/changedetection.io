@@ -230,6 +230,27 @@ Math: {{ 1 + 1 }}") }}
                             ({{ _('Not supported by Selenium browser') }})
                         </div>
                     </div>
+                <div class="pure-control-group advanced-options" id="request-oauth2" style="display: none;">
+                    <details class="form-wrapper" {% if watch.get('oauth2_token_url') %}open{% endif %}>
+                        <summary>{{ _('OAuth 2.0 bearer token') }}</summary>
+                        <br>
+                        <div class="border-fieldset">
+                            <div class="pure-form-message-inline">{{ _('For APIs that want a bearer token: each check first gets an access token from the token URL with the client credentials grant, and sends it as an Authorization header. Tokens are reused until they expire. An Authorization header set above takes its place.') }}</div>
+                            <div class="pure-control-group">{{ render_field(form.oauth2_token_url, placeholder="https://auth.example.com/oauth/token", class="m-d") }}</div>
+                            <div class="pure-control-group">{{ render_field(form.oauth2_client_id, class="m-d") }}</div>
+                            <div class="pure-control-group">
+                                {{ render_field(form.oauth2_client_secret, autocomplete="new-password", class="m-d",
+                                                placeholder=_('(saved - leave empty to keep it)') if watch.get('oauth2_client_secret') else '') }}
+                            </div>
+                            <div class="pure-control-group">{{ render_field(form.oauth2_scope, placeholder="read:prices", class="m-d") }}</div>
+                            <div class="pure-control-group">
+                                {{ render_field(form.oauth2_audience, class="m-d") }}
+                                <span class="pure-form-message-inline">{{ _('Only for providers that ask for one, such as Auth0') }}</span>
+                            </div>
+                            <div class="pure-control-group">{{ render_field(form.oauth2_client_auth) }}</div>
+                        </div>
+                    </details>
+                </div>
             <fieldset data-visible-for="fetch_backend=html_requests fetch_backend=html_webdriver" >
                     <div class="pure-control-group inline-radio advanced-options"  style="display: none;">
                     {{ render_checkbox_field(form.ignore_status_codes) }}

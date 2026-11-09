@@ -248,6 +248,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if _resolve_llm_group_overrides(datastore.data['watching'][uuid], datastore).get('llm_backend_profile'):
                 extra_update_obj['llm_backend_profile'] = datastore.data['watching'][uuid].get('llm_backend_profile', True)
 
+            # The OAuth client secret is never sent back to the page, so an empty field means "keep it",
+            # unless OAuth is being switched off by clearing the token URL (#375)
+            if not form.data.get('oauth2_token_url'):
+                extra_update_obj['oauth2_client_secret'] = ''
+            elif not form.data.get('oauth2_client_secret'):
+                extra_update_obj['oauth2_client_secret'] = datastore.data['watching'][uuid].get('oauth2_client_secret', '')
+
             # Because wtforms doesn't support accessing other data in process_ , but we convert the CSV list of tags back to a list of UUIDs
             tag_uuids = []
             if form.data.get('tags'):

@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 
 from changedetectionio.browser_steps.browser_steps import browser_steps_get_valid_steps
@@ -227,6 +228,16 @@ class difference_detection_processor():
 
         timeout = self.datastore.data['settings']['requests'].get('timeout')
 
+        # OAuth 2.0 client credentials (#375): a bearer token, unless the user set their own Authorization header
+        oauth2_token_used = False
+        from changedetectionio import oauth2
+        if oauth2.is_configured(self.watch) and 'Authorization' not in request_headers:
+            proxy_url = self.fetcher.selected_proxy_url
+            proxies = {'http': proxy_url, 'https': proxy_url} if proxy_url else None
+            token = await asyncio.to_thread(oauth2.get_access_token, self.watch, proxies, timeout or 30)
+            request_headers.update({'Authorization': f"Bearer {token}"})
+            oauth2_token_used = True
+
         request_body = self.watch.get('body')
         if request_body and JINJA2_MARKER_PATTERN.search(request_body):
             request_body = jinja_render(template_str=request_body)
@@ -261,7 +272,13 @@ class difference_detection_processor():
             # Not a failure, the page is just the same as last time
             raise
         except Exception as failed_fetch:
+            # A refused token, revoked or expired early, is not asked for again until the next one is fetched
+            if oauth2_token_used and getattr(failed_fetch, 'status_code', None) == 401:
+                oauth2.forget_token(self.watch)
             await self._fetch_with_fallbacks(failed_fetch, prefer_fetch_backend, preferred_proxy_id, run_args)
+
+        if oauth2_token_used and getattr(self.fetcher, 'status_code', None) == 401:
+            oauth2.forget_token(self.watch)
 
         # @todo .quit here could go on close object, so we can run JS if change-detected
         await self.fetcher.quit(watch=self.watch)
@@ -352,6 +369,8 @@ class difference_detection_processor():
         # Stamp the resolved backend name so downstream consumers (processors, plugins)
         # can read it directly instead of re-deriving it from the fetcher class name.
         fetcher.backend_name = backend_name
+        # and the proxy, which the check's other requests, such as for an OAuth token, go through too
+        fetcher.selected_proxy_url = proxy_url
 
         if self.watch.has_browser_steps:
             fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

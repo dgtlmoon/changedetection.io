@@ -2702,6 +2702,25 @@ msgid "Not supported by Selenium browser"
 msgstr "Selenium 브라우저에서는 지원되지 않습니다."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid "OAuth 2.0 bearer token"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"For APIs that want a bearer token: each check first gets an access token from the token URL with the client "
+"credentials grant, and sends it as an Authorization header. Tokens are reused until they expire. An Authorization "
+"header set above takes its place."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "(saved - leave empty to keep it)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Only for providers that ask for one, such as Auth0"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Turn on text finder"
 msgstr "텍스트 찾기 켜기"
 
@@ -3938,6 +3957,38 @@ msgid "Request method"
 msgstr "요청 방법"
 
 #: changedetectionio/forms.py
+msgid "OAuth 2.0 token URL"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Client ID"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Client secret"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Scope"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Audience"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "Send the client credentials"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "As HTTP Basic authentication"
+msgstr ""
+
+#: changedetectionio/forms.py
+msgid "In the request body"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Ignore status codes (process non-2xx status codes as normal)"
 msgstr "응답 코드 무시(2xx가 아닌 응답 코드도 정상 처리)"
 
@@ -4033,6 +4084,10 @@ msgstr "목록에 페이지 <title> 사용"
 #: changedetectionio/forms.py
 msgid "Number of history items per watch to keep"
 msgstr "모니터링별 보관할 기록 개수"
+
+#: changedetectionio/forms.py
+msgid "A client ID is needed with an OAuth 2.0 token URL"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
