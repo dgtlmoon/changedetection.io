@@ -6,6 +6,7 @@ from flask_babel import gettext
 from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.pluggy_interface import set_watch_last_viewed
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
@@ -48,7 +49,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
     elif (op == 'mark-viewed'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
-                datastore.set_last_viewed(uuid, int(time.time()))
+                set_watch_last_viewed(datastore, uuid, time.time(), source='mark_viewed')
         result_message = gettext("{} watches updated").format(len(uuids))
 
     elif (op == 'mark-unviewed'):
@@ -60,7 +61,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
             watch = datastore.data['watching'].get(uuid)
             if watch and watch.history_n >= 2:
                 sorted_keys = sorted(watch.history.keys(), key=lambda x: int(x))
-                datastore.set_last_viewed(uuid, int(sorted_keys[-2]))
+                set_watch_last_viewed(datastore, uuid, sorted_keys[-2], source='mark_unviewed')
                 updated += 1
         result_message = gettext("{} watches updated").format(updated)
 
@@ -264,7 +265,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 if not wl_filters.watch_matches_filters(datastore, watch, list_filters):
                     continue
 
-                datastore.set_last_viewed(watch_uuid, now, send_signal=False)
+                set_watch_last_viewed(datastore, watch_uuid, now, source='mark_all_viewed', send_signal=False)
                 marked_count += 1
 
             logger.info(f"Marking complete: {marked_count} watches marked as viewed")
