@@ -14,6 +14,7 @@ plugins can replace through the hooks in hookspecs.py.
 """
 import re
 import statistics
+import time
 
 from flask_babel import gettext
 from loguru import logger
@@ -182,7 +183,7 @@ def get_chart(watch, datastore, request):
     """HTML of a price/stock chart, served by /diff/<uuid>/processor-chart?context=watchlist|history.
     Drawn by whichever plugin implements the matching hook, the built-in chart otherwise.
     Returns None for an unknown context."""
-    from changedetectionio.pluggy_interface import plugin_manager
+    from changedetectionio.pluggy_interface import plugin_manager, set_watch_last_viewed
 
     context = request.args.get('context', 'history')
     hook_name = CHART_HOOKS.get(context)
@@ -194,14 +195,14 @@ def get_chart(watch, datastore, request):
     # The watch list roll-down stands in for the history page, so opening it counts as viewing the
     # watch (the history page itself does that in render())
     if context == 'watchlist' and html is not None:
-        plugin_manager.hook.restock_diff_mark_watch_viewed(watch=watch, datastore=datastore)
+        set_watch_last_viewed(datastore, watch.get('uuid'), time.time(), source='watchlist_chart')
     return html
 
 
 def render(watch, datastore, request, url_for, render_template, flash, redirect, extract_form=None):
     """Render the price/stock timeline page (shell + summary). The graph data is loaded
     asynchronously from get_data() so this stays light regardless of history length."""
-    from changedetectionio.pluggy_interface import plugin_manager
+    from changedetectionio.pluggy_interface import set_watch_last_viewed
 
     uuid = watch.get('uuid')
     dates = list(watch.history.keys())
@@ -216,7 +217,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
             logger.error(f"Restock diff: unable to read latest snapshot for {uuid}: {e}")
 
     # Opening the history page counts as viewing it (mirrors the text diff page).
-    plugin_manager.hook.restock_diff_mark_watch_viewed(watch=watch, datastore=datastore)
+    set_watch_last_viewed(datastore, uuid, time.time(), source='history')
 
     return render_template(
         'restock_diff/difference.html',

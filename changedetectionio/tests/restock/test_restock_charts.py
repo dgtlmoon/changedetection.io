@@ -71,16 +71,16 @@ def test_watchlist_chart_marks_watch_viewed(client, live_server, measure_memory_
 
 
 def test_mark_viewed_hook_replaces_the_builtin(client, live_server, measure_memory_usage, datastore_path):
-    """A plugin returning a result from restock_diff_mark_watch_viewed replaces the built-in that saves the view,
-    for both the watch list chart and the history page."""
+    """A plugin returning a result from the core set_watch_last_viewed hook replaces saving the view, for both the
+    watch list chart and the restock history page."""
     from changedetectionio.pluggy_interface import plugin_manager, hookimpl
 
     viewed = []
 
     class OwnViewTracking:
         @hookimpl
-        def restock_diff_mark_watch_viewed(self, watch):
-            viewed.append(watch.get('uuid'))
+        def set_watch_last_viewed(self, watch, source):
+            viewed.append((watch.get('uuid'), source))
             return True
 
     uuid = add_restock_watch_with_two_prices(client, datastore_path)
@@ -89,7 +89,7 @@ def test_mark_viewed_hook_replaces_the_builtin(client, live_server, measure_memo
     try:
         assert chart(client, uuid, 'watchlist').status_code == 200
         assert client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid)).status_code == 200
-        assert viewed == [uuid, uuid]
+        assert viewed == [(uuid, 'watchlist_chart'), (uuid, 'history')]
         assert watch['last_viewed'] == 0, "The plugin took over, the built-in didn't run"
     finally:
         plugin_manager.unregister(name='test_own_view_tracking')

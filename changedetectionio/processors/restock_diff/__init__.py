@@ -147,9 +147,9 @@ class Watch(BaseWatch):
 
 def register_plugin_hooks(plugin_manager):
     """Called once at startup (processors.register_processor_plugin_hooks()): adds this processor's own
-    hooks (hookspecs.py) and their built-in implementations (plugins/default_charts.py, plugins/mark_viewed.py)."""
+    hooks (hookspecs.py) and the built-in charts that implement them (plugins/default_charts.py)."""
     from . import hookspecs
-    from .plugins import default_charts, mark_viewed
+    from .plugins import default_charts
 
     caller = getattr(plugin_manager.hook, 'restock_diff_watch_history_page_chart', None)
     if caller is None or caller.spec is None:
@@ -157,5 +157,3 @@ def register_plugin_hooks(plugin_manager):
     # 'builtin_' names are hidden from the active plugins list
     if not plugin_manager.is_registered(default_charts):
         plugin_manager.register(default_charts, 'builtin_restock_default_charts')
-    if not plugin_manager.is_registered(mark_viewed):
-        plugin_manager.register(mark_viewed, 'builtin_restock_mark_viewed')
