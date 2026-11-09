@@ -435,14 +435,11 @@ class ChangeDetectionSpec:
         """
         pass
 
-    @hookspec(firstresult=True)
-    def set_watch_last_viewed(watch, datastore, timestamp, source):
-        """A watch's "last viewed" time is about to be saved, which is what decides whether its row
-        shows as unviewed. Core saves it with datastore.set_last_viewed() unless a plugin takes over.
-
-        Return None to let it be saved as usual (any other plugin, then core, still runs), so a
-        plugin that only wants to know about views must return None. Return anything else to
-        replace the save: core then doesn't write last_viewed at all.
+    @hookspec
+    def watch_last_viewed_updated(watch, datastore, timestamp, source):
+        """A watch's "last viewed" time was just saved, which is what decides whether its row shows
+        as unviewed. Called after the save, so watch['last_viewed'] already holds the new value.
+        Core always saves it, a plugin can't stop or replace that. Return values are ignored.
 
         Args:
             watch: The Watch model instance
@@ -456,9 +453,6 @@ class ChangeDetectionSpec:
                 'mark_viewed'     - the "Mark viewed" action on selected watches
                 'mark_unviewed'   - the "Mark unviewed" action on selected watches
                 'mark_all_viewed' - the "Mark all viewed" button, once per watch in view
-
-        Returns:
-            None to let the save happen, anything else to replace it
         """
         pass
 
@@ -932,18 +926,16 @@ def collect_fetcher_status_icons(fetcher_name):
     return None
 
 def set_watch_last_viewed(datastore, uuid, timestamp, source, send_signal=True):
-    """Save a watch's last viewed time, or let a set_watch_last_viewed plugin take over.
+    """Save a watch's last viewed time, then tell plugins (watch_last_viewed_updated).
     Every "this watch was viewed" path goes through here, not datastore.set_last_viewed() directly.
     send_signal is passed on to datastore.set_last_viewed(), bulk callers turn it off."""
     watch = datastore.data['watching'].get(uuid)
     if not watch:
         return
     timestamp = int(timestamp)
-    # firstresult=True, so anything but None means a plugin handled it
-    if plugin_manager.hook.set_watch_last_viewed(watch=watch, datastore=datastore, timestamp=timestamp,
-                                                 source=source) is not None:
-        return
     datastore.set_last_viewed(uuid, timestamp, send_signal=send_signal)
+    plugin_manager.hook.watch_last_viewed_updated(watch=watch, datastore=datastore, timestamp=timestamp,
+                                                  source=source)
 
 
 def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instance, url, llm_intent=None):

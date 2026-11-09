@@ -1,7 +1,7 @@
 """
 Plugin hooks of the restock_diff processor, added to the plugin manager by register_plugin_hooks() in
 __init__.py. The built-in charts implement them in plugins/default_charts.py (trylast), so a plugin that
-implements one of these replaces that chart. Marking a watch as viewed is a core hook, set_watch_last_viewed
+implements one of these replaces that chart. Marking a watch as viewed is a core hook, watch_last_viewed_updated
 in pluggy_interface.py.
 
 Both get the same arguments, take only the ones you need:
