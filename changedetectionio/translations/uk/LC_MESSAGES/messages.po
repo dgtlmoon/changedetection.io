@@ -543,6 +543,10 @@ msgid "MCP server switched off."
 msgstr "Сервер MCP вимкнено."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."
+msgstr "Публічну адресу MCP змінено: асистентам, підключеним через вхід (OAuth), потрібно підключитися знову."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -1419,6 +1423,43 @@ msgstr "Відкликати цей вхід?"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "Асистента буде відразу відключено, він може увійти знову."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The address assistants reach this instance on, for example when it is served through another domain or proxy. Sign-in"
+" (OAuth) hands this address out, so it must be the one assistants connect to. Leave it empty to use the address of "
+"each request, shown in grey."
+msgstr ""
+"Адреса, за якою асистенти звертаються до цього екземпляра, наприклад коли він доступний через інший домен або проксі."
+" Вхід (OAuth) передає цю адресу, тож вона має збігатися з тією, до якої підключаються асистенти. Залиште порожнім, "
+"щоб використовувати адресу кожного запиту (показано сірим)."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The MCP server is then at this address followed by /mcp/v1. Changing it signs out assistants connected with sign-in "
+"(OAuth), they need to connect again. Access tokens keep working."
+msgstr ""
+"MCP-сервер тоді знаходиться за цією адресою з /mcp/v1 у кінці. Зміна відключає асистентів, підключених через вхід "
+"(OAuth), їм потрібно підключитися знову. Токени доступу й далі працюють."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "Доступ без входу"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr ""
+"Будь-хто з адресою MCP зможе переглядати список ваших моніторів і читати їхні зміни, знімки та скриншоти без токена "
+"чи пароля, наприклад для публічного демо. Сповіщення, системна інформація та будь-які зміни, як і раніше, потребують "
+"входу або токена доступу."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "Без входу кожна адреса може робити %(count)s викликів інструментів на хвилину."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
@@ -4379,12 +4420,24 @@ msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Use a full http:// or https:// address, without ?query or #fragment."
+msgstr "Вкажіть повну адресу http:// або https:// без ?запиту та #фрагмента."
+
+#: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "Увімкнути кінцеві точки MCP і OAuth"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "MCP Note"
 msgstr "Нотатка MCP"
+
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "Дозволити доступ лише для читання без входу"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "Public MCP address"
+msgstr "Публічна адреса MCP"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
@@ -4396,6 +4449,7 @@ msgid "Monitors"
 msgstr "Монітори"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4403,6 +4457,7 @@ msgid "Write"
 msgstr "Запис"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4410,6 +4465,7 @@ msgid "None"
 msgstr "Немає"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4421,7 +4477,7 @@ msgstr "Читання"
 msgid "Groups (tags)"
 msgstr "Групи (теги)"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Browser steps & JavaScript"
 msgstr "Кроки браузера та JavaScript"
 
@@ -5030,6 +5086,11 @@ msgstr "+ Пошук серед понад %(count)d інших сервісів
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "List all"
 msgstr "Показати всі"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Notification services <a href=\"%(url)s\" target=\"_blank\">powered by Apprise</a>."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"

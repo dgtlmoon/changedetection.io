@@ -2,7 +2,8 @@
   The MCP None / Read / Write grid, shared by the access token overlay (settings/llm/templates/llm-settings_mcp.html)
   and the OAuth consent screen (blueprint/mcp/oauth/templates/mcp-oauth-consent.html).
 #}
-{# The None / Read / Write grid, one row per perm_<area> field of forms.MCPTokenForm #}
+{# The None / Read / Write grid, one row per perm_<area> field of forms.MCPTokenForm, then the rows plugins added
+   (form.plugin_rows, set by settings/llm mcp_token_form()) #}
 {% macro permissions_grid(form) -%}
   {% set rows = [
       (form.perm_monitors, _('Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete.')),
@@ -10,7 +11,7 @@
       (form.perm_notifications, _('Read: list them (secrets hidden) and look up services. Write: add, remove and mute.')),
       (form.perm_browser, _('Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors.')),
       (form.perm_system, _('Health, the check queue and what is being checked right now.')),
-  ] %}
+  ] + (form.plugin_rows|default([])) %}
   <table class="mcp-perms">
     <thead>
       <tr>

@@ -32,3 +32,9 @@ test-memory.log
 
 # Per-test loguru logs written by tests/conftest.py (dirname(__file__)/logs)
 changedetectionio/tests/logs/
+
+# AI local configs
+/.claude/
+/.mcp.json
+/opencode.json
+/opencode.jsonc

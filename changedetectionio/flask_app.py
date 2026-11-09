@@ -1913,13 +1913,18 @@ def ticker_thread_check_time_launch_checks():
                                 # Record the last used time
                                 proxy_last_called_time[watch_proxy] = int(time.time())
 
+                    # running_uuids / queued_uuids are from the start of this pass: a worker may have taken it since
+                    if worker_pool.is_watch_running(uuid) or uuid in update_q.get_queued_uuids():
+                        continue
+
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
 
-                    # Into the queue with you
+                    # Into the queue with you. scheduled_at lets a worker drop it when the watch was checked since
+                    # (a worker between taking it off the queue and claiming it is in neither list above)
                     queued_successfully = worker_pool.queue_item_async_safe(
                         update_q,
-                        queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}),
+                        queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'scheduled_at': now}),
                     )
                     if queued_successfully:
                         logger.debug(

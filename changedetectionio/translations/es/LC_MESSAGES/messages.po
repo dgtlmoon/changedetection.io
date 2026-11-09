@@ -550,6 +550,12 @@ msgid "MCP server switched off."
 msgstr "Servidor MCP desactivado."
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."
+msgstr ""
+"La dirección pública de MCP ha cambiado: los asistentes conectados con inicio de sesión (OAuth) deben conectarse de "
+"nuevo."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -1440,6 +1446,43 @@ msgstr "¿Revocar este inicio de sesión?"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "El asistente se desconecta de inmediato, puede volver a iniciar sesión."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The address assistants reach this instance on, for example when it is served through another domain or proxy. Sign-in"
+" (OAuth) hands this address out, so it must be the one assistants connect to. Leave it empty to use the address of "
+"each request, shown in grey."
+msgstr ""
+"La dirección en la que los asistentes encuentran esta instancia, por ejemplo cuando se sirve a través de otro dominio"
+" o proxy. El inicio de sesión (OAuth) comunica esta dirección, así que debe ser a la que se conectan los asistentes. "
+"Déjala vacía para usar la dirección de cada petición, mostrada en gris."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The MCP server is then at this address followed by /mcp/v1. Changing it signs out assistants connected with sign-in "
+"(OAuth), they need to connect again. Access tokens keep working."
+msgstr ""
+"El servidor MCP estará en esta dirección seguida de /mcp/v1. Cambiarla cierra la sesión de los asistentes conectados "
+"con inicio de sesión (OAuth), tendrán que conectarse de nuevo. Los tokens de acceso siguen funcionando."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "Acceso sin iniciar sesión"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr ""
+"Cualquiera con la dirección MCP podrá listar tus monitores y leer sus cambios, instantáneas y capturas de pantalla, "
+"sin token ni contraseña, por ejemplo para una demo pública. Las notificaciones, la información del sistema y "
+"cualquier cambio siguen necesitando inicio de sesión o un token de acceso."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "Sin iniciar sesión, cada dirección puede hacer %(count)s llamadas a herramientas por minuto."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
@@ -4438,12 +4481,24 @@ msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Use a full http:// or https:// address, without ?query or #fragment."
+msgstr "Usa una dirección completa http:// o https://, sin ?consulta ni #fragmento."
+
+#: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "Activar los endpoints de MCP y OAuth"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "MCP Note"
 msgstr "Nota MCP"
+
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "Permitir acceso de solo lectura sin iniciar sesión"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "Public MCP address"
+msgstr "Dirección pública de MCP"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
@@ -4455,6 +4510,7 @@ msgid "Monitors"
 msgstr "Monitores"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4462,6 +4518,7 @@ msgid "Write"
 msgstr "Escritura"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4469,6 +4526,7 @@ msgid "None"
 msgstr "Ninguno"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4480,7 +4538,7 @@ msgstr "Lectura"
 msgid "Groups (tags)"
 msgstr "Grupos (etiquetas)"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Browser steps & JavaScript"
 msgstr "Pasos del navegador y JavaScript"
 
@@ -5089,6 +5147,11 @@ msgstr "+ Buscar entre más de %(count)d servicios"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "List all"
 msgstr "Ver todos"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Notification services <a href=\"%(url)s\" target=\"_blank\">powered by Apprise</a>."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"

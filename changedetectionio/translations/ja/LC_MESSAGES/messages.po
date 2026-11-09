@@ -542,6 +542,10 @@ msgid "MCP server switched off."
 msgstr "MCP サーバーをオフにしました。"
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."
+msgstr "公開 MCP アドレスが変更されました。サインイン（OAuth）で接続したアシスタントは再接続が必要です。"
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
@@ -1388,6 +1392,39 @@ msgstr "このサインインを取り消しますか？"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid "The assistant is disconnected at once, it can sign in again."
 msgstr "アシスタントはすぐに切断されます。もう一度サインインできます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The address assistants reach this instance on, for example when it is served through another domain or proxy. Sign-in"
+" (OAuth) hands this address out, so it must be the one assistants connect to. Leave it empty to use the address of "
+"each request, shown in grey."
+msgstr ""
+"アシスタントがこのインスタンスに接続するアドレスです（例: "
+"別のドメインやプロキシ経由で公開している場合）。サインイン（OAuth）はこのアドレスを伝えるため、アシスタントが接続するアドレスと一致させてください。空欄にすると各リクエストのアドレス（グレー表示）を使います。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The MCP server is then at this address followed by /mcp/v1. Changing it signs out assistants connected with sign-in "
+"(OAuth), they need to connect again. Access tokens keep working."
+msgstr "MCP サーバーはこのアドレスの後ろに /mcp/v1 を付けた場所になります。変更すると、サインイン（OAuth）で接続したアシスタントはサインアウトされ、再接続が必要です。アクセストークンはそのまま使えます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "サインインなしのアクセス"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr ""
+"MCP "
+"アドレスを知っていれば誰でも、トークンやパスワードなしでモニターの一覧と、その変更・スナップショット・スクリーンショットを読めるようになります（公開デモなど）。通知、システム情報、変更操作には引き続きサインインかアクセストークンが必要です。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "サインインなしでは、各アドレスは 1 分あたり %(count)s 回までツールを呼び出せます。"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
@@ -4328,12 +4365,24 @@ msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Use a full http:// or https:// address, without ?query or #fragment."
+msgstr "?クエリや #フラグメントを含まない、完全な http:// または https:// のアドレスを入力してください。"
+
+#: changedetectionio/forms.py
 msgid "Switch on the MCP and OAuth endpoints"
 msgstr "MCP と OAuth のエンドポイントをオンにする"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "MCP Note"
 msgstr "MCPノート"
+
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "サインインなしで読み取り専用アクセスを許可"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "Public MCP address"
+msgstr "公開 MCP アドレス"
 
 #: changedetectionio/forms.py
 msgid "e.g. Claude Code, laptop"
@@ -4345,6 +4394,7 @@ msgid "Monitors"
 msgstr "モニター"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4352,6 +4402,7 @@ msgid "Write"
 msgstr "書き込み"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4359,6 +4410,7 @@ msgid "None"
 msgstr "なし"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4370,7 +4422,7 @@ msgstr "読み取り"
 msgid "Groups (tags)"
 msgstr "グループ（タグ）"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Browser steps & JavaScript"
 msgstr "ブラウザステップとJavaScript"
 
@@ -4979,6 +5031,11 @@ msgstr "+ 他の%(count)d以上のサービスを検索"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "List all"
 msgstr "すべて表示"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Notification services <a href=\"%(url)s\" target=\"_blank\">powered by Apprise</a>."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"
