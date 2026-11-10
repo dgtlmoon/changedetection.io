@@ -32,6 +32,21 @@ class fetcher(playwright_fetcher):
     supports_browser_type = True
     supports_delete_created_files = True
 
+    # The browser a variation launches (FetcherConfig.browser_type) -> (icon, its name)
+    BROWSER_TYPE_ICONS = {
+        'chromium': ('google-chrome-icon.png', 'Chromium'),
+        'firefox': ('firefox-icon.svg', 'Firefox'),
+        'webkit': ('webkit-icon.svg', 'WebKit'),
+    }
+
+    @classmethod
+    def get_status_icon_data(cls, browser_config=None):
+        """The browser a variation launches, or the Playwright icon for the fetcher itself
+        (it launches nothing until a variation picks a browser)."""
+        filename, name = cls.BROWSER_TYPE_ICONS.get(getattr(browser_config, 'browser_type', None),
+                                                    ('playwright-icon.png', 'Playwright'))
+        return {'filename': filename, 'alt': name, 'title': name}
+
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(proxy_override=proxy_override,
                          custom_browser_connection_url=custom_browser_connection_url, **kwargs)

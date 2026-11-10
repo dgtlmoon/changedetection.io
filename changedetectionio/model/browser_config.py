@@ -605,6 +605,45 @@ def is_valid_browser_selector(value, datastore, allow_empty=True):
     return value in {name for name, _description in content_fetchers.available_fetchers()}
 
 
+def browser_icon_data(engine_name, browser_config=None):
+    """Icon data ({'filename', 'alt', 'title', optional 'group' / 'style'}) for a fetcher, or for
+    one browser built on it when `browser_config` (a FetcherConfig or its dict) is given. None
+    when it has no icon (the plain HTTP client).
+
+    THE one place an icon is resolved - the watch list and the /browsers page both ask here. A
+    plugin's fetcher_status_icon hook wins, then the fetcher class answers
+    (Fetcher.get_status_icon_data), which is how a variation of a fetcher that can launch several
+    browsers gets its own browser's icon rather than the fetcher's.
+    """
+    import inspect
+    from changedetectionio import content_fetchers
+    from changedetectionio.pluggy_interface import collect_fetcher_status_icons
+
+    if isinstance(browser_config, dict):
+        browser_config = FetcherConfig(**browser_config)
+
+    icon = collect_fetcher_status_icons(engine_name, browser_config)
+    if icon:
+        return icon
+    get_icon = getattr(getattr(content_fetchers, engine_name or '', None), 'get_status_icon_data', None)
+    if not get_icon:
+        return None
+    # A fetcher from a plugin written before browser_config existed takes no argument
+    if 'browser_config' in inspect.signature(get_icon).parameters:
+        return get_icon(browser_config=browser_config)
+    return get_icon()
+
+
+def browser_selector_icon_data(datastore, selected):
+    """browser_icon_data() for anything a watch may have in fetch_backend: a fetcher name, a
+    saved browser's id, or 'system' - which answers with the icon of whatever the default
+    browser currently is."""
+    if not selected or selected == 'system':
+        selected = datastore.data['settings']['application'].get('fetch_backend')
+    _entry, engine, cfg = datastore.browser_config_store.engine_and_config(selected)
+    return browser_icon_data(engine, cfg)
+
+
 def engine_short_description(engine_name):
     """An engine's short name for browser lists (Fetcher.fetcher_short_description), falling back
     to its full description, then to the engine name itself."""

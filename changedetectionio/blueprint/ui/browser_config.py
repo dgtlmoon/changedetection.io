@@ -61,6 +61,54 @@ def _base_fetchers(datastore):
     return out
 
 
+def _variation_summary(browser_config):
+    """What a variation changes, in words, for its row on the /browsers page:
+    [{'kind', 'text', 'icon' or 'flag', 'title'}]. `kind` becomes the chip's
+    browser-chip--<kind> class. Never includes the connection URL itself, only its host - the
+    rest commonly carries credentials."""
+    from urllib.parse import urlparse
+    from changedetectionio.model.browser_devices import DEVICE_PRESETS
+    from .form_browseroptions import BLOCKABLE_RESOURCE_TYPES
+    bc = browser_config or {}
+    out = []
+
+    if bc.get('browser_type'):
+        out.append({'kind': 'browser-type', 'icon': 'compass', 'text': bc['browser_type'].capitalize()})
+    if bc.get('device'):
+        category = (DEVICE_PRESETS.get(bc['device']) or {}).get('category')
+        out.append({'kind': 'device', 'icon': 'tablet' if category == 'tablet' else 'smartphone', 'text': bc['device']})
+    elif bc.get('viewport_width'):
+        out.append({'kind': 'viewport', 'icon': 'monitor',
+                    'text': f"{bc['viewport_width']}×{bc.get('viewport_height') or '?'}"})
+    if bc.get('locale'):
+        chip = {'kind': 'locale', 'icon': 'globe', 'text': bc['locale'], 'title': bc['locale']}
+        try:
+            from babel import Locale
+            from flask_babel import get_locale
+            locale = Locale.parse(bc['locale'], sep='-')
+            # The language's name in the UI's own language, and its country's flag
+            chip['text'] = locale.get_display_name(get_locale() or 'en') or bc['locale']
+            if locale.territory and len(locale.territory) == 2:
+                chip['flag'] = locale.territory.lower()
+        except Exception:
+            pass
+        out.append(chip)
+    if bc.get('timezone_id'):
+        out.append({'kind': 'timezone', 'icon': 'clock', 'title': bc['timezone_id'],
+                    'text': bc['timezone_id'].split('/')[-1].replace('_', ' ')})
+    if bc.get('block_resource_types'):
+        labels = dict(BLOCKABLE_RESOURCE_TYPES)
+        blocked = ', '.join(str(labels.get(t, t)) for t in bc['block_resource_types'])
+        out.append({'kind': 'blocking', 'icon': 'slash', 'text': f"{gettext('no')} {blocked}"})
+    if bc.get('connection_url'):
+        host = urlparse(bc['connection_url']).hostname
+        if host:
+            out.append({'kind': 'endpoint', 'icon': 'link', 'text': host})
+    if bc.get('user_agent'):
+        out.append({'kind': 'user-agent', 'icon': 'user', 'text': gettext('Custom User-Agent'), 'title': bc['user_agent']})
+    return out
+
+
 def _autocomplete_choices():
     """(locales, timezones) for the datalist autocompletes - same sources the FetcherConfig
     validators use (babel CLDR + stdlib zoneinfo)."""
@@ -92,8 +140,12 @@ def _applicable_fields_for(capabilities):
 def _entry_to_formdata(entry, sections=()):
     """Flatten a browsers.json entry into flat form field values (base is contextual, not a field).
     Each plugin section's saved settings go to its sub-form (plugin_<id>)."""
+    from .form_browseroptions import DEVICE_CUSTOM_SIZE
     data = {'label': entry.get('label')}
     data.update(entry.get('browser_config') or {})
+    # A saved viewport with no device is what "Custom size" stores
+    if not data.get('device') and data.get('viewport_width'):
+        data['device'] = DEVICE_CUSTOM_SIZE
     saved = data.pop('plugin_settings', None) or {}
     for section in sections:
         data[section.field_name] = saved.get(section.plugin_id) or {}
@@ -168,10 +220,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             base = entry.get('base_fetcher')
             if cid == base:
                 continue
-            variations_by_base.setdefault(base, []).append({'id': cid, 'usage': usage.get(cid, no_usage), **entry})
+            variations_by_base.setdefault(base, []).append({
+                'id': cid, 'usage': usage.get(cid, no_usage),
+                'summary': _variation_summary(entry.get('browser_config')), **entry})
         for f in base_fetchers:
             f['variations'] = variations_by_base.get(f['name'], [])
             f['usage'] = usage.get(f['name'], no_usage)
+            # Base-only browsers (nothing to connect to / launch until a variation says what)
+            # are set up once they have a variation
+            f['needs_setup'] = not f['ready_to_use'] and not f['variations']
+        # Usable ones first, the ones still to be set up last; within that, real browsers first
+        base_fetchers.sort(key=lambda f: (f['needs_setup'], not f['is_browser'], f['name']))
         return render_template(
             "browsers-overview.html",
             base_fetchers=base_fetchers,
@@ -297,7 +356,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return redirect(url_for('ui.browser_config.browsers_overview'))
 
         base = config_id if is_builtin else (entry or {}).get('base_fetcher')
-        base_label = str(builtins[config_id]['label']) if is_builtin else base
+        # The browser's own long name, e.g. "Playwright (local library)" - never its internal id
+        from changedetectionio import content_fetchers
+        base_label = str(builtins[config_id]['label'] if is_builtin
+                         else dict(content_fetchers.available_fetchers()).get(base, base))
         sections, form_class = _plugin_sections_and_form(base, _caps_for(base) if base else None)
         saved_plugin_settings = ((entry or {}).get('browser_config') or {}).get('plugin_settings') or {}
 

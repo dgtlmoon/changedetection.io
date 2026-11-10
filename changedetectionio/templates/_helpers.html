@@ -115,17 +115,26 @@
   {{ field(**kwargs)|safe }}
 {% endmacro %}
 
-{% macro render_browser_choice_field(field, variation_ids) %}
+{% macro render_browser_choice_field(field, variation_ids, show_label=True) %}
   {# A Browser RadioField rendered exactly like WTForms' own ListWidget, except that a browser the
      user added as a variation gets its name linked to its edit page (WTForms can't put markup in
      a radio label). `variation_ids` comes from list_user_variation_ids(), {id: engine short name};
      only the browser's own name is the link, not the "Local Playwright: " in front of it.
-     kwargs go on the <ul>, as they do with field(**kwargs). #}
-  <div {% if field.errors %} class="error" {% endif %}>{{ field.label }}</div>
+     Every choice also carries its browser's icon (browser_choice_icon filter).
+     Used for a watch's Browser and a group's browser override (show_label=False there, its
+     checkbox is the label). kwargs go on the <ul>, as they do with field(**kwargs); `class` is
+     added to the list's own browser-choice-list. #}
+  {% if show_label %}<div {% if field.errors %} class="error" {% endif %}>{{ field.label }}</div>{% endif %}
   <div {% if field.errors %} class="error" {% endif %}>
-    <ul id="{{ field.id }}"{% for k, v in kwargs.items() %} {{ k }}="{{ v }}"{% endfor %}>
+    <ul id="{{ field.id }}" class="browser-choice-list{% if kwargs.get('class') %} {{ kwargs.get('class') }}{% endif %}"{% for k, v in kwargs.items() if k != 'class' %} {{ k }}="{{ v }}"{% endfor %}>
       {% for option in field %}
         <li>{{ option() }} <label for="{{ option.id }}">
+          {#- Each choice's own icon: the browser a variation runs, and for "Default" whatever
+              the default browser currently is. A plain fetcher has none, so it gets a neutral one. -#}
+          <span class="browser-choice-icon">
+            {%- set choice_icon = option.data|browser_choice_icon -%}
+            {%- if choice_icon %}{{ choice_icon }}{% else %}<i data-feather="zap"></i>{% endif -%}
+          </span>
           {%- if option.data in variation_ids and not browser_config_locked() -%}
             {%- set prefix = variation_ids[option.data] ~ ': ' -%}
             {%- set label_text = option.label.text | string -%}

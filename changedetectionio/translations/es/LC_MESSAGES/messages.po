@@ -2431,6 +2431,14 @@ msgid "Language set to auto-detect from browser"
 msgstr "Idioma configurado para detectarse automáticamente desde el navegador"
 
 #: changedetectionio/blueprint/ui/browser_config.py
+msgid "no"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Custom User-Agent"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
 msgid "This is required for this browser"
 msgstr ""
 
@@ -2558,7 +2566,11 @@ msgid "WebSockets"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
-msgid "Desktop / custom size"
+msgid "Desktop (default size)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Custom size"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/form_browseroptions.py
@@ -2634,6 +2646,10 @@ msgstr ""
 msgid "User-Agent"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "A custom size needs a width and a height"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Vista previa no disponible: no se completó la búsqueda/verificación o no se alcanzaron los activadores"
@@ -2657,7 +2673,7 @@ msgid "Queue cleared ({} items removed)."
 msgstr "Cola borrada ({} elementos eliminados)."
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
-msgid "Based on browser"
+msgid "Based on the browser"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
@@ -2746,7 +2762,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browser-config-form.html
 #: changedetectionio/blueprint/ui/templates/browser-config-modal.html
-msgid "Add browser variation"
+msgid "Add a browser variation"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browser-config-form.html
@@ -2764,6 +2780,14 @@ msgstr ""
 msgid "Watches: %(watches)s, groups: %(groups)s"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Set as the default browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Make default"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
 msgid "Browsers"
 msgstr "Navegadores"
@@ -2776,29 +2800,22 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid ""
-"These are the available browsers. Save a variation of one (its screen size, language, timezone…) with <strong>+ Add "
-"variation</strong> and reuse it on any watch or group — your variations appear nested (↳) under the browser they "
-"extend."
+"Browsers fetch your pages. Choose the default, or save your own variation of one with a different screen size, "
+"language or timezone."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-#, python-format
+msgid "How this works"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "The <strong>default</strong> browser is used by every watch, unless the watch or its group picks another one."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid ""
-"The <strong>Default browser</strong> (chosen with the radio button) is used by every watch unless the watch — or its "
-"group — picks another one. This is the same value shown on the <a href=\"%(url)s#fetching\">Settings → Fetching</a> "
-"page."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Capabilities"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Set as the default browser"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "needs setup"
+"A <strong>variation</strong> is a browser with your own settings saved under a name, ready to use on any watch or "
+"group."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -2806,16 +2823,11 @@ msgid "plain text, no JavaScript"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "Add variation"
+msgid "needs setup"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
-#, python-format
-msgid "Variation of %(base)s"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
-msgid "no"
+msgid "Variations"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -2824,6 +2836,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Remove this browser?"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Add variation"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -4303,7 +4319,6 @@ msgstr "Procesador"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/edit.py
 #: changedetectionio/blueprint/ui/templates/browser-config-modal.html
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Browser"
 msgstr "Navegador"

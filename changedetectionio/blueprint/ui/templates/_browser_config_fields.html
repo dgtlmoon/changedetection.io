@@ -45,7 +45,7 @@
 <div class="tab-pane-inner" id="browser">
 <fieldset>
     <div class="pure-control-group browser-based-on">
-        {{ _('Based on browser') }} <strong>{{ base_label }}</strong>
+        {{ _('Based on the browser') }} <strong>{{ base_label }}</strong>
     </div>
     <div class="pure-control-group">
         {{ render_field(form.label) }}
@@ -53,7 +53,20 @@
     </div>
     {% if 'browser_type' in applicable %}
     <div class="pure-control-group">
-        {{ render_field(form.browser_type) }}
+        <label>{{ form.browser_type.label.text }}</label>
+        {# One tile per browser, with the icon its fetcher gives a variation set to it - the same
+           icon that variation then shows on /browsers and on its watches #}
+        <div class="browser-type-picker{% if form.browser_type.errors %} error{% endif %}">
+            {% for option in form.browser_type %}
+            <label class="browser-type-option">
+                {{ option() }}
+                <span class="browser-type-tile">{{ base_fetcher|fetcher_status_icons({'browser_type': option.data}) }}{{ option.label.text }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        {% if form.browser_type.errors %}
+        <ul class="errors">{% for error in form.browser_type.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
         <span class="pure-form-message-inline">{{ _('Which browser engine to launch locally.') }}</span>
     </div>
     {% endif %}
@@ -76,6 +89,9 @@
     </div>
     {% endif %}
     {% if 'viewport_width' in applicable %}
+    {# With a device picker above, the size only shows for "Custom size" (to fill in) or a device
+       (to see its size); without one it is always there and optional #}
+    <div id="viewport-size-group">
     <div class="pure-control-group">
         <div class="viewport-presets">
             <button type="button" class="pure-button button-small" data-w="1920" data-h="1080">{{ _('Desktop') }}</button>
@@ -91,6 +107,7 @@
 
     <div class="pure-control-group">
         <span class="pure-form-message-inline" id="viewport-set-by-device" hidden>{{ _('Set by the emulated device above.') }}</span>
+    </div>
     </div>
     {% endif %}
 </fieldset>
@@ -223,9 +240,17 @@
     var setByDevice = document.getElementById('viewport-set-by-device');
     var ownSize = {w: w ? w.value : '', h: h ? h.value : ''};
 
+    var sizeGroup = document.getElementById('viewport-size-group');
+    var presets = document.querySelector('.viewport-presets');
+
     function sync() {
         var vp = deviceViewports[device.value];
+        // "Custom size": the size is typed in and required. "Desktop (default size)": no size at all.
+        var custom = device.value === 'custom';
+        if (sizeGroup) sizeGroup.hidden = !(vp || custom);
+        if (presets) presets.hidden = !custom;
         if (w && h) {
+            w.required = h.required = custom;
             if (vp) {
                 if (!w.disabled) { ownSize = {w: w.value, h: h.value}; }
                 w.value = vp.width;

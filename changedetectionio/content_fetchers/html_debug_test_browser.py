@@ -28,6 +28,13 @@ class fetcher(Fetcher):
     supports_page_settings = True
     supports_cookies = True
 
+    @classmethod
+    def get_status_icon_data(cls, browser_config=None):
+        """The same answer the local Playwright browser gives (Chromium / Firefox / WebKit by
+        browser_type), so tests can follow a variation's icon end-to-end without Playwright."""
+        from changedetectionio.content_fetchers.playwright_builtin import fetcher as local_playwright
+        return local_playwright.get_status_icon_data(browser_config)
+
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
         self.proxy_override = proxy_override

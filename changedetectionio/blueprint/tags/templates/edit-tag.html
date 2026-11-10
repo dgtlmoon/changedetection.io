@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_ternary_field, render_plugin_settings_sections %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_ternary_field, render_plugin_settings_sections, render_browser_choice_field %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="group-settings")}}";
@@ -101,7 +101,10 @@
                         <div style="display:flex; align-items:center; gap:0.75em; flex-wrap:wrap;">
                             {{ form.browser_config_overrides_watch() }}
                             <label for="{{ form.browser_config_overrides_watch.id }}" style="margin:0">{{ form.browser_config_overrides_watch.label.text }}</label>
-                            {{ form.browser_config() }}
+                        </div>
+                        {# The same picker a watch has (without "Default": the checkbox above is the off switch) #}
+                        <div class="browser-choice-group">
+                            {{ render_browser_choice_field(form.browser_config, browser_variation_ids, show_label=False) }}
                         </div>
                         <span class="pure-form-message-inline">
                             {{ _('When enabled, watches in this group use the selected browser and their own Browser choice is hidden.') }}
@@ -110,8 +113,13 @@
                         <script>
                         (function () {
                             var en = document.getElementById('{{ form.browser_config_overrides_watch.id }}');
-                            var sel = document.getElementById('{{ form.browser_config.id }}');
-                            function sync() { if (sel) sel.disabled = !en.checked; }
+                            var list = document.getElementById('{{ form.browser_config.id }}');
+                            // Off: the choices are greyed out and not submitted, so the stored one is kept
+                            function sync() {
+                                if (!list) return;
+                                list.classList.toggle('is-disabled', !en.checked);
+                                list.querySelectorAll('input[type=radio]').forEach(function (radio) { radio.disabled = !en.checked; });
+                            }
                             if (en) { en.addEventListener('change', sync); sync(); }
                         })();
                         </script>

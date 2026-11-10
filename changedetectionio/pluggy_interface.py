@@ -115,11 +115,15 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
-    def fetcher_status_icon(fetcher_name):
-        """Return the status icon shown in the watch list for a content fetcher.
+    def fetcher_status_icon(fetcher_name, browser_config):
+        """Return the icon shown for a content fetcher: in the watch list, and next to the
+        browser and its variations on the /browsers page.
 
         Args:
             fetcher_name: The name of the fetcher (e.g., 'html_webdriver', 'html_js_zyte')
+            browser_config: the FetcherConfig of the browser being shown, or None for the fetcher
+                itself - lets a fetcher that runs more than one kind of browser show the right
+                one. Optional: an implementation that only names fetcher_name keeps working.
 
         Returns:
             dict or None: None if fetcher_name isn't yours, otherwise
@@ -1007,17 +1011,18 @@ def collect_ui_edit_stats_extras(watch):
 
     return "\n".join(extras_content) if extras_content else ""
 
-def collect_fetcher_status_icons(fetcher_name):
+def collect_fetcher_status_icons(fetcher_name, browser_config=None):
     """Collect status icon data from all plugins
 
     Args:
         fetcher_name: The name of the fetcher (e.g., 'html_webdriver', 'html_js_zyte')
+        browser_config: the FetcherConfig of the browser being shown, or None
 
     Returns:
         dict or None: Icon data dictionary from first matching plugin, or None
     """
     # Get status icon data from plugins
-    results = plugin_manager.hook.fetcher_status_icon(fetcher_name=fetcher_name)
+    results = plugin_manager.hook.fetcher_status_icon(fetcher_name=fetcher_name, browser_config=browser_config)
 
     # Return first non-None result
     if results:

@@ -198,9 +198,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                             sub_field.data = sub_value
                     break
 
+        # Nothing chosen yet: start on the first browser, so switching the override on always
+        # has one selected (the dropdown this used to be did the same)
+        if not form.browser_config.data and form.browser_config.choices:
+            form.browser_config.data = form.browser_config.choices[0][0]
+
+        from changedetectionio.model.browser_config import list_user_variation_ids
         template_args = {
             'data': default,
             'form': form,
+            # {id: engine short name} of the browsers the user added, so the picker links them
+            'browser_variation_ids': list_user_variation_ids(datastore),
             'watch': default,
             'extra_notification_token_placeholder_info': datastore.get_unique_notification_token_placeholders_available(),
             'llm_configured': bool(_get_llm_config(datastore)),

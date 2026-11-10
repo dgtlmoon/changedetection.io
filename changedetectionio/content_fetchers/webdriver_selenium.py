@@ -21,7 +21,7 @@ class fetcher(Fetcher):
     supports_xpath_element_data = True
 
     @classmethod
-    def get_status_icon_data(cls):
+    def get_status_icon_data(cls, browser_config=None):
         """Return Chrome browser icon data for WebDriver fetcher."""
         return {
             'filename': 'google-chrome-icon.png',

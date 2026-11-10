@@ -220,10 +220,16 @@ class Fetcher():
 
 
     @classmethod
-    def get_status_icon_data(cls):
-        """Return data for status icon to display in the watch overview.
+    def get_status_icon_data(cls, browser_config=None):
+        """Return data for the icon shown for this fetcher: in the watch overview, and next to
+        the browser and each of its variations on the /browsers page.
 
         This method can be overridden by subclasses to provide custom status icons.
+
+        Args:
+            browser_config: the FetcherConfig of the browser being shown, or None for the
+                fetcher itself. A fetcher that can run more than one kind of browser answers
+                with the one this config picks (e.g. browser_type 'firefox' -> a Firefox icon).
 
         Returns:
             dict or None: Dictionary with icon data:

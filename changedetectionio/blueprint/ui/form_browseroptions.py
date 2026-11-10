@@ -12,6 +12,7 @@ from wtforms import (
     FloatField,
     Form,
     IntegerField,
+    RadioField,
     SelectField,
     SelectMultipleField,
     StringField,
@@ -35,14 +36,21 @@ BLOCKABLE_RESOURCE_TYPES = [
 ]
 
 
+# The "Custom size" choice of the device picker. A form-only value: it means "no device, the
+# viewport typed below" and is never stored (FetcherConfig.device stays None, see
+# to_fetcher_config_dict), a saved viewport is what brings it back when the form is reopened.
+DEVICE_CUSTOM_SIZE = 'custom'
+
+
 def device_choices():
-    """Grouped choices (WTForms renders a dict as <optgroup>s): desktop with its own size first,
-    then phones and tablets. Device names are product names and aren't translated."""
+    """Grouped choices (WTForms renders a dict as <optgroup>s): desktop at the browser's own
+    size or a custom one first, then phones and tablets. Device names are product names and
+    aren't translated."""
     from changedetectionio.model.browser_devices import DEVICE_PRESETS
     def of(category):
         return [(name, name) for name, preset in DEVICE_PRESETS.items() if preset['category'] == category]
     return {
-        _l('Desktop'): [('', _l('Desktop / custom size'))],
+        _l('Desktop'): [('', _l('Desktop (default size)')), (DEVICE_CUSTOM_SIZE, _l('Custom size'))],
         _l('Phones'): of('phone'),
         _l('Tablets'): of('tablet'),
     }
@@ -78,9 +86,10 @@ class BrowserOptionsForm(Form):
                               render_kw={"placeholder": "Europe/Berlin", "list": "timezone-datalist", "autocomplete": "off"})
 
     # Local-launch engines only (gated by supports_browser_type)
-    browser_type = SelectField(_l('Browser engine'), validators=[validators.Optional()],
-                               choices=[('chromium', 'Chromium'), ('firefox', 'Firefox'), ('webkit', 'WebKit')],
-                               default='chromium')
+    # A radio group, drawn as tiles with each browser's icon (a <select> can't show icons)
+    browser_type = RadioField(_l('Browser engine'), validators=[validators.Optional()],
+                              choices=[('chromium', 'Chromium'), ('firefox', 'Firefox'), ('webkit', 'WebKit')],
+                              default='chromium')
     delete_created_files = BooleanField(_l('Delete temporary browser files after each check'), default=True)
 
     block_resource_types = MultiCheckboxField(_l('Block asset types'), choices=BLOCKABLE_RESOURCE_TYPES)
@@ -102,6 +111,21 @@ class BrowserOptionsForm(Form):
                              render_kw={"placeholder": "Mozilla/5.0 (…)"})
 
     save = SubmitField(_l('Save'))
+
+    def _device_was_submitted(self):
+        """The device picker was part of the POST. It isn't for a browser that can't emulate
+        devices (the field isn't rendered), nor for a client posting only the settings it sets."""
+        return bool(self.device.raw_data)
+
+    def validate(self, extra_validators=None):
+        ok = super().validate(extra_validators=extra_validators)
+        # "Custom size" is a promise to give one
+        if self.device.data == DEVICE_CUSTOM_SIZE:
+            for field in (self.viewport_width, self.viewport_height):
+                if not field.data:
+                    field.errors = list(field.errors) + [_l('A custom size needs a width and a height')]
+                    ok = False
+        return ok
 
     @staticmethod
     def device_summaries():
@@ -126,11 +150,19 @@ class BrowserOptionsForm(Form):
             'connection_url': (self.connection_url.data or None),
             'user_agent': (self.user_agent.data or None),
         }
-        # A device sets the screen size, so don't keep a viewport that would only sit there hidden
-        if data['device']:
+        if data['device'] == DEVICE_CUSTOM_SIZE:
+            # Not a device: the viewport typed in is the setting
+            data['device'] = None
+            data['device_scale_factor'] = None
+        elif data['device'] or self._device_was_submitted():
+            # A device sets the screen size, and "Desktop (default size)" means the browser's
+            # own - either way don't keep a viewport that would only sit there hidden
             data['viewport_width'] = None
             data['viewport_height'] = None
+            if not data['device']:
+                data['device_scale_factor'] = None
         else:
+            # No device picker in this form: the viewport fields stand by themselves, optional
             data['device_scale_factor'] = None
         # Blank timeout means "use the model default" (DEFAULT_REQUEST_TIMEOUT_SECONDS), so omit the
         # key entirely rather than passing None (which would override that default).

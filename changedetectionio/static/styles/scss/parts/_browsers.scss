@@ -1,169 +1,469 @@
 // The /browsers page (browsers-overview.html) and the add/edit browser form
-// (_browser_config_fields.html).
+// (_browser_config_fields.html, as a page or in the dialog).
 //
-// Every column, row and chip keeps its own class (col-*, browser-engine-<name>,
-// browser-chip--cap-<capability>, browser-chip--<setting>) so a deployment can hide any of them
-// with CSS alone.
+// One card per browser, its variations listed inside. Every part keeps its own class - the
+// regions col-default / col-browser / col-capabilities / col-actions, each card and variation
+// its engine (browser-engine-<name>), each chip what it shows (browser-chip--cap-<capability>,
+// browser-chip--<setting>) - so a deployment can hide any of them with CSS alone.
 
-$browser-line: rgba(127, 127, 127, 0.35);
-$browser-tint: rgba(127, 127, 127, 0.05);
-$browser-default-tint: rgba(21, 87, 36, 0.06);
+$browser-line: rgba(127, 127, 127, 0.22);
+$browser-line-strong: rgba(127, 127, 127, 0.38);
+$browser-tint: rgba(127, 127, 127, 0.06);
+
+.browsers-page {
+  // The accent of the default browser and of anything clickable in a card
+  --browser-accent: var(--color-link);
+}
+
+.browsers-head {
+  margin-bottom: 1.5rem;
+}
 
 .browsers-title {
-  margin-top: 0;
+  margin: 0 0 0.4rem;
   display: flex;
   align-items: center;
-  gap: 0.4em;
+  gap: 0.45em;
+  font-size: 1.35rem;
 
   svg {
     width: 1.1em;
     height: 1.1em;
+    color: var(--browser-accent);
   }
 }
 
-.browsers-table {
-  width: 100%;
-  margin-top: 1em;
+.browsers-lead {
+  margin: 0;
+  color: var(--color-grey-500);
+  line-height: 1.5;
+}
 
-  th,
-  td {
-    padding: 0.7em 0.8em;
-    vertical-align: middle;
+.browsers-help {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+
+  summary {
+    display: inline-block;
+    cursor: pointer;
+    color: var(--browser-accent);
   }
 
-  .col-default {
-    width: 5em;
-    text-align: center;
-  }
-
-  .col-capabilities {
-    line-height: 1.9;
-  }
-
-  .col-actions {
-    text-align: right;
-    white-space: nowrap;
-
-    .pure-button {
-      margin-left: 0.3em;
-    }
-
-    // Still in use, so it can't be removed (the title says why)
-    .pure-button[disabled] {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-  }
-
-  // A base browser and its variations read as one group: the base has a firm top border, its
-  // children a lighter tint and no internal separators.
-  tr.browser-base-row td {
-    border-top: 2px solid $browser-line;
-  }
-
-  tr.browser-variation-row td {
-    background: $browser-tint;
-    border-top: none;
-  }
-
-  tr.is-default,
-  tr.browser-variation-row.is-default td {
-    background: $browser-default-tint;
+  p {
+    margin: 0.5rem 0 0;
+    line-height: 1.5;
   }
 }
 
-// The fetcher's icon in front of its name: an <img class="status-icon"> or a feather <svg>
-.browser-icon {
-  display: inline-flex;
-  width: 1.4em;
-  justify-content: center;
-  vertical-align: middle;
-  margin-right: 0.3em;
+.browser-cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.browser-card {
+  border: 1px solid $browser-line;
+  border-radius: 12px;
+  background: var(--color-background);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  // One reveal on page load, each card a beat after the one above
+  animation: browser-card-in 0.35s ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 60ms);
+
+  &:hover {
+    border-color: $browser-line-strong;
+  }
+
+  // The default browser (the card itself, or one of its variations below)
+  &.is-default {
+    border-color: var(--browser-accent);
+    box-shadow: 0 0 0 1px var(--browser-accent), 0 8px 22px -14px var(--browser-accent);
+  }
+
+  // Works only through a variation and has none yet
+  &.needs-setup {
+    border-style: dashed;
+    box-shadow: none;
+    background: transparent;
+
+    .browser-icon-tile,
+    .browser-name {
+      opacity: 0.7;
+    }
+  }
+}
+
+@keyframes browser-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browser-card {
+    animation: none;
+  }
+}
+
+// A browser, and each of its variations, lay out the same way:
+// [icon] [name + what it does ........] [default] [actions]
+.browser-card-head,
+.browser-variation-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 0.9rem;
+}
+
+.browser-card-head {
+  padding: 1rem 1.1rem;
+}
+
+.browser-name {
+  margin: 0 0 0.3rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+// The big icon of a card: an <img class="status-icon"> or a feather <svg>
+.browser-icon-tile {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 10px;
+  background: $browser-tint;
   color: var(--color-grey-500);
 
   svg,
-  img {
-    width: 1.1em;
-    height: 1.1em;
+  img.status-icon {
+    width: 1.5rem;
+    height: 1.5rem;
   }
 }
 
-.browser-variation-name {
-  padding-left: 1.5em;
+// ---- A browser's variations: a tree hanging off its icon, so they read as its children ----
+// The trunk drops from the middle of the card's icon tile; every variation (and "Add
+// variation") joins it with a branch.
+$browser-branch: 1.4rem;
+$browser-trunk: 2px;
+
+.browser-children {
+  position: relative;
+  // head padding (1.1rem) + half the icon tile (2.75rem / 2): the trunk sits under the icon
+  margin: 0 1.1rem 1rem 2.475rem;
+  padding-left: $browser-branch;
+  border-left: $browser-trunk solid $browser-line-strong;
+
+  // A branch from the trunk to each child
+  .browser-variation-row::before,
+  > .browser-add-variation::before {
+    content: "";
+    position: absolute;
+    left: -$browser-branch;
+    top: 50%;
+    width: $browser-branch;
+    border-top: $browser-trunk solid $browser-line-strong;
+  }
+
+  // The trunk stops at the last child's branch: paint over what hangs below it
+  > .browser-add-variation::after,
+  > .browser-variations:last-child > .browser-variation-row:last-child::after {
+    content: "";
+    position: absolute;
+    left: calc(-#{$browser-branch} - #{$browser-trunk});
+    top: calc(50% + #{$browser-trunk});
+    bottom: -1px;
+    width: $browser-trunk;
+    background: var(--color-background);
+  }
 }
 
-// Feather renders an inline <svg>, so it is sized with width/height (font-size won't apply)
-.browser-variation-arrow {
-  width: 16px;
-  height: 16px;
-  margin-right: 0.4em;
-  color: var(--color-grey-600);
-  vertical-align: middle;
+.browser-children-label {
+  padding: 0 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-grey-500);
 }
 
-.browser-default-radio {
-  transform: scale(1.3);
-  cursor: pointer;
+.browser-variations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
+.browser-variation-row {
+  position: relative;
+  margin-bottom: 0.5rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid $browser-line;
+  border-radius: 10px;
+  background: $browser-tint;
+
+  &.is-default {
+    border-color: var(--browser-accent);
+    box-shadow: inset 3px 0 0 var(--browser-accent);
+  }
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+// A variation's icon
+.browser-icon {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  color: var(--color-grey-500);
+
+  svg,
+  img.status-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+}
+
+.col-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.browser-variation-name .col-capabilities {
+  margin-top: 0.25rem;
+}
+
+// ---- Default: a radio drawn as a badge (chosen) or a quiet "Make default" (not) ----
 .set-default-form {
   margin: 0;
-  display: inline;
+}
+
+.browser-default-toggle {
+  display: inline-flex;
+  margin: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.8rem;
+
+  // The radio stays in the page (keyboard + forms), only out of sight
+  .browser-default-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .browser-default-on,
+  .browser-default-off {
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.25em 0.75em;
+    border-radius: 1em;
+    border: 1px solid transparent;
+  }
+
+  .browser-default-on {
+    display: none;
+    background: var(--browser-accent);
+    color: #fff;
+    font-weight: 600;
+
+    svg {
+      width: 1em;
+      height: 1em;
+    }
+  }
+
+  // Always there, held back until pointed at
+  .browser-default-off {
+    display: inline-flex;
+    color: var(--color-text);
+    border-color: var(--color-text);
+    font-weight: 600;
+    opacity: 0.5;
+    transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .browser-default-radio:checked ~ .browser-default-on {
+    display: inline-flex;
+  }
+
+  .browser-default-radio:checked ~ .browser-default-off {
+    display: none;
+  }
+
+  .browser-default-radio:focus-visible ~ span {
+    outline: 2px solid var(--browser-accent);
+    outline-offset: 2px;
+  }
+
+  &:hover .browser-default-off {
+    color: var(--browser-accent);
+    border-color: var(--browser-accent);
+  }
+}
+
+// Full strength when pointed at or tabbed into
+.browser-default-toggle:hover .browser-default-off,
+.browser-default-radio:focus-visible ~ .browser-default-off {
+  opacity: 1;
+}
+
+// ---- Actions: icon buttons, dark and heavy enough to read on the tinted rows ----
+.col-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 4.5rem;
+  justify-content: flex-end;
 }
 
 .browser-remove-form {
-  display: inline;
+  display: inline-flex;
+  margin: 0;
 }
 
+.browser-action {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    stroke-width: 2.6;
+  }
+
+  &:hover {
+    background: rgba(127, 127, 127, 0.18);
+    color: var(--browser-accent);
+  }
+
+  &--remove:hover {
+    color: var(--color-background-button-error);
+  }
+
+  // Still in use, so it can't be removed (the title says why)
+  &[disabled] {
+    opacity: 0.3;
+    cursor: not-allowed;
+
+    &:hover {
+      background: none;
+      color: var(--color-text);
+    }
+  }
+}
+
+// ---- "Add variation": the last child in a browser's tree, and the one clear action of a card ----
+.browser-add-variation {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.5rem 0.8rem;
+  border: 1px dashed $browser-line-strong;
+  border-radius: 10px;
+  color: var(--color-grey-500);
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    background: $browser-tint;
+    border-color: var(--browser-accent);
+    color: var(--browser-accent);
+  }
+}
+
+// On a card that still needs setting up it is the thing to do
+.browser-card.needs-setup .browser-add-variation {
+  border-color: var(--browser-accent);
+  color: var(--browser-accent);
+  font-weight: 600;
+
+  // (that card has no background of its own to paint the trunk's end with)
+  &::after {
+    background: none;
+  }
+}
+
+.browser-card.needs-setup .browser-children {
+  border-left-color: transparent;
+}
+
+// ---- Chips ----
 .browser-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.35em;
-  padding: 0.1em 0.65em;
-  margin: 0.1em;
+  padding: 0.1em 0.6em;
   border-radius: 1em;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  background: rgba(127, 127, 127, 0.15);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  background: $browser-tint;
+  color: var(--color-grey-400);
   white-space: nowrap;
-  vertical-align: middle;
 
   svg {
     width: 0.95em;
     height: 0.95em;
-    opacity: 0.75;
+    opacity: 0.7;
   }
 
-  &--default {
-    background: #d4edda;
-    color: #155724;
-    font-weight: 600;
+  // A country flag (flag-icons) in front of a language
+  .fi {
+    border-radius: 2px;
+    font-size: 0.85em;
   }
 
   // Links to the watch list filtered to the watches using this browser
   &--usage {
     background: transparent;
     border: 1px solid $browser-line;
-    color: inherit;
     text-decoration: none;
 
     &:hover {
-      border-color: var(--color-link);
-      color: var(--color-link);
+      border-color: var(--browser-accent);
+      color: var(--browser-accent);
     }
   }
 
   &--needs-setup {
-    background: rgba(255, 170, 0, 0.2);
+    background: rgba(255, 170, 0, 0.18);
+    color: inherit;
   }
 }
 
+// Chip text is tuned for the light theme's greys; let it follow the text colour in dark
+html[data-darkmode="true"] .browser-chip {
+  color: inherit;
+}
+
 .browser-empty {
-  margin-top: 0.75em;
   padding: 2em;
   text-align: center;
-  border: 1px dashed $browser-line;
-  border-radius: 0.5em;
+  border: 1px dashed $browser-line-strong;
+  border-radius: 12px;
 
   p {
     color: var(--color-grey-500);
@@ -171,7 +471,120 @@ $browser-default-tint: rgba(21, 87, 36, 0.06);
   }
 }
 
+// Narrow screens: name on its own line, default + actions under it
+@media only screen and (max-width: 640px) {
+  .browser-card-head,
+  .browser-variation-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    row-gap: 0.5rem;
+
+    .col-default {
+      grid-column: 2;
+    }
+
+    .col-actions {
+      grid-column: 3;
+      grid-row: 1;
+    }
+  }
+}
+
+// The "Browser" picker of a watch and of a group's override (render_browser_choice_field):
+// one browser per line, radio - icon - name
+.browser-choice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.2em 0;
+
+    label {
+      margin: 0;
+      font-weight: normal;
+    }
+  }
+
+  // A group's list while its override is switched off
+  &.is-disabled {
+    opacity: 0.5;
+  }
+}
+
+.browser-choice-group {
+  margin: 0.6em 0 0.4em 1.9em;
+}
+
+// The icon in front of each choice
+.browser-choice-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  margin-right: 0.3em;
+  vertical-align: middle;
+  color: var(--color-grey-500);
+
+  svg,
+  img.status-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
 // Add/edit browser form
+// "Browser engine": a radio group drawn as tiles, each with its browser's icon
+.browser-type-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.browser-type-option {
+  margin: 0;
+  cursor: pointer;
+
+  // The radio stays in the page (keyboard + forms), only out of sight
+  input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .browser-type-tile {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid $browser-line-strong;
+    border-radius: 10px;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+
+    img.status-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+
+  &:hover .browser-type-tile {
+    background: $browser-tint;
+  }
+
+  input:checked + .browser-type-tile {
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 1px var(--color-link);
+    background: $browser-tint;
+    font-weight: 600;
+  }
+
+  input:focus-visible + .browser-type-tile {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+}
+
 // "Use my current timezone <name>" under the timezone field
 .browser-use-my-timezone {
   margin-top: 0.5em;
@@ -206,9 +619,9 @@ $browser-default-tint: rgba(21, 87, 36, 0.06);
   }
 }
 
-// "Based on browser <name>" - one line, the name picked out
+// "Based on the browser <name>" - reads as one line, wraps when the name is long
 .browser-based-on {
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 
   strong {
     margin-left: 0.3em;
@@ -220,6 +633,11 @@ $browser-default-tint: rgba(21, 87, 36, 0.06);
   display: flex;
   flex-wrap: wrap;
   gap: 0.4em;
+
+  // Only offered for "Custom size" ([hidden] loses to display: flex otherwise)
+  &[hidden] {
+    display: none;
+  }
 }
 
 .browser-inline-checkboxes {
@@ -238,6 +656,11 @@ $browser-default-tint: rgba(21, 87, 36, 0.06);
 .modal-dialog.browser-config-dialog {
   width: min(600px, calc(100vw - 2rem));
   max-width: none;
+
+  // Room to spare on a very wide desktop screen
+  @media only screen and (min-width: 1600px) {
+    width: 760px;
+  }
 
   form {
     margin: 0;

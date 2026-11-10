@@ -203,7 +203,7 @@ class fetcher(Fetcher):
     supports_pdf = True
 
     @classmethod
-    def get_status_icon_data(cls):
+    def get_status_icon_data(cls, browser_config=None):
         """Return Chrome browser icon data for Puppeteer fetcher."""
         return {
             'filename': 'google-chrome-icon.png',

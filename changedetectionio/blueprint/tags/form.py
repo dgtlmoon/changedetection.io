@@ -28,7 +28,8 @@ class group_restock_settings_form(restock_settings_form):
     # enabler is on and a config is chosen, member watches use this group's browser config
     # and their own Fetch Method selector is hidden. Choices are set in the tags blueprint.
     browser_config_overrides_watch = BooleanField(_l("Override each watch's browser with"), default=False)
-    browser_config = SelectField(_l('Browser config'), validators=[validators.Optional()], choices=[])
+    # A radio list with each browser's icon, the same picker a watch has (render_browser_choice_field)
+    browser_config = RadioField(_l('Browser config'), validators=[validators.Optional()], choices=[])
     url_match_pattern = StringField(_l('Auto-apply to watches with URLs matching'),
                                     render_kw={"placeholder": _l("e.g. *://example.com/* or github.com/myorg")})
     # Rendered into a <style> block, so only a plain hex colour is accepted, see colour.py

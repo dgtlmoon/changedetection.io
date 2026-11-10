@@ -196,7 +196,7 @@ class fetcher(Fetcher):
         return self.browser_type
 
     @classmethod
-    def get_status_icon_data(cls):
+    def get_status_icon_data(cls, browser_config=None):
         """Return Chrome browser icon data for Playwright fetcher."""
         return {
             'filename': 'google-chrome-icon.png',

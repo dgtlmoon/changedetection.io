@@ -82,6 +82,199 @@ def test_debug_content_fetcher_pipeline(client, live_server, measure_memory_usag
     assert b'that supports screenshots' not in res.data
 
 
+def _recheck_and_get_snapshot(client, datastore, uuid, timeout=30):
+    """Check the watch once more and return its newest snapshot, for a check that STARTED after
+    this call - so it ran with whatever the test changed just before calling.
+
+    last_checked is the check's start time rounded to a second, so wait two seconds out from now
+    and only accept a check stamped at or after that: one started before the change (the scheduler
+    may have had the watch queued) can't satisfy it, even rounded up.
+    """
+    started_after = int(time.time()) + 2
+    while time.time() < started_after:
+        time.sleep(0.1)
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+        watch = datastore.data['watching'][uuid]
+        if (watch.get('last_checked') or 0) >= started_after and watch.history_n:
+            return watch.get_history_snapshot(timestamp=watch.newest_history_key)
+        time.sleep(0.2)
+    raise AssertionError(f"Watch {uuid} was not checked again within {timeout}s")
+
+
+def _set_group_override(client, datastore, tag_uuid, browser_id, enabled):
+    """Set a group's browser override through its edit form, as a user would."""
+    title = datastore.data['settings']['application']['tags'][tag_uuid]['title']
+    data = {'title': title, 'browser_config': browser_id}
+    if enabled:
+        data['browser_config_overrides_watch'] = 'y'
+    client.post(url_for("tags.form_tag_edit_submit", uuid=tag_uuid), data=data, follow_redirects=True)
+    tag = datastore.data['settings']['application']['tags'][tag_uuid]
+    assert bool(tag.get('browser_config_overrides_watch')) is enabled
+    assert tag.get('browser_config') == browser_id
+
+
+def _watchlist_row(client, uuid):
+    import re
+    html = client.get(url_for("watchlist.index")).data.decode()
+    return re.search(rf'<tr id="{uuid}".*?</tr>', html, re.S).group(0)
+
+
+@pytest.mark.skipif(not os.getenv('ENABLE_DEBUG_CONTENT_FETCHER'),
+                    reason="Needs ENABLE_DEBUG_CONTENT_FETCHER (set in the test-browser-config CI step)")
+def test_group_override_decides_the_browser_at_fetch_time(client, live_server, measure_memory_usage, datastore_path):
+    """End-to-end, with real checks: the browser a watch is FETCHED with follows the whole chain -
+    group override (first group in the watch's order) -> the watch's own choice -> system default -
+    and the watch list shows that same browser's icon at every step.
+
+    The debug fetcher echoes what it was handed into the snapshot, so each step reads back the
+    browser the worker actually used rather than what a resolver says it would use.
+    """
+    from .util import set_original_response
+    datastore = client.application.config.get('DATASTORE')
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+    # What the plain HTTP client gets from the test endpoint, for the steps where it is the one fetching
+    set_original_response(datastore_path=datastore_path)
+
+    _add_browser(client, label="French phone", base_fetcher="html_debug_test_browser",
+                 browser_type='firefox', locale='fr-FR', viewport_width=375, viewport_height=812)
+    _add_browser(client, label="Japanese desktop", base_fetcher="html_debug_test_browser",
+                 browser_type='webkit', locale='ja-JP')
+    ids = {e['label']: cid for cid, e in datastore.browser_config_store.all().items()}
+    french, japanese = ids['French phone'], ids['Japanese desktop']
+
+    def _fetched_with(snapshot):
+        """Which of the two browsers produced this snapshot, or None for anything else."""
+        if 'debug_test_browser' not in snapshot:
+            return None
+        assert '"backend_name": "html_debug_test_browser"' in snapshot
+        if '"locale": "fr-FR"' in snapshot:
+            # The whole variation arrived, not just its name
+            assert '"browser_type": "firefox"' in snapshot
+            assert '"viewport_width": 375' in snapshot
+            return french
+        assert '"locale": "ja-JP"' in snapshot and '"browser_type": "webkit"' in snapshot
+        return japanese
+
+    # Two groups, the first overriding to the French phone - set up before the watch exists so
+    # its very first check already runs under the override
+    group_a = datastore.add_tag("Group A")
+    group_b = datastore.add_tag("Group B")
+    _set_group_override(client, datastore, group_a, french, enabled=True)
+
+    # The watch itself asks for the plain HTTP client
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), tag_uuids=[group_a],
+                               extras={'fetch_backend': 'html_requests'})
+    watch = datastore.data['watching'][uuid]
+    assert watch.get('fetch_backend') == 'html_requests'
+
+    # 1. The group's browser fetched it, not the watch's own
+    assert _fetched_with(_wait_for_debug_snapshot(client, datastore, uuid)) == french
+    row = _watchlist_row(client, uuid)
+    assert 'firefox-icon.svg' in row
+    assert 'French phone (firefox) — from group Group A' in row
+
+    # 2. A second overriding group AFTER the first in the watch's order changes nothing
+    _set_group_override(client, datastore, group_b, japanese, enabled=True)
+    watch['tags'] = [group_a, group_b]
+    assert _fetched_with(_recheck_and_get_snapshot(client, datastore, uuid)) == french
+    assert 'firefox-icon.svg' in _watchlist_row(client, uuid)
+
+    # 3. ...but first in the order, it is the one that wins
+    watch['tags'] = [group_b, group_a]
+    assert _fetched_with(_recheck_and_get_snapshot(client, datastore, uuid)) == japanese
+    row = _watchlist_row(client, uuid)
+    assert 'webkit-icon.svg' in row and 'firefox-icon.svg' not in row
+    assert 'from group Group B' in row
+
+    # 4. Its override switched off: the next group in line takes over
+    _set_group_override(client, datastore, group_b, japanese, enabled=False)
+    assert _fetched_with(_recheck_and_get_snapshot(client, datastore, uuid)) == french
+    assert 'firefox-icon.svg' in _watchlist_row(client, uuid)
+
+    # 5. No override left: back to the watch's own choice, the plain client (no browser icon)
+    _set_group_override(client, datastore, group_a, french, enabled=False)
+    snapshot = _recheck_and_get_snapshot(client, datastore, uuid)
+    assert _fetched_with(snapshot) is None, f"still fetched by a group's browser - last error: {watch.get('last_error')}"
+    assert 'Some initial text' in snapshot, "the plain client fetched the real page"
+    row = _watchlist_row(client, uuid)
+    for icon in ('firefox-icon.svg', 'webkit-icon.svg', 'google-chrome-icon.png', 'playwright-icon.png'):
+        assert icon not in row
+    assert 'from group' not in row
+
+    # 6. Following the system default: whatever /browsers sets as the default is what fetches
+    watch['fetch_backend'] = 'system'
+    client.post(url_for("ui.browser_config.browser_config_set_default", config_id=japanese), follow_redirects=True)
+    assert _fetched_with(_recheck_and_get_snapshot(client, datastore, uuid)) == japanese
+    assert 'webkit-icon.svg' in _watchlist_row(client, uuid)
+
+    # 7. And a group override still beats the system default
+    _set_group_override(client, datastore, group_a, french, enabled=True)
+    assert _fetched_with(_recheck_and_get_snapshot(client, datastore, uuid)) == french
+    assert 'firefox-icon.svg' in _watchlist_row(client, uuid)
+
+
+def test_group_override_order_off_switch_and_missing_browser(client, live_server, measure_memory_usage, datastore_path):
+    """The override rules themselves (Watch.get_fetch_backend), and the watch list icon that
+    follows them, without fetching anything - so it runs everywhere, unlike the end-to-end test
+    above: the first overriding group in the watch's order wins, a group with its override off or
+    pointing at a browser that no longer exists is skipped, and with none left the watch's own
+    choice is back."""
+    from changedetectionio.content_fetchers import resolve_content_fetcher
+    datastore = client.application.config.get('DATASTORE')
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+    tags = datastore.data['settings']['application']['tags']
+
+    _add_browser(client, label="Group browser", viewport_width=1111, viewport_height=700)
+    group_browser = next(iter(datastore.browser_config_store.all()))
+
+    first = datastore.add_tag("First group")
+    second = datastore.add_tag("Second group")
+    _set_group_override(client, datastore, first, group_browser, enabled=True)
+    _set_group_override(client, datastore, second, 'html_webdriver', enabled=True)
+
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'fetch_backend': 'html_requests', 'paused': True})
+    watch = datastore.data['watching'][uuid]
+
+    def _resolved():
+        """(selector the watch resolves to, engine + viewport the fetcher would really get)"""
+        _cls, engine, _url, config = resolve_content_fetcher(watch, datastore)
+        return watch.get_fetch_backend, engine, config.viewport_width
+
+    # No group: the watch's own choice
+    assert _resolved() == ('html_requests', 'html_requests', None)
+    assert 'google-chrome-icon.png' not in _watchlist_row(client, uuid)
+
+    # First in the watch's order wins, with its settings
+    watch['tags'] = [first, second]
+    assert _resolved() == (group_browser, 'html_webdriver', 1111)
+    row = _watchlist_row(client, uuid)
+    assert 'google-chrome-icon.png' in row and 'Group browser — from group First group' in row
+
+    watch['tags'] = [second, first]
+    assert _resolved() == ('html_webdriver', 'html_webdriver', None)
+    assert 'from group Second group' in _watchlist_row(client, uuid)
+
+    # An override that is switched off is skipped, the next group's applies
+    _set_group_override(client, datastore, second, 'html_webdriver', enabled=False)
+    assert _resolved() == (group_browser, 'html_webdriver', 1111)
+    assert 'from group First group' in _watchlist_row(client, uuid)
+
+    # So is one whose browser no longer exists - it must not break the watch
+    tags[second]['browser_config_overrides_watch'] = True
+    tags[second]['browser_config'] = 'a-browser-that-was-removed'
+    assert _resolved() == (group_browser, 'html_webdriver', 1111)
+
+    # None left: the watch's own choice again, and no browser icon
+    _set_group_override(client, datastore, first, group_browser, enabled=False)
+    tags[second]['browser_config_overrides_watch'] = False
+    assert _resolved() == ('html_requests', 'html_requests', None)
+    row = _watchlist_row(client, uuid)
+    assert 'google-chrome-icon.png' not in row and 'from group' not in row
+
+
 def test_browser_config_crud(client, live_server, measure_memory_usage, datastore_path):
     datastore = client.application.config.get('DATASTORE')
 
@@ -237,6 +430,59 @@ def test_watchlist_filter_by_browser(client, live_server, measure_memory_usage, 
     assert b'Filter me' in res.data
 
 
+def test_custom_size_needs_a_width_and_a_height(client, live_server, measure_memory_usage, datastore_path):
+    """The device picker offers "Desktop (default size)" and "Custom size" apart: choosing a
+    custom size without giving one is refused, the default size stores no viewport at all, and a
+    saved custom size comes back selected."""
+    datastore = client.application.config.get('DATASTORE')
+    add_url = url_for("ui.browser_config.browser_config_add", base_fetcher='html_webdriver')
+
+    form_html = client.get(add_url).data.decode()
+    assert '<option selected value="">Desktop (default size)</option>' in form_html
+    assert '<option value="custom">Custom size</option>' in form_html
+
+    def _viewport_of(label):
+        entry = next(e for e in datastore.browser_config_store.all().values() if e['label'] == label)
+        return entry['browser_config']['device'], entry['browser_config']['viewport_width'], entry['browser_config']['viewport_height']
+
+    # Custom size with nothing, or only half of it: refused, on the field that is missing
+    for partial in ({}, {'viewport_width': 1280}, {'viewport_height': 720}):
+        res = client.post(add_url, data={'label': 'Custom', 'device': 'custom', **partial}, follow_redirects=True)
+        assert b'A custom size needs a width and a height' in res.data
+        assert not datastore.browser_config_store.all()
+
+    # With both: stored as a plain viewport - "custom" itself is never a device
+    client.post(add_url, data={'label': 'Custom', 'device': 'custom', 'viewport_width': 1280, 'viewport_height': 720},
+                follow_redirects=True)
+    assert _viewport_of('Custom') == (None, 1280, 720)
+    cid = next(c for c, e in datastore.browser_config_store.all().items() if e['label'] == 'Custom')
+    edit_html = client.get(url_for("ui.browser_config.browser_config_edit", config_id=cid)).data.decode()
+    assert '<option selected value="custom">Custom size</option>' in edit_html
+    # The form names the browser it is based on by its own name, not its internal id
+    based_on = edit_html[edit_html.index('browser-based-on'):][:300]
+    assert 'html_webdriver' not in based_on
+    assert str(dict(__import__('changedetectionio').content_fetchers.available_fetchers())['html_webdriver']) in __import__('html').unescape(based_on)
+    assert 'value="1280"' in edit_html
+
+    # Default size: no viewport is kept, even if the (hidden) fields still carried one
+    client.post(add_url, data={'label': 'Default size', 'device': '', 'viewport_width': 1280, 'viewport_height': 720},
+                follow_redirects=True)
+    # (a posted empty device is the picker saying "default size")
+    assert _viewport_of('Default size') == (None, None, None)
+
+    # A device: its own size, the typed one is dropped
+    client.post(add_url, data={'label': 'Phone', 'device': 'Pixel 7', 'viewport_width': 1280, 'viewport_height': 720},
+                follow_redirects=True)
+    assert _viewport_of('Phone') == ('Pixel 7', None, None)
+
+    # No device picker in the POST at all (a browser that can't emulate devices, an API-style
+    # client): the viewport stands by itself and stays optional
+    client.post(add_url, data={'label': 'Just a viewport', 'viewport_width': 1024, 'viewport_height': 768}, follow_redirects=True)
+    assert _viewport_of('Just a viewport') == (None, 1024, 768)
+    client.post(add_url, data={'label': 'Nothing set'}, follow_redirects=True)
+    assert _viewport_of('Nothing set') == (None, None, None)
+
+
 def test_browser_form_as_dialog(client, live_server, measure_memory_usage, datastore_path):
     """The /browsers page opens Add variation / Edit in a dialog: the same routes with ?modal=1
     answer with just the form, a failed save comes back as that form with its errors, and a
@@ -249,7 +495,7 @@ def test_browser_form_as_dialog(client, live_server, measure_memory_usage, datas
     res = client.get(overview_url)
     assert b'id="browser-config-dialog"' in res.data
     assert b'browser-config-modal.js' in res.data
-    assert f'<a data-browser-config-modal class="pure-button button-small pure-button-primary" href="{add_url}">'.encode() in res.data
+    assert f'<a data-browser-config-modal class="browser-add-variation" href="{add_url}">'.encode() in res.data
 
     # GET: only the form, posting back to the modal variant - no page around it
     res = client.get(add_url, query_string={'modal': '1'})
@@ -1313,8 +1559,8 @@ def test_device_field_only_for_engines_that_emulate(client, live_server, measure
     assert b'Screen &amp; device' in res.data
     # Grouped, with desktop/custom size first
     assert b'<optgroup label="Phones">' in res.data and b'<optgroup label="Tablets">' in res.data
-    assert b'Desktop / custom size' in res.data
-    assert res.data.index(b'Desktop / custom size') < res.data.index(b'Pixel 7') < res.data.index(b'iPad Pro 11')
+    assert b'Desktop (default size)' in res.data
+    assert res.data.index(b'Desktop (default size)') < res.data.index(b'Pixel 7') < res.data.index(b'iPad Pro 11')
 
     # The plain HTTP client renders no pages, there is nothing to emulate
     res = client.get(url_for("ui.browser_config.browser_config_edit", config_id="html_requests"))
@@ -1421,11 +1667,12 @@ def test_needs_setup_chip_goes_once_there_is_a_variation(client, live_server, me
     overview_url = url_for("ui.browser_config.browsers_overview")
 
     def _external_browser_row():
-        # Just that browser's own row - others on the page may still need setting up
+        # Just that browser's own card - others on the page may still need setting up
         html = client.get(overview_url).data.decode()
-        return re.search(r'<tr class="browser-base-row browser-engine-html_external_cdp.*?</tr>', html, re.S).group(0)
+        return re.search(r'<section class="browser-card browser-engine-html_external_cdp.*?</section>', html, re.S).group(0)
 
     assert 'browser-chip--needs-setup' in _external_browser_row()
+    assert 'browser-card browser-engine-html_external_cdp needs-setup' in _external_browser_row()
 
     _add_browser(client, label="My remote browser", base_fetcher="html_external_cdp",
                  connection_url="ws://my-browser:3000")
@@ -1433,21 +1680,130 @@ def test_needs_setup_chip_goes_once_there_is_a_variation(client, live_server, me
     assert 'browser-chip--needs-setup' not in _external_browser_row()
 
 
+def test_browser_icon_follows_the_variations_browser(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """The fetcher resolves the icon from the browser config (Fetcher.get_status_icon_data): a
+    Playwright variation set to Firefox shows Firefox - next to it on /browsers and on its
+    watches in the watch list - while the Playwright browser itself keeps the Playwright icon."""
+    import re
+    from changedetectionio import content_fetchers
+    from changedetectionio.content_fetchers.playwright_builtin import fetcher as local_playwright
+    from changedetectionio.model.browser_config import FetcherConfig, browser_icon_data
+    datastore = client.application.config.get('DATASTORE')
+    # The local Playwright browser is only offered where the playwright library is installed;
+    # nothing is fetched here, so offer it regardless and the test runs everywhere
+    monkeypatch.setitem(content_fetchers._plugin_fetchers, 'html_playwright_builtin', local_playwright)
+    monkeypatch.setattr(content_fetchers, 'html_playwright_builtin', local_playwright, raising=False)
+
+    # The resolver itself: the fetcher alone, then each browser it can launch
+    assert browser_icon_data('html_playwright_builtin')['filename'] == 'playwright-icon.png'
+    for browser_type, icon in (('chromium', 'google-chrome-icon.png'), ('firefox', 'firefox-icon.svg'), ('webkit', 'webkit-icon.svg')):
+        assert browser_icon_data('html_playwright_builtin', FetcherConfig(browser_type=browser_type))['filename'] == icon
+        assert browser_icon_data('html_playwright_builtin', {'browser_type': browser_type})['filename'] == icon
+        assert client.get(url_for('static_content', group='images', filename=icon)).status_code == 200
+    # A fetcher with one kind of browser answers the same whatever the config; the plain client has none
+    assert browser_icon_data('html_webdriver', FetcherConfig(browser_type='firefox'))['filename'] == 'google-chrome-icon.png'
+    assert browser_icon_data('html_requests') is None
+
+    # The form offers each browser as a tile carrying that same icon, the default one chosen
+    form_html = client.get(url_for("ui.browser_config.browser_config_add", base_fetcher='html_playwright_builtin')).data.decode()
+    tiles = re.findall(r'<label class="browser-type-option">.*?</label>', form_html, re.S)
+    assert len(tiles) == 3
+    for tile, (browser_type, icon) in zip(tiles, (('chromium', 'google-chrome-icon.png'), ('firefox', 'firefox-icon.svg'), ('webkit', 'webkit-icon.svg'))):
+        assert f'type="radio" value="{browser_type}"' in tile and icon in tile
+        assert ('checked' in tile) == (browser_type == 'chromium')
+
+    _add_browser(client, label="German desktop", base_fetcher="html_playwright_builtin", browser_type='firefox', locale='de-DE')
+    _add_browser(client, label="Safari-like", base_fetcher="html_playwright_builtin", browser_type='webkit')
+    ids = {e['label']: cid for cid, e in datastore.browser_config_store.all().items()}
+
+    # /browsers: Playwright's own icon on its card, each variation's browser on its row
+    html = client.get(url_for("ui.browser_config.browsers_overview")).data.decode()
+    card = re.search(r'<section class="browser-card browser-engine-html_playwright_builtin.*?</section>', html, re.S).group(0)
+    head, variations = card.split('<ul class="browser-variations">')
+    assert 'playwright-icon.png' in head and 'firefox-icon.svg' not in head
+    assert 'playwright-icon.png' not in variations
+    rows = variations.split('<li class="browser-variation-row')[1:]
+    assert len(rows) == 2
+    german_row = next(r for r in rows if 'German desktop' in r)
+    assert 'firefox-icon.svg' in german_row and 'webkit-icon.svg' not in german_row
+    assert 'webkit-icon.svg' in next(r for r in rows if 'Safari-like' in r)
+    # ...and what the variation changes, in words: the language by name with its flag
+    assert '<span class="browser-chip browser-chip--locale" title="de-DE">' in german_row
+    assert 'fi fi-de' in german_row
+
+    # The watch list: a watch shows the browser its variation runs
+    test_url = url_for('test_endpoint', _external=True)
+    firefox_watch = datastore.add_watch(url=test_url, extras={'fetch_backend': ids['German desktop']})
+    webkit_watch = datastore.add_watch(url=test_url, extras={'fetch_backend': ids['Safari-like']})
+    plain_watch = datastore.add_watch(url=test_url, extras={'fetch_backend': 'html_requests'})
+    html = client.get(url_for("watchlist.index")).data.decode()
+
+    def _row(uuid):
+        return re.search(rf'<tr id="{uuid}".*?</tr>', html, re.S).group(0)
+
+    assert 'firefox-icon.svg' in _row(firefox_watch)
+    assert 'playwright-icon.png' not in _row(firefox_watch)
+    assert 'title="German desktop (firefox)"' in _row(firefox_watch)
+    assert 'webkit-icon.svg' in _row(webkit_watch)
+    for icon in ('firefox-icon.svg', 'webkit-icon.svg', 'playwright-icon.png', 'google-chrome-icon.png'):
+        assert icon not in _row(plain_watch)
+
+    # The Browser picker on a watch's edit page: every choice carries its browser's icon, and
+    # "Default" the icon of whatever the default browser currently is
+    def _picker_choices():
+        html = client.get(url_for("ui.ui_edit.edit_page", uuid=plain_watch)).data.decode()
+        picker = re.search(r'<ul id="fetch_backend".*?</ul>', html, re.S).group(0)
+        return {re.search(r'value="([^"]+)"', li).group(1): li for li in picker.split('<li>')[1:]}
+
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+    choices = _picker_choices()
+    assert 'firefox-icon.svg' in choices[ids['German desktop']]
+    assert 'webkit-icon.svg' in choices[ids['Safari-like']]
+    assert 'google-chrome-icon.png' in choices['html_webdriver']
+    # The plain client has no icon of its own, so a neutral one - and so does a default set to it
+    for plain in ('html_requests', 'system'):
+        assert 'data-feather="zap"' in choices[plain] and 'status-icon' not in choices[plain]
+    datastore.data['settings']['application']['fetch_backend'] = ids['German desktop']
+    assert 'firefox-icon.svg' in _picker_choices()['system']
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+
+    # A group override changes the browser, so it changes the icon
+    tag_uuid = datastore.add_tag(title="Firefoxers")
+    tag = datastore.data['settings']['application']['tags'][tag_uuid]
+    tag['browser_config'] = ids['German desktop']
+    tag['browser_config_overrides_watch'] = True
+    datastore.data['watching'][plain_watch]['tags'] = [tag_uuid]
+    html = client.get(url_for("watchlist.index")).data.decode()
+    assert 'firefox-icon.svg' in _row(plain_watch)
+
+    # The group's own picker is the same list of radio buttons with icons - minus "Default",
+    # its checkbox is the off switch - with the group's browser chosen
+    html = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid)).data.decode()
+    picker = re.search(r'<ul id="browser_config".*?</ul>', html, re.S).group(0)
+    choices = {re.search(r'value="([^"]+)"', li).group(1): li for li in picker.split('<li>')[1:]}
+    assert 'system' not in choices
+    assert 'type="radio"' in choices[ids['German desktop']] and 'firefox-icon.svg' in choices[ids['German desktop']]
+    assert 'webkit-icon.svg' in choices[ids['Safari-like']]
+    assert [value for value, li in choices.items() if 'checked' in li] == [ids['German desktop']]
+    assert '<select' not in picker
+
+
 def test_browsers_table_has_css_hooks(client, live_server, measure_memory_usage, datastore_path):
-    """Deployments hide parts of the browsers table with CSS alone, so every cell, row and chip
-    must stay addressable by class."""
+    """Deployments hide parts of the browsers page with CSS alone, so every region, card, row
+    and chip must stay addressable by class."""
+    import re
     _add_browser(client, label="Phone", base_fetcher="html_playwright_builtin", browser_type='chromium',
                  device='Pixel 7', locale='de-DE')
     res = client.get(url_for("ui.browser_config.browsers_overview"))
     for column in (b'col-default', b'col-browser', b'col-capabilities', b'col-actions'):
-        assert b'<th class="' + column in res.data
-        assert b'<td class="' + column in res.data
+        assert b'<div class="' + column in res.data
     assert b'browser-engine-html_requests' in res.data
     assert b'browser-engine-html_playwright_builtin' in res.data
     assert b'browser-chip--cap-screenshots' in res.data
     assert b'browser-chip--plain-text' in res.data
-    assert b'browser-chip--device">Pixel 7<' in res.data
-    assert b'browser-chip--locale">de-DE<' in res.data
+    # A variation's settings are chips too, each with its own class
+    assert re.search(rb'browser-chip--device">.*?Pixel 7</span>', res.data, re.S)
+    assert b'<span class="browser-chip browser-chip--locale" title="de-DE">' in res.data
 
 
 def test_watch_browser_picker_links_user_variations(client, live_server, measure_memory_usage, datastore_path):
@@ -1463,7 +1819,7 @@ def test_watch_browser_picker_links_user_variations(client, live_server, measure
     assert b'Local Playwright: <a href="' + edit_url + b'" title="Edit this browser">My firefox</a>' in res.data
     # Still a normal radio choice, same markup WTForms would produce
     assert f'type="radio" value="{cid}"'.encode() in res.data
-    assert b'<ul id="fetch_backend" class="fetch-backend">' in res.data
+    assert b'<ul id="fetch_backend" class="browser-choice-list fetch-backend">' in res.data
     # Built-in engines aren't linked
     assert url_for("ui.browser_config.browser_config_edit", config_id="html_requests").encode() not in res.data
 
