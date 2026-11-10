@@ -1416,6 +1416,64 @@ def test_live_session_refuses_a_browser_that_cannot_do_it(client, live_server, m
             asyncio.run(acquire_browser_for_fetcher(cannot, keepalive_ms=1000))
 
 
+def test_browser_steps_follow_the_browsers_capability_not_an_env_var(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """Browser Steps is offered - the tab AND the script that drives it - whenever the watch's
+    browser can run steps. It used to need PLAYWRIGHT_DRIVER_URL for the script, so a browser that
+    launches by itself (local Playwright, a plugin) showed the tab but it did nothing."""
+    monkeypatch.delenv('PLAYWRIGHT_DRIVER_URL', raising=False)
+    datastore = client.application.config.get('DATASTORE')
+    test_url = url_for('test_endpoint', _external=True)
+
+    # html_webdriver is pinned to the Playwright fetcher in this file: it can run steps
+    can = datastore.add_watch(url=test_url, extras={'fetch_backend': 'html_webdriver', 'paused': True})
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=can))
+    assert b'id="browsersteps-tab"' in res.data
+    assert b'browser-steps.js' in res.data
+
+    # The plain HTTP client can't: neither the tab nor the script
+    cannot = datastore.add_watch(url=test_url, extras={'fetch_backend': 'html_requests', 'paused': True})
+    res = client.get(url_for("ui.ui_edit.edit_page", uuid=cannot))
+    assert b'id="browsersteps-tab"' not in res.data
+    assert b'browser-steps.js' not in res.data
+
+
+def test_live_session_hands_the_browser_config_to_a_fetcher_that_launches_its_own(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """A fetcher that launches its own browser for a live session (get_browsersteps_browser) gets
+    the watch's browser config when it asks for it, and still works when it doesn't."""
+    import asyncio
+    from changedetectionio import content_fetchers
+    from changedetectionio.blueprint.browser_steps import acquire_browser_for_fetcher
+    from changedetectionio.content_fetchers.base import Fetcher
+    from changedetectionio.model.browser_config import FetcherConfig
+    seen = {}
+
+    class takes_config(Fetcher):
+        supports_browser_steps = True
+
+        @classmethod
+        async def get_browsersteps_browser(cls, proxy=None, keepalive_ms=None, browser_config=None):
+            seen['new'] = (proxy, keepalive_ms, browser_config)
+            return ('browser', None)
+
+    class older_plugin(Fetcher):
+        supports_browser_steps = True
+
+        @classmethod
+        async def get_browsersteps_browser(cls, proxy=None, keepalive_ms=None):
+            seen['old'] = (proxy, keepalive_ms)
+            return ('browser', None)
+
+    monkeypatch.setattr(content_fetchers, 'html_takes_config', takes_config, raising=False)
+    monkeypatch.setattr(content_fetchers, 'html_older_plugin', older_plugin, raising=False)
+    config = FetcherConfig(locale='de-DE')
+    proxy = {'server': 'http://proxy.example:3128'}
+
+    assert asyncio.run(acquire_browser_for_fetcher('html_takes_config', proxy=proxy, keepalive_ms=5000, browser_config=config)) == ('browser', None)
+    assert seen['new'] == (proxy, 5000, config)
+    assert asyncio.run(acquire_browser_for_fetcher('html_older_plugin', proxy=proxy, keepalive_ms=5000, browser_config=config)) == ('browser', None)
+    assert seen['old'] == (proxy, 5000)
+
+
 def test_external_cdp_live_session_uses_its_own_endpoint(client, live_server, measure_memory_usage, datastore_path):
     """A live session for an External CDP browser connects to THAT browser, not the system one."""
     from changedetectionio import content_fetchers

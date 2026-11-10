@@ -22,7 +22,6 @@
     const email_notification_prefix=JSON.parse('{{ emailprefix|tojson }}');
 {% endif %}
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', watch_uuid=uuid)}}";
-    const playwright_enabled={% if playwright_enabled %}true{% else %}false{% endif %};
     const recheck_proxy_start_url="{{url_for('check_proxies.start_check', uuid=uuid)}}";
     const proxy_recheck_status_url="{{url_for('check_proxies.get_recheck_status', uuid=uuid)}}";
     const screenshot_url="{{url_for('static_content', group='screenshot', filename=uuid)}}";
@@ -33,7 +32,9 @@
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='visual-selector.js')}}" defer></script>
-{% if playwright_enabled %}
+{# With the tab it drives: whenever this watch's browser can run browser steps, whichever one it
+   is (a local-launch or plugin browser needs no PLAYWRIGHT_DRIVER_URL) #}
+{% if capabilities.supports_browser_steps %}
 <script src="{{url_for('static_content', group='js', filename='browser-steps.js')}}" defer></script>
 {% endif %}
 
@@ -248,6 +249,12 @@ Math: {{ 1 + 1 }}") }}
                             ({{ _('Not supported by Selenium browser') }})
                         </div>
                     </div>
+            {% for section in plugin_request_settings %}
+                <div class="pure-control-group advanced-options plugin-request-settings" id="plugin-request-settings-{{ section.plugin_id }}" style="display: none;"> <!-- from pluggy plugin -->
+                    <input type="hidden" name="plugin_request_settings_shown" value="{{ section.plugin_id }}">
+                    {% with plugin_form=form[section.field_name] %}{% include section.template %}{% endwith %}
+                </div>
+            {% endfor %}
             <fieldset data-visible-for="fetch_backend=html_requests fetch_backend=html_webdriver" >
                     <div class="pure-control-group inline-radio advanced-options"  style="display: none;">
                     {{ render_checkbox_field(form.ignore_status_codes) }}

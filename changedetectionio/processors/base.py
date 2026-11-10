@@ -304,6 +304,23 @@ class difference_detection_processor():
         empty_pages_are_a_change = self.datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
         fetch_error = None
         try:
+            # Plugins have the last word on the request, e.g. an Authorization header (fetch_request_alter hook,
+            # Plugin API 0.7.0+). It gets the request as the browser_request_alter plugins left it, and what it
+            # changes goes back into it. Inside the try so a plugin failing here still gets browser_request_finished.
+            from changedetectionio.pluggy_interface import apply_fetch_request_alter
+            plugin_request = {
+                'headers': browser_request.headers,
+                'method': browser_request.method,
+                'body': browser_request.body,
+                'url': url,
+                'proxy_url': self.fetcher.selected_proxy_url,
+                'fetcher': prefer_fetch_backend,
+            }
+            await apply_fetch_request_alter(self.watch, self.datastore, plugin_request)
+            browser_request.headers = plugin_request['headers']
+            browser_request.method = plugin_request['method']
+            browser_request.body = plugin_request['body']
+
             if browser_request.response is not None:
                 # A plugin already has the page, use it instead of running the browser
                 self._use_plugin_response(browser_request, empty_pages_are_a_change, ignore_status_codes)
@@ -444,6 +461,8 @@ class difference_detection_processor():
             )
         except Exception as e:
             logger.debug(f"Could not log browser_config: {e}")
+        # and the proxy, for plugins that send their own requests for this check (fetch_request_alter hook)
+        fetcher.selected_proxy_url = proxy_url
 
         if self.watch.has_browser_steps:
             fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

@@ -73,6 +73,8 @@ async def gather_hook_results(results):
 #   html_to_text                   - HTML to plain text, the same conversion the built-in processors use
 #   Fetcher                        - base class of a register_content_fetcher fetcher
 #   load_plugin_settings           - (datastore_path, plugin_id) -> the dict saved from your plugin_settings_tab
+#   load_watch_plugin_settings     - (watch, plugin_id) -> the dict saved from your ui_edit_request_settings form
+#   save_watch_plugin_settings     - (watch, plugin_id, dict), e.g. to keep state for one watch (written atomically)
 #   Non200ErrorCodeReceived        - what a fetcher raises when the site answers with an error status (.status_code)
 #   TimeBetweenCheckForm           - the weeks/days/hours/minutes/seconds recheck time widget, for FormField() in a
 #                                    plugin_settings_tab form (render_kw={'class': 'time-check-widget'} styles it)
@@ -84,13 +86,15 @@ if TYPE_CHECKING:
     from changedetectionio.forms import TimeBetweenCheckForm
     from changedetectionio.model.Watch import time_between_check_to_seconds
     from changedetectionio.html_tools import html_to_text
-    from changedetectionio.pluggy_interface import load_plugin_settings
+    from changedetectionio.pluggy_interface import load_plugin_settings, load_watch_plugin_settings, save_watch_plugin_settings
     from changedetectionio.processors import get_resolved_processor_config
     from changedetectionio.processors.base import difference_detection_processor
 
 _LAZY_EXPORTS = {
     'Fetcher': 'changedetectionio.content_fetchers.base',
     'load_plugin_settings': 'changedetectionio.pluggy_interface',
+    'load_watch_plugin_settings': 'changedetectionio.pluggy_interface',
+    'save_watch_plugin_settings': 'changedetectionio.pluggy_interface',
     'Non200ErrorCodeReceived': 'changedetectionio.content_fetchers.exceptions',
     'TimeBetweenCheckForm': 'changedetectionio.forms',
     'time_between_check_to_seconds': 'changedetectionio.model.Watch',
@@ -130,5 +134,7 @@ __all__ = [
     'hookimpl',
     'html_to_text',
     'load_plugin_settings',
+    'load_watch_plugin_settings',
+    'save_watch_plugin_settings',
     'time_between_check_to_seconds',
 ]

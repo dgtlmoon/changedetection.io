@@ -153,7 +153,13 @@ async def acquire_browser_for_fetcher(fetcher_name, proxy=None, keepalive_ms=Non
 
     # Engines that run their own browser locally hand one back themselves.
     if hasattr(fetcher_class, 'get_browsersteps_browser'):
-        result = await fetcher_class.get_browsersteps_browser(proxy=proxy, keepalive_ms=keepalive_ms)
+        own_browser_args = dict(proxy=proxy, keepalive_ms=keepalive_ms)
+        # The watch's browser config, for a fetcher whose launch depends on it. Only passed to
+        # those that take it, plugins written before it existed don't.
+        import inspect
+        if 'browser_config' in inspect.signature(fetcher_class.get_browsersteps_browser).parameters:
+            own_browser_args['browser_config'] = browser_config
+        result = await fetcher_class.get_browsersteps_browser(**own_browser_args)
         if result is not None:
             logger.debug(f"acquire_browser_for_fetcher: '{fetcher_name}' supplied its own browser")
             return result

@@ -60,7 +60,7 @@ def resolve_diff_versions(watch, request) -> DiffVersions:
     ``?to_version=`` query args. The caller is responsible for guaranteeing at least two
     snapshots exist (the route already redirects otherwise).
 
-    Note: read the versions BEFORE calling ``datastore.set_last_viewed()`` — the default
+    Note: read the versions BEFORE calling ``set_watch_last_viewed()`` — the default
     ``from_version`` depends on the pre-update last-viewed timestamp.
     """
     dates = list(watch.history.keys())

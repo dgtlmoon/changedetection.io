@@ -2434,6 +2434,11 @@ msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Res
 msgstr "Dosažen měsíční počet %(budget)s AI tokenů (%(used)s použito). Resetuje se příští měsíc."
 
 #: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not save the '{}' settings, see the log."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
 msgid "No watches to edit"
 msgstr "Žádná sledování k úpravě"
 

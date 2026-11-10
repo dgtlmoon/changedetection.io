@@ -69,6 +69,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
                 return True
 
+    def _save_plugin_request_settings(watch, section, data):
+        from changedetectionio.pluggy_interface import load_watch_plugin_settings, save_watch_plugin_settings
+        plugin_id = section['plugin_id']
+        try:
+            if section.get('on_save'):
+                data = section['on_save'](watch, data, load_watch_plugin_settings(watch, plugin_id))
+            save_watch_plugin_settings(watch, plugin_id, data or {})
+        except Exception as e:
+            logger.exception(f"Saving '{plugin_id}' settings for watch {watch.get('uuid')} failed: {e}")
+            flash(gettext("Could not save the '{}' settings, see the log.").format(plugin_id), 'error')
+
     @edit_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
     # https://stackoverflow.com/questions/42984453/wtforms-populate-form-with-data-if-data-exists
@@ -149,6 +160,16 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         if plugin_sections:
             for section in plugin_sections:
                 default[section.field_name] = dict(((default.get('plugin_settings') or {}).get(section.plugin_id)) or {})
+        # Plugins' own per-watch settings in the Request tab (ui_edit_request_settings hook), nested forms kept
+        # in the watch's data dir, never in the watch itself
+        from changedetectionio.pluggy_interface import get_ui_edit_request_settings, load_watch_plugin_settings
+        plugin_request_settings = get_ui_edit_request_settings(datastore.data['watching'][uuid], datastore)
+        if plugin_request_settings:
+            from wtforms.fields.form import FormField
+            form_class = type(form_class.__name__, (form_class,),
+                              {section['field_name']: FormField(section['form_class']) for section in plugin_request_settings})
+            for section in plugin_request_settings:
+                default[section['field_name']] = load_watch_plugin_settings(datastore.data['watching'][uuid], section['plugin_id'])
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                           data=default,
@@ -236,6 +257,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             processor_config_data = processors.extract_processor_config_from_form_data(form.data)
             processors.save_processor_config(datastore, uuid, processor_config_data)
 
+            # Only the sections that were on the page, the Request tab isn't shown for every fetcher and an
+            # absent section must not save as empty
+            shown_sections = request.form.getlist('plugin_request_settings_shown')
+            for section in plugin_request_settings:
+                if section['plugin_id'] not in shown_sections:
+                    continue
+                _save_plugin_request_settings(datastore.data['watching'][uuid], section, form[section['field_name']].data)
+
             # Ignore text
             form_ignore_text = form.ignore_text.data
             datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
@@ -274,7 +303,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                         tag_uuids.append(datastore.add_tag(title=t))
                     extra_update_obj['tags'] = tag_uuids
 
-            datastore.data['watching'][uuid].update(form.data)
+            plugin_field_names = {section['field_name'] for section in plugin_request_settings}
+            datastore.data['watching'][uuid].update({k: v for k, v in form.data.items() if k not in plugin_field_names})
             # Plugin sections go into plugin_settings, not next to the watch's own fields
             problem = save_sections(form, plugin_sections, datastore.data['watching'][uuid])
             if problem:
@@ -394,7 +424,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
                 'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
                 'jq_support': jq_support,
-                'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                 'app_rss_token': app_rss_token,
                 'rss_uuid_feed' : {
                     'label': watch.label,
@@ -435,6 +464,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             output = render_template("edit.html",
                                      extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
                                      extra_form_content=included_content,
+                                     plugin_request_settings=plugin_request_settings,
                                      **template_args
                                      )
 

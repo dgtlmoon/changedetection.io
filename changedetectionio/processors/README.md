@@ -22,8 +22,8 @@ See `restock_diff/api.yaml` for a working example.
 
 A processor can add its own plugin hooks: define `register_plugin_hooks(plugin_manager)` in its `__init__.py`
 and it's called once at startup. Add your hookspecs there, and register built-in implementations with
-`trylast=True` so any other plugin's implementation wins. `restock_diff` does this for its two price charts
-and for marking a watch as viewed, see `restock_diff/hookspecs.py` and `restock_diff/plugins/`.
+`trylast=True` so any other plugin's implementation wins. `restock_diff` does this for its two price charts,
+see `restock_diff/hookspecs.py` and `restock_diff/plugins/default_charts.py`.
 
 ## Todo
 

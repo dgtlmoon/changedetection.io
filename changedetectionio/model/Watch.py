@@ -435,6 +435,9 @@ class model(EntityPersistenceMixin, watch_base):
         from changedetectionio.processors import find_processors
         processor_names = [name for cls, name in find_processors()]
         processor_config_files = {f"{name}.json" for name in processor_names}
+        # and the files plugins keep their settings for this watch in (watch_settings_files hook)
+        from changedetectionio.pluggy_interface import collect_watch_settings_files
+        processor_config_files |= collect_watch_settings_files(self)
 
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
         # But preserve processor config files (they're configuration, not history data)

@@ -150,7 +150,8 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
     if datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False):
         password_enabled_and_share_is_off = not datastore.data['settings']['application'].get('shared_diff_access')
 
-    datastore.set_last_viewed(uuid, time.time())
+    from changedetectionio.pluggy_interface import set_watch_last_viewed
+    set_watch_last_viewed(datastore, uuid, time.time(), source='history')
 
     # Parse diff preferences from request using config as single source of truth
     # Check if this is a user submission (any diff pref param exists in query string)

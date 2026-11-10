@@ -1,5 +1,6 @@
 import pluggy
 import os
+import re
 import importlib
 import inspect
 import sys
@@ -32,6 +33,8 @@ HOOKS_THAT_PROPAGATE_EXCEPTIONS = {
     # A plugin that can't prepare the request (e.g. a challenge solver failing) must stop the
     # fetch with its message as the watch's error, rather than fetching without what it needed
     'browser_request_alter',
+    # fetch_request_alter: a check must fail rather than go out without the header a plugin meant to add.
+    'fetch_request_alter',
 }
 
 
@@ -89,6 +92,86 @@ class ChangeDetectionSpec:
             None, a registered fetcher name (starting with 'html_'), or {'backend': name, 'priority': int}.
             A plain name has priority 0. Unknown names, fetchers already tried, and fetchers that can't
             fetch a PDF watch are skipped.
+        """
+        pass
+
+    @hookspec
+    def fetch_request_alter(watch, datastore, request):
+        """Change the request just before it is sent, for example to add an Authorization header. Plugin API 0.7.0+.
+
+        Called once per check, after the watch's own headers, the headers.txt files and their Jinja2 are applied,
+        so what you set here wins. If a fetch fails and another fetcher retries it (select_fetch_backend), the
+        retry sends the same request. May be `async def`; do blocking work (network, disk) with
+        `await asyncio.to_thread(...)` so the other checks keep running.
+
+        An exception raised here fails the check with your message as the watch's error, rather than sending
+        the request without what you meant to add. To react to the answer, for example forget a token on a
+        401, use update_finalize: update_handler.fetcher.status_code, or processing_exception.status_code
+        when the fetch raised.
+
+        Args:
+            watch: The watch being checked
+            datastore: The application datastore
+            request: dict, change it in place:
+                'headers'   - requests.structures.CaseInsensitiveDict, add, change or remove headers
+                'method'    - e.g. 'GET', 'POST'
+                'body'      - the request body or None
+                'url'       - read only, the URL being fetched (changing it is ignored, the URL was already
+                              checked against the fetch rules)
+                'proxy_url' - read only, the proxy this check goes through or None. Send your own requests
+                              (for example to a token endpoint) through it too
+                'fetcher'   - read only, the fetcher name, e.g. 'html_requests'
+
+        Returns:
+            None, the request is changed in place
+        """
+        pass
+
+    @hookspec
+    def ui_edit_request_settings(watch, datastore):
+        """Add a section of per-watch settings to the edit page's Request tab, under "Show advanced options".
+        Plugin API 0.7.0+.
+
+        Your WTForms Form is nested into the edit form, so its fields are validated with the rest of the page and
+        errors show next to them. Its data is never stored in the watch itself: it is saved as JSON to
+        {watch data dir}/{plugin_id}.json, read it with plugin_api.load_watch_plugin_settings(watch, plugin_id).
+        Also return that filename from watch_settings_files, so "Clear history" keeps it.
+
+        Args:
+            watch: The watch being edited
+            datastore: The application datastore
+
+        Returns:
+            None, or a dict:
+                {
+                    'plugin_id': str,      # letters, digits, _ and -; also the JSON file's name, so it must not
+                                           # be a processor's name (those files are taken)
+                    'form_class': Form,    # a wtforms.Form (not FlaskForm, the page already has CSRF). The
+                                           # Request tab isn't shown for every fetcher, and the page must still
+                                           # save then, so its validators must pass on an empty form (Optional())
+                    'template': str,       # in your plugin's templates/ dir, rendered with `plugin_form` (your
+                                           # bound form), `watch` and `form` (the whole page's form). Import
+                                           # render_field etc from "_helpers.html" like the core templates do
+                    'on_save': callable,   # optional, on_save(watch, data, stored) -> dict to save, where data
+                                           # is your form's data and stored what is saved now. For example keep
+                                           # a stored password when its field was left empty. Default: data
+                }
+        """
+        pass
+
+    @hookspec
+    def watch_settings_files(watch):
+        """Files in the watch's data dir that are settings, not history, so "Clear history" keeps them.
+        Plugin API 0.7.0+.
+
+        Processors' {processor}.json files are always kept. Return the filenames your plugin stores there,
+        for example your ui_edit_request_settings '{plugin_id}.json'.
+
+        Args:
+            watch: The watch whose history is being cleared
+
+        Returns:
+            None, a filename, or a list of filenames (bare names, no directories)
         """
         pass
 
@@ -517,6 +600,27 @@ class ChangeDetectionSpec:
 
         Returns:
             dict or None: JSON-serialisable state for this watch, or None
+        """
+        pass
+
+    @hookspec
+    def watch_last_viewed_updated(watch, datastore, timestamp, source):
+        """A watch's "last viewed" time was just saved, which is what decides whether its row shows
+        as unviewed. Called after the save, so watch['last_viewed'] already holds the new value.
+        Core always saves it, a plugin can't stop or replace that. Return values are ignored.
+
+        Args:
+            watch: The Watch model instance
+            datastore: The ChangeDetectionStore
+            timestamp: int epoch seconds to save. Usually now, but 'mark_unviewed' winds it back
+                       to the second-newest snapshot
+            source: what triggered it:
+                'history'         - the watch's history / diff page was opened
+                'watchlist_chart' - a processor's chart rolled down under the watch list row
+                'llm_summary'     - the AI summary rolled down under the watch list row
+                'mark_viewed'     - the "Mark viewed" action on selected watches
+                'mark_unviewed'   - the "Mark unviewed" action on selected watches
+                'mark_all_viewed' - the "Mark all viewed" button, once per watch in view
         """
         pass
 
@@ -1032,6 +1136,19 @@ def collect_fetcher_status_icons(fetcher_name, browser_config=None):
 
     return None
 
+def set_watch_last_viewed(datastore, uuid, timestamp, source, send_signal=True):
+    """Save a watch's last viewed time, then tell plugins (watch_last_viewed_updated).
+    Every "this watch was viewed" path goes through here, not datastore.set_last_viewed() directly.
+    send_signal is passed on to datastore.set_last_viewed(), bulk callers turn it off."""
+    watch = datastore.data['watching'].get(uuid)
+    if not watch:
+        return
+    timestamp = int(timestamp)
+    datastore.set_last_viewed(uuid, timestamp, send_signal=send_signal)
+    plugin_manager.hook.watch_last_viewed_updated(watch=watch, datastore=datastore, timestamp=timestamp,
+                                                  source=source)
+
+
 def get_itemprop_availability_from_plugin(content, fetcher_name, fetcher_instance, url, llm_intent=None):
     """Get itemprop availability data from plugins as a fallback.
 
@@ -1230,6 +1347,78 @@ def save_plugin_settings(datastore_path, plugin_id, settings):
     except Exception as e:
         logger.error(f"Failed to save settings for plugin '{plugin_id}': {e}")
         return False
+
+
+# Plugin IDs become filenames in the watch's data dir
+_WATCH_PLUGIN_ID_RE = re.compile(r'^[A-Za-z0-9_-]+$')
+
+
+def _watch_plugin_settings_path(watch, plugin_id):
+    if not watch or not watch.data_dir or not isinstance(plugin_id, str) or not _WATCH_PLUGIN_ID_RE.match(plugin_id):
+        return None
+    return os.path.join(watch.data_dir, f"{plugin_id}.json")
+
+
+def load_watch_plugin_settings(watch, plugin_id):
+    """A plugin's settings for one watch, saved from its ui_edit_request_settings form, or {} when there are none."""
+    import json
+    path = _watch_plugin_settings_path(watch, plugin_id)
+    if not path or not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, encoding='utf-8') as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception as e:
+        logger.error(f"Failed to load '{plugin_id}' settings for watch {watch.get('uuid')}: {e}")
+        return {}
+
+
+def save_watch_plugin_settings(watch, plugin_id, settings):
+    """Save a plugin's settings for one watch to {watch data dir}/{plugin_id}.json, atomically."""
+    from changedetectionio.store.file_saving_datastore import save_json_atomic
+    path = _watch_plugin_settings_path(watch, plugin_id)
+    if not path:
+        raise ValueError(f"Invalid plugin_id {plugin_id!r} or watch without a data dir")
+    save_json_atomic(path, settings, label=f"{plugin_id} settings", max_size_mb=1)
+
+
+def get_ui_edit_request_settings(watch, datastore):
+    """The valid ui_edit_request_settings sections plugins offer for this watch, one per plugin_id."""
+    from changedetectionio.processors import find_processors
+    taken = {name for _, name in find_processors()}
+    sections = []
+    for result in plugin_manager.hook.ui_edit_request_settings(watch=watch, datastore=datastore) or []:
+        if not result:
+            continue
+        plugin_id = result.get('plugin_id') if isinstance(result, dict) else None
+        if not (plugin_id and isinstance(plugin_id, str) and _WATCH_PLUGIN_ID_RE.match(plugin_id)
+                and result.get('form_class') and result.get('template')):
+            logger.warning(f"Invalid ui_edit_request_settings section, needs plugin_id, form_class and template: {result!r}")
+            continue
+        if plugin_id in taken:
+            logger.warning(f"ui_edit_request_settings plugin_id '{plugin_id}' is already in use, skipped")
+            continue
+        taken.add(plugin_id)
+        sections.append(dict(result, field_name=f"plugin_settings_{plugin_id.replace('-', '_')}"))
+    return sections
+
+
+def collect_watch_settings_files(watch):
+    """Filenames plugins keep in this watch's data dir as settings (watch_settings_files hook)."""
+    files = set()
+    for result in plugin_manager.hook.watch_settings_files(watch=watch) or []:
+        for name in ([result] if isinstance(result, str) else (result or [])):
+            if isinstance(name, str) and name and name == os.path.basename(name):
+                files.add(name)
+    return files
+
+
+async def apply_fetch_request_alter(watch, datastore, request):
+    """Run the fetch_request_alter hooks, sync or async, one after the other. Their exceptions fail the check."""
+    from changedetectionio.plugin_api import await_me_maybe
+    for result in plugin_manager.hook.fetch_request_alter(watch=watch, datastore=datastore, request=request) or []:
+        await await_me_maybe(result)
 
 
 def get_plugin_template_paths():

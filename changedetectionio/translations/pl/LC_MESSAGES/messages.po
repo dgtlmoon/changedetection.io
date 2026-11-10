@@ -2560,6 +2560,11 @@ msgstr ""
 "zostanie zresetowany w przyszłym miesiącu."
 
 #: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not save the '{}' settings, see the log."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
 msgid "No watches to edit"
 msgstr "Brak obserwacji do edycji"
 
