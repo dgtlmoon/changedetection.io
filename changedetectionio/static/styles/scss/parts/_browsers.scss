@@ -1,0 +1,330 @@
+// The /browsers page (browsers-overview.html) and the add/edit browser form
+// (_browser_config_fields.html).
+//
+// Every column, row and chip keeps its own class (col-*, browser-engine-<name>,
+// browser-chip--cap-<capability>, browser-chip--<setting>) so a deployment can hide any of them
+// with CSS alone.
+
+$browser-line: rgba(127, 127, 127, 0.35);
+$browser-tint: rgba(127, 127, 127, 0.05);
+$browser-default-tint: rgba(21, 87, 36, 0.06);
+
+.browsers-title {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+
+  svg {
+    width: 1.1em;
+    height: 1.1em;
+  }
+}
+
+.browsers-table {
+  width: 100%;
+  margin-top: 1em;
+
+  th,
+  td {
+    padding: 0.7em 0.8em;
+    vertical-align: middle;
+  }
+
+  .col-default {
+    width: 5em;
+    text-align: center;
+  }
+
+  .col-capabilities {
+    line-height: 1.9;
+  }
+
+  .col-actions {
+    text-align: right;
+    white-space: nowrap;
+
+    .pure-button {
+      margin-left: 0.3em;
+    }
+
+    // Still in use, so it can't be removed (the title says why)
+    .pure-button[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  // A base browser and its variations read as one group: the base has a firm top border, its
+  // children a lighter tint and no internal separators.
+  tr.browser-base-row td {
+    border-top: 2px solid $browser-line;
+  }
+
+  tr.browser-variation-row td {
+    background: $browser-tint;
+    border-top: none;
+  }
+
+  tr.is-default,
+  tr.browser-variation-row.is-default td {
+    background: $browser-default-tint;
+  }
+}
+
+// The fetcher's icon in front of its name: an <img class="status-icon"> or a feather <svg>
+.browser-icon {
+  display: inline-flex;
+  width: 1.4em;
+  justify-content: center;
+  vertical-align: middle;
+  margin-right: 0.3em;
+  color: var(--color-grey-500);
+
+  svg,
+  img {
+    width: 1.1em;
+    height: 1.1em;
+  }
+}
+
+.browser-variation-name {
+  padding-left: 1.5em;
+}
+
+// Feather renders an inline <svg>, so it is sized with width/height (font-size won't apply)
+.browser-variation-arrow {
+  width: 16px;
+  height: 16px;
+  margin-right: 0.4em;
+  color: var(--color-grey-600);
+  vertical-align: middle;
+}
+
+.browser-default-radio {
+  transform: scale(1.3);
+  cursor: pointer;
+}
+
+.set-default-form {
+  margin: 0;
+  display: inline;
+}
+
+.browser-remove-form {
+  display: inline;
+}
+
+.browser-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.1em 0.65em;
+  margin: 0.1em;
+  border-radius: 1em;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  background: rgba(127, 127, 127, 0.15);
+  white-space: nowrap;
+  vertical-align: middle;
+
+  svg {
+    width: 0.95em;
+    height: 0.95em;
+    opacity: 0.75;
+  }
+
+  &--default {
+    background: #d4edda;
+    color: #155724;
+    font-weight: 600;
+  }
+
+  // Links to the watch list filtered to the watches using this browser
+  &--usage {
+    background: transparent;
+    border: 1px solid $browser-line;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      border-color: var(--color-link);
+      color: var(--color-link);
+    }
+  }
+
+  &--needs-setup {
+    background: rgba(255, 170, 0, 0.2);
+  }
+}
+
+.browser-empty {
+  margin-top: 0.75em;
+  padding: 2em;
+  text-align: center;
+  border: 1px dashed $browser-line;
+  border-radius: 0.5em;
+
+  p {
+    color: var(--color-grey-500);
+    margin-top: 0;
+  }
+}
+
+// Add/edit browser form
+// "Use my current timezone <name>" under the timezone field
+.browser-use-my-timezone {
+  margin-top: 0.5em;
+
+  // [hidden] loses to .pure-button's display otherwise
+  &[hidden] {
+    display: none;
+  }
+
+  svg {
+    width: 1em;
+    height: 1em;
+    margin-right: 0.35em;
+    vertical-align: -0.12em;
+  }
+}
+
+// Viewport width × height side by side
+.browser-viewport {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6em;
+
+  input {
+    width: 7em;
+  }
+
+  // Sits level with the inputs, not the labels above them
+  .browser-viewport-times {
+    padding-bottom: 0.6em;
+    color: var(--color-grey-500);
+  }
+}
+
+// "Based on browser <name>" - one line, the name picked out
+.browser-based-on {
+  white-space: nowrap;
+
+  strong {
+    margin-left: 0.3em;
+    color: var(--color-link);
+  }
+}
+
+.viewport-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+}
+
+.browser-inline-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em 1.2em;
+
+  .checkbox {
+    white-space: nowrap;
+  }
+}
+
+// Add/edit form as a dialog on /browsers (browser-config-modal.html)
+// (.modal-dialog doubled in: parts/_modal.scss loads later and its max-width: 500px would win
+// against a single class)
+.modal-dialog.browser-config-dialog {
+  width: min(600px, calc(100vw - 2rem));
+  max-width: none;
+
+  form {
+    margin: 0;
+  }
+
+  .modal-icon svg {
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+
+  // Which browser this is a variation of
+  .browser-config-dialog-base {
+    font-size: 0.85rem;
+    color: var(--color-grey-500);
+  }
+
+  .modal-body {
+    text-align: left;
+    // One height for every tab, so the dialog doesn't jump when switching
+    height: min(62vh, 34rem);
+    overflow-y: auto;
+  }
+
+  // Same tabs as the page version of the form, switched by class instead of the URL #anchor
+  .browser-dialog-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid var(--color-border-table-cell);
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.75rem 0.9rem;
+      margin-bottom: -1px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      color: var(--color-grey-500);
+      font: inherit;
+      cursor: pointer;
+
+      svg {
+        width: 1em;
+        height: 1em;
+      }
+
+      &:hover {
+        color: var(--color-text);
+      }
+
+      &.active {
+        color: var(--color-link);
+        border-bottom-color: var(--color-link);
+        font-weight: 600;
+      }
+
+      // A pane with a field the save refused
+      &.has-error::after {
+        content: "";
+        width: 0.5em;
+        height: 0.5em;
+        border-radius: 50%;
+        background: var(--color-background-button-error);
+      }
+    }
+  }
+
+  .tab-pane-inner,
+  .tab-pane-inner:not(:target) {
+    display: none;
+  }
+
+  .tab-pane-inner.active {
+    display: block;
+  }
+
+  fieldset {
+    padding-top: 0;
+  }
+
+  input[type="text"],
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}

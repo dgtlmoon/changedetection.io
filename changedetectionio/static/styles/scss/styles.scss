@@ -8,6 +8,7 @@
 @use "parts/browser-steps";
 @use "parts/extra_proxies";
 @use "parts/extra_browsers";
+@use "parts/browsers";
 @use "parts/pagination";
 @use "parts/spinners";
 @use "parts/darkmode";
@@ -158,8 +159,14 @@ a {
   color: var(--color-link);
 }
 
-#search-result-info {
+#search-result-info,
+#browser-filter-info {
   color: #fff;
+}
+
+#browser-filter-info a {
+  color: #fff;
+  margin-left: 0.5em;
 }
 
 button.toggle-button {

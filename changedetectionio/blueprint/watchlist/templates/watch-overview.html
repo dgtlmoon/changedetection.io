@@ -194,6 +194,7 @@ window.watchOverviewI18n = {
     </div>
 
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
+    {%- if active_browser_label -%}<div id="browser-filter-info">{{ _('Browser') }}: <strong>{{ active_browser_label }}</strong> <a href="{{ filter_url(browser=None) }}">{{ _('Clear') }}</a></div>{%- endif -%}
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}

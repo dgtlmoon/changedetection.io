@@ -650,6 +650,39 @@ def list_user_variation_ids(datastore):
             for cid, entry in datastore.browser_config_store.all().items() if cid not in engines}
 
 
+def watch_browser_ids(watch):
+    """The browser ids this watch depends on: the one it resolves to through the whole chain
+    (group override -> the watch's own choice -> system default, Watch.get_fetch_backend) plus
+    the one chosen on the watch itself, which a group override can hide but which it falls back
+    to once that override is gone.
+
+    THE answer to "does this watch use browser X" - the watch list's ?browser= filter and the
+    in-use counts on /browsers both ask here, so the count and the list behind it always agree.
+    """
+    return {watch.get_fetch_backend, watch.get('fetch_backend')} - {None, '', 'system'}
+
+
+def browser_config_usage(datastore):
+    """{browser id: {'watches': n, 'groups': n}} for every browser that is in use.
+
+    Watches are counted with watch_browser_ids(), so the ones that only reach a browser through
+    a group override or the system default are included. A group counts while its override is
+    switched on (with it off the group doesn't use the browser).
+    """
+    usage = {}
+
+    def _bump(config_id, kind):
+        usage.setdefault(config_id, {'watches': 0, 'groups': 0})[kind] += 1
+
+    for watch in datastore.data['watching'].values():
+        for config_id in watch_browser_ids(watch):
+            _bump(config_id, 'watches')
+    for tag in datastore.data['settings']['application'].get('tags', {}).values():
+        if tag.get('browser_config_overrides_watch') and tag.get('browser_config'):
+            _bump(tag['browser_config'], 'groups')
+    return usage
+
+
 def _system_default_label(datastore):
     from flask_babel import gettext
     return gettext('Default (system settings)')

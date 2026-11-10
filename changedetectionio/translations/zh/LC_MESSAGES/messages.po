@@ -443,6 +443,7 @@ msgstr "你将被送回 %(host)s。"
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 #: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "取消"
@@ -2352,6 +2353,17 @@ msgid "Browser config updated"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/browser_config.py
+msgid "This is the default browser, choose another default before removing it"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+#, python-format
+msgid ""
+"This browser is still in use (watches: %(watches)s, groups: %(groups)s), switch them to another browser before "
+"removing it - <a href=\"%(url)s\">show its watches</a>"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
 msgid "Browser config removed"
 msgstr ""
 
@@ -2567,6 +2579,7 @@ msgid "Laptop"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html changedetectionio/blueprint/ui/templates/queue.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear"
 msgstr ""
 
@@ -2595,6 +2608,10 @@ msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Use my current timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
 msgid "Maximum seconds to wait for the response (plain HTTP client only)."
 msgstr ""
 
@@ -2615,19 +2632,28 @@ msgid "One address pattern per line, e.g. <code>*.ttf</code>."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
 msgid "Edit browser"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
 msgid "Add browser variation"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
 msgid "Language & timezone"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
 msgid "Request options"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#, python-format
+msgid "Watches: %(watches)s, groups: %(groups)s"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
@@ -2682,6 +2708,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "no"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Still in use - switch its watches, groups or the default to another browser first"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
@@ -2908,11 +2938,11 @@ msgstr "截图需要启用 Playwright/WebDriver"
 msgid "Request"
 msgstr "请求"
 
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/content_fetchers/base.py
 msgid "Browser Steps"
 msgstr "浏览器步骤"
 
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/content_fetchers/base.py
 msgid "Visual Filter Selector"
 msgstr "可视化过滤器选择器"
 
@@ -3885,6 +3915,22 @@ msgstr ""
 msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
 msgstr ""
 
+#: changedetectionio/content_fetchers/base.py
+msgid "Screenshots"
+msgstr ""
+
+#: changedetectionio/content_fetchers/base.py
+msgid "Mobile emulation"
+msgstr ""
+
+#: changedetectionio/content_fetchers/base.py
+msgid "Block images & assets"
+msgstr ""
+
+#: changedetectionio/content_fetchers/base.py
+msgid "PDF"
+msgstr ""
+
 #: changedetectionio/content_fetchers/external_cdp.py
 msgid "External browser"
 msgstr ""
@@ -4121,6 +4167,7 @@ msgid "Processor"
 msgstr "处理器"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
 #: changedetectionio/blueprint/ui/templates/browsers-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Browser"

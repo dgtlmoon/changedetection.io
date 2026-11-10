@@ -1,0 +1,43 @@
+{# The add/edit browser form as a fragment for the dialog on /browsers (?modal=1, loaded and
+   submitted by static/js/browser-config-modal.js). Same fields and the same routes as the page
+   version (browser-config-form.html); a failed save re-renders this with its errors, a
+   successful one answers with JSON instead. #}
+<form class="pure-form pure-form-stacked browser-config-form" method="POST" action="{{ form_action }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="modal-header">
+        <span class="modal-icon info"><i data-feather="monitor"></i></span>
+        <div>
+            <h2 class="modal-title" id="browser-config-dialog-title">{% if mode == 'edit' %}{{ _('Edit browser') }}{% else %}{{ _('Add browser variation') }}{% endif %}</h2>
+            <span class="browser-config-dialog-base">{{ base_label }}</span>
+        </div>
+    </div>
+    {# The same tabs as the page version. They switch panes by class (browser-config-modal.js)
+       instead of the URL #anchor, which belongs to the /browsers page behind the dialog. #}
+    <div class="browser-dialog-tabs" role="tablist">
+        <button type="button" role="tab" data-pane="browser"><i data-feather="monitor"></i>{{ _('Browser') }}</button>
+        {% if show_language_tab %}
+        <button type="button" role="tab" data-pane="language"><i data-feather="globe"></i>{{ _('Language & timezone') }}</button>
+        {% endif %}
+        {% if show_request_tab %}
+        <button type="button" role="tab" data-pane="request"><i data-feather="sliders"></i>{{ _('Request options') }}</button>
+        {% endif %}
+        {% for section in plugin_sections if section.has_own_tab %}
+        <button type="button" role="tab" data-pane="plugin-tab-{{ section.plugin_id }}"><i data-feather="package"></i>{{ section.label }}</button>
+        {% endfor %}
+    </div>
+    <div class="modal-body">
+        {# Errors that belong to no single field (flash) - shown here, the page behind stays as it is #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul class="messages">
+            {% for category, message in messages %}<li class="{{ category }}">{{ message }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        {% include "_browser_config_fields.html" %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="modal-btn-cancel pure-button" data-browser-dialog-close>{{ _('Cancel') }}</button>
+        {{ form.save(class="pure-button pure-button-primary") }}
+    </div>
+</form>

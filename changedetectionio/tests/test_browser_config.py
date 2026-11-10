@@ -126,9 +126,179 @@ def test_browser_config_crud(client, live_server, measure_memory_usage, datastor
     assert b"Desktop 4K" in res.data
     assert datastore.browser_config_store.get(cid)['browser_config']['viewport_width'] == 3840
 
-    # Remove
+    # Remove - refused while it is still the default browser (see test_remove_refused_while_in_use)
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
     client.post(url_for("ui.browser_config.browser_config_remove", config_id=cid), follow_redirects=True)
     assert len(datastore.browser_config_store.all()) == 0
+
+
+def test_remove_refused_while_in_use(client, live_server, measure_memory_usage, datastore_path):
+    """A browser that a watch, a group override or the system default still points at can't be
+    removed - the watches left behind could no longer be checked (BrowserConfigDoesntExist).
+    The refusal links to the watch list filtered to the watches that use it."""
+    datastore = client.application.config.get('DATASTORE')
+    _add_browser(client, label="In use")
+    cid = next(iter(datastore.browser_config_store.all()))
+    remove_url = url_for("ui.browser_config.browser_config_remove", config_id=cid)
+    watches_url = url_for("watchlist.index", browser=cid)
+
+    def _remove():
+        return client.post(remove_url, follow_redirects=True)
+
+    # The default browser
+    datastore.data['settings']['application']['fetch_backend'] = cid
+    assert b"This is the default browser" in _remove().data
+    assert datastore.browser_config_store.get(cid)
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+
+    # Chosen by a watch
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'fetch_backend': cid})
+    res = _remove()
+    assert b"still in use (watches: 1, groups: 0)" in res.data
+    assert f'<a href="{watches_url}">'.encode() in res.data, "the refusal links to that browser's watches"
+    assert datastore.browser_config_store.get(cid)
+    # ...and the page offers no working Remove for it, only the count
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    assert b'browser-chip--usage' in res.data
+    assert f'action="{remove_url}"'.encode() not in res.data
+    datastore.data['watching'][uuid]['fetch_backend'] = 'system'
+
+    # Chosen by a group override - only while the override is switched on. The watch in that
+    # group counts too: it reaches the browser through the group.
+    tag_uuid = datastore.add_tag(title="Shops")
+    tag = datastore.data['settings']['application']['tags'][tag_uuid]
+    tag['browser_config'] = cid
+    tag['browser_config_overrides_watch'] = True
+    datastore.data['watching'][uuid]['tags'] = [tag_uuid]
+    assert b"still in use (watches: 1, groups: 1)" in _remove().data
+    assert datastore.browser_config_store.get(cid)
+    tag['browser_config_overrides_watch'] = False
+
+    # Nothing uses it any more
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    assert f'action="{remove_url}"'.encode() in res.data
+    assert b"Browser config removed" in _remove().data
+    assert not datastore.browser_config_store.get(cid)
+
+
+def test_watchlist_filter_by_browser(client, live_server, measure_memory_usage, datastore_path):
+    """/?browser=<id> lists the watches that use that browser whichever level chose it - the
+    watch itself, a group override or the system default - and its count on /browsers agrees."""
+    from changedetectionio.blueprint.watchlist.filters import matching_watch_uuids
+    from changedetectionio.model.browser_config import browser_config_usage
+    datastore = client.application.config.get('DATASTORE')
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+    _add_browser(client, label="Filter me")
+    cid = next(iter(datastore.browser_config_store.all()))
+    test_url = url_for('test_endpoint', _external=True)
+
+    def _matching(browser):
+        return set(matching_watch_uuids(datastore, {'browser': browser}))
+
+    direct = datastore.add_watch(url=test_url, extras={'fetch_backend': cid})
+    via_group = datastore.add_watch(url=test_url, extras={'fetch_backend': 'html_requests'})
+    via_default = datastore.add_watch(url=test_url, extras={'fetch_backend': 'system'})
+    other = datastore.add_watch(url=test_url, extras={'fetch_backend': 'html_requests'})
+
+    # 1. Only the watch that chose it itself
+    assert _matching(cid) == {direct}
+    assert _matching('html_requests') == {via_group, via_default, other}
+    assert len(_matching('')) == 4, "no browser filter, every watch"
+
+    # 2. A group override pulls its watch in - and that watch still lists under the browser it
+    #    chose itself, which it falls back to when the override goes
+    tag_uuid = datastore.add_tag(title="Overriders")
+    tag = datastore.data['settings']['application']['tags'][tag_uuid]
+    tag['browser_config'] = cid
+    tag['browser_config_overrides_watch'] = True
+    datastore.data['watching'][via_group]['tags'] = [tag_uuid]
+    assert _matching(cid) == {direct, via_group}
+    assert via_group in _matching('html_requests')
+
+    # ...but not while the group's override is switched off
+    tag['browser_config_overrides_watch'] = False
+    assert _matching(cid) == {direct}
+    tag['browser_config_overrides_watch'] = True
+
+    # 3. As the system default, the watches that follow the default come too
+    datastore.data['settings']['application']['fetch_backend'] = cid
+    assert _matching(cid) == {direct, via_group, via_default}
+    assert _matching('html_requests') == {via_group, other}
+
+    # The count on /browsers is the same set
+    assert browser_config_usage(datastore)[cid] == {'watches': 3, 'groups': 1}
+
+    # The rendered list: the three rows, the browser named, and a way back out
+    res = client.get(url_for("watchlist.index", browser=cid))
+    for uuid in (direct, via_group, via_default):
+        assert f'data-watch-uuid="{uuid}"'.encode() in res.data
+    assert f'data-watch-uuid="{other}"'.encode() not in res.data
+    assert b'id="browser-filter-info"' in res.data
+    assert b'Filter me' in res.data
+
+
+def test_browser_form_as_dialog(client, live_server, measure_memory_usage, datastore_path):
+    """The /browsers page opens Add variation / Edit in a dialog: the same routes with ?modal=1
+    answer with just the form, a failed save comes back as that form with its errors, and a
+    successful one as JSON pointing back at the overview."""
+    datastore = client.application.config.get('DATASTORE')
+    overview_url = url_for("ui.browser_config.browsers_overview")
+    add_url = url_for("ui.browser_config.browser_config_add", base_fetcher='html_requests')
+
+    # The overview carries the dialog and marks the links that open in it
+    res = client.get(overview_url)
+    assert b'id="browser-config-dialog"' in res.data
+    assert b'browser-config-modal.js' in res.data
+    assert f'<a data-browser-config-modal class="pure-button button-small pure-button-primary" href="{add_url}">'.encode() in res.data
+
+    # GET: only the form, posting back to the modal variant - no page around it
+    res = client.get(add_url, query_string={'modal': '1'})
+    assert res.status_code == 200
+    assert b'<html' not in res.data
+    assert b'class="modal-header"' in res.data
+    assert f'action="{add_url}?modal=1"'.encode() in res.data
+    assert b'name="user_agent"' in res.data
+    # Same tabs as the page, as buttons naming the pane they show (html_requests has no
+    # language/timezone settings, so no such tab)
+    assert b'role="tab" data-pane="browser"' in res.data
+    assert b'role="tab" data-pane="request"' in res.data
+    assert b'data-pane="language"' not in res.data
+    assert b'id="request"' in res.data
+
+    # A browser with a timezone setting offers to fill in the user's own (the script names it).
+    # Needs the debug fetcher, the one browser every environment can offer with that setting.
+    from changedetectionio import content_fetchers
+    if hasattr(content_fetchers, 'html_debug_test_browser') and 'html_debug_test_browser' in dict(content_fetchers.available_fetchers()):
+        res = client.get(url_for("ui.browser_config.browser_config_add", base_fetcher='html_debug_test_browser'),
+                         query_string={'modal': '1'})
+        assert b'role="tab" data-pane="language"' in res.data
+        assert b'id="use-my-timezone"' in res.data
+        assert b'Use my current timezone' in res.data
+
+    # ...while without ?modal=1 it is still the full page
+    assert b'<html' in client.get(add_url).data
+
+    # POST with a problem: the form again, with the error, nothing stored and no redirect
+    res = client.post(add_url, query_string={'modal': '1'}, data={'label': ''})
+    assert res.status_code == 200
+    assert b'<html' not in res.data
+    assert b'Give this browser config a name' in res.data
+    assert not datastore.browser_config_store.all()
+
+    # POST that saves: JSON, and the flash waits for the overview
+    res = client.post(add_url, query_string={'modal': '1'}, data={'label': 'From dialog', 'user_agent': 'dialog-agent'})
+    assert res.is_json and res.get_json() == {'ok': True, 'redirect': overview_url}
+    cid = next(c for c, e in datastore.browser_config_store.all().items() if e.get('label') == 'From dialog')
+    assert b'Browser added' in client.get(overview_url).data
+
+    # Edit works the same way
+    edit_url = url_for("ui.browser_config.browser_config_edit", config_id=cid)
+    res = client.get(edit_url, query_string={'modal': '1'})
+    assert b'<html' not in res.data
+    assert b'value="dialog-agent"' in res.data
+    res = client.post(edit_url, query_string={'modal': '1'}, data={'label': 'From dialog', 'user_agent': 'edited-agent'})
+    assert res.get_json() == {'ok': True, 'redirect': overview_url}
+    assert datastore.browser_config_store.get(cid)['browser_config']['user_agent'] == 'edited-agent'
 
 
 def test_browser_config_unique_label(client, live_server, measure_memory_usage, datastore_path):
@@ -1224,6 +1394,43 @@ def test_device_reaches_the_fetcher(client, live_server, measure_memory_usage, d
     assert '"has_touch": true' in snapshot
     assert '"device_scale_factor": 1' in snapshot
     assert DEVICE_PRESETS['Pixel 7']['user_agent'] in snapshot
+
+
+def test_capability_chips_are_readable(client, live_server, measure_memory_usage, datastore_path):
+    """The capabilities column shows the labelled, user-facing flags (FetcherCapabilities.labels()),
+    not every internal flag with its attribute name."""
+    from changedetectionio.content_fetchers.base import FetcherCapabilities
+    res = client.get(url_for("ui.browser_config.browsers_overview"))
+    assert b'browser-chip--cap-screenshots' in res.data
+    assert b'Screenshots</span>' in res.data
+    assert b'xpath element data' not in res.data
+    # Every fetcher has these two, but they only decide which settings the form offers
+    assert b'browser-chip--cap-custom_user_agent' not in res.data
+    assert b'browser-chip--cap-cookies' not in res.data
+
+    # model_dump() still carries every flag as a plain bool, labelled or not (plugin API, templates)
+    dumped = FetcherCapabilities(supports_screenshots=True).model_dump()
+    assert dumped['supports_screenshots'] is True and dumped['supports_cookies'] is False
+    assert [c['flag'] for c in FetcherCapabilities(supports_screenshots=True, supports_cookies=True).chips()] == ['supports_screenshots']
+
+
+def test_needs_setup_chip_goes_once_there_is_a_variation(client, live_server, measure_memory_usage, datastore_path):
+    """A browser that only works through a variation (here the external one, which needs an
+    endpoint) says "needs setup" - until it has a variation, then it is set up."""
+    import re
+    overview_url = url_for("ui.browser_config.browsers_overview")
+
+    def _external_browser_row():
+        # Just that browser's own row - others on the page may still need setting up
+        html = client.get(overview_url).data.decode()
+        return re.search(r'<tr class="browser-base-row browser-engine-html_external_cdp.*?</tr>', html, re.S).group(0)
+
+    assert 'browser-chip--needs-setup' in _external_browser_row()
+
+    _add_browser(client, label="My remote browser", base_fetcher="html_external_cdp",
+                 connection_url="ws://my-browser:3000")
+    assert b'My remote browser' in client.get(overview_url).data
+    assert 'browser-chip--needs-setup' not in _external_browser_row()
 
 
 def test_browsers_table_has_css_hooks(client, live_server, measure_memory_usage, datastore_path):

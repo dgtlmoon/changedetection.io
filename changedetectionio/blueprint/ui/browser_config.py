@@ -9,7 +9,7 @@ Registered as a sub-blueprint of `ui`, so endpoints are `ui.browser_config.*`.
 """
 import os
 
-from flask import Blueprint, request, render_template, redirect, url_for, flash
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for, flash
 from flask_babel import gettext
 from loguru import logger
 from pydantic import ValidationError
@@ -49,6 +49,8 @@ def _base_fetchers(datastore):
             'name': name,
             'description': description,
             'capabilities': caps.model_dump(),
+            # The capabilities worth showing a user, with their translated label + icon
+            'capability_chips': caps.chips(),
             'browser_config': stored.get('browser_config') or {},
             'ready_to_use': getattr(cls, 'ready_to_use', True),
             'is_browser': caps.is_browser,
@@ -106,6 +108,46 @@ def _plugin_sections_and_form(base_fetcher, capabilities):
     return sections, form_class_with_sections(BrowserOptionsForm, sections)
 
 
+def _wants_modal():
+    """?modal=1: the /browsers page loads the add/edit form into its dialog (browser-config-modal.js)
+    instead of opening it as a page. Without it the same routes are ordinary pages, which is also
+    what a browser without <dialog> or JavaScript gets."""
+    return request.args.get('modal') == '1'
+
+
+def _saved(message):
+    """A browser was added/updated: back to the overview with `message`. The dialog gets the
+    address as JSON and goes there itself, so the flash shows on the reloaded overview."""
+    flash(message)
+    overview = url_for('ui.browser_config.browsers_overview')
+    if _wants_modal():
+        return jsonify({'ok': True, 'redirect': overview})
+    return redirect(overview)
+
+
+def _render_form(form, mode, base_fetcher, base_label, sections, capabilities, form_endpoint, **context):
+    """The add/edit form, as a page or (?modal=1) as the fragment the dialog loads.
+
+    Both lay out the same panes (_browser_config_fields.html); which optional panes exist is
+    decided here so the page's tabs and the dialog's sections can't disagree.
+    """
+    applicable = _applicable_fields_for(capabilities)
+    locale_choices, timezone_choices = _autocomplete_choices()
+    section_tabs = {section.tab for section in sections}
+    modal = _wants_modal()
+    return render_template(
+        "browser-config-modal.html" if modal else "browser-config-form.html",
+        form=form, mode=mode, base_fetcher=base_fetcher, base_label=base_label,
+        plugin_sections=sections, applicable=applicable,
+        show_language_tab=bool(applicable & {'locale', 'timezone_id'}) or 'language' in section_tabs,
+        show_request_tab=bool(applicable & {'timeout', 'user_agent', 'block_resource_types', 'block_url_patterns'})
+                         or 'request' in section_tabs,
+        locale_choices=locale_choices, timezone_choices=timezone_choices,
+        # Keep ?modal=1 on the POST, so a validation error comes back as a fragment too
+        form_action=url_for(form_endpoint[0], modal='1' if modal else None, **form_endpoint[1]),
+        **context)
+
+
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_config_blueprint = Blueprint('browser_config', __name__, template_folder="templates")
 
@@ -119,13 +161,17 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # keyed by the engine name itself (cid == base_fetcher) - those are the base row's own
         # "Edit", not a variation, so they're skipped here.
         variations_by_base = {}
+        from changedetectionio.model.browser_config import browser_config_usage
+        usage = browser_config_usage(datastore)
+        no_usage = {'watches': 0, 'groups': 0}
         for cid, entry in datastore.browser_config_store.all().items():
             base = entry.get('base_fetcher')
             if cid == base:
                 continue
-            variations_by_base.setdefault(base, []).append({'id': cid, **entry})
+            variations_by_base.setdefault(base, []).append({'id': cid, 'usage': usage.get(cid, no_usage), **entry})
         for f in base_fetchers:
             f['variations'] = variations_by_base.get(f['name'], [])
+            f['usage'] = usage.get(f['name'], no_usage)
         return render_template(
             "browsers-overview.html",
             base_fetchers=base_fetchers,
@@ -227,15 +273,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                         base_fetcher=base_fetcher,
                         browser_config=cfg.model_dump(exclude_defaults=True),
                     )
-                    flash(gettext("Browser added"))
-                    return redirect(url_for('ui.browser_config.browsers_overview'))
+                    return _saved(gettext("Browser added"))
 
-        locale_choices, timezone_choices = _autocomplete_choices()
-        return render_template("browser-config-form.html", form=form, mode='add',
-                               base_fetcher=base_fetcher, base_label=base_label, plugin_sections=sections,
-                               applicable=_applicable_fields_for(caps),
-                               locale_choices=locale_choices, timezone_choices=timezone_choices,
-                               form_action=url_for('ui.browser_config.browser_config_add', base_fetcher=base_fetcher))
+        return _render_form(form, 'add', base_fetcher, base_label, sections, caps,
+                            ('ui.browser_config.browser_config_add', {'base_fetcher': base_fetcher}))
 
     @browser_config_blueprint.route("/browsers/edit/<string:config_id>", methods=['GET', 'POST'])
     @login_optionally_required
@@ -275,24 +316,34 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                             base_fetcher=base,
                             browser_config=cfg.model_dump(exclude_defaults=True),
                         )
-                        flash(gettext("Browser config updated"))
-                        return redirect(url_for('ui.browser_config.browsers_overview'))
+                        return _saved(gettext("Browser config updated"))
         else:
             form = form_class(data=_entry_to_formdata(entry, sections) if entry else {'label': base_label})
 
-        locale_choices, timezone_choices = _autocomplete_choices()
-        return render_template("browser-config-form.html", form=form, mode='edit',
-                               config_id=config_id, is_builtin=is_builtin,
-                               base_fetcher=base, base_label=base_label, plugin_sections=sections,
-                               applicable=_applicable_fields_for(_caps_for(base) if base else None),
-                               locale_choices=locale_choices, timezone_choices=timezone_choices,
-                               form_action=url_for('ui.browser_config.browser_config_edit', config_id=config_id))
+        return _render_form(form, 'edit', base, base_label, sections, _caps_for(base) if base else None,
+                            ('ui.browser_config.browser_config_edit', {'config_id': config_id}),
+                            config_id=config_id, is_builtin=is_builtin)
 
     @browser_config_blueprint.route("/browsers/remove/<string:config_id>", methods=['POST'])
     @login_optionally_required
     def browser_config_remove(config_id):
         if _browser_config_locked():
             flash(gettext("Browser configuration is locked on this instance"), 'error')
+            return redirect(url_for('ui.browser_config.browsers_overview'))
+        # A watch or group left pointing at a removed browser can't be checked any more
+        # (BrowserConfigDoesntExist), so a browser that is still in use stays.
+        from markupsafe import Markup
+        from changedetectionio.model.browser_config import browser_config_usage
+        if datastore.data['settings']['application'].get('fetch_backend') == config_id:
+            flash(gettext("This is the default browser, choose another default before removing it"), 'error')
+            return redirect(url_for('ui.browser_config.browsers_overview'))
+        in_use = browser_config_usage(datastore).get(config_id)
+        if in_use:
+            # The link lists exactly the watches counted here (same watch_browser_ids() test)
+            flash(Markup(gettext(
+                'This browser is still in use (watches: %(watches)s, groups: %(groups)s), switch them to another browser before removing it - <a href="%(url)s">show its watches</a>',
+                watches=in_use['watches'], groups=in_use['groups'],
+                url=url_for('watchlist.index', browser=config_id))), 'error')
             return redirect(url_for('ui.browser_config.browsers_overview'))
         if datastore.browser_config_store.delete(config_id):
             flash(gettext("Browser config removed"))

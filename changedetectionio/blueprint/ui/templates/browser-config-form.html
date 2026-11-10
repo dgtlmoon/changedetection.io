@@ -3,12 +3,8 @@
 <script src="{{url_for('static_content', group='js', filename='tabs.js')}}" defer></script>
 
 {# Same tab/anchor setup as the watch edit page. A tab is only shown when this engine has a
-   setting in it (`applicable` is the set the save path allows, see _browser_config_fields.html). #}
-{% set plugin_sections = plugin_sections or [] %}
-{% set show_language_tab = 'locale' in applicable or 'timezone_id' in applicable
-                           or plugin_sections | selectattr('tab', 'equalto', 'language') | list | length > 0 %}
-{% set show_request_tab = applicable | select('in', ['timeout', 'user_agent', 'block_resource_types', 'block_url_patterns']) | list | length > 0
-                          or plugin_sections | selectattr('tab', 'equalto', 'request') | list | length > 0 %}
+   setting in it - show_language_tab / show_request_tab come from the view (_render_form), which
+   the dialog version of this form (browser-config-modal.html) shares. #}
 
 <div class="edit-form">
     <div class="tabs collapsable">
