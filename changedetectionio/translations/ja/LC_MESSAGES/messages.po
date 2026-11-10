@@ -473,6 +473,17 @@ msgstr "UUID %(uuid)s のウォッチが見つかりません"
 msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
 msgstr "ウォッチ %(uuid)s には変更を表示するためのスナップショット履歴が不足しています（最低2件必要）"
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Settings updated."
+msgstr "設定を更新しました。"
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "エラーが発生しました。以下をご確認ください。"
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "パスワード保護が解除されました。"
@@ -499,17 +510,6 @@ msgstr "ワーカー数の調整中にエラーが発生しました: {}"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
 msgstr "パスワード保護が有効になりました。"
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py
-msgid "Settings updated."
-msgstr "設定を更新しました。"
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
-msgid "An error occurred, please see below."
-msgstr "エラーが発生しました。以下をご確認ください。"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
@@ -1545,6 +1545,24 @@ msgstr "通知デバッグログ"
 msgid "For security this log is emptied on restart."
 msgstr "セキュリティのため、このログは再起動時に消去されます。"
 
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "Tip"
+msgstr "ヒント"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr "ブロックされたWebサイトには「Residential」や「Mobile」プロキシタイプが「Data Center」より効果的な場合があります。"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr "「名前」はウォッチ編集設定でプロキシを選択する際に使用されます"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr "認証付きSOCKS5プロキシは「プレーンリクエスト」フェッチャーのみサポートしています。他のフェッチャーではIPアクセスをホワイトリストに登録してください。"
+
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -1569,10 +1587,6 @@ msgstr "バックアップ"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "時刻と日付"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "CAPTCHA & Proxies"
-msgstr "CAPTCHA とプロキシ"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
@@ -1651,6 +1665,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "すべてのウォッチのデフォルトプロキシを選択"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage proxies"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default browser"
@@ -1939,24 +1957,6 @@ msgid ""
 msgstr "「折りたたみアイコンレール」は左ナビを細く保ち、マウスオーバーでラベルを表示します。「常に展開」はラベルを常時表示します。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Tip"
-msgstr "ヒント"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
-msgstr "ブロックされたWebサイトには「Residential」や「Mobile」プロキシタイプが「Data Center」より効果的な場合があります。"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
-msgstr "「名前」はウォッチ編集設定でプロキシを選択する際に使用されます"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
-"whitelist the IP access instead"
-msgstr "認証付きSOCKS5プロキシは「プレーンリクエスト」フェッチャーのみサポートしています。他のフェッチャーではIPアクセスをホワイトリストに登録してください。"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "稼働時間："
 
@@ -2083,7 +2083,7 @@ msgstr "タグ名に基づく自動生成色を使用する場合はチェック
 msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
 msgstr ""
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/templates/_helpers.html
 msgid "Manage browsers"
 msgstr ""
 
@@ -2689,7 +2689,7 @@ msgstr ""
 msgid "Make default"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/browsers-proxies-tabs.html
 msgid "Browsers"
 msgstr "ブラウザ"
 
@@ -5744,10 +5744,6 @@ msgid "Entry"
 msgstr "エントリー"
 
 #: changedetectionio/templates/_helpers.html
-msgid "Edit this browser"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
 msgid "Actions"
 msgstr "アクション"
 
@@ -6023,6 +6019,10 @@ msgstr "検索語を入力..."
 #, python-format
 msgid "Searching in current group '%(title)s' only"
 msgstr "グループ「%(title)s」内のみを検索"
+
+#: changedetectionio/templates/browsers-proxies-tabs.html
+msgid "Proxies"
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -6395,6 +6395,10 @@ msgstr "ウォッチグループ"
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
 msgstr "ウェブページのリストをインポート"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers & Proxies"
+msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Search, or Use Alt+S Key"

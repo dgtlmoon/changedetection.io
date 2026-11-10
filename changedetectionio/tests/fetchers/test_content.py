@@ -24,7 +24,7 @@ def test_fetch_webdriver_content(client, live_server, measure_memory_usage, data
 
     assert b"Settings updated." in res.data
 
-    # The global "Default browser" is now set on the /browsers tab (was application-fetch_backend
+    # The global "Default browser" is now set on the /settings/browsers tab (was application-fetch_backend
     # on the settings page). Make html_webdriver the default so 'system' watches use it.
     res = client.post(
         url_for("ui.browser_config.browser_config_set_default", config_id="html_webdriver"),

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+{% from 'browsers-proxies-tabs.html' import browsers_proxies_tabs %}
 
 {# How many watches use a browser, linking to the watch list filtered to exactly those
    (?browser=<id>, counted the same way - through group overrides and the system default) #}
@@ -26,6 +27,7 @@
 {% endmacro %}
 
 <div class="edit-form">
+    {{ browsers_proxies_tabs(active='browsers') }}
     <div class="box-wrap inner browsers-page">
 
         <header class="browsers-head">
@@ -55,7 +57,7 @@
         <div class="browser-cards">
             {% for f in base_fetchers %}
             {% set f_is_default = f.ready_to_use and f.name == default_browser_id %}
-            <section class="browser-card browser-engine-{{ f.name }}{% if f_is_default %} is-default{% endif %}{% if f.needs_setup %} needs-setup{% endif %}"
+            <section id="{{ f.name }}" class="browser-card browser-engine-{{ f.name }}{% if f_is_default %} is-default{% endif %}{% if f.needs_setup %} needs-setup{% endif %}"
                      style="--card-index: {{ loop.index0 }}">
 
                 {# ---- The browser itself ---- #}
@@ -101,7 +103,8 @@
                     {% set bc = v.get('browser_config') or {} %}
                     {# Still chosen by a watch or group, or the default: removing it would break them #}
                     {% set in_use = v.usage.watches or v.usage.groups %}
-                    <li class="browser-variation-row browser-engine-{{ f.name }}{% if v.id == default_browser_id %} is-default{% endif %}">
+                    {# id: its name as an anchor, so other pages can point at this row (it is then highlighted) #}
+                    <li id="{{ v.anchor }}" class="browser-variation-row browser-engine-{{ f.name }}{% if v.id == default_browser_id %} is-default{% endif %}">
                         {# The icon of the browser this variation runs - the fetcher resolves it from the settings #}
                         <span class="browser-icon">
                             {%- set variation_icon = f.name|fetcher_status_icons(bc) -%}

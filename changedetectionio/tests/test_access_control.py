@@ -156,7 +156,7 @@ def test_check_access_control(app, client, live_server, measure_memory_usage, da
         assert b"Import" in res.data
         assert b"/logout" in res.data
         assert b"time_between_check-minutes" in res.data
-        # The global browser default moved to the /browsers tab; the settings page now shows it
+        # The global browser default moved to the /settings/browsers tab; the settings page now shows it
         # read-only as "Default browser" (the editable radio was removed).
         assert b"Default browser" in res.data
 

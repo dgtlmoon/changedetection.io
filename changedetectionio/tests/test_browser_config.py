@@ -204,7 +204,7 @@ def test_group_override_decides_the_browser_at_fetch_time(client, live_server, m
         assert icon not in row
     assert 'from group' not in row
 
-    # 6. Following the system default: whatever /browsers sets as the default is what fetches
+    # 6. Following the system default: whatever /settings/browsers sets as the default is what fetches
     watch['fetch_backend'] = 'system'
     client.post(url_for("ui.browser_config.browser_config_set_default", config_id=japanese), follow_redirects=True)
     assert _fetched_with(_recheck_and_get_snapshot(client, datastore, uuid)) == japanese
@@ -376,7 +376,7 @@ def test_remove_refused_while_in_use(client, live_server, measure_memory_usage, 
 
 def test_watchlist_filter_by_browser(client, live_server, measure_memory_usage, datastore_path):
     """/?browser=<id> lists the watches that use that browser whichever level chose it - the
-    watch itself, a group override or the system default - and its count on /browsers agrees."""
+    watch itself, a group override or the system default - and its count on /settings/browsers agrees."""
     from changedetectionio.blueprint.watchlist.filters import matching_watch_uuids
     from changedetectionio.model.browser_config import browser_config_usage
     datastore = client.application.config.get('DATASTORE')
@@ -418,7 +418,7 @@ def test_watchlist_filter_by_browser(client, live_server, measure_memory_usage, 
     assert _matching(cid) == {direct, via_group, via_default}
     assert _matching('html_requests') == {via_group, other}
 
-    # The count on /browsers is the same set
+    # The count on /settings/browsers is the same set
     assert browser_config_usage(datastore)[cid] == {'watches': 3, 'groups': 1}
 
     # The rendered list: the three rows, the browser named, and a way back out
@@ -484,7 +484,7 @@ def test_custom_size_needs_a_width_and_a_height(client, live_server, measure_mem
 
 
 def test_browser_form_as_dialog(client, live_server, measure_memory_usage, datastore_path):
-    """The /browsers page opens Add variation / Edit in a dialog: the same routes with ?modal=1
+    """The /settings/browsers page opens Add variation / Edit in a dialog: the same routes with ?modal=1
     answer with just the form, a failed save comes back as that form with its errors, and a
     successful one as JSON pointing back at the overview."""
     datastore = client.application.config.get('DATASTORE')
@@ -646,7 +646,7 @@ def test_html_requests_edit_hides_browser_only_fields(client, live_server, measu
 
 def test_plain_requests_engine_is_selectable_default_in_overview(client, live_server, measure_memory_usage, datastore_path):
     """The plain HTTP client (html_requests) - and any non-browser fetcher a plugin registers -
-    must ALWAYS appear in /browsers so it can be set as the global default (it's the most common
+    must ALWAYS appear in /settings/browsers so it can be set as the global default (it's the most common
     one), and it supports variations (HTTP timeout + user-agent) so Add-variation/Edit show too."""
     datastore = client.application.config.get('DATASTORE')
 
@@ -859,7 +859,7 @@ def test_group_browser_config_override(client, live_server, measure_memory_usage
 
 
 def test_settings_default_browser_is_readonly_and_browsers_tab_owns_it(client, live_server, measure_memory_usage, datastore_path):
-    """All browser choice moved to /browsers. The Settings->Fetching page shows the global
+    """All browser choice moved to /settings/browsers. The Settings->Fetching page shows the global
     Default browser read-only (no editable radio) and a settings save must NOT clobber it."""
     datastore = client.application.config.get('DATASTORE')
 
@@ -868,7 +868,7 @@ def test_settings_default_browser_is_readonly_and_browsers_tab_owns_it(client, l
     client.post(url_for("ui.browser_config.browser_config_set_default", config_id=cid), follow_redirects=True)
     assert datastore.data['settings']['application']['fetch_backend'] == cid
 
-    # Settings page shows the read-only summary (label + link to /browsers) and NO editable radio.
+    # Settings page shows the read-only summary (label + link to /settings/browsers) and NO editable radio.
     res = client.get(url_for("settings.settings_page"))
     assert b"Default browser" in res.data
     assert b"Settings Default" in res.data
@@ -905,7 +905,7 @@ def test_watch_get_fetch_backend_resolution_chain(client, live_server, measure_m
     """Watch.get_fetch_backend owns the whole chain: PDF / watch / 'system'->global / group override."""
     datastore = client.application.config.get('DATASTORE')
 
-    # Global Default browser = html_webdriver (what /browsers set-default writes)
+    # Global Default browser = html_webdriver (what /settings/browsers set-default writes)
     datastore.data['settings']['application']['fetch_backend'] = 'html_webdriver'
 
     uuid = datastore.add_watch(url="https://example.com")
@@ -1060,7 +1060,7 @@ def test_browsers_json_corruption_is_tolerated(tmp_path):
 
 
 def test_locked_browser_config_flag(monkeypatch):
-    """LOCKED_BROWSER_CONFIG gates the /browsers editing UI. browser_config_locked() is the single
+    """LOCKED_BROWSER_CONFIG gates the /settings/browsers editing UI. browser_config_locked() is the single
     source of truth used by BOTH the blueprint registration guard and every template that links to
     the endpoint, so verify the env->bool contract here."""
     from changedetectionio.flask_app import browser_config_locked
@@ -1078,7 +1078,7 @@ def test_locked_browser_config_flag(monkeypatch):
 
 
 def test_browsers_page_registered_and_reachable(client, live_server, measure_memory_usage, datastore_path):
-    """Sanity: the /browsers page is always registered and reachable (locking only disables the
+    """Sanity: the /settings/browsers page is always registered and reachable (locking only disables the
     add/edit/remove actions, it never withdraws the page - see the lock test below)."""
     endpoints = {r.endpoint for r in client.application.url_map.iter_rules()}
     assert 'ui.browser_config.browsers_overview' in endpoints
@@ -1086,7 +1086,7 @@ def test_browsers_page_registered_and_reachable(client, live_server, measure_mem
 
 
 def test_locked_browser_config_blocks_mutations(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
-    """LOCKED_BROWSER_CONFIG keeps /browsers viewable and set-default working, but disables
+    """LOCKED_BROWSER_CONFIG keeps /settings/browsers viewable and set-default working, but disables
     add/edit/remove - both the UI affordances AND the routes (defends against a direct POST).
     The route guards read the env per-request, so toggling it here exercises the real path."""
     datastore = client.application.config.get('DATASTORE')
@@ -1250,7 +1250,7 @@ def test_plugin_can_supply_a_whole_new_browser_base(client, live_server, measure
                                                     datastore_path, acme_browser_plugin):
     """A plugin-provided engine must be a first-class browser base, with no core changes.
 
-    Pins the whole contract in one place: discovery, the /browsers base row + "Add variation",
+    Pins the whole contract in one place: discovery, the /settings/browsers base row + "Add variation",
     capability-gated fields, the watch picker, resolution to the plugin's own class with its
     FetcherConfig injected, and eligibility for the Add-Watch live preview. If the browser-config
     layer ever starts assuming built-in engines, this is what says so.
@@ -1266,7 +1266,7 @@ def test_plugin_can_supply_a_whole_new_browser_base(client, live_server, measure
     assert 'html_acme_cloud' in {b['id'] for b in list_builtin_browsers()}
     assert 'html_acme_cloud' in {v for v, _ in list_watch_browser_choices(datastore)}
 
-    # A base row on /browsers, with a working "Add variation" link
+    # A base row on /settings/browsers, with a working "Add variation" link
     res = client.get(url_for('ui.browser_config.browsers_overview'))
     assert b'ACME Cloud Browser' in res.data
     assert url_for('ui.browser_config.browser_config_add',
@@ -1339,7 +1339,7 @@ def test_update_37_migrates_extra_browsers(client, live_server, measure_memory_u
     brd = datastore.browser_config_store.get('extra_browser_BrightData')
     assert brd['base_fetcher'] == 'html_external_cdp'
     assert brd['browser_config']['connection_url'] == 'wss://brd.example:9222'
-    # ...with a de-duplicated label, or the /browsers form could never save it again
+    # ...with a de-duplicated label, or the /settings/browsers form could never save it again
     assert brd['label'] == 'BrightData (2)'
     oxy = datastore.browser_config_store.get('extra_browser_Oxylabs')
     assert oxy['browser_config']['connection_url'] == 'wss://oxy.example:9222'
@@ -1669,7 +1669,7 @@ def test_needs_setup_chip_goes_once_there_is_a_variation(client, live_server, me
     def _external_browser_row():
         # Just that browser's own card - others on the page may still need setting up
         html = client.get(overview_url).data.decode()
-        return re.search(r'<section class="browser-card browser-engine-html_external_cdp.*?</section>', html, re.S).group(0)
+        return re.search(r'<section id="html_external_cdp" class="browser-card .*?</section>', html, re.S).group(0)
 
     assert 'browser-chip--needs-setup' in _external_browser_row()
     assert 'browser-card browser-engine-html_external_cdp needs-setup' in _external_browser_row()
@@ -1682,7 +1682,7 @@ def test_needs_setup_chip_goes_once_there_is_a_variation(client, live_server, me
 
 def test_browser_icon_follows_the_variations_browser(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """The fetcher resolves the icon from the browser config (Fetcher.get_status_icon_data): a
-    Playwright variation set to Firefox shows Firefox - next to it on /browsers and on its
+    Playwright variation set to Firefox shows Firefox - next to it on /settings/browsers and on its
     watches in the watch list - while the Playwright browser itself keeps the Playwright icon."""
     import re
     from changedetectionio import content_fetchers
@@ -1716,13 +1716,13 @@ def test_browser_icon_follows_the_variations_browser(client, live_server, measur
     _add_browser(client, label="Safari-like", base_fetcher="html_playwright_builtin", browser_type='webkit')
     ids = {e['label']: cid for cid, e in datastore.browser_config_store.all().items()}
 
-    # /browsers: Playwright's own icon on its card, each variation's browser on its row
+    # /settings/browsers: Playwright's own icon on its card, each variation's browser on its row
     html = client.get(url_for("ui.browser_config.browsers_overview")).data.decode()
-    card = re.search(r'<section class="browser-card browser-engine-html_playwright_builtin.*?</section>', html, re.S).group(0)
+    card = re.search(r'<section id="html_playwright_builtin" class="browser-card .*?</section>', html, re.S).group(0)
     head, variations = card.split('<ul class="browser-variations">')
     assert 'playwright-icon.png' in head and 'firefox-icon.svg' not in head
     assert 'playwright-icon.png' not in variations
-    rows = variations.split('<li class="browser-variation-row')[1:]
+    rows = re.split(r'<li id="[^"]*" class="browser-variation-row', variations)[1:]
     assert len(rows) == 2
     german_row = next(r for r in rows if 'German desktop' in r)
     assert 'firefox-icon.svg' in german_row and 'webkit-icon.svg' not in german_row
@@ -1807,22 +1807,46 @@ def test_browsers_table_has_css_hooks(client, live_server, measure_memory_usage,
 
 
 def test_watch_browser_picker_links_user_variations(client, live_server, measure_memory_usage, datastore_path):
-    """On the watch edit page a browser the user added links to its edit page; built-ins don't."""
+    """On the watch edit page a browser the user added links to its own row on the browsers page
+    (/settings/browsers#its-name), where that row is the link's target; built-ins aren't linked."""
+    import re
+    from changedetectionio.model.browser_config import browser_anchors
     datastore = client.application.config.get('DATASTORE')
     _add_browser(client, label="My firefox", base_fetcher="html_playwright_builtin", browser_type='firefox')
     cid = next(c for c, e in datastore.browser_config_store.all().items() if e.get('label') == "My firefox")
-    uuid = datastore.add_watch(url='https://example.com', extras={'paused': True})
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True})
+    overview_url = url_for("ui.browser_config.browsers_overview")
 
     res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
-    edit_url = url_for("ui.browser_config.browser_config_edit", config_id=cid).encode()
-    # Only the browser's own name is the link, the engine name in front of it is plain text
-    assert b'Local Playwright: <a href="' + edit_url + b'" title="Edit this browser">My firefox</a>' in res.data
+    # Only the browser's own name is the link, the engine name in front of it is plain text.
+    # The anchor is its name as a machine name, not its uuid.
+    assert f'Local Playwright: <a href="{overview_url}#my-firefox" title="Manage browsers">My firefox</a>'.encode() in res.data
     # Still a normal radio choice, same markup WTForms would produce
     assert f'type="radio" value="{cid}"'.encode() in res.data
     assert b'<ul id="fetch_backend" class="browser-choice-list fetch-backend">' in res.data
     # Built-in engines aren't linked
-    assert url_for("ui.browser_config.browser_config_edit", config_id="html_requests").encode() not in res.data
+    assert f'{overview_url}#html_requests'.encode() not in res.data
 
+    # That anchor is exactly one row on the browsers page - the one for this browser
+    html = client.get(overview_url).data.decode()
+    targets = re.findall(r'<li id="my-firefox" class="browser-variation-row[^"]*">', html)
+    assert len(targets) == 1
+    row = html[html.index(targets[0]):].split('</li>')[0]
+    assert '<strong>My firefox</strong>' in row
+    # ...and a built-in browser's card is a target by its id
+    assert '<section id="html_requests" class="browser-card' in html
+
+    # Two names that would share a machine name, and one that equals a built-in's id, still
+    # each get an anchor of their own
+    _add_browser(client, label="my-firefox", base_fetcher="html_playwright_builtin", browser_type='firefox')
+    _add_browser(client, label="html requests", base_fetcher="html_playwright_builtin", browser_type='webkit')
+    _add_browser(client, label="html_requests", base_fetcher="html_playwright_builtin", browser_type='webkit')
+    anchors = browser_anchors(datastore)
+    assert len(anchors) == 4 and len(set(anchors.values())) == 4
+    assert 'html_requests' not in anchors.values()
+    html = client.get(overview_url).data.decode()
+    for anchor in anchors.values():
+        assert html.count(f' id="{anchor}"') == 1
 
 def test_page_settings_only_for_engines_that_apply_them():
     """Screen size, locale and timezone need supports_page_settings, not just screenshots: an engine

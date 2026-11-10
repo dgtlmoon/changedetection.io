@@ -473,6 +473,17 @@ msgstr "找不到 UUID 為 %(uuid)s 的監測任務"
 msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
 msgstr "監測任務 %(uuid)s 沒有足夠的歷史快照來顯示變更（至少需要 2 個）"
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Settings updated."
+msgstr "設定已更新。"
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "發生錯誤，請參見下方。"
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "密碼保護已移除。"
@@ -499,17 +510,6 @@ msgstr "調整工作程序時發生錯誤：{}"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
 msgstr "已啟用密碼保護。"
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py
-msgid "Settings updated."
-msgstr "設定已更新。"
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
-msgid "An error occurred, please see below."
-msgstr "發生錯誤，請參見下方。"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
@@ -1541,6 +1541,24 @@ msgstr "通知除錯記錄"
 msgid "For security this log is emptied on restart."
 msgstr "基於安全考量，此記錄在重啟時會被清空。"
 
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "Tip"
+msgstr "提示"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr "對於被封鎖的網站，「住宅」與「行動網路」代理伺服器類型可能比「資料中心」更容易成功。"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr "「名稱」將用於在監測任務編輯設定中選擇代理伺服器"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr "僅「純文字請求」抓取器支援需要驗證的 SOCKS5 代理伺服器，對於其他抓取器，您應該改為將 IP 存取列入白名單"
+
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -1565,10 +1583,6 @@ msgstr "備份"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "時間與日期"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "CAPTCHA & Proxies"
-msgstr "驗證碼與代理伺服器"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
@@ -1647,6 +1661,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "為所有監測任務選擇預設代理伺服器"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage proxies"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default browser"
@@ -1935,24 +1953,6 @@ msgid ""
 msgstr "「摺疊式圖示列」可保持左側導覽列精簡，並在滑鼠懸停時顯示標籤；「一律展開」則讓標籤保持可見。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Tip"
-msgstr "提示"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
-msgstr "對於被封鎖的網站，「住宅」與「行動網路」代理伺服器類型可能比「資料中心」更容易成功。"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
-msgstr "「名稱」將用於在監測任務編輯設定中選擇代理伺服器"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
-"whitelist the IP access instead"
-msgstr "僅「純文字請求」抓取器支援需要驗證的 SOCKS5 代理伺服器，對於其他抓取器，您應該改為將 IP 存取列入白名單"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "運行時間："
 
@@ -2079,7 +2079,7 @@ msgstr "保持未勾選以使用根據標籤名稱自動產生的顏色。"
 msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
 msgstr ""
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/templates/_helpers.html
 msgid "Manage browsers"
 msgstr ""
 
@@ -2684,7 +2684,7 @@ msgstr ""
 msgid "Make default"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/browsers-proxies-tabs.html
 msgid "Browsers"
 msgstr "瀏覽器"
 
@@ -5716,10 +5716,6 @@ msgid "Entry"
 msgstr "項目"
 
 #: changedetectionio/templates/_helpers.html
-msgid "Edit this browser"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
 msgid "Actions"
 msgstr "操作"
 
@@ -5995,6 +5991,10 @@ msgstr "輸入搜尋關鍵字 ..."
 #, python-format
 msgid "Searching in current group '%(title)s' only"
 msgstr "僅在群組「%(title)s」中搜尋"
+
+#: changedetectionio/templates/browsers-proxies-tabs.html
+msgid "Proxies"
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -6366,6 +6366,10 @@ msgstr "監測群組"
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
 msgstr "匯入網頁清單"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers & Proxies"
+msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Search, or Use Alt+S Key"

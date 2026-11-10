@@ -73,10 +73,10 @@
     </li>
     <li class="action-sidebar-li">
         <a href="{{ url_for('ui.browser_config.browsers_overview') }}"
-           class="action-sidebar-item {% if ep.startswith('ui.browser_config') %}active{% endif %}"
-           title="{{ _('Browsers') }}">
+           class="action-sidebar-item {% if ep.startswith('ui.browser_config') or ep == 'settings.proxies_page' %}active{% endif %}"
+           title="{{ _('Browsers & Proxies') }}">
             <i data-feather="globe" class="action-icon"></i>
-            <span class="action-label">{{ _('Browsers') }}</span>
+            <span class="action-label">{{ _('Browsers & Proxies') }}</span>
         </a>
     </li>
     {% if not current_diff_url %}

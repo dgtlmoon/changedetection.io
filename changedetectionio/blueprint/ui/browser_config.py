@@ -31,7 +31,7 @@ def _base_fetchers(datastore):
     """Every available base engine shown as a row in "Available browsers".
 
     Includes the plain HTTP client ('html_requests') and any other non-browser fetchers, not just
-    browser-capable engines: /browsers is the only place the global Default browser is set, and the
+    browser-capable engines: /settings/browsers is the only place the global Default browser is set, and the
     plaintext client is the most common default, so it MUST be selectable here. Per-row flags tell
     the template which actions apply:
       - is_browser (supports screenshots / visual-selector) -> can "Add variation" + "Edit"
@@ -62,7 +62,7 @@ def _base_fetchers(datastore):
 
 
 def _variation_summary(browser_config):
-    """What a variation changes, in words, for its row on the /browsers page:
+    """What a variation changes, in words, for its row on the /settings/browsers page:
     [{'kind', 'text', 'icon' or 'flag', 'title'}]. `kind` becomes the chip's
     browser-chip--<kind> class. Never includes the connection URL itself, only its host - the
     rest commonly carries credentials."""
@@ -161,7 +161,7 @@ def _plugin_sections_and_form(base_fetcher, capabilities):
 
 
 def _wants_modal():
-    """?modal=1: the /browsers page loads the add/edit form into its dialog (browser-config-modal.js)
+    """?modal=1: the /settings/browsers page loads the add/edit form into its dialog (browser-config-modal.js)
     instead of opening it as a page. Without it the same routes are ordinary pages, which is also
     what a browser without <dialog> or JavaScript gets."""
     return request.args.get('modal') == '1'
@@ -203,7 +203,7 @@ def _render_form(form, mode, base_fetcher, base_label, sections, capabilities, f
 def construct_blueprint(datastore: ChangeDetectionStore):
     browser_config_blueprint = Blueprint('browser_config', __name__, template_folder="templates")
 
-    @browser_config_blueprint.route("/browsers", methods=['GET'])
+    @browser_config_blueprint.route("/settings/browsers", methods=['GET'])
     @login_optionally_required
     def browsers_overview():
         base_fetchers = _base_fetchers(datastore)
@@ -213,15 +213,18 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # keyed by the engine name itself (cid == base_fetcher) - those are the base row's own
         # "Edit", not a variation, so they're skipped here.
         variations_by_base = {}
-        from changedetectionio.model.browser_config import browser_config_usage
+        from changedetectionio.model.browser_config import browser_anchors, browser_config_usage
         usage = browser_config_usage(datastore)
         no_usage = {'watches': 0, 'groups': 0}
+        # Each variation's row is a link target (/settings/browsers#its-name), which is where a
+        # watch's Browser picker sends you
+        anchors = browser_anchors(datastore)
         for cid, entry in datastore.browser_config_store.all().items():
             base = entry.get('base_fetcher')
             if cid == base:
                 continue
             variations_by_base.setdefault(base, []).append({
-                'id': cid, 'usage': usage.get(cid, no_usage),
+                'id': cid, 'usage': usage.get(cid, no_usage), 'anchor': anchors.get(cid, cid),
                 'summary': _variation_summary(entry.get('browser_config')), **entry})
         for f in base_fetchers:
             f['variations'] = variations_by_base.get(f['name'], [])
@@ -237,6 +240,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # The default browser is the global system fetch_backend (single source of truth).
             default_browser_id=datastore.data['settings']['application'].get('fetch_backend'),
         )
+
+    @browser_config_blueprint.route("/browsers", methods=['GET'])
+    @login_optionally_required
+    def old_browsers_url():
+        # This page was at /browsers before it moved next to Proxies, keep old bookmarks and links working
+        return redirect(url_for('ui.browser_config.browsers_overview'))
 
     def _label_is_taken(label, exclude_id=None):
         """True if another browser config already uses this label (case-insensitive).
@@ -300,7 +309,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     flash(err['msg'], 'error')
             return None
 
-    @browser_config_blueprint.route("/browsers/add/<string:base_fetcher>", methods=['GET', 'POST'])
+    @browser_config_blueprint.route("/settings/browsers/add/<string:base_fetcher>", methods=['GET', 'POST'])
     @login_optionally_required
     def browser_config_add(base_fetcher):
         """Add a browser config *variation* based on a specific engine (from the row's link).
@@ -337,7 +346,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         return _render_form(form, 'add', base_fetcher, base_label, sections, caps,
                             ('ui.browser_config.browser_config_add', {'base_fetcher': base_fetcher}))
 
-    @browser_config_blueprint.route("/browsers/edit/<string:config_id>", methods=['GET', 'POST'])
+    @browser_config_blueprint.route("/settings/browsers/edit/<string:config_id>", methods=['GET', 'POST'])
     @login_optionally_required
     def browser_config_edit(config_id):
         if _browser_config_locked():
@@ -386,7 +395,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                             ('ui.browser_config.browser_config_edit', {'config_id': config_id}),
                             config_id=config_id, is_builtin=is_builtin)
 
-    @browser_config_blueprint.route("/browsers/remove/<string:config_id>", methods=['POST'])
+    @browser_config_blueprint.route("/settings/browsers/remove/<string:config_id>", methods=['POST'])
     @login_optionally_required
     def browser_config_remove(config_id):
         if _browser_config_locked():
@@ -413,11 +422,11 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("Browser config not found"), 'error')
         return redirect(url_for('ui.browser_config.browsers_overview'))
 
-    @browser_config_blueprint.route("/browsers/set-default/<string:config_id>", methods=['POST'])
+    @browser_config_blueprint.route("/settings/browsers/set-default/<string:config_id>", methods=['POST'])
     @login_optionally_required
     def browser_config_set_default(config_id):
         # "Default browser" is the global settings.application.fetch_backend - the single source
-        # of truth a watch/group set to 'system' resolves to. This /browsers tab is now the only
+        # of truth a watch/group set to 'system' resolves to. This /settings/browsers tab is now the only
         # place it's set (the Settings page shows it read-only). Only usable (ready-to-use)
         # built-in engines or saved browser configs may be the default.
         from changedetectionio.model.browser_config import list_builtin_browsers

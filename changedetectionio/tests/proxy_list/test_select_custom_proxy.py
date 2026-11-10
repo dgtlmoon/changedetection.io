@@ -11,7 +11,7 @@ def test_select_custom(client, live_server, measure_memory_usage, datastore_path
 
     # Goto settings, add our custom one
     res = client.post(
-        url_for("settings.settings_page"),
+        url_for("settings.proxies_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
@@ -55,7 +55,7 @@ def test_custom_proxy_validation(client, live_server, measure_memory_usage, data
 
     # Goto settings, add our custom one
     res = client.post(
-        url_for("settings.settings_page"),
+        url_for("settings.proxies_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",
@@ -71,7 +71,7 @@ def test_custom_proxy_validation(client, live_server, measure_memory_usage, data
 
 
     res = client.post(
-        url_for("settings.settings_page"),
+        url_for("settings.proxies_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",

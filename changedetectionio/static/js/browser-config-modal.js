@@ -1,5 +1,5 @@
 /**
- * The add/edit browser form as a dialog on the /browsers page.
+ * The add/edit browser form as a dialog on the /settings/browsers page.
  *
  * Links marked data-browser-config-modal are ordinary links to the form page; here they are
  * loaded with ?modal=1 instead, which makes the same route answer with just the form

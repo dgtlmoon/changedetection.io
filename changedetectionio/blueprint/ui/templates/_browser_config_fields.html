@@ -10,7 +10,7 @@
 
    Laid out as the tab panes of browser-config-form.html (#browser, #language, #request); that
    page only shows the Language and Request tabs when this engine has a setting in them. The
-   dialog on /browsers (browser-config-modal.html) shows the same panes behind its own tab
+   dialog on /settings/browsers (browser-config-modal.html) shows the same panes behind its own tab
    strip, switched by class rather than by the URL #anchor. #}
 {% from '_helpers.html' import render_field, render_checkbox_field %}
 
@@ -55,7 +55,7 @@
     <div class="pure-control-group">
         <label>{{ form.browser_type.label.text }}</label>
         {# One tile per browser, with the icon its fetcher gives a variation set to it - the same
-           icon that variation then shows on /browsers and on its watches #}
+           icon that variation then shows on /settings/browsers and on its watches #}
         <div class="browser-type-picker{% if form.browser_type.errors %} error{% endif %}">
             {% for option in form.browser_type %}
             <label class="browser-type-option">

@@ -204,7 +204,7 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
         follow_redirects=True
     )
 
-    # The global "Default browser" is now set on the /browsers tab (was the settings-page
+    # The global "Default browser" is now set on the /settings/browsers tab (was the settings-page
     # application-fetch_backend radio).
     res = client.post(
         url_for("ui.browser_config.browser_config_set_default", config_id=fetch_backend),

@@ -41,7 +41,7 @@ def do_test(client, live_server, make_test_use_extra_browser=False):
                              client.application.config.get('DATASTORE').browser_config_store.all().items()
                              if e.get('label') == custom_browser_name)
 
-    # The global "Default browser" is now chosen on the /browsers tab (was the settings-page
+    # The global "Default browser" is now chosen on the /settings/browsers tab (was the settings-page
     # application-fetch_backend radio). Make html_webdriver the default.
     res = client.post(
         url_for("ui.browser_config.browser_config_set_default", config_id="html_webdriver"),

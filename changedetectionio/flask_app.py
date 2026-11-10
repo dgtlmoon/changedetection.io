@@ -401,7 +401,7 @@ app.session_interface = PublicStaticAssetSessionInterface()
 
 @app.template_global()
 def browser_config_locked():
-    """True when LOCKED_BROWSER_CONFIG is set: the /browsers page is still listed and you can
+    """True when LOCKED_BROWSER_CONFIG is set: the /settings/browsers page is still listed and you can
     still choose the default browser, but adding / editing / removing browser configs is
     disabled - the add/edit/remove buttons are hidden and those routes reject the request.
     Loading and using browsers.json is unaffected."""
@@ -708,6 +708,13 @@ def _watch_list_extra_text(watch):
     from changedetectionio.pluggy_interface import collect_watch_list_extra_text
 
     return collect_watch_list_extra_text(watch)
+
+
+@app.template_filter('browser_anchor')
+def _jinja2_filter_browser_anchor(config_id):
+    """The #anchor of a browser the user added on the /settings/browsers page ('' if it isn't one)."""
+    from changedetectionio.model.browser_config import browser_anchors
+    return browser_anchors(datastore).get(config_id, '')
 
 
 @app.template_filter('browser_choice_icon')

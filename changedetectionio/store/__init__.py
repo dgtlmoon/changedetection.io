@@ -77,7 +77,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
     def get_default_backend(self):
         """The global "Default browser" (settings.application.fetch_backend) - the single source
-        of truth a watch/group set to 'system' resolves to. Set only on the /browsers tab
+        of truth a watch/group set to 'system' resolves to. Set only on the /settings/browsers tab
         (its per-row radio); the Settings page shows it read-only. May be a built-in engine name
         or a user browser-config id. See Watch.get_fetch_backend for the per-watch resolution."""
         return self.__data['settings']['application'].get('fetch_backend', 'html_requests')

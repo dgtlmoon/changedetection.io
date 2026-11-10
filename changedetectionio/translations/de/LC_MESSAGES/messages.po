@@ -479,6 +479,17 @@ msgstr ""
 msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
 msgstr ""
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Settings updated."
+msgstr "Einstellungen aktualisiert."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "Ein Fehler ist aufgetreten, siehe unten."
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "Passwortschutz entfernt."
@@ -505,17 +516,6 @@ msgstr "Fehler beim Anpassen der \"Worker\": {}"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
 msgstr "Passwortschutz aktiviert."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py
-msgid "Settings updated."
-msgstr "Einstellungen aktualisiert."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
-msgid "An error occurred, please see below."
-msgstr "Ein Fehler ist aufgetreten, siehe unten."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
@@ -1602,6 +1602,24 @@ msgstr "Benachrichtigungs-Debug-Protokoll"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "Tip"
+msgstr "Tipp"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr ""
+
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -1626,10 +1644,6 @@ msgstr "Backups"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "Uhrzeit und Datum"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "CAPTCHA & Proxies"
-msgstr "CAPTCHA & Proxys"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
@@ -1712,6 +1726,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Wählen Sie einen Standard-Proxy für alle Überwachungen"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage proxies"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default browser"
@@ -2002,24 +2020,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Tip"
-msgstr "Tipp"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
-"whitelist the IP access instead"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr ""
 
@@ -2146,7 +2146,7 @@ msgstr ""
 msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
 msgstr ""
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/templates/_helpers.html
 msgid "Manage browsers"
 msgstr ""
 
@@ -2760,7 +2760,7 @@ msgstr ""
 msgid "Make default"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/browsers-proxies-tabs.html
 msgid "Browsers"
 msgstr ""
 
@@ -5827,10 +5827,6 @@ msgid "Entry"
 msgstr "Eintrag"
 
 #: changedetectionio/templates/_helpers.html
-msgid "Edit this browser"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
 msgid "Actions"
 msgstr "Aktionen"
 
@@ -6108,6 +6104,10 @@ msgstr "Suchbegriff eingeben..."
 #, python-format
 msgid "Searching in current group '%(title)s' only"
 msgstr "Suche nur in Gruppe '%(title)s'"
+
+#: changedetectionio/templates/browsers-proxies-tabs.html
+msgid "Proxies"
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -6469,6 +6469,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers & Proxies"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

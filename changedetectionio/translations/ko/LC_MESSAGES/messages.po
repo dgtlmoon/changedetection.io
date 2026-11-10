@@ -471,6 +471,17 @@ msgstr "UUID %(uuid)s의 모니터링을 찾을 수 없습니다."
 msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
 msgstr "모니터링 %(uuid)s에 변경 내용을 표시할 기록 스냅샷이 충분하지 않습니다. (최소 2개 필요)"
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Settings updated."
+msgstr "설정이 업데이트되었습니다."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "오류가 발생했습니다. 아래 내용을 확인해 주세요."
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "비밀번호 보호가 해제되었습니다."
@@ -497,17 +508,6 @@ msgstr "워커 수 조정 중 오류가 발생했습니다: {}"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
 msgstr "비밀번호 보호가 활성화되었습니다."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py
-msgid "Settings updated."
-msgstr "설정이 업데이트되었습니다."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
-msgid "An error occurred, please see below."
-msgstr "오류가 발생했습니다. 아래 내용을 확인해 주세요."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
@@ -1548,6 +1548,24 @@ msgstr "알림 디버그 로그"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "Tip"
+msgstr "팁"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr "차단된 웹사이트에서는 \"Data Center\"보다 \"Residential\" 및 \"Mobile\" 프록시가 더 잘 동작할 수 있습니다."
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr "\"Name\"은 모니터링 편집 설정에서 프록시를 선택할 때 사용됩니다."
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr "인증이 필요한 SOCKS5 프록시는 'plain requests' 가져오기 방식에서만 지원됩니다. 다른 가져오기 방식에서는 대신 IP 접근을 허용해야 합니다."
+
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -1572,10 +1590,6 @@ msgstr "백업"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "시간 및 날짜"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "CAPTCHA & Proxies"
-msgstr "보안 문자 및 프록시"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
@@ -1654,6 +1668,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "모든 모니터링의 기본 프록시 선택"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage proxies"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default browser"
@@ -1942,24 +1960,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Tip"
-msgstr "팁"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
-msgstr "차단된 웹사이트에서는 \"Data Center\"보다 \"Residential\" 및 \"Mobile\" 프록시가 더 잘 동작할 수 있습니다."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
-msgstr "\"Name\"은 모니터링 편집 설정에서 프록시를 선택할 때 사용됩니다."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
-"whitelist the IP access instead"
-msgstr "인증이 필요한 SOCKS5 프록시는 'plain requests' 가져오기 방식에서만 지원됩니다. 다른 가져오기 방식에서는 대신 IP 접근을 허용해야 합니다."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "가동 시간:"
 
@@ -2086,7 +2086,7 @@ msgstr "체크하지 않으면 태그 이름을 기준으로 자동 생성된 �
 msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
 msgstr ""
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/templates/_helpers.html
 msgid "Manage browsers"
 msgstr ""
 
@@ -2693,7 +2693,7 @@ msgstr ""
 msgid "Make default"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/browsers-proxies-tabs.html
 msgid "Browsers"
 msgstr ""
 
@@ -5723,10 +5723,6 @@ msgid "Entry"
 msgstr "항목"
 
 #: changedetectionio/templates/_helpers.html
-msgid "Edit this browser"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
 msgid "Actions"
 msgstr "작업"
 
@@ -6002,6 +5998,10 @@ msgstr "검색어를 입력하세요..."
 #, python-format
 msgid "Searching in current group '%(title)s' only"
 msgstr "'%(title)s' 그룹 내에서만 검색"
+
+#: changedetectionio/templates/browsers-proxies-tabs.html
+msgid "Proxies"
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -6373,6 +6373,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers & Proxies"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

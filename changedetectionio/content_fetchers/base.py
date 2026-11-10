@@ -12,7 +12,7 @@ def _capability(label=None, icon=None):
     """A FetcherCapabilities flag.
 
     `label` is its translatable name and `icon` a feather icon name, for the flags a user would
-    choose a browser by - those are shown as chips on the /browsers page (FetcherCapabilities.chips()).
+    choose a browser by - those are shown as chips on the /settings/browsers page (FetcherCapabilities.chips()).
     A flag with no label is internal: it only decides which browser settings apply.
     """
     return Field(default=False, json_schema_extra={'label': label, 'icon': icon})
@@ -74,7 +74,7 @@ class FetcherCapabilities(BaseModel):
     def can_host_variation(self):
         """True if this engine has per-profile behaviour worth saving as a browser config -
         a real browser (viewport/locale/…), the plain client's request timeout, or a custom
-        user-agent (all fetchers). Single source of truth for the /browsers 'Add variation' +
+        user-agent (all fetchers). Single source of truth for the /settings/browsers 'Add variation' +
         'Edit' actions."""
         return bool(self.is_browser or self.supports_request_timeout or self.supports_custom_user_agent)
 
@@ -166,7 +166,7 @@ class Fetcher():
     # Short name for browser lists, e.g. "Local Playwright: My firefox". None falls back to
     # fetcher_description (see browser_config.engine_short_description()).
     fetcher_short_description = None
-    # False keeps a registered engine out of the browser lists (/browsers, pickers) while it stays
+    # False keeps a registered engine out of the browser lists (/settings/browsers, pickers) while it stays
     # usable, e.g. one that's only switched to by a plugin's fetch_engine_override()
     offered_as_browser = True
     # Cookies to send, set by core from BrowserRequest.cookies_for_browser() (Playwright-style
@@ -222,7 +222,7 @@ class Fetcher():
     @classmethod
     def get_status_icon_data(cls, browser_config=None):
         """Return data for the icon shown for this fetcher: in the watch overview, and next to
-        the browser and each of its variations on the /browsers page.
+        the browser and each of its variations on the /settings/browsers page.
 
         This method can be overridden by subclasses to provide custom status icons.
 

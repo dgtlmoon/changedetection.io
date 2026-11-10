@@ -478,6 +478,17 @@ msgstr "Часы с UUID %(uuid)s не найдены"
 msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
 msgstr "У Watch %(uuid)s недостаточно снимков истории, чтобы отобразить изменения (нужно как минимум 2)."
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Settings updated."
+msgstr "Настройки обновлены."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "Произошла ошибка, см. ниже."
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "Защита паролем снята."
@@ -506,17 +517,6 @@ msgstr "Ошибка настройки работников: {}"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
 msgstr "Защита паролем включена."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py
-msgid "Settings updated."
-msgstr "Настройки обновлены."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
-msgid "An error occurred, please see below."
-msgstr "Произошла ошибка, см. ниже."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
@@ -1635,6 +1635,26 @@ msgstr "Журнал отладки уведомлений"
 msgid "For security this log is emptied on restart."
 msgstr ""
 
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "Tip"
+msgstr "Кончик"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr "«Жилой» и «Мобильный» тип прокси могут быть более успешными, чем «Дата-центр» для заблокированных веб-сайтов."
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr "«Имя» будет использоваться для выбора прокси в настройках Watch Edit."
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr ""
+"Прокси-серверы SOCKS5 с аутентификацией поддерживаются только с помощью сборщика «простых запросов», для других "
+"сборщиков вместо этого следует внести в белый список доступ по IP."
+
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -1659,10 +1679,6 @@ msgstr "Резервные копии"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "Время и дата"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "CAPTCHA & Proxies"
-msgstr "Капча и прокси"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
@@ -1743,6 +1759,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Выберите прокси-сервер по умолчанию для всех часов"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage proxies"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default browser"
@@ -2051,26 +2071,6 @@ msgid ""
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Tip"
-msgstr "Кончик"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
-msgstr "«Жилой» и «Мобильный» тип прокси могут быть более успешными, чем «Дата-центр» для заблокированных веб-сайтов."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
-msgstr "«Имя» будет использоваться для выбора прокси в настройках Watch Edit."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
-"whitelist the IP access instead"
-msgstr ""
-"Прокси-серверы SOCKS5 с аутентификацией поддерживаются только с помощью сборщика «простых запросов», для других "
-"сборщиков вместо этого следует внести в белый список доступ по IP."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "Время работы:"
 
@@ -2199,7 +2199,7 @@ msgstr "Оставьте этот флажок снятым, чтобы испо
 msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
 msgstr ""
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/templates/_helpers.html
 msgid "Manage browsers"
 msgstr ""
 
@@ -2809,7 +2809,7 @@ msgstr ""
 msgid "Make default"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/browsers-proxies-tabs.html
 msgid "Browsers"
 msgstr ""
 
@@ -5871,10 +5871,6 @@ msgid "Entry"
 msgstr "Вход"
 
 #: changedetectionio/templates/_helpers.html
-msgid "Edit this browser"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
 msgid "Actions"
 msgstr "Действия"
 
@@ -6152,6 +6148,10 @@ msgstr "Введите поисковый запрос..."
 #, python-format
 msgid "Searching in current group '%(title)s' only"
 msgstr "Поиск только в группе '%(title)s'"
+
+#: changedetectionio/templates/browsers-proxies-tabs.html
+msgid "Proxies"
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -6544,6 +6544,10 @@ msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
+msgstr ""
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers & Proxies"
 msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html

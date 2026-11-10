@@ -493,7 +493,7 @@ class model(EntityPersistenceMixin, watch_base):
     @property
     def _global_default_fetch_backend(self):
         """The global 'Default browser' (settings.application.fetch_backend) - the single source
-        of truth that BOTH /browsers (per-row radio) and Settings->Fetching write. May be a
+        of truth that BOTH /settings/browsers (per-row radio) and Settings->Fetching write. May be a
         built-in engine name or a user browser-config id."""
         if self._datastore:
             return self._datastore['settings']['application'].get('fetch_backend', 'html_requests')

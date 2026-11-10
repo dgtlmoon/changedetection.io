@@ -2,7 +2,7 @@
 
 The lifecycle, in order:
 
-  1. Editing a browser (/browsers/add, /browsers/edit)
+  1. Editing a browser (/settings/browsers/add, /settings/browsers/edit)
        hook browser_config_form_section(base_fetcher, capabilities) -> BrowserConfigSection
        A plugin adds its own WTForms form (and optionally its own template) to a tab of the
        browser's edit page. What the user saves is stored with that browser, in browsers.json, as

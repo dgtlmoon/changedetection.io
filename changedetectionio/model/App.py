@@ -30,7 +30,7 @@ class model(dict):
                     'proxy': None, # Preferred proxy connection
                     'time_between_check': {'weeks': None, 'days': None, 'hours': 3, 'minutes': None, 'seconds': None},
                     # NOTE: 'timeout' and 'default_ua' were migrated out to per-engine browser
-                    # configs on the /browsers tab (update_36). The plain-client request timeout
+                    # configs on the /settings/browsers tab (update_36). The plain-client request timeout
                     # now defaults via DEFAULT_SETTINGS_REQUESTS_TIMEOUT (processor) and its default
                     # User-Agent via DEFAULT_SETTINGS_HEADERS_USERAGENT (requests fetcher).
                     'workers': int(getenv("DEFAULT_SETTINGS_REQUESTS_WORKERS", "5")),  # Number of threads, lower is better for slow connections

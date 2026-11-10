@@ -480,6 +480,17 @@ msgstr "Monitor dengan UUID %(uuid)s tidak ditemukan"
 msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
 msgstr "Monitor %(uuid)s tidak memiliki cukup snapshot riwayat untuk menampilkan perubahan (perlu minimal 2)"
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Settings updated."
+msgstr "Pengaturan diperbarui."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "Terjadi kesalahan, silakan lihat di bawah."
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "Perlindungan kata sandi dihapus."
@@ -506,17 +517,6 @@ msgstr "Kesalahan saat menyesuaikan worker: {}"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
 msgstr "Perlindungan kata sandi diaktifkan."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py
-msgid "Settings updated."
-msgstr "Pengaturan diperbarui."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
-msgid "An error occurred, please see below."
-msgstr "Terjadi kesalahan, silakan lihat di bawah."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
@@ -1641,6 +1641,28 @@ msgstr "Log debug notifikasi"
 msgid "For security this log is emptied on restart."
 msgstr "Demi keamanan, log ini dikosongkan saat aplikasi dimulai ulang."
 
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "Tip"
+msgstr "Kiat"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr ""
+"Tipe proksi \"Residential\" dan \"Mobile\" dapat lebih berhasil daripada \"Data Center\" untuk situs web yang "
+"diblokir."
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr "\"Nama\" akan digunakan untuk memilih proksi dalam pengaturan Edit Monitor"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr ""
+"Proksi SOCKS5 dengan autentikasi hanya didukung dengan pengambil 'plain requests'; untuk pengambil lain, sebaiknya "
+"masukkan akses IP ke daftar putih"
+
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -1665,10 +1687,6 @@ msgstr "Cadangan"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "Waktu & Tanggal"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "CAPTCHA & Proxies"
-msgstr "CAPTCHA & Proksi"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
@@ -1751,6 +1769,10 @@ msgstr ""
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "Pilih proksi default untuk semua monitor"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage proxies"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default browser"
@@ -2055,28 +2077,6 @@ msgstr ""
 "diperluas\" membuat label tetap terlihat."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Tip"
-msgstr "Kiat"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
-msgstr ""
-"Tipe proksi \"Residential\" dan \"Mobile\" dapat lebih berhasil daripada \"Data Center\" untuk situs web yang "
-"diblokir."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
-msgstr "\"Nama\" akan digunakan untuk memilih proksi dalam pengaturan Edit Monitor"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
-"whitelist the IP access instead"
-msgstr ""
-"Proksi SOCKS5 dengan autentikasi hanya didukung dengan pengambil 'plain requests'; untuk pengambil lain, sebaiknya "
-"masukkan akses IP ke daftar putih"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "Uptime:"
 
@@ -2205,7 +2205,7 @@ msgstr "Biarkan tidak dicentang untuk menggunakan warna yang dibuat otomatis ber
 msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
 msgstr ""
 
-#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/templates/_helpers.html
 msgid "Manage browsers"
 msgstr ""
 
@@ -2816,7 +2816,7 @@ msgstr ""
 msgid "Make default"
 msgstr ""
 
-#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/browsers-proxies-tabs.html
 msgid "Browsers"
 msgstr "Browser"
 
@@ -5874,10 +5874,6 @@ msgid "Entry"
 msgstr "Entri"
 
 #: changedetectionio/templates/_helpers.html
-msgid "Edit this browser"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
 msgid "Actions"
 msgstr "Tindakan"
 
@@ -6155,6 +6151,10 @@ msgstr "Masukkan istilah pencarian..."
 #, python-format
 msgid "Searching in current group '%(title)s' only"
 msgstr "Mencari hanya dalam grup '%(title)s'"
+
+#: changedetectionio/templates/browsers-proxies-tabs.html
+msgid "Proxies"
+msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -6550,6 +6550,10 @@ msgstr "Grup Monitor"
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
 msgstr "Impor daftar halaman web"
+
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Browsers & Proxies"
+msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Search, or Use Alt+S Key"

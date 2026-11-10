@@ -42,7 +42,7 @@ except ImportError:
 # Default plain-HTTP-client request timeout (seconds). Fixed, NOT read from the environment at
 # call time: the old settings.requests.timeout was baked once at startup, and resolving it lazily
 # per-fetch made tests (which set DEFAULT_SETTINGS_REQUESTS_TIMEOUT low) time out on slow endpoints.
-# A user who wants a different value sets it per-browser on the /browsers tab; upgrades preserve the
+# A user who wants a different value sets it per-browser on the /settings/browsers tab; upgrades preserve the
 # old global value via update_36.
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 45
 
@@ -74,7 +74,7 @@ def _needs(capability, required=False, **field_kwargs):
 
     The capability rides on the field itself rather than in a separate name->flag table, so
     there is exactly one place to declare a field and no second list to keep in step. Read back
-    by FetcherConfig.applicable_fields(), which drives BOTH which fields the /browsers form
+    by FetcherConfig.applicable_fields(), which drives BOTH which fields the /settings/browsers form
     renders and which ones may be saved.
 
     `required=True` means an engine that has this capability cannot work without a value (an
@@ -610,7 +610,7 @@ def browser_icon_data(engine_name, browser_config=None):
     one browser built on it when `browser_config` (a FetcherConfig or its dict) is given. None
     when it has no icon (the plain HTTP client).
 
-    THE one place an icon is resolved - the watch list and the /browsers page both ask here. A
+    THE one place an icon is resolved - the watch list and the /settings/browsers page both ask here. A
     plugin's fetcher_status_icon hook wins, then the fetcher class answers
     (Fetcher.get_status_icon_data), which is how a variation of a fetcher that can launch several
     browsers gets its own browser's icon rather than the fetcher's.
@@ -632,6 +632,30 @@ def browser_icon_data(engine_name, browser_config=None):
     if 'browser_config' in inspect.signature(get_icon).parameters:
         return get_icon(browser_config=browser_config)
     return get_icon()
+
+
+def browser_anchors(datastore):
+    """{browser id: its #anchor on the /settings/browsers page} for the browsers the user added.
+
+    The anchor is the browser's name as a "machine name" (lowercase, anything but letters and
+    digits a dash), so a link reads /settings/browsers#german-desktop rather than a uuid. Names
+    are unique but two can share a machine name ("My phone" / "my-phone"), and one could equal a
+    built-in browser's id - those get a piece of their id appended so every anchor is one row.
+    """
+    import re
+    from changedetectionio import content_fetchers
+    taken = {name for name, _description in content_fetchers.available_fetchers()}
+    anchors = {}
+    for cid, entry in sorted(datastore.browser_config_store.all().items()):
+        if cid in taken:
+            # A built-in browser's own saved settings: its card is anchored by its id already
+            continue
+        anchor = re.sub(r'[^\w]+', '-', (entry.get('label') or '').strip().lower()).strip('-') or cid
+        if anchor in taken:
+            anchor = f"{anchor}-{cid[:8]}"
+        taken.add(anchor)
+        anchors[cid] = anchor
+    return anchors
 
 
 def browser_selector_icon_data(datastore, selected):
@@ -696,7 +720,7 @@ def watch_browser_ids(watch):
     to once that override is gone.
 
     THE answer to "does this watch use browser X" - the watch list's ?browser= filter and the
-    in-use counts on /browsers both ask here, so the count and the list behind it always agree.
+    in-use counts on /settings/browsers both ask here, so the count and the list behind it always agree.
     """
     return {watch.get_fetch_backend, watch.get('fetch_backend')} - {None, '', 'system'}
 

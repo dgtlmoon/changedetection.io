@@ -1091,7 +1091,7 @@ class SingleExtraProxy(Form):
 
 # datastore.data['settings']['requests']..
 # NOTE: the plain-client request timeout and per-engine default User-Agent were migrated out of
-# here to per-engine browser configs on the /browsers tab (update_36), so there is no `timeout`
+# here to per-engine browser configs on the /settings/browsers tab (update_36), so there is no `timeout`
 # field or `default_ua` sub-form anymore.
 class globalSettingsRequestForm(Form):
     time_between_check = RequiredFormField(TimeBetweenCheckForm, label=_l('Time Between Check'))
@@ -1106,14 +1106,28 @@ class globalSettingsRequestForm(Form):
                           validators=[validators.NumberRange(min=1, max=50,
                                                              message=_l("Should be between 1 and 50"))])
 
+    # The extra proxies list is its own page now (/settings/proxies, ProxiesSettingsForm), so a
+    # save of this form can't touch settings.requests.extra_proxies
+
+
+class ExtraProxiesRequestsForm(Form):
+    """settings.requests.extra_proxies - the proxies added in the UI."""
     extra_proxies = FieldList(FormField(SingleExtraProxy), min_entries=5)
 
     def validate_extra_proxies(self, extra_validators=None):
         for e in self.data['extra_proxies']:
             if e.get('proxy_name') or e.get('proxy_url'):
-                if not e.get('proxy_name','').strip() or not e.get('proxy_url','').strip():
+                # (a field left out of the POST is None, not '')
+                if not (e.get('proxy_name') or '').strip() or not (e.get('proxy_url') or '').strip():
                     self.extra_proxies.errors.append(gettext('Both a name, and a Proxy URL is required.'))
                     return False
+
+
+class ProxiesSettingsForm(Form):
+    """The /settings/proxies page. Nested under `requests` like the settings it stores, which
+    also keeps the field names it had on /settings (requests-extra_proxies-N-proxy_name ...)."""
+    requests = FormField(ExtraProxiesRequestsForm)
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 class globalSettingsApplicationUIForm(Form):
     open_diff_in_new_tab = BooleanField(_l("Open 'History' page in a new tab"), default=True, validators=[validators.Optional()])
@@ -1134,7 +1148,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
     api_access_token_enabled = BooleanField(_l('API access token security check enabled'), default=True, validators=[validators.Optional()])
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
     # NOTE: the global "Default browser" is NOT a field here anymore - all browser choice was
-    # migrated to the /browsers tab (set-default writes settings.application.fetch_backend). The
+    # migrated to the /settings/browsers tab (set-default writes settings.application.fetch_backend). The
     # inherited commonSettingsForm.fetch_backend field is del()'d from this form in the settings
     # blueprint so a settings save never touches the default. Watches still pick a browser via
     # their own commonSettingsForm.fetch_backend (processor_text_json_diff_form).

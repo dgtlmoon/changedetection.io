@@ -1,4 +1,4 @@
-{# The add/edit browser form as a fragment for the dialog on /browsers (?modal=1, loaded and
+{# The add/edit browser form as a fragment for the dialog on /settings/browsers (?modal=1, loaded and
    submitted by static/js/browser-config-modal.js). Same fields and the same routes as the page
    version (browser-config-form.html); a failed save re-renders this with its errors, a
    successful one answers with JSON instead. #}
@@ -12,7 +12,7 @@
         </div>
     </div>
     {# The same tabs as the page version. They switch panes by class (browser-config-modal.js)
-       instead of the URL #anchor, which belongs to the /browsers page behind the dialog. #}
+       instead of the URL #anchor, which belongs to the /settings/browsers page behind the dialog. #}
     <div class="browser-dialog-tabs" role="tablist">
         <button type="button" role="tab" data-pane="browser"><i data-feather="monitor"></i>{{ _('Browser') }}</button>
         {% if show_language_tab %}

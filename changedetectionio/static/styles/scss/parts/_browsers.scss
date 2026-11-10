@@ -1,4 +1,4 @@
-// The /browsers page (browsers-overview.html) and the add/edit browser form
+// The /settings/browsers page (browsers-overview.html) and the add/edit browser form
 // (_browser_config_fields.html, as a page or in the dialog).
 //
 // One card per browser, its variations listed inside. Every part keeps its own class - the
@@ -212,6 +212,34 @@ $browser-trunk: 2px;
 
   strong {
     font-weight: 600;
+  }
+}
+
+// Arrived by a link to one browser (/settings/browsers#its-name, e.g. from a watch's Browser
+// picker): that row or card is picked out, with a pulse to catch the eye
+.browser-variation-row:target,
+.browser-card:target {
+  // Clear of the page header when scrolled to
+  scroll-margin-top: 6rem;
+  border-color: var(--browser-accent);
+  box-shadow: 0 0 0 2px var(--browser-accent);
+  animation: browser-target-pulse 1.2s ease-out 2;
+}
+
+@keyframes browser-target-pulse {
+  from {
+    box-shadow: 0 0 0 2px var(--browser-accent), 0 0 0 0 var(--browser-accent);
+  }
+
+  to {
+    box-shadow: 0 0 0 2px var(--browser-accent), 0 0 0 14px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browser-variation-row:target,
+  .browser-card:target {
+    animation: none;
   }
 }
 
@@ -650,7 +678,7 @@ html[data-darkmode="true"] .browser-chip {
   }
 }
 
-// Add/edit form as a dialog on /browsers (browser-config-modal.html)
+// Add/edit form as a dialog on /settings/browsers (browser-config-modal.html)
 // (.modal-dialog doubled in: parts/_modal.scss loads later and its max-width: 500px would win
 // against a single class)
 .modal-dialog.browser-config-dialog {

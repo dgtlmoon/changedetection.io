@@ -117,7 +117,7 @@ class ChangeDetectionSpec:
     @hookspec
     def fetcher_status_icon(fetcher_name, browser_config):
         """Return the icon shown for a content fetcher: in the watch list, and next to the
-        browser and its variations on the /browsers page.
+        browser and its variations on the /settings/browsers page.
 
         Args:
             fetcher_name: The name of the fetcher (e.g., 'html_webdriver', 'html_js_zyte')

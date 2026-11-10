@@ -284,7 +284,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
     test_url = url_for('test_headers', _external=True)
 
     # The default User-Agent for the plain client now lives on its browser config (html_requests),
-    # set via the /browsers Edit page (migrated out of settings.requests.default_ua).
+    # set via the /settings/browsers Edit page (migrated out of settings.requests.default_ua).
     res = client.post(
         url_for("ui.browser_config.browser_config_edit", config_id="html_requests"),
         data={
@@ -346,7 +346,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
         test_url = test_url.replace('localhost', 'cdio')
 
     # Per-engine default User-Agent now lives on each engine's browser config (migrated out of
-    # settings.requests.default_ua). Set them via the /browsers Edit page.
+    # settings.requests.default_ua). Set them via the /settings/browsers Edit page.
     res = client.post(
         url_for("ui.browser_config.browser_config_edit", config_id="html_requests"),
         data={"label": "Basic fast Plaintext/HTTP Client", "base_fetcher": "html_requests",

@@ -35,6 +35,28 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         construct_notifications_blueprint(datastore), url_prefix='/notifications',
     )
 
+    @settings_blueprint.route("/proxies", methods=['GET', 'POST'])
+    @login_optionally_required
+    def proxies_page():
+        """The proxies added in the UI (settings.requests.extra_proxies) and the CAPTCHA / proxy
+        provider notes - the Proxies tab next to Browsers (/settings/browsers)."""
+        from changedetectionio import forms
+        if request.method == 'POST':
+            # Only what was submitted: with the stored list passed as well, a row posted without
+            # one of its fields would quietly take that field from the stored row at its position
+            form = forms.ProxiesSettingsForm(formdata=request.form)
+        else:
+            stored = datastore.data['settings']['requests'].get('extra_proxies') or []
+            form = forms.ProxiesSettingsForm(data={'requests': {'extra_proxies': stored}})
+        if request.method == 'POST':
+            if form.validate():
+                datastore.data['settings']['requests']['extra_proxies'] = form.data['requests']['extra_proxies']
+                datastore.commit()
+                flash(gettext("Settings updated."))
+                return redirect(url_for('settings.proxies_page'))
+            flash(gettext("An error occurred, please see below."), "error")
+        return render_template("proxies.html", form=form)
+
     @settings_blueprint.route("", methods=['GET', "POST"])
     @login_optionally_required
     def settings_page():
@@ -74,9 +96,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                         extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                         )
 
-        # The global "Default browser" was migrated to the /browsers tab (its per-row radio
+        # The global "Default browser" was migrated to the /settings/browsers tab (its per-row radio
         # writes settings.application.fetch_backend). Drop the inherited fetch_backend field so a
-        # settings save never renders, validates, or clobbers the default - /browsers owns it now.
+        # settings save never renders, validates, or clobbers the default - /settings/browsers owns it now.
         del form.application.form.fetch_backend
 
         if datastore.proxy_list is None:
@@ -205,7 +227,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             # Instantiate the form with existing settings
             plugin_forms[plugin_id] = form_class(data=settings)
 
-        # Read-only label for the global "Default browser" (managed on the /browsers tab).
+        # Read-only label for the global "Default browser" (managed on the /settings/browsers tab).
         from changedetectionio.model.browser_config import list_builtin_browsers
         _default_id = datastore.get_default_backend()
         _default_entry = datastore.browser_config_store.get(_default_id)

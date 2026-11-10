@@ -212,7 +212,7 @@ def test_requests_timeout(client, live_server, measure_memory_usage, datastore_p
     test_url = url_for('test_endpoint', delay=delay, _external=True)
 
     # The request timeout is now a per-browser setting on the plain client's config (migrated out
-    # of settings.requests.timeout). Set it via the /browsers Edit page.
+    # of settings.requests.timeout). Set it via the /settings/browsers Edit page.
     res = client.post(
         url_for("ui.browser_config.browser_config_edit", config_id="html_requests"),
         data={"label": "Basic fast Plaintext/HTTP Client", "base_fetcher": "html_requests",

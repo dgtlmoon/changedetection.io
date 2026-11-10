@@ -887,13 +887,13 @@ class DatastoreUpdatesMixin:
             logger.info(f"update_34: kept existing MCP sign-ins working, Public MCP address set to {base}")
 
     def update_35(self):
-        """Make the global 'Default browser' a concrete, valid selection for the /browsers tab.
+        """Make the global 'Default browser' a concrete, valid selection for the /settings/browsers tab.
 
-        All browser choice is managed on /browsers now; the default is
+        All browser choice is managed on /settings/browsers now; the default is
         settings.application.fetch_backend (the single source of truth that the per-row radio
         writes and every watch/group set to 'system' resolves to). Older installs may hold a
         blank/missing value, the sentinel 'system', or a browser-config id that has since been
-        deleted - any of which would leave the /browsers "Default" radio with nothing selected
+        deleted - any of which would leave the /settings/browsers "Default" radio with nothing selected
         (and a watch on 'system' with no concrete engine). Normalise those to a concrete built-in
         engine, honouring DEFAULT_FETCH_BACKEND (the same env var fresh installs use), else
         'html_requests'.
@@ -926,7 +926,7 @@ class DatastoreUpdatesMixin:
     def update_36(self):
         """Migrate the per-engine request timeout + default User-Agent out of global settings into
         browser configs keyed by the engine name (html_requests / html_webdriver), so all fetch
-        behaviour lives on the /browsers tab.
+        behaviour lives on the /settings/browsers tab.
 
         Watches/global defaults set to those engine names pick the same-keyed config up
         automatically (BrowserConfigStore.engine_and_config), so nothing needs repointing. Only
@@ -963,7 +963,7 @@ class DatastoreUpdatesMixin:
         logger.info("update_36: removed migrated requests.timeout / requests.default_ua from settings")
 
     def update_37(self):
-        """Migrate settings.requests.extra_browsers into browser configs on the /browsers tab.
+        """Migrate settings.requests.extra_browsers into browser configs on the /settings/browsers tab.
 
         Each 'extra browser' was a name + a ws(s):// endpoint, selected by a watch as the magic
         string 'extra_browser_<name>'. That string was resolved to html_webdriver + a custom
@@ -1005,7 +1005,7 @@ class DatastoreUpdatesMixin:
                 continue  # already migrated (a re-run with the settings key still present)
 
             # A label that collides with an existing browser would make this entry unsaveable
-            # later, because the /browsers form rejects duplicate names.
+            # later, because the /settings/browsers form rejects duplicate names.
             label = name
             suffix = 2
             while label.strip().lower() in existing_labels:
