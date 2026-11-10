@@ -164,8 +164,11 @@ def test_group_override_decides_the_browser_at_fetch_time(client, live_server, m
     group_b = datastore.add_tag("Group B")
     _set_group_override(client, datastore, group_a, french, enabled=True)
 
-    # The watch itself asks for the plain HTTP client
-    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), tag_uuids=[group_a],
+    # The watch itself asks for the plain HTTP client. That client really fetches the test
+    # endpoint in step 5, so name the host in a way every environment resolves: the live server's
+    # 'localhost.localdomain' only resolves where the host's resolver makes it up.
+    test_url = url_for('test_endpoint', _external=True).replace('localhost.localdomain', 'localhost')
+    uuid = datastore.add_watch(url=test_url, tag_uuids=[group_a],
                                extras={'fetch_backend': 'html_requests'})
     watch = datastore.data['watching'][uuid]
     assert watch.get('fetch_backend') == 'html_requests'
