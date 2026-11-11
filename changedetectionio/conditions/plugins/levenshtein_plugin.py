@@ -28,7 +28,16 @@ def levenshtein_ratio_recent_history(watch, incoming_text=None):
         # Needs atleast one snapshot
         elif len(k) >= 1: # Should be atleast one snapshot to compare against
             a = watch.get_history_snapshot(timestamp=k[-1]) # Latest saved snapshot
-            b = incoming_text if incoming_text else k[-2]
+            # When there is no incoming text (e.g. the filter matched nothing this cycle) fall back
+            # to the PREVIOUS SNAPSHOT, not its timestamp key - k[-2] is a dict key, not the text.
+            # See #4287
+            if incoming_text:
+                b = incoming_text
+            elif len(k) >= 2:
+                b = watch.get_history_snapshot(timestamp=k[-2])
+            else:
+                # Only one snapshot in history and no incoming text, nothing to compare against
+                b = None
 
         if a and b:
             distance_value = distance(a, b)
