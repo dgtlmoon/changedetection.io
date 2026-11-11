@@ -209,16 +209,50 @@ def handle_watch_update(socketio, **kwargs):
             'has_error': True if error_texts else False,
             'has_favicon': True if watch.get_favicon_filename() else False,
             'history_n': watch.history_n,
-            # Uses the same filter as the server-rendered list so the long/short (timeago_format) setting is honoured.
-            'last_changed_text': _jinja2_filter_datetimestamp(int(watch.last_changed)) if watch.history_n >= 2 and int(watch.last_changed) > 0 else gettext('Not yet'),
             'last_checked': watch.get('last_checked'),
-            'last_checked_text': _jinja2_filter_datetime(watch),
             'notification_muted': True if watch.get('notification_muted') else False,
             'paused': True if watch.get('paused') else False,
             'queued': True if watch.get('uuid') in queue_list else False,
             'unviewed': watch.has_unviewed,
             'uuid': watch.get('uuid'),
         }
+
+        # The "last checked" / "last changed" columns are rendered as text, and the
+        # text has to be in the language of the browser that is looking at it - the
+        # display language is per-browser (session['locale'] / Accept-Language), so
+        # one rendering per language and one emit per client is needed here.
+        # Without this the live update overwrites the translated cell with English.
+        # See #4482
+        from changedetectionio.i18n_thread import translation_scope
+        app = getattr(socketio, 'flask_app', None)
+
+        def _render_times(locale):
+            """(last_changed_text, last_checked_text) rendered in `locale`
+
+            Uses the same filter as the server-rendered list so the long/short
+            (timeago_format) setting is honoured.
+            """
+            with translation_scope(app=app, locale=locale):
+                last_changed_text = _jinja2_filter_datetimestamp(int(watch.last_changed)) if watch.history_n >= 2 and int(watch.last_changed) > 0 else gettext('Not yet')
+                last_checked_text = _jinja2_filter_datetime(watch)
+            return last_changed_text, last_checked_text
+
+        client_locales = getattr(socketio, 'client_locales', None) or {}
+
+        if client_locales:
+            sids_by_locale = {}
+            for sid, locale in client_locales.items():
+                sids_by_locale.setdefault(locale or '', []).append(sid)
+
+            for locale, sids in sids_by_locale.items():
+                watch_data['last_changed_text'], watch_data['last_checked_text'] = _render_times(locale or None)
+                for sid in sids:
+                    socketio.emit("watch_update", {'watch': watch_data}, to=sid)
+        else:
+            # No client connected (or none that we know the language of), keep the
+            # old broadcast behaviour.
+            watch_data['last_changed_text'], watch_data['last_checked_text'] = _render_times(None)
+            socketio.emit("watch_update", {'watch': watch_data})
 
         errored_count = 0
         for watch_uuid_iter, watch_iter in datastore.data['watching'].items():
@@ -233,8 +267,7 @@ def handle_watch_update(socketio, **kwargs):
         # Debug what's being emitted
         # logger.debug(f"Emitting 'watch_update' event for {watch.get('uuid')}, data: {watch_data}")
 
-        # Emit to all clients (no 'broadcast' parameter needed - it's the default behavior)
-        socketio.emit("watch_update", {'watch': watch_data})
+        # 'watch_update' was emitted above, once per language, to the clients that use it.
         socketio.emit("general_stats_update", general_stats)
 
         # The set of running UUIDs changes exactly when a worker claims/releases a watch,
@@ -320,6 +353,17 @@ def init_socketio(app, datastore):
                         # Flask-Compress already handles HTTP response compression
                         engineio_options={'http_compression': False, 'compression_threshold': 0})
 
+    # Remember the application, so the code that renders text for a client can
+    # push an application context when it runs outside of a request (workers,
+    # background threads) - flask_babel needs one to translate at all.
+    socketio.flask_app = app
+
+    # The display language is per-browser (session['locale'] or the browser's
+    # Accept-Language header), so remember which language each connected client
+    # is using. The watch list rows are pushed over the socket and have to be
+    # rendered in that client's own language. See #4482
+    socketio.client_locales = {}
+
     # Set up event handlers
     logger.info("Socket.IO: Registering connect event handler")
 
@@ -339,20 +383,28 @@ def init_socketio(app, datastore):
         from flask import request
         sid = getattr(request, 'sid', None)
 
+        # Same for the locale - the toast is built in the thread, and flask_babel's
+        # gettext() has no request to read the locale from in there, so it would
+        # fall back to English and ignore the user's display language. See #4481.
+        from changedetectionio.i18n_thread import capture_locale, translation_scope
+        locale = capture_locale()
+        app = getattr(socketio, 'flask_app', None)
+
         def run_operation():
             """Run the operation in a background thread to avoid blocking the socket.io event loop"""
             try:
-                result = _handle_operations(
-                    op=data.get('op'),
-                    uuids=data.get('uuids'),
-                    datastore=datastore,
-                    extra_data=data.get('extra_data'),
-                    worker_pool=worker_pool,
-                    update_q=update_q,
-                    queuedWatchMetaData=queuedWatchMetaData,
-                    watch_check_update=watch_check_update,
-                    emit_flash=False
-                )
+                with translation_scope(app=app, locale=locale):
+                    result = _handle_operations(
+                        op=data.get('op'),
+                        uuids=data.get('uuids'),
+                        datastore=datastore,
+                        extra_data=data.get('extra_data'),
+                        worker_pool=worker_pool,
+                        update_q=update_q,
+                        queuedWatchMetaData=queuedWatchMetaData,
+                        watch_check_update=watch_check_update,
+                        emit_flash=False
+                    )
                 # Server-driven feedback: tell the requesting client what happened (real count / errors)
                 if result and result.get('message') and sid:
                     socketio.emit('toast', {'message': result['message'], 'type': result.get('type', 'success')}, to=sid)
@@ -385,6 +437,12 @@ def init_socketio(app, datastore):
 
         # Send the current queue size to the newly connected client
         try:
+            # Remember which language this browser is using, the watch list rows
+            # are pushed over the socket and have to be rendered in the client's
+            # own language and not in the server default. See #4482
+            from changedetectionio.i18n_thread import capture_locale
+            socketio.client_locales[request.sid] = capture_locale()
+
             queue_size = update_q.qsize()
             socketio.emit("queue_size", {
                 "q_length": queue_size,
@@ -408,6 +466,10 @@ def init_socketio(app, datastore):
     @socketio.on('disconnect')
     def handle_disconnect():
         """Handle client disconnection"""
+        from flask import request
+        sid = getattr(request, 'sid', None)
+        if sid:
+            socketio.client_locales.pop(sid, None)
         logger.info("Socket.IO: Client disconnected")
 
     # Create a dedicated signal handler that will receive signals and emit them to clients
