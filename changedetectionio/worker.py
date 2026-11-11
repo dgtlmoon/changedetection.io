@@ -810,40 +810,76 @@ def cleanup_error_artifacts(uuid, datastore):
 
 
 
+def record_notification_error(datastore, watch_uuid, error):
+    """Make a notification failure visible in the UI.
+
+    A notification that could not even be PREPARED - an invalid notification
+    format for example - raised before it was ever queued, so the notification
+    runner never saw it and the watch kept an empty 'last_notification_error'.
+    The error only ended up in the log and the watch looked healthy in the UI,
+    while no notification was ever sent.
+
+    Errors that happen while the notification is delivered are already caught
+    (and shown) by the notification runner.
+
+    See #4461
+    """
+    message = "Notification error detected, goto notification log."
+
+    try:
+        datastore.update_watch(
+            uuid=watch_uuid,
+            update_obj={'last_notification_error': message}
+        )
+    except Exception as e:
+        logger.error(f"Could not record the notification error for {watch_uuid}: {e}")
+
+    # Put the reason in the notification log, so the link in the UI leads to it.
+    try:
+        from changedetectionio import flask_app
+        flask_app.notification_debug_log.append(f"{watch_uuid} - {error}")
+        flask_app.notification_debug_log[:] = flask_app.notification_debug_log[-100:]
+    except Exception as e:
+        logger.error(f"Could not add the notification error to the log: {e}")
+
+
 async def send_content_changed_notification(watch_uuid, notification_q, datastore):
     """Helper function to queue notifications using the new notification service"""
     try:
         from changedetectionio.notification_service import create_notification_service
-        
+
         # Create notification service instance
         notification_service = create_notification_service(datastore, notification_q)
-        
+
         notification_service.send_content_changed_notification(watch_uuid)
     except Exception as e:
         logger.error(f"Error sending notification for {watch_uuid}: {e}")
+        record_notification_error(datastore, watch_uuid, e)
 
 
 async def send_filter_failure_notification(watch_uuid, notification_q, datastore):
     """Helper function to send filter failure notifications using the new notification service"""
     try:
         from changedetectionio.notification_service import create_notification_service
-        
+
         # Create notification service instance
         notification_service = create_notification_service(datastore, notification_q)
-        
+
         notification_service.send_filter_failure_notification(watch_uuid)
     except Exception as e:
         logger.error(f"Error sending filter failure notification for {watch_uuid}: {e}")
+        record_notification_error(datastore, watch_uuid, e)
 
 
 async def send_step_failure_notification(watch_uuid, step_n, notification_q, datastore):
     """Helper function to send step failure notifications using the new notification service"""
     try:
         from changedetectionio.notification_service import create_notification_service
-        
+
         # Create notification service instance
         notification_service = create_notification_service(datastore, notification_q)
-        
+
         notification_service.send_step_failure_notification(watch_uuid, step_n)
     except Exception as e:
         logger.error(f"Error sending step failure notification for {watch_uuid}: {e}")
+        record_notification_error(datastore, watch_uuid, e)
