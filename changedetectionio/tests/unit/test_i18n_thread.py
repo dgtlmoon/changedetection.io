@@ -109,11 +109,19 @@ class TestI18nThread(unittest.TestCase):
             session['locale'] = 'ja'
             self.assertEqual(capture_locale(), 'ja')
 
-    def test_capture_locale_outside_a_request(self):
-        """No request, no locale - and definitely no exception."""
-        from changedetectionio.i18n_thread import capture_locale
+    def test_capture_locale_without_a_locale_to_read(self):
+        """When the locale cannot be read, it must not raise - it returns None."""
+        import changedetectionio.i18n_thread as i18n_thread
 
-        self.assertIsNone(capture_locale())
+        def broken():
+            raise RuntimeError("Working outside of request context.")
+
+        original = i18n_thread.get_locale
+        i18n_thread.get_locale = broken
+        try:
+            self.assertIsNone(i18n_thread.capture_locale())
+        finally:
+            i18n_thread.get_locale = original
 
     def test_translation_works_in_a_thread_without_a_request(self):
         """The real use case - a worker thread that has to build a message."""
