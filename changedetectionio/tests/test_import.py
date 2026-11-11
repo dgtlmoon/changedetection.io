@@ -34,6 +34,65 @@ https://example.com tag1, other tag"""
     res = client.get( url_for("watchlist.index"))
     res = client.get( url_for("watchlist.index"))
 
+
+def test_import_url_with_space_is_not_truncated(client, live_server, measure_memory_usage, datastore_path):
+    """A URL that legitimately contains a space must be imported whole.
+
+    The import format is `<url> <tags>`, but splitting on the first space cut
+    off everything after it, so a URL with a space in its query string was
+    truncated and the tail was treated as tags. See #1568 and #1516.
+    """
+    wait_for_all_checks(client)
+
+    url_with_space = "https://example.com/search?q=website monitoring and change detection"
+
+    res = client.post(
+        url_for("imports.import_page"),
+        data={
+            "distill-io": "",
+            "urls": url_with_space
+        },
+        follow_redirects=True,
+    )
+    assert b"1 Imported" in res.data
+
+    # The stored URL must be the whole thing, not the part before the first space
+    res = client.get(url_for("watchlist.index"))
+    assert url_with_space.encode() in res.data
+
+    delete_all_watches(client)
+
+    # Clear flask alerts
+    res = client.get(url_for("watchlist.index"))
+    res = client.get(url_for("watchlist.index"))
+
+
+def test_import_url_with_tags_still_splits(client, live_server, measure_memory_usage, datastore_path):
+    """The documented `<url> <tags>` format must keep working."""
+    wait_for_all_checks(client)
+
+    res = client.post(
+        url_for("imports.import_page"),
+        data={
+            "distill-io": "",
+            "urls": "https://example.com/page?a=1 tag1, tag2"
+        },
+        follow_redirects=True,
+    )
+    assert b"1 Imported" in res.data
+
+    res = client.get(url_for("watchlist.index"))
+    # The URL stops at the space, the rest became tags
+    assert b"https://example.com/page?a=1" in res.data
+    assert b"tag1" in res.data
+    assert b"tag2" in res.data
+
+    delete_all_watches(client)
+
+    # Clear flask alerts
+    res = client.get(url_for("watchlist.index"))
+    res = client.get(url_for("watchlist.index"))
+
 def xtest_import_skip_url(client, live_server, measure_memory_usage, datastore_path):
 
 
