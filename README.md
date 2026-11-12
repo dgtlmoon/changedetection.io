@@ -9,7 +9,7 @@ Monitor websites for updates — get notified via Discord, Email, Slack, Telegra
 
 [<img src="./docs/screenshot.png" style="max-width:100%;" alt="Web site page change monitoring"  title="Web site page change monitoring"  />](https://changedetection.io?src=github)
 
-![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master)
+![changedetection.io](https://github.com/dgtlmoon/changedetection.io/actions/workflows/test-only.yml/badge.svg?branch=master) [![Plumber Score](https://score.getplumber.io/github.com/dgtlmoon/changedetection.io.svg)](https://score.getplumber.io/github.com/dgtlmoon/changedetection.io)
 
 [**Get started with website page change monitoring straight away. Don't have time? Try our $8.99/month subscription, use our proxies and support!**](https://changedetection.io) , _Same open-source changedetection.io, minus the hard parts, No infrastructure to baby-sit._
 

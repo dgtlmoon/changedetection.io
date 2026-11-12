@@ -1,0 +1,14 @@
+# Plumber overlay: inherits every control from the CLI's built-in
+# baseline, only the differences for this repository are written here.
+# Run 'plumber config resolve' to see the full effective config.
+extends: plumber:default
+version: '2.0'
+
+github:
+  controls:
+    branchMustBeProtected:
+      # master and dev carry no protection rule today. That is a
+      # repository setting only an admin can change, no pull request
+      # can. Remove these two lines once a rule exists and the check
+      # will start watching it.
+      enabled: false
