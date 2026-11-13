@@ -120,7 +120,9 @@ def _register_http_handler(schema, send_func):
                 )
                 return True if result is None else bool(result)
             except Exception as e:
-                self.logger.warning(f"Exception in custom HTTP handler: {e}")
+                # Short line for the notification error shown in the UI, full traceback only with LOGGER_LEVEL=TRACE
+                self.logger.warning(f"Exception in custom HTTP handler: {type(e).__name__}: {e}")
+                logger.opt(exception=True).trace(f"Custom HTTP handler {self.secure_protocol}:// failed")
                 return False
 
     # Register the plugin
