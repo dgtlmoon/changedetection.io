@@ -85,6 +85,12 @@ def _register_http_handler(schema, send_func):
         service_name = f"Custom HTTP - {schema.upper()}"
         _base_args = base_args
 
+        @staticmethod
+        def parse_url(url):
+            # Plain parse only - the query string belongs to the remote endpoint, so ?user= / ?pass= etc
+            # must be sent on as-is and never be lifted out of it and treated as login credentials.
+            return apprise_parse_url(url, verify_host=False, simple=True)
+
         def __init__(self, **kwargs):
             # Extract format from qsd and set it as a top-level kwarg
             # This allows NotifyBase.__init__ to properly set notify_format
@@ -133,9 +139,7 @@ def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
     if user is not None and password is not None:
         return (unquote_plus(user), unquote_plus(password))
 
-    if user is not None:
-        return unquote_plus(user)
-
+    # A username without a password is not a login (requests would also reject a bare string here)
     return ""
 
 
