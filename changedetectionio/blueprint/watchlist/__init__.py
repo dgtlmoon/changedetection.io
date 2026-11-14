@@ -61,8 +61,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         active_processor = request.args.get('processor', '').strip()
         # Toolbar facet counts are tallied over the tag/processor/search context but
         # independently of the active status toggle, so the .seg numbers stay stable
-        # as you switch between All / Unread / Deals / With errors.
+        # as you switch between All / Unread / Deals / With errors / Healthy.
         errored_count = 0
+        healthy_count = 0
         deals_count = 0
         unread_count = 0
         processor_counts = {}
@@ -84,6 +85,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 continue
             if watch.get('last_error'):
                 errored_count += 1
+            else:
+                healthy_count += 1
             if wl_filters.watch_is_deal(watch):
                 deals_count += 1
             # Unread = changed and not yet viewed — same test the 'unread' status
@@ -138,6 +141,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             checking_now_size=len(worker_pool.get_running_uuids()),
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             errored_count=errored_count,
+            healthy_count=healthy_count,
             deals_count=deals_count,
             unread_count=unread_count,
             processor_counts=processor_counts,

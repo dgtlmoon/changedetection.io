@@ -22,6 +22,7 @@ def list_filters_from_args(datastore, args):
     active_tag_req = (args.get('tag') or '').lower().strip()
     return {
         'with_errors': args.get('with_errors') == "1",
+        'healthy': args.get('healthy') == "1",
         'unread_only': args.get('unread') == "1",
         'deals': args.get('deals') == "1",
         'processor': (args.get('processor') or '').strip(),
@@ -62,8 +63,10 @@ def watch_in_context(datastore, watch, f):
 
 
 def watch_passes_status(watch, f):
-    """The mutually-presented status toggle (All / Unread / Deals / With errors)."""
+    """The mutually-presented status toggle (All / Unread / Deals / With errors / Healthy)."""
     if f['with_errors'] and not watch.get('last_error'):
+        return False
+    if f['healthy'] and watch.get('last_error'):
         return False
     if f['unread_only'] and (watch.viewed or watch.last_changed == 0):
         return False
@@ -95,7 +98,7 @@ def matching_watch_uuids(datastore, args):
 
 
 # The query-string keys that define a watch-list view.
-FILTER_KEYS = ('tag', 'processor', 'unread', 'with_errors', 'deals', 'q')
+FILTER_KEYS = ('tag', 'processor', 'unread', 'with_errors', 'healthy', 'deals', 'q')
 
 
 def filter_query_args(args):

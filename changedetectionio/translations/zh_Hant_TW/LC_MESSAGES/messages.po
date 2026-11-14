@@ -3248,6 +3248,10 @@ msgid "With errors"
 msgstr "有錯誤"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Healthy"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Filter by type"
 msgstr "按類型過濾"
 
