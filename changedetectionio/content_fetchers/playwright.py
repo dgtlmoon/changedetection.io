@@ -24,6 +24,11 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     page_height = await page.evaluate("document.documentElement.scrollHeight")
     page_width = await page.evaluate("document.documentElement.scrollWidth")
     original_viewport = page.viewport_size
+    # A browser running without viewport emulation - its real window size, e.g. one launched
+    # maximized - reports no viewport. Its window's own size is what it renders at, so that is
+    # the viewport to work from.
+    viewport = original_viewport or await page.evaluate("({width: window.innerWidth, height: window.innerHeight})")
+    viewport_changed = False
     dimensions_time = time.time() - setup_start
 
     logger.debug(f"{watch_info}Playwright viewport size {page.viewport_size} page height {page_height} page width {page_width} (got dimensions in {dimensions_time:.2f}s)")
@@ -36,7 +41,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
 
     # Only lock viewport elements if explicitly enabled (for image_ssim_diff processor)
     # This prevents headers/ads from resizing when viewport changes
-    if lock_viewport_elements and page_height > page.viewport_size['height']:
+    if lock_viewport_elements and page_height > viewport['height']:
         lock_start = time.time()
         lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
         with open(lock_elements_js_path, 'r', encoding='utf-8') as f:
@@ -46,18 +51,19 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
         lock_time = time.time() - lock_start
         logger.debug(f"{watch_info}Viewport element locking enabled (took {lock_time:.2f}s)")
 
-    if page_height > page.viewport_size['height']:
+    if page_height > viewport['height']:
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
         # Never set viewport taller than our max capture height - otherwise one screenshot chunk
         # captures the whole (e.g. 8098px) page even when SCREENSHOT_MAX_HEIGHT=1000
         step_size = min(step_size, SCREENSHOT_MAX_TOTAL_HEIGHT)
         viewport_start = time.time()
-        logger.debug(f"{watch_info}Setting bigger viewport to step through large page width W{page.viewport_size['width']}xH{step_size} because page_height > viewport_size")
+        logger.debug(f"{watch_info}Setting bigger viewport to step through large page width W{viewport['width']}xH{step_size} because page_height > viewport_size")
         # Set viewport to a larger size to capture more content at once
-        await page.set_viewport_size({'width': page.viewport_size['width'], 'height': step_size})
+        await page.set_viewport_size({'width': viewport['width'], 'height': step_size})
+        viewport_changed = True
         viewport_time = time.time() - viewport_start
-        logger.debug(f"{watch_info}Viewport changed to {page.viewport_size['width']}x{step_size} (took {viewport_time:.2f}s)")
+        logger.debug(f"{watch_info}Viewport changed to {viewport['width']}x{step_size} (took {viewport_time:.2f}s)")
 
     # Capture screenshots in chunks up to the max total height
     capture_start = time.time()
@@ -91,7 +97,11 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
         y += step_size
 
     # Restore original viewport size
-    await page.set_viewport_size({'width': original_viewport['width'], 'height': original_viewport['height']})
+    if original_viewport:
+        await page.set_viewport_size({'width': original_viewport['width'], 'height': original_viewport['height']})
+    elif viewport_changed:
+        # There was no emulated viewport to go back to: the window's own size is the same thing
+        await page.set_viewport_size({'width': viewport['width'], 'height': viewport['height']})
 
     # Unlock element dimensions if they were locked
     if elements_locked:
@@ -156,6 +166,7 @@ class fetcher(Fetcher):
     )
     if os.getenv("PLAYWRIGHT_DRIVER_URL"):
         fetcher_description += " via '{}'".format(os.getenv("PLAYWRIGHT_DRIVER_URL"))
+    fetcher_short_description = "{} (Playwright)".format(os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize())
 
     browser_type = ''
     command_executor = ''
@@ -170,9 +181,32 @@ class fetcher(Fetcher):
     supports_browser_steps = True
     supports_screenshots = True
     supports_xpath_element_data = True
+    supports_request_blocking = True
+    supports_device_emulation = True
+    supports_page_settings = True
+    supports_cookies = True
+
+    # When True, _get_browser() launches a local browser instead of connecting to a remote
+    # CDP endpoint (overridden by the html_playwright_builtin subclass).
+    local_launch = False
+
+    async def _get_browser(self, browser_type):
+        """Acquire a Playwright browser. Default: connect to the configured remote CDP endpoint.
+        Subclasses (local launch) override this. Kept as the single seam so the tuned run()
+        body is shared."""
+        return await browser_type.connect_over_cdp(self.browser_connection_url, timeout=60000)
+
+
+    def _resolve_browser_type_name(self):
+        """chromium/firefox/webkit - from the browser_config when the engine supports choosing
+        it (local launch), else the env default."""
+        bc = getattr(self, 'browser_config', None)
+        if bc is not None and getattr(bc, 'browser_type', None) and self.supports_browser_type:
+            return bc.browser_type
+        return self.browser_type
 
     @classmethod
-    def get_status_icon_data(cls):
+    def get_status_icon_data(cls, browser_config=None):
         """Return Chrome browser icon data for Playwright fetcher."""
         return {
             'filename': 'google-chrome-icon.png',
@@ -270,19 +304,20 @@ class fetcher(Fetcher):
         response = None
 
         async with async_playwright() as p:
-            browser_type = getattr(p, self.browser_type)
+            _browser_type_name = self._resolve_browser_type_name()
+            browser_type = getattr(p, _browser_type_name)
 
-            # Seemed to cause a connection Exception even tho I can see it connect
-            # self.browser = browser_type.connect(self.command_executor, timeout=timeout*1000)
-            # 60,000 connection timeout only
-            browser = await browser_type.connect_over_cdp(self.browser_connection_url, timeout=60000)
+            # Acquire the browser via the seam (remote connect by default, local launch in the
+            # html_playwright_builtin subclass).
+            browser = await self._get_browser(browser_type)
 
             # SOCKS5 with authentication is not supported (yet)
             # https://github.com/microsoft/playwright/issues/10567
 
-            # Set user agent to prevent Cloudflare from blocking the browser
-            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
-            context = await browser.new_context(
+            # Per-watch browser behaviour (viewport/locale/timezone) from the resolved
+            # FetcherConfig - only added when set so defaults/behaviour are unchanged.
+            # (locale also drives the Accept-Language header - see issues #4210 #1412; timezone #3303)
+            context_kwargs = dict(
                 accept_downloads=False,  # Should never be needed
                 # Enabled by default because sites such as GitHub need it for injected JavaScript.
                 # Some CDP implementations do not support Page.setBypassCSP, so allow operators to disable it.
@@ -290,9 +325,23 @@ class fetcher(Fetcher):
                 extra_http_headers=request_headers,
                 ignore_https_errors=True,
                 proxy=self.proxy,
-                service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
                 user_agent=manage_user_agent(headers=request_headers),
             )
+            # service_workers is a chromium-only new_context option - Firefox/WebKit reject it,
+            # so only pass it for chromium (matters for the local html_playwright_builtin fetcher).
+            if _browser_type_name == 'chromium':
+                context_kwargs['service_workers'] = os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow')
+            _bc = getattr(self, 'browser_config', None)
+            if _bc is not None:
+                context_kwargs.update(_bc.browser_context_kwargs())
+
+            # Set user agent to prevent Cloudflare from blocking the browser
+            # Use the default one configured in the App.py model that's passed from fetch_site_status.py
+            context = await browser.new_context(**context_kwargs)
+            if self.cookies:
+                await context.add_cookies(self.cookies)
+                logger.debug(f"Added {len(self.cookies)} cookie(s) to the browser context: "
+                             f"{', '.join(c['name'] for c in self.cookies)}")
 
             self.page = await context.new_page()
 

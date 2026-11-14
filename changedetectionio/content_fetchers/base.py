@@ -1,10 +1,21 @@
 import os
 from abc import abstractmethod
 from loguru import logger
-from pydantic import BaseModel
+from flask_babel import lazy_gettext as _l
+from pydantic import BaseModel, Field
 
 from changedetectionio.content_fetchers import BrowserStepsStepException
 from changedetectionio.strtobool import strtobool
+
+
+def _capability(label=None, icon=None):
+    """A FetcherCapabilities flag.
+
+    `label` is its translatable name and `icon` a feather icon name, for the flags a user would
+    choose a browser by - those are shown as chips on the /settings/browsers page (FetcherCapabilities.chips()).
+    A flag with no label is internal: it only decides which browser settings apply.
+    """
+    return Field(default=False, json_schema_extra={'label': label, 'icon': icon})
 
 
 class FetcherCapabilities(BaseModel):
@@ -15,10 +26,36 @@ class FetcherCapabilities(BaseModel):
     validated instance from a fetcher class with FetcherCapabilities.from_fetcher(),
     and call .model_dump() where a plain dict is expected (templates, plugin API).
     """
-    supports_browser_steps: bool = False       # Can execute browser automation steps
-    supports_screenshots: bool = False         # Can capture page screenshots
-    supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
-    supports_pdf: bool = False                 # Can supply the original PDF bytes as raw_content
+    # Can execute browser automation steps
+    supports_browser_steps: bool = _capability(_l('Browser Steps'), 'mouse-pointer')
+    # Can capture page screenshots
+    supports_screenshots: bool = _capability(_l('Screenshots'), 'camera')
+    # Can extract xpath element positions for visual selector
+    supports_xpath_element_data: bool = _capability(_l('Visual Filter Selector'), 'crosshair')
+    # Can emulate a phone/tablet (viewport, touch, mobile layout)
+    supports_device_emulation: bool = _capability(_l('Mobile emulation'), 'smartphone')
+    # Can block requests by resource-type / URL pattern
+    supports_request_blocking: bool = _capability(_l('Block images & assets'), 'shield')
+    # Can supply the original PDF bytes as raw_content
+    supports_pdf: bool = _capability(_l('PDF'), 'file-text')
+    # --- Internal: no label, never shown as a chip ---
+    supports_browser_type: bool = _capability()         # Can choose the browser engine (chromium/firefox/webkit)
+    supports_delete_created_files: bool = _capability() # Launches locally & can clean up its temp files
+    supports_request_timeout: bool = _capability()      # Plain HTTP client: honours a per-profile request timeout
+    supports_custom_user_agent: bool = _capability()    # Honours a per-profile User-Agent (all fetchers)
+    supports_connection_url: bool = _capability()       # Connects to an endpoint named by the browser config
+    supports_cookies: bool = _capability()              # Applies cookies set by plugins (BrowserRequest.cookies)
+    supports_page_settings: bool = _capability()        # Honours a profile's screen size, locale and timezone
+
+    @classmethod
+    def labels(cls):
+        """{flag: {'label', 'icon'}} for the user-facing flags, in declaration order."""
+        return {name: field.json_schema_extra for name, field in cls.model_fields.items()
+                if isinstance(field.json_schema_extra, dict) and field.json_schema_extra.get('label')}
+
+    def chips(self):
+        """The user-facing capabilities this fetcher has, as [{'flag', 'label', 'icon'}]."""
+        return [{'flag': name, **meta} for name, meta in self.labels().items() if getattr(self, name)]
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -27,6 +64,19 @@ class FetcherCapabilities(BaseModel):
             name: getattr(fetcher_class, name, False)
             for name in cls.model_fields
         })
+
+    @property
+    def is_browser(self):
+        """A real browser: can screenshot / extract element positions (visual selector)."""
+        return bool(self.supports_screenshots or self.supports_xpath_element_data)
+
+    @property
+    def can_host_variation(self):
+        """True if this engine has per-profile behaviour worth saving as a browser config -
+        a real browser (viewport/locale/…), the plain client's request timeout, or a custom
+        user-agent (all fetchers). Single source of truth for the /settings/browsers 'Add variation' +
+        'Edit' actions."""
+        return bool(self.is_browser or self.supports_request_timeout or self.supports_custom_user_agent)
 
 
 def get_playwright_bypass_csp():
@@ -77,6 +127,33 @@ class Fetcher():
     # (e.g. 'html_requests', 'html_webdriver'). Set by resolve_content_fetcher()
     # so downstream consumers don't have to re-derive it from the class name.
     backend_name = None
+    # Resolved per-watch browser behaviour (FetcherConfig), injected after construction.
+    # None by default so a fetcher that never reads it is completely unaffected.
+    browser_config = None
+    # True for engines that reach the web through someone else's service (an external CDP
+    # endpoint), where layering our own per-watch proxy on top is wrong rather than merely
+    # redundant. Read by call_browser() when it decides whether to pass a proxy URL.
+    ignores_proxy_setting = False
+
+    @classmethod
+    def browser_steps_connection_url(cls, browser_config=None):
+        """CDP endpoint a live browser-steps / visual-selector session connects to.
+
+        A live session is always driven with Playwright whatever the engine fetches with, so the
+        default is the system driver. An engine whose browser lives somewhere else overrides this
+        and answers from the watch's browser config (see external_cdp).
+        """
+        return os.getenv('PLAYWRIGHT_DRIVER_URL', '').strip('"')
+
+    # Whether this fetcher is usable directly, out-of-the-box, as a built-in "browser" (has sane
+    # env defaults). False means it's a *base only* - it must be configured via a browser config
+    # first (e.g. html_playwright_builtin needs a browser_type chosen), so it's offered as a base
+    # in the Add Browser form but NOT shown as a directly-selectable built-in browser.
+    ready_to_use = True
+    # Every fetcher sends an HTTP User-Agent (browsers via the request_headers channel -> the
+    # browser context, the plain client directly), so all support a per-profile UA override.
+    # Set here on the base so browser configs can carry a user_agent for any engine.
+    supports_custom_user_agent = True
     browser_connection_is_custom = None
     browser_connection_url = None
     browser_steps = None
@@ -86,6 +163,15 @@ class Fetcher():
     # Set when this fetcher is a retry after another one failed (the select_fetch_backend hook): the failed one's name
     fallback_from = None
     fetcher_description = "No description"
+    # Short name for browser lists, e.g. "Local Playwright: My firefox". None falls back to
+    # fetcher_description (see browser_config.engine_short_description()).
+    fetcher_short_description = None
+    # False keeps a registered engine out of the browser lists (/settings/browsers, pickers) while it stays
+    # usable, e.g. one that's only switched to by a plugin's fetch_engine_override()
+    offered_as_browser = True
+    # Cookies to send, set by core from BrowserRequest.cookies_for_browser() (Playwright-style
+    # dicts, each with a url or a domain); only fetchers with supports_cookies apply them
+    cookies = None
     headers = {}
     favicon_blob = None
     instock_data = None
@@ -134,10 +220,16 @@ class Fetcher():
 
 
     @classmethod
-    def get_status_icon_data(cls):
-        """Return data for status icon to display in the watch overview.
+    def get_status_icon_data(cls, browser_config=None):
+        """Return data for the icon shown for this fetcher: in the watch overview, and next to
+        the browser and each of its variations on the /settings/browsers page.
 
         This method can be overridden by subclasses to provide custom status icons.
+
+        Args:
+            browser_config: the FetcherConfig of the browser being shown, or None for the
+                fetcher itself. A fetcher that can run more than one kind of browser answers
+                with the one this config picks (e.g. browser_type 'firefox' -> a Firefox icon).
 
         Returns:
             dict or None: Dictionary with icon data:

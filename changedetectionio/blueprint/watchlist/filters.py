@@ -25,6 +25,8 @@ def list_filters_from_args(datastore, args):
         'unread_only': args.get('unread') == "1",
         'deals': args.get('deals') == "1",
         'processor': (args.get('processor') or '').strip(),
+        # A browser id (built-in name or saved browser), see watch_matches_browser()
+        'browser': (args.get('browser') or '').strip(),
         'tag_uuid': resolve_active_tag_uuid(datastore, active_tag_req),
         'search_q': args.get('q').strip().lower() if args.get('q') else False,
     }
@@ -52,9 +54,20 @@ def watch_matches_tag(datastore, watch, f):
     return not f['tag_uuid'] or f['tag_uuid'] in datastore.get_all_tags_for_watch(watch['uuid'])
 
 
+def watch_matches_browser(watch, f):
+    """?browser=<id> - the watches that use that browser, whichever level chose it (the watch,
+    a group override or the system default). See model.browser_config.watch_browser_ids()."""
+    if not f['browser']:
+        return True
+    from changedetectionio.model.browser_config import watch_browser_ids
+    return f['browser'] in watch_browser_ids(watch)
+
+
 def watch_in_context(datastore, watch, f):
-    """Tag + processor — the working set the operator is looking at."""
+    """Tag + browser + processor — the working set the operator is looking at."""
     if not watch_matches_tag(datastore, watch, f):
+        return False
+    if not watch_matches_browser(watch, f):
         return False
     if f['processor'] and watch.get('processor') != f['processor']:
         return False
@@ -95,7 +108,7 @@ def matching_watch_uuids(datastore, args):
 
 
 # The query-string keys that define a watch-list view.
-FILTER_KEYS = ('tag', 'processor', 'unread', 'with_errors', 'deals', 'q')
+FILTER_KEYS = ('tag', 'processor', 'browser', 'unread', 'with_errors', 'deals', 'q')
 
 
 def filter_query_args(args):

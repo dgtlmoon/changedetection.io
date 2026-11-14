@@ -17,7 +17,7 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage, datas
 
     # Goto settings, add our custom one
     res = client.post(
-        url_for("settings.settings_page"),
+        url_for("settings.proxies_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",

@@ -704,13 +704,15 @@ def test_mcp_fetcher_and_proxy(client, live_server, measure_memory_usage, datast
     api_key = new_mcp_token(client)
     requests_settings = datastore.data['settings']['requests']
     requests_settings['extra_proxies'] = [{'proxy_name': 'Czech exit', 'proxy_url': 'http://agent:s3cret@cz.example.com:3128'}]
-    requests_settings['extra_browsers'] = [{'browser_name': 'stealth', 'browser_connection_url': 'ws://browser.example.com:3000'}]
+    # A browser saved on the Browsers page
+    stealth = datastore.browser_config_store.add('stealth', 'html_requests')
     try:
         info = _call(client, api_key, 'get_system_info')
         data = info['structuredContent']
         assert {'id': 'ui-0Czech exit', 'label': 'Czech exit'} in data['proxies']
-        assert 'html_requests' in data['fetchers'] and 'extra_browser_stealth' in data['fetchers']
-        assert 's3cret' not in json.dumps(info) and 'browser.example.com' not in json.dumps(info)
+        assert 'html_requests' in data['fetchers'] and stealth in data['fetchers']
+        assert any(b['id'] == stealth and b['label'].endswith('stealth') for b in data['browsers'])
+        assert 's3cret' not in json.dumps(info)
 
         result = _call(client, api_key, 'create_watch', url=_url('shop'), proxy='czech exit',
                        fetch_backend='html_requests', paused=True)
@@ -732,12 +734,15 @@ def test_mcp_fetcher_and_proxy(client, live_server, measure_memory_usage, datast
         result = _call(client, api_key, 'create_watch', url=_url('shop-2'), proxy='Mars exit')
         assert result['isError'] and 'Czech exit (ui-0Czech exit)' in result['content'][0]['text']
         assert 's3cret' not in result['content'][0]['text']
-        result = _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='extra_browser_nope')
+        result = _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='nope')
         assert result['isError'] and 'stealth' in result['content'][0]['text']
-        assert not _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='extra_browser_stealth')['isError']
+        assert not _call(client, api_key, 'update_watch', watch=uuid, fetch_backend=stealth)['isError']
+        # or by its name
+        assert not _call(client, api_key, 'update_watch', watch=uuid, fetch_backend='Stealth')['isError']
+        assert datastore.data['watching'][uuid]['fetch_backend'] == stealth
     finally:
         requests_settings['extra_proxies'] = []
-        requests_settings['extra_browsers'] = []
+        datastore.browser_config_store.delete(stealth)
         delete_all_watches(client)
 
 

@@ -10,6 +10,7 @@ class fetcher(Fetcher):
         fetcher_description = f"WebDriver Chrome/Javascript via \"{os.getenv('WEBDRIVER_URL', '')}\""
     else:
         fetcher_description = "WebDriver Chrome/Javascript"
+    fetcher_short_description = "Chrome (WebDriver)"
 
     proxy = None
     proxy_url = None
@@ -20,7 +21,7 @@ class fetcher(Fetcher):
     supports_xpath_element_data = True
 
     @classmethod
-    def get_status_icon_data(cls):
+    def get_status_icon_data(cls, browser_config=None):
         """Return Chrome browser icon data for WebDriver fetcher."""
         return {
             'filename': 'google-chrome-icon.png',

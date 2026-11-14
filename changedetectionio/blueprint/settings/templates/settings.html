@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field, render_fieldlist_with_inline_errors %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_time_schedule_form, render_ternary_field, render_fieldlist_with_inline_errors, render_plugin_settings_sections %}
 {% from '_common_fields.html' import show_token_placeholders %}
 {% from 'settings-tabs.html' import settings_tabs with context %}
 <script src="{{url_for('static_content', group='js', filename='modal.js')}}"></script>
@@ -106,7 +106,7 @@
                     <br>
                         <div class="inline-radio">
                             {{ render_field(form.requests.form.proxy, class="fetch-backend-proxy") }}
-                            <span class="pure-form-message-inline">{{ _('Choose a default proxy for all watches') }}</span>
+                            <span class="pure-form-message-inline">{{ _('Choose a default proxy for all watches') }} - <a href="{{ url_for('settings.proxies_page') }}">{{ _('Manage proxies') }}</a></span>
                         </div>
                     </div>
                 {% endif %}
@@ -115,14 +115,20 @@
             </div>
 
             <div class="tab-pane-inner" id="fetching">
-                <div class="pure-control-group inline-radio">
-                    {{ render_field(form.application.form.fetch_backend, class="fetch-backend") }}
+                <div class="pure-control-group">
+                    <label>{{ _('Default browser') }}</label>
+                    <div class="default-browser-summary" style="margin:0.3em 0;">
+                        <strong style="margin-right:0.75em;">{{ default_browser_label }}</strong>
+                        <a class="pure-button button-small" href="{{ url_for('ui.browser_config.browsers_overview') }}">{% if browser_config_locked() %}{{ _('Set default browser') }}{% else %}{{ _('Manage browsers &amp; set default')|safe }}{% endif %}</a>
+                    </div>
                     <span class="pure-form-message-inline">
-                        <p>{{ _('Use the <strong>Basic</strong> method (default) where your watched sites don\'t need Javascript to render.')|safe }}</p>
-                        <p>{{ _('The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set by the ENV var \'WEBDRIVER_URL\'.')|safe }}</p>
+                        <p>{{ _('Every watch uses this browser unless it (or its group) picks another one.')|safe }}</p>
+                        {% if not browser_config_locked() %}
+                        <p>{{ _('Add screen sizes, languages, timezones and choose the default on the <a href="%(url)s">Browsers</a> page.', url=url_for('ui.browser_config.browsers_overview'))|safe }}</p>
+                        {% endif %}
                     </span>
                 </div>
-                <fieldset class="pure-group" id="webdriver-override-options" data-visible-for="application-fetch_backend=html_webdriver">
+                <fieldset class="pure-group" id="webdriver-override-options">
                     <div class="pure-form-message-inline">
                         <strong>{{ _('If you\'re having trouble waiting for the page to be fully rendered (text missing etc), try increasing the \'wait\' time here.') }}</strong>
                         <br>
@@ -144,21 +150,20 @@
                     <span class="pure-form-message-inline">{{ _('Example - 3 seconds random jitter could trigger up to 3 seconds earlier or up to 3 seconds later') }}</span>
                 </div>
                 <div class="pure-control-group">
-                    {{ render_field(form.requests.form.timeout) }}
-                    <span class="pure-form-message-inline">{{ _('For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999.') }}</span><br>
-                </div>
-                <div class="pure-control-group inline-radio">
-                    {{ render_field(form.requests.form.default_ua) }}
                     <span class="pure-form-message-inline">
+                        {% if not browser_config_locked() %}
+                        <p>{{ _('The plain-requests timeout and the default User-Agent are now set per browser on the <a href="%(url)s">Browsers</a> page (Edit the browser, under “HTTP request options”).', url=url_for('ui.browser_config.browsers_overview'))|safe }}</p>
                         {{ _('Applied to all requests.') }}<br><br>
+                        {% endif %}
                         {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                         {{ _('Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it\'s important to consider') }} <a href="https://changedetection.io/tutorial/what-are-main-types-anti-robot-mechanisms">{{ _('all of the ways that the browser is detected') }}</a>.
                     </span>
                 </div>
                 <div class="pure-control-group">
                 <br>
-                    {{ _('Tip:') }} <a href="{{ url_for('settings.settings_page')}}#proxies">{{ _('Connect using Bright Data proxies, find out more here.') }}</a>
+                    {{ _('Tip:') }} <a href="{{ url_for('settings.proxies_page') }}">{{ _('Connect using Bright Data proxies, find out more here.') }}</a>
                 </div>
+                {{ render_plugin_settings_sections(form, plugin_settings_sections) }}
             </div>
 
             <div class="tab-pane-inner" id="filters">
@@ -349,65 +354,6 @@ nav
                     <span class="pure-form-message-inline">{{ _('"Collapsed icon rail" keeps the left navigation slim and reveals labels on mouse-over; "Always expanded" keeps labels visible.') }}</span>
                 </div>
 
-            </div>
-            <div class="tab-pane-inner" id="proxies">
-                <div id="recommended-proxy">
-                    <div>
-                        <img style="height: 2em;" src="{{url_for('static_content', group='images', filename='brightdata.svg')}}" alt="BrightData Proxy Provider">
-                        <p>BrightData offer world-class proxy services, "Data Center" proxies are a very affordable way to proxy your requests, whilst <strong><a href="https://brightdata.grsm.io/n0r16zf7eivq">WebUnlocker</a></strong> can help solve most CAPTCHAs.</p>
-                        <p>
-                            BrightData offer many <a href="https://brightdata.com/proxy-types" target="new">many different types of proxies</a>, it is worth reading about what is best for your use-case.
-                        </p>
-
-                        <p>
-                            When you have <a href="https://brightdata.grsm.io/n0r16zf7eivq">registered</a>, enabled the required services, visit the <A href="https://brightdata.com/cp/api_example?">API example page</A>, then select <strong>Python</strong>, set the country you wish to use, then copy+paste the access Proxy URL into the "Extra Proxies" boxes below.<br>
-                        </p>
-                        <p>
-                            The Proxy URL with BrightData should start with <code>http://brd-customer...</code>
-                        </p>
-                        <p>When you sign up using <a href="https://brightdata.grsm.io/n0r16zf7eivq">https://brightdata.grsm.io/n0r16zf7eivq</a> BrightData will match any first deposit up to $150</p>
-                    </div>
-                    <div>
-                        <img style="height: 2em;"
-                             src="{{url_for('static_content', group='images', filename='oxylabs.svg')}}"
-                             alt="Oxylabs Proxy Provider">
-                        <p>
-                            Collect public data at scale with industry-leading web scraping solutions and the world’s
-                            largest ethical proxy network.
-                        </p>
-                        <p>
-                            Oxylabs also provide a <a href="https://oxylabs.io/products/web-unblocker"><strong>WebUnlocker</strong></a>
-                            proxy that bypasses sophisticated anti-bot systems, so you don’t have to.<br>
-                        </p>
-                        <p>
-                            Serve over <a href="https://oxylabs.io/location-proxy">195 countries</a>, providing <a
-                                href="https://oxylabs.io/products/residential-proxy-pool">Residential</a>, <a
-                                href="https://oxylabs.io/products/mobile-proxies">Mobile</a> and <a
-                                href="https://oxylabs.io/products/rotating-isp-proxies">ISP proxies</a> and much more.
-                        </p>
-                        <p>
-                            Use the promo code <strong>boost35</strong> with this link <a href="https://oxylabs.go2cloud.org/SH2d">https://oxylabs.go2cloud.org/SH2d</a> for 35% off Residential, Mobile proxies, Web Unblocker, and Scraper APIs. Built-in proxies enable you to access data from all around the world and help overcome anti-bot solutions.
-
-                        </p>
-
-                        
-                    </div>
-                </div>
-
-                <p><strong>{{ _('Tip') }}</strong>: {{ _('"Residential" and "Mobile" proxy type can be more successful than "Data Center" for blocked websites.') }}</p>
-
-                <div class="pure-control-group" id="extra-proxies-setting">
-                {{ render_fieldlist_with_inline_errors(form.requests.form.extra_proxies) }}
-                <span class="pure-form-message-inline">{{ _('"Name" will be used for selecting the proxy in the Watch Edit settings') }}</span><br>
-                <span class="pure-form-message-inline">{{ _('SOCKS5 proxies with authentication are only supported with \'plain requests\' fetcher, for other fetchers you should whitelist the IP access instead') }}</span>
-                </div>
-                <div class="pure-control-group" id="extra-browsers-setting">
-                    <p>
-                    <span class="pure-form-message-inline"><i>Extra Browsers</i> can be attached to further defeat CAPTCHA's on websites that are particularly hard to scrape.</span><br>
-                    <span class="pure-form-message-inline">Simply paste the connection address into the box, <a href="https://changedetection.io/tutorial/using-bright-datas-scraping-browser-pass-captchas-and-other-protection-when-monitoring">More instructions and examples here</a> </span>
-                    </p>
-                    {{ render_fieldlist_with_inline_errors(form.requests.form.extra_browsers) }}
-                </div>
             </div>
             {% if plugin_tabs %}
                 {% for tab in plugin_tabs %}

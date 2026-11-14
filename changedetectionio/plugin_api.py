@@ -31,6 +31,10 @@ from typing import TYPE_CHECKING
 
 import pluggy
 
+from changedetectionio.browser_lifecycle import BrowserConfigSection, BrowserRequest, BrowserResponse
+from changedetectionio.plugin_settings import (SettingsSection, clear_plugin_state, get_plugin_state, queue_recheck,
+                                               resolved_plugin_settings, set_plugin_state)
+
 # Defined here, not imported from pluggy_interface: that module loads the built-in plugins at import
 # time, and they import hookimpl from here, so importing plugin_api first would be a circular import.
 # pluggy_interface imports it from here instead. Must stay the same namespace as PLUGIN_NAMESPACE there.
@@ -110,10 +114,19 @@ def __getattr__(name):
 
 
 __all__ = [
+    'BrowserConfigSection',
+    'BrowserRequest',
+    'BrowserResponse',
     'Fetcher',
     'Non200ErrorCodeReceived',
     'PLUGIN_API_VERSION',
+    'SettingsSection',
     'TimeBetweenCheckForm',
+    'clear_plugin_state',
+    'get_plugin_state',
+    'queue_recheck',
+    'resolved_plugin_settings',
+    'set_plugin_state',
     'await_me_maybe',
     'difference_detection_processor',
     'gather_hook_results',

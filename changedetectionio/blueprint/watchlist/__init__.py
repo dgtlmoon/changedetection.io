@@ -73,6 +73,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # switch between them.
             if not wl_filters.watch_matches_tag(datastore, watch, list_filters):
                 continue
+            if not wl_filters.watch_matches_browser(watch, list_filters):
+                continue
             if not wl_filters.watch_passes_search(watch, list_filters):
                 continue
             proc = watch.get('processor')
@@ -117,8 +119,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         sorted_tags = sorted(datastore.data['settings']['application'].get('tags').items(), key=lambda x: x[1]['title'])
 
-        from changedetectionio import content_fetchers
-        available_fetchers = content_fetchers.available_fetchers()
+        # Same "Browser" choices as the watch edit picker (system default + built-ins + user
+        # browsers) for the bulk "Set browser" modal, so it stays consistent.
+        from changedetectionio.model.browser_config import list_watch_browser_choices
+        browser_choices = list_watch_browser_choices(datastore)
+        # ?browser=<id> narrows the list to one browser's watches - name it so the view explains itself
+        active_browser = list_filters['browser']
+        active_browser_label = dict(browser_choices).get(active_browser, active_browser) if active_browser else None
 
         from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
         from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
@@ -150,7 +157,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             generate_tag_colors=processors.generate_processor_badge_colors,
             wcag_text_color=processors.wcag_text_color,
             guid=datastore.data['app_guid'],
-            available_fetchers=available_fetchers,
+            browser_choices=browser_choices,
             #header=_("todo - tag name etc"),
             hosted_sticky=os.getenv("SALTED_PASS", False) == False,
             now_time_server=round(time.time()),
@@ -162,6 +169,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # can re-apply them and not drop the operator's current filtered view.
             active_filters=wl_filters.filter_query_args(request.args),
             search_q=request.args.get('q', '').strip(),
+            active_browser_label=active_browser_label,
             sort_attribute=request.args.get('sort') if request.args.get('sort') else request.cookies.get('sort'),
             sort_order=request.args.get('order') if request.args.get('order') else request.cookies.get('order'),
             tags=sorted_tags,

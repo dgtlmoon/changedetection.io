@@ -172,6 +172,13 @@ body.watch-selection-active #checkbox-operations {
       }
     }
 
+    /* notes from plugins (hook watch_list_extra_text), e.g. "fetching with FlareSolverr" */
+    .extra-watch-text {
+      color: var(--color-text-input-description);
+      font-size: 0.8em;
+      margin-top: 0.15em;
+    }
+
     /* page title and external link, needs to align center in its own container */
     .watch-title {
       display: inline-flex;

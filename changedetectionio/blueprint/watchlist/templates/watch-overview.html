@@ -173,9 +173,8 @@ window.watchOverviewI18n = {
     {# Option lists for the bulk Browser / Proxy modals (rendered by watch-overview.js into a ModalDialog).
        Mirrors the choices on the watch edit page. Kept inert inside <template> until the modal is opened. #}
     <template id="bulk-browser-options">
-        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="system" checked> {{ _('System settings default') }}</label>
-        {% for key, label in available_fetchers %}
-        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="{{ key }}"> {{ label }}</label>
+        {% for key, label in browser_choices %}
+        <label class="bulk-choice-row"><input type="radio" name="bulk-fetch-backend" value="{{ key }}" {% if loop.first %}checked{% endif %}> {{ label }}</label>
         {% endfor %}
     </template>
     {% if has_proxies %}
@@ -195,6 +194,7 @@ window.watchOverviewI18n = {
     </div>
 
     {%- if search_q -%}<div id="search-result-info">{{ _('Searching') }} "<strong><i>{{search_q}}</i></strong>"</div>{%- endif -%}
+    {%- if active_browser_label -%}<div id="browser-filter-info">{{ _('Browser') }}: <strong>{{ active_browser_label }}</strong> <a href="{{ filter_url(browser=None) }}">{{ _('Clear') }}</a></div>{%- endif -%}
     {%- set sort_order = sort_order or 'asc' -%}
     {%- set sort_attribute = sort_attribute or 'last_changed'  -%}
     {%- set pagination_page = request.args.get('page', 0) -%}

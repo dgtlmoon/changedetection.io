@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block content %}
+{% from 'browsers-proxies-tabs.html' import browsers_proxies_tabs %}
+
+{# How many watches use a browser, linking to the watch list filtered to exactly those
+   (?browser=<id>, counted the same way - through group overrides and the system default) #}
+{% macro usage_chip(browser_id, usage) %}
+{% if usage.watches or usage.groups %}
+<a class="browser-chip browser-chip--usage" href="{{ url_for('watchlist.index', browser=browser_id) }}"
+   title="{{ _('Watches: %(watches)s, groups: %(groups)s', watches=usage.watches, groups=usage.groups) }}"><i data-feather="eye"></i>{{ usage.watches }}</a>
+{% endif %}
+{% endmacro %}
+
+{# The default browser control: a radio per browser (one group across the page), drawn as a
+   "Default" badge when chosen and a quiet "Make default" otherwise. Each sits in its own
+   mini-form so it posts its own set-default action. #}
+{% macro default_toggle(browser_id) %}
+<form method="POST" class="set-default-form" action="{{ url_for('ui.browser_config.browser_config_set_default', config_id=browser_id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="browser-default-toggle" title="{{ _('Set as the default browser') }}">
+        <input type="radio" class="browser-default-radio" name="browser_default" value="{{ browser_id }}"
+               {% if browser_id == default_browser_id %}checked{% endif %}>
+        <span class="browser-default-on"><i data-feather="check-circle"></i>{{ _('Default') }}</span>
+        <span class="browser-default-off">{{ _('Make default') }}</span>
+    </label>
+</form>
+{% endmacro %}
+
+<div class="edit-form">
+    {{ browsers_proxies_tabs(active='browsers') }}
+    <div class="box-wrap inner browsers-page">
+
+        <header class="browsers-head">
+            <h4 class="browsers-title"><i data-feather="monitor"></i> {{ _('Browsers') }}</h4>
+            {% if browser_config_locked() %}
+            <p class="browsers-lead">
+                {{ _('These are the available browsers. Adding, editing and removing browsers is locked on this instance — you can still choose the default browser below.') }}
+            </p>
+            {% else %}
+            <p class="browsers-lead">
+                {{ _('Browsers fetch your pages. Choose the default, or save your own variation of one with a different screen size, language or timezone.') }}
+            </p>
+            {% endif %}
+            <details class="browsers-help">
+                <summary>{{ _('How this works') }}</summary>
+                <p>{{ _('The <strong>default</strong> browser is used by every watch, unless the watch or its group picks another one.')|safe }}</p>
+                <p>{{ _('A <strong>variation</strong> is a browser with your own settings saved under a name, ready to use on any watch or group.')|safe }}</p>
+            </details>
+        </header>
+
+        {# One card per available browser, its variations listed inside it.
+           Each part keeps its own class - the regions col-default / col-browser /
+           col-capabilities / col-actions, every card and variation its engine
+           (browser-engine-<name>), every chip what it shows (browser-chip--cap-<capability>,
+           browser-chip--<setting>) - so a deployment can hide any of them with CSS alone. #}
+        {% if base_fetchers %}
+        <div class="browser-cards">
+            {% for f in base_fetchers %}
+            {% set f_is_default = f.ready_to_use and f.name == default_browser_id %}
+            <section id="{{ f.name }}" class="browser-card browser-engine-{{ f.name }}{% if f_is_default %} is-default{% endif %}{% if f.needs_setup %} needs-setup{% endif %}"
+                     style="--card-index: {{ loop.index0 }}">
+
+                {# ---- The browser itself ---- #}
+                <div class="browser-card-head browser-base-row browser-engine-{{ f.name }}{% if f_is_default %} is-default{% endif %}">
+                    {# The fetcher's own icon (built-in or from a plugin), else a generic one #}
+                    <span class="browser-icon-tile">
+                        {%- set fetcher_icon = f.name|fetcher_status_icons -%}
+                        {%- if fetcher_icon %}{{ fetcher_icon }}{% else %}<i data-feather="{{ 'monitor' if f.is_browser else 'zap' }}"></i>{% endif -%}
+                    </span>
+                    <div class="col-browser">
+                        <h3 class="browser-name">{{ f.description }}</h3>
+                        <div class="col-capabilities">
+                            {# Only the capabilities a user picks a browser by - FetcherCapabilities.chips() #}
+                            {% for chip in f.capability_chips %}
+                            <span class="browser-chip browser-chip--cap browser-chip--cap-{{ chip.flag.replace('supports_', '') }}"><i data-feather="{{ chip.icon }}"></i>{{ chip.label }}</span>
+                            {% endfor %}
+                            {% if not f.is_browser %}<span class="browser-chip browser-chip--plain-text">{{ _('plain text, no JavaScript') }}</span>{% endif %}
+                            {{ usage_chip(f.name, f.usage) }}
+                        </div>
+                    </div>
+                    <div class="col-default">
+                        {# Only ready-to-use browsers can be the default (base-only ones work through a variation) #}
+                        {% if f.ready_to_use %}{{ default_toggle(f.name) }}
+                        {% elif f.needs_setup %}<span class="browser-chip browser-chip--needs-setup">{{ _('needs setup') }}</span>{% endif %}
+                    </div>
+                    <div class="col-actions">
+                        {# When browser config is locked, only setting the default is allowed #}
+                        {% if not browser_config_locked() and f.ready_to_use and f.configurable %}
+                        <a data-browser-config-modal class="browser-action" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=f.name) }}"
+                           title="{{ _('Edit') }}"><i data-feather="edit-2"></i><span class="visually-hidden">{{ _('Edit') }}</span></a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# ---- Its variations, hung off the browser as a tree so they read as its children ---- #}
+                {% set can_add = not browser_config_locked() and f.configurable %}
+                {% if f.variations or can_add %}
+                <div class="browser-children">
+                {% if f.variations %}
+                <div class="browser-children-label">{{ _('Variations') }}</div>
+                <ul class="browser-variations">
+                    {% for v in f.variations %}
+                    {% set bc = v.get('browser_config') or {} %}
+                    {# Still chosen by a watch or group, or the default: removing it would break them #}
+                    {% set in_use = v.usage.watches or v.usage.groups %}
+                    {# id: its name as an anchor, so other pages can point at this row (it is then highlighted) #}
+                    <li id="{{ v.anchor }}" class="browser-variation-row browser-engine-{{ f.name }}{% if v.id == default_browser_id %} is-default{% endif %}">
+                        {# The icon of the browser this variation runs - the fetcher resolves it from the settings #}
+                        <span class="browser-icon">
+                            {%- set variation_icon = f.name|fetcher_status_icons(bc) -%}
+                            {%- if variation_icon %}{{ variation_icon }}{% else %}<i data-feather="{{ 'monitor' if f.is_browser else 'zap' }}"></i>{% endif -%}
+                        </span>
+                        <div class="col-browser browser-variation-name">
+                            <strong>{{ v.get('label') }}</strong>
+                            <div class="col-capabilities">
+                                {% for chip in v.summary %}
+                                <span class="browser-chip browser-chip--{{ chip.kind }}"{% if chip.title %} title="{{ chip.title }}"{% endif %}>
+                                    {%- if chip.flag %}<span class="fi fi-{{ chip.flag }}"></span>{% else %}<i data-feather="{{ chip.icon }}"></i>{% endif -%}
+                                    {{ chip.text }}</span>
+                                {% endfor %}
+                                {{ usage_chip(v.id, v.usage) }}
+                            </div>
+                        </div>
+                        <div class="col-default">{{ default_toggle(v.id) }}</div>
+                        <div class="col-actions">
+                            {% if not browser_config_locked() %}
+                            <a data-browser-config-modal class="browser-action" href="{{ url_for('ui.browser_config.browser_config_edit', config_id=v.id) }}"
+                               title="{{ _('Edit') }}"><i data-feather="edit-2"></i><span class="visually-hidden">{{ _('Edit') }}</span></a>
+                            {% if in_use or v.id == default_browser_id %}
+                            <button class="browser-action browser-action--remove" type="button" disabled
+                                    title="{{ _('Still in use - switch its watches, groups or the default to another browser first') }}"><i data-feather="trash-2"></i><span class="visually-hidden">{{ _('Remove') }}</span></button>
+                            {% else %}
+                            <form method="POST" class="browser-remove-form" action="{{ url_for('ui.browser_config.browser_config_remove', config_id=v.id) }}"
+                                  onsubmit="return confirm('{{ _('Remove this browser?') }}');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="browser-action browser-action--remove" type="submit" title="{{ _('Remove') }}"><i data-feather="trash-2"></i><span class="visually-hidden">{{ _('Remove') }}</span></button>
+                            </form>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {# "Add variation" for any configurable browser - real browsers or the plain client #}
+                {% if can_add %}
+                <a data-browser-config-modal class="browser-add-variation" href="{{ url_for('ui.browser_config.browser_config_add', base_fetcher=f.name) }}"><i data-feather="plus"></i>{{ _('Add variation') }}</a>
+                {% endif %}
+                </div>
+                {% endif %}
+            </section>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="browser-empty">
+            <p>{{ _("No interactive browser is available.") }}</p>
+            <p class="pure-form-message-inline">{{ _('Connect a Chrome/Playwright browser (e.g. set <code>PLAYWRIGHT_DRIVER_URL</code>) or install the Playwright library to configure browsers here.')|safe }}</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{# Edit / Add variation open here (links marked data-browser-config-modal); without JavaScript
+   they stay ordinary links to the same form as a page #}
+<dialog id="browser-config-dialog" class="modal-dialog browser-config-dialog" aria-labelledby="browser-config-dialog-title">
+    <div class="browser-config-dialog-content"></div>
+</dialog>
+<script src="{{url_for('static_content', group='js', filename='browser-config-modal.js')}}" defer></script>
+
+<script>
+// The default radios live in per-browser mini-forms (so each posts its own set-default action).
+// They share a name so they read as one group; on change we clear the others for instant
+// feedback, then submit — the server persists the choice and the reloaded page reflects it.
+document.querySelectorAll('.browser-default-radio').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+        if (!radio.checked) return;
+        document.querySelectorAll('.browser-default-radio').forEach(function (other) {
+            if (other !== radio) other.checked = false;
+        });
+        radio.closest('form').submit();
+    });
+});
+</script>
+{% endblock %}

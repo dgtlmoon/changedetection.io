@@ -153,6 +153,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             # .forms exists but no useful form
             form_class = forms.processor_text_json_diff_form
 
+        # Plugin sections (hook settings_form_section, scope 'watch'), saved in plugin_settings
+        from changedetectionio.plugin_settings import form_class_with_sections, get_settings_sections, save_sections
+        plugin_sections = get_settings_sections('watch')
+        form_class = form_class_with_sections(form_class, plugin_sections)
+        if plugin_sections:
+            for section in plugin_sections:
+                default[section.field_name] = dict(((default.get('plugin_settings') or {}).get(section.plugin_id)) or {})
         # Plugins' own per-watch settings in the Request tab (ui_edit_request_settings hook), nested forms kept
         # in the watch's data dir, never in the watch itself
         from changedetectionio.pluggy_interface import get_ui_edit_request_settings, load_watch_plugin_settings
@@ -169,6 +176,18 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                           extra_notification_tokens=default.extra_notification_token_values(),
                           default_system_settings=datastore.data['settings']
                           )
+
+        # The watch-level fetch selector is now a "Browser" picker: system default + the
+        # user's saved browsers (browsers.json). Raw engines are chosen only as a browser's
+        # base in the Add Browser form. Set choices per-request (datastore-dependent).
+        from changedetectionio.model.browser_config import list_watch_browser_choices, list_user_variation_ids
+        form.fetch_backend.choices = list_watch_browser_choices(datastore)
+        form.fetch_backend.label.text = gettext('Browser')
+        # Only offer Default + user browsers, but still ACCEPT legacy raw-engine values
+        # ('html_requests'/'html_webdriver'/...) that existing watches/API clients store -
+        # resolve_content_fetcher handles them. Without this, editing a pre-existing watch
+        # would fail RadioField choice validation.
+        form.fetch_backend.validate_choice = False
 
         # For the form widget tag UUID back to "string name" for the field
         form.tags.datastore = datastore
@@ -209,11 +228,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                     logger.debug(f"Loaded processor config from {config_filename}: {sub_key} = {sub_value}")
             except Exception as e:
                 logger.warning(f"Failed to load processor config: {e}")
-
-        for p in datastore.extra_browsers:
-            form.fetch_backend.choices.append(p)
-
-        form.fetch_backend.choices.append(("system", gettext('System settings default')))
 
         # form.browser_steps[0] can be assumed that we 'goto url' first
 
@@ -291,6 +305,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             plugin_field_names = {section['field_name'] for section in plugin_request_settings}
             datastore.data['watching'][uuid].update({k: v for k, v in form.data.items() if k not in plugin_field_names})
+            # Plugin sections go into plugin_settings, not next to the watch's own fields
+            problem = save_sections(form, plugin_sections, datastore.data['watching'][uuid])
+            if problem:
+                flash(problem, 'error')
             datastore.data['watching'][uuid].update(extra_update_obj)
 
             if not datastore.data['watching'][uuid].get('tags'):
@@ -387,9 +405,11 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             if worker_pool.is_watch_running(uuid):
                 c.append('checking-now')
 
+            from changedetectionio.model.browser_config import resolve_browser_config_override
             template_args = {
                 'available_processors': processors.available_processors(),
                 'available_timezones': sorted(available_timezones()),
+                'browser_config_group_override': resolve_browser_config_override(watch, datastore),
                 'browser_steps_config': browser_step_ui_config,
                 'emailprefix': os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
                 'extra_classes': ' '.join(c),
@@ -397,11 +417,13 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'extra_processor_config': form.extra_tab_content(),
                 'extra_title': f" - {gettext('Edit')} - {watch.label}",
                 'form': form,
+                'plugin_settings_sections': plugin_sections,
+                # Browsers the user added as variations, so their names link to their edit page
+                'browser_variation_ids': list_user_variation_ids(datastore),
                 'has_default_notification_urls': True if len(datastore.data['settings']['application']['notification_urls']) else False,
                 'has_extra_headers_file': len(datastore.get_all_headers_in_textfile_for_watch(uuid=uuid)) > 0,
                 'has_special_tag_options': _watch_has_tag_options_set(watch=watch),
                 'jq_support': jq_support,
-                'playwright_enabled': os.getenv('PLAYWRIGHT_DRIVER_URL', False),
                 'app_rss_token': app_rss_token,
                 'rss_uuid_feed' : {
                     'label': watch.label,

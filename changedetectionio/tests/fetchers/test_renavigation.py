@@ -27,11 +27,18 @@ def test_interstitial_redirect_is_followed(client, live_server, measure_memory_u
         data={
             "application-empty_pages_are_a_change": "",
             "requests-time_between_check-minutes": 180,
-            'application-fetch_backend': "html_webdriver",
         },
         follow_redirects=True
     )
     assert b"Settings updated." in res.data
+
+    # The default browser is set on the Browsers page, no longer by application-fetch_backend on
+    # the settings page. Make html_webdriver the default so the imported watch uses it.
+    res = client.post(
+        url_for("ui.browser_config.browser_config_set_default", config_id="html_webdriver"),
+        follow_redirects=True
+    )
+    assert b"Default browser set" in res.data
 
     test_url = _cdio(url_for('test_interstitial', key='renav', _external=True))
 

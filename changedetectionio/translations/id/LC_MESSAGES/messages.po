@@ -448,6 +448,8 @@ msgstr "Anda akan dikembalikan ke %(host)s."
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
 msgid "Cancel"
 msgstr "Batal"
@@ -478,6 +480,17 @@ msgstr "Monitor dengan UUID %(uuid)s tidak ditemukan"
 msgid "Watch %(uuid)s does not have enough history snapshots to show changes (need at least 2)"
 msgstr "Monitor %(uuid)s tidak memiliki cukup snapshot riwayat untuk menampilkan perubahan (perlu minimal 2)"
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Settings updated."
+msgstr "Pengaturan diperbarui."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
+msgid "An error occurred, please see below."
+msgstr "Terjadi kesalahan, silakan lihat di bawah."
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection removed."
 msgstr "Perlindungan kata sandi dihapus."
@@ -504,17 +517,6 @@ msgstr "Kesalahan saat menyesuaikan worker: {}"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Password protection enabled."
 msgstr "Perlindungan kata sandi diaktifkan."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py
-msgid "Settings updated."
-msgstr "Pengaturan diperbarui."
-
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
-#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/processors/extract.py
-msgid "An error occurred, please see below."
-msgstr "Terjadi kesalahan, silakan lihat di bawah."
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
@@ -644,6 +646,7 @@ msgstr "grup terhapus"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Edit"
 msgstr "Edit"
@@ -904,6 +907,7 @@ msgid "This will remove your saved AI provider, model, and API key."
 msgstr "Ini akan menghapus penyedia AI, model, dan kunci API yang tersimpan."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
 msgid "Remove"
 msgstr "Hapus"
 
@@ -1637,6 +1641,28 @@ msgstr "Log debug notifikasi"
 msgid "For security this log is emptied on restart."
 msgstr "Demi keamanan, log ini dikosongkan saat aplikasi dimulai ulang."
 
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "Tip"
+msgstr "Kiat"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
+msgstr ""
+"Tipe proksi \"Residential\" dan \"Mobile\" dapat lebih berhasil daripada \"Data Center\" untuk situs web yang "
+"diblokir."
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
+msgstr "\"Nama\" akan digunakan untuk memilih proksi dalam pengaturan Edit Monitor"
+
+#: changedetectionio/blueprint/settings/templates/proxies.html
+msgid ""
+"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
+"whitelist the IP access instead"
+msgstr ""
+"Proksi SOCKS5 dengan autentikasi hanya didukung dengan pengambil 'plain requests'; untuk pengambil lain, sebaiknya "
+"masukkan akses IP ke daftar putih"
+
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
@@ -1661,10 +1687,6 @@ msgstr "Cadangan"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "Waktu & Tanggal"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "CAPTCHA & Proxies"
-msgstr "CAPTCHA & Proksi"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
@@ -1748,17 +1770,30 @@ msgstr ""
 msgid "Choose a default proxy for all watches"
 msgstr "Pilih proksi default untuk semua monitor"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
-msgstr "Gunakan metode <strong>Basic</strong> (default) jika situs yang dipantau tidak memerlukan Javascript untuk dirender."
-
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
-" by the ENV var 'WEBDRIVER_URL'."
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage proxies"
 msgstr ""
-"Metode <strong>Chrome/Javascript</strong> memerlukan koneksi jaringan ke server WebDriver+Chrome yang sedang "
-"berjalan, diatur melalui variabel ENV 'WEBDRIVER_URL'."
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Default browser"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Set default browser"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Manage browsers &amp; set default"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Every watch uses this browser unless it (or its group) picks another one."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Add screen sizes, languages, timezones and choose the default on the <a href=\"%(url)s\">Browsers</a> page."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/edit.html
 msgid ""
@@ -1800,8 +1835,11 @@ msgid "Example - 3 seconds random jitter could trigger up to 3 seconds earlier o
 msgstr "Contoh - jitter acak 3 detik dapat memicu hingga 3 detik lebih awal atau hingga 3 detik lebih lambat"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "For regular plain requests (not chrome based), maximum number of seconds until timeout, 1-999."
-msgstr "Untuk permintaan biasa (bukan berbasis Chrome), jumlah detik maksimum hingga timeout, 1-999."
+#, python-format
+msgid ""
+"The plain-requests timeout and the default User-Agent are now set per browser on the <a href=\"%(url)s\">Browsers</a>"
+" page (Edit the browser, under “HTTP request options”)."
+msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Applied to all requests."
@@ -2039,28 +2077,6 @@ msgstr ""
 "diperluas\" membuat label tetap terlihat."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "Tip"
-msgstr "Kiat"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Residential\" and \"Mobile\" proxy type can be more successful than \"Data Center\" for blocked websites."
-msgstr ""
-"Tipe proksi \"Residential\" dan \"Mobile\" dapat lebih berhasil daripada \"Data Center\" untuk situs web yang "
-"diblokir."
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid "\"Name\" will be used for selecting the proxy in the Watch Edit settings"
-msgstr "\"Nama\" akan digunakan untuk memilih proksi dalam pengaturan Edit Monitor"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
-msgid ""
-"SOCKS5 proxies with authentication are only supported with 'plain requests' fetcher, for other fetchers you should "
-"whitelist the IP access instead"
-msgstr ""
-"Proksi SOCKS5 dengan autentikasi hanya didukung dengan pengambil 'plain requests'; untuk pengambil lain, sebaiknya "
-"masukkan akses IP ke daftar putih"
-
-#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Uptime:"
 msgstr "Uptime:"
 
@@ -2112,6 +2128,14 @@ msgstr "Diperbarui"
 #: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr "Aktifkan untuk masing-masing monitor dalam tag/grup ini?"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Override each watch's browser with"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Browser config"
+msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
 msgid "Auto-apply to watches with URLs matching"
@@ -2176,6 +2200,14 @@ msgstr "Warna kustom"
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "Leave unchecked to use the auto-generated colour based on the tag name."
 msgstr "Biarkan tidak dicentang untuk menggunakan warna yang dibuat otomatis berdasarkan nama tag."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "When enabled, watches in this group use the selected browser and their own Browser choice is hidden."
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/templates/_helpers.html
+msgid "Manage browsers"
+msgstr ""
 
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -2428,6 +2460,61 @@ msgstr "Tidak dapat membagikan, terjadi kesalahan saat berkomunikasi dengan serv
 msgid "Language set to auto-detect from browser"
 msgstr "Bahasa diatur agar terdeteksi otomatis dari browser"
 
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "no"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Custom User-Agent"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "This is required for this browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser configuration is locked on this instance"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Unknown base browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "A browser with this name already exists"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser added"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config not found"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config updated"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "This is the default browser, choose another default before removing it"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+#, python-format
+msgid ""
+"This browser is still in use (watches: %(watches)s, groups: %(groups)s), switch them to another browser before "
+"removing it - <a href=\"%(url)s\">show its watches</a>"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Browser config removed"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/browser_config.py
+msgid "Default browser set"
+msgstr ""
+
 #: changedetectionio/blueprint/ui/diff.py changedetectionio/blueprint/ui/preview.py
 msgid "No history found for the specified link, bad link?"
 msgstr "Tidak ada riwayat untuk tautan yang ditentukan, tautan salah?"
@@ -2470,11 +2557,8 @@ msgstr "Tidak dapat memuat prosesor '{}', plugin prosesor mungkin tidak tersedia
 msgid "Could not load '{}' processor, processor plugin might be missing."
 msgstr "Tidak dapat memuat prosesor '{}', plugin prosesor mungkin tidak tersedia."
 
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "System settings default"
-msgstr "Default pengaturan sistem"
-
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/blueprint/ui/templates/browsers-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Default"
 msgstr "Default"
 
@@ -2485,6 +2569,119 @@ msgstr "Monitor diperbarui - jeda dinonaktifkan!"
 #: changedetectionio/blueprint/ui/edit.py
 msgid "Updated watch."
 msgstr "Monitor diperbarui."
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Images"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Fonts"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Media (audio/video)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Stylesheets (CSS)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Scripts (JS)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "XHR / fetch"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "WebSockets"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Desktop (default size)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Custom size"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Desktop"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Phones"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Tablets"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Give this browser config a name"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "e.g. Desktop Full-HD, Mobile de-DE"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Emulate device"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Pixel density"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Viewport width"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Viewport height"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Locale"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Browser engine"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Delete temporary browser files after each check"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Block asset types"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Block URL patterns"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Browser connection URL"
+msgstr "URL koneksi browser"
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "Request timeout (seconds)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "User-Agent"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/form_browseroptions.py
+msgid "A custom size needs a width and a height"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/preview.py
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
@@ -2507,6 +2704,186 @@ msgstr "item dalam antrean"
 #, python-brace-format
 msgid "Queue cleared ({} items removed)."
 msgstr "Antrean dibersihkan ({} item dihapus)."
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Based on the browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "A friendly name, e.g. “Mobile” or “German desktop”."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Which browser engine to launch locally."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Screen & device"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid ""
+"Load pages as this phone or tablet would: its screen size, touch, mobile layout and User-Agent. Many sites serve a "
+"simpler page to phones."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Leave empty for 1. Higher values only make screenshots sharper (and much larger), the page layout stays the same."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Laptop"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html changedetectionio/blueprint/ui/templates/queue.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear"
+msgstr "Bersihkan"
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Set by the emulated device above."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Browser endpoint"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Address of the external browser to connect to, e.g. a Bright Data or Oxylabs Scraping Browser."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "More instructions and examples here"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Start typing to search - e.g. <code>de-DE</code>, <code>en-GB</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Start typing to search - e.g. <code>Europe/Berlin</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Use my current timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Maximum seconds to wait for the response (plain HTTP client only)."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Sent as the User-Agent header for requests using this browser, leave blank for the default."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Warning: modifying this can increase the uniqueness of your browser and may have unintended consequences."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "Skip downloads (save bandwidth)"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/_browser_config_fields.html
+msgid "One address pattern per line, e.g. <code>*.ttf</code>."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
+msgid "Edit browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
+msgid "Add a browser variation"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
+msgid "Language & timezone"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browser-config-form.html
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
+msgid "Request options"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+#, python-format
+msgid "Watches: %(watches)s, groups: %(groups)s"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Set as the default browser"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Make default"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html changedetectionio/templates/browsers-proxies-tabs.html
+msgid "Browsers"
+msgstr "Browser"
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"These are the available browsers. Adding, editing and removing browsers is locked on this instance — you can still "
+"choose the default browser below."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"Browsers fetch your pages. Choose the default, or save your own variation of one with a different screen size, "
+"language or timezone."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "How this works"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "The <strong>default</strong> browser is used by every watch, unless the watch or its group picks another one."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"A <strong>variation</strong> is a browser with your own settings saved under a name, ready to use on any watch or "
+"group."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "plain text, no JavaScript"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "needs setup"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Variations"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Still in use - switch its watches, groups or the default to another browser first"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Remove this browser?"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "Add variation"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid "No interactive browser is available."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/browsers-overview.html
+msgid ""
+"Connect a Chrome/Playwright browser (e.g. set <code>PLAYWRIGHT_DRIVER_URL</code>) or install the Playwright library "
+"to configure browsers here."
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
@@ -2718,11 +3095,11 @@ msgstr "Tangkapan layar memerlukan Playwright/WebDriver yang diaktifkan"
 msgid "Request"
 msgstr "Permintaan"
 
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/content_fetchers/base.py
 msgid "Browser Steps"
 msgstr "Langkah Browser"
 
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/content_fetchers/base.py
 msgid "Visual Filter Selector"
 msgstr "Selektor Filter Visual"
 
@@ -2778,6 +3155,32 @@ msgstr "Interval/jangka waktu antara setiap pemeriksaan."
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
 msgstr "Kosongkan untuk menggunakan default pengaturan sistem"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Using browser config"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "from group"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"This group overrides the fetch method for its watches. Change it in the group settings, or turn off the override "
+"there to choose per-watch."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "Use the <strong>Basic</strong> method (default) where your watched sites don't need Javascript to render."
+msgstr "Gunakan metode <strong>Basic</strong> (default) jika situs yang dipantau tidak memerlukan Javascript untuk dirender."
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"The <strong>Chrome/Javascript</strong> method requires a network connection to a running WebDriver+Chrome server, set"
+" by the ENV var 'WEBDRIVER_URL'."
+msgstr ""
+"Metode <strong>Chrome/Javascript</strong> memerlukan koneksi jaringan ke server WebDriver+Chrome yang sedang "
+"berjalan, diatur melalui variabel ENV 'WEBDRIVER_URL'."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Connect using Bright Data and Oxylabs Proxies, find out more here."
@@ -3193,10 +3596,6 @@ msgid "<p>This will remove every pending check from the queue.</p><p>Running che
 msgstr ""
 "<p>Ini akan menghapus setiap pemeriksaan tertunda dari antrean.</p><p>Pemeriksaan yang sedang berjalan akan tetap "
 "dilanjutkan.</p>"
-
-#: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Clear"
-msgstr "Bersihkan"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear Queue"
@@ -3692,9 +4091,37 @@ msgstr "Jumlah kata (snapshot terbaru)"
 msgid "Word count is a simple measure of content length, calculated by splitting text on whitespace."
 msgstr "Jumlah kata adalah ukuran sederhana panjang konten, dihitung dengan memisahkan teks berdasarkan spasi."
 
+#: changedetectionio/content_fetchers/base.py
+msgid "Screenshots"
+msgstr ""
+
+#: changedetectionio/content_fetchers/base.py
+msgid "Mobile emulation"
+msgstr ""
+
+#: changedetectionio/content_fetchers/base.py
+msgid "Block images & assets"
+msgstr ""
+
+#: changedetectionio/content_fetchers/base.py
+msgid "PDF"
+msgstr ""
+
+#: changedetectionio/content_fetchers/external_cdp.py
+msgid "External browser"
+msgstr ""
+
+#: changedetectionio/content_fetchers/playwright_builtin.py
+msgid "Local Playwright"
+msgstr ""
+
 #: changedetectionio/content_fetchers/requests.py
 msgid "Basic fast Plaintext/HTTP Client"
 msgstr "Klien Plaintext/HTTP Dasar yang cepat"
+
+#: changedetectionio/content_fetchers/requests.py
+msgid "Plain HTTP"
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
 #: changedetectionio/realtime/socket_server.py
@@ -3917,6 +4344,8 @@ msgstr "Monitor"
 msgid "Processor"
 msgstr "Prosesor"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/ui/templates/browser-config-modal.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Browser"
 msgstr "Browser"
@@ -3970,7 +4399,8 @@ msgid "Not set"
 msgstr "Belum diatur"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/blueprint/tags/form.py
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/form_browseroptions.py
+#: changedetectionio/forms.py
 msgid "Save"
 msgstr "Simpan"
 
@@ -4188,7 +4618,8 @@ msgstr "Jumlah item riwayat per monitor yang disimpan"
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "Isi harus kosong saat Metode Permintaan diatur ke GET"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/ui/form_browseroptions.py
+#: changedetectionio/forms.py
 msgid "Name"
 msgstr "Nama"
 
@@ -4199,22 +4630,6 @@ msgstr "URL Proksi"
 #: changedetectionio/forms.py
 msgid "Proxy URLs must start with http://, https:// or socks5://"
 msgstr "URL Proksi harus diawali dengan http://, https:// atau socks5://"
-
-#: changedetectionio/forms.py
-msgid "Browser connection URL"
-msgstr "URL koneksi browser"
-
-#: changedetectionio/forms.py
-msgid "Browser URLs must start with wss:// or ws://"
-msgstr "URL browser harus diawali dengan wss:// atau ws://"
-
-#: changedetectionio/forms.py
-msgid "Plaintext requests"
-msgstr "Permintaan plaintext"
-
-#: changedetectionio/forms.py
-msgid "Chrome requests"
-msgstr "Permintaan Chrome"
 
 #: changedetectionio/forms.py
 msgid "Default proxy"
@@ -4231,18 +4646,6 @@ msgstr "Jumlah worker pengambilan"
 #: changedetectionio/forms.py
 msgid "Should be between 1 and 50"
 msgstr "Harus antara 1 dan 50"
-
-#: changedetectionio/forms.py
-msgid "Requests timeout in seconds"
-msgstr "Timeout permintaan dalam detik"
-
-#: changedetectionio/forms.py
-msgid "Should be between 1 and 999"
-msgstr "Harus antara 1 dan 999"
-
-#: changedetectionio/forms.py
-msgid "Default User-Agent overrides"
-msgstr "Penimpaan User-Agent default"
 
 #: changedetectionio/forms.py
 msgid "Both a name, and a Proxy URL is required."
@@ -4672,6 +5075,10 @@ msgstr "%sth lalu"
 msgid "in %syr"
 msgstr "dalam %sth"
 
+#: changedetectionio/model/browser_config.py
+msgid "Default (system settings)"
+msgstr ""
+
 #: changedetectionio/notification/apprise_form.py
 msgid "Custom e-mail"
 msgstr "Email kustom"
@@ -4912,6 +5319,29 @@ msgstr "Mendeteksi jika produk kembali tersedia"
 
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Restock"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "More than one price detected on this page - restock/price detection needs a single-product page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "No price or stock information was detected on this page."
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "price: %(price)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "availability: %(availability)s"
+msgstr ""
+
+#: changedetectionio/processors/restock_diff/processor.py
+#, python-format
+msgid "Detected — %(details)s"
 msgstr ""
 
 #. FIXME: fragment msgids (#4074)
@@ -5727,6 +6157,10 @@ msgstr "Masukkan istilah pencarian..."
 msgid "Searching in current group '%(title)s' only"
 msgstr "Mencari hanya dalam grup '%(title)s'"
 
+#: changedetectionio/templates/browsers-proxies-tabs.html
+msgid "Proxies"
+msgstr ""
+
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
 "<strong>On</strong> &ndash; every watch in this group uses the AI settings below, unless it fills in its own. "
@@ -6123,16 +6557,8 @@ msgid "Import lists of web pages"
 msgstr "Impor daftar halaman web"
 
 #: changedetectionio/templates/sidebar-nav.html
-msgid "Browsers (coming soon)"
-msgstr "Browser (segera hadir)"
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "Browsers"
-msgstr "Browser"
-
-#: changedetectionio/templates/sidebar-nav.html
-msgid "soon"
-msgstr "segera"
+msgid "Browsers & Proxies"
+msgstr ""
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Search, or Use Alt+S Key"

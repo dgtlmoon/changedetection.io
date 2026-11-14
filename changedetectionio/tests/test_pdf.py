@@ -97,12 +97,12 @@ def test_pdf_fetcher_resolution(client, live_server, measure_memory_usage, datas
     assert watch.is_pdf
 
     monkeypatch.setattr(content_fetchers, 'html_webdriver', selenium_fetcher)
-    _, backend_name, _ = content_fetchers.resolve_content_fetcher(watch, datastore)
+    _, backend_name, _, _ = content_fetchers.resolve_content_fetcher(watch, datastore)
     assert backend_name == 'html_requests'
     assert watch.get_fetch_backend == 'html_requests'
 
     monkeypatch.setattr(content_fetchers, 'html_webdriver', puppeteer_fetcher)
-    fetcher_class, backend_name, _ = content_fetchers.resolve_content_fetcher(watch, datastore)
+    fetcher_class, backend_name, _, _ = content_fetchers.resolve_content_fetcher(watch, datastore)
     assert backend_name == 'html_webdriver'
     assert fetcher_class is puppeteer_fetcher
     assert watch.get_fetch_backend == 'html_webdriver'

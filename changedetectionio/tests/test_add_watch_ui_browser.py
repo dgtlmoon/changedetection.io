@@ -208,3 +208,28 @@ def test_watchlist_quick_add_is_unaffected(client, live_server, measure_memory_u
 
     uuid = next(iter(datastore.data['watching']))
     assert datastore.data['watching'][uuid].get('fetch_backend') in (None, '', 'system')
+
+
+def test_submit_accepts_a_saved_browser_config(client, live_server, measure_memory_usage, datastore_path):
+    """A browser picked by config id (not engine name) must survive submit.
+
+    The Add-Watch browser list offers the user's saved browser configs alongside the built-in
+    engines, so the shared quick-add endpoint has to accept an id that is not a fetcher name -
+    otherwise picking your own browser fails validation with "Unknown fetch method".
+    """
+    datastore = _datastore(client)
+    config_id = datastore.browser_config_store.add(label='My Firefox 1080p',
+                                                   base_fetcher='html_webdriver',
+                                                   browser_config={'browser_type': 'firefox'})
+    test_url = url_for('test_endpoint', _external=True)
+
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "fetch_backend": config_id},
+        follow_redirects=True
+    )
+    assert b"Unknown fetch method" not in res.data
+    assert b"Watch added" in res.data
+
+    uuid = next(iter(datastore.data['watching']))
+    assert datastore.data['watching'][uuid].get('fetch_backend') == config_id

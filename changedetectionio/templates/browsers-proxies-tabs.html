@@ -1,0 +1,16 @@
+{#
+  The tab row of "Browsers & Proxies": two pages, each tab a real link to its own route
+  (/settings/browsers, /settings/proxies) rather than an in-page #anchor. `active` marks the
+  current page server-side.
+
+    {% from 'browsers-proxies-tabs.html' import browsers_proxies_tabs %}
+    {{ browsers_proxies_tabs(active='browsers') }}
+#}
+{% macro browsers_proxies_tabs(active) %}
+<div class="tabs collapsable">
+    <ul>
+        <li class="tab{% if active == 'browsers' %} active{% endif %}"><a href="{{ url_for('ui.browser_config.browsers_overview') }}">{{ _('Browsers') }}</a></li>
+        <li class="tab{% if active == 'proxies' %} active{% endif %}"><a href="{{ url_for('settings.proxies_page') }}">{{ _('Proxies') }}</a></li>
+    </ul>
+</div>
+{% endmacro %}

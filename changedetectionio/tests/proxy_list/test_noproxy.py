@@ -18,7 +18,7 @@ def test_noproxy_option(client, live_server, measure_memory_usage, datastore_pat
 
     # Setup a proxy
     res = client.post(
-        url_for("settings.settings_page"),
+        url_for("settings.proxies_page"),
         data={
             "requests-time_between_check-minutes": 180,
             "application-ignore_whitespace": "y",

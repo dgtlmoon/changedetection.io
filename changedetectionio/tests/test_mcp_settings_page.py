@@ -290,8 +290,10 @@ def test_ai_pages_settings_tab_row(client, live_server, measure_memory_usage, da
         html = client.get(page).get_data(as_text=True)
         assert f'<li class="tab active">{ai_tab}</li>' in html, page
         assert html.count('<li class="tab active">') == 1, page
-        for anchor in ('general', 'fetching', 'filters', 'ui-options', 'api', 'rss', 'timedate', 'proxies', 'info'):
+        for anchor in ('general', 'fetching', 'filters', 'ui-options', 'api', 'rss', 'timedate', 'info'):
             assert f'<li class="tab"><a href="{settings_page}#{anchor}">' in html, (page, anchor)
+        # Proxies is no longer a settings tab, it has its own page next to Browsers
+        assert f'{settings_page}#proxies' not in html, page
         assert f'href="{url_for("backups.create")}"' in html
         assert f'<a href="{active_switch}#overview" class="settings-subtab subtab-{direction} active" aria-current="page">' in html, page
 

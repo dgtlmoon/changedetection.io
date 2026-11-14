@@ -925,10 +925,13 @@ def get_system_info(ctx, args):
     if ctx.limited:
         info['limited_to_groups'] = ctx.tag_names()
     # What create_watch / update_watch can choose from: fetcher names and proxy names, never proxy URLs
-    from changedetectionio.content_fetchers import available_fetchers
+    from changedetectionio.model.browser_config import list_watch_browser_choices
     proxies = datastore.proxy_list or {}
-    info['fetchers'] = [name for name, _ in available_fetchers()] + \
-        [f"extra_browser_{b.get('browser_name')}" for b in datastore.data['settings']['requests'].get('extra_browsers') or []]
+    # The built-in engines and the browsers saved on the Browsers page, by id (a saved one's id is a uuid,
+    # hence the labels in 'browsers')
+    browsers = [(bid, label) for bid, label in list_watch_browser_choices(datastore) if bid != 'system']
+    info['fetchers'] = [bid for bid, _ in browsers]
+    info['browsers'] = [{'id': bid, 'label': str(label)} for bid, label in browsers]
     info['default_fetcher'] = app.get('fetch_backend')
     info['proxies'] = [{'id': key, 'label': p.get('label')} for key, p in proxies.items()]
     default_proxy = datastore.data['settings']['requests'].get('proxy')
@@ -1069,12 +1072,19 @@ def _proxy_key(ctx, value):
 
 
 def _check_fetch_backend(ctx, value):
-    if value and value.startswith('extra_browser_'):
-        names = [b.get('browser_name') for b in ctx.datastore.data['settings']['requests'].get('extra_browsers') or []]
-        if value[len('extra_browser_'):] not in names:
-            raise ToolError(f"No custom browser called '{value[len('extra_browser_'):]}'. The custom browsers are: "
-                            f"{', '.join(names) or 'none are configured'} (as extra_browser_<name>).")
-    return value
+    """'system', an engine, or a saved browser by its id or (case-insensitive) label. Returns the id."""
+    from changedetectionio.model.browser_config import is_valid_browser_selector, list_watch_browser_choices
+    if not value or is_valid_browser_selector(value, ctx.datastore):
+        return value
+    choices = list_watch_browser_choices(ctx.datastore)
+    by_label = {str(label).strip().lower(): bid for bid, label in choices if bid != 'system'}
+    # A saved browser also by its own name, without the "<engine>: " the list puts in front
+    by_label.update({(e.get('label') or '').strip().lower(): bid
+                     for bid, e in ctx.datastore.browser_config_store.all().items() if e.get('label')})
+    if value.strip().lower() in by_label:
+        return by_label[value.strip().lower()]
+    known = ', '.join(f"{label} ({bid})" for bid, label in choices if bid != 'system')
+    raise ToolError(f"No browser called '{value}'. The browsers are: {known}, or 'system' for the system default.")
 
 
 def _fetch_settings(ctx, watch):
@@ -1082,7 +1092,7 @@ def _fetch_settings(ctx, watch):
     (resolve_content_fetcher, get_preferred_proxy_for_watch), so a group or system default is accounted for."""
     from changedetectionio.content_fetchers import resolve_content_fetcher
     try:
-        _, effective_fetcher, _ = resolve_content_fetcher(watch=watch, datastore=ctx.datastore)
+        _, effective_fetcher, _, _ = resolve_content_fetcher(watch=watch, datastore=ctx.datastore)
     except Exception as e:
         logger.debug(f"MCP: couldn't resolve the fetcher of {watch.get('uuid')}: {e}")
         effective_fetcher = None
@@ -1782,8 +1792,8 @@ _WATCH_SETTINGS = {
     **_NOTIFICATION_TEMPLATES,
     'check_interval': _INTERVAL,
     'fetch_backend': _spec('fetch_backend', "'system' (the system default), 'html_requests' (fast, no JavaScript), "
-                                            "'html_webdriver' (a real browser) or extra_browser_<name>; see "
-                                            "get_system_info for what's available"),
+                                            "'html_webdriver' (a real browser) or a browser from the Browsers page; "
+                                            "see get_system_info for what's available"),
     'proxy': {'type': 'string', 'maxLength': 200,
               'description': "A proxy by its name or id from get_system_info, 'system' for the system default"},
     'webdriver_delay': {'type': 'integer', 'minimum': 0, 'maximum': 60,

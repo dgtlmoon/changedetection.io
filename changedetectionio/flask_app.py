@@ -399,6 +399,14 @@ class PublicStaticAssetSessionInterface(SecureCookieSessionInterface):
 app.session_interface = PublicStaticAssetSessionInterface()
 
 
+@app.template_global()
+def browser_config_locked():
+    """True when LOCKED_BROWSER_CONFIG is set: the /settings/browsers page is still listed and you can
+    still choose the default browser, but adding / editing / removing browser configs is
+    disabled - the add/edit/remove buttons are hidden and those routes reject the request.
+    Loading and using browsers.json is unaffected."""
+    return bool(strtobool(os.getenv('LOCKED_BROWSER_CONFIG', 'False')))
+
 @app.template_global('filtered_action_url')
 def _filtered_action_url(endpoint, **overrides):
     """Build a URL to `endpoint` carrying the CURRENT watch-list filters (query args)
@@ -474,6 +482,13 @@ def _is_safe_valid_url(test_url):
     from .validate_url import is_safe_valid_url
 
     return is_safe_valid_url(test_url)
+
+
+@app.template_global('watch_list_extra_text')
+def _watch_list_extra_text(watch):
+    from .plugin_settings import collect_watch_list_extra_text
+
+    return collect_watch_list_extra_text(watch)
 
 
 @app.template_global('get_html_head_extras')
@@ -636,6 +651,57 @@ def _jinja2_filter_format_duration(seconds):
 
     return ", ".join(parts)
 
+@app.template_filter('watch_fetcher_engine')
+def _jinja2_filter_watch_fetcher_engine(watch):
+    """Resolve a watch to the concrete engine that will fetch it (honours group override,
+    browser-config id, 'system'), so the watchlist status icon matches by engine name."""
+    from changedetectionio.model.browser_config import resolve_watch_fetcher_engine
+    return resolve_watch_fetcher_engine(watch, datastore)
+
+
+def _status_icon_html(icon_data, title=None):
+    """<img class="status-icon"> for browser_icon_data()'s answer ('' for none). `title`
+    replaces the icon's own tooltip."""
+    from flask import url_for
+    from markupsafe import Markup, escape
+
+    if not (icon_data and isinstance(icon_data, dict)):
+        return ''
+    # 'group' is the static group the file is served from, e.g. 'plugin' for a plugin's own files
+    group = icon_data.get('group', 'images')
+    try:
+        src = url_for('static_content', group=group, filename=icon_data['filename'])
+    except Exception:
+        # Endpoint not registered yet: build the URL by hand, respecting APPLICATION_ROOT
+        from flask import request
+        app_root = request.script_root if hasattr(request, 'script_root') else ''
+        src = f"{app_root}/static/{group}/{icon_data['filename']}"
+    style = Markup(' style="{}"').format(icon_data['style']) if icon_data.get('style') else ''
+    return Markup('<img class="status-icon" src="{}" alt="{}" title="{}"{}>').format(
+        src, escape(icon_data.get('alt', '')), escape(title or icon_data.get('title', '')), style)
+
+
+@app.template_filter('watch_browser_status_icon')
+def _jinja2_filter_watch_browser_status_icon(watch):
+    """Status icon HTML for the browser a watch effectively uses - honours group override,
+    named browser config, and the browser it launches (firefox/webkit). The icon comes from the
+    fetcher (browser_icon_data), the title names the browser config (if named) or the built-in
+    browser."""
+    from changedetectionio.model.browser_config import browser_icon_data, resolve_watch_browser_display
+
+    d = resolve_watch_browser_display(watch, datastore)
+    _entry, engine, cfg = watch.browser_config_store.engine_and_config(watch.get_fetch_backend)
+    icon = browser_icon_data(engine, cfg)
+    if not icon:
+        return ''
+
+    title = str(d['label'] or d['engine'])
+    if d['browser_type']:
+        title = f"{title} ({d['browser_type'].lower()})"
+    if d['group_title']:
+        title = f"{title} — from group {d['group_title']}"
+    return _status_icon_html(icon, title=title)
+
 
 @app.template_global('watch_list_extra_text')
 def _watch_list_extra_text(watch):
@@ -644,56 +710,36 @@ def _watch_list_extra_text(watch):
     return collect_watch_list_extra_text(watch)
 
 
-@app.template_filter('fetcher_status_icons')
-def _jinja2_filter_fetcher_status_icons(fetcher_name):
-    """Get status icon HTML for a given fetcher.
+@app.template_filter('browser_anchor')
+def _jinja2_filter_browser_anchor(config_id):
+    """The #anchor of a browser the user added on the /settings/browsers page ('' if it isn't one)."""
+    from changedetectionio.model.browser_config import browser_anchors
+    return browser_anchors(datastore).get(config_id, '')
 
-    This filter checks both built-in fetchers and plugin fetchers for status icons.
+
+@app.template_filter('browser_choice_icon')
+def _jinja2_filter_browser_choice_icon(selected):
+    """Icon HTML for one choice of a watch's Browser picker - a fetcher name, a saved browser's
+    id, or 'system' (the icon of the current default browser). '' when it has none."""
+    from changedetectionio.model.browser_config import browser_selector_icon_data
+    return _status_icon_html(browser_selector_icon_data(datastore, selected))
+
+
+@app.template_filter('fetcher_status_icons')
+def _jinja2_filter_fetcher_status_icons(fetcher_name, browser_config=None):
+    """Status icon HTML for a fetcher (built-in or plugin), or for one browser built on it when
+    its `browser_config` (FetcherConfig or dict) is passed - see browser_icon_data().
 
     Args:
         fetcher_name: The fetcher name (e.g., 'html_webdriver', 'html_js_zyte')
+        browser_config: optional, the config of the browser variation being shown
 
     Returns:
-        str: HTML string containing status icon elements
+        str: HTML for the icon, '' when the fetcher has none
     """
-    from flask import url_for
-    from markupsafe import Markup
+    from changedetectionio.model.browser_config import browser_icon_data
+    return _status_icon_html(browser_icon_data(fetcher_name, browser_config))
 
-    from changedetectionio import content_fetchers
-    from changedetectionio.pluggy_interface import collect_fetcher_status_icons
-
-    icon_data = None
-
-    # First check if it's a plugin fetcher (plugins have priority)
-    plugin_icon_data = collect_fetcher_status_icons(fetcher_name)
-    if plugin_icon_data:
-        icon_data = plugin_icon_data
-    # Check if it's a built-in fetcher
-    elif hasattr(content_fetchers, fetcher_name):
-        fetcher_class = getattr(content_fetchers, fetcher_name)
-        if hasattr(fetcher_class, 'get_status_icon_data'):
-            icon_data = fetcher_class.get_status_icon_data()
-
-    # Build HTML from icon data
-    if icon_data and isinstance(icon_data, dict):
-        # Use 'group' from icon_data if specified, otherwise default to 'images'
-        group = icon_data.get('group', 'images')
-
-        # Try to use url_for, but fall back to manual URL building if endpoint not registered yet
-        try:
-            icon_url = url_for('static_content', group=group, filename=icon_data['filename'])
-        except:
-            # Fallback: build URL manually respecting APPLICATION_ROOT
-            from flask import request
-
-            app_root = request.script_root if hasattr(request, 'script_root') else ''
-            icon_url = f"{app_root}/static/{group}/{icon_data['filename']}"
-
-        style_attr = f' style="{icon_data["style"]}"' if icon_data.get('style') else ''
-        html = f'<img class="status-icon" src="{icon_url}" alt="{icon_data["alt"]}" title="{icon_data["title"]}"{style_attr}>'
-        return Markup(html)
-
-    return ''
 
 @app.template_filter('sanitize_tag_class')
 def _jinja2_filter_sanitize_tag_class(tag_title):
@@ -782,6 +828,8 @@ def clean_startup_state(datastore):
         from changedetectionio import content_fetchers
 
         valid_fetchers = {name for name, _desc in content_fetchers.available_fetchers()}
+        # A user browser-config id is also a valid default (it maps to an engine).
+        valid_fetchers |= set(datastore.browser_config_store.all().keys())
         cur_default = datastore.data['settings']['application'].get('fetch_backend')
         if cur_default and cur_default != 'system' and cur_default not in valid_fetchers:
             logger.warning(
