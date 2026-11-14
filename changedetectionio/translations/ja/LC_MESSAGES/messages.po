@@ -2029,7 +2029,7 @@ msgstr "タグ名"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag-extra-form.html
 msgid "Used for watches in \"Restock & Price detection\" mode"
-msgstr ""
+msgstr "「再入荷＆価格検知」モードのウォッチで使用されます"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
@@ -2641,11 +2641,11 @@ msgstr "ページタイトルが見つかった場合は自動的に使用され
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Extra Page Title and Link options"
-msgstr ""
+msgstr "ページタイトルとリンクの追加オプション"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
-msgstr ""
+msgstr "任意 - 一覧・履歴・通知内のリンクは、チェック対象のURLではなくこのURLを開きます。チェック対象のURLは変更されません。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
@@ -3863,7 +3863,7 @@ msgstr "ウェブページ URL"
 
 #: changedetectionio/forms.py
 msgid "Open Link Override"
-msgstr ""
+msgstr "リンク先URLの上書き"
 
 #: changedetectionio/forms.py
 msgid "Group Tag"
@@ -4830,30 +4830,37 @@ msgstr "グラフを描くにはまだ価格データが足りません。監視
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Note! A Group tag overrides the restock and price detection here."
-msgstr ""
+msgstr "注意！グループタグがここでの再入荷・価格検知を上書きします。"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Changes in price should trigger a notification"
-msgstr ""
+msgstr "価格が変化したら通知をトリガーします"
 
+# 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value."
-msgstr ""
+msgstr "最小金額：価格がこの値を<strong>下回った</strong>ときに変更/通知をトリガーします。"
 
+# 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value."
-msgstr ""
+msgstr "最大金額：価格がこの値を<strong>上回った</strong>ときに変更/通知をトリガーします。"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 #, python-format
 msgid "Price must change more than this % since the previous check to trigger a change."
 msgstr ""
 
+# 訳注: 原文はUSD建ての例だが、日本向けに円建てに置き換え、2%の関係を保っている。
+#. Amounts are illustrative. You may localise the currency and adjust both figures, as long as the 2% relationship is
+#. preserved.
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid ""
 "For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change "
 "more than $20 since then."
-msgstr ""
+msgstr "例えば、前回のチェックで商品価格が10万円だった場合、<strong>2%</strong> はそれ以降 2,000円 を超えて変化する必要があることを意味します。"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "This tool will extract text data from all of the watch history."
@@ -4948,7 +4955,7 @@ msgstr "通知サービスを追加:"
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Webhook / API"
-msgstr "Webhook / API"
+msgstr "ウェブフック / API"
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "E-mail"
@@ -4970,7 +4977,7 @@ msgstr "すべて表示"
 #: changedetectionio/templates/_common_fields-notification.html
 #, python-format
 msgid "Notification services <a href=\"%(url)s\" target=\"_blank\">powered by Apprise</a>."
-msgstr ""
+msgstr "通知サービスは <a href=\"%(url)s\" target=\"_blank\">Apprise を利用しています</a>。"
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"
@@ -5017,7 +5024,7 @@ msgstr "監視中のURL。"
 msgid ""
 "The Open Link Override set on the watch, otherwise the same as watch_url. Use this when the watched URL is an API "
 "endpoint or RSS feed but you want to link to the real page."
-msgstr ""
+msgstr "ウォッチに設定したリンク先URLの上書き。未設定の場合は watch_url と同じ。監視対象のURLがAPIエンドポイントやRSSフィードで、実際のページにリンクしたい場合に使用します。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The UUID of the watch."
@@ -5164,7 +5171,7 @@ msgstr "詳細はこちら"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add email notification:"
-msgstr ""
+msgstr "メール通知を追加:"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
@@ -5172,7 +5179,7 @@ msgstr "メールアドレスを追加"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Configured list of notifications - Use the \"Add a notification service\" to add to this."
-msgstr ""
+msgstr "設定済みの通知一覧 - 「通知サービスを追加」から追加できます。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
@@ -5612,6 +5619,7 @@ msgstr ""
 msgid "From group '%(name)s': %(value)s"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes."
 msgstr ""
@@ -5624,6 +5632,7 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Only notify if the price drops below $200, or a limited-time deal is added"
 msgstr ""
