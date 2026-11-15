@@ -377,6 +377,37 @@ def new_live_server_setup(live_server):
     def test_favicon_requests():
         return {'requested_by': _favicon_requests.get(request.args.get('key', 'default'), [])}
 
+    # A tall page that never stops animating, and draws itself by script: a band that turns green once
+    # the viewport is made tall for the full page screenshot, and a fixed band that turns blue once
+    # the page is scrolled. Both stay red when the page's scripts are not running at that moment.
+    @live_server.app.route('/test-animated-tall-page')
+    def test_animated_tall_page():
+        return """<html><head><style>
+            body { margin: 0; height: 15000px; }
+            #size, #scrolled { left: 0; width: 100%; height: 400px; background: rgb(255, 0, 0); }
+            #size { position: absolute; top: 0; }
+            #scrolled { position: fixed; top: 400px; }
+            p { position: absolute; top: 900px; }
+        </style></head><body>
+        <div id="size"></div><div id="scrolled"></div>
+        <p>The animated page text is here</p>
+        <script>
+            const size = document.getElementById('size'), scrolled = document.getElementById('scrolled');
+            window.addEventListener('resize', () => {
+                // Not window.innerHeight or clientHeight, the fetcher's stealth scripts report made-up ones
+                size.style.background = window.matchMedia('(min-height: 5000px)').matches ? 'rgb(0, 160, 0)' : 'rgb(255, 0, 0)';
+            });
+            window.addEventListener('scroll', () => {
+                scrolled.style.background = window.scrollY > 0 ? 'rgb(0, 0, 255)' : 'rgb(255, 0, 0)';
+            });
+            // Keeps the renderer busy on every frame, the way a large animation does
+            (function animate() {
+                const until = performance.now() + 30;
+                while (performance.now() < until) {}
+                requestAnimationFrame(animate);
+            })();
+        </script></body></html>"""
+
     @live_server.app.route('/test-endpoint2')
     def test_endpoint2():
         return "<html><body>some basic content</body></html>"

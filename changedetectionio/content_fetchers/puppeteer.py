@@ -27,6 +27,31 @@ async def _configure_puppeteer_csp(page):
 # Bug 3 in Playwright screenshot handling
 # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
 
+# How long a page gets to react to the taller viewport / the new scroll position before it is held
+# still for a screenshot chunk. One rendered frame is not enough: a page that swaps its content as
+# you scroll does it over several frames, and was drawn as if never scrolled.
+SCREENSHOT_SETTLE_SECONDS = float(os.getenv("SCREENSHOT_SETTLE_SECONDS", 1))
+
+# Resolves once the page has rendered a frame, for a browser so busy that the settle time above
+# passed without one. Bounded, a page that is not being painted never runs a frame.
+WAIT_FOR_NEXT_FRAME_JS = """() => new Promise(resolve => {
+    const done = setTimeout(resolve, 2000);
+    requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(done); resolve(); }));
+})"""
+
+
+async def _set_page_scripts_paused(page, paused):
+    """Stop (or resume) the page's own scripts. What is already rendered stays and a plain
+    evaluate() still answers, but timers and frames stop too: an evaluate() that waits on one never
+    returns, so nothing is extracted while paused. Returns False when the browser would not do it."""
+    try:
+        await page._client.send('Emulation.setScriptExecutionDisabled', {'value': paused})
+        return True
+    except Exception as e:
+        logger.debug(f"Could not {'pause' if paused else 'resume'} the page's scripts: {e}")
+        return False
+
+
 # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
 # acceptable screenshot quality here
@@ -81,7 +106,9 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         lock_time = time.time() - lock_start
         logger.debug(f"{watch_info}Viewport element locking enabled - File read: {file_read_time:.3f}s, Browser evaluate: {evaluate_time:.2f}s, Total: {lock_time:.2f}s")
 
-    if page_height > page.viewport['height']:
+    # Only a page taller than the viewport is resized and scrolled, see the settle time in the loop
+    viewport_resized = page_height > page.viewport['height']
+    if viewport_resized:
         if page_height < step_size:
             step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
         # Never set viewport taller than our max capture height - otherwise one screenshot chunk
@@ -112,8 +139,29 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         if screenshot_type == 'jpeg':
             screenshot_kwargs['quality'] = screenshot_quality
 
+        # A page that animates (a scroll-driven story, a large canvas or SVG animation) repaints the
+        # whole of this very tall viewport on every frame, and the capture has to queue behind
+        # that: measured on one core, 50s per chunk against 0.2s with the page's scripts paused -
+        # enough on its own to use up the whole fetch. So the page is held still while the chunk is
+        # taken, and only then. Pausing any earlier loses its reaction to the new viewport size and
+        # scroll position: a page that sizes itself by script is drawn at its old size inside the
+        # tall viewport, one that changes as you scroll is drawn as if never scrolled.
+        if viewport_resized:
+            await asyncio.sleep(SCREENSHOT_SETTLE_SECONDS)
+            try:
+                await page.evaluate(WAIT_FOR_NEXT_FRAME_JS)
+            except Exception as e:
+                logger.debug(f"{watch_info}Waiting for the page to render before the chunk failed: {e}")
+        scripts_paused = await _set_page_scripts_paused(page, True)
+
         chunk_start = time.time()
-        screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
+        try:
+            screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
+        finally:
+            # Always handed back: the next scroll, and everything extracted after the screenshot,
+            # is for a page that runs as normal
+            if scripts_paused:
+                await _set_page_scripts_paused(page, False)
         chunk_time = time.time() - chunk_start
         chunk_times.append(chunk_time)
         logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} captured in {chunk_time:.2f}s")
