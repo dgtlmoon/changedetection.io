@@ -1,10 +1,12 @@
-"""Record the network traffic of one browser fetch as a HAR 1.2 file, built from raw CDP Network events.
+"""Record the network traffic of one browser fetch as a HAR 1.2 file.
 
-Diagnostic aid for "why does this site block/behave differently for the browser" (#4539). It only
-needs a CDP session object offering .on() / .remove_listener() / .send(), so it is not tied to one
-browser library.
+Diagnostic aid for "why does this site block/behave differently for the browser" (#4539).
 
-Only loaded when recording is switched on for a watch, see HAR_UUID_RECORD in the puppeteer fetcher.
+The playwright fetcher uses playwright's own HAR recording and only needs write_har_zip() from here.
+pyppeteer has none, so HarRecorder builds the HAR from raw CDP Network events - it only needs a CDP
+session object offering .on() / .remove_listener() / .send().
+
+Only loaded when recording is switched on for a watch, see HAR_UUID_RECORD in the browser fetchers.
 """
 import asyncio
 import json
@@ -32,6 +34,19 @@ def har_recording_wanted(watch_uuid, env_value=None):
         return False
     wanted = {u.strip().strip('"\'').lower() for u in env_value.split(',')}
     return str(watch_uuid).lower() in wanted
+
+
+def write_har_zip(directory, har_json=None, har_file=None):
+    """Write {directory}/har-record.zip from HAR JSON text or an existing .har file, replacing the previous one. Blocking."""
+    destination = os.path.join(directory, HAR_ZIP_FILENAME)
+    tmp = destination + '.tmp'
+    with zipfile.ZipFile(tmp, 'w', compression=zipfile.ZIP_DEFLATED) as z:
+        if har_file:
+            z.write(har_file, arcname=HAR_FILENAME_IN_ZIP)
+        else:
+            z.writestr(HAR_FILENAME_IN_ZIP, har_json)
+    os.replace(tmp, destination)
+    return destination
 
 
 def _name_value_list(headers):
@@ -292,10 +307,5 @@ class HarRecorder:
 
     def save(self, directory):
         """Write {directory}/har-record.zip, replacing the one from the previous check. Blocking."""
-        destination = os.path.join(directory, HAR_ZIP_FILENAME)
-        tmp = destination + '.tmp'
         har = self.to_har()
-        with zipfile.ZipFile(tmp, 'w', compression=zipfile.ZIP_DEFLATED) as z:
-            z.writestr(HAR_FILENAME_IN_ZIP, json.dumps(har))
-        os.replace(tmp, destination)
-        return destination, len(har['log']['entries'])
+        return write_har_zip(directory, json.dumps(har)), len(har['log']['entries'])

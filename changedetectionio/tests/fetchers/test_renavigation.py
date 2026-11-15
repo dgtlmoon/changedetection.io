@@ -64,12 +64,8 @@ def test_har_record_env_writes_har_zip(client, live_server, measure_memory_usage
     """HAR_UUID_RECORD=<uuid> saves the network traffic of that watch's fetch to har-record.zip"""
     import json
     import zipfile
-    import pytest
-    from changedetectionio.strtobool import strtobool
 
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
-    if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
-        pytest.skip("HAR recording is only in the puppeteer fetcher for now")
 
     client.post(
         url_for("settings.settings_page"),
@@ -105,7 +101,7 @@ def test_har_record_env_writes_har_zip(client, live_server, measure_memory_usage
              f"HAR {har['log']['version']} - {len(har['log']['entries'])} entries, zip is {os.path.getsize(har_zip)} bytes"]
     for e in har['log']['entries']:
         lines.append(f"{e['request']['method']} {e['response']['status']} {e['request']['url']} "
-                     f"[{e['_resourceType']}, {e['response']['content']['mimeType']}, "
+                     f"[{e.get('_resourceType', '')}, {e['response']['content']['mimeType']}, "
                      f"{e['response']['content']['size']} bytes, {e['time']}ms]")
         lines += [f"   > {h['name']}: {h['value']}" for h in e['request']['headers']]
         lines += [f"   < {h['name']}: {h['value']}" for h in e['response']['headers']]
@@ -115,7 +111,12 @@ def test_har_record_env_writes_har_zip(client, live_server, measure_memory_usage
     documents = [e for e in har['log']['entries'] if e['request']['url'] == recorded_url]
     # Both hops of the interstitial are in there, which is the whole point of having the recording
     assert [e['response']['status'] for e in documents] == [503, 200]
-    assert 'The real page content is here' in documents[-1]['response']['content'].get('text', '')
+    body = documents[-1]['response']['content']
+    text = body.get('text', '')
+    if body.get('encoding') == 'base64':
+        import base64
+        text = base64.b64decode(text).decode()
+    assert 'The real page content is here' in text
 
     assert not os.path.isfile(os.path.join(datastore.data['watching'][not_recorded].data_dir, 'har-record.zip')), \
         "A watch that is not listed in HAR_UUID_RECORD must not be recorded"
