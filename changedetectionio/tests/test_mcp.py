@@ -86,6 +86,7 @@ def test_mcp_protocol(client, live_server, measure_memory_usage, datastore_path)
     read_only = {'list_watches', 'get_watch', 'list_tags', 'get_changes', 'get_diff', 'get_snapshot',
                  'get_system_info', 'list_notifications', 'notification_services',
                  'list_snapshots', 'find_change', 'get_history', 'line_timeline', 'get_screenshot',
+                 'get_network_log',
                  # From the built-in restock_diff plugin (register_mcp_tools, see test_mcp_plugin_tools.py)
                  'restock_status'}
     # update_* can replace settings (e.g. the whole notification URL list), so they count as destructive too
@@ -801,6 +802,109 @@ def test_mcp_recheck_wait(client, live_server, measure_memory_usage, datastore_p
     # Without wait: the old answer
     assert 'wait=true' in _call(client, api_key, 'recheck_watches', watches=[uuid])['content'][0]['text']
     delete_all_watches(client)
+
+
+def test_mcp_network_log(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """recheck_watches record_network=true records that one check, get_network_log reads it back."""
+    from flask import url_for
+    monkeypatch.delenv('HAR_UUID_RECORD', raising=False)
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    with open(os.path.join(datastore_path, 'endpoint-content.txt'), 'w') as f:
+        f.write('<html><body>Hello there</body></html>')
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = datastore.add_watch(url=test_url, extras={'title': 'Endpoint', 'headers': {'Cookie': 'sid=topsecret'}})
+
+    # Nothing is recorded until asked, and the answer says how to ask
+    result = _call(client, api_key, 'get_network_log', watch=uuid)
+    assert result['isError'] and 'record_network=true' in result['content'][0]['text']
+
+    # Only for monitors that were named, a recording of everything is not what this is for
+    assert _call(client, api_key, 'recheck_watches', all=True, record_network=True)['isError']
+
+    result = _call(client, api_key, 'recheck_watches', watches=[uuid], record_network=True, wait=True, wait_seconds=30)
+    assert not result['isError'], result
+    assert result['structuredContent']['checks'][0]['state'] == 'checked', result['content'][0]['text']
+    assert 'get_network_log' in result['content'][0]['text']
+
+    result = _call(client, api_key, 'get_network_log', watch=uuid)
+    assert not result['isError'], result
+    text, data = result['content'][0]['text'], result['structuredContent']
+    assert text.startswith(UNTRUSTED_NOTE)
+    assert data['total'] == data['matched'] == 1
+    assert data['requests'][0] == {**data['requests'][0], 'n': 1, 'method': 'GET', 'status': 200, 'url': test_url}
+    assert f"1 | GET 200 | {test_url}" in text
+
+    assert _call(client, api_key, 'get_network_log', watch=uuid, url_contains='nothing-like-this')['structuredContent']['matched'] == 0
+    assert _call(client, api_key, 'get_network_log', watch=uuid, only_errors=True)['structuredContent']['matched'] == 0
+    assert _call(client, api_key, 'get_network_log', watch=uuid, request=2)['isError']
+
+    # One request: headers and the body, secrets stay on the instance
+    text = _call(client, api_key, 'get_network_log', watch=uuid, request=1)['content'][0]['text']
+    assert text.startswith(UNTRUSTED_NOTE)
+    assert 'Hello there' in text
+    assert 'topsecret' not in text and 'Cookie: [hidden, 13 characters]' in text
+
+    # One shot: an ordinary recheck leaves the recording as it was
+    recorded = data['recorded']
+    assert not _call(client, api_key, 'recheck_watches', watches=[uuid], wait=True, wait_seconds=30)['isError']
+    assert _call(client, api_key, 'get_network_log', watch=uuid)['structuredContent']['recorded'] == recorded
+    delete_all_watches(client)
+
+
+def test_mcp_recheck_one_shot_proxy(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """recheck_watches proxy=...: that one check goes through another configured proxy, the monitor keeps its own."""
+    from flask import url_for
+    # A proxy nothing listens on fails at once instead of after the connection retries
+    monkeypatch.setenv('REQUESTS_RETRY_MAX_COUNT', '0')
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    requests_settings = datastore.data['settings']['requests']
+    requests_settings['extra_proxies'] = [{'proxy_name': 'Dead exit', 'proxy_url': 'http://agent:s3cret@127.0.0.1:9'}]
+    try:
+        with open(os.path.join(datastore_path, 'endpoint-content.txt'), 'w') as f:
+            f.write('<html><body>Hello there</body></html>')
+        uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True),
+                                   extras={'title': 'Endpoint', 'proxy': 'no-proxy'})
+        watch = datastore.data['watching'][uuid]
+
+        # Only a proxy from the settings, by its name - never one of the caller's own
+        for unknown in ('Mars exit', 'http://evil.invalid:3128'):
+            result = _call(client, api_key, 'recheck_watches', watches=[uuid], proxy=unknown)
+            assert result['isError'] and 'Dead exit' in result['content'][0]['text'], result
+        assert _call(client, api_key, 'recheck_watches', all=True, proxy='dead exit')['isError']
+
+        result = _call(client, api_key, 'recheck_watches', watches=[uuid], proxy='dead exit', wait=True, wait_seconds=30)
+        assert not result['isError'], result
+        assert 'through the proxy Dead exit' in result['content'][0]['text'] and 's3cret' not in json.dumps(result)
+        assert result['structuredContent']['checks'][0]['error'], "The check should have gone through the dead proxy and failed"
+
+        # One shot: the monitor's own setting is untouched and the next check uses it again
+        assert watch.get('proxy') == 'no-proxy'
+        # wait=true goes by last_checked in whole seconds, so don't start the next check in the same second
+        import time
+        time.sleep(1.1)
+        result = _call(client, api_key, 'recheck_watches', watches=[uuid], wait=True, wait_seconds=30)
+        assert not result['structuredContent']['checks'][0]['error'], result['content'][0]['text']
+    finally:
+        requests_settings['extra_proxies'] = []
+        delete_all_watches(client)
+
+
+def test_queue_rechecks_with_one_shot_options():
+    """Options for a check that is already waiting in the queue go onto that item, instead of being dropped"""
+    from changedetectionio.api.operations import queue_rechecks
+    from changedetectionio.queue_handlers import RecheckPriorityQueue
+    from changedetectionio.queuedWatchMetaData import PrioritizedItem
+    q = RecheckPriorityQueue()
+    q.put(PrioritizedItem(priority=5, item={'uuid': 'aaa'}))
+
+    assert queue_rechecks(q, ['aaa']) == (0, 1)  # as before: already queued, skipped
+    assert queue_rechecks(q, ['aaa', 'bbb'], metadata={'record_har': True}) == (2, 0)
+    queued = {i.item['uuid']: i.item for i in q._priority_items}
+    assert len(q._priority_items) == 2, "The waiting item is updated, not queued a second time"
+    assert queued['aaa'].get('record_har') is True and queued['bbb'].get('record_har') is True
+    assert not q.update_queued_metadata('not-queued', {'record_har': True})
 
 
 def test_queue_positions():

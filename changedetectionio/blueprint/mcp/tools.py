@@ -888,6 +888,99 @@ def get_screenshot(ctx, args):
     return text, structured, [{'type': 'image', 'data': base64.b64encode(jpeg).decode('ascii'), 'mimeType': 'image/jpeg'}]
 
 
+NETWORK_LOG_URL_MAX = 200
+# Values of these never leave the instance, the recording itself (in the watch data package) has them
+_SECRET_HEADERS = ('cookie', 'authorization')
+_SECRET_HEADER_WORDS = ('token', 'secret', 'api-key', 'apikey', 'password', 'session')
+
+
+def _har_headers(headers):
+    lines = []
+    for h in headers or []:
+        name, value = str(h.get('name', '')), str(h.get('value', ''))
+        low = name.lower()
+        if any(s in low for s in _SECRET_HEADERS) or any(w in low for w in _SECRET_HEADER_WORDS):
+            value = f"[hidden, {len(value)} characters]"
+        lines.append(f"  {name}: {value}")
+    return lines
+
+
+def _har_row(n, entry):
+    request, response = entry.get('request') or {}, entry.get('response') or {}
+    content = response.get('content') or {}
+    return {'n': n, 'method': request.get('method'), 'status': response.get('status') or 0,
+            'url': request.get('url') or '', 'type': entry.get('_resourceType') or '',
+            'mime_type': content.get('mimeType') or '', 'size': content.get('size') or 0,
+            'ms': round(entry.get('time') or 0),
+            'error': entry.get('_error') or response.get('_failureText') or None}
+
+
+def _har_failed(row):
+    return bool(row['error']) or row['status'] >= 400 or row['status'] <= 0
+
+
+def get_network_log(ctx, args):
+    watch = _resolve_watch(ctx, args.get('watch'))
+    from changedetectionio.content_fetchers.har_recorder import load_har
+    try:
+        har, recorded = load_har(watch.data_dir) if watch.data_dir else (None, None)
+    except Exception as e:
+        logger.warning(f"MCP: couldn't read the network recording of {watch.get('uuid')}: {e}")
+        raise ToolError("The network recording couldn't be read")
+    if not har:
+        raise ToolError(f"No network recording for {watch.label}. They're only made on request: call recheck_watches "
+                        f"with watches=['{watch.get('uuid')}'], record_network=true and wait=true, then ask again.")
+    entries = har.get('log', {}).get('entries') or []
+    rows = [_har_row(n, e) for n, e in enumerate(entries, start=1)]
+    head = (f"### {watch.label} - {watch.get('url')}\nNetwork requests of the check recorded {_iso(recorded)}, "
+            f"{len(rows)} requests. Only the latest recording is kept.")
+    structured = {'uuid': watch.get('uuid'), 'recorded': _iso(recorded), 'total': len(rows)}
+
+    n = args.get('request')
+    if n is not None:
+        if not isinstance(n, int) or not 1 <= n <= len(rows):
+            raise ToolError(f"'request' must be a request number from the list, 1 to {len(rows)}")
+        entry, row = entries[n - 1], rows[n - 1]
+        request, response = entry.get('request') or {}, entry.get('response') or {}
+        content = response.get('content') or {}
+        max_chars = _int(args, 'max_chars', 4000, 100, 50000)
+        lines = [head, f"Request {n}: {row['method']} {row['url']}", "Request headers:"] + _har_headers(request.get('headers'))
+        post = (request.get('postData') or {}).get('text')
+        if post:
+            lines += ["Request body:", post[:2000] + ('... (cut)' if len(post) > 2000 else '')]
+        lines += [f"Response: {row['status']} {response.get('statusText') or ''}".rstrip()
+                  + (f", failed: {row['error']}" if row['error'] else '') + f", {row['ms']} ms", "Response headers:"]
+        lines += _har_headers(response.get('headers'))
+        body = content.get('text')
+        if body is None:
+            lines.append(f"Response body: not recorded ({row['size']} bytes, {row['mime_type'] or 'unknown type'})")
+        elif content.get('encoding') == 'base64':
+            lines.append(f"Response body: binary, {row['size']} bytes of {row['mime_type'] or 'unknown type'}, not shown")
+        else:
+            lines += [f"Response body ({len(body)} characters{', cut to ' + str(max_chars) if len(body) > max_chars else ''}):",
+                      body[:max_chars]]
+        structured['request'] = row
+        return f"{UNTRUSTED_NOTE}\n" + '\n'.join(lines), structured
+
+    needle = (args.get('url_contains') or '').lower()
+    matched = [r for r in rows if (not needle or needle in r['url'].lower())
+               and (not args.get('only_errors') or _har_failed(r))]
+    offset, limit = _int(args, 'offset', 0, 0, 1_000_000), _int(args, 'limit', 100, 1, 300)
+    page = matched[offset:offset + limit]
+    lines = [head, f"{len(matched)} match" + (f", showing {offset + 1}-{offset + len(page)}" if len(page) < len(matched) else '')
+             + f", {sum(1 for r in rows if _har_failed(r))} of all {len(rows)} failed or answered 4xx/5xx. "
+               "Call again with request=<number> for the headers and body of one."]
+    for r in page:
+        url = r['url'] if len(r['url']) <= NETWORK_LOG_URL_MAX else r['url'][:NETWORK_LOG_URL_MAX] + '...'
+        lines.append(f"{r['n']} | {r['method']} {r['status'] or 'failed'} | {url} | {r['type'] or r['mime_type']} | "
+                     f"{r['size']} bytes | {r['ms']} ms" + (f" | {r['error']}" if r['error'] else ''))
+    if offset + len(page) < len(matched):
+        lines.append(f"More: call again with offset={offset + len(page)}.")
+    structured.update(matched=len(matched), requests=page,
+                      next_offset=offset + len(page) if offset + len(page) < len(matched) else None)
+    return f"{UNTRUSTED_NOTE}\n" + '\n'.join(lines), structured
+
+
 def get_system_info(ctx, args):
     import time
     from changedetectionio import __version__, worker_pool
@@ -1291,6 +1384,7 @@ def update_watch(ctx, args):
 # recheck_watches wait=true: at most this many seconds (under MCP clients' tool timeouts), for at most this many monitors
 RECHECK_WAIT_MAX_SECONDS = 60
 RECHECK_WAIT_MAX_MONITORS = 20
+ONE_SHOT_MAX_MONITORS = 5
 
 
 def _check_states(ctx, watches, since):
@@ -1346,8 +1440,27 @@ def recheck_watches(ctx, args):
         watches = [w for w in watches if not w.get('paused')]
     import time
     started = int(time.time())
-    queued, skipped = queue_rechecks(ctx.update_q, [w.get('uuid') for w in watches])
+    # Options for these checks only, nothing is stored on the monitors
+    metadata, notes = {}, []
+    if args.get('record_network'):
+        metadata['record_har'] = True
+        notes.append("recording the network requests (read them with get_network_log once it's checked)")
+    proxy = (str(args.get('proxy') or '')).strip()
+    if proxy:
+        if proxy.lower() in ('none', 'no-proxy', 'direct'):
+            metadata['proxy'] = 'no-proxy'
+            notes.append('connecting directly, without a proxy')
+        else:
+            key = _proxy_key(ctx, proxy)
+            if key:
+                metadata['proxy'] = key
+                notes.append(f"through the proxy {ctx.datastore.proxy_list[key].get('label')}")
+    if metadata and (not refs or len(watches) > ONE_SHOT_MAX_MONITORS):
+        raise ToolError(f"record_network and proxy are for monitors named in 'watches', at most {ONE_SHOT_MAX_MONITORS} at a time")
+    queued, skipped = queue_rechecks(ctx.update_q, [w.get('uuid') for w in watches], metadata=metadata or None)
     text = f"Queued {queued} monitors for a recheck" + (f" ({skipped} already queued or running)" if skipped else '')
+    if notes:
+        text += ', for this one check only: ' + ' and '.join(notes)
     structured = {'queued': queued, 'skipped': skipped}
     if not args.get('wait'):
         return text + ". This doesn't wait for the checks: look at last_checked with get_watch or list_watches later, " \
@@ -1939,6 +2052,21 @@ TOOLS = {
         _schema({'watch': _WATCH, 'which': {'type': 'string', 'enum': ['latest', 'error'], 'default': 'latest'},
                  'offset': {'type': 'integer', 'minimum': 0, 'default': 0,
                             'description': 'Pixels from the top to start at, from the previous answer'}}, ['watch'])),
+    'get_network_log': (get_network_log, READ_ONLY, 'Network requests of a check',
+        "What a monitor's check really requested and got back (like the network tab of a browser's dev-tools): every "
+        "request with its status, type and size, for 'why is this page blocked / empty / different here?' - a 403, "
+        "a challenge script, an API call behind the page that failed or came back empty. Lists the requests "
+        "(narrow with url_contains or only_errors), then request=<number> gives one request's headers and response "
+        "body. Cookie and authorization values are hidden. Nothing is recorded until asked: first call "
+        "recheck_watches with record_network=true and wait=true. Only the latest recording is kept.",
+        _schema({'watch': _WATCH,
+                 'url_contains': {'type': 'string', 'description': 'Only requests whose URL contains this'},
+                 'only_errors': {'type': 'boolean', 'description': 'Only requests that failed or answered 4xx/5xx'},
+                 'request': {'type': 'integer', 'minimum': 1,
+                             'description': "A request's number from the list: its headers and response body instead of the list"},
+                 'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 50000, 'default': 4000,
+                               'description': 'With request: how much of the response body'},
+                 'limit': _limit(300, 100, 'requests'), 'offset': _OFFSET}, ['watch'])),
     'get_system_info': (get_system_info, READ_ONLY, 'System info',
         "Health and load: how many monitors (failing, paused, overdue for a check), the check queue size, how many "
         "fetch workers there are and which monitors they're checking right now and for how long. Use it for 'why "
@@ -1975,13 +2103,22 @@ TOOLS = {
     'recheck_watches': (recheck_watches, dict(WRITE, idempotentHint=True, openWorldHint=True), 'Recheck monitors',
         "Queue monitors to be checked now: by name/uuid, a whole tag, the ones with errors, or all. Returns at once, "
         "or with wait=true waits up to wait_seconds and says for each whether it changed, is being checked, or its "
-        "place in the queue. Paused monitors are skipped unless named.",
+        "place in the queue. Paused monitors are skipped unless named. Two options apply to that one check only, "
+        "to find out why a page is blocked or different: record_network=true records what it requests (read it "
+        "with get_network_log), and proxy tries it through another of the configured proxies.",
         _schema({'watches': _WATCHES, 'tag': _TAG, 'with_errors': {'type': 'boolean'},
                  'all': {'type': 'boolean', 'description': 'Every monitor that isn\'t paused'},
                  'wait': {'type': 'boolean', 'default': False,
                           'description': f'Wait for the checks (at most {RECHECK_WAIT_MAX_MONITORS} monitors) and say how each went, '
                                          'or where it is in the queue'},
-                 'wait_seconds': {'type': 'integer', 'minimum': 1, 'maximum': RECHECK_WAIT_MAX_SECONDS, 'default': 30}})),
+                 'wait_seconds': {'type': 'integer', 'minimum': 1, 'maximum': RECHECK_WAIT_MAX_SECONDS, 'default': 30},
+                 'record_network': {'type': 'boolean', 'default': False,
+                                    'description': f"Also record the network requests of this one check, for get_network_log. "
+                                                   f"Only with 'watches', at most {ONE_SHOT_MAX_MONITORS}"},
+                 'proxy': {'type': 'string',
+                           'description': "Fetch this one check through another proxy, by its name or id from "
+                                          "get_system_info, or 'none' for a direct connection. The monitor's own "
+                                          f"proxy setting is not changed. Only with 'watches', at most {ONE_SHOT_MAX_MONITORS}"}})),
     'pause_watches': (pause_watches, dict(WRITE, idempotentHint=True), 'Pause or unpause monitors',
         "Pause or unpause monitors in one call: by name/uuid, every monitor in a tag/group, or all of them. "
         "scheduler=true instead pauses or resumes checking for the whole instance (the pause button in the UI), "
