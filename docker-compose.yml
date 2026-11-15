@@ -16,6 +16,10 @@ services:
   #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
   #      - LOGGER_LEVEL=TRACE
   #
+  #        Debugging: save the network traffic (HAR) of each check of these watch UUIDs to {datastore}/{uuid}/har-record.zip
+  #        Optional: HAR_FORMAT=har for a plain .har file, HAR_INCLUDE_BINARY=true to also keep image/font content
+  #      - HAR_UUID_RECORD=aa4bd6db-e0c9-4ec6-9b95-2b7d8394e333,another-uuid
+  #
   #        Plugins! See https://changedetection.io/plugins for more plugins.
   #        Install additional Python packages (processor plugins, etc.)
   #        Example: Install the OSINT reconnaissance processor plugin
@@ -102,14 +106,6 @@ services:
   #        Maximum height of screenshots, default is 20000 px, screenshots will be clipped to this if exceeded.
   #        RAM usage will be higher if you increase this.
   #      - SCREENSHOT_MAX_HEIGHT=20000
-  #
-  #        Debugging - record the network traffic (HAR) of each check of these watches (comma separated UUIDs) to {datastore}/{uuid}/har-record.zip
-  #        It is included in "Download watch data package", note that it contains cookies and auth headers in plain text.
-  #      - HAR_UUID_RECORD=aa4bd6db-e0c9-4ec6-9b95-2b7d8394e333,another-uuid
-  #        "zip" (default) or "har" for a plain har-record.har that opens directly in browser dev-tools
-  #      - HAR_FORMAT=zip
-  #        Also keep the content of images, fonts etc (off by default, they are always listed with their headers)
-  #      - HAR_INCLUDE_BINARY=false
   #
   #        HTTPS SSL Mode for webserver, unset both of these, you may need to volume mount these files also.
   #        ./cert.pem:/app/cert.pem and ./privkey.pem:/app/privkey.pem
