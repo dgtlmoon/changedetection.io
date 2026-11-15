@@ -329,6 +329,17 @@ def new_live_server_setup(live_server):
     # not seen recently (reported against fotokoch.de, which answers 503 + meta refresh and then
     # serves a 200). The browser follows the refresh, so the fetch has to be judged on the
     # document we actually end up extracting rather than on the interstitial.
+    # What a parked domain serves: an empty document that sends the browser on from its load event
+    @live_server.app.route('/test-onload-redirect')
+    def test_onload_redirect():
+        landing = url_for('test_onload_redirect_landing')
+        return ('<!DOCTYPE html><html><head><script>window.onload=function(){window.location.href="'
+                + landing + '"}</script></head></html>')
+
+    @live_server.app.route('/test-onload-redirect-landing')
+    def test_onload_redirect_landing():
+        return '<html><body><h1>This domain is for sale</h1></body></html>'
+
     # Keyed on last-seen time rather than a hit count, so EVERY fresh check starts out gated -
     # a counter would serve a clean 200 to the second check and let the test pass without the fix.
     _interstitial_last_seen = {}
