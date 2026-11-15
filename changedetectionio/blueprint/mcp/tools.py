@@ -1387,8 +1387,16 @@ RECHECK_WAIT_MAX_MONITORS = 20
 ONE_SHOT_MAX_MONITORS = 5
 
 
-def _check_states(ctx, watches, since):
-    """Where each check is: 'checked' (with whether it changed and any error), 'checking' or 'queued' (position)."""
+def _check_marks(watches):
+    """What to remember about each monitor before queueing it, for _check_states to tell a new check from the last
+    one: {uuid: (check_count, last_changed)}. Not last_checked, that's in whole seconds, so a check that finished in
+    the same second as this was asked for would look like the one being waited for."""
+    return {w.get('uuid'): (w.get('check_count', 0), w.last_changed) for w in watches}
+
+
+def _check_states(ctx, watches, before):
+    """Where each check is: 'checked' (with whether it changed and any error), 'checking' or 'queued' (position).
+    before: _check_marks() from before they were queued."""
     import time
     from changedetectionio import worker_pool
     positions = ctx.update_q.get_queue_positions() if ctx.update_q is not None and hasattr(ctx.update_q, 'get_queue_positions') else {}
@@ -1403,9 +1411,9 @@ def _check_states(ctx, watches, since):
             state.update(state='checking', running_seconds=round(time.time() - started) if started else None)
         elif uuid in positions:
             state.update(state='queued', position=positions[uuid], queued_total=queued_total)
-        elif (w.get('last_checked') or 0) >= since:
+        elif w.get('check_count', 0) > before[uuid][0]:
             state.update(state='checked', last_checked=_iso(w['last_checked']),
-                         changed=bool(w.last_changed and w.last_changed >= since), error=w.get('last_error') or None)
+                         changed=bool(w.last_changed and w.last_changed != before[uuid][1]), error=w.get('last_error') or None)
         else:
             state.update(state='not queued')
         states.append(state)
@@ -1439,7 +1447,8 @@ def recheck_watches(ctx, args):
     if not refs:
         watches = [w for w in watches if not w.get('paused')]
     import time
-    started = int(time.time())
+    started = time.time()
+    before = _check_marks(watches)
     # Options for these checks only, nothing is stored on the monitors
     metadata, notes = {}, []
     if args.get('record_network'):
@@ -1472,7 +1481,7 @@ def recheck_watches(ctx, args):
     # (and greenlets, in gevent mode) run in the meantime
     deadline = time.monotonic() + _int(args, 'wait_seconds', 30, 1, RECHECK_WAIT_MAX_SECONDS)
     while True:
-        states = _check_states(ctx, watches, started)
+        states = _check_states(ctx, watches, before)
         # 'not queued' right after queueing can be a worker that has taken it but not yet marked it running, so it
         # only counts as settled after a few seconds
         settled = ('checked', 'not queued') if time.time() - started > 3 else ('checked',)

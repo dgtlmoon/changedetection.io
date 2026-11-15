@@ -881,9 +881,7 @@ def test_mcp_recheck_one_shot_proxy(client, live_server, measure_memory_usage, d
 
         # One shot: the monitor's own setting is untouched and the next check uses it again
         assert watch.get('proxy') == 'no-proxy'
-        # wait=true goes by last_checked in whole seconds, so don't start the next check in the same second
-        import time
-        time.sleep(1.1)
+        # Straight after, in the same second: wait=true must report this check, not the failed one before it
         result = _call(client, api_key, 'recheck_watches', watches=[uuid], wait=True, wait_seconds=30)
         assert not result['structuredContent']['checks'][0]['error'], result['content'][0]['text']
     finally:
