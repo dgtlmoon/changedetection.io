@@ -177,6 +177,45 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     return screenshot_chunks[0]
 
 
+# The icons a page declares, in the order the browser would consider them, plus the /favicon.ico every browser tries
+FAVICON_CANDIDATE_URLS_JS = """() => Array.from(document.querySelectorAll('link[rel~="icon"], link[rel~="apple-touch-icon"]'))
+    .map(l => l.href).filter(h => h && !h.startsWith('data:')).concat([location.origin + '/favicon.ico'])"""
+# Same limit as the in-page fetcher and bump_favicon()
+FAVICON_MAX_BYTES = 1 * 1024 * 1024
+
+
+async def favicon_from_browser_requests(page, browser_fetched, watch_uuid=None):
+    """The favicon the browser downloaded for itself, as {'url', 'mime_type', 'base64'}, or None.
+
+    Fallback for when the in-page fetcher (FAVICON_FETCHER_JS) comes back empty: page script may not
+    read an icon on another host unless that host allows it, but the browser's own icon request is not
+    page script and is not held to that. browser_fetched is {url: (requestId, mimeType)} of the
+    responses seen during the fetch; only a URL the page declares as its icon is ever used.
+    """
+    if not browser_fetched:
+        return None
+    try:
+        candidates = await page.evaluate(FAVICON_CANDIDATE_URLS_JS)
+        for url in candidates or []:
+            if url not in browser_fetched:
+                continue
+            request_id, mime_type = browser_fetched[url]
+            try:
+                r = await page._client.send('Network.getResponseBody', {'requestId': request_id})
+            except Exception as e:
+                logger.debug(f"[{watch_uuid}] Favicon {url} was requested by the browser but its body is gone: {e}")
+                continue
+            body = r.get('body') or ''
+            icon = body if r.get('base64Encoded') else base64.b64encode(body.encode('utf-8')).decode('ascii')
+            if not icon or len(icon) * 0.75 > FAVICON_MAX_BYTES:
+                continue
+            logger.debug(f"[{watch_uuid}] Favicon taken from the browser's own request for {url}")
+            return {'url': url, 'mime_type': mime_type, 'base64': icon}
+    except Exception as e:
+        logger.debug(f"[{watch_uuid}] No favicon from the browser's own requests: {e}")
+    return None
+
+
 class fetcher(Fetcher):
     fetcher_description = "Puppeteer/direct {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
@@ -422,6 +461,22 @@ class fetcher(Fetcher):
 
         # Enable Network domain to detect when first bytes arrive
         await self.page._client.send('Network.enable')
+
+        # Remember which responses the browser got, so favicon_from_browser_requests() can find the icon
+        # the browser fetched for itself. Only when a favicon is wanted on this check.
+        browser_fetched = {}
+
+        def _note_response(event):
+            # Must never raise, an exception escaping a CDP listener can take the connection down
+            try:
+                response = event.get('response') or {}
+                if 200 <= response.get('status', 0) < 300 and event.get('type') in ('Other', 'Image'):
+                    browser_fetched[response.get('url')] = (event.get('requestId'), response.get('mimeType'))
+            except Exception:
+                pass
+
+        if fetch_favicon:
+            self.page._client.on('Network.responseReceived', _note_response)
 
         # Navigate (bounded), then wait the configured "wait n seconds before extracting text"
         # delay, then stop whatever is still loading, then extract. The delay is measured from
@@ -693,6 +748,11 @@ class fetcher(Fetcher):
                 self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
             except Exception as e:
                 logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+            # The in-page fetch can't read an icon another host doesn't share with page script, the
+            # browser's own copy of it can still be used
+            if not (self.favicon_blob and self.favicon_blob.get('base64')):
+                self.favicon_blob = await favicon_from_browser_requests(self.page, browser_fetched, watch_uuid)
+            self.page._client.remove_listener('Network.responseReceived', _note_response)
 
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)

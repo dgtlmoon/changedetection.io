@@ -349,6 +349,34 @@ def new_live_server_setup(live_server):
         resp.headers['Content-Type'] = 'text/html'
         return resp
 
+    # A page whose icon the browser may load for itself, but page script may not read - what a browser
+    # that enforces cross-origin rules does with an icon on another host. Told apart by the Accept
+    # header: the browser's own icon request asks for images ('image/avif,image/webp,...'), a fetch()
+    # from page script asks for '*/*'. (Sec-Fetch-Dest would say it too, but is not sent over plain http)
+    @live_server.app.route('/test-favicon-page')
+    def test_favicon_page():
+        icon = url_for('test_favicon_browser_only', key=request.args.get('key', 'default'))
+        return (f'<html><head><title>favicon</title><link rel="icon" type="image/png" href="{icon}"></head>'
+                f'<body>A page with an icon only the browser itself may fetch</body></html>')
+
+    _favicon_requests = {}
+
+    @live_server.app.route('/test-favicon-browser-only.png')
+    def test_favicon_browser_only():
+        import base64
+        by = 'browser' if request.headers.get('Accept', '').startswith('image/') else 'script'
+        _favicon_requests.setdefault(request.args.get('key', 'default'), []).append(by)
+        if by != 'browser':
+            return make_response('Not for scripts', 403)
+        png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
+        resp = make_response(png, 200)
+        resp.headers['Content-Type'] = 'image/png'
+        return resp
+
+    @live_server.app.route('/test-favicon-requests')
+    def test_favicon_requests():
+        return {'requested_by': _favicon_requests.get(request.args.get('key', 'default'), [])}
+
     @live_server.app.route('/test-endpoint2')
     def test_endpoint2():
         return "<html><body>some basic content</body></html>"
