@@ -840,10 +840,19 @@ def test_mcp_network_log(client, live_server, measure_memory_usage, datastore_pa
     assert _call(client, api_key, 'get_network_log', watch=uuid, request=2)['isError']
 
     # One request: headers and the body, secrets stay on the instance
-    text = _call(client, api_key, 'get_network_log', watch=uuid, request=1)['content'][0]['text']
+    result = _call(client, api_key, 'get_network_log', watch=uuid, request=1)
+    text = result['content'][0]['text']
     assert text.startswith(UNTRUSTED_NOTE)
     assert 'Hello there' in text
     assert 'topsecret' not in text and 'Cookie: [hidden, 13 characters]' in text
+    # The same in the structured answer, which is all that some clients show
+    detail = result['structuredContent']['request']
+    assert 'Hello there' in detail['response_body'] and detail['response_body_truncated'] is False
+    assert {'name': 'Cookie', 'value': '[hidden, 13 characters]'} in detail['request_headers']
+    assert any(h['name'].lower() == 'content-type' for h in detail['response_headers'])
+    assert 'topsecret' not in json.dumps(result)
+    cut = _call(client, api_key, 'get_network_log', watch=uuid, request=1, max_chars=100)['structuredContent']['request']
+    assert len(cut['response_body']) <= 100
 
     # One shot: an ordinary recheck leaves the recording as it was
     recorded = data['recorded']
