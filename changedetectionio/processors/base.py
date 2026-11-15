@@ -370,6 +370,7 @@ class difference_detection_processor():
         fetcher.backend_name = backend_name
         # and the proxy, for plugins that send their own requests for this check (fetch_request_alter hook)
         fetcher.selected_proxy_url = proxy_url
+        fetcher.watch_data_dir = self.watch.data_dir
 
         if self.watch.has_browser_steps:
             fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

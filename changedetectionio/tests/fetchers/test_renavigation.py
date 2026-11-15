@@ -58,3 +58,66 @@ def test_interstitial_redirect_is_followed(client, live_server, measure_memory_u
     assert 'Browser check in progress' not in snapshot
 
     client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+
+def test_har_record_env_writes_har_zip(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """HAR_UUID_RECORD=<uuid> saves the network traffic of that watch's fetch to har-record.zip"""
+    import json
+    import zipfile
+    import pytest
+    from changedetectionio.strtobool import strtobool
+
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+    if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
+        pytest.skip("HAR recording is only in the puppeteer fetcher for now")
+
+    client.post(
+        url_for("settings.settings_page"),
+        data={
+            "application-empty_pages_are_a_change": "",
+            "requests-time_between_check-minutes": 180,
+            'application-fetch_backend': "html_webdriver",
+        },
+        follow_redirects=True
+    )
+
+    datastore = live_server.app.config['DATASTORE']
+    recorded_url = _cdio(url_for('test_interstitial', key='har-on', _external=True))
+    recorded = datastore.add_watch(url=recorded_url)
+    not_recorded = datastore.add_watch(url=_cdio(url_for('test_interstitial', key='har-off', _external=True)))
+
+    # Upper-cased and with a neighbour in the list, the match is case insensitive
+    monkeypatch.setenv('HAR_UUID_RECORD', f"not-a-real-uuid, {recorded.upper()}")
+
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][recorded]
+    assert not watch.get('last_error'), watch.get('last_error')
+
+    har_zip = os.path.join(watch.data_dir, 'har-record.zip')
+    assert os.path.isfile(har_zip), "HAR_UUID_RECORD listed this watch but nothing was recorded"
+    with zipfile.ZipFile(har_zip) as z:
+        har = json.loads(z.read('har-record.har'))
+
+    # Shown by the "HAR TEST OUTPUT" step in CI (pytest -s), so a human can eyeball what was recorded
+    lines = ["=== HAR TEST OUTPUT ===",
+             f"HAR {har['log']['version']} - {len(har['log']['entries'])} entries, zip is {os.path.getsize(har_zip)} bytes"]
+    for e in har['log']['entries']:
+        lines.append(f"{e['request']['method']} {e['response']['status']} {e['request']['url']} "
+                     f"[{e['_resourceType']}, {e['response']['content']['mimeType']}, "
+                     f"{e['response']['content']['size']} bytes, {e['time']}ms]")
+        lines += [f"   > {h['name']}: {h['value']}" for h in e['request']['headers']]
+        lines += [f"   < {h['name']}: {h['value']}" for h in e['response']['headers']]
+    lines.append("=== END HAR TEST OUTPUT ===")
+    print("\n".join(lines), flush=True)
+
+    documents = [e for e in har['log']['entries'] if e['request']['url'] == recorded_url]
+    # Both hops of the interstitial are in there, which is the whole point of having the recording
+    assert [e['response']['status'] for e in documents] == [503, 200]
+    assert 'The real page content is here' in documents[-1]['response']['content'].get('text', '')
+
+    assert not os.path.isfile(os.path.join(datastore.data['watching'][not_recorded].data_dir, 'har-record.zip')), \
+        "A watch that is not listed in HAR_UUID_RECORD must not be recorded"
+
+    client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

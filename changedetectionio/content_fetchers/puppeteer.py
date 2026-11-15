@@ -210,6 +210,8 @@ class fetcher(Fetcher):
         # Renderer crashes recorded during the fetch, see the 'error' handler in fetch_page().
         # Set up here so run()'s finally can always report, even if we never got as far as a page.
         self.page_errors = []
+        # Only set while HAR_UUID_RECORD asks for this watch's traffic to be recorded
+        self.har_recorder = None
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
@@ -352,6 +354,15 @@ class fetcher(Fetcher):
             logger.error(f"[{watch_uuid}] Page error (the renderer likely crashed, often OOM): {e}")
 
         self.page.on('error', _handle_page_error)
+
+        # Opt-in network recording for debugging a single watch, HAR_UUID_RECORD=uuid,uuid
+        # Attached before anything is requested so the very first document is in there too
+        if os.getenv('HAR_UUID_RECORD'):
+            from changedetectionio.content_fetchers.har_recorder import HarRecorder, har_recording_wanted
+            if har_recording_wanted(watch_uuid):
+                logger.info(f"[{watch_uuid}] HAR_UUID_RECORD matched, recording network traffic of this fetch")
+                self.har_recorder = HarRecorder(self.page._client, title=url)
+                self.har_recorder.start()
 
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
@@ -741,6 +752,22 @@ class fetcher(Fetcher):
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
 
+    async def save_har_record(self, watch_uuid):
+        """Write the recorded traffic to {watch dir}/har-record.zip, must run while the page is still open."""
+        recorder, self.har_recorder = self.har_recorder, None
+        if not recorder:
+            return
+        try:
+            await recorder.stop()
+            if not self.watch_data_dir:
+                logger.warning(f"[{watch_uuid}] HAR recorded but the watch has no data directory to save it to")
+                return
+            os.makedirs(self.watch_data_dir, exist_ok=True)
+            destination, n = await asyncio.to_thread(recorder.save, self.watch_data_dir)
+            logger.info(f"[{watch_uuid}] HAR record with {n} requests saved to {destination}")
+        except Exception as e:
+            logger.error(f"[{watch_uuid}] Could not save the HAR record: {e}")
+
     async def run(self,
                   fetch_favicon=True,
                   current_include_filters=None,
@@ -787,6 +814,10 @@ class fetcher(Fetcher):
                     f"[{watch_uuid}] {len(self.page_errors)} page error(s) during this fetch of '{url}', "
                     f"content may be incomplete: {'; '.join(str(e) for e in self.page_errors)}"
                 )
+
+            # Saved here rather than at the end of fetch_page() so a failed fetch is recorded too,
+            # a blocked or broken page is exactly when the recording is wanted
+            await self.save_har_record(watch_uuid)
 
             # Internal cleanup on any exception/timeout - call quit() immediately
             # This prevents connection leaks during exception bursts

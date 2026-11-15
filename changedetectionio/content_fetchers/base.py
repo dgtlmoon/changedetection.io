@@ -94,6 +94,8 @@ class Fetcher():
     raw_content = None
     screenshot_format = None
     status_code = None
+    # The watch's own directory in the datastore, for fetchers that write per-watch files
+    watch_data_dir = None
     webdriver_js_execute_code = None
     worker_id = None
     xpath_data = None
