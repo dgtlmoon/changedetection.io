@@ -895,14 +895,19 @@ _SECRET_HEADER_WORDS = ('token', 'secret', 'api-key', 'apikey', 'password', 'ses
 
 
 def _har_headers(headers):
-    lines = []
+    """[{'name', 'value'}] with the values of secrets hidden."""
+    out = []
     for h in headers or []:
         name, value = str(h.get('name', '')), str(h.get('value', ''))
         low = name.lower()
         if any(s in low for s in _SECRET_HEADERS) or any(w in low for w in _SECRET_HEADER_WORDS):
             value = f"[hidden, {len(value)} characters]"
-        lines.append(f"  {name}: {value}")
-    return lines
+        out.append({'name': name, 'value': value})
+    return out
+
+
+def _header_lines(headers):
+    return [f"  {h['name']}: {h['value']}" for h in headers]
 
 
 def _har_row(n, entry):
@@ -944,22 +949,29 @@ def get_network_log(ctx, args):
         request, response = entry.get('request') or {}, entry.get('response') or {}
         content = response.get('content') or {}
         max_chars = _int(args, 'max_chars', 4000, 100, 50000)
-        lines = [head, f"Request {n}: {row['method']} {row['url']}", "Request headers:"] + _har_headers(request.get('headers'))
+        # Everything goes into the structured answer as well: some clients only show that part
+        request_headers, response_headers = _har_headers(request.get('headers')), _har_headers(response.get('headers'))
+        detail = dict(row, status_text=response.get('statusText') or '', request_headers=request_headers,
+                      response_headers=response_headers, request_body=None, response_body=None,
+                      response_body_truncated=False)
+        lines = [head, f"Request {n}: {row['method']} {row['url']}", "Request headers:"] + _header_lines(request_headers)
         post = (request.get('postData') or {}).get('text')
         if post:
+            detail['request_body'] = post[:2000]
             lines += ["Request body:", post[:2000] + ('... (cut)' if len(post) > 2000 else '')]
-        lines += [f"Response: {row['status']} {response.get('statusText') or ''}".rstrip()
+        lines += [f"Response: {row['status']} {detail['status_text']}".rstrip()
                   + (f", failed: {row['error']}" if row['error'] else '') + f", {row['ms']} ms", "Response headers:"]
-        lines += _har_headers(response.get('headers'))
+        lines += _header_lines(response_headers)
         body = content.get('text')
         if body is None:
             lines.append(f"Response body: not recorded ({row['size']} bytes, {row['mime_type'] or 'unknown type'})")
         elif content.get('encoding') == 'base64':
             lines.append(f"Response body: binary, {row['size']} bytes of {row['mime_type'] or 'unknown type'}, not shown")
         else:
+            detail.update(response_body=body[:max_chars], response_body_truncated=len(body) > max_chars)
             lines += [f"Response body ({len(body)} characters{', cut to ' + str(max_chars) if len(body) > max_chars else ''}):",
                       body[:max_chars]]
-        structured['request'] = row
+        structured['request'] = detail
         return f"{UNTRUSTED_NOTE}\n" + '\n'.join(lines), structured
 
     needle = (args.get('url_contains') or '').lower()
