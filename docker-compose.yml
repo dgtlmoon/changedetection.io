@@ -16,6 +16,10 @@ services:
   #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
   #      - LOGGER_LEVEL=TRACE
   #
+  #        Debugging: save the network traffic (HAR) of each check of these watch UUIDs to {datastore}/{uuid}/har-record.zip
+  #        Optional: HAR_FORMAT=har for a plain .har file, HAR_INCLUDE_BINARY=true to also keep image/font content
+  #      - HAR_UUID_RECORD=aa4bd6db-e0c9-4ec6-9b95-2b7d8394e333,another-uuid
+  #
   #        Plugins! See https://changedetection.io/plugins for more plugins.
   #        Install additional Python packages (processor plugins, etc.)
   #        Example: Install the OSINT reconnaissance processor plugin

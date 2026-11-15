@@ -2,6 +2,7 @@ import asyncio
 import gc
 import json
 import os
+from contextlib import asynccontextmanager
 
 from loguru import logger
 
@@ -247,6 +248,40 @@ class fetcher(Fetcher):
         del content
         gc.collect()
 
+    @asynccontextmanager
+    async def _har_record(self, watch_uuid):
+        """Opt-in network recording for debugging a single watch, see Fetcher.har_record_wanted()
+
+        Yields the extra new_context() arguments that switch on playwright's own HAR recording.
+        Playwright only writes the HAR when the context closes, and not every exit from run() closes
+        it, so this closes the context itself on the way out - a failed fetch is exactly when the
+        recording is wanted. Entered alongside async_playwright() so it unwinds while the driver is
+        still running.
+        """
+        har = {'context_args': {}, 'context': None}
+        har_tmp = None
+        if self.har_record_wanted(watch_uuid):
+            logger.info(f"[{watch_uuid}] Recording network traffic (HAR) of this fetch")
+            os.makedirs(self.watch_data_dir, exist_ok=True)
+            har_tmp = os.path.join(self.watch_data_dir, 'har-record.tmp.har')
+            har['context_args'] = {'record_har_path': har_tmp, 'record_har_content': 'embed'}
+        try:
+            yield har
+        finally:
+            if har_tmp:
+                try:
+                    if har['context']:
+                        # A no-op when run() already closed it
+                        await asyncio.wait_for(har['context'].close(), timeout=10.0)
+                    from changedetectionio.content_fetchers.har_recorder import save_har_file
+                    destination = await asyncio.to_thread(save_har_file, self.watch_data_dir, har_tmp)
+                    logger.info(f"[{watch_uuid}] HAR record saved to {destination}")
+                except Exception as e:
+                    logger.error(f"[{watch_uuid}] Could not save the HAR record: {e}")
+                finally:
+                    if os.path.exists(har_tmp):
+                        os.unlink(har_tmp)
+
     async def run(self,
                   fetch_favicon=True,
                   current_include_filters=None,
@@ -269,7 +304,7 @@ class fetcher(Fetcher):
         self.watch_uuid = watch_uuid  # Store for use in screenshot_step
         response = None
 
-        async with async_playwright() as p:
+        async with async_playwright() as p, self._har_record(watch_uuid) as har:
             browser_type = getattr(p, self.browser_type)
 
             # Seemed to cause a connection Exception even tho I can see it connect
@@ -292,7 +327,9 @@ class fetcher(Fetcher):
                 proxy=self.proxy,
                 service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
                 user_agent=manage_user_agent(headers=request_headers),
+                **har['context_args'],
             )
+            har['context'] = context
 
             self.page = await context.new_page()
 

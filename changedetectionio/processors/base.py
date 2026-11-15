@@ -24,6 +24,10 @@ class difference_detection_processor():
     screenshot_format = SCREENSHOT_FORMAT_JPEG
     last_raw_content_checksum = None
     worker_id = None
+    # The 'item' dict this check was queued with ({'uuid': .., plus any one-shot options such as
+    # 'record_har'}), set by the worker and handed on to the fetcher in call_browser(). Options in
+    # here apply to this one check only and are never stored on the watch.
+    queued_metadata = None
 
     def __init__(self, datastore, watch_uuid, worker_id=None):
         self.datastore = datastore
@@ -370,6 +374,8 @@ class difference_detection_processor():
         fetcher.backend_name = backend_name
         # and the proxy, for plugins that send their own requests for this check (fetch_request_alter hook)
         fetcher.selected_proxy_url = proxy_url
+        fetcher.watch_data_dir = self.watch.data_dir
+        fetcher.queued_metadata = self.queued_metadata
 
         if self.watch.has_browser_steps:
             fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

@@ -271,6 +271,21 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Playwright - HAR TEST OUTPUT
+        run: |
+          # HAR_UUID_RECORD network recording - print what the browser recorded rather than only pass/fail.
+          # The rest of the -s output is noise, so only the block the test prints is shown unless it fails.
+          if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+               bash -c "cd changedetectionio;pytest -s --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_renavigation.py -k test_har_record_env_writes_har_zip" > /tmp/har-test.log 2>&1; then
+            cat /tmp/har-test.log
+            echo "::error::HAR recording test FAILED"
+            exit 1
+          fi
+          if ! sed -n '/^=== HAR TEST OUTPUT ===/,/^=== END HAR TEST OUTPUT ===/p' /tmp/har-test.log | grep .; then
+            echo "::error::HAR recording test passed but printed no HAR TEST OUTPUT block (was it skipped?)"
+            exit 1
+          fi
+
       - name: Playwright - Headers and requests
         run: |
           docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py; pwd;find .'
@@ -320,6 +335,21 @@ jobs:
             fi
             echo "::endgroup::"
           done
+
+      - name: Pyppeteer - HAR TEST OUTPUT
+        run: |
+          # HAR_UUID_RECORD network recording - print what the browser recorded rather than only pass/fail.
+          # The rest of the -s output is noise, so only the block the test prints is shown unless it fails.
+          if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+               bash -c "cd changedetectionio;pytest -s --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_renavigation.py -k test_har_record_env_writes_har_zip" > /tmp/har-test.log 2>&1; then
+            cat /tmp/har-test.log
+            echo "::error::HAR recording test FAILED"
+            exit 1
+          fi
+          if ! sed -n '/^=== HAR TEST OUTPUT ===/,/^=== END HAR TEST OUTPUT ===/p' /tmp/har-test.log | grep .; then
+            echo "::error::HAR recording test passed but printed no HAR TEST OUTPUT block (was it skipped?)"
+            exit 1
+          fi
 
       - name: Pyppeteer - Headers and requests checks
         run: |
