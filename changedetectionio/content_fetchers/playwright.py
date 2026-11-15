@@ -275,8 +275,8 @@ class fetcher(Fetcher):
                     if har['context']:
                         # A no-op when run() already closed it
                         await asyncio.wait_for(har['context'].close(), timeout=10.0)
-                    from changedetectionio.content_fetchers.har_recorder import write_har_zip
-                    destination = await asyncio.to_thread(write_har_zip, self.watch_data_dir, har_file=har_tmp)
+                    from changedetectionio.content_fetchers.har_recorder import save_har_file
+                    destination = await asyncio.to_thread(save_har_file, self.watch_data_dir, har_tmp)
                     logger.info(f"[{watch_uuid}] HAR record saved to {destination}")
                 except Exception as e:
                     logger.error(f"[{watch_uuid}] Could not save the HAR record: {e}")

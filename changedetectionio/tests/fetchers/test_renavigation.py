@@ -121,4 +121,11 @@ def test_har_record_env_writes_har_zip(client, live_server, measure_memory_usage
     assert not os.path.isfile(os.path.join(datastore.data['watching'][not_recorded].data_dir, 'har-record.zip')), \
         "A watch that is not listed in HAR_UUID_RECORD must not be recorded"
 
+    # And the same recording is what "Download watch data package" hands out
+    import io
+    res = client.get(url_for("ui.ui_edit.watch_get_data_package", uuid=recorded))
+    package = zipfile.ZipFile(io.BytesIO(res.data))
+    with open(har_zip, 'rb') as f:
+        assert package.read(f"{recorded}/har-record.zip") == f.read()
+
     client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
