@@ -153,7 +153,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         # UUID already claimed above immediately after getting from queue
         # to prevent race condition with wait_for_all_checks()
 
-        fetch_start_time = round(time.time())
+        # int(), not round(): rounding up would stamp last_checked and the snapshot up to half a second in the future
+        fetch_start_time = int(time.time())
 
         try:
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
