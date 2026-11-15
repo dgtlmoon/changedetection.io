@@ -192,6 +192,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                                                                          watch_uuid=uuid,
                                                                          worker_id=worker_id)
 
+                    # Whatever this check was queued with, so one-shot options reach the processor and the fetcher
+                    update_handler.queued_metadata = queued_item_data.item
+
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
                     # Kept for the update_finalize hook: on success update_handler is deleted before the

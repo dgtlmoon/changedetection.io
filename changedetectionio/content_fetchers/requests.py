@@ -80,17 +80,15 @@ class fetcher(Fetcher):
         session.mount("http://", adapter)
         session.mount("https://", adapter)
 
-        # Opt-in network recording for debugging a single watch, HAR_UUID_RECORD=uuid,uuid
+        # Opt-in network recording for debugging a single watch, see Fetcher.har_record_wanted()
         # The hook sees the response of every hop, including the redirects followed by hand below
         har_responses = None
-        if os.getenv('HAR_UUID_RECORD') and self.watch_data_dir:
-            from changedetectionio.content_fetchers.har_recorder import har_recording_wanted
-            if har_recording_wanted(watch_uuid):
-                import time
-                logger.info(f"[{watch_uuid}] HAR_UUID_RECORD matched, recording network traffic of this fetch")
-                har_responses = []
-                session.hooks['response'].append(
-                    lambda resp, *args, **kwargs: har_responses.append((time.time() - resp.elapsed.total_seconds(), resp)))
+        if self.har_record_wanted(watch_uuid):
+            import time
+            logger.info(f"[{watch_uuid}] Recording network traffic (HAR) of this fetch")
+            har_responses = []
+            session.hooks['response'].append(
+                lambda resp, *args, **kwargs: har_responses.append((time.time() - resp.elapsed.total_seconds(), resp)))
 
         if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
             from requests_file import FileAdapter

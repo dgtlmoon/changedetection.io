@@ -90,6 +90,8 @@ class Fetcher():
     favicon_blob = None
     instock_data = None
     instock_data_js = ""
+    # The queue 'item' dict of this check, one-shot options that apply to this fetch only (e.g. 'record_har')
+    queued_metadata = None
     # Original response bytes (needed for PDF etc), fetchers that can't provide them leave this as None
     raw_content = None
     screenshot_format = None
@@ -163,6 +165,17 @@ class Fetcher():
         self.screenshot = None
         self.xpath_data = None
         # Keep headers and status_code as they're small
+
+    def har_record_wanted(self, watch_uuid):
+        """Record this fetch's network traffic? Asked for on this one check, or the watch is in HAR_UUID_RECORD"""
+        if not self.watch_data_dir:
+            return False
+        if (self.queued_metadata or {}).get('record_har'):
+            return True
+        if not os.getenv('HAR_UUID_RECORD'):
+            return False
+        from changedetectionio.content_fetchers.har_recorder import har_recording_wanted
+        return har_recording_wanted(watch_uuid)
 
     @abstractmethod
     def get_error(self):

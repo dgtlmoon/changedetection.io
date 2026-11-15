@@ -250,7 +250,7 @@ class fetcher(Fetcher):
 
     @asynccontextmanager
     async def _har_record(self, watch_uuid):
-        """Opt-in network recording for debugging a single watch, HAR_UUID_RECORD=uuid,uuid
+        """Opt-in network recording for debugging a single watch, see Fetcher.har_record_wanted()
 
         Yields the extra new_context() arguments that switch on playwright's own HAR recording.
         Playwright only writes the HAR when the context closes, and not every exit from run() closes
@@ -260,13 +260,11 @@ class fetcher(Fetcher):
         """
         har = {'context_args': {}, 'context': None}
         har_tmp = None
-        if os.getenv('HAR_UUID_RECORD') and self.watch_data_dir:
-            from changedetectionio.content_fetchers.har_recorder import har_recording_wanted
-            if har_recording_wanted(watch_uuid):
-                logger.info(f"[{watch_uuid}] HAR_UUID_RECORD matched, recording network traffic of this fetch")
-                os.makedirs(self.watch_data_dir, exist_ok=True)
-                har_tmp = os.path.join(self.watch_data_dir, 'har-record.tmp.har')
-                har['context_args'] = {'record_har_path': har_tmp, 'record_har_content': 'embed'}
+        if self.har_record_wanted(watch_uuid):
+            logger.info(f"[{watch_uuid}] Recording network traffic (HAR) of this fetch")
+            os.makedirs(self.watch_data_dir, exist_ok=True)
+            har_tmp = os.path.join(self.watch_data_dir, 'har-record.tmp.har')
+            har['context_args'] = {'record_har_path': har_tmp, 'record_har_content': 'embed'}
         try:
             yield har
         finally:
