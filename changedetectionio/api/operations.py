@@ -227,20 +227,29 @@ def update_watch(datastore, uuid, data):
     processors.save_processor_config(datastore, uuid, processor_config_data)
 
 
-def queue_rechecks(update_q, uuids):
+def queue_rechecks(update_q, uuids, metadata=None):
     """Queue watches for a recheck without waiting for them. Skips ones already queued or running.
+
+    metadata: one-shot options for these checks only, added to each queue item (the worker hands it to the
+    processor and fetcher as queued_metadata), e.g. {'record_har': True}. Given options, nothing is skipped: they're
+    merged into an item that's already queued, and a monitor that's being checked right now is queued again, which
+    the worker holds back until that check is done.
 
     Returns (queued, skipped). 20 or more are queued from a background thread so the request returns at once.
     """
     import threading
     from changedetectionio import queuedWatchMetaData, worker_pool
 
-    busy = set(update_q.get_queued_uuids()) | set(worker_pool.get_running_uuids())
-    to_queue = [u for u in uuids if u not in busy]
+    if metadata:
+        to_queue = [u for u in uuids if not update_q.update_queued_metadata(u, metadata)]
+    else:
+        busy = set(update_q.get_queued_uuids()) | set(worker_pool.get_running_uuids())
+        to_queue = [u for u in uuids if u not in busy]
 
     def queue_all():
         for uuid in to_queue:
-            worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+            worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(
+                priority=1, item={'uuid': uuid, **(metadata or {})}))
 
     if len(to_queue) < 20:
         queue_all()
@@ -252,7 +261,7 @@ def queue_rechecks(update_q, uuids):
             except Exception as e:
                 logger.error(f"Error in background queueing: {e}")
         threading.Thread(target=background, daemon=True, name="QueueRechecks").start()
-    return len(to_queue), len(uuids) - len(to_queue)
+    return (len(uuids), 0) if metadata else (len(to_queue), len(uuids) - len(to_queue))
 
 
 def create_tag(datastore, data):
