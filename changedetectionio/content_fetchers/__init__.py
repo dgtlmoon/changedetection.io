@@ -101,21 +101,36 @@ def _log_fetcher_capabilities(fetcher_class, backend_name, uuid=None):
         f"browser_steps={caps.supports_browser_steps}, "
         f"screenshots={caps.supports_screenshots}, "
         f"xpath_element_data={caps.supports_xpath_element_data}, "
-        f"pdf={caps.supports_pdf}"
+        f"pdf={caps.supports_pdf}, "
+        f"binary_downloads={caps.supports_binary_downloads}"
     )
     return caps
 
 
+def fetcher_can_handle_watch(fetcher_class, watch):
+    """Whether this fetcher can supply what the watch is known to be (from its last content-type or URL).
+
+    Browsers show a PDF in their built-in viewer and download other binary files, only some fetchers
+    can get the original out of that (see supports_pdf / supports_binary_downloads)."""
+    from changedetectionio.content_types import binary_rule
+
+    if getattr(watch, 'is_pdf', False):
+        return bool(getattr(fetcher_class, 'supports_pdf', False))
+    if binary_rule(watch.get('content-type'), url=watch.get('url')):
+        return bool(getattr(fetcher_class, 'supports_binary_downloads', False))
+    return True
+
+
 def get_fetcher_by_name(backend_name, watch=None):
     """The fetcher class registered as `backend_name` ('html_requests', a plugin's 'html_...'), or None when
-    there isn't one, or when `watch` is a PDF watch and this fetcher can't supply the original PDF."""
+    there isn't one, or when this fetcher can't supply what `watch` is (see fetcher_can_handle_watch)."""
     import inspect
     if not backend_name or not backend_name.startswith('html_'):
         return None
     fetcher_obj = getattr(sys.modules[__name__], backend_name, None)
     if not inspect.isclass(fetcher_obj):
         return None
-    if watch is not None and getattr(watch, 'is_pdf', False) and not getattr(fetcher_obj, 'supports_pdf', False):
+    if watch is not None and not fetcher_can_handle_watch(fetcher_obj, watch):
         return None
     return fetcher_obj
 
@@ -131,7 +146,7 @@ def resolve_content_fetcher(watch, datastore):
     Also collapses the special backend forms into a concrete fetcher:
       - 'system'                    -> global application default
       - 'extra_browser_<key>'       -> html_webdriver + custom connection URL
-      - is_pdf watch                -> html_requests, unless the fetcher has supports_pdf
+      - PDF / binary watch          -> html_requests, unless the fetcher can handle it (fetcher_can_handle_watch)
       - html_webdriver + browser_steps -> playwright override (puppeteer steps incomplete)
 
     Returns:
@@ -175,12 +190,10 @@ def resolve_content_fetcher(watch, datastore):
         # What it referenced doesn't exist, just use a default
         fetcher_obj = getattr(this_module, "html_requests")
 
-    # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it
-    # @todo https://github.com/dgtlmoon/changedetection.io/issues/2019
-    if getattr(watch, 'is_pdf', False) and not getattr(fetcher_obj, 'supports_pdf', False):
+    if not fetcher_can_handle_watch(fetcher_obj, watch):
         logger.warning(
-            f"Watch {watch.get('uuid')} is_pdf detected (content-type/url) - forcing the "
-            f"'html_requests' fetcher because '{prefer_fetch_backend}' can't supply the original PDF."
+            f"Watch {watch.get('uuid')} is a PDF/binary file (content-type/url) - forcing the "
+            f"'html_requests' fetcher because '{prefer_fetch_backend}' can't supply it."
         )
         prefer_fetch_backend = "html_requests"
         fetcher_obj = getattr(this_module, "html_requests")

@@ -549,7 +549,18 @@ class perform_site_check(difference_detection_processor):
         update_obj['last_filter_config_hash'] = current_filter_config_hash
 
         # === CONTENT PREPROCESSING ===
-        content = content_processor.preprocess(self.fetcher.content, stream_content_type)
+        content = self.fetcher.content
+
+        # Binary files (see content_types.py) that have no text of their own - the snapshot is a
+        # description of the file itself, so any change to the bytes is a change
+        binary = self.fetcher.binary
+        if binary and not (watch.is_pdf or stream_content_type.is_pdf):
+            content = binary.snapshot_text()
+            for flag in ('is_json', 'is_html', 'is_rss', 'is_csv', 'is_xml', 'is_yaml'):
+                setattr(stream_content_type, flag, False)
+            stream_content_type.is_plaintext = True
+
+        content = content_processor.preprocess(content, stream_content_type)
 
         # Check for LD+JSON price data (for HTML content)
         if stream_content_type.is_html:
