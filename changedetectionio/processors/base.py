@@ -25,7 +25,7 @@ class difference_detection_processor():
     last_raw_content_checksum = None
     worker_id = None
     # The 'item' dict this check was queued with ({'uuid': .., plus any one-shot options such as
-    # 'record_har'}), set by the worker and handed on to the fetcher in call_browser(). Options in
+    # 'record_har' or 'proxy'}), set by the worker and handed on to the fetcher in call_browser(). Options in
     # here apply to this one check only and are never stored on the watch.
     queued_metadata = None
 
@@ -176,6 +176,20 @@ class difference_detection_processor():
         logger.info(f"Using preloaded Add-Watch snapshot for {self.watch.get('uuid')} - skipping network fetch")
         return True
 
+    def _proxy_for_this_check(self):
+        """The proxy key to fetch with: a one-shot 'proxy' this check was queued with (queued_metadata), else the
+        watch's/system's. The one-shot value is only ever a key of the configured proxy list, or 'no-proxy' for a
+        direct connection - never a URL, so whoever queues a check can't send it through a proxy of their own."""
+        one_shot = (self.queued_metadata or {}).get('proxy')
+        if one_shot == 'no-proxy':
+            return None
+        if one_shot:
+            if one_shot in (self.datastore.proxy_list or {}):
+                logger.info(f"[{self.watch_uuid}] Using proxy '{one_shot}' for this check only")
+                return one_shot
+            logger.warning(f"[{self.watch_uuid}] Ignoring one-shot proxy '{one_shot}', it is not a configured proxy")
+        return self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
+
     async def call_browser(self, preferred_proxy_id=None):
 
         from requests.structures import CaseInsensitiveDict
@@ -186,8 +200,7 @@ class difference_detection_processor():
         await self.validate_url_is_fetchable()
 
         # Proxy ID "key"
-        preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(
-            uuid=self.watch.get('uuid'))
+        preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self._proxy_for_this_check()
 
         # Resolve which content fetcher this watch should use. This is the single source of
         # truth (watch -> group -> system, extra_browser_/pdf/browser_steps overrides etc);

@@ -94,6 +94,18 @@ def save_har(directory, har):
     return destination
 
 
+def load_har(directory):
+    """(HAR dict, unix time it was recorded) of the recording in directory, (None, None) without one. Blocking."""
+    zipped, plain = os.path.join(directory, HAR_ZIP_FILENAME), os.path.join(directory, HAR_FILENAME)
+    if os.path.isfile(zipped):
+        with zipfile.ZipFile(zipped) as z:
+            return json.loads(z.read(HAR_FILENAME)), os.path.getmtime(zipped)
+    if os.path.isfile(plain):
+        with open(plain, 'r', encoding='utf-8') as f:
+            return json.load(f), os.path.getmtime(plain)
+    return None, None
+
+
 def save_har_file(directory, har_file):
     """Same as save_har() for a HAR that some other recorder already wrote to har_file. Blocking."""
     with open(har_file, 'r', encoding='utf-8') as f:
