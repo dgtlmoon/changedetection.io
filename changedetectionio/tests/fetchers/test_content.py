@@ -91,9 +91,10 @@ def test_favicon_falls_back_to_the_browsers_own_copy(client, live_server, measur
     import pytest
     from changedetectionio.strtobool import strtobool
 
-    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+    # This file also runs in the playwright and selenium CI jobs, only the puppeteer one has the fallback
     if not strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')):
         pytest.skip("The browser-request favicon fallback is only in the puppeteer fetcher for now")
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
 
     def _cdio(url):
         # The browser runs in another container in CI and reaches the test server as 'cdio'
