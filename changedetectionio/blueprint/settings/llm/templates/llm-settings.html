@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from 'settings-tabs.html' import settings_tabs with context %}
+{#
+  The AI pages, /settings/ai/llm ("AI / LLM") and /settings/ai/mcp ("MCP Server") (blueprint/settings/llm), one
+  wrapper for both: the /settings tab row with "AI / LLM / MCP" active, the switch between the two pages
+  (settings-ai-tabs.html), the scripts, and the page's own part: llm-settings_llm.html or llm-settings_mcp.html, by
+  active_tab. Only registered when LLM_FEATURES_DISABLED isn't set.
+#}
+{% block content %}
+<script src="{{ url_for('static_content', group='js', filename='modal.js') }}"></script>
+<script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
+<script src="{{ url_for('static_content', group='js', filename='click-to-copy.js') }}" defer></script>
+{#- Drops the API key's anti-autofill readonly on focus/click (data-unlock-on-interact), without it the key can't be typed -#}
+<script src="{{ url_for('static_content', group='js', filename='global-settings.js') }}" defer></script>
+{% if active_tab == 'mcp' %}
+<script src="{{ url_for('static_content', group='js', filename='mcp-tokens.js') }}" defer></script>
+<script src="{{ url_for('static_content', group='js', filename='mcp-note.js') }}" defer></script>
+{% endif %}
+
+<div class="edit-form">
+    {{ settings_tabs(active='ai', plugin_tabs=plugin_tabs) }}
+    <div class="box-wrap inner">
+        {% include 'settings-ai-tabs.html' %}
+        {% if active_tab == 'mcp' %}
+        {% include 'llm-settings_mcp.html' %}
+        {% else %}
+        {% include 'llm-settings_llm.html' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

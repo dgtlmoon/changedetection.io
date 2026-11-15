@@ -78,6 +78,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
     while not app.config.exit.is_set():
         update_handler = None
+        finalize_handler = None  # The handler update_finalize gets, see below
         watch = None
         processing_exception = None  # Reset at start of each iteration to prevent state bleeding
 
@@ -98,6 +99,16 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 deferred_priority = max(1000, queued_item_data.priority * 10)
                 deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
                 worker_pool.queue_item_async_safe(q, deferred_item, silent=True)
+                continue
+
+            # A scheduled check (the ticker stamps scheduled_at) for a monitor that was checked since it was scheduled:
+            # the ticker can queue it again while a worker has taken it off the queue but not claimed it yet, and that
+            # second copy is also re-queued above until the first check is done. One check is enough.
+            scheduled_at = queued_item_data.item.get('scheduled_at')
+            checked_watch = datastore.data['watching'].get(uuid)
+            if scheduled_at and checked_watch is not None and checked_watch.get('last_checked', 0) >= int(scheduled_at):
+                logger.debug(f"Worker {worker_id} skipping scheduled check of {uuid}, already checked since it was queued")
+                worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
                 continue
 
         except asyncio.TimeoutError:
@@ -183,6 +194,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
+                    # Kept for the update_finalize hook: on success update_handler is deleted before the
+                    # finally block below, so capturing it there would hand plugins None
+                    finalize_handler = update_handler
 
                     set_watch_minitext_status(watch, "Fetching...")
 
@@ -231,7 +245,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             extra_help = ", it's possible that the filters were found, but contained no usable text."
 
                     datastore.update_watch(uuid=uuid, update_obj={
-                        'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}"
+                        'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}",
+                        'last_check_status': e.status_code
                     })
 
                     if e.screenshot:
@@ -266,7 +281,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     if e.page_text:
                         watch.save_error_text(contents=e.page_text)
 
-                    datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                    datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                'last_check_status': e.status_code})
                     process_changedetection_results = False
 
                 except FilterNotFoundInResponse as e:
@@ -422,8 +438,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     update_obj['content-type'] = str(update_handler.fetcher.get_all_headers().get('content-type', '') or "").lower()
 
-                    if not watch.get('ignore_status_codes'):
-                        update_obj['consecutive_filter_failures'] = 0
+                    # Any successful check breaks the failure streak, "Ignore status codes" only affects HTTP status handling
+                    update_obj['consecutive_filter_failures'] = 0
 
                     update_obj['last_error'] = False
                     cleanup_error_artifacts(uuid, datastore)
@@ -683,7 +699,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             if uuid:
                 # Capture references for plugin finalize hook BEFORE cleanup
                 # (cleanup may delete these variables, but plugins need the original references)
-                finalize_handler = update_handler  # Capture now, before cleanup deletes it
                 finalize_watch = watch              # Capture now, before any modifications
 
                 # Call quit() as backup (Puppeteer/Playwright have internal cleanup, but this acts as safety net)

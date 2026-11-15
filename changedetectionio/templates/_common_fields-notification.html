@@ -1,0 +1,73 @@
+{# Setup widget, builds an Apprise URL from a few fields and appends it to the
+   textarea below (which stays the source of truth). Its inputs have no name=
+   so nothing here is submitted with the form. See notification-setup.js #}
+<div id="notification-setup" class="notification-setup"
+     data-services-url="{{ url_for('settings.notifications.apprise_services') }}"
+     data-service-url="{{ url_for('settings.notifications.apprise_service', schema='__SCHEMA__') }}"
+     data-build-url="{{ url_for('settings.notifications.apprise_build') }}"
+     data-i18n="{{ {
+        'noMatches': _('No matching service'),
+        'required': _('Required'),
+        'commaSeparated': _('Separate several with commas'),
+        'secure': _('Secure connection (TLS)'),
+        'headersHint': _('One per line, Name=Value'),
+        'fillIn': _('Fill in the fields to build the URL'),
+        'added': _('Added to the list below'),
+        'sending': _('Processing..'),
+     }|tojson|forceescape }}">
+    <label for="ns-search">{{ _('Add a notification service:') }}</label>
+    <div class="ns-search-wrap">
+        {# The most used services, one click opens their form. Apprise isn't imported to count the
+           rest (it's loaded lazily), 152 are listed at the time of writing, so "over 140" holds.
+           With NOTIFICATION_MAIL_BUTTON_PREFIX set there's already an "Add email notification" row
+           (a hosted mail service), a second, plain e-mail button next to it would be confusing. #}
+        {%- set ns_quick = [('discord', 'Discord', 'discord-logo.svg'),
+                            ('tgram', 'Telegram', 'telegram_logo.svg'),
+                            ('slack', 'Slack', 'slack-mark.svg')] %}
+        {%- if emailprefix %}
+            {%- set ns_quick = ns_quick + [('custom-http', _('Webhook / API'), 'webhook-mark.svg')] %}
+        {%- else %}
+            {%- set ns_quick = ns_quick + [('mailtos', _('E-mail'), 'email-envelope.svg')] %}
+        {%- endif %}
+        {%- set ns_quick = ns_quick + [('matrixs', 'Matrix', 'matrix-mark.svg'),
+                                       ('pover', 'Pushover', 'pushover-mark.svg'),
+                                       ('workflow', 'Microsoft Teams (Workflows)', 'teams-workflow-mark.svg'),
+                                       ('hassios', 'Home Assistant', 'homeassistant-mark.svg'),
+                                       ] %}
+        <div class="ns-quick" role="group" aria-label="{{ _('Popular services') }}">
+            {%- for schema, name, icon in ns_quick %}
+            <button type="button" class="ns-quick-btn" data-schema="{{ schema }}" title="{{ name }}" aria-label="{{ name }}">
+                <img src="{{ url_for('static_content', group='images', filename=icon) }}" alt="">
+            </button>
+            {%- endfor %}
+        </div>
+        <input type="search" id="ns-search" autocomplete="off" spellcheck="false"
+               placeholder="{{ _('+ Search over %(count)d other services', count=140) }}"
+               role="combobox" aria-expanded="false" aria-controls="ns-results" aria-autocomplete="list">
+        <ul id="ns-results" class="ns-results" role="listbox" hidden></ul>
+        <details class="ns-all">
+            <summary>{{ _('List all') }}</summary>
+            <ul class="ns-all-list"></ul>
+        </details>
+        <span class="pure-form-message-inline">{{ _('Notification services <a href="%(url)s" target="_blank">powered by Apprise</a>.', url='https://appriseit.com/')|safe }}</span>
+    </div>
+    <div class="ns-card" hidden>
+        <div class="ns-card-head">
+            <strong class="ns-name"></strong> <code class="ns-schema"></code>
+            <a class="ns-help" target="_blank" rel="noopener">{{ _('How do I get these?') }}</a>
+            <a href="#" class="ns-close" title="{{ _('Close') }}">✕</a>
+        </div>
+        <div class="ns-fields"></div>
+        <details class="ns-options">
+            <summary>{{ _('Options') }}</summary>
+            <div class="ns-fields ns-options-body"></div>
+        </details>
+        <div class="ns-preview">
+            <code class="ns-url"></code>
+            <span class="ns-message"></span>
+            <button type="button" class="pure-button button-xsmall ns-test" disabled>{{ _('Send test notification') }}</button>
+            <button type="button" class="pure-button button-secondary button-xsmall ns-add" disabled>{{ _('Add to list') }}</button>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static_content', group='js', filename='notification-setup.js') }}" defer></script>

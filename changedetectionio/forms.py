@@ -29,6 +29,7 @@ from wtforms import (
     PasswordField,
     RadioField,
     SelectField,
+    SelectMultipleField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -1029,14 +1030,20 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
     def extra_tab_content(self):
         return None
 
+    def extra_form_template(self):
+        # Template name (on the Flask loader) for the processor's extra tab, rendered with render_template()
+        # so its text is translatable. Preferred over extra_form_content().
+        return None
+
     def extra_form_content(self):
+        # Legacy: raw Jinja2 source for the extra tab, kept for third-party processor plugins.
+        # Text in a Python string is never extracted by Babel, use extra_form_template() instead.
         return None
 
     def validate(self, **kwargs):
         if not super().validate():
             return False
 
-        from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -1044,64 +1051,15 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
             self.body.errors.append(gettext('Body must be empty when Request Method is set to GET'))
             result = False
 
-        # Attempt to validate jinja2 templates in the URL
-        if self.url.data and JINJA2_MARKER_PATTERN.search(self.url.data):
-            try:
-                jinja_render(template_str=self.url.data)
-            except ModuleNotFoundError as e:
-                # incase jinja2_time or others is missing
-                logger.error(e)
-                self.url.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                result = False
-            except Exception as e:
-                logger.error(e)
-                self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-                result = False
-
-        # Attempt to validate jinja2 templates in the optional "Link to Open"
-        if self.link_to_open.data and self.link_to_open.data.strip():
-            if JINJA2_MARKER_PATTERN.search(self.link_to_open.data):
-                try:
-                    jinja_render(template_str=self.link_to_open.data)
-                except ModuleNotFoundError as e:
-                    logger.error(e)
-                    self.link_to_open.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                    result = False
-                except Exception as e:
-                    logger.error(e)
-                    self.link_to_open.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-                    result = False
-
-        # Attempt to validate jinja2 templates in the body
-        if self.body.data and self.body.data.strip():
-            if JINJA2_MARKER_PATTERN.search(self.body.data):
-                try:
-                    jinja_render(template_str=self.body.data)
-                except ModuleNotFoundError as e:
-                    # incase jinja2_time or others is missing
-                    logger.error(e)
-                    self.body.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                    result = False
-                except Exception as e:
-                    logger.error(e)
-                    self.body.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-                    result = False
-
-        # Attempt to validate jinja2 templates in the headers
-        if len(self.headers.data) > 0:
-            try:
-                for header, value in self.headers.data.items():
-                    if JINJA2_MARKER_PATTERN.search(value):
-                        jinja_render(template_str=value)
-            except ModuleNotFoundError as e:
-                # incase jinja2_time or others is missing
-                logger.error(e)
-                self.headers.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                result = False
-            except Exception as e:
-                logger.error(e)
-                self.headers.errors.append(gettext('Invalid template syntax in \"%(header)s\" header: %(error)s') % {'header': header, 'error': e})
-                result = False
+        # Jinja2 templates in the URL, "Link to Open", body and headers - shared with the API
+        from changedetectionio.jinja2_custom.validate import validate_jinja2_fields
+        jinja2_errors = validate_jinja2_fields(url=self.url.data,
+                                               link_to_open=self.link_to_open.data,
+                                               body=self.body.data,
+                                               headers=self.headers.data)
+        for field_name, error in jinja2_errors.items():
+            getattr(self, field_name).errors.append(error)
+            result = False
 
         return result
 
@@ -1319,6 +1277,11 @@ class globalSettingsLLMForm(Form):
         default=5,
         render_kw={"placeholder": "5", "style": "width: 6em;"},
     )
+    # Ollama / OpenAI-compatible endpoints only, off by default so the server's own thinking default applies (#4638)
+    local_thinking_off = BooleanField(
+        _l('Switch thinking off'),
+        default=False,
+    )
     change_summary_default = TextAreaField(
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
@@ -1424,8 +1387,65 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class globalLLMSettingsPageForm(Form):
+    """The /settings/llm page. Still stored under datastore['settings']['application']['llm'], the
+    sub-form keeps the `llm-` field prefix so settings/llm/templates/llm-settings_llm.html renders it unchanged."""
     llm = FormField(globalSettingsLLMForm)
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+def normalise_mcp_public_url(value):
+    """The "Public MCP address" as stored (settings.application.mcp_base_url): no trailing slash, and the instance's
+    address rather than its MCP endpoint when someone pastes .../mcp/v1."""
+    value = (value or '').strip().rstrip('/')
+    if value.endswith('/mcp/v1'):
+        value = value[:-len('/mcp/v1')].rstrip('/')
+    return value
+
+
+def validate_mcp_public_url(form, field):
+    from urllib.parse import urlsplit
+    value = normalise_mcp_public_url(field.data)
+    if not value:
+        return
+    parts = urlsplit(value)
+    if parts.scheme not in ('http', 'https') or not parts.hostname or parts.query or parts.fragment or parts.username:
+        raise ValidationError(_l('Use a full http:// or https:// address, without ?query or #fragment.'))
+
+
+class globalMCPSettingsPageForm(Form):
+    """The /settings/ai/mcp page ("MCP Server" tab), stored in datastore['settings']['application']['mcp_enabled']. The
+    access tokens have their own form, MCPTokenForm."""
+    # Also the switch for the OAuth endpoints once they exist (MCP-config.md, point 3)
+    enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
+    # Empty for the built-in note (blueprint/mcp INSTRUCTIONS, shown as the placeholder), stored as mcp_note
+    note = TextAreaField(_l('MCP Note'), validators=[validators.Optional(), validators.Length(max=4000)])
+    # Stored as mcp_anonymous_read: a request with no credentials gets read-only access (blueprint/mcp
+    # ANONYMOUS_PERMISSIONS) instead of a 401
+    anonymous_read = BooleanField(_l('Allow read-only access without sign-in'), default=False)
+    # Empty to build it from each request, stored as mcp_base_url (blueprint/mcp/oauth issuer()). Not the notification
+    # Base URL: that one is only for links in notifications
+    public_url = StringField(_l('Public MCP address'), validators=[validators.Optional(), validators.Length(max=500),
+                                                                   validate_mcp_public_url])
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class MCPTokenForm(Form):
+    """Add or edit one MCP access token (the overlay on the "Access tokens" sub-tab, sent with ajax): its name and its
+    None / Read / Write grid, one perm_<area> field per row (see blueprint/mcp/tools.py)."""
+    name = StringField(_l('Name'), validators=[validators.DataRequired(), validators.Length(max=64)],
+                       render_kw={'placeholder': _l('e.g. Claude Code, laptop'), 'maxlength': 64})
+    perm_monitors = RadioField(_l('Monitors'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_tags = RadioField(_l('Groups (tags)'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_notifications = RadioField(_l('Notifications'), default='read', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_browser = RadioField(_l('Browser steps & JavaScript'), default='none', choices=[('none', _l('None')), ('write', _l('Write'))])
+    perm_system = RadioField(_l('System info'), default='read', choices=[('none', _l('None')), ('read', _l('Read'))])
+    # The groups (tags) the token is limited to, none ticked for every monitor. Choices are the tags, set by the routes
+    tags = SelectMultipleField(_l('Only these groups'), choices=[], validate_choice=True,
+                               widget=widgets.ListWidget(prefix_label=False), option_widget=widgets.CheckboxInput())
 
 
 class extractDataForm(Form):

@@ -1,4 +1,5 @@
 import time
+import pytest
 from flask import url_for
 from email import message_from_string
 from email.policy import default as email_policy
@@ -778,3 +779,87 @@ def test_check_html_notification_with_apprise_format_is_html(client, live_server
     # GHSA-q8xq-qg4x-wphg: apostrophes in diff content are escaped (&#39;) for HTML notifications.
     assert '(added) So let&#39;s see what happens.<br>' in html_content  # the html part
     delete_all_watches(client)
+
+
+def _notify_mail_and_json(live_server, datastore_path, title, body, notification_format, mail_first, json_url_extra=''):
+    """Send one notification to a mailto:// URL and a json:// URL, return (email_html, json_message, sent_objs)."""
+    import json
+    from changedetectionio.notification.handler import process_notification
+
+    mail_url = f'mailto://changedetection@{smtp_test_server}:11025/?to=fff@home.com'
+    json_url = live_server.url(f"/test_notification_endpoint?status_code=204{json_url_extra}").replace("http://", "json://", 1)
+
+    n_object = NotificationContextData(
+        initial_data={
+            "notification_urls": [mail_url, json_url] if mail_first else [json_url, mail_url],
+            "notification_title": title,
+            "notification_body": body,
+            "notification_format": notification_format,
+            "watch_url": "https://example.com/watched",
+        }
+    )
+    sent = process_notification(n_object, live_server.app.config["DATASTORE"])
+
+    with open(os.path.join(datastore_path, "notification.txt")) as f:
+        json_message = json.loads(f.read())["message"]
+
+    msg = message_from_string(get_last_message_from_smtp_server(), policy=email_policy)
+    # The echo server only keeps the last message, make sure it's this run's email
+    assert msg['subject'] == title
+    email_html = next((p.get_content() for p in msg.walk() if p.get_content_type() == 'text/html'), '')
+
+    return email_html, json_message, sent
+
+
+@pytest.mark.parametrize("notification_format", ["markdown", "html", "htmlcolor"])
+@pytest.mark.parametrize("mail_first", [True, False])
+def test_notification_format_is_applied_per_notification_url(mail_first, notification_format, live_server, datastore_path):
+    """#4619 - Markdown-to-HTML and the monospaced email wrapper are per notification URL.
+
+    Previously the first URL rewrote the shared format to html, so a later URL skipped the
+    Markdown conversion, and a single notify() after the loop sent the last URL's body to every
+    URL - so the email lost its wrapper, or the json:// service received the email's HTML document.
+    """
+    title = f"Per-URL notice {notification_format} mail_first={mail_first}"
+    email_html, json_message, sent = _notify_mail_and_json(live_server, datastore_path,
+                                                           title=title,
+                                                           body="**bold change**\n\nsecond line",
+                                                           notification_format=notification_format,
+                                                           mail_first=mail_first)
+
+    # The monospaced email document is only for mail URLs
+    assert "<!DOCTYPE html>" in email_html
+    assert "<pre" in email_html
+    assert "<!DOCTYPE html>" not in json_message
+    assert "bold change" in json_message
+
+    if notification_format == "markdown":
+        # Both services receive converted HTML, not the original Markdown
+        converted_html = "<p><strong>bold change</strong></p>"
+        assert converted_html in json_message
+        assert "**bold change**" not in json_message
+        assert converted_html in email_html
+        assert "**bold change**" not in email_html
+
+    # Logged body is the rendered body, the email wrapper only goes to Apprise
+    assert len(sent) == 2
+    for entry in sent:
+        assert "<!DOCTYPE html>" not in entry["body"]
+        assert entry["title"] == title
+
+
+def test_notification_url_format_override_stays_on_its_own_url(live_server, datastore_path):
+    """#4619 - An explicit ?format=text on one URL must not turn a later mailto:// URL into plaintext."""
+    title = "Per-URL format override"
+    email_html, json_message, sent = _notify_mail_and_json(live_server, datastore_path,
+                                                           title=title,
+                                                           body="override check line",
+                                                           notification_format="html",
+                                                           mail_first=False,
+                                                           json_url_extra="&format=text")
+
+    assert "override check line" in json_message
+    assert "<!DOCTYPE html>" not in json_message
+    # The mail URL still gets its HTML part with the monospaced wrapper
+    assert "<!DOCTYPE html>" in email_html
+    assert "override check line" in email_html

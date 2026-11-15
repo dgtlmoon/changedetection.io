@@ -53,6 +53,14 @@
   --color-background-tab: rgba(255, 255, 255, 0.2);
   --color-background-tab-hover: rgba(255, 255, 255, 0.5);
   --color-text-tab-active: #222;
+  // The sub-page switch inside a settings box (.settings-subtabs), on the box's background, not the page gradient
+  --color-text-subtab: var(--color-grey-300);
+  --color-background-subtabs: rgba(0, 0, 0, 0.06);
+  --color-background-subtab-hover: rgba(0, 0, 0, 0.06);
+  // The two AI pages: outgoing (AI / LLM, the existing orange accent) and incoming (MCP Server, teal)
+  --color-ai-outgoing: var(--color-menu-accent);
+  --color-ai-incoming: #0e9488;
+  --color-ai-incoming-soft: rgba(14, 148, 136, 0.08);
   --color-api-key: #0078e7;
 
   --color-background-button-primary: #0078e7;
@@ -77,6 +85,7 @@
   --color-background-messages-error: rgba(255, 1, 1, .5);
   --color-background-messages-notice: rgba(255, 255, 255, .5);
   --color-border-notification: #ccc;
+  --color-text-notification-setup-error: var(--color-error);
 
   --color-background-checkbox-operations: rgba(255, 255, 255, 0.7);
   --color-warning: #ff3300;
@@ -136,7 +145,7 @@
   --color-background-gradient-first: #3f90a5;
   --color-background-gradient-second: #1e316c;
   --color-background-gradient-third: #4d2c64;
-
+  --color-background-button-secondary: rgba(66, 184, 221, 0.2);
   --color-background-new-watch-input: var(--color-grey-100);
   --color-background-new-watch-input-transparent: var(--color-grey-100);
   --color-text-new-watch-input: var(--color-text);
@@ -152,6 +161,11 @@
   --color-text-menu-link: var(--color-grey-800);
   --color-border-table-cell: var(--color-grey-400);
   --color-text-tab-active: var(--color-text);
+  --color-text-subtab: var(--color-grey-750);
+  --color-background-subtabs: rgba(255, 255, 255, 0.06);
+  --color-background-subtab-hover: rgba(255, 255, 255, 0.08);
+  --color-ai-incoming: #2dd4bf;
+  --color-ai-incoming-soft: rgba(45, 212, 191, 0.12);
 
   --color-border-input: var(--color-grey-400);
   --color-shadow-input: var(--color-grey-50);
@@ -167,7 +181,7 @@
   --color-background-snapshot-age: var(--color-grey-200);
   --color-shadow-jump: var(--color-grey-200);
   --color-icon-github: var(--color-white);
-  --color-watch-table-error: var(--color-light-red);
+  --color-text-notification-setup-error: #ff7b7b;
   --color-watch-table-row-text: var(--color-grey-800);
 
   // Left rail — dark mode overrides

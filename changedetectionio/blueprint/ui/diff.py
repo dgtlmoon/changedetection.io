@@ -322,7 +322,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
     def _mark_viewed(uuid):
         import time
-        datastore.set_last_viewed(uuid, int(time.time()))
+        from changedetectionio.pluggy_interface import set_watch_last_viewed
+        set_watch_last_viewed(datastore, uuid, time.time(), source='llm_summary')
 
     # Slack on top of the model's own deadline: the worker still has to come back through
     # litellm and write the summary to the on-disk cache after the last token.
@@ -563,6 +564,38 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return jsonify(processor_module.get_data(watch=watch, datastore=datastore, request=request))
 
         abort(404, description=f"Processor '{processor_name}' does not provide difference data")
+
+    @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-chart", methods=['GET'])
+    @login_optionally_required
+    def diff_history_page_processor_chart(uuid):
+        """
+        Return a processor's chart as an HTML fragment (e.g. the restock price/stock chart), loaded
+        into the history page and the watch list roll-down. Processor-aware: delegates to
+        processors/{type}/difference.py::get_chart(), 404 if the processor doesn't implement it
+        (or doesn't know the requested ?context=).
+        """
+        from flask import make_response, abort
+
+        if uuid == 'first':
+            uuid = list(datastore.data['watching'].keys()).pop()
+        try:
+            watch = datastore.data['watching'][uuid]
+        except KeyError:
+            abort(404, description='Watch not found')
+
+        processor_name = watch.get('processor', 'text_json_diff')
+        from changedetectionio.processors import get_processor_submodule
+        processor_module = get_processor_submodule(processor_name, 'difference')
+
+        html = processor_module.get_chart(watch=watch, datastore=datastore, request=request) \
+            if processor_module and hasattr(processor_module, 'get_chart') else None
+        if html is None:
+            abort(404, description=f"Processor '{processor_name}' does not provide this chart")
+
+        response = make_response(html)
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+        response.headers['Cache-Control'] = 'no-cache'
+        return response
 
     @diff_blueprint.route("/diff/<uuid_str:uuid>/processor-export.xlsx", methods=['GET'])
     @login_optionally_required

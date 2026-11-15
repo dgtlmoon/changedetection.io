@@ -136,21 +136,7 @@ window.watchOverviewI18n = {
     generatingSummary: {{ _('Generating change summary…')|tojson }},
     gotoHistory:       {{ _('Goto full history')|tojson }},
     loadingPriceHistory: {{ _('Loading price history…')|tojson }},
-    inStock:           {{ _('In stock')|tojson }},
-    outOfStock:        {{ _('Out of stock')|tojson }},
-    noPriceData:       {{ _('No price data available to graph yet.')|tojson }},
-    priceHistoryError: {{ _('Could not load price history.')|tojson }},
-    changes:           {{ _('Changes')|tojson }},
-    avgPrice:          {{ _('Average price')|tojson }},
-    priceLow:          {{ _('Currently low')|tojson }},
-    priceTypical:      {{ _('Currently typical')|tojson }},
-    priceHigh:         {{ _('Currently high')|tojson }},
-    {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
-    cheaperThan:       {{ _('cheaper than {pct} of tracked prices')|tojson }},
-    {# TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" #}
-    pricierThan:       {{ _('more expensive than {pct} of tracked prices')|tojson }},
-    typicalNote:       {{ _('around the usual price')|tojson }},
-    avgLabel:          {{ _('avg')|tojson }}
+    priceHistoryError: {{ _('Could not load price history.')|tojson }}
 };
 </script>
 {% endif %}
@@ -236,20 +222,25 @@ window.watchOverviewI18n = {
                current tag/processor/search context (computed in index()), so each
                option only appears when it has matches in the current view. #}
             <div class="seg" role="group" aria-label="{{ _('Filter watches') }}">
-                <a class="{{ 'active' if not request.args.get('unread') and not request.args.get('with_errors') and not request.args.get('deals') }}"
-                   href="{{ filter_url(unread=None, with_errors=None, deals=None) }}">{{ _('All') }}</a>
+                <a class="{{ 'active' if not request.args.get('unread') and not request.args.get('with_errors') and not request.args.get('healthy') and not request.args.get('deals') }}"
+                   href="{{ filter_url(unread=None, with_errors=None, healthy=None, deals=None) }}">{{ _('All') }}</a>
                 {% if unread_count %}
                 <a id="post-list-unread" class="{{ 'active' if request.args.get('unread') == '1' }}"
-                   href="{{ filter_url(unread=1, with_errors=None, deals=None) }}">{{ _('Unread') }} <span class="seg-count seg-count--unread" id="unread-tab-counter">{{ unread_count|format_int_locale }}</span></a>
+                   href="{{ filter_url(unread=1, with_errors=None, healthy=None, deals=None) }}">{{ _('Unread') }} <span class="seg-count seg-count--unread" id="unread-tab-counter">{{ unread_count|format_int_locale }}</span></a>
                 {% endif %}
                 {# Deals appears only when a price drop has been detected in the current view. #}
                 {% if deals_count %}
                 <a id="post-list-deals" class="{{ 'active' if request.args.get('deals') == '1' }}"
-                   href="{{ filter_url(deals=1, unread=None, with_errors=None) }}">{{ _('Deals') }} <span class="seg-count seg-count--deal" id="deals-tab-counter">{{ deals_count|format_int_locale }}</span></a>
+                   href="{{ filter_url(deals=1, unread=None, with_errors=None, healthy=None) }}">{{ _('Deals') }} <span class="seg-count seg-count--deal" id="deals-tab-counter">{{ deals_count|format_int_locale }}</span></a>
                 {% endif %}
                 {% if errored_count %}
                 <a id="post-list-with-errors" class="{{ 'active' if request.args.get('with_errors') == '1' }}"
-                   href="{{ filter_url(with_errors=1, unread=None, deals=None) }}">{{ _('With errors') }} <span class="seg-count seg-count--error" id="with-errors-tab-counter">{{ errored_count|format_int_locale }}</span></a>
+                   href="{{ filter_url(with_errors=1, healthy=None, unread=None, deals=None) }}">{{ _('With errors') }} <span class="seg-count seg-count--error" id="with-errors-tab-counter">{{ errored_count|format_int_locale }}</span></a>
+                {% endif %}
+                {# Inverse of 'With errors' - only worth offering while something is failing, otherwise it would equal All. #}
+                {% if errored_count and healthy_count %}
+                <a id="post-list-healthy" class="{{ 'active' if request.args.get('healthy') == '1' }}"
+                   href="{{ filter_url(healthy=1, with_errors=None, unread=None, deals=None) }}">{{ _('Healthy') }} <span class="seg-count" id="healthy-tab-counter">{{ healthy_count|format_int_locale }}</span></a>
                 {% endif %}
             </div>
             {# Processor (watch type) filter — only when more than one type is in use.
@@ -303,6 +294,7 @@ window.watchOverviewI18n = {
         <button type="submit" name="op" value="set-fetch-backend" id="op-set-fetch-backend" hidden></button>
         <button type="submit" name="op" value="set-proxy" id="op-set-proxy" hidden></button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" ></i>&nbsp;{{ _('Mark viewed') }}</button>
+        <button class="pure-button button-secondary button-xsmall" name="op" value="mark-unviewed"><i data-feather="eye-off" ></i>&nbsp;{{ _('Mark unviewed') }}</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" ></i>&nbsp;{{ _('Use default notification') }}</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="clear-errors"><i data-feather="x-circle" ></i>&nbsp;{{ _('Clear errors') }}</button>
         <button class="pure-button button-secondary button-xsmall" style="background: #dd4242;" name="op" value="clear-history"

@@ -225,6 +225,18 @@ class RecheckPriorityQueue:
         """Check if queue is empty"""
         return self.qsize() == 0
 
+    def get_queue_positions(self) -> dict:
+        """{uuid: 1-based position} in the order the workers will take them (lowest priority value first). Items of
+        the same priority have no fixed order between them, so this is close, not exact."""
+        try:
+            with self._lock:
+                ordered = sorted(self._priority_items)
+            return {item.item['uuid']: n for n, item in enumerate(
+                (i for i in ordered if hasattr(i, 'item') and 'uuid' in i.item), start=1)}
+        except Exception as e:
+            logger.error(f"Failed to get queue positions: {str(e)}")
+            return {}
+
     def get_queued_uuids(self) -> list:
         """Get list of all queued UUIDs efficiently with single lock"""
         try:

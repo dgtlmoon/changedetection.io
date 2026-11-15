@@ -11,24 +11,7 @@ $(document).ready(function () {
         $(this).removeAttr('readonly');
     });
 
-    $("#api-key").hover(
-        function () {
-            $("#api-key-copy").html('copy').fadeIn();
-        },
-        function () {
-            $("#api-key-copy").hide();
-        }
-    ).click(function (e) {
-        $("#api-key-copy").html('copied');
-        var range = document.createRange();
-        var n = $("#api-key")[0];
-        range.selectNode(n);
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(range);
-        document.execCommand("copy");
-        window.getSelection().removeAllRanges();
-
-    });
+    // The API key's click to copy is click-to-copy.js
 
     $(".toggle-show").click(function (e) {
         e.preventDefault();

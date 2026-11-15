@@ -1,11 +1,14 @@
-{% from '_helpers.html' import render_field %}
-{% from '_stab.html' import stab_shell, stab_pane %}
 {#
-  AI / LLM settings tab content — included from settings.html.
-  Requires template context: form, llm_config, llm_env_configured
+  The "AI / LLM" part of /settings/ai/llm, included by llm-settings.html (the wrapper with the tab rows and the
+  scripts). Stored in settings.application.llm. Its own inline script below drives this form (provider hints, model
+  list), so it stays with it.
+  Requires template context: form, llm_config, llm_env_configured (see llm_template_context())
 #}
-<div class="tab-pane-inner" id="ai">
-<script src="{{ url_for('static_content', group='js', filename='sub-tabs.js') }}"></script>
+{% from '_helpers.html' import render_field, render_button %}
+{% from '_stab.html' import stab_shell, stab_pane %}
+        <form class="pure-form pure-form-stacked settings" action="{{ url_for('settings.llm.llm_settings_page') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="tab-pane-inner tab-pane-current" id="ai">
 
 {# TRANSLATORS: 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide #}
 {% set _usage_label = pgettext('AI usage stats', 'Usage') %}
@@ -18,11 +21,16 @@
 ]) %}
 
   {# ── Overview ──────────────────────────────────────────────────────────── #}
-  {% call stab_pane('overview') %}
-  <div class="stab-overview-hero">
-    <h3><span class="stab-overview-glyph"><i data-feather="cpu"></i></span> {{ _('AI-powered change monitoring') }}</h3>
-    <p>{{ _('Connect an LLM to move from "something changed" to "only the thing you care about changed".') }}</p>
-  </div>
+    {% call stab_pane('overview') %}
+        <div class="stab-overview-hero">
+            <h3><span class="stab-overview-glyph"><i data-feather="cpu"></i></span> {{ _('AI-powered change monitoring') }}</h3>
+            <img src="{{url_for('static_content', group='images', filename='ai-infographic.jpg')}}" alt="MCP - A way for AI Assistants to interact with changedetection.io" style="max-width: 900px; width: 100%; height: auto;">
+
+            <h4>{{ _('Configure the connection to your favorite AI assistant service, such as OpenAI, Claude, Google Gemini - move from "something changed" to "only the thing you care about changed".') }}</h4>
+            <p>
+                <A href="https://changedetection.io/tutorial/ai-summary-and-change-detection-bring-your-own-key">{{ _('For a short tutorial on how to setup AI integration, see this tutorial.') }}</A>
+            </p>
+        </div>
 
   <div class="stab-overview-features">
     <div class="stab-overview-feature">
@@ -121,11 +129,16 @@
     <select id="llm-provider" onchange="llmOnProviderChange(this.value)"{% if llm_provider_locked %} disabled{% endif %}>
       <option value="">— {{ _('select a provider') }} —</option>
         <option value="anthropic">Anthropic</option>
+        <option value="deepseek">DeepSeek</option>
         <option value="gemini">Google (Gemini)</option>
+        <option value="groq">Groq</option>
+        <option value="mistral">Mistral</option>
         <option value="ollama">Ollama</option>
         <option value="openai">OpenAI</option>
         <option value="openai_compatible">{{ _('OpenAI-compatible (vLLM, LM Studio, llama.cpp)') }}</option>
         <option value="openrouter">OpenRouter (200+ models)</option>
+        <option value="together_ai">Together AI</option>
+        <option value="xai">xAI (Grok)</option>
     </select>
   </div>
 
@@ -153,6 +166,18 @@
     {{ form.llm.form.local_token_multiplier() }}
     <span class="pure-form-message-inline">
       {{ _('Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their original tight caps.', default='5x') | safe }}
+    </span>
+  </div>
+
+  {# Ollama and OpenAI-compatible endpoints, shown with the multiplier above (evaluator._thinking_extra_body) #}
+  <div class="pure-control-group" id="llm-local-thinking-group" style="display:none">
+    <label></label>
+    {{ form.llm.form.local_thinking_off() }}
+    <label for="{{ form.llm.form.local_thinking_off.id }}" style="display:inline; font-weight:normal;">
+      {{ form.llm.form.local_thinking_off.label.text }}
+    </label>
+    <span class="pure-form-message-inline">
+      {{ _('Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: --reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat template supports enable_thinking (Qwen3 and others).') }}
     </span>
   </div>
 
@@ -237,6 +262,8 @@
        data-cancel-button="{{ _('Cancel') }}">
       &#10005; {{ _('Clear all summary cache') }}
     </a>
+        <br>
+
     <span class="pure-form-message-inline">{{ _('Removes all cached AI change summaries across all watches. They will be regenerated on the next check.') }}</span>
   </div>
 
@@ -246,6 +273,7 @@
     <label for="{{ form.llm.form.debug.id }}" style="display:inline; font-weight:normal;">
       {{ form.llm.form.debug.label.text }}
     </label>
+  <br>
     <span class="pure-form-message-inline">
       {{ _('Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. Leave off in production — generates a lot of log volume.') }}
     </span>
@@ -302,7 +330,7 @@
   <div class="pure-control-group">
     <label for="{{ form.llm.form.thinking_budget.id }}">{{ form.llm.form.thinking_budget.label.text }}</label>
     {{ form.llm.form.thinking_budget() }}
-    <span class="pure-form-message-inline">{{ _('For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to Off if summaries are being cut short.') }}</span>
+    <span class="pure-form-message-inline">{{ _('For Gemini 2.5+ models. For Claude Haiku 5.5, Sonnet 5 and Sonnet 5.5, Off switches thinking off and any other value keeps the model default. Thinking tokens improve reasoning quality but count against the output budget. Set to Off if summaries are being cut short.') }}</span>
   </div>
 
   <div class="pure-control-group">
@@ -456,11 +484,17 @@
   {% endcall %}
 
 {% endcall %}{# stab_shell #}
+<div id="actions">
+    <div class="pure-control-group">
+        {{ render_button(form.save_button) }}
+    </div>
+</div>
 </div>
 
 <script>
 (function () {
-  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openai_compatible', 'openrouter'];
+  const LIVE_PROVIDERS = ['openai', 'anthropic', 'gemini', 'ollama', 'openai_compatible', 'openrouter',
+                          'deepseek', 'groq', 'mistral', 'together_ai', 'xai'];
   const BASE_DEFAULTS  = { ollama: 'http://localhost:11434' };
   const KEY_HINTS = {
     openai:             '{{ _("platform.openai.com → API keys") }}',
@@ -469,6 +503,11 @@
     ollama:             '{{ _("No API key needed for local Ollama") }}',
     openai_compatible:  '{{ _("Bearer token for your self-hosted server (vLLM, LM Studio, etc.)") }}',
     openrouter:         '{{ _("openrouter.ai → Keys") }}',
+    deepseek:           '{{ _("platform.deepseek.com → API keys") }}',
+    groq:               '{{ _("console.groq.com → API keys") }}',
+    mistral:            '{{ _("console.mistral.ai → API keys") }}',
+    together_ai:        '{{ _("api.together.ai → API keys") }}',
+    xai:                '{{ _("console.x.ai → API keys") }}',
   };
 
   window.llmDisclaimerToggle = function (cb) {
@@ -502,6 +541,8 @@
     // endpoints. Cloud providers get the original tight caps and don't see this
     // section at all.
     if (localAdvGrp) localAdvGrp.style.display = (provider === 'ollama' || provider === 'openai_compatible') ? '' : 'none';
+    const localThinkGrp = document.getElementById('llm-local-thinking-group');
+    if (localThinkGrp) localThinkGrp.style.display = localAdvGrp ? localAdvGrp.style.display : 'none';
 
     hint.textContent = KEY_HINTS[provider] || '';
     modelSelGrp.style.display = 'none';
@@ -630,12 +671,17 @@
     if (m.startsWith('gemini/'))       guessed = 'gemini';
     else if (m.startsWith('ollama/'))  guessed = 'ollama';
     else if (m.startsWith('openrouter/')) guessed = 'openrouter';
+    else if (m.startsWith('deepseek/'))    guessed = 'deepseek';
+    else if (m.startsWith('groq/'))        guessed = 'groq';
+    else if (m.startsWith('mistral/'))     guessed = 'mistral';
+    else if (m.startsWith('together_ai/')) guessed = 'together_ai';
+    else if (m.startsWith('xai/'))         guessed = 'xai';
     else if (m.startsWith('openai/')) {
       // openai/<model> + custom api_base = self-hosted OpenAI-compatible (vLLM etc.)
       const baseField = document.querySelector('[name="llm-api_base"]');
       guessed = (baseField && baseField.value.trim()) ? 'openai_compatible' : 'openai';
     }
-    else if (m.startsWith('claude'))   guessed = 'anthropic';
+    else if (m.startsWith('claude') || m.startsWith('anthropic/')) guessed = 'anthropic';
     else if (m.startsWith('gpt') || m.startsWith('o1') || m.startsWith('o3')) guessed = 'openai';
 
     if (guessed) {
@@ -645,3 +691,5 @@
   })();
 }());
 </script>
+
+        </form>

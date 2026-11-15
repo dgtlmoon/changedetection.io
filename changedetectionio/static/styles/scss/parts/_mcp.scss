@@ -1,0 +1,747 @@
+@use "../settings" as *;
+
+// The AI settings pages, /settings/ai/llm and /settings/ai/mcp (blueprint/settings/llm/templates)
+
+// Each tab there is its own page (settings-ai-tabs.html), so its pane shows without being the #anchor target.
+// More specific than styles.scss's `.tab-pane-inner:not(:target) { display: none }`.
+.box-wrap .tab-pane-inner.tab-pane-current {
+  display: block;
+}
+
+// The token overlay sits outside #mcp (it's a <dialog> after the page's form), so it shares these styles
+#mcp,
+.mcp-token-dialog,
+.mcp-oauth-consent {
+  --mcp-line: rgba(0, 0, 0, 0.08);
+  --mcp-soft: rgba(0, 0, 0, 0.025);
+  --mcp-on: #27ae60;
+
+  .stab-body p,
+  .stab-body li {
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .stab-overview-text p {
+    margin: 0;
+  }
+
+  // Incoming: the MCP page takes the teal accent where the AI / LLM page has orange
+  .stab-btn.active {
+    border-left-color: var(--color-ai-incoming);
+    background: var(--color-ai-incoming-soft);
+    color: var(--color-ai-incoming);
+  }
+
+  .stab-overview-glyph {
+    color: var(--color-ai-incoming);
+  }
+
+  .mcp-hint {
+    margin: 0.35rem 0;
+    font-size: 0.82rem !important;
+    color: var(--color-text-input-description);
+    max-width: 46rem;
+  }
+
+  // ── On/off bar above the sub-tabs ──
+  .mcp-power {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.8rem 1.1rem;
+    border: 1px solid rgba(214, 48, 49, 0.3);
+    border-left: 4px solid #d63031;
+    border-radius: var(--common-round-border, 8px);
+    background: rgba(214, 48, 49, 0.06);
+
+    &.on {
+      border-color: rgba(39, 174, 96, 0.3);
+      border-left-color: var(--mcp-on);
+      background: rgba(39, 174, 96, 0.06);
+    }
+
+    .mcp-power-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+
+        input {
+          margin: 0;
+        }
+
+        label {
+          display: inline;
+          margin: 0;
+          font-weight: 600;
+        }
+      }
+
+      > span {
+        font-size: 0.82rem;
+        color: var(--color-text-input-description);
+      }
+    }
+  }
+
+  .mcp-status {
+    flex-shrink: 0;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(214, 48, 49, 0.14);
+    color: #c0392b;
+  }
+
+  .mcp-power.on .mcp-status {
+    background: rgba(39, 174, 96, 0.15);
+    color: #1f8a4c;
+  }
+
+  // ── Overview: the current permissions as chips ──
+  .mcp-perm-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin: -0.4rem 0 1.4rem;
+  }
+
+  .mcp-perm-summary-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin-right: 0.3rem;
+  }
+
+  .mcp-chip {
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: baseline;
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--mcp-line);
+    border-radius: 999px;
+    background: var(--mcp-soft);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: border-color 0.12s ease;
+
+    &:hover {
+      border-color: var(--color-background-button-primary);
+    }
+
+    strong {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    &.level-write strong { color: #1f8a4c; }
+    &.level-read strong { color: var(--color-background-button-primary); }
+    &.level-none strong { color: #c0392b; }
+  }
+
+  .mcp-infographic {
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    margin: 0 0 1.4rem;
+    border-radius: 6px;
+  }
+
+  // ── Connect: label / value rows ──
+  .mcp-fields {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: 0.75rem 1.2rem;
+    margin: 0 0 1rem;
+
+    dt {
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding-top: 0.3rem;
+    }
+
+    dd {
+      margin: 0;
+      min-width: 0;
+    }
+  }
+
+  .mcp-value {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: 5px;
+    background: var(--color-background-code);
+    font-size: 0.85rem;
+  }
+
+  .mcp-snippet {
+    max-width: 52rem;
+
+    pre {
+      margin: 0.4em 0 0.8em;
+      padding: 0.65em 0.9em;
+      background: var(--color-background-code);
+      border-radius: 6px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      background: none;
+      font-size: 0.82rem;
+    }
+  }
+
+  .mcp-client {
+    margin: 1.1rem 0 0.2rem;
+    font-weight: 600;
+  }
+
+  .mcp-where {
+    font-weight: normal;
+    font-family: monospace;
+    font-size: 0.8rem;
+    opacity: 0.65;
+    margin-left: 0.4em;
+  }
+
+
+  // ── Permissions grid: one row per area, None / Read / Write columns ──
+  .mcp-perms {
+    width: 100%;
+    max-width: 46rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 0 1.2rem;
+    border: 1px solid var(--mcp-line);
+    border-radius: var(--common-round-border, 8px);
+    overflow: hidden;
+
+    thead th {
+      padding: 0.55rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      text-align: center;
+      background: var(--mcp-soft);
+      border-bottom: 1px solid var(--mcp-line);
+    }
+
+    tbody tr + tr > * {
+      border-top: 1px solid var(--mcp-line);
+    }
+
+    tbody tr:hover {
+      background: var(--mcp-soft);
+    }
+
+    tbody th {
+      padding: 0.7rem 1rem;
+      text-align: left;
+      font-weight: normal;
+    }
+
+    td {
+      width: 5.5rem;
+      text-align: center;
+      vertical-align: middle;
+    }
+  }
+
+  .mcp-perm-name {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .mcp-perm-desc {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    color: var(--color-text-input-description);
+  }
+
+  .mcp-perm-choice {
+    display: inline-flex;
+    padding: 0.5rem;
+    cursor: pointer;
+
+    input[type="radio"] {
+      margin: 0;
+      width: 1.05rem;
+      height: 1.05rem;
+      cursor: pointer;
+      accent-color: var(--color-background-button-primary);
+    }
+  }
+
+  .mcp-perm-na {
+    color: var(--color-text-input-description);
+    opacity: 0.5;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  // ── Access tokens ──
+  .mcp-tokens-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 46rem;
+
+    .stab-section-title {
+      margin: 0;
+    }
+  }
+
+  .mcp-token-list {
+    list-style: none;
+    margin: 0.8rem 0 1.2rem;
+    padding: 0;
+    max-width: 46rem;
+    border: 1px solid var(--mcp-line);
+    border-radius: var(--common-round-border, 8px);
+    overflow: hidden;
+  }
+
+  .mcp-token {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.45rem 1rem;
+    padding: 0.8rem 1rem;
+
+    & + .mcp-token {
+      border-top: 1px solid var(--mcp-line);
+    }
+
+    &:hover {
+      background: var(--mcp-soft);
+    }
+  }
+
+  .mcp-token-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem 0.7rem;
+  }
+
+  .mcp-token-name {
+    font-weight: 600;
+  }
+
+  .mcp-token-hint {
+    font-size: 0.78rem;
+    opacity: 0.7;
+  }
+
+  .mcp-token-used {
+    font-size: 0.78rem;
+    color: var(--color-text-input-description);
+  }
+
+  .mcp-token-levels {
+    grid-column: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+
+    .mcp-chip {
+      cursor: default;
+      font-size: 0.74rem;
+    }
+
+    // "Only <groups>": a limit, so it reads differently from the access levels next to it
+    .mcp-chip-groups {
+      border-style: dashed;
+      border-color: var(--color-background-button-primary);
+    }
+  }
+
+  // The token overlay's group checkboxes: a wrapping row, so a dozen groups don't make the dialog scroll
+  .mcp-token-groups {
+    margin-top: 1rem;
+    border: 0;
+    padding: 0;
+
+    legend {
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .mcp-token-group-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 1rem;
+      list-style: none;
+      margin: 0 0 0.4rem;
+      padding: 0;
+
+      label {
+        display: inline;
+        margin-left: 0.25rem;
+      }
+    }
+  }
+
+  .mcp-token-actions {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  // ── Overview: "Get started", until the server is on and has a token ──
+  .mcp-steps {
+    max-width: 46rem;
+    margin: 0 0 1.6rem;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid rgba(0, 120, 231, 0.35);
+    border-radius: var(--common-round-border, 8px);
+    background: rgba(0, 120, 231, 0.04);
+
+    ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.55rem 0;
+
+      & + li {
+        border-top: 1px solid var(--mcp-line);
+      }
+
+      .cdio-btn {
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      &.done .mcp-step-text strong {
+        opacity: 0.6;
+      }
+    }
+  }
+
+  .mcp-steps-title {
+    margin: 0 0 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-background-button-primary);
+  }
+
+  .mcp-step-mark {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 2px solid var(--color-background-button-primary);
+    color: var(--color-background-button-primary);
+  }
+
+  .mcp-steps li.done .mcp-step-mark {
+    border-color: var(--mcp-on);
+    background: var(--mcp-on);
+    color: #fff;
+  }
+
+  .mcp-step-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+
+    span {
+      font-size: 0.82rem;
+      color: var(--color-text-input-description);
+    }
+  }
+
+  // ── OAuth sub-tab: how to add it in claude.ai and ChatGPT ──
+  .mcp-connect-steps {
+    max-width: 46rem;
+    margin: 0.4rem 0 0.6rem;
+    padding-left: 1.4rem;
+
+    li {
+      margin: 0.35rem 0;
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .click-to-copy-inline {
+      margin-top: 0.25rem;
+    }
+  }
+
+  // ── No tokens yet: the next step, so a blue call to action rather than an empty-state note ──
+  .mcp-token-cta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 46rem;
+    margin: 0.8rem 0 1.2rem;
+    padding: 1.1rem 1.3rem;
+    border: 2px dashed var(--color-background-button-primary);
+    border-radius: var(--common-round-border, 8px);
+    background: rgba(0, 120, 231, 0.05);
+    color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-style 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(0, 120, 231, 0.1);
+      border-style: solid;
+    }
+
+    .mcp-token-cta-plus {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 50%;
+      background: var(--color-background-button-primary);
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .mcp-token-cta-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+
+      strong {
+        color: var(--color-background-button-primary);
+        font-size: 1rem;
+      }
+
+      span {
+        font-size: 0.82rem;
+        color: var(--color-text-input-description);
+      }
+    }
+  }
+
+  // Overview's token chips open the Access tokens sub-tab, so they look like links
+  .mcp-perm-summary .mcp-chip {
+    color: var(--color-link);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .mcp-chip.mcp-chip-add {
+    border-color: var(--color-background-button-primary);
+    background: rgba(0, 120, 231, 0.08);
+    color: var(--color-background-button-primary);
+    font-weight: 600;
+  }
+
+  // ── OAuth connections, until there are any ──
+  .mcp-empty {
+    max-width: 34rem;
+    margin: 0.5rem 0;
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    border: 1px dashed var(--mcp-line);
+    border-radius: var(--common-round-border, 8px);
+
+    svg {
+      width: 1.6rem;
+      height: 1.6rem;
+      stroke: currentColor;
+      fill: none;
+      opacity: 0.45;
+    }
+
+    p {
+      margin: 0.4rem auto;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .mcp-fields {
+      grid-template-columns: 1fr;
+    }
+
+    .mcp-perms td {
+      width: 3.5rem;
+    }
+  }
+}
+
+// The OAuth consent dialog (blueprint/mcp/oauth/templates/mcp-oauth-consent.html), the token overlay's look
+.mcp-oauth-consent {
+  .mcp-oauth-who {
+    margin: 0 0 1rem;
+
+    strong {
+      display: block;
+      font-size: 1.05rem;
+    }
+  }
+
+  .mcp-perm-summary {
+    margin: 0 0 1rem;
+  }
+
+  .mcp-chip {
+    cursor: default;
+  }
+
+  // The lock, top left in the header, in the MCP page's incoming (teal) accent; amber when sign-in failed
+  .modal-header .mcp-oauth-lock {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: var(--color-ai-incoming-soft);
+    color: var(--color-ai-incoming);
+
+    svg {
+      width: 1.2rem;
+      height: 1.2rem;
+      stroke: currentColor;
+      fill: none;
+    }
+
+    &.failed {
+      background: rgba(255, 180, 0, 0.12);
+      color: #c07800;
+    }
+  }
+
+  .mcp-oauth-change {
+    margin: 0 0 1rem;
+
+    summary {
+      cursor: pointer;
+      color: var(--color-link);
+      margin-bottom: 0.6rem;
+    }
+  }
+}
+
+// The overlay itself: wider than a confirm dialog, for the grid
+.mcp-token-dialog {
+  width: min(44rem, calc(100vw - 2rem));
+  max-width: none;
+
+  .modal-body {
+    text-align: left;
+  }
+
+  .mcp-perms {
+    max-width: none;
+  }
+
+  input[name="name"] {
+    margin-bottom: 1rem;
+  }
+
+  .mcp-token-errors {
+    margin: -0.6rem 0 1rem;
+    color: var(--color-error);
+    font-size: 0.85rem;
+  }
+
+  #mcp-new-token {
+    display: block;
+    margin: 0.4rem 0 0.8rem;
+    padding-right: 6em;
+    word-break: break-all;
+  }
+
+  // A block there, so the copy hint goes inside it, top right, like the code blocks
+  .click-to-copy-inline {
+    display: block;
+
+    .click-to-copy-hint {
+      top: 0.55em;
+      left: auto;
+      right: 0.6em;
+      margin-left: 0;
+      transform: none;
+    }
+  }
+}
+
+@include dark-mode {
+  #mcp,
+  .mcp-token-dialog,
+  .mcp-oauth-consent {
+    --mcp-line: rgba(255, 255, 255, 0.08);
+    --mcp-soft: rgba(255, 255, 255, 0.03);
+
+    .mcp-status {
+      background: rgba(255, 90, 90, 0.18);
+      color: #ff7b7b;
+    }
+
+    .mcp-power.on .mcp-status {
+      background: rgba(39, 174, 96, 0.18);
+      color: #5db880;
+    }
+
+    .mcp-token-cta {
+      background: rgba(89, 189, 251, 0.06);
+
+      &:hover,
+      &:focus-visible {
+        background: rgba(89, 189, 251, 0.12);
+      }
+    }
+
+    .mcp-chip {
+      &.level-write strong { color: #5db880; }
+      &.level-read strong { color: #59bdfb; }
+      &.level-none strong { color: #ff7b7b; }
+    }
+  }
+}

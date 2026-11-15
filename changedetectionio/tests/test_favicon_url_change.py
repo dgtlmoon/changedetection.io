@@ -9,7 +9,7 @@ import json
 
 from flask import url_for
 
-from .util import set_original_response, delete_all_watches
+from .util import set_original_response, delete_all_watches, wait_for_all_checks
 
 SVG_BASE64 = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxIDEiLz4='
 
@@ -17,6 +17,8 @@ SVG_BASE64 = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ij
 def _add_watch_with_favicon(client, url):
     datastore = client.application.config.get('DATASTORE')
     uuid = datastore.add_watch(url=url)
+    # Its first check runs now, let it finish so it isn't looking the favicon up while it's being saved
+    wait_for_all_checks(client)
     watch = datastore.data['watching'][uuid]
     watch.ensure_data_dir_exists()
     watch.bump_favicon(url="favicon.svg", favicon_base_64=SVG_BASE64)

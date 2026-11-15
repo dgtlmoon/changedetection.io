@@ -48,9 +48,59 @@ BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRE
 # Keyed by data_dir so it survives Watch object recreation, deepcopy, and concurrent requests.
 # Invalidated explicitly when the favicon is saved or the watch history is cleared.
 _FAVICON_FILENAME_CACHE: dict = {}
+# Held while looking a favicon up and while forgetting one, so a lookup that globbed before a save can't store its
+# stale "no favicon" after the save cleared the cache
+import threading as _threading
+_FAVICON_FILENAME_LOCK = _threading.Lock()
+_MISSING = object()
+
+
+def _forget_favicon_filename(data_dir):
+    with _FAVICON_FILENAME_LOCK:
+        _FAVICON_FILENAME_CACHE.pop(data_dir, None)
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+
+
+def time_between_check_to_seconds(value):
+    """A time_between_check dict ({'weeks': .., 'days': .., 'hours': .., 'minutes': .., 'seconds': ..}, any part
+    may be missing or None) as seconds."""
+    return sum((value or {}).get(m) * n for m, n in mtable.items() if (value or {}).get(m))
+
+
+def validate_time_between_check_required(json_data):
+    """
+    Validate that at least one time interval is specified when not using default settings.
+    Returns None if valid, or error message string if invalid.
+    Defaults to using global settings if time_between_check_use_default is not provided.
+    """
+    # Default to using global settings if not specified
+    use_default = json_data.get('time_between_check_use_default', True)
+
+    # If using default settings, no validation needed
+    if use_default:
+        return None
+
+    # If not using defaults, check if time_between_check exists and has at least one non-zero value
+    time_check = json_data.get('time_between_check')
+    if not time_check:
+        # No time_between_check provided and not using defaults - this is an error
+        return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+
+    # time_between_check exists, check if it has at least one non-zero value
+    if any([
+        (time_check.get('weeks') or 0) > 0,
+        (time_check.get('days') or 0) > 0,
+        (time_check.get('hours') or 0) > 0,
+        (time_check.get('minutes') or 0) > 0,
+        (time_check.get('seconds') or 0) > 0
+    ]):
+        return None
+
+    # time_between_check exists but all values are 0 or empty - this is an error
+    return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+
 
 def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
     """
@@ -385,6 +435,9 @@ class model(EntityPersistenceMixin, watch_base):
         from changedetectionio.processors import find_processors
         processor_names = [name for cls, name in find_processors()]
         processor_config_files = {f"{name}.json" for name in processor_names}
+        # and the files plugins keep their settings for this watch in (watch_settings_files hook)
+        from changedetectionio.pluggy_interface import collect_watch_settings_files
+        processor_config_files |= collect_watch_settings_files(self)
 
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
         # But preserve processor config files (they're configuration, not history data)
@@ -393,9 +446,10 @@ class model(EntityPersistenceMixin, watch_base):
             # Skip processor config files
             if item.name in processor_config_files:
                 continue
-            os.unlink(item)
+            # A save or check running now may rename its .tmp file away between glob() and here
+            item.unlink(missing_ok=True)
 
-        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+        _forget_favicon_filename(self.data_dir)
 
         # Force the attr to recalculate
         bump = self.history
@@ -820,16 +874,25 @@ class model(EntityPersistenceMixin, watch_base):
     def has_empty_checktime(self):
         # using all() + dictionary comprehension
         # Check if all values are 0 in dictionary
-        res = all(x == None or x == False or x==0 for x in self.get('time_between_check', {}).values())
+        res = all(x == None or x == False or x==0 for x in (self.get('time_between_check') or {}).values())
         return res
 
+    def ensure_valid_time_between_check(self):
+        """
+        "Don't use the default" with no interval of its own leaves no threshold at all, so force it back to
+        the system default. Returns True if the watch was changed.
+        """
+        if not validate_time_between_check_required(self):
+            return False
+
+        logger.warning(f"Watch '{self.get('url')}' - {self.get('uuid')} - 'time_between_check' has no interval set but "
+                       f"'time_between_check_use_default' is False, forcing 'time_between_check_use_default' "
+                       f"to True so the system default recheck time is used.")
+        self['time_between_check_use_default'] = True
+        return True
+
     def threshold_seconds(self):
-        seconds = 0
-        for m, n in mtable.items():
-            x = self.get('time_between_check', {}).get(m, None)
-            if x:
-                seconds += x * n
-        return seconds
+        return time_between_check_to_seconds(self.get('time_between_check'))
 
     # Iterate over all history texts and see if something new exists
     # Always applying .strip() to start/end but optionally replace any other whitespace
@@ -985,7 +1048,7 @@ class model(EntityPersistenceMixin, watch_base):
                     logger.debug(f"UUID: {self.get('uuid')} could not remove {stale}: {e}")
 
             # Invalidate module-level favicon filename cache for this watch
-            _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+            _forget_favicon_filename(self.data_dir)
 
             # A signal that could trigger the socket server to update the browser also
             watch_check_update = signal('watch_favicon_bump')
@@ -1009,7 +1072,7 @@ class model(EntityPersistenceMixin, watch_base):
                 os.unlink(fname)
             except OSError as e:
                 logger.warning(f"UUID: {self.get('uuid')} could not remove favicon {fname}: {e}")
-        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+        _forget_favicon_filename(self.data_dir)
 
     def get_favicon_filename(self) -> str | None:
         """
@@ -1022,13 +1085,15 @@ class model(EntityPersistenceMixin, watch_base):
         Returns:
             str: Basename of the favicon file, or None if not found.
         """
-        if self.data_dir in _FAVICON_FILENAME_CACHE:
-            return _FAVICON_FILENAME_CACHE[self.data_dir]
+        cached = _FAVICON_FILENAME_CACHE.get(self.data_dir, _MISSING)
+        if cached is not _MISSING:
+            return cached
 
         import glob
-        files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
-        fname = os.path.basename(files[0]) if files else None
-        _FAVICON_FILENAME_CACHE[self.data_dir] = fname
+        with _FAVICON_FILENAME_LOCK:
+            files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
+            fname = os.path.basename(files[0]) if files else None
+            _FAVICON_FILENAME_CACHE[self.data_dir] = fname
         return fname
 
     def get_screenshot_as_thumbnail(self, max_age=3200):
@@ -1094,6 +1159,31 @@ class model(EntityPersistenceMixin, watch_base):
         except Exception as e:
             logger.error(f"Error creating thumbnail for {self.get('uuid')}: {str(e)}")
             return None
+
+    def get_screenshot_part(self, which='latest', offset=0, max_width=1024, max_height=1568, quality=70):
+        """A readable slice of a screenshot, as JPEG bytes, for an AI model or anything else that can't take a
+        20000 pixel tall full-page capture: scaled to at most max_width wide, then max_height of it from `offset`
+        (in pixels of the scaled image) down. Page through a long capture by raising offset.
+
+        :param which: 'latest' (last-screenshot.png) or 'error' (the one taken when the last check failed)
+        :return: (jpeg_bytes, info) or (None, None) without that screenshot. info: {'width', 'height' (the scaled
+                 full capture), 'offset', 'part_height', 'taken' (unix seconds)}
+        """
+        path = self.get_screenshot() if which == 'latest' else self.get_error_snapshot()
+        if not path:
+            return None, None
+        from io import BytesIO
+        from PIL import Image
+        with Image.open(path) as img:
+            img = img.convert('RGB')
+            if img.width > max_width:
+                img = img.resize((max_width, max(1, round(img.height * max_width / img.width))), Image.BILINEAR)
+            offset = max(0, min(int(offset or 0), max(0, img.height - 1)))
+            part = img.crop((0, offset, img.width, min(img.height, offset + max_height)))
+            out = BytesIO()
+            part.save(out, 'JPEG', quality=quality, optimize=True)
+            return out.getvalue(), {'width': img.width, 'height': img.height, 'offset': offset,
+                                    'part_height': part.height, 'taken': int(os.path.getmtime(path))}
 
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.data_dir, filename)
@@ -1279,6 +1369,150 @@ class model(EntityPersistenceMixin, watch_base):
 
         return csv_output_filename
 
+
+    # A find_change()/line_timeline() regex longer than this is refused, same limit as the regex_replace Jinja2 filter
+    FIND_CHANGE_MAX_PATTERN = 500
+    # Lines are cut at this before they're compared and returned
+    FIND_CHANGE_MAX_LINE = 300
+    # line_timeline() stops collecting (and says it's incomplete) past this many distinct lines
+    LINE_TIMELINE_MAX_LINES = 100_000
+
+    def _line_matcher(self, text, regex=False, case_sensitive=False):
+        """A function(line) -> bool for plain text (substring) or a regex.
+
+        :raises ValueError: no text, or the regex is invalid or too long
+        The regex matcher raises TimeoutError when one line takes longer than REGEX_TIMEOUT_SECONDS (catastrophic
+        backtracking), the same ReDoS protection as the regex_replace Jinja2 filter. It's left to propagate so the
+        caller can say so instead of reporting "not found".
+        """
+        text = str(text or '')
+        if not text.strip():
+            raise ValueError("Give some text to look for")
+        if regex:
+            if len(text) > self.FIND_CHANGE_MAX_PATTERN:
+                raise ValueError(f"The regex is too long, at most {self.FIND_CHANGE_MAX_PATTERN} characters")
+            # The 'regex' package enforces the timeout inside the matcher, so it works in any thread
+            import regex as regex_lib
+            from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
+            try:
+                compiled = regex_lib.compile(text, 0 if case_sensitive else regex_lib.IGNORECASE)
+            except regex_lib.error as e:
+                raise ValueError(f"Invalid regex: {e}")
+            timeout = regex_plugin.REGEX_TIMEOUT_SECONDS
+            return lambda line: compiled.search(line, timeout=timeout) is not None
+        if case_sensitive:
+            return lambda line: text in line
+        needle = text.casefold()
+        return lambda line: needle in line.casefold()
+
+    def _history_texts(self, from_ts=None, to_ts=None, deadline=None, state=None):
+        """(timestamp, text) of each snapshot in the range, oldest first, reading the history index once
+        (get_history_snapshot(timestamp=...) re-reads it on every call).
+
+        Fills `state` with snapshots_total, snapshots_searched and incomplete (stopped at `deadline`, a
+        time.monotonic() value). Binary history (image/PDF processors) gives '' as there's no text to search.
+        """
+        import time
+        state = state if state is not None else {}
+        history = self.history or {}
+        keys = sorted(history.keys(), key=int)
+        state.update({'snapshots_total': len(keys), 'snapshots_searched': 0, 'incomplete': False})
+        for k in keys:
+            ts = int(k)
+            if (from_ts is not None and ts < from_ts) or (to_ts is not None and ts > to_ts):
+                continue
+            if deadline and time.monotonic() > deadline:
+                state['incomplete'] = True
+                return
+            # Lets other requests/greenlets run between snapshots, this runs inside a web request
+            time.sleep(0)
+            content = self.get_history_snapshot(filepath=history[k])
+            state['snapshots_searched'] += 1
+            yield ts, content if isinstance(content, str) else ''
+
+    def find_change(self, text, regex=False, case_sensitive=False, from_ts=None, to_ts=None, deadline=None):
+        """When `text` was on the page, searched line by line in one pass over the history.
+
+        Answers "when did the price become 319?" or "when did 'Out of stock' go away?" without fetching snapshots
+        one by one to narrow it down. Snapshots are only saved when the page changed, so first_seen is when it was
+        first detected.
+
+        :param text: plain text to look for, or a regular expression when regex=True (matched against each line)
+        :param from_ts/to_ts: only search snapshots inside this range of unix seconds (both included)
+        :param deadline: a time.monotonic() value, stop there and return what was found with 'incomplete': True
+        :return: {'periods': [{'first_seen', 'last_seen', 'gone_at', 'snapshots', 'line'}],
+                  'lines': [{'line', 'first_seen', 'last_seen', 'snapshots'}],
+                  'snapshots_searched', 'snapshots_total', 'matching_snapshots', 'incomplete'}
+                 periods: runs of consecutive snapshots with a match (a text can come and go), gone_at is the first
+                 later snapshot without one, None when there was still one at the last snapshot searched, line is
+                 the first matching line of the period's first snapshot.
+                 lines: every distinct matching line, by when it first appeared, e.g. every headline that mentions
+                 a word, not only the first one of each period.
+        :raises ValueError: no text, or the regex is invalid or too long
+        :raises TimeoutError: the regex took longer than REGEX_TIMEOUT_SECONDS on one line
+        """
+        matches = self._line_matcher(text, regex, case_sensitive)
+        state, periods, current, matching, lines = {}, [], None, 0, {}
+        for ts, content in self._history_texts(from_ts, to_ts, deadline, state):
+            found = [line[:self.FIND_CHANGE_MAX_LINE] for line in (raw.strip() for raw in content.splitlines())
+                     if line and matches(line)]
+            if not found:
+                if current is not None:
+                    current['gone_at'] = ts
+                    current = None
+                continue
+            matching += 1
+            if current is None:
+                current = {'first_seen': ts, 'last_seen': ts, 'gone_at': None, 'snapshots': 0, 'line': found[0]}
+                periods.append(current)
+            current['last_seen'] = ts
+            current['snapshots'] += 1
+            for line in dict.fromkeys(found):
+                entry = lines.setdefault(line, {'line': line, 'first_seen': ts, 'last_seen': ts, 'snapshots': 0})
+                entry['last_seen'] = ts
+                entry['snapshots'] += 1
+        return {'periods': periods, 'lines': list(lines.values()), 'matching_snapshots': matching, **state}
+
+    def line_timeline(self, from_ts=None, to_ts=None, deadline=None, text=None, regex=False, case_sensitive=False,
+                      min_length=2):
+        """Every line that was ever on the page, with when it first and last appeared.
+
+        For lists that grow and shrink (tour dates, a festival line-up, headlines, a changelog) this is the answer
+        to "what was added, and when?" in one pass, where diffs would repeat the same lines over and over. A line
+        that disappears and comes back (a page flipping between two layouts) is not new again: it keeps its first
+        first_seen.
+
+        :param text: optional, only lines containing this (or matching it with regex=True)
+        :param min_length: lines shorter than this are skipped (stray punctuation, list bullets)
+        :return: {'lines': [{'line', 'first_seen', 'last_seen', 'snapshots', 'at_start', 'still_there'}],
+                  'first_snapshot', 'last_snapshot', 'snapshots_searched', 'snapshots_total', 'incomplete'}
+                 lines are oldest first (page order within a snapshot); at_start: already on the first snapshot
+                 searched, so first_seen isn't when it was added; still_there: on the last snapshot searched.
+        :raises ValueError/TimeoutError: as find_change(), for `text`
+        """
+        matches = self._line_matcher(text, regex, case_sensitive) if str(text or '').strip() else None
+        state, lines, first_ts, last_ts = {}, {}, None, None
+        for ts, content in self._history_texts(from_ts, to_ts, deadline, state):
+            first_ts = ts if first_ts is None else first_ts
+            last_ts = ts
+            for line in dict.fromkeys(raw.strip()[:self.FIND_CHANGE_MAX_LINE] for raw in content.splitlines()):
+                if len(line) < min_length or (matches and not matches(line)):
+                    continue
+                entry = lines.get(line)
+                if entry is None:
+                    if len(lines) >= self.LINE_TIMELINE_MAX_LINES:
+                        state['incomplete'] = True
+                        continue
+                    lines[line] = {'line': line, 'first_seen': ts, 'last_seen': ts, 'snapshots': 1}
+                else:
+                    entry['last_seen'] = ts
+                    entry['snapshots'] += 1
+        for entry in lines.values():
+            entry['at_start'] = entry['first_seen'] == first_ts
+            entry['still_there'] = entry['last_seen'] == last_ts
+        # sorted() is stable, so lines first seen in the same snapshot keep their page order
+        return {'lines': sorted(lines.values(), key=lambda e: e['first_seen']), 'first_snapshot': first_ts,
+                'last_snapshot': last_ts, **state}
 
     def has_special_diff_filter_options_set(self):
 

@@ -121,6 +121,20 @@ def fetcher_can_handle_watch(fetcher_class, watch):
     return True
 
 
+def get_fetcher_by_name(backend_name, watch=None):
+    """The fetcher class registered as `backend_name` ('html_requests', a plugin's 'html_...'), or None when
+    there isn't one, or when this fetcher can't supply what `watch` is (see fetcher_can_handle_watch)."""
+    import inspect
+    if not backend_name or not backend_name.startswith('html_'):
+        return None
+    fetcher_obj = getattr(sys.modules[__name__], backend_name, None)
+    if not inspect.isclass(fetcher_obj):
+        return None
+    if watch is not None and not fetcher_can_handle_watch(fetcher_obj, watch):
+        return None
+    return fetcher_obj
+
+
 def resolve_content_fetcher(watch, datastore):
     """Single source of truth for resolving which content fetcher a watch should use.
 

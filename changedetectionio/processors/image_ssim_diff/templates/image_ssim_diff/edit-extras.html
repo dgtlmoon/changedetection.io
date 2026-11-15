@@ -1,0 +1,26 @@
+{% from '_helpers.html' import render_field %}
+<fieldset>
+    <legend>{{ _('Screenshot Comparison Settings') }}</legend>
+
+    <div class="pure-control-group">
+        {{ render_field(form.processor_config_min_change_percentage) }}
+        <span class="pure-form-message-inline">
+            <strong>{{ _('What percentage of pixels must change to trigger a detection?') }}</strong><br>
+            {{ _('For example, <strong>0.1%</strong> means if 0.1% or more of the pixels change, it counts as a change.')|safe }}<br>
+            {{ _('Lower values = more sensitive (detect smaller changes).') }}<br>
+            {{ _('Higher values = less sensitive (only detect larger changes).') }}<br>
+            {{ _('Leave blank to use global default (0.1%).') }}
+        </span>
+    </div>
+
+    <div class="pure-control-group">
+        {{ render_field(form.processor_config_pixel_difference_threshold_sensitivity) }}
+        <span class="pure-form-message-inline">
+            <strong>{{ _('How different must an individual pixel be to count as "changed"?') }}</strong><br>
+            {{ _('<strong>Low sensitivity (75)</strong> = Only count pixels that changed significantly (0-255 scale).')|safe }}<br>
+            {{ _('<strong>High sensitivity (20)</strong> = Count pixels with small changes as different.')|safe }}<br>
+            {{ _('<strong>Very high (0)</strong> = Any pixel change counts.')|safe }}<br>
+            {{ _('Select "Use global default" to inherit the system-wide setting.') }}
+        </span>
+    </div>
+</fieldset>

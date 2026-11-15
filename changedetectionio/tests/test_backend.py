@@ -224,7 +224,8 @@ def test_requests_timeout(client, live_server, measure_memory_usage, datastore_p
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
     client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
-
+    # Extra small delay to be sure the workers are finished
+    time.sleep(1)
     # requests takes >2 sec but we timeout at 1 second
     res = client.get(url_for("watchlist.index"))
     assert b'Read timed out. (read timeout=1)' in res.data
