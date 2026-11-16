@@ -45,6 +45,35 @@ async def _set_page_scripts_paused(page, paused):
         return False
 
 
+# A very large canvas (measured: a 2600x2600 WebGL one, far down a page) can keep a capture beyond the
+# viewport from ever returning - the first screen alone took 0.4s, the page with that canvas hidden
+# 3s. Canvases with more pixels than this are left blank below the first screen (which is captured
+# the ordinary way, with everything on it); the size of a graph is well under it.
+SCREENSHOT_MAX_CANVAS_PIXELS = int(os.getenv("SCREENSHOT_MAX_CANVAS_PIXELS", 5_000_000))
+
+# Hidden, not removed: the space it takes up stays, so nothing below it moves
+HIDE_LARGE_CANVASES_JS = """(maxPixels) => {
+    let hidden = 0;
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.width * canvas.height > maxPixels) {
+            canvas.__screenshotVisibility = [canvas.style.getPropertyValue('visibility'), canvas.style.getPropertyPriority('visibility')];
+            canvas.style.setProperty('visibility', 'hidden', 'important');
+            hidden++;
+        }
+    }
+    return hidden;
+}"""
+
+RESTORE_LARGE_CANVASES_JS = """() => {
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.__screenshotVisibility) {
+            canvas.style.setProperty('visibility', canvas.__screenshotVisibility[0], canvas.__screenshotVisibility[1]);
+            delete canvas.__screenshotVisibility;
+        }
+    }
+}"""
+
+
 async def _capture_chunk_beyond_viewport(page, y, width, height, screenshot_type, screenshot_quality):
     """One horizontal band of the page, from y down, as image bytes. The viewport is left as it is."""
     params = {
@@ -67,7 +96,8 @@ async def _capture_chunk_beyond_viewport(page, y, width, height, screenshot_type
 async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
     """The whole page as one image, up to SCREENSHOT_MAX_HEIGHT.
 
-    The page is captured as it stands, in bands "beyond the viewport". The viewport is never made
+    The first screen is an ordinary screenshot, the rest of the page is captured as it stands, in
+    bands "beyond the viewport". The viewport is never made
     taller and the page is never scrolled, both of which change what a page looks like and costs:
     anything sized to the viewport (a 100vh hero, a full-window canvas or video) grew to the height
     of a whole band, a fixed header was drawn once per band, and a page that animates repainted all
@@ -94,6 +124,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     capture_height = min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
     screenshot_chunks = []
     chunk_times = []
+    canvases_hidden = 0
 
     # The page's own scripts are held still for as long as it is being captured: an animating page
     # otherwise keeps every capture waiting behind its repaints (15s a band against 0.3s). Nothing
@@ -101,23 +132,45 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     scripts_paused = await _set_page_scripts_paused(page, True)
     capture_start = time.time()
     try:
+        viewport_screenshot_kwargs = {'type_': screenshot_type, 'fullPage': False}
+        # PNG doesn't support quality parameter in Puppeteer
+        if screenshot_type == 'jpeg':
+            viewport_screenshot_kwargs['quality'] = screenshot_quality
+
         if page_height <= viewport['height']:
             # Fits the viewport as it is
-            screenshot_kwargs = {'type_': screenshot_type, 'fullPage': False}
-            # PNG doesn't support quality parameter in Puppeteer
-            if screenshot_type == 'jpeg':
-                screenshot_kwargs['quality'] = screenshot_quality
-            screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
+            screenshot_chunks.append(await page.screenshot(**viewport_screenshot_kwargs))
             chunk_times.append(time.time() - capture_start)
         else:
+            y = 0
+            # The first screen the ordinary way, with everything on it as it is - that one always
+            # answers. Only what is below it has to come from beyond the viewport.
             try:
-                # As page.screenshot() does, a tab in the background is not painted
-                await page._client.send('Target.activateTarget', {'targetId': page._target._targetId})
+                at_the_top = not await page.evaluate("window.scrollX || window.scrollY")
+            except Exception:
+                at_the_top = False
+            if at_the_top:
+                chunk_start = time.time()
+                screenshot_chunks.append(await page.screenshot(**viewport_screenshot_kwargs))
+                chunk_times.append(time.time() - chunk_start)
+                logger.debug(f"{watch_info}Chunk 1 (the first screen, {viewport['height']}px) captured in {chunk_times[-1]:.2f}s")
+                y = viewport['height']
+            else:
+                try:
+                    # As page.screenshot() does, a tab in the background is not painted
+                    await page._client.send('Target.activateTarget', {'targetId': page._target._targetId})
+                except Exception as e:
+                    logger.debug(f"{watch_info}Could not bring the page to the front before capturing: {e}")
+
+            try:
+                canvases_hidden = await page.evaluate(HIDE_LARGE_CANVASES_JS, SCREENSHOT_MAX_CANVAS_PIXELS)
+                if canvases_hidden:
+                    logger.debug(f"{watch_info}{canvases_hidden} canvas(es) of more than {SCREENSHOT_MAX_CANVAS_PIXELS} pixels "
+                                 f"left blank below the first screen")
             except Exception as e:
-                logger.debug(f"{watch_info}Could not bring the page to the front before capturing: {e}")
+                logger.debug(f"{watch_info}Could not look for very large canvases: {e}")
 
             # In bands, something that will not cause the GPU to overflow when taking the screenshot
-            y = 0
             while y < capture_height:
                 chunk_start = time.time()
                 chunk_height = min(SCREENSHOT_SIZE_STITCH_THRESHOLD, capture_height - y)
@@ -127,7 +180,12 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
                 logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} ({chunk_height}px from {y}) captured in {chunk_times[-1]:.2f}s")
                 y += chunk_height
     finally:
-        # Always handed back, everything extracted after the screenshot is for a page that runs as normal
+        # Always handed back, everything extracted after the screenshot is for a page as it was
+        if canvases_hidden:
+            try:
+                await asyncio.wait_for(page.evaluate(RESTORE_LARGE_CANVASES_JS), timeout=RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS)
+            except Exception as e:
+                logger.debug(f"{watch_info}Could not show the hidden canvases again: {type(e).__name__} {e}")
         if scripts_paused:
             await _set_page_scripts_paused(page, False)
 
@@ -176,6 +234,45 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         f"{watch_info}Screenshot complete - Page height: {page_height}px, Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT}px | "
         f"Setup: {setup_time:.2f}s, Single chunk: {capture_time:.2f}s, Total: {total_time:.2f}s")
     return screenshot_chunks[0]
+
+
+# The icons a page declares, in the order the browser would consider them, plus the /favicon.ico every browser tries
+FAVICON_CANDIDATE_URLS_JS = """() => Array.from(document.querySelectorAll('link[rel~="icon"], link[rel~="apple-touch-icon"]'))
+    .map(l => l.href).filter(h => h && !h.startsWith('data:')).concat([location.origin + '/favicon.ico'])"""
+# Same limit as the in-page fetcher and bump_favicon()
+FAVICON_MAX_BYTES = 1 * 1024 * 1024
+
+
+async def favicon_from_browser_requests(page, browser_fetched, watch_uuid=None):
+    """The favicon the browser downloaded for itself, as {'url', 'mime_type', 'base64'}, or None.
+
+    Fallback for when the in-page fetcher (FAVICON_FETCHER_JS) comes back empty: page script may not
+    read an icon on another host unless that host allows it, but the browser's own icon request is not
+    page script and is not held to that. browser_fetched is {url: (requestId, mimeType)} of the
+    responses seen during the fetch; only a URL the page declares as its icon is ever used.
+    """
+    if not browser_fetched:
+        return None
+    try:
+        candidates = await page.evaluate(FAVICON_CANDIDATE_URLS_JS)
+        for url in candidates or []:
+            if url not in browser_fetched:
+                continue
+            request_id, mime_type = browser_fetched[url]
+            try:
+                r = await page._client.send('Network.getResponseBody', {'requestId': request_id})
+            except Exception as e:
+                logger.debug(f"[{watch_uuid}] Favicon {url} was requested by the browser but its body is gone: {e}")
+                continue
+            body = r.get('body') or ''
+            icon = body if r.get('base64Encoded') else base64.b64encode(body.encode('utf-8')).decode('ascii')
+            if not icon or len(icon) * 0.75 > FAVICON_MAX_BYTES:
+                continue
+            logger.debug(f"[{watch_uuid}] Favicon taken from the browser's own request for {url}")
+            return {'url': url, 'mime_type': mime_type, 'base64': icon}
+    except Exception as e:
+        logger.debug(f"[{watch_uuid}] No favicon from the browser's own requests: {e}")
+    return None
 
 
 class fetcher(Fetcher):
