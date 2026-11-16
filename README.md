@@ -36,6 +36,27 @@ We've got a quick tutorial here - [Bring your own LLM/AI Key to changedetection.
 
 Yes - Even MCP is supported [https://changedetection.io/MCP](https://changedetection.io/MCP) - Easily connect Claude.AI / OpenAi and others to your changedetection.io dashboard - Now your web page changes become a resource for easily asking questions and building on.
 
+### Find a public page to watch
+
+If you know what you want to monitor but don't have the URL yet, use a web search
+tool in your MCP client. For example, add the keyless
+[Parallel Search MCP](https://parallel.ai/mcp) at `https://mcp.parallel.ai/mcp`
+and ask it to find the official Python downloads page and show you the URL and
+an excerpt. Use a public search query since your MCP client sends it to the
+search provider.
+
+Pick the source you want to monitor. To prefill **Web page URL** on your
+changedetection.io watch list, add `?pwa_preset_url=<URL-encoded source URL>` to
+your instance's watch-list address. For example, on a local instance:
+
+```text
+http://localhost:5000/?pwa_preset_url=https%3A%2F%2Fwww.python.org%2Fdownloads%2F
+```
+
+The link uses the same hand-off as the Android share menu. It opens the
+watch list with the selected URL filled in. Review the URL and click **Watch**
+to start monitoring it.
+
 ### Target specific parts of the webpage using the Visual Selector tool.
 
 Available when connected to a <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Playwright-content-fetcher">playwright content fetcher</a> (included as part of our subscription service)

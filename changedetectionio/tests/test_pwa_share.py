@@ -11,6 +11,11 @@ That "GET never creates anything" property is the reason this is safe to have on
 navigation that any app on the phone can trigger.
 """
 
+from urllib.parse import urlencode
+
+from bs4 import BeautifulSoup
+from flask import url_for
+
 from changedetectionio.blueprint.pwa.service import is_share, pwa_preset_url
 
 
@@ -117,6 +122,26 @@ def test_share_does_not_create_a_watch(client, live_server):
     after = client.get('/').data
     assert b'https://example.com/not-added.html' not in after
     assert before.count(b'watch-table') == after.count(b'watch-table')
+
+
+def test_shared_url_is_saved_only_after_confirming_watch(client, live_server):
+    datastore = client.application.config['DATASTORE']
+    selected = url_for('test_endpoint', _external=True) + '?channel=stable&platform=linux'
+    response = client.get('/?' + urlencode({'pwa_preset_url': selected}))
+
+    assert response.status_code == 200
+    assert not datastore.data['watching']
+    form = BeautifulSoup(response.data, 'html.parser').select_one('#new-watch-form')
+    assert form.select_one('input[name="url"]')['value'] == selected
+
+    submitted = client.post(form['action'], data={
+        'url': form.select_one('input[name="url"]')['value'],
+        'processor': form.select_one('input[name="processor"][checked]')['value'],
+        'csrf_token': form.select_one('input[name="csrf_token"]')['value'],
+    }, follow_redirects=True)
+
+    assert b'Watch added.' in submitted.data
+    assert [watch['url'] for watch in datastore.data['watching'].values()] == [selected]
 
 
 def test_service_worker_is_served_from_the_root(client, live_server):
