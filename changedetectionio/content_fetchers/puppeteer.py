@@ -45,11 +45,13 @@ async def _set_page_scripts_paused(page, paused):
         return False
 
 
-# A very large canvas (measured: a 2600x2600 WebGL one, far down a page) can keep a capture beyond the
-# viewport from ever returning - the first screen alone took 0.4s, the page with that canvas hidden
-# 3s. Canvases with more pixels than this are left blank below the first screen (which is captured
-# the ordinary way, with everything on it); the size of a graph is well under it.
-SCREENSHOT_MAX_CANVAS_PIXELS = int(os.getenv("SCREENSHOT_MAX_CANVAS_PIXELS", 5_000_000))
+# A large canvas below the first screen is what makes a capture beyond the viewport slow, or keeps it
+# from ever returning. Measured on a browser without a GPU: a 2600x2600 WebGL canvas far down a page
+# hung the capture (the page with it hidden took 3s), a 2300x800 one made its band take 27s against
+# 7s. Canvases with more pixels than this - a little more than a whole 1280x1024 screen - are left
+# blank below the first screen, which is captured the ordinary way with everything on it. A graph is
+# smaller than a screen (the ones measured: 1.2 million pixels at most).
+SCREENSHOT_MAX_CANVAS_PIXELS = int(os.getenv("SCREENSHOT_MAX_CANVAS_PIXELS", 1_500_000))
 
 # Hidden, not removed: the space it takes up stays, so nothing below it moves
 HIDE_LARGE_CANVASES_JS = """(maxPixels) => {
