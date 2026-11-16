@@ -38,24 +38,24 @@ Yes - Even MCP is supported [https://changedetection.io/MCP](https://changedetec
 
 ### Find a public page to watch
 
-If you know what you want to monitor but don't have the URL yet, use a web search
-tool in your MCP client. For example, add the keyless
-[Parallel Search MCP](https://parallel.ai/mcp) at `https://mcp.parallel.ai/mcp`
-and ask it to find the official Python downloads page and show you the URL and
-an excerpt. Use a public search query since your MCP client sends it to the
-search provider.
+If you know what you want to monitor but don't have the URL yet, add the keyless
+[Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/installation) at
+`https://mcp.parallel.ai/mcp` in a separate MCP client. Ask it to find the
+official Python downloads page and show you the URL and an excerpt. Use a public
+search query since your MCP client sends it to the search provider.
 
-Pick the source you want to monitor. To prefill **Web page URL** on your
-changedetection.io watch list, add `?pwa_preset_url=<URL-encoded source URL>` to
-your instance's watch-list address. For example, on a local instance:
+Pick the source you want to monitor. If its URL is up to 2,000 characters long,
+URL-encode just that URL and put it in the `pwa_preset_url` query parameter on
+your changedetection.io watch-list address. For example, on a local instance:
 
 ```text
 http://localhost:5000/?pwa_preset_url=https%3A%2F%2Fwww.python.org%2Fdownloads%2F
 ```
 
-The link uses the same hand-off as the Android share menu. It opens the
-watch list with the selected URL filled in. Review the URL and click **Watch**
-to start monitoring it.
+The link uses the same hand-off as the Android share menu to prefill
+**Web page URL**. For a longer URL, paste it directly into that field. Check that
+the field contains the full URL you selected, then click **Watch** to start
+monitoring it.
 
 ### Target specific parts of the webpage using the Visual Selector tool.
 

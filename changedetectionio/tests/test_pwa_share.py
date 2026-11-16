@@ -124,19 +124,29 @@ def test_share_does_not_create_a_watch(client, live_server):
     assert before.count(b'watch-table') == after.count(b'watch-table')
 
 
-def test_shared_url_is_saved_only_after_confirming_watch(client, live_server):
-    datastore = client.application.config['DATASTORE']
-    selected = url_for('test_endpoint', _external=True) + '?channel=stable&platform=linux'
+def test_shared_url_is_saved_only_after_confirming_watch(client, live_server, monkeypatch):
+    config = client.application.config
+    monkeypatch.setitem(config, 'WTF_CSRF_ENABLED', True)
+    datastore = config['DATASTORE']
+    selected = (
+        url_for('test_endpoint', _external=True)
+        + '?channel=stable&next=%2Freleases%3Fplatform%3Dlinux%26arch%3Dx86_64'
+    )
     response = client.get('/?' + urlencode({'pwa_preset_url': selected}))
 
     assert response.status_code == 200
     assert not datastore.data['watching']
     form = BeautifulSoup(response.data, 'html.parser').select_one('#new-watch-form')
-    assert form.select_one('input[name="url"]')['value'] == selected
-
-    submitted = client.post(form['action'], data={
+    payload = {
         'url': form.select_one('input[name="url"]')['value'],
         'processor': form.select_one('input[name="processor"][checked]')['value'],
+    }
+    assert payload['url'] == selected
+    assert client.post(form['action'], data=payload).status_code == 400
+    assert not datastore.data['watching']
+
+    submitted = client.post(form['action'], data={
+        **payload,
         'csrf_token': form.select_one('input[name="csrf_token"]')['value'],
     }, follow_redirects=True)
 
