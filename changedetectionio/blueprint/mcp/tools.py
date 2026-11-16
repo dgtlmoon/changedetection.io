@@ -22,6 +22,7 @@ import re
 
 from loguru import logger
 
+from changedetectionio.notification.masking import mask_notification_url as _mask_notification_url
 from changedetectionio.changes_report import (MODES, RELATIVE_TO, _iso, _unified, group_changes, parse_timestamp,
                                               render_patches, render_unified, select_watches, snapshots_as_patches)
 
@@ -220,21 +221,6 @@ def _snapshot_key(watch, value, default='latest'):
     if not earlier:
         raise ToolError(f"No snapshot at or before {_iso(ts)}, the first one is {_iso(keys[0])}")
     return earlier[-1]
-
-
-def _mask_notification_url(url):
-    """An Apprise URL with its secrets hidden, it never goes back to the model in full."""
-    try:
-        import apprise
-        # Registers changedetection.io's own get:// post:// ... handlers so their URLs can be read too
-        import changedetectionio.notification.apprise_plugin.custom_handlers  # noqa: F401
-        instance = apprise.Apprise.instantiate(url)
-        if instance:
-            return instance.url(privacy=True)
-    except Exception:
-        pass
-    scheme = url.split('://', 1)[0] if '://' in url else ''
-    return f"{scheme}://****" if scheme else '****'
 
 
 def _api_call(fn, *args):
