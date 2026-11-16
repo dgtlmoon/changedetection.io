@@ -95,7 +95,7 @@ async def _capture_chunk_beyond_viewport(page, y, width, height, screenshot_type
 # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
 # acceptable screenshot quality here
-async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
+async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False, pause_scripts=True):
     """The whole page as one image, up to SCREENSHOT_MAX_HEIGHT.
 
     The first screen is an ordinary screenshot, the rest of the page is captured as it stands, in
@@ -106,6 +106,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     of that on every frame - on a busy browser that alone used up the whole fetch. So the page looks
     the way the element positions of the Visual Selector were measured, and
     lock_viewport_elements has nothing left to do here (kept for the callers that pass it).
+    pause_scripts=False is for a caller that is already holding the page's scripts still.
     """
     import time
 
@@ -131,7 +132,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     # The page's own scripts are held still for as long as it is being captured: an animating page
     # otherwise keeps every capture waiting behind its repaints (15s a band against 0.3s). Nothing
     # here asks the page to react to anything, so there is nothing for it to miss meanwhile.
-    scripts_paused = await _set_page_scripts_paused(page, True)
+    scripts_paused = pause_scripts and await _set_page_scripts_paused(page, True)
     capture_start = time.time()
     try:
         viewport_screenshot_kwargs = {'type_': screenshot_type, 'fullPage': False}
@@ -245,6 +246,12 @@ FAVICON_CANDIDATE_URLS_JS = """() => Array.from(document.querySelectorAll('link[
 FAVICON_MAX_BYTES = 1 * 1024 * 1024
 
 
+# The in-page favicon fetcher gives itself 3s, but it counts them with the page's own timers. On a
+# page that keeps the browser's main thread busy those hardly fire and it took 100s+, so the wait
+# for it is bounded from here as well.
+FAVICON_FETCH_TIMEOUT_SECONDS = 10
+
+
 async def favicon_from_browser_requests(page, browser_fetched, watch_uuid=None):
     """The favicon the browser downloaded for itself, as {'url', 'mime_type', 'base64'}, or None.
 
@@ -275,6 +282,40 @@ async def favicon_from_browser_requests(page, browser_fetched, watch_uuid=None):
     except Exception as e:
         logger.debug(f"[{watch_uuid}] No favicon from the browser's own requests: {e}")
     return None
+
+
+async def fetch_favicon_last(page, browser_fetched, watch_uuid=None, scripts_paused=False):
+    """The page's favicon as {'url', 'mime_type', 'base64'} or None, for the end of a fetch: it lets the
+    page's scripts run again and may leave a request to the page unanswered.
+
+    The in-page fetcher needs the page's timers and fetch(), so the page has to run for it, and on a
+    page that keeps the browser busy it may not come back in any reasonable time. The browser's own
+    copy of the icon is looked up first, while the page is still held, so there is something to fall
+    back on that does not depend on the page.
+    """
+    browser_copy = await favicon_from_browser_requests(page, browser_fetched, watch_uuid)
+    if scripts_paused:
+        await _set_page_scripts_paused(page, False)
+
+    favicon = None
+    in_page = asyncio.ensure_future(page.evaluate(FAVICON_FETCHER_JS))
+    # Not cancelled when it is late: cancelling a pyppeteer request mid-flight leaves the connection
+    # unusable, and the page is about to be closed anyway
+    in_page.add_done_callback(lambda task: task.cancelled() or task.exception())
+    done, _pending = await asyncio.wait({in_page}, timeout=FAVICON_FETCH_TIMEOUT_SECONDS)
+    if done:
+        try:
+            favicon = in_page.result()
+        except Exception as e:
+            logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+    else:
+        logger.warning(f"[{watch_uuid}] The page did not let the favicon fetcher finish in {FAVICON_FETCH_TIMEOUT_SECONDS}s, continuing without it")
+
+    # The in-page fetch can't read an icon another host doesn't share with page script, the browser's
+    # own copy of it can still be used
+    if not (favicon and favicon.get('base64')):
+        favicon = browser_copy
+    return favicon
 
 
 class fetcher(Fetcher):
@@ -804,19 +845,17 @@ class fetcher(Fetcher):
             logger.critical(response)
             raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-        if fetch_favicon:
-            try:
-                self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
-            except Exception as e:
-                logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
-            # The in-page fetch can't read an icon another host doesn't share with page script, the
-            # browser's own copy of it can still be used
-            if not (self.favicon_blob and self.favicon_blob.get('base64')):
-                self.favicon_blob = await favicon_from_browser_requests(self.page, browser_fetched, watch_uuid)
-            self.page._client.remove_listener('Network.responseReceived', _note_response)
+        # From here on the page's own scripts are held still. Everything below reads the page as it
+        # stands and none of it needs the page to do anything - but a page that keeps the browser's
+        # main thread busy (an animation drawn without a GPU) makes every one of those reads queue
+        # behind it: measured, a plain evaluate did not answer in 40s and the fetch ran out of time
+        # before it got to the screenshot, with the page's scripts paused each read took 0.0s.
+        # terminateExecution above only stops the script running at that moment, the next frame
+        # starts it again.
+        scripts_paused = await _set_page_scripts_paused(self.page, True)
 
         if self.status_code != 200 and not ignore_status_codes:
-            screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
+            screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements, pause_scripts=not scripts_paused)
 
             raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
@@ -852,7 +891,7 @@ class fetcher(Fetcher):
 
         # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
         logger.debug(f"Screenshot format {self.screenshot_format}")
-        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
+        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements, pause_scripts=not scripts_paused)
 
         # Force garbage collection - pyppeteer base64 decode creates temporary buffers
         gc_debounce.collect('puppeteer.after_screenshot')
@@ -865,6 +904,10 @@ class fetcher(Fetcher):
 
 
         self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
+
+        if fetch_favicon:
+            self.page._client.remove_listener('Network.responseReceived', _note_response)
+            self.favicon_blob = await fetch_favicon_last(self.page, browser_fetched, watch_uuid, scripts_paused)
 
         # It's good to log here in the case that the browser crashes on shutting down but we still get the data we need
         logger.success(f"Fetching '{url}' complete, exiting puppeteer fetch.")

@@ -359,6 +359,18 @@ def new_live_server_setup(live_server):
         return (f'<html><head><title>favicon</title><link rel="icon" type="image/png" href="{icon}"></head>'
                 f'<body>A page with an icon only the browser itself may fetch</body></html>')
 
+    # A page that never leaves the browser's main thread alone for long, the way an animation drawn
+    # without a GPU does: anything the fetcher asks the page has to wait for a gap. Its icon is one
+    # only the browser itself may fetch.
+    @live_server.app.route('/test-busy-page')
+    def test_busy_page():
+        icon = url_for('test_favicon_browser_only', key=request.args.get('key', 'default'))
+        return (f'<html><head><title>busy</title><link rel="icon" type="image/png" href="{icon}"></head>'
+                '<body><p>The busy page text is here</p><script>'
+                # On an interval so that stopping the script that is running does not end it, the next one starts
+                'setInterval(() => { const until = performance.now() + 8000; while (performance.now() < until) {} }, 0);'
+                '</script></body></html>')
+
     _favicon_requests = {}
 
     @live_server.app.route('/test-favicon-browser-only.png')
