@@ -1,6 +1,7 @@
 import json
 from unittest.mock import patch
 
+import apprise
 import pytest
 import requests
 from apprise.utils.parse import parse_url as apprise_parse_url
@@ -18,7 +19,12 @@ from changedetectionio.notification.apprise_plugin.custom_handlers import (
     "url,expected_auth",
     [
         ("get://user:pass@localhost:9999", ("user", "pass")),
-        ("get://user@localhost:9999", "user"),
+        # A username without a password is not a login
+        ("get://user@localhost:9999", ""),
+        # Query parameters are for the remote endpoint, never credentials
+        ("get://localhost:9999?user=abc&token=xyz", ""),
+        ("get://localhost:9999?user=abc&password=xyz", ""),
+        ("get://localhost:9999?user=abc&pass=xyz", ""),
         ("get://localhost:9999", ""),
         ("get://user%20name:pass%20word@localhost:9999", ("user name", "pass word")),
     ],
@@ -61,6 +67,7 @@ def test_get_headers(url, body, expected_content_type):
         ("get://localhost:9999?param1=value1&+X-Key=secret", {"param1": "value1"}),
         ("get://localhost:9999?param1=value1&+Authorization=Bearer%20token", {"param1": "value1"}),
         ("get://localhost:9999?param1=value1&-Param2=ignored", {"param1": "value1"}),
+        ("get://localhost:9999?user=abc&token=xyz", {"user": "abc", "token": "xyz"}),
         (
             "get://localhost:9999?encoded%20param=encoded%20value",
             {"encoded param": "encoded value"},
@@ -122,37 +129,34 @@ def test_apprise_custom_api_call_with_auth(mock_request):
 
 
 @pytest.mark.parametrize(
-    "exception_type,expected_result",
-    [
-        (requests.RequestException, False),
-        (requests.HTTPError, False),
-        (Exception, False),
-    ],
+    "exception_type",
+    [requests.RequestException, requests.HTTPError, Exception],
 )
 @patch("requests.request")
-def test_apprise_custom_api_call_failure(mock_request, exception_type, expected_result):
-    """Test various failure scenarios."""
+def test_apprise_custom_api_call_failure(mock_request, exception_type):
+    """A failed request raises out of the handler, and is reported as a failed send by Apprise."""
     url = "get://localhost:9999/error"
-    meta = {"url": url, "schema": "get"}
-
-    # Simulate different types of exceptions
     mock_request.side_effect = exception_type("Error occurred")
 
+    with pytest.raises(exception_type):
+        apprise_http_custom_handler(
+            body="error body", title="Error Test", notify_type="error", meta={"url": url, "schema": "get"}
+        )
+
+    apobj = apprise.Apprise()
+    assert apobj.add(url)
+    assert not apobj.notify(body="error body", title="Error Test")
+
+
+@patch("requests.request")
+def test_invalid_url_parsing(mock_request):
+    """A URL that cannot be parsed is a failed send, nothing is requested."""
     result = apprise_http_custom_handler(
-        body="error body", title="Error Test", notify_type="error", meta=meta
-    )
-
-    assert result == expected_result
-
-
-def test_invalid_url_parsing():
-    """Test handling of invalid URL parsing."""
-    meta = {"url": "invalid://url", "schema": "invalid"}
-    result = apprise_http_custom_handler(
-        body="test", title="Invalid URL", notify_type="info", meta=meta
+        body="test", title="Invalid URL", notify_type="info", meta={"url": "get://", "schema": "get"}
     )
 
     assert result is False
+    mock_request.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -213,3 +217,46 @@ def test_https_method_conversion(
 
     assert call_args[1]["method"] == expected_method
     assert call_args[1]["url"].startswith("https")
+
+
+@pytest.mark.parametrize("schema", sorted(SUPPORTED_HTTP_METHODS))
+@pytest.mark.parametrize(
+    "query,expected_params",
+    [
+        ("user=abc&token=xyz&title=hello", {"user": "abc", "token": "xyz", "title": "hello"}),
+        ("user=abc", {"user": "abc"}),
+        ("user=abc&password=secret", {"user": "abc", "password": "secret"}),
+        ("user=abc&pass=secret", {"user": "abc", "pass": "secret"}),
+        ("verify=no&retry=2", {"verify": "no", "retry": "2"}),
+    ],
+)
+@patch("requests.request")
+def test_query_params_reach_endpoint_untouched(mock_request, schema, query, expected_params):
+    """Sent through Apprise itself: ?user=, ?pass= etc are plain query parameters for the remote
+    endpoint, they are never turned into a login and never moved into the URL."""
+    mock_request.return_value.raise_for_status.return_value = None
+
+    apobj = apprise.Apprise()
+    assert apobj.add(f"{schema}://localhost:9999/webhook?{query}")
+    assert apobj.notify(body="test body", title="Test Title")
+
+    mock_request.assert_called_once()
+    call_args = mock_request.call_args[1]
+    assert call_args["method"] == schema.upper()
+    assert call_args["url"] == "http://localhost:9999/webhook"
+    assert call_args["auth"] == ""
+    assert dict(call_args["params"]) == expected_params
+
+
+@patch("requests.request")
+def test_url_credentials_still_used_with_user_query_param(mock_request):
+    """user:pass@ in the URL is the login, a ?user= beside it is still just a query parameter."""
+    mock_request.return_value.raise_for_status.return_value = None
+
+    apobj = apprise.Apprise()
+    assert apobj.add("post://login:secret@localhost:9999/webhook?user=abc")
+    assert apobj.notify(body="test body", title="Test Title")
+
+    call_args = mock_request.call_args[1]
+    assert call_args["auth"] == ("login", "secret")
+    assert dict(call_args["params"]) == {"user": "abc"}

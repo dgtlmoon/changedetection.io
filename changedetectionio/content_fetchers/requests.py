@@ -80,6 +80,16 @@ class fetcher(Fetcher):
         session.mount("http://", adapter)
         session.mount("https://", adapter)
 
+        # Opt-in network recording for debugging a single watch, see Fetcher.har_record_wanted()
+        # The hook sees the response of every hop, including the redirects followed by hand below
+        har_responses = None
+        if self.har_record_wanted(watch_uuid):
+            import time
+            logger.info(f"[{watch_uuid}] Recording network traffic (HAR) of this fetch")
+            har_responses = []
+            session.hooks['response'].append(
+                lambda resp, *args, **kwargs: har_responses.append((time.time() - resp.elapsed.total_seconds(), resp)))
+
         if strtobool(os.getenv('ALLOW_FILE_URI', 'false')) and url.startswith('file://'):
             from requests_file import FileAdapter
             session.mount('file://', FileAdapter())
@@ -131,6 +141,16 @@ class fetcher(Fetcher):
             if proxies and 'SOCKSHTTPSConnectionPool' in msg:
                 msg = f"Proxy connection failed? {msg}"
             raise Exception(msg) from e
+        finally:
+            # Here rather than at the end, so an error status or a blocked redirect is recorded too
+            if har_responses is not None:
+                try:
+                    from changedetectionio.content_fetchers.har_recorder import har_from_requests_responses, save_har
+                    os.makedirs(self.watch_data_dir, exist_ok=True)
+                    destination = save_har(self.watch_data_dir, har_from_requests_responses(har_responses, title=url))
+                    logger.info(f"[{watch_uuid}] HAR record with {len(har_responses)} requests saved to {destination}")
+                except Exception as e:
+                    logger.error(f"[{watch_uuid}] Could not save the HAR record: {e}")
 
         # If the response did not tell us what encoding format to expect, Then use chardet to override what `requests` thinks.
         # For example - some sites don't tell us it's utf-8, but return utf-8 content

@@ -1460,6 +1460,25 @@ msgstr ""
 "verbundene Assistenten ab, sie müssen sich neu verbinden. Zugriffstoken funktionieren weiter."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "Zugriff ohne Anmeldung"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr ""
+"Jeder mit der MCP-Adresse kann dann Ihre Monitore auflisten und deren Änderungen, Snapshots und Screenshots lesen, "
+"ohne Token oder Passwort, z. B. für eine öffentliche Demo. Benachrichtigungen, Systeminfos und jede Änderung brauchen"
+" weiterhin eine Anmeldung oder ein Zugriffstoken."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "Ohne Anmeldung kann jede Adresse %(count)s Tool-Aufrufe pro Minute machen."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
 "use the built-in note, shown in grey."
@@ -2329,18 +2348,21 @@ msgid "Watch is already queued or being checked."
 msgstr "Überwachung ist bereits in der Warteschlange oder wird gerade geprüft."
 
 #: changedetectionio/blueprint/ui/__init__.py
-msgid "Queued 1 watch for rechecking."
-msgstr "1 Überwachung zur erneuten Überprüfung in Warteschlange gestellt."
+#, python-format
+msgid "Queued %(count)s watch for rechecking"
+msgid_plural "Queued %(count)s watches for rechecking"
+msgstr[0] "%(count)s Überwachung zur erneuten Überprüfung in Warteschlange gestellt"
+msgstr[1] "In der Warteschlange %(count)s zur erneuten Überprüfung"
+
+#. TRANSLATORS: sentence-final full stop
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "."
+msgstr "."
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
-msgstr "{count} Überwachungen zur erneuten Überprüfung eingereiht ({skipped_count} bereits in Warteschlange oder laufend)."
-
-#: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {} watches for rechecking."
-msgstr "In der Warteschlange {} zur erneuten Überprüfung."
+#, python-format
+msgid " (%(skipped_count)s already queued or running)"
+msgstr " (%(skipped_count)s bereits in Warteschlange oder laufend)"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
@@ -2366,6 +2388,11 @@ msgstr "Nicht genügend Verlauf (2 snapshots erforderlich), um die Änderungssei
 #: changedetectionio/blueprint/ui/diff.py
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not save the '{}' settings, see the log."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
@@ -3324,6 +3351,10 @@ msgid "With errors"
 msgstr "Mit Fehlern"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Healthy"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Filter by type"
 msgstr ""
 
@@ -3639,59 +3670,45 @@ msgstr ""
 
 #: changedetectionio/flask_app.py
 msgid "year"
-msgstr ""
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr ""
+msgid_plural "years"
+msgstr[0] ""
+msgstr[1] ""
 
 #: changedetectionio/flask_app.py
 msgid "month"
-msgstr ""
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr ""
+msgid_plural "months"
+msgstr[0] ""
+msgstr[1] ""
 
 #: changedetectionio/flask_app.py
 msgid "week"
-msgstr ""
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr ""
+msgid_plural "weeks"
+msgstr[0] ""
+msgstr[1] ""
 
 #: changedetectionio/flask_app.py
 msgid "day"
-msgstr ""
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr ""
+msgid_plural "days"
+msgstr[0] ""
+msgstr[1] ""
 
 #: changedetectionio/flask_app.py
 msgid "hour"
-msgstr ""
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr ""
+msgid_plural "hours"
+msgstr[0] ""
+msgstr[1] ""
 
 #: changedetectionio/flask_app.py
 msgid "minute"
-msgstr ""
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr ""
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr ""
+msgid_plural "minutes"
+msgstr[0] ""
+msgstr[1] ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "Sekunden"
+msgid "second"
+msgid_plural "seconds"
+msgstr[0] ""
+msgstr[1] "Sekunden"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
@@ -4397,6 +4414,10 @@ msgstr "MCP- und OAuth-Endpunkte einschalten"
 msgid "MCP Note"
 msgstr "MCP-Hinweis"
 
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "Lesezugriff ohne Anmeldung erlauben"
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "Public MCP address"
 msgstr "Öffentliche MCP-Adresse"
@@ -4411,6 +4432,7 @@ msgid "Monitors"
 msgstr "Monitore"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4418,6 +4440,7 @@ msgid "Write"
 msgstr "Schreiben"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4425,6 +4448,7 @@ msgid "None"
 msgstr "Keine"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4436,7 +4460,7 @@ msgstr "Lesen"
 msgid "Groups (tags)"
 msgstr "Gruppen (Tags)"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Browser steps & JavaScript"
 msgstr "Browser-Schritte & JavaScript"
 
@@ -4917,10 +4941,12 @@ msgstr ""
 msgid "Changes in price should trigger a notification"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value."
 msgstr ""
@@ -4930,6 +4956,8 @@ msgstr ""
 msgid "Price must change more than this % since the previous check to trigger a change."
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency and adjust both figures, as long as the 2% relationship is
+#. preserved.
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid ""
 "For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change "
@@ -5047,6 +5075,11 @@ msgstr "+ Über %(count)d weitere Dienste durchsuchen"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "List all"
 msgstr "Alle anzeigen"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Notification services <a href=\"%(url)s\" target=\"_blank\">powered by Apprise</a>."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"
@@ -5676,6 +5709,7 @@ msgstr ""
 msgid "From group '%(name)s': %(value)s"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes."
 msgstr ""
@@ -5688,6 +5722,7 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Only notify if the price drops below $200, or a limited-time deal is added"
 msgstr ""

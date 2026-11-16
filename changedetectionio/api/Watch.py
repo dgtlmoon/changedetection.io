@@ -436,8 +436,10 @@ class CreateWatch(Resource):
                 'last_checked': watch['last_checked'],
                 'last_error': watch['last_error'],
                 'link': watch.link,
+                'notification_muted': bool(watch.get('notification_muted')),
                 'open_link': watch.open_link,
                 'page_title': watch['page_title'],
+                'paused': bool(watch.get('paused')),
                 'processor': watch.get('processor') or 'text_json_diff',
                 'tags': [*tags],  # Unpack dict keys to list (can't use list() since variable named 'list')
                 'title': watch['title'],

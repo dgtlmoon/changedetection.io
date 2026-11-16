@@ -155,10 +155,12 @@ def register_mcp_tools():
     from changedetectionio.blueprint.mcp.tools import WATCH_ARGUMENT
     return [
         {'name': 'restock_status', 'title': 'Stock and prices', 'kind': 'read',
-         'description': "Which product monitors (processor restock_diff) are in stock and at what price, with their "
-                        "price history (lowest, median, highest, whether now is low/typical/high, the last price "
-                        "change and since when) and notification rules. Use it for 'what on my wishlist is back in "
-                        "stock?' or 'is anything cheap now?'. All of them, one tag, a name search, or one monitor.",
+         'description': "Which product monitors are in stock and at what price, with their price history (lowest, "
+                        "median, highest, whether now is low/typical/high, the last price change and since when) and "
+                        "restock alert rules. Use it for 'what on my wishlist is back in stock?' or 'is anything "
+                        "cheap now?'. No arguments for all product monitors, or narrow it to one tag, a name search "
+                        "or one monitor, and in_stock=true/false. Sorted by name. Only product (restock) monitors; "
+                        "for other monitors' settings or latest change, use get_watch.",
          'input_schema': {'tag': {'type': 'string', 'description': 'Only monitors in this tag/group (name or uuid)'},
                           'search': {'type': 'string', 'description': 'Only monitors whose title or URL contains this'},
                           'watch': WATCH_ARGUMENT,

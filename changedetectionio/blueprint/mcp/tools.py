@@ -22,6 +22,7 @@ import re
 
 from loguru import logger
 
+from changedetectionio.notification.masking import mask_notification_url as _mask_notification_url
 from changedetectionio.changes_report import (MODES, RELATIVE_TO, _iso, _unified, group_changes, parse_timestamp,
                                               render_patches, render_unified, select_watches, snapshots_as_patches)
 
@@ -220,21 +221,6 @@ def _snapshot_key(watch, value, default='latest'):
     if not earlier:
         raise ToolError(f"No snapshot at or before {_iso(ts)}, the first one is {_iso(keys[0])}")
     return earlier[-1]
-
-
-def _mask_notification_url(url):
-    """An Apprise URL with its secrets hidden, it never goes back to the model in full."""
-    try:
-        import apprise
-        # Registers changedetection.io's own get:// post:// ... handlers so their URLs can be read too
-        import changedetectionio.notification.apprise_plugin.custom_handlers  # noqa: F401
-        instance = apprise.Apprise.instantiate(url)
-        if instance:
-            return instance.url(privacy=True)
-    except Exception:
-        pass
-    scheme = url.split('://', 1)[0] if '://' in url else ''
-    return f"{scheme}://****" if scheme else '****'
 
 
 def _api_call(fn, *args):
@@ -888,6 +874,111 @@ def get_screenshot(ctx, args):
     return text, structured, [{'type': 'image', 'data': base64.b64encode(jpeg).decode('ascii'), 'mimeType': 'image/jpeg'}]
 
 
+NETWORK_LOG_URL_MAX = 200
+# Values of these never leave the instance, the recording itself (in the watch data package) has them
+_SECRET_HEADERS = ('cookie', 'authorization')
+_SECRET_HEADER_WORDS = ('token', 'secret', 'api-key', 'apikey', 'password', 'session')
+
+
+def _har_headers(headers):
+    """[{'name', 'value'}] with the values of secrets hidden."""
+    out = []
+    for h in headers or []:
+        name, value = str(h.get('name', '')), str(h.get('value', ''))
+        low = name.lower()
+        if any(s in low for s in _SECRET_HEADERS) or any(w in low for w in _SECRET_HEADER_WORDS):
+            value = f"[hidden, {len(value)} characters]"
+        out.append({'name': name, 'value': value})
+    return out
+
+
+def _header_lines(headers):
+    return [f"  {h['name']}: {h['value']}" for h in headers]
+
+
+def _har_row(n, entry):
+    request, response = entry.get('request') or {}, entry.get('response') or {}
+    content = response.get('content') or {}
+    return {'n': n, 'method': request.get('method'), 'status': response.get('status') or 0,
+            'url': request.get('url') or '', 'type': entry.get('_resourceType') or '',
+            'mime_type': content.get('mimeType') or '', 'size': content.get('size') or 0,
+            'ms': round(entry.get('time') or 0),
+            'error': entry.get('_error') or response.get('_failureText') or None}
+
+
+def _har_failed(row):
+    return bool(row['error']) or row['status'] >= 400 or row['status'] <= 0
+
+
+def get_network_log(ctx, args):
+    watch = _resolve_watch(ctx, args.get('watch'))
+    from changedetectionio.content_fetchers.har_recorder import load_har
+    try:
+        har, recorded = load_har(watch.data_dir) if watch.data_dir else (None, None)
+    except Exception as e:
+        logger.warning(f"MCP: couldn't read the network recording of {watch.get('uuid')}: {e}")
+        raise ToolError("The network recording couldn't be read")
+    if not har:
+        raise ToolError(f"No network recording for {watch.label}. They're only made on request: call recheck_watches "
+                        f"with watches=['{watch.get('uuid')}'], record_network=true and wait=true, then ask again.")
+    entries = har.get('log', {}).get('entries') or []
+    rows = [_har_row(n, e) for n, e in enumerate(entries, start=1)]
+    head = (f"### {watch.label} - {watch.get('url')}\nNetwork requests of the check recorded {_iso(recorded)}, "
+            f"{len(rows)} requests. Only the latest recording is kept.")
+    structured = {'uuid': watch.get('uuid'), 'recorded': _iso(recorded), 'total': len(rows)}
+
+    n = args.get('request')
+    if n is not None:
+        if not isinstance(n, int) or not 1 <= n <= len(rows):
+            raise ToolError(f"'request' must be a request number from the list, 1 to {len(rows)}")
+        entry, row = entries[n - 1], rows[n - 1]
+        request, response = entry.get('request') or {}, entry.get('response') or {}
+        content = response.get('content') or {}
+        max_chars = _int(args, 'max_chars', 4000, 100, 50000)
+        # Everything goes into the structured answer as well: some clients only show that part
+        request_headers, response_headers = _har_headers(request.get('headers')), _har_headers(response.get('headers'))
+        detail = dict(row, status_text=response.get('statusText') or '', request_headers=request_headers,
+                      response_headers=response_headers, request_body=None, response_body=None,
+                      response_body_truncated=False)
+        lines = [head, f"Request {n}: {row['method']} {row['url']}", "Request headers:"] + _header_lines(request_headers)
+        post = (request.get('postData') or {}).get('text')
+        if post:
+            detail['request_body'] = post[:2000]
+            lines += ["Request body:", post[:2000] + ('... (cut)' if len(post) > 2000 else '')]
+        lines += [f"Response: {row['status']} {detail['status_text']}".rstrip()
+                  + (f", failed: {row['error']}" if row['error'] else '') + f", {row['ms']} ms", "Response headers:"]
+        lines += _header_lines(response_headers)
+        body = content.get('text')
+        if body is None:
+            lines.append(f"Response body: not recorded ({row['size']} bytes, {row['mime_type'] or 'unknown type'})")
+        elif content.get('encoding') == 'base64':
+            lines.append(f"Response body: binary, {row['size']} bytes of {row['mime_type'] or 'unknown type'}, not shown")
+        else:
+            detail.update(response_body=body[:max_chars], response_body_truncated=len(body) > max_chars)
+            lines += [f"Response body ({len(body)} characters{', cut to ' + str(max_chars) if len(body) > max_chars else ''}):",
+                      body[:max_chars]]
+        structured['request'] = detail
+        return f"{UNTRUSTED_NOTE}\n" + '\n'.join(lines), structured
+
+    needle = (args.get('url_contains') or '').lower()
+    matched = [r for r in rows if (not needle or needle in r['url'].lower())
+               and (not args.get('only_errors') or _har_failed(r))]
+    offset, limit = _int(args, 'offset', 0, 0, 1_000_000), _int(args, 'limit', 100, 1, 300)
+    page = matched[offset:offset + limit]
+    lines = [head, f"{len(matched)} match" + (f", showing {offset + 1}-{offset + len(page)}" if len(page) < len(matched) else '')
+             + f", {sum(1 for r in rows if _har_failed(r))} of all {len(rows)} failed or answered 4xx/5xx. "
+               "Call again with request=<number> for the headers and body of one."]
+    for r in page:
+        url = r['url'] if len(r['url']) <= NETWORK_LOG_URL_MAX else r['url'][:NETWORK_LOG_URL_MAX] + '...'
+        lines.append(f"{r['n']} | {r['method']} {r['status'] or 'failed'} | {url} | {r['type'] or r['mime_type']} | "
+                     f"{r['size']} bytes | {r['ms']} ms" + (f" | {r['error']}" if r['error'] else ''))
+    if offset + len(page) < len(matched):
+        lines.append(f"More: call again with offset={offset + len(page)}.")
+    structured.update(matched=len(matched), requests=page,
+                      next_offset=offset + len(page) if offset + len(page) < len(matched) else None)
+    return f"{UNTRUSTED_NOTE}\n" + '\n'.join(lines), structured
+
+
 def get_system_info(ctx, args):
     import time
     from changedetectionio import __version__, worker_pool
@@ -1291,10 +1382,19 @@ def update_watch(ctx, args):
 # recheck_watches wait=true: at most this many seconds (under MCP clients' tool timeouts), for at most this many monitors
 RECHECK_WAIT_MAX_SECONDS = 60
 RECHECK_WAIT_MAX_MONITORS = 20
+ONE_SHOT_MAX_MONITORS = 5
 
 
-def _check_states(ctx, watches, since):
-    """Where each check is: 'checked' (with whether it changed and any error), 'checking' or 'queued' (position)."""
+def _check_marks(watches):
+    """What to remember about each monitor before queueing it, for _check_states to tell a new check from the last
+    one: {uuid: (check_count, last_changed)}. Not last_checked, that's in whole seconds, so a check that finished in
+    the same second as this was asked for would look like the one being waited for."""
+    return {w.get('uuid'): (w.get('check_count', 0), w.last_changed) for w in watches}
+
+
+def _check_states(ctx, watches, before):
+    """Where each check is: 'checked' (with whether it changed and any error), 'checking' or 'queued' (position).
+    before: _check_marks() from before they were queued."""
     import time
     from changedetectionio import worker_pool
     positions = ctx.update_q.get_queue_positions() if ctx.update_q is not None and hasattr(ctx.update_q, 'get_queue_positions') else {}
@@ -1309,9 +1409,9 @@ def _check_states(ctx, watches, since):
             state.update(state='checking', running_seconds=round(time.time() - started) if started else None)
         elif uuid in positions:
             state.update(state='queued', position=positions[uuid], queued_total=queued_total)
-        elif (w.get('last_checked') or 0) >= since:
+        elif w.get('check_count', 0) > before[uuid][0]:
             state.update(state='checked', last_checked=_iso(w['last_checked']),
-                         changed=bool(w.last_changed and w.last_changed >= since), error=w.get('last_error') or None)
+                         changed=bool(w.last_changed and w.last_changed != before[uuid][1]), error=w.get('last_error') or None)
         else:
             state.update(state='not queued')
         states.append(state)
@@ -1345,9 +1445,29 @@ def recheck_watches(ctx, args):
     if not refs:
         watches = [w for w in watches if not w.get('paused')]
     import time
-    started = int(time.time())
-    queued, skipped = queue_rechecks(ctx.update_q, [w.get('uuid') for w in watches])
+    started = time.time()
+    before = _check_marks(watches)
+    # Options for these checks only, nothing is stored on the monitors
+    metadata, notes = {}, []
+    if args.get('record_network'):
+        metadata['record_har'] = True
+        notes.append("recording the network requests (read them with get_network_log once it's checked)")
+    proxy = (str(args.get('proxy') or '')).strip()
+    if proxy:
+        if proxy.lower() in ('none', 'no-proxy', 'direct'):
+            metadata['proxy'] = 'no-proxy'
+            notes.append('connecting directly, without a proxy')
+        else:
+            key = _proxy_key(ctx, proxy)
+            if key:
+                metadata['proxy'] = key
+                notes.append(f"through the proxy {ctx.datastore.proxy_list[key].get('label')}")
+    if metadata and (not refs or len(watches) > ONE_SHOT_MAX_MONITORS):
+        raise ToolError(f"record_network and proxy are for monitors named in 'watches', at most {ONE_SHOT_MAX_MONITORS} at a time")
+    queued, skipped = queue_rechecks(ctx.update_q, [w.get('uuid') for w in watches], metadata=metadata or None)
     text = f"Queued {queued} monitors for a recheck" + (f" ({skipped} already queued or running)" if skipped else '')
+    if notes:
+        text += ', for this one check only: ' + ' and '.join(notes)
     structured = {'queued': queued, 'skipped': skipped}
     if not args.get('wait'):
         return text + ". This doesn't wait for the checks: look at last_checked with get_watch or list_watches later, " \
@@ -1359,7 +1479,7 @@ def recheck_watches(ctx, args):
     # (and greenlets, in gevent mode) run in the meantime
     deadline = time.monotonic() + _int(args, 'wait_seconds', 30, 1, RECHECK_WAIT_MAX_SECONDS)
     while True:
-        states = _check_states(ctx, watches, started)
+        states = _check_states(ctx, watches, before)
         # 'not queued' right after queueing can be a worker that has taken it but not yet marked it running, so it
         # only counts as settled after a few seconds
         settled = ('checked', 'not queued') if time.time() - started > 3 else ('checked',)
@@ -1669,8 +1789,21 @@ _WHEN = "'latest', 'previous', unix seconds, or an ISO date/datetime (uses the s
 _INTERVAL = {'type': 'object', 'description': 'How often to check, e.g. {"hours": 6}', 'additionalProperties': False,
              'properties': {k: {'type': 'integer', 'minimum': 0} for k in ('weeks', 'days', 'hours', 'minutes', 'seconds')}}
 _TEXT_LIST = {'type': 'array', 'items': {'type': 'string'}}
-_SCOPE = {'watch': {'type': 'string', 'description': 'A monitor (uuid or part of title/URL), instead of the global settings'},
-          'tag': {'type': 'string', 'description': 'A tag/group (name or uuid), instead of the global settings'}}
+# Paging, the same on every tool that lists: the answer gives the total, or the offset to call again with
+_OFFSET = {'type': 'integer', 'minimum': 0, 'default': 0,
+           'description': 'Skip this many, for the next page: the answer says how many there are, or which offset to '
+                          'call again with'}
+
+
+def _limit(maximum, default, what):
+    return {'type': 'integer', 'minimum': 1, 'maximum': maximum, 'default': default,
+            'description': f'How many {what} in this call, at most {maximum}'}
+
+
+_SCOPE = {'watch': {'type': 'string', 'description': "A monitor (uuid or part of title/URL): its own notification "
+                                                     "URLs, instead of the global settings"},
+          'tag': {'type': 'string', 'description': "A tag/group (name or uuid): its own notification URLs, instead of "
+                                                   "the global settings"}}
 
 
 # Value constraints copied from the API spec's WatchBase, so MCP and REST can't drift apart and the model sees the
@@ -1805,14 +1938,17 @@ TOOLS = {
                           'description': 'last_changed: most recently changed first, first_snapshot: oldest history '
                                          'first, snapshots: most snapshots first, history_span: longest time between '
                                          'first and last snapshot first'},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 500, 'default': 50},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}})),
+                 'limit': _limit(500, 50, 'monitors'), 'offset': _OFFSET})),
     'get_watch': (get_watch, READ_ONLY, 'Monitor details',
         "One monitor's settings, status, last error, price/stock if it has one, and its latest change as a diff. "
         "Answers 'what changed on X?' in one call.",
         _schema({'watch': _WATCH}, ['watch'])),
     'list_tags': (list_tags, READ_ONLY, 'List tags/groups',
-        'The tags (groups) monitors are organised in, with how many monitors each has.', _schema({})),
+        "List every tag (group) with its uuid, how many monitors it has and whether its notifications are muted. A "
+        "monitor can be in several tags; a tag can hold its own notification URLs and settings for its monitors. "
+        "Call it to find a tag's exact name or uuid before using 'tag' on another tool (list_watches, get_changes, "
+        "restock_status...) or before create_tag, so you don't make a duplicate. For the monitors in one tag, use "
+        "list_watches with 'tag'.", _schema({})),
     'get_changes': (get_changes, READ_ONLY, 'What changed',
         "Every change across many monitors between two dates, in one call, as unified diffs under a header per "
         "monitor. Use it for 'what changed on my competitor pages this month?'. Monitors without changes are left "
@@ -1824,8 +1960,7 @@ TOOLS = {
                  'mode': {'type': 'string', 'enum': list(MODES), 'default': 'net_change'},
                  'context': {'type': 'integer', 'minimum': 0, 'maximum': 10, 'default': 1},
                  'max_lines_per_watch': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 200},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['from'])),
+                 'limit': _limit(200, 50, 'monitors with changes'), 'offset': _OFFSET}, ['from'])),
     'get_diff': (get_diff, READ_ONLY, 'Diff of one monitor',
         "Unified diff of one monitor between two of its snapshots, by default the previous and the latest; "
         "word_diff=true marks the changed words instead.",
@@ -1851,9 +1986,7 @@ TOOLS = {
                                          "selector for include_filters (kept for the newest two snapshots)"},
                  'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 200000,
                                'description': 'Per monitor: default 20000 for one, 5000 (at most 50000) each for several'},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': SNAPSHOT_BATCH_MAX, 'default': 10,
-                           'description': 'Several monitors: how many in this call'},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}})),
+                 'limit': _limit(SNAPSHOT_BATCH_MAX, 10, 'monitors (with several)'), 'offset': _OFFSET})),
     'list_snapshots': (list_snapshots, READ_ONLY, 'List snapshots',
         "The snapshot dates of one monitor (one is saved each time the page changed) and their size on disk. With "
         f"more than {SNAPSHOT_LIST_SUMMARY_OVER} it gives a summary: date range, snapshots per month, sizes, and only "
@@ -1863,8 +1996,8 @@ TOOLS = {
                  'from': {'type': ['string', 'integer'], 'description': 'Only snapshots at or after this: unix seconds or an ISO date'},
                  'to': {'type': ['string', 'integer'], 'description': 'Only snapshots at or before this'},
                  'full': {'type': 'boolean', 'default': False, 'description': 'Every snapshot, not the summary'},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 200},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['watch'])),
+                 'limit': _limit(2000, 200, 'snapshots (with full=true or up to the summary size)'),
+                 'offset': _OFFSET}, ['watch'])),
     'find_change': (find_change, READ_ONLY, 'When did this text appear',
         "When a text was on a monitor's page, searching every snapshot line by line in one call: every different "
         "line that matched with when it was first and last seen, and the periods with a match (when it went away). "
@@ -1897,8 +2030,7 @@ TOOLS = {
                                  'description': 'Only lines still on the page (true) or that went away (false)'},
                  'from': {'type': ['string', 'integer'], 'description': 'Only snapshots at or after this: unix seconds or an ISO date'},
                  'to': {'type': ['string', 'integer'], 'description': 'Only snapshots at or before this'},
-                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 2000, 'default': 200},
-                 'offset': {'type': 'integer', 'minimum': 0, 'default': 0}}, ['watch'])),
+                 'limit': _limit(2000, 200, 'lines'), 'offset': _OFFSET}, ['watch'])),
     'get_history': (get_history, READ_ONLY, 'Several snapshots as diffs',
         "Several snapshots of one monitor in one call, compactly: the first in full, then each of the others only as "
         "a diff, so text that stays the same is sent once. Use it for 'how did this page/its prices change over "
@@ -1927,18 +2059,38 @@ TOOLS = {
         _schema({'watch': _WATCH, 'which': {'type': 'string', 'enum': ['latest', 'error'], 'default': 'latest'},
                  'offset': {'type': 'integer', 'minimum': 0, 'default': 0,
                             'description': 'Pixels from the top to start at, from the previous answer'}}, ['watch'])),
+    'get_network_log': (get_network_log, READ_ONLY, 'Network requests of a check',
+        "What a monitor's check really requested and got back (like the network tab of a browser's dev-tools): every "
+        "request with its status, type and size, for 'why is this page blocked / empty / different here?' - a 403, "
+        "a challenge script, an API call behind the page that failed or came back empty. Lists the requests "
+        "(narrow with url_contains or only_errors), then request=<number> gives one request's headers and response "
+        "body. Cookie and authorization values are hidden. Nothing is recorded until asked: first call "
+        "recheck_watches with record_network=true and wait=true. Only the latest recording is kept.",
+        _schema({'watch': _WATCH,
+                 'url_contains': {'type': 'string', 'description': 'Only requests whose URL contains this'},
+                 'only_errors': {'type': 'boolean', 'description': 'Only requests that failed or answered 4xx/5xx'},
+                 'request': {'type': 'integer', 'minimum': 1,
+                             'description': "A request's number from the list: its headers and response body instead of the list"},
+                 'max_chars': {'type': 'integer', 'minimum': 100, 'maximum': 50000, 'default': 4000,
+                               'description': 'With request: how much of the response body'},
+                 'limit': _limit(300, 100, 'requests'), 'offset': _OFFSET}, ['watch'])),
     'get_system_info': (get_system_info, READ_ONLY, 'System info',
         "Health and load: how many monitors (failing, paused, overdue for a check), the check queue size, how many "
         "fetch workers there are and which monitors they're checking right now and for how long. Use it for 'why "
         "are my monitors slow / not being checked?'.", _schema({})),
     'list_notifications': (list_notifications, READ_ONLY, 'List notifications',
-        "The notification URLs (Apprise) on the global settings, a tag or a monitor, with their secrets hidden and a "
-        "position number for remove_notification, and that level's notification format, title and body.",
+        "List the notification URLs (Apprise) already set up in one place: the global settings by default, or one "
+        "tag or one monitor with 'tag'/'watch'. Each URL comes with its secrets hidden and a position number (what "
+        "remove_notification takes), followed by that place's notification format, title and body if set. An empty "
+        "list on a monitor or tag means it has none of its own and uses its tags' or the global ones; an unknown "
+        "tag or monitor is an error. To set up a new service (Slack, email...), use notification_services for its "
+        "URL format instead.",
         _schema(dict(_SCOPE))),
     'notification_services': (notification_services, READ_ONLY, 'Notification services',
-        "How to set up a notification service (Slack, Discord, Telegram, email, ntfy, Teams and 140 more): its URL "
-        "forms and the tokens it needs, which ones are secrets, and where the user gets them. Without 'search', the "
-        "list of services.",
+        "How to write the notification URL for a service (Slack, Discord, Telegram, email, ntfy, Teams and 140 "
+        "more): its URL forms and the tokens it needs, which ones are secrets, and where the user gets them. "
+        "Without 'search', the list of services. It describes services, not what is set up here: for that, use "
+        "list_notifications.",
         _schema({'search': {'type': 'string', 'description': "A service name or scheme, e.g. 'slack' or 'tgram'"}})),
 
     'create_watch': (create_watch, dict(WRITE, openWorldHint=True), 'Add a monitor',
@@ -1958,13 +2110,22 @@ TOOLS = {
     'recheck_watches': (recheck_watches, dict(WRITE, idempotentHint=True, openWorldHint=True), 'Recheck monitors',
         "Queue monitors to be checked now: by name/uuid, a whole tag, the ones with errors, or all. Returns at once, "
         "or with wait=true waits up to wait_seconds and says for each whether it changed, is being checked, or its "
-        "place in the queue. Paused monitors are skipped unless named.",
+        "place in the queue. Paused monitors are skipped unless named. Two options apply to that one check only, "
+        "to find out why a page is blocked or different: record_network=true records what it requests (read it "
+        "with get_network_log), and proxy tries it through another of the configured proxies.",
         _schema({'watches': _WATCHES, 'tag': _TAG, 'with_errors': {'type': 'boolean'},
                  'all': {'type': 'boolean', 'description': 'Every monitor that isn\'t paused'},
                  'wait': {'type': 'boolean', 'default': False,
                           'description': f'Wait for the checks (at most {RECHECK_WAIT_MAX_MONITORS} monitors) and say how each went, '
                                          'or where it is in the queue'},
-                 'wait_seconds': {'type': 'integer', 'minimum': 1, 'maximum': RECHECK_WAIT_MAX_SECONDS, 'default': 30}})),
+                 'wait_seconds': {'type': 'integer', 'minimum': 1, 'maximum': RECHECK_WAIT_MAX_SECONDS, 'default': 30},
+                 'record_network': {'type': 'boolean', 'default': False,
+                                    'description': f"Also record the network requests of this one check, for get_network_log. "
+                                                   f"Only with 'watches', at most {ONE_SHOT_MAX_MONITORS}"},
+                 'proxy': {'type': 'string',
+                           'description': "Fetch this one check through another proxy, by its name or id from "
+                                          "get_system_info, or 'none' for a direct connection. The monitor's own "
+                                          f"proxy setting is not changed. Only with 'watches', at most {ONE_SHOT_MAX_MONITORS}"}})),
     'pause_watches': (pause_watches, dict(WRITE, idempotentHint=True), 'Pause or unpause monitors',
         "Pause or unpause monitors in one call: by name/uuid, every monitor in a tag/group, or all of them. "
         "scheduler=true instead pauses or resumes checking for the whole instance (the pause button in the UI), "
@@ -2022,10 +2183,11 @@ TOOLS = {
 WATCH_ARGUMENT = _WATCH
 _PLUGIN_KINDS = {'read': READ_ONLY, 'write': WRITE, 'destructive': DESTRUCTIVE}
 _PLUGIN_TOOL_NAME = re.compile(r'[a-z][a-z0-9_]{0,63}')
+_PLUGIN_ROW_NAME = re.compile(r'[a-z][a-z0-9_]{0,31}')
 # A plugin tool's text is cut at this, so one can't blow the assistant's context
 PLUGIN_TOOL_MAX_CHARS = 100_000
-# (the registered plugins, their tools), rebuilt when the plugins change
-_plugin_tools_cache = (None, {})
+# (the registered plugins, their tools, {tool: permission row}, their permission rows), rebuilt when the plugins change
+_plugin_cache = (None, {}, {}, {})
 
 
 def _wrap_plugin_handler(name, spec):
@@ -2046,18 +2208,41 @@ def _wrap_plugin_handler(name, spec):
     return handler
 
 
-def _plugin_tools():
-    """{name: tool} from every plugin's register_mcp_tools(), the ones that are valid."""
-    global _plugin_tools_cache
+def _plugin_permission_rows(plugin_manager):
+    """{name: {label, description}} from every plugin's register_mcp_permission_rows(), the ones that are valid."""
+    rows = {}
+    for result in plugin_manager.hook.register_mcp_permission_rows():
+        for row in result or []:
+            name = row.get('name') if isinstance(row, dict) else None
+            problem = None
+            if not isinstance(name, str) or not _PLUGIN_ROW_NAME.fullmatch(name):
+                problem = "name must be a-z, 0-9 and _, at most 32 characters, starting with a letter"
+            elif name in PERMISSION_DEFAULTS or name in rows:
+                problem = "that name is already taken"
+            elif not row.get('label'):
+                problem = "label is required"
+            if problem:
+                logger.warning(f"MCP: skipping plugin permission row {name!r}: {problem}")
+                continue
+            rows[name] = {'label': str(row['label']), 'description': str(row.get('description') or '')}
+    return rows
+
+
+def _load_plugins():
+    """(registered plugins, {name: tool}, {tool: permission row}, {row: {label, description, levels}}) from the
+    register_mcp_tools and register_mcp_permission_rows hooks, cached until the plugins change."""
+    global _plugin_cache
     from changedetectionio.pluggy_interface import plugin_manager
     registered = frozenset(id(p) for p in plugin_manager.get_plugins())
-    if _plugin_tools_cache[0] == registered:
-        return _plugin_tools_cache[1]
+    if _plugin_cache[0] == registered:
+        return _plugin_cache
 
-    found = {}
+    rows = _plugin_permission_rows(plugin_manager)
+    found, areas = {}, {}
     for result in plugin_manager.hook.register_mcp_tools():
         for spec in result or []:
             name = spec.get('name') if isinstance(spec, dict) else None
+            area = (spec.get('area') or 'monitors') if isinstance(spec, dict) else None
             problem = None
             if not isinstance(name, str) or not _PLUGIN_TOOL_NAME.fullmatch(name):
                 problem = "name must be a-z, 0-9 and _, at most 64 characters, starting with a letter"
@@ -2069,13 +2254,43 @@ def _plugin_tools():
                 problem = "title, description and handler are required"
             elif not isinstance(spec.get('input_schema') or {}, dict):
                 problem = "input_schema must be a dict of JSON Schema properties"
+            elif area not in PERMISSION_DEFAULTS and area not in rows:
+                problem = f"area {area!r} is not a permission row (core's, or one from register_mcp_permission_rows)"
+            elif area in READ_ONLY_AREAS and spec['kind'] != 'read':
+                problem = f"the {area!r} row only goes up to read, it can't hold a {spec['kind']} tool"
             if problem:
                 logger.warning(f"MCP: skipping plugin tool {name!r}: {problem}")
                 continue
-            found[name] = (_wrap_plugin_handler(name, spec), _PLUGIN_KINDS[spec['kind']], str(spec['title']),
+            annotations = dict(_PLUGIN_KINDS[spec['kind']])
+            if spec.get('open_world'):
+                # It reaches outside this instance (another service, a payment provider...), clients may ask first
+                annotations['openWorldHint'] = True
+            found[name] = (_wrap_plugin_handler(name, spec), annotations, str(spec['title']),
                            str(spec['description']), _schema(dict(spec.get('input_schema') or {}), spec.get('required')))
-    _plugin_tools_cache = (registered, found)
-    return found
+            areas[name] = area
+
+    # A plugin row offers read when one of its tools only reads, write when one changes something
+    for name, area in areas.items():
+        if area in rows:
+            rows[area].setdefault('levels', {NONE}).add(READ if found[name][1]['readOnlyHint'] else WRITE_ACCESS)
+    for row in [r for r in rows if not rows[r].get('levels')]:
+        logger.warning(f"MCP: skipping plugin permission row {row!r}: no tool uses it")
+        del rows[row]
+    for row in rows.values():
+        row['levels'] = tuple(level for level in LEVELS if level in row['levels'])
+
+    _plugin_cache = (registered, found, areas, rows)
+    return _plugin_cache
+
+
+def _plugin_tools():
+    """{name: tool} from every plugin's register_mcp_tools(), the ones that are valid."""
+    return _load_plugins()[1]
+
+
+def plugin_permission_rows():
+    """The permission rows plugins added, {name: {label, description, levels}}, after core's in the grid."""
+    return _load_plugins()[3]
 
 
 def get_tools():
@@ -2088,13 +2303,13 @@ def get_tools():
 
 NONE, READ, WRITE_ACCESS = 'none', 'read', 'write'
 LEVELS = (NONE, READ, WRITE_ACCESS)
-# Each row of the grid and its default
+# Each row of the grid and its default. Plugins can add rows (register_mcp_permission_rows), always None by default
 PERMISSION_DEFAULTS = {'monitors': WRITE_ACCESS, 'tags': WRITE_ACCESS, 'notifications': READ, 'browser': NONE,
                        'system': READ}
 # Rows without write tools, they only go up to read
 READ_ONLY_AREAS = {'system'}
 # Rows that are only about arguments of other rows' tools (ARGUMENT_AREAS), none or write
-# The row each tool belongs to, everything else (plugin tools too, they act on a monitor) is 'monitors'
+# The row each tool belongs to; everything else is 'monitors', plugin tools too unless they give their own 'area'
 TOOL_AREAS = {'list_tags': 'tags', 'create_tag': 'tags', 'update_tag': 'tags', 'delete_tag': 'tags',
               'list_notifications': 'notifications', 'notification_services': 'notifications',
               'add_notification': 'notifications', 'remove_notification': 'notifications',
@@ -2115,21 +2330,35 @@ AREA_LABELS = {'monitors': 'Monitors', 'tags': 'Groups (tags)', 'notifications':
                'browser': 'Browser steps & JavaScript', 'system': 'System info'}
 
 
+def permission_defaults():
+    """{row: default level}, core's rows then the plugins' (None until the owner allows them)."""
+    rows = plugin_permission_rows()
+    return {**PERMISSION_DEFAULTS, **{row: NONE for row in rows}} if rows else PERMISSION_DEFAULTS
+
+
+def area_label(area):
+    """A row's name as shown in the grid, for messages."""
+    row = plugin_permission_rows().get(area)
+    return row['label'] if row else AREA_LABELS.get(area, area)
+
+
 def permissions(stored=None, read_only=False):
     """{area: level} from the saved grid, the defaults for anything not saved; read_only (?readonly=1) caps every
     row at read."""
     stored = stored if isinstance(stored, dict) else {}
+    plugin_rows = plugin_permission_rows()
     result = {}
-    for area, default in PERMISSION_DEFAULTS.items():
+    for area, default in permission_defaults().items():
         level = stored.get(area) if stored.get(area) in LEVELS else default
-        if level == WRITE_ACCESS and (read_only or area in READ_ONLY_AREAS):
+        tops_at_read = area in READ_ONLY_AREAS or (area in plugin_rows and WRITE_ACCESS not in plugin_rows[area]['levels'])
+        if level == WRITE_ACCESS and (read_only or tops_at_read):
             level = READ
         result[area] = level
     return result
 
 
 def tool_area(name):
-    return TOOL_AREAS.get(name, 'monitors')
+    return TOOL_AREAS.get(name) or _load_plugins()[2].get(name, 'monitors')
 
 
 def is_read_only(name):

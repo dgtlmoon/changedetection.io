@@ -24,6 +24,10 @@ class difference_detection_processor():
     screenshot_format = SCREENSHOT_FORMAT_JPEG
     last_raw_content_checksum = None
     worker_id = None
+    # The 'item' dict this check was queued with ({'uuid': .., plus any one-shot options such as
+    # 'record_har' or 'proxy'}), set by the worker and handed on to the fetcher in call_browser(). Options in
+    # here apply to this one check only and are never stored on the watch.
+    queued_metadata = None
 
     def __init__(self, datastore, watch_uuid, worker_id=None):
         self.datastore = datastore
@@ -172,6 +176,20 @@ class difference_detection_processor():
         logger.info(f"Using preloaded Add-Watch snapshot for {self.watch.get('uuid')} - skipping network fetch")
         return True
 
+    def _proxy_for_this_check(self):
+        """The proxy key to fetch with: a one-shot 'proxy' this check was queued with (queued_metadata), else the
+        watch's/system's. The one-shot value is only ever a key of the configured proxy list, or 'no-proxy' for a
+        direct connection - never a URL, so whoever queues a check can't send it through a proxy of their own."""
+        one_shot = (self.queued_metadata or {}).get('proxy')
+        if one_shot == 'no-proxy':
+            return None
+        if one_shot:
+            if one_shot in (self.datastore.proxy_list or {}):
+                logger.info(f"[{self.watch_uuid}] Using proxy '{one_shot}' for this check only")
+                return one_shot
+            logger.warning(f"[{self.watch_uuid}] Ignoring one-shot proxy '{one_shot}', it is not a configured proxy")
+        return self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
+
     async def call_browser(self, preferred_proxy_id=None):
 
         from requests.structures import CaseInsensitiveDict
@@ -182,8 +200,7 @@ class difference_detection_processor():
         await self.validate_url_is_fetchable()
 
         # Proxy ID "key"
-        preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self.datastore.get_preferred_proxy_for_watch(
-            uuid=self.watch.get('uuid'))
+        preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self._proxy_for_this_check()
 
         # Resolve which content fetcher this watch should use. This is the single source of
         # truth (watch -> group -> system, extra_browser_/pdf/browser_steps overrides etc);
@@ -232,6 +249,22 @@ class difference_detection_processor():
             request_body = jinja_render(template_str=request_body)
 
         request_method = self.watch.get('method')
+
+        # Plugins have the last word on the request, e.g. an Authorization header (fetch_request_alter hook)
+        from changedetectionio.pluggy_interface import apply_fetch_request_alter
+        plugin_request = {
+            'headers': request_headers,
+            'method': request_method,
+            'body': request_body,
+            'url': url,
+            'proxy_url': self.fetcher.selected_proxy_url,
+            'fetcher': prefer_fetch_backend,
+        }
+        await apply_fetch_request_alter(self.watch, self.datastore, plugin_request)
+        request_headers = plugin_request['headers']
+        request_method = plugin_request['method']
+        request_body = plugin_request['body']
+
         ignore_status_codes = self.watch.get('ignore_status_codes', False)
 
         # Requests for PDF's, images etc should be passwd the is_binary flag
@@ -352,6 +385,10 @@ class difference_detection_processor():
         # Stamp the resolved backend name so downstream consumers (processors, plugins)
         # can read it directly instead of re-deriving it from the fetcher class name.
         fetcher.backend_name = backend_name
+        # and the proxy, for plugins that send their own requests for this check (fetch_request_alter hook)
+        fetcher.selected_proxy_url = proxy_url
+        fetcher.watch_data_dir = self.watch.data_dir
+        fetcher.queued_metadata = self.queued_metadata
 
         if self.watch.has_browser_steps:
             fetcher.browser_steps = browser_steps_get_valid_steps(self.watch.get('browser_steps', []))

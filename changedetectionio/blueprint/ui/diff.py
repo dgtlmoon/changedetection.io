@@ -322,7 +322,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
     def _mark_viewed(uuid):
         import time
-        datastore.set_last_viewed(uuid, int(time.time()))
+        from changedetectionio.pluggy_interface import set_watch_last_viewed
+        set_watch_last_viewed(datastore, uuid, time.time(), source='llm_summary')
 
     # Slack on top of the model's own deadline: the worker still has to come back through
     # litellm and write the summary to the on-disk cache after the last token.

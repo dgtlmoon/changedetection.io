@@ -183,19 +183,27 @@ def get_chart(watch, datastore, request):
     """HTML of a price/stock chart, served by /diff/<uuid>/processor-chart?context=watchlist|history.
     Drawn by whichever plugin implements the matching hook, the built-in chart otherwise.
     Returns None for an unknown context."""
-    from changedetectionio.pluggy_interface import plugin_manager
+    from changedetectionio.pluggy_interface import plugin_manager, set_watch_last_viewed
 
-    hook_name = CHART_HOOKS.get(request.args.get('context', 'history'))
+    context = request.args.get('context', 'history')
+    hook_name = CHART_HOOKS.get(context)
     if not hook_name:
         return None
     series = _build_series(watch)
-    return getattr(plugin_manager.hook, hook_name)(
+    html = getattr(plugin_manager.hook, hook_name)(
         series=series, currency=_currency(watch), summary=compute_price_summary(series), watch=watch)
+    # The watch list roll-down stands in for the history page, so opening it counts as viewing the
+    # watch (the history page itself does that in render())
+    if context == 'watchlist' and html is not None:
+        set_watch_last_viewed(datastore, watch.get('uuid'), time.time(), source='watchlist_chart')
+    return html
 
 
 def render(watch, datastore, request, url_for, render_template, flash, redirect, extract_form=None):
     """Render the price/stock timeline page (shell + summary). The graph data is loaded
     asynchronously from get_data() so this stays light regardless of history length."""
+    from changedetectionio.pluggy_interface import set_watch_last_viewed
+
     uuid = watch.get('uuid')
     dates = list(watch.history.keys())
 
@@ -209,7 +217,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect,
             logger.error(f"Restock diff: unable to read latest snapshot for {uuid}: {e}")
 
     # Opening the history page counts as viewing it (mirrors the text diff page).
-    datastore.set_last_viewed(uuid, time.time())
+    set_watch_last_viewed(datastore, uuid, time.time(), source='history')
 
     return render_template(
         'restock_diff/difference.html',

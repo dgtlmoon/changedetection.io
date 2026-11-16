@@ -153,7 +153,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         # UUID already claimed above immediately after getting from queue
         # to prevent race condition with wait_for_all_checks()
 
-        fetch_start_time = round(time.time())
+        # int(), not round(): rounding up would stamp last_checked and the snapshot up to half a second in the future
+        fetch_start_time = int(time.time())
 
         try:
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
@@ -191,6 +192,9 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     update_handler = processor_module.perform_site_check(datastore=datastore,
                                                                          watch_uuid=uuid,
                                                                          worker_id=worker_id)
+
+                    # Whatever this check was queued with, so one-shot options reach the processor and the fetcher
+                    update_handler.queued_metadata = queued_item_data.item
 
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)

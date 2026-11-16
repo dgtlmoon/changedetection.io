@@ -72,6 +72,18 @@ def manage_user_agent(headers, current_ua=''):
 
     return None
 
+
+def browser_address_for_logs(browser_connection_url):
+    """Where the browser is, without the rest of its connection URL: the query string carries the
+    access token of the browser service and the proxy of the watch."""
+    from urllib.parse import urlsplit
+    try:
+        parts = urlsplit(browser_connection_url)
+        return f"{parts.scheme}://{parts.hostname}{':' + str(parts.port) if parts.port else ''}"
+    except Exception:
+        return '(browser address not readable)'
+
+
 class Fetcher():
     # The fully-resolved concrete backend name this fetcher was chosen as
     # (e.g. 'html_requests', 'html_webdriver'). Set by resolve_content_fetcher()
@@ -90,10 +102,14 @@ class Fetcher():
     favicon_blob = None
     instock_data = None
     instock_data_js = ""
+    # The queue 'item' dict of this check, one-shot options that apply to this fetch only (e.g. 'record_har')
+    queued_metadata = None
     # Original response bytes (needed for PDF etc), fetchers that can't provide them leave this as None
     raw_content = None
     screenshot_format = None
     status_code = None
+    # The watch's own directory in the datastore, for fetchers that write per-watch files
+    watch_data_dir = None
     webdriver_js_execute_code = None
     worker_id = None
     xpath_data = None
@@ -161,6 +177,17 @@ class Fetcher():
         self.screenshot = None
         self.xpath_data = None
         # Keep headers and status_code as they're small
+
+    def har_record_wanted(self, watch_uuid):
+        """Record this fetch's network traffic? Asked for on this one check, or the watch is in HAR_UUID_RECORD"""
+        if not self.watch_data_dir:
+            return False
+        if (self.queued_metadata or {}).get('record_har'):
+            return True
+        if not os.getenv('HAR_UUID_RECORD'):
+            return False
+        from changedetectionio.content_fetchers.har_recorder import har_recording_wanted
+        return har_recording_wanted(watch_uuid)
 
     @abstractmethod
     def get_error(self):

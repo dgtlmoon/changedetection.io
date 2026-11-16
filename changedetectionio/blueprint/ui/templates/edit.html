@@ -230,6 +230,12 @@ Math: {{ 1 + 1 }}") }}
                             ({{ _('Not supported by Selenium browser') }})
                         </div>
                     </div>
+            {% for section in plugin_request_settings %}
+                <div class="pure-control-group advanced-options plugin-request-settings" id="plugin-request-settings-{{ section.plugin_id }}" style="display: none;"> <!-- from pluggy plugin -->
+                    <input type="hidden" name="plugin_request_settings_shown" value="{{ section.plugin_id }}">
+                    {% with plugin_form=form[section.field_name] %}{% include section.template %}{% endwith %}
+                </div>
+            {% endfor %}
             <fieldset data-visible-for="fetch_backend=html_requests fetch_backend=html_webdriver" >
                     <div class="pure-control-group inline-radio advanced-options"  style="display: none;">
                     {{ render_checkbox_field(form.ignore_status_codes) }}

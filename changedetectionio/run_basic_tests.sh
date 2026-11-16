@@ -10,7 +10,7 @@
 set -e
 
 # Failing fast is deliberate here (the first failure is usually the real problem, and it keeps
-# the run short) - but this script runs 8 independent pytest groups, so make it obvious that the
+# the run short) - but this script runs several independent pytest groups, so make it obvious that the
 # groups after the failure were SKIPPED rather than passed. Otherwise one failing test reads as
 # "the whole basic suite is broken".
 trap 'rc=$?; echo "::error::run_basic_tests.sh aborted at line $LINENO (exit $rc) - the test groups after this point were SKIPPED, not run"' ERR
@@ -86,6 +86,9 @@ pytest tests/test_*.py \
 echo "---------------------------- DONE parallel test ---------------------------------------"
 
 FETCH_WORKERS=20 pytest --durations=25 -vvv -s tests/test_queue_handler.py
+
+# Custom notification handlers (post://, get:// etc)
+pytest --durations=25 -vv -s tests/apprise/
 
 echo "RUNNING WITH BASE_URL SET"
 

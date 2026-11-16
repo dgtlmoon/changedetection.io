@@ -20,15 +20,18 @@
         </fieldset>
         <fieldset class="pure-group price-change-minmax">
             {{ render_field(form.processor_config_restock_diff.price_change_min, placeholder=watch.get('restock', {}).get('price')) }}
+            {# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}
             <span class="pure-form-message-inline">{{ _('Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value.')|safe }}</span>
         </fieldset>
         <fieldset class="pure-group price-change-minmax">
             {{ render_field(form.processor_config_restock_diff.price_change_max, placeholder=watch.get('restock', {}).get('price')) }}
+            {# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}
             <span class="pure-form-message-inline">{{ _('Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value.')|safe }}</span>
         </fieldset>
         <fieldset class="pure-group price-change-minmax">
             {{ render_field(form.processor_config_restock_diff.price_change_threshold_percent) }}
             <span class="pure-form-message-inline">{{ _('Price must change more than this % since the previous check to trigger a change.') }}</span><br>
+            {# TRANSLATORS: Amounts are illustrative. You may localise the currency and adjust both figures, as long as the 2% relationship is preserved. #}
             <span class="pure-form-message-inline">{{ _('For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change more than $20 since then.')|safe }}</span><br>
         </fieldset>
     </div>

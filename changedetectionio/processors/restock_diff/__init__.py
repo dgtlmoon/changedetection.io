@@ -154,6 +154,6 @@ def register_plugin_hooks(plugin_manager):
     caller = getattr(plugin_manager.hook, 'restock_diff_watch_history_page_chart', None)
     if caller is None or caller.spec is None:
         plugin_manager.add_hookspecs(hookspecs)
+    # 'builtin_' names are hidden from the active plugins list
     if not plugin_manager.is_registered(default_charts):
-        # 'builtin_' names are hidden from the active plugins list
         plugin_manager.register(default_charts, 'builtin_restock_default_charts')

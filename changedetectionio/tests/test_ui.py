@@ -289,3 +289,39 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
     res = client.get(url_for("watchlist.index"))
     assert b'unread-tab-counter' not in res.data, "Unread filter chip should disappear when there are no unread changes"
     delete_all_watches(client)
+
+
+def test_watchlist_healthy_filter(client, live_server, measure_memory_usage, datastore_path):
+    """#4245 - the 'Healthy' chip is the inverse of 'With errors' and both only appear when there is a mix."""
+    datastore = client.application.config.get('DATASTORE')
+    ok_uuid = datastore.add_watch(url='https://example.com/ok', extras={'paused': True})
+    err_uuid = datastore.add_watch(url='https://example.com/err', extras={'paused': True})
+
+    # Nothing failing - 'Healthy' would just equal 'All', so no chip
+    res = client.get(url_for("watchlist.index"))
+    assert b'post-list-healthy' not in res.data
+    assert b'post-list-with-errors' not in res.data
+
+    datastore.data['watching'][err_uuid]['last_error'] = 'Something went wrong'
+    res = client.get(url_for("watchlist.index"))
+    assert b'id="healthy-tab-counter">1<' in res.data
+    assert b'id="with-errors-tab-counter">1<' in res.data
+    assert res.data.count(b'data-watch-uuid') == 2
+
+    res = client.get(url_for("watchlist.index", healthy=1))
+    assert res.data.count(b'data-watch-uuid') == 1
+    assert ok_uuid.encode() in res.data
+    assert err_uuid.encode() not in res.data
+
+    res = client.get(url_for("watchlist.index", with_errors=1))
+    assert res.data.count(b'data-watch-uuid') == 1
+    assert err_uuid.encode() in res.data
+    assert ok_uuid.encode() not in res.data
+
+    # Every watch failing - no healthy watches left to offer
+    datastore.data['watching'][ok_uuid]['last_error'] = 'Also broken'
+    res = client.get(url_for("watchlist.index"))
+    assert b'post-list-healthy' not in res.data
+    assert b'post-list-with-errors' in res.data
+
+    delete_all_watches(client)

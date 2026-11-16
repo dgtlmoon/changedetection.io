@@ -329,6 +329,17 @@ def new_live_server_setup(live_server):
     # not seen recently (reported against fotokoch.de, which answers 503 + meta refresh and then
     # serves a 200). The browser follows the refresh, so the fetch has to be judged on the
     # document we actually end up extracting rather than on the interstitial.
+    # What a parked domain serves: an empty document that sends the browser on from its load event
+    @live_server.app.route('/test-onload-redirect')
+    def test_onload_redirect():
+        landing = url_for('test_onload_redirect_landing')
+        return ('<!DOCTYPE html><html><head><script>window.onload=function(){window.location.href="'
+                + landing + '"}</script></head></html>')
+
+    @live_server.app.route('/test-onload-redirect-landing')
+    def test_onload_redirect_landing():
+        return '<html><body><h1>This domain is for sale</h1></body></html>'
+
     # Keyed on last-seen time rather than a hit count, so EVERY fresh check starts out gated -
     # a counter would serve a clean 200 to the second check and let the test pass without the fix.
     _interstitial_last_seen = {}
@@ -348,6 +359,34 @@ def new_live_server_setup(live_server):
                 '<html><body><h1>The real page content is here</h1></body></html>', 200)
         resp.headers['Content-Type'] = 'text/html'
         return resp
+
+    # A page whose icon the browser may load for itself, but page script may not read - what a browser
+    # that enforces cross-origin rules does with an icon on another host. Told apart by the Accept
+    # header: the browser's own icon request asks for images ('image/avif,image/webp,...'), a fetch()
+    # from page script asks for '*/*'. (Sec-Fetch-Dest would say it too, but is not sent over plain http)
+    @live_server.app.route('/test-favicon-page')
+    def test_favicon_page():
+        icon = url_for('test_favicon_browser_only', key=request.args.get('key', 'default'))
+        return (f'<html><head><title>favicon</title><link rel="icon" type="image/png" href="{icon}"></head>'
+                f'<body>A page with an icon only the browser itself may fetch</body></html>')
+
+    _favicon_requests = {}
+
+    @live_server.app.route('/test-favicon-browser-only.png')
+    def test_favicon_browser_only():
+        import base64
+        by = 'browser' if request.headers.get('Accept', '').startswith('image/') else 'script'
+        _favicon_requests.setdefault(request.args.get('key', 'default'), []).append(by)
+        if by != 'browser':
+            return make_response('Not for scripts', 403)
+        png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
+        resp = make_response(png, 200)
+        resp.headers['Content-Type'] = 'image/png'
+        return resp
+
+    @live_server.app.route('/test-favicon-requests')
+    def test_favicon_requests():
+        return {'requested_by': _favicon_requests.get(request.args.get('key', 'default'), [])}
 
     @live_server.app.route('/test-endpoint2')
     def test_endpoint2():

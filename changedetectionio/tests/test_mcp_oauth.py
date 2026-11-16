@@ -42,7 +42,7 @@ def test_discovery(client, live_server, measure_memory_usage, datastore_path):
     meta = client.get('/.well-known/oauth-authorization-server').json
     assert meta['issuer'] == base
     assert meta['code_challenge_methods_supported'] == ['S256']
-    assert meta['token_endpoint_auth_methods_supported'] == ['none'], "public clients only, CIMD has no secrets"
+    assert meta['token_endpoint_auth_methods_supported'] == ['none', 'private_key_jwt'], "no client secrets, CIMD has none"
     assert meta['client_id_metadata_document_supported'] is True
     assert meta['authorization_response_iss_parameter_supported'] is True
     assert meta['authorization_endpoint'] == f'{base}/oauth/authorize' and meta['token_endpoint'] == f'{base}/oauth/token'
@@ -272,10 +272,12 @@ def test_sign_in_refused(client, live_server, measure_memory_usage, datastore_pa
 def test_register_limits(client, live_server, measure_memory_usage, datastore_path, logged_in):
     for body, error in (({'redirect_uris': ['http://claude.ai/cb']}, 'invalid_redirect_uri'),
                         ({'redirect_uris': []}, 'invalid_redirect_uri'),
-                        ({'redirect_uris': [CALLBACK], 'token_endpoint_auth_method': 'client_secret_basic'}, 'invalid_client_metadata'),
                         ({'redirect_uris': [CALLBACK], 'grant_types': ['client_credentials']}, 'invalid_client_metadata')):
         res = client.post('/oauth/register', json=body)
         assert res.status_code == 400 and res.json['error'] == error, body
+    # Asking for another auth method gets a public client anyway (RFC 7591 3.2.1)
+    res = client.post('/oauth/register', json={'redirect_uris': [CALLBACK], 'token_endpoint_auth_method': 'private_key_jwt'})
+    assert res.status_code == 201 and res.json['token_endpoint_auth_method'] == 'none'
     # http is fine on localhost (apps on this computer), and a missing name gets a placeholder
     res = client.post('/oauth/register', json={'redirect_uris': ['http://127.0.0.1:33418/callback']})
     assert res.status_code == 201 and res.json['client_name'] == 'Unnamed assistant'
@@ -335,6 +337,114 @@ def test_cimd_client_on_this_computer_any_port(client, live_server, measure_memo
                   'https://localhost:53228/callback', 'http://example.com:53228/callback'):
         res = client.get(_authorize_url(client_id, challenge, MCP_URL, redirect_uri=other))
         assert res.status_code == 400 and "be used" in res.get_data(as_text=True), other
+
+
+# ChatGPT's metadata as published (2026-11): it signs its token requests with its own key (private_key_jwt)
+CHATGPT_ID = 'https://chatgpt.com/oauth/client.json'
+CHATGPT_REDIRECT = 'https://chatgpt.com/connector_platform_oauth_redirect'
+CHATGPT_DOC = {"client_id": CHATGPT_ID, "client_uri": "https://chatgpt.com/", "redirect_uris": [CHATGPT_REDIRECT],
+               "token_endpoint_auth_method": "private_key_jwt",
+               "token_endpoint_auth_methods_supported": ["none", "private_key_jwt"],
+               "grant_types": ["authorization_code", "refresh_token"], "response_types": ["code"], "client_name": "ChatGPT",
+               "logo_uri": "https://persistent.oaistatic.com/sonic/misc/openai-logo.png",
+               "token_endpoint_auth_signing_alg": "RS256", "jwks_uri": "https://chatgpt.com/oauth/jwks.json"}
+
+
+def _assertion(key, kid, aud=BASE + '/oauth/token', iss=CHATGPT_ID, exp_in=300):
+    import time
+    from joserfc import jwt
+    now = int(time.time())
+    return jwt.encode({'alg': 'RS256', 'kid': kid}, {'iss': iss, 'sub': iss, 'aud': aud, 'iat': now, 'exp': now + exp_in,
+                                                     'jti': secrets.token_hex(16)}, key)
+
+
+def _signed(form, key, kid, **claims):
+    return dict(form, client_assertion_type='urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+                client_assertion=_assertion(key, kid, **claims))
+
+
+def test_private_key_jwt_client(client, live_server, measure_memory_usage, datastore_path, logged_in, monkeypatch):
+    from joserfc.jwk import RSAKey
+    from changedetectionio.blueprint.mcp.oauth import cimd
+    key, other_key = RSAKey.generate_key(2048), RSAKey.generate_key(2048)
+    jwks = {'keys': [dict(key.as_dict(private=False), kid='k1', alg='RS256', use='sig')]}
+    fetched = []
+    documents = {CHATGPT_ID: CHATGPT_DOC,
+                 'https://elsewhere.example.com/client.json': dict(CHATGPT_DOC, client_id='https://elsewhere.example.com/client.json'),
+                 'https://nokeys.example.com/client.json': {k: v for k, v in CHATGPT_DOC.items() if k != 'jwks_uri'} | {'client_id': 'https://nokeys.example.com/client.json'},
+                 'https://secret.example.com/client.json': dict(CHATGPT_DOC, client_id='https://secret.example.com/client.json', token_endpoint_auth_method='client_secret_post')}
+    monkeypatch.setattr(cimd, '_fetch_document', lambda url: json.dumps(documents[url]).encode())
+    monkeypatch.setattr(cimd, '_fetch_jwks', lambda url: fetched.append(url) or json.dumps(jwks).encode())
+    cimd._cache.clear()
+    cimd._jwks_cache.clear()
+
+    # Offered in the discovery document
+    meta = client.get('/.well-known/oauth-authorization-server').json
+    assert 'private_key_jwt' in meta['token_endpoint_auth_methods_supported']
+    assert 'RS256' in meta['token_endpoint_auth_signing_alg_values_supported'] and 'HS256' not in meta['token_endpoint_auth_signing_alg_values_supported']
+
+    def sign_in():
+        verifier, challenge = _pkce()
+        code = _approve(client, _authorize_url(CHATGPT_ID, challenge, MCP_URL, redirect_uri=CHATGPT_REDIRECT))['code'][0]
+        return {'grant_type': 'authorization_code', 'code': code, 'redirect_uri': CHATGPT_REDIRECT,
+                'client_id': CHATGPT_ID, 'code_verifier': verifier}
+
+    # No signature: refused, its client_id alone isn't enough
+    res = client.post('/oauth/token', data=sign_in())
+    assert res.status_code in (400, 401) and res.json['error'] == 'invalid_client'
+    # Signed with a key that isn't its own, for another audience, or by another client: refused
+    for claims in ({'key': other_key}, {'aud': 'https://elsewhere.example.com/oauth/token'},
+                   {'iss': 'https://elsewhere.example.com/client.json'}):
+        sign_key = claims.pop('key', key)
+        res = client.post('/oauth/token', data=_signed(sign_in(), sign_key, 'k1', **claims))
+        assert res.json.get('error') == 'invalid_client', claims
+    # Valid for far too long: refused (the replay list stays small)
+    assert client.post('/oauth/token', data=_signed(sign_in(), key, 'k1', exp_in=86400)).json['error'] == 'invalid_client'
+
+    # Signed with its key: tokens, at the token endpoint or the issuer as audience
+    form = _signed(sign_in(), key, 'k1')
+    res = client.post('/oauth/token', data=form)
+    assert res.status_code == 200, res.json
+    tokens = res.json
+    assert _tools(client, tokens['access_token'])[0] == 200
+    assert fetched == [CHATGPT_DOC['jwks_uri']]
+    assert client.post('/oauth/token', data=_signed(sign_in(), key, 'k1', aud=BASE)).status_code == 200
+
+    # PKCE still applies to a signing client
+    bad = _signed(dict(sign_in(), code_verifier='x' * 50), key, 'k1')
+    assert client.post('/oauth/token', data=bad).json['error'] == 'invalid_grant'
+
+    # Refresh needs a signature too, and an assertion is used once
+    refresh = {'grant_type': 'refresh_token', 'refresh_token': tokens['refresh_token'], 'client_id': CHATGPT_ID}
+    assert client.post('/oauth/token', data=refresh).json['error'] == 'invalid_client'
+    signed_refresh = _signed(refresh, key, 'k1')
+    res = client.post('/oauth/token', data=signed_refresh)
+    assert res.status_code == 200, res.json
+    assert client.post('/oauth/token', data=dict(signed_refresh, refresh_token=res.json['refresh_token'])).json['error'] == 'invalid_client'
+
+    # Keys rotated: an unknown kid fetches the key set again
+    monkeypatch.setattr(cimd, 'JWKS_REFETCH_SECONDS', 0)
+    jwks['keys'] = [dict(other_key.as_dict(private=False), kid='k2', alg='RS256', use='sig')]
+    assert client.post('/oauth/token', data=_signed(sign_in(), other_key, 'k2')).status_code == 200
+    assert len(fetched) == 2
+
+    # Metadata that can't be used: keys on another host, no keys, a client secret
+    for client_id, expect in (('https://elsewhere.example.com/client.json', None),
+                              ('https://nokeys.example.com/client.json', 'no https jwks_uri'),
+                              ('https://secret.example.com/client.json', 't supported, only')):
+        res = client.get(_authorize_url(client_id, 'x' * 43, MCP_URL, redirect_uri=CHATGPT_REDIRECT))
+        assert res.status_code == 400 and (expect or 'same host') in res.get_data(as_text=True), client_id
+
+
+def test_public_client_cant_send_an_assertion(client, live_server, measure_memory_usage, datastore_path, logged_in):
+    # A public client (DCR) gets nothing out of an assertion: its auth method is 'none'
+    from joserfc.jwk import RSAKey
+    client_id = _register(client)
+    verifier, challenge = _pkce()
+    code = _approve(client, _authorize_url(client_id, challenge, MCP_URL))['code'][0]
+    form = {'grant_type': 'authorization_code', 'code': code, 'redirect_uri': CALLBACK, 'code_verifier': verifier}
+    res = client.post('/oauth/token', data=_signed(form, RSAKey.generate_key(2048), 'k1', iss=client_id))
+    assert res.json.get('error') == 'invalid_client'
 
 
 def test_redirect_uri_matches():

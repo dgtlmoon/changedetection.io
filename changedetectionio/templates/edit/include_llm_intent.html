@@ -122,6 +122,7 @@
         {% if not llm_group_mode and llm_group_overrides is defined and llm_group_overrides.llm_intent %}
             {% set intent_placeholder = _("From group '%(name)s': %(value)s", name=llm_group_overrides.llm_intent.group_name, value=llm_group_overrides.llm_intent.value) %}
         {% elif not llm_group_mode %}
+            {# TRANSLATORS: Amounts are illustrative. You may localise the currency. #}
             {% set intent_placeholder = _('e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes.') %}
         {% else %}
             {% set intent_placeholder = _('e.g. Flag price changes or new product launches across all watches in this group') %}
@@ -132,6 +133,7 @@
     <div class="pure-form-message-inline">
         <strong>{{ _('Examples:') }}</strong>
         <ul style="margin: 0.3em 0 0 1.2em; padding: 0;">
+            {# TRANSLATORS: Amounts are illustrative. You may localise the currency. #}
             <li><em>{{ _('Only notify if the price drops below $200, or a limited-time deal is added') }}</em></li>
             <li><em>{{ _('Alert when a new recall, safety notice, or product withdrawal is published') }}</em></li>
             <li><em>{{ _('Notify when a new grant round opens or an application deadline is announced') }}</em></li>

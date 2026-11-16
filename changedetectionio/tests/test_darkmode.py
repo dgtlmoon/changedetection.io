@@ -14,7 +14,7 @@ def get_html_darkmode_state(res):
 
 def test_darkmode_follows_device_unless_cookie_set(client, live_server, measure_memory_usage, datastore_path):
     # The test client defaults cookies to domain="localhost", which isn't sent to the
-    # live_server's SERVER_NAME (localhost.localdomain), so set them for the real host
+    # live_server's SERVER_NAME when that is something else, so set them for the real host
     cookie_domain = urlsplit(url_for("watchlist.index", _external=True)).hostname
 
     # No cookie - "auto", the CSS follows prefers-color-scheme

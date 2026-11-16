@@ -141,8 +141,12 @@ def is_special_purpose_ip(ip):
     return False, ''
 
 
-def is_private_hostname(hostname):
+def is_private_hostname(hostname, classify_only=False):
     """Return True if hostname resolves to an IANA-restricted (private/reserved/non-global) IP address.
+
+    classify_only=True is for callers that only want to know whether a host is local
+    (e.g. picking a longer LLM timeout) and are not refusing anything - logs at debug
+    instead of a misleading "refused" warning (issue #4700).
 
     Unresolvable hostnames return False (allow them) — DNS may be temporarily unavailable
     or the domain not yet live. The actual DNS rebinding attack is mitigated by fetch-time
@@ -158,16 +162,19 @@ def is_private_hostname(hostname):
             ip = ipaddress.ip_address(info[4][0])
             blocked, why = is_special_purpose_ip(ip)
             if blocked:
-                logger.warning(f"Hostname '{hostname}' resolves to {ip} which is {why} — refused.")
+                if classify_only:
+                    logger.debug(f"Hostname '{hostname}' resolves to {ip} which is {why}.")
+                else:
+                    logger.warning(f"Hostname '{hostname}' resolves to {ip} which is {why} — refused.")
                 return True
     except socket.gaierror as e:
-        logger.warning(f"{hostname} error checking {str(e)}")
+        (logger.debug if classify_only else logger.warning)(f"{hostname} error checking {str(e)}")
         return False
     except ValueError as e:
         # getaddrinfo handed back something ip_address() won't parse - fail closed.
         logger.warning(f"Hostname '{hostname}' produced an unparseable address ({e}) — refused.")
         return True
-    logger.info(f"Hostname '{hostname}' is NOT private/IANA restricted.")
+    (logger.debug if classify_only else logger.info)(f"Hostname '{hostname}' is NOT private/IANA restricted.")
     return False
 
 

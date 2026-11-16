@@ -7,6 +7,9 @@ host resolves to must be a public one, and the connection is made to that checke
 still verified for the hostname), so a second DNS answer can't point it somewhere else. No redirects, at most 5 KB,
 only a 200 counts, a short timeout. ALLOW_IANA_RESTRICTED_ADDRESSES doesn't apply here: the draft allows no exception.
 
+A client that signs its token requests (private_key_jwt, RFC 7523, like ChatGPT) names its public keys with jwks_uri.
+That has to be on the client_id's own host, and is fetched the same safe way (fetch_jwks).
+
 No Authlib, only urllib3 (already here through requests).
 """
 import ipaddress
@@ -17,12 +20,20 @@ import time
 from urllib.parse import urlsplit
 
 MAX_BYTES = 5 * 1024
+# A few RSA keys while one is being rotated out
+JWKS_MAX_BYTES = 20 * 1024
 TIMEOUT_SECONDS = 5
 # Documents are cached briefly; errors never are
 CACHE_SECONDS = 300
+# A key that isn't in the cached key set refetches it (the client rotated its keys), at most this often
+JWKS_REFETCH_SECONDS = 30
+
+# How a client may authenticate at the token endpoint: public (PKCE only), or signing a JWT with its own key
+AUTH_METHODS = ('none', 'private_key_jwt')
 
 _cache = {}
 _cache_lock = threading.Lock()
+_jwks_cache = {}
 
 
 class CIMDError(Exception):
@@ -70,7 +81,17 @@ def _public_address_for(hostname, port):
 
 
 def _fetch_document(url):
-    """The raw document at url, fetched from a checked public address. Separate from fetch() so tests can stand in."""
+    """The raw metadata document at url. Separate from fetch() so tests can stand in."""
+    return _fetch(url, MAX_BYTES, "the client's metadata")
+
+
+def _fetch_jwks(url):
+    """The raw key set at a client's jwks_uri. Separate from fetch_jwks() so tests can stand in."""
+    return _fetch(url, JWKS_MAX_BYTES, "the client's keys")
+
+
+def _fetch(url, max_bytes, what):
+    """The raw body at url, fetched from a checked public address."""
     import urllib3
     parts = validate_client_id_url(url)
     port = parts.port or 443
@@ -83,15 +104,15 @@ def _fetch_document(url):
         response = pool.urlopen('GET', path, headers={'Host': parts.netloc, 'Accept': 'application/json'},
                                 redirect=False, preload_content=False)
         if response.status != 200:
-            raise CIMDError(f"fetching the client's metadata gave HTTP {response.status}")
-        body = response.read(MAX_BYTES + 1)
+            raise CIMDError(f"fetching {what} gave HTTP {response.status}")
+        body = response.read(max_bytes + 1)
         response.release_conn()
     except urllib3.exceptions.HTTPError as e:
-        raise CIMDError(f"the client's metadata couldn't be fetched ({type(e).__name__})")
+        raise CIMDError(f"{what} couldn't be fetched ({type(e).__name__})")
     finally:
         pool.close()
-    if len(body) > MAX_BYTES:
-        raise CIMDError("the client's metadata is larger than 5 KB")
+    if len(body) > max_bytes:
+        raise CIMDError(f"{what} is larger than {max_bytes // 1024} KB")
     return body
 
 
@@ -107,14 +128,26 @@ def _check_document(url, body):
         raise CIMDError("the client's metadata has no client_name")
     if not isinstance(redirect_uris, list) or not redirect_uris or not all(isinstance(u, str) for u in redirect_uris):
         raise CIMDError("the client's metadata has no redirect_uris")
-    # Public clients only: CIMD forbids shared secrets, and private_key_jwt isn't supported here
-    if doc.get('token_endpoint_auth_method', 'none') != 'none':
-        raise CIMDError("only public clients (token_endpoint_auth_method 'none') can sign in")
-    return {'client_name': name.strip()[:100], 'redirect_uris': redirect_uris}
+    # The method it says it uses is the one it must use: a client that signs its requests can't sign in without
+    # signing, or anyone with its client_id could. CIMD forbids shared secrets, so no client_secret_*
+    auth_method = doc.get('token_endpoint_auth_method', 'none')
+    if auth_method not in AUTH_METHODS:
+        raise CIMDError(f"token_endpoint_auth_method {auth_method!r} isn't supported, only 'none' or 'private_key_jwt'")
+    client = {'client_name': name.strip()[:100], 'redirect_uris': redirect_uris, 'auth_method': auth_method}
+    if auth_method == 'private_key_jwt':
+        jwks_uri = doc.get('jwks_uri')
+        if not isinstance(jwks_uri, str) or not jwks_uri.startswith('https://'):
+            raise CIMDError("the client's metadata uses private_key_jwt but has no https jwks_uri")
+        # On the client_id's own host: whoever controls the metadata controls the keys anyway, and it stops a
+        # metadata document from sending this server to fetch from somewhere else
+        if urlsplit(jwks_uri).hostname != urlsplit(url).hostname:
+            raise CIMDError("the client's jwks_uri must be on the same host as its client_id")
+        client['jwks_uri'] = jwks_uri
+    return client
 
 
 def fetch(url):
-    """{client_name, redirect_uris} for a CIMD client_id, cached briefly. Raises CIMDError."""
+    """{client_name, redirect_uris, auth_method[, jwks_uri]} for a CIMD client_id, cached briefly. Raises CIMDError."""
     now = time.time()
     with _cache_lock:
         cached = _cache.get(url)
@@ -126,3 +159,24 @@ def fetch(url):
             del _cache[key]
         _cache[url] = (now + CACHE_SECONDS, client)
     return client
+
+
+def fetch_jwks(url, refresh=False):
+    """The key set (a JWKS dict) at a client's jwks_uri, cached like documents. refresh=True fetches it again, for a
+    key id that isn't in it, but at most every JWKS_REFETCH_SECONDS. Raises CIMDError."""
+    now = time.time()
+    with _cache_lock:
+        cached = _jwks_cache.get(url)
+    if cached and cached[0] > now and not (refresh and now - cached[1] >= JWKS_REFETCH_SECONDS):
+        return cached[2]
+    try:
+        jwks = json.loads(_fetch_jwks(url))
+    except ValueError:
+        raise CIMDError("the client's keys aren't JSON")
+    if not isinstance(jwks, dict) or not isinstance(jwks.get('keys'), list):
+        raise CIMDError("the client's keys aren't a JWK set")
+    with _cache_lock:
+        for key in [k for k, v in _jwks_cache.items() if v[0] <= now]:
+            del _jwks_cache[key]
+        _jwks_cache[url] = (now + CACHE_SECONDS, now, jwks)
+    return jwks

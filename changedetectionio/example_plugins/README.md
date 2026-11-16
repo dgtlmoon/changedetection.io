@@ -6,7 +6,8 @@ active until you install it.
 To install one, run `pip install .` from its directory, in the same Python environment that runs
 changedetection.io, then restart changedetection.io. Plugins are picked up through the `changedetectionio`
 entry point in their `pyproject.toml`. They need plugin API 0.3.0 or newer
-(`changedetectionio.plugin_api.PLUGIN_API_VERSION`), the hello world example 0.5.0 or newer, the fallback fetcher 0.6.0 or newer.
+(`changedetectionio.plugin_api.PLUGIN_API_VERSION`), the hello world example 0.5.0 or newer, the fallback fetcher 0.6.0 or newer,
+the API key header 0.7.0 or newer.
 
 Plugins import only from `changedetectionio.plugin_api`, everything else in the package is internal and
 may change between releases. If you need something that isn't exported there, ask for it.
@@ -119,6 +120,34 @@ pip install .
 
 **Try it:** in Settings > "Fallback fetcher", set the scraping API URL and key, and `403` under "Fall back
 on these status codes". A watch whose site answers 403 is then fetched through the API on its next check.
+
+---
+
+## API key header - `request/api_key_header`
+
+An API key header for each watch, set under "Show advanced options" in the edit page's Request tab and sent
+with every check. The key is kept in the watch's data dir, not in the watch, so it isn't in the watch's JSON
+or the API, and the page never shows it again (leave the field empty to keep it). The same three hooks are
+what an OAuth 2.0 client credentials, HMAC request signing or rotating token plugin needs.
+
+**Hooks** (plugin API 0.7.0+)
+- `ui_edit_request_settings` - its WTForms form, nested into the edit form and validated with it, saved to
+  `{watch data dir}/cdio_example_api_key_header.json`. `on_save` keeps the stored key when the field is empty
+- `fetch_request_alter` - adds the header just before the fetch, unless the watch already sets it. Raising
+  here fails the check with your message, rather than sending the request without the header
+- `watch_settings_files` - "Clear history" keeps the JSON file
+
+**Also shows** reading the settings back with `load_watch_plugin_settings(watch, plugin_id)`, and a template
+under `templates/cdio_example_api_key_header/` that uses the core `_helpers.html` macros.
+
+**Install**
+```bash
+cd changedetectionio/example_plugins/request/api_key_header
+pip install .
+```
+
+**Try it:** add a watch of a page that echoes request headers (e.g. `https://httpbin.org/headers`), set a key
+under Request > "Show advanced options", and look at the next snapshot.
 
 ---
 

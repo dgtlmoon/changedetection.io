@@ -53,6 +53,49 @@ def test_restock_default_charts(client, live_server, measure_memory_usage, datas
     delete_all_watches(client)
 
 
+def test_watchlist_chart_marks_watch_viewed(client, live_server, measure_memory_usage, datastore_path):
+    """For restock rows the watch list's History button rolls down the chart instead of opening the History page,
+    so the roll-down has to save the view, or the row turns unviewed again on the next check (#4697)."""
+    uuid = add_restock_watch_with_two_prices(client, datastore_path)
+    watch = client.application.config.get('DATASTORE').data['watching'][uuid]
+    assert watch.has_unviewed
+    assert watch['last_viewed'] == 0
+
+    assert chart(client, uuid, 'history').status_code == 200
+    assert watch['last_viewed'] == 0, "The history page's own chart leaves that to the page"
+
+    assert chart(client, uuid, 'watchlist').status_code == 200
+    assert watch['last_viewed'] > 0
+
+    delete_all_watches(client)
+
+
+def test_restock_views_reach_the_last_viewed_hook(client, live_server, measure_memory_usage, datastore_path):
+    """The watch list chart and the restock history page both save the view and report it to the core
+    watch_last_viewed_updated hook."""
+    from changedetectionio.pluggy_interface import plugin_manager, hookimpl
+
+    viewed = []
+
+    class ViewLog:
+        @hookimpl
+        def watch_last_viewed_updated(self, watch, source):
+            viewed.append((watch.get('uuid'), source))
+
+    uuid = add_restock_watch_with_two_prices(client, datastore_path)
+    watch = client.application.config.get('DATASTORE').data['watching'][uuid]
+    plugin_manager.register(ViewLog(), 'test_view_log')
+    try:
+        assert chart(client, uuid, 'watchlist').status_code == 200
+        assert watch['last_viewed'] > 0
+        assert client.get(url_for('ui.ui_diff.diff_history_page', uuid=uuid)).status_code == 200
+        assert viewed == [(uuid, 'watchlist_chart'), (uuid, 'history')]
+    finally:
+        plugin_manager.unregister(name='test_view_log')
+
+    delete_all_watches(client)
+
+
 def test_restock_chart_hook_replaces_only_its_chart(client, live_server, measure_memory_usage, datastore_path):
     """A plugin implementing only the history page hook replaces that chart, the watch list one stays built-in."""
     from changedetectionio.pluggy_interface import plugin_manager, hookimpl

@@ -12,7 +12,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio import gc_debounce
-from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.content_fetchers.base import Fetcher, browser_address_for_logs, get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
@@ -177,6 +177,45 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     return screenshot_chunks[0]
 
 
+# The icons a page declares, in the order the browser would consider them, plus the /favicon.ico every browser tries
+FAVICON_CANDIDATE_URLS_JS = """() => Array.from(document.querySelectorAll('link[rel~="icon"], link[rel~="apple-touch-icon"]'))
+    .map(l => l.href).filter(h => h && !h.startsWith('data:')).concat([location.origin + '/favicon.ico'])"""
+# Same limit as the in-page fetcher and bump_favicon()
+FAVICON_MAX_BYTES = 1 * 1024 * 1024
+
+
+async def favicon_from_browser_requests(page, browser_fetched, watch_uuid=None):
+    """The favicon the browser downloaded for itself, as {'url', 'mime_type', 'base64'}, or None.
+
+    Fallback for when the in-page fetcher (FAVICON_FETCHER_JS) comes back empty: page script may not
+    read an icon on another host unless that host allows it, but the browser's own icon request is not
+    page script and is not held to that. browser_fetched is {url: (requestId, mimeType)} of the
+    responses seen during the fetch; only a URL the page declares as its icon is ever used.
+    """
+    if not browser_fetched:
+        return None
+    try:
+        candidates = await page.evaluate(FAVICON_CANDIDATE_URLS_JS)
+        for url in candidates or []:
+            if url not in browser_fetched:
+                continue
+            request_id, mime_type = browser_fetched[url]
+            try:
+                r = await page._client.send('Network.getResponseBody', {'requestId': request_id})
+            except Exception as e:
+                logger.debug(f"[{watch_uuid}] Favicon {url} was requested by the browser but its body is gone: {e}")
+                continue
+            body = r.get('body') or ''
+            icon = body if r.get('base64Encoded') else base64.b64encode(body.encode('utf-8')).decode('ascii')
+            if not icon or len(icon) * 0.75 > FAVICON_MAX_BYTES:
+                continue
+            logger.debug(f"[{watch_uuid}] Favicon taken from the browser's own request for {url}")
+            return {'url': url, 'mime_type': mime_type, 'base64': icon}
+    except Exception as e:
+        logger.debug(f"[{watch_uuid}] No favicon from the browser's own requests: {e}")
+    return None
+
+
 class fetcher(Fetcher):
     fetcher_description = "Puppeteer/direct {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
@@ -210,6 +249,8 @@ class fetcher(Fetcher):
         # Renderer crashes recorded during the fetch, see the 'error' handler in fetch_page().
         # Set up here so run()'s finally can always report, even if we never got as far as a page.
         self.page_errors = []
+        # Only set while this fetch's network traffic is being recorded
+        self.har_recorder = None
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
@@ -308,7 +349,7 @@ class fetcher(Fetcher):
         # Connect directly using the specified browser_ws_endpoint
         # @todo timeout
         try:
-            logger.debug(f"[{watch_uuid}] Connecting to browser at {self.browser_connection_url}")
+            logger.debug(f"[{watch_uuid}] Connecting to browser at {browser_address_for_logs(self.browser_connection_url)}")
             self.browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
                                                             ignoreHTTPSErrors=True
                                                             )
@@ -352,6 +393,14 @@ class fetcher(Fetcher):
             logger.error(f"[{watch_uuid}] Page error (the renderer likely crashed, often OOM): {e}")
 
         self.page.on('error', _handle_page_error)
+
+        # Opt-in network recording for debugging a single watch, see Fetcher.har_record_wanted()
+        # Attached before anything is requested so the very first document is in there too
+        if self.har_record_wanted(watch_uuid):
+            from changedetectionio.content_fetchers.har_recorder import HarRecorder
+            logger.info(f"[{watch_uuid}] Recording network traffic (HAR) of this fetch")
+            self.har_recorder = HarRecorder(self.page._client, title=url)
+            self.har_recorder.start()
 
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
@@ -412,6 +461,22 @@ class fetcher(Fetcher):
 
         # Enable Network domain to detect when first bytes arrive
         await self.page._client.send('Network.enable')
+
+        # Remember which responses the browser got, so favicon_from_browser_requests() can find the icon
+        # the browser fetched for itself. Only when a favicon is wanted on this check.
+        browser_fetched = {}
+
+        def _note_response(event):
+            # Must never raise, an exception escaping a CDP listener can take the connection down
+            try:
+                response = event.get('response') or {}
+                if 200 <= response.get('status', 0) < 300 and event.get('type') in ('Other', 'Image'):
+                    browser_fetched[response.get('url')] = (event.get('requestId'), response.get('mimeType'))
+            except Exception:
+                pass
+
+        if fetch_favicon:
+            self.page._client.on('Network.responseReceived', _note_response)
 
         # Navigate (bounded), then wait the configured "wait n seconds before extracting text"
         # delay, then stop whatever is still loading, then extract. The delay is measured from
@@ -605,6 +670,15 @@ class fetcher(Fetcher):
                     if goto_task in done:
                         try:
                             response = goto_task.result()
+                            if response is None and navigation_response.get('response'):
+                                # goto() hands back nothing when the page starts its next navigation
+                                # from its own load event (a parked domain: an empty document whose
+                                # onload sets location.href). That is not "the page did not fetch" -
+                                # retrying gets the same answer three times in a row and ends as an
+                                # EmptyReply, on a page that goes on to load perfectly well.
+                                response = navigation_response['response']
+                                logger.debug(f"goto() returned no response (the page navigated again as it loaded), "
+                                             f"continuing with the one seen for {response.url} - status {response.status}")
                         except Exception as e:
                             if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
                                 raise
@@ -683,6 +757,11 @@ class fetcher(Fetcher):
                 self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
             except Exception as e:
                 logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+            # The in-page fetch can't read an icon another host doesn't share with page script, the
+            # browser's own copy of it can still be used
+            if not (self.favicon_blob and self.favicon_blob.get('base64')):
+                self.favicon_blob = await favicon_from_browser_requests(self.page, browser_fetched, watch_uuid)
+            self.page._client.remove_listener('Network.responseReceived', _note_response)
 
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
@@ -741,6 +820,19 @@ class fetcher(Fetcher):
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
 
+    async def save_har_record(self, watch_uuid):
+        """Write the recorded traffic to {watch dir}/har-record.zip, must run while the page is still open."""
+        recorder, self.har_recorder = self.har_recorder, None
+        if not recorder:
+            return
+        try:
+            await recorder.stop()
+            os.makedirs(self.watch_data_dir, exist_ok=True)
+            destination, n = await asyncio.to_thread(recorder.save, self.watch_data_dir)
+            logger.info(f"[{watch_uuid}] HAR record with {n} requests saved to {destination}")
+        except Exception as e:
+            logger.error(f"[{watch_uuid}] Could not save the HAR record: {e}")
+
     async def run(self,
                   fetch_favicon=True,
                   current_include_filters=None,
@@ -787,6 +879,10 @@ class fetcher(Fetcher):
                     f"[{watch_uuid}] {len(self.page_errors)} page error(s) during this fetch of '{url}', "
                     f"content may be incomplete: {'; '.join(str(e) for e in self.page_errors)}"
                 )
+
+            # Saved here rather than at the end of fetch_page() so a failed fetch is recorded too,
+            # a blocked or broken page is exactly when the recording is wanted
+            await self.save_har_record(watch_uuid)
 
             # Internal cleanup on any exception/timeout - call quit() immediately
             # This prevents connection leaks during exception bursts

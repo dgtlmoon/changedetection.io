@@ -1436,6 +1436,25 @@ msgstr ""
 "připojit znovu. Přístupové tokeny fungují dál."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "Přístup bez přihlášení"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr ""
+"Kdokoli s adresou MCP pak může vypsat vaše monitory a číst jejich změny, snímky a snímky obrazovky bez tokenu či "
+"hesla, např. pro veřejné demo. Oznámení, systémové informace a jakékoli změny stále vyžadují přihlášení nebo "
+"přístupový token."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "Bez přihlášení může každá adresa provést %(count)s volání nástrojů za minutu."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
 "use the built-in note, shown in grey."
@@ -2286,18 +2305,22 @@ msgid "Watch is already queued or being checked."
 msgstr "Sledování je již zařazeno do fronty ke kontrole."
 
 #: changedetectionio/blueprint/ui/__init__.py
-msgid "Queued 1 watch for rechecking."
-msgstr "Zařazeno 1 sledování ke kontrole."
+#, python-format
+msgid "Queued %(count)s watch for rechecking"
+msgid_plural "Queued %(count)s watches for rechecking"
+msgstr[0] "Zařazeno %(count)s sledování ke kontrole"
+msgstr[1] "Do fronty přidáno %(count)s sledování k opětovné kontrole"
+msgstr[2] "Do fronty přidáno %(count)s sledování k opětovné kontrole"
+
+#. TRANSLATORS: sentence-final full stop
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "."
+msgstr "."
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
-msgstr "Do fronty přidáno {count} sledování k opětovné kontrole ({skipped_count} již ve frontě nebo běží)."
-
-#: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {} watches for rechecking."
-msgstr "Do fronty přidáno {} sledování k opětovné kontrole."
+#, python-format
+msgid " (%(skipped_count)s already queued or running)"
+msgstr " (%(skipped_count)s již ve frontě nebo běží)"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
@@ -2324,6 +2347,11 @@ msgstr "Nedostatečná historie (vyžadovány 2 záchyty) pro zobrazení rozdíl
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
 msgstr "Dosažen měsíční počet %(budget)s AI tokenů (%(used)s použito). Resetuje se příští měsíc."
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not save the '{}' settings, see the log."
+msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
 msgid "No watches to edit"
@@ -3257,6 +3285,10 @@ msgid "With errors"
 msgstr "S chybami"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Healthy"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Filter by type"
 msgstr ""
 
@@ -3568,59 +3600,52 @@ msgstr "0 sekund"
 
 #: changedetectionio/flask_app.py
 msgid "year"
-msgstr "rok"
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr "roky"
+msgid_plural "years"
+msgstr[0] "rok"
+msgstr[1] "roky"
+msgstr[2] "let"
 
 #: changedetectionio/flask_app.py
 msgid "month"
-msgstr "měsíc"
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr "měsíce"
+msgid_plural "months"
+msgstr[0] "měsíc"
+msgstr[1] "měsíce"
+msgstr[2] "měsíců"
 
 #: changedetectionio/flask_app.py
 msgid "week"
-msgstr "týden"
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr "týdny"
+msgid_plural "weeks"
+msgstr[0] "týden"
+msgstr[1] "týdny"
+msgstr[2] "týdnů"
 
 #: changedetectionio/flask_app.py
 msgid "day"
-msgstr "den"
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr "dny"
+msgid_plural "days"
+msgstr[0] "den"
+msgstr[1] "dny"
+msgstr[2] "dní"
 
 #: changedetectionio/flask_app.py
 msgid "hour"
-msgstr "hodina"
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr "hodiny"
+msgid_plural "hours"
+msgstr[0] "hodina"
+msgstr[1] "hodiny"
+msgstr[2] "hodin"
 
 #: changedetectionio/flask_app.py
 msgid "minute"
-msgstr "minuta"
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr "minut"
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr "sekunda"
+msgid_plural "minutes"
+msgstr[0] "minuta"
+msgstr[1] "minuty"
+msgstr[2] "minut"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "sekundy"
+msgid "second"
+msgid_plural "seconds"
+msgstr[0] "sekunda"
+msgstr[1] "sekundy"
+msgstr[2] "sekund"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
@@ -4325,6 +4350,10 @@ msgstr "Zapnout koncové body MCP a OAuth"
 msgid "MCP Note"
 msgstr "Poznámka MCP"
 
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "Povolit přístup jen pro čtení bez přihlášení"
+
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "Public MCP address"
 msgstr "Veřejná adresa MCP"
@@ -4339,6 +4368,7 @@ msgid "Monitors"
 msgstr "Monitory"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4346,6 +4376,7 @@ msgid "Write"
 msgstr "Zápis"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4353,6 +4384,7 @@ msgid "None"
 msgstr "Žádné"
 
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 #: changedetectionio/templates/_mcp-permissions-grid.html
@@ -4364,7 +4396,7 @@ msgstr "Čtení"
 msgid "Groups (tags)"
 msgstr "Skupiny (štítky)"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
 msgid "Browser steps & JavaScript"
 msgstr "Kroky prohlížeče a JavaScript"
 
@@ -4843,10 +4875,12 @@ msgstr ""
 msgid "Changes in price should trigger a notification"
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value."
 msgstr ""
 
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid "Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value."
 msgstr ""
@@ -4856,6 +4890,8 @@ msgstr ""
 msgid "Price must change more than this % since the previous check to trigger a change."
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency and adjust both figures, as long as the 2% relationship is
+#. preserved.
 #: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
 msgid ""
 "For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change "
@@ -4973,6 +5009,11 @@ msgstr "+ Hledat mezi více než %(count)d dalšími službami"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "List all"
 msgstr "Zobrazit vše"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Notification services <a href=\"%(url)s\" target=\"_blank\">powered by Apprise</a>."
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "How do I get these?"
@@ -5600,6 +5641,7 @@ msgstr ""
 msgid "From group '%(name)s': %(value)s"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes."
 msgstr ""
@@ -5612,6 +5654,7 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Only notify if the price drops below $200, or a limited-time deal is added"
 msgstr ""

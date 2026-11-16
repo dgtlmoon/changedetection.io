@@ -3,6 +3,7 @@
 from .util import set_original_response, live_server_setup, wait_for_all_checks
 from flask import url_for
 import io
+import json
 from zipfile import ZipFile, ZIP_DEFLATED
 import re
 import time
@@ -80,12 +81,15 @@ def test_backup(client, live_server, measure_memory_usage, datastore_path):
     assert b'No backups found.' in res.data
 
 
-def test_watch_data_package_download(client, live_server, measure_memory_usage, datastore_path):
+def test_watch_data_package_download(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """Test downloading a single watch's data as a zip package"""
 
     set_original_response(datastore_path=datastore_path)
 
-    uuid = client.application.config.get('DATASTORE').add_watch(url=url_for('test_endpoint', _external=True))
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    # Record the network traffic of this watch's check, the recording has to come along in the package
+    monkeypatch.setenv('HAR_UUID_RECORD', uuid)
     tag_uuid = client.application.config.get('DATASTORE').add_tag(title="Tasty backup tag")
     tag_uuid2 = client.application.config.get('DATASTORE').add_tag(title="Tasty backup tag number two")
     client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
@@ -112,6 +116,14 @@ def test_watch_data_package_download(client, live_server, measure_memory_usage, 
     # Should contain watch.json
     watch_json_path = f"{uuid}/watch.json"
     assert watch_json_path in files, f"Should contain watch.json, got: {files}"
+    assert f"{uuid}/har-record.zip" in files, f"Should contain the HAR recording, got: {files}"
+    har = json.loads(ZipFile(io.BytesIO(backup.read(f"{uuid}/har-record.zip"))).read('har-record.har'))
+    entry = har['log']['entries'][-1]
+    assert entry['request']['url'] == test_url
+    assert entry['request']['method'] == 'GET'
+    assert entry['response']['status'] == 200
+    assert any(h['name'].lower() == 'user-agent' for h in entry['request']['headers'])
+    assert 'Some initial text' in entry['response']['content']['text']
 
     # Should contain history/snapshot files
     uuid4hex_txt = re.compile(f'^{re.escape(uuid)}/.*\\.txt', re.I)

@@ -1,7 +1,8 @@
 """
 Plugin hooks of the restock_diff processor, added to the plugin manager by register_plugin_hooks() in
 __init__.py. The built-in charts implement them in plugins/default_charts.py (trylast), so a plugin that
-implements one of these replaces that chart.
+implements one of these replaces that chart. Marking a watch as viewed is a core hook, watch_last_viewed_updated
+in pluggy_interface.py.
 
 Both get the same arguments, take only the ones you need:
     series:   [{'timestamp': <epoch sec>, 'price': <float or None>, 'in_stock': <bool or None>}, ...]
@@ -24,3 +25,4 @@ def restock_diff_watchlist_overview_chart(series, currency, summary, watch):
 @hookspec(firstresult=True)
 def restock_diff_watch_history_page_chart(series, currency, summary, watch):
     """The chart on a restock watch's history (/diff) page."""
+
