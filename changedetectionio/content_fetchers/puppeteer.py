@@ -526,7 +526,7 @@ class fetcher(Fetcher):
 
         async def _handle_document_response(event):
             try:
-                # Request-stage pauses only exist when proxy auth is on (see the Fetch.enable below), nothing to inspect
+                # Request-stage pauses are for proxy auth or the navigation guard (see the Fetch.enable below), nothing to inspect
                 if 'responseStatusCode' not in event and 'responseErrorReason' not in event:
                     return
                 if event.get('frameId') != self.page.mainFrame._id:
@@ -549,14 +549,24 @@ class fetcher(Fetcher):
                 except Exception as e:
                     logger.debug(f"Fetch.continueRequest failed, page is most likely already gone: {e}")
 
+        # Refuses redirect hops, meta-refresh, JS navigations and iframes that lead to private/reserved
+        # addresses - the URL check before the fetch only ever saw the first URL.
+        from changedetectionio.content_fetchers.navigation_guard import FETCH_PATTERN, NavigationGuard, navigation_guard_enabled
+        navigation_guard = NavigationGuard(send=self.page._client.send, main_frame_id=self.page.mainFrame._id)
+
         def _on_request_paused(event):
-            asyncio.ensure_future(_handle_document_response(event))
+            if navigation_guard.is_request_stage_document(event):
+                asyncio.ensure_future(navigation_guard.handle_request_paused(event))
+            else:
+                asyncio.ensure_future(_handle_document_response(event))
 
         # Fetch.enable REPLACES any earlier Fetch.enable, including the one page.authenticate() did for
         # proxy credentials ({'handleAuthRequests': True, 'patterns': [{'urlPattern': '*'}]}), without
         # handleAuthRequests Chrome never asks for the credentials and the proxy answers 407.
         proxy_auth = bool(self.proxy and self.proxy.get('username'))
         fetch_patterns = [{'resourceType': 'Document', 'requestStage': 'Response'}]
+        if navigation_guard_enabled():
+            fetch_patterns.append(FETCH_PATTERN)
         if proxy_auth:
             # Every request (not just documents) must be matched for Chrome to emit Fetch.authRequired for it
             fetch_patterns.append({'urlPattern': '*', 'requestStage': 'Request'})
@@ -604,12 +614,15 @@ class fetcher(Fetcher):
                         try:
                             response = goto_task.result()
                         except Exception as e:
+                            navigation_guard.raise_if_blocked()
                             if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
                                 raise
                             response = navigation_response['response']
                             logger.debug(f"Navigation was aborted by the browser (empty body on an error status), "
                                          f"recovered status {response.status} from the response event")
                     else:
+                        # The error page for a blocked navigation fires 'load' too
+                        navigation_guard.raise_if_blocked()
                         # Either the replacement document loaded, or we ran out of patience
                         response = navigation_response.get('response')
                         if not response:
@@ -637,6 +650,7 @@ class fetcher(Fetcher):
             # force-stop whatever is still loading, so extraction always gets what rendered.
             # Awaited inline rather than fired off as a task, so nothing can outlive the fetch.
             await wait_for_content_ready_then_stop_loading()
+            navigation_guard.raise_if_blocked()
 
             # That wait is where a meta-refresh interstitial typically swaps in the real page, so
             # re-check which document we are actually on before judging the status code.

@@ -426,6 +426,10 @@ class browsersteps_live_ui(steppable_browser_interface):
 
         self.page = await self.context.new_page()
 
+        # Every navigation in the live session (redirects, clicked links, iframes) is checked, not just the "Goto" URLs
+        from changedetectionio.content_fetchers.navigation_guard import install_playwright_navigation_guard
+        await install_playwright_navigation_guard(self.context, self.page)
+
         # self.page.set_default_navigation_timeout(keep_open)
         self.page.set_default_timeout(keep_open)
         # Set event handlers

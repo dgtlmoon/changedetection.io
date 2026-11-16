@@ -310,6 +310,11 @@ class fetcher(Fetcher):
             if latest_navigation_response is None:
                 latest_navigation_response = {}
 
+            # Refuses redirect hops, meta-refresh, JS navigations and iframes that lead to private/reserved
+            # addresses - the URL check before the fetch only ever saw the first URL.
+            from changedetectionio.content_fetchers.navigation_guard import install_playwright_navigation_guard
+            navigation_guard = await install_playwright_navigation_guard(context, self.page)
+
             # Listen for all console events and handle errors
             self.page.on("console", lambda msg: logger.debug(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
 
@@ -318,7 +323,12 @@ class fetcher(Fetcher):
             browsersteps_interface = steppable_browser_interface(start_url=url)
             browsersteps_interface.page = self.page
 
-            response = await browsersteps_interface.action_goto_url(value=url)
+            try:
+                response = await browsersteps_interface.action_goto_url(value=url)
+            except Exception:
+                if navigation_guard:
+                    navigation_guard.raise_if_blocked()
+                raise
 
             if response is None:
                 await context.close()
@@ -369,6 +379,14 @@ class fetcher(Fetcher):
             except Exception as e:
                 logger.debug(f"Page did not reach a settled load state, continuing anyway: {e}")
 
+            if navigation_guard:
+                try:
+                    navigation_guard.raise_if_blocked()
+                except Exception:
+                    await context.close()
+                    await browser.close()
+                    raise
+
             try:
                 self.status_code = response.status
             except Exception as e:
@@ -408,6 +426,9 @@ class fetcher(Fetcher):
                         raise
 
                     await self.page.wait_for_timeout(extra_wait * 1000)
+                    # A step may have navigated somewhere it may not go
+                    if navigation_guard:
+                        navigation_guard.raise_if_blocked()
 
                 now = time.time()
                 # So we can find an element on the page where its selector was entered manually (maybe not xPath etc)

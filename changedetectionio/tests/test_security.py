@@ -797,6 +797,106 @@ def test_ssrf_private_ip_blocked(client, live_server, monkeypatch, measure_memor
                 )
 
 
+def test_browser_navigation_guard_blocks_redirect_to_private_ip(monkeypatch):
+    """
+    Chromium-based fetchers follow redirects, meta-refresh and iframes themselves, so the
+    pre-fetch URL check only ever saw the first URL. NavigationGuard answers every paused
+    document request (each redirect hop is one) and must fail the ones leading to a
+    private/reserved address, before Chrome connects to it.
+    """
+    import asyncio
+    from unittest.mock import patch
+    from changedetectionio.content_fetchers.navigation_guard import NavigationGuard, navigation_guard_enabled
+
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')
+    assert navigation_guard_enabled()
+
+    sent = []
+
+    async def fake_send(method, params):
+        sent.append((method, params))
+
+    def paused(request_id, url, frame_id):
+        return {'requestId': request_id, 'resourceType': 'Document', 'frameId': frame_id, 'request': {'url': url}}
+
+    guard = NavigationGuard(send=fake_send, main_frame_id='MAIN')
+
+    async def run():
+        # Initial public URL, then the hop it 302s to, then an iframe to the private address
+        await guard.handle_request_paused(paused('1', 'http://example.com/', 'MAIN'))
+        await guard.handle_request_paused(paused('2', 'http://169.254.169.254/latest/meta-data/', 'IFRAME'))
+        guard.raise_if_blocked()  # An iframe being refused does not invalidate the page itself
+        await guard.handle_request_paused(paused('3', 'http://169.254.169.254/latest/meta-data/', 'MAIN'))
+
+    with patch('changedetectionio.validate_url.is_private_hostname', side_effect=lambda h: h == '169.254.169.254'):
+        asyncio.run(run())
+
+    assert sent[0] == ('Fetch.continueRequest', {'requestId': '1'})
+    assert sent[1] == ('Fetch.failRequest', {'requestId': '2', 'errorReason': 'BlockedByClient'})
+    assert sent[2] == ('Fetch.failRequest', {'requestId': '3', 'errorReason': 'BlockedByClient'})
+    with pytest.raises(Exception, match='Redirect blocked'):
+        guard.raise_if_blocked()
+
+    # Response-stage pauses (the puppeteer PDF capture) are not the guard's to answer
+    assert not guard.is_request_stage_document({'resourceType': 'Document', 'responseStatusCode': 302})
+
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')
+    assert not navigation_guard_enabled()
+
+
+def test_selenium_navigation_guard_blocks_redirect_to_private_ip(monkeypatch):
+    """
+    The Selenium fetcher gets the same gate through WebDriver BiDi network interception: every
+    paused request leading to a private/reserved address is failed, the fetch is refused when the
+    browser ended up on one, and a WebDriver endpoint without BiDi refuses the fetch outright.
+    """
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    from changedetectionio.content_fetchers.navigation_guard import SeleniumNavigationGuard, install_selenium_navigation_guard
+
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'false')
+
+    class FakeRequest:
+        def __init__(self, url):
+            self.url = url
+            self.failed = False
+
+        def fail(self):
+            self.failed = True
+
+    guard = SeleniumNavigationGuard()
+    public = FakeRequest('http://example.com/')
+    private = FakeRequest('http://169.254.169.254/latest/meta-data/')
+
+    with patch('changedetectionio.validate_url.is_private_hostname', side_effect=lambda h: h == '169.254.169.254'):
+        guard.on_request(public)
+        guard.on_request(private)
+
+    assert not public.failed, "Public requests are left for Selenium to continue"
+    assert private.failed, "The redirect hop to a private address must be failed before it is sent"
+
+    guard.raise_if_blocked('http://example.com/')  # Still on the public page, e.g. only an iframe was refused
+    with pytest.raises(Exception, match='Redirect blocked'):
+        guard.raise_if_blocked('http://169.254.169.254/latest/meta-data/')
+
+    # No BiDi on the WebDriver endpoint -> nothing could stop the redirect, so refuse the fetch
+    class NoBidiDriver:
+        @property
+        def network(self):
+            raise Exception("Unable to find url to connect to from capabilities")
+
+    with pytest.raises(Exception, match='does not support WebDriver BiDi'):
+        install_selenium_navigation_guard(NoBidiDriver())
+
+    registered = []
+    driver = SimpleNamespace(network=SimpleNamespace(add_request_handler=registered.append))
+    assert isinstance(install_selenium_navigation_guard(driver), SeleniumNavigationGuard)
+    assert len(registered) == 1
+
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')
+    assert install_selenium_navigation_guard(NoBidiDriver()) is None
+
+
 def test_unresolvable_hostname_is_allowed(client, live_server, monkeypatch):
     """
     Unresolvable hostnames must NOT be blocked at add-time when ALLOW_IANA_RESTRICTED_ADDRESSES=false.
