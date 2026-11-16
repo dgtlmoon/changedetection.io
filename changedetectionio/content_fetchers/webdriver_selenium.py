@@ -102,11 +102,6 @@ class fetcher(Fetcher):
             if self.proxy_url:
                 options.add_argument(f'--proxy-server={self.proxy_url}')
 
-            from changedetectionio.content_fetchers.navigation_guard import install_selenium_navigation_guard, navigation_guard_enabled
-            if navigation_guard_enabled():
-                # Needed for the BiDi network interception that refuses redirects to private/reserved addresses
-                options.enable_bidi = True
-
             from selenium.webdriver.remote.remote_connection import RemoteConnection
             from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
             from selenium.webdriver.remote.client_config import ClientConfig
@@ -116,9 +111,7 @@ class fetcher(Fetcher):
                 connection_timeout = int(os.getenv("WEBDRIVER_CONNECTION_TIMEOUT", 90))
                 client_config = ClientConfig(
                     remote_server_addr=self.browser_connection_url,
-                    timeout=Timeout(connect=connection_timeout, total=connection_timeout),
-                    # Bounds the guarded BiDi navigation below the way set_page_load_timeout() bounds driver.get()
-                    websocket_timeout=int(os.getenv("WEBDRIVER_PAGELOAD_TIMEOUT", 45)),
+                    timeout=Timeout(connect=connection_timeout, total=connection_timeout)
                 )
                 remote_connection = RemoteConnection(client_config=client_config)
 
@@ -128,20 +121,13 @@ class fetcher(Fetcher):
                 )
 
                 driver.set_page_load_timeout(int(os.getenv("WEBDRIVER_PAGELOAD_TIMEOUT", 45)))
-
-                # Refuses redirect hops, meta-refresh, JS navigations, iframes and anything else the page
-                # loads from private/reserved addresses - the URL check before the fetch only saw the first URL.
-                navigation_guard = install_selenium_navigation_guard(driver)
             except Exception as e:
                 if driver:
                     driver.quit()
                 raise e
 
             try:
-                if navigation_guard:
-                    navigation_guard.navigate(driver, url)
-                else:
-                    driver.get(url)
+                driver.get(url)
 
                 if not "--window-size" in os.getenv("CHROME_OPTIONS", ""):
                     driver.set_window_size(1280, 1024)
@@ -161,9 +147,6 @@ class fetcher(Fetcher):
                 # @todo - dom wait loaded?
                 import time
                 time.sleep(int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay)
-                # A meta-refresh or client-side redirect usually lands during that wait
-                if navigation_guard:
-                    navigation_guard.raise_if_blocked(driver.current_url)
                 self.content = driver.page_source
                 self.headers = {}
 

@@ -254,10 +254,8 @@ def is_fetch_url_allowed(url):
     validate_fetch_url_async() instead so the event loop keeps turning.
 
     Note this validates one URL, not a redirect chain. content_fetchers/requests.py follows
-    redirects manually and re-checks each hop; the playwright, puppeteer and Selenium fetchers
-    (and the live Browser Steps UI) refuse each redirect hop, meta-refresh, JS navigation and
-    iframe in the browser itself via content_fetchers/navigation_guard.py - CDP Fetch
-    interception for the first two, WebDriver BiDi network interception for Selenium.
+    redirects manually and re-checks each hop; the Chromium-based fetchers cannot do that yet,
+    so an open redirect on a public host remains a known gap for those backends.
     """
     import os
     import re
