@@ -1731,8 +1731,10 @@ def notification_runner(worker_id=0):
                         )
 
                 # Process notifications
+                # Shown on the notification log page, without the passwords and tokens of the notification URLs
+                from changedetectionio.notification.masking import mask_sent_notifications
                 notification_debug_log += [
-                    "{} - SENDING - {}".format(now.strftime("%c"), json.dumps(sent_obj))
+                    "{} - SENDING - {}".format(now.strftime("%c"), json.dumps(mask_sent_notifications(sent_obj)))
                 ]
                 # Trim the log length
                 notification_debug_log = notification_debug_log[-100:]
