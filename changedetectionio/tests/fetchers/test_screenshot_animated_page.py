@@ -41,7 +41,7 @@ def test_screenshot_of_animated_tall_page(client, live_server, measure_memory_us
 
     datastore = live_server.app.config['DATASTORE']
     uuid = datastore.add_watch(url=_cdio(url_for('test_animated_tall_page', _external=True)))
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     watch = datastore.data['watching'][uuid]
