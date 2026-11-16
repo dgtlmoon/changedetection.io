@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-"""The full page screenshot of a page that animates and draws itself by script.
+"""The full page screenshot of a tall page that never stops animating.
 
-The page's scripts are held still while each screenshot chunk is taken (an animating page otherwise
-keeps the capture waiting behind its repaints), but not before the page has reacted to the tall
-screenshot viewport and to being scrolled - or it is drawn as it was before either happened.
+The puppeteer fetcher captures the page in bands beyond the viewport, without making the viewport
+taller or scrolling: the page is drawn the way a visitor has it, not with everything that is sized
+to the viewport stretched to the height of a band and a fixed header repeated in each one.
 """
 
 import os
@@ -22,7 +22,7 @@ def _is(pixel, red, green, blue):
     return all(abs(a - b) < 60 for a, b in zip(pixel[:3], (red, green, blue)))
 
 
-def test_screenshot_of_animated_page_shows_what_its_scripts_drew(client, live_server, measure_memory_usage, datastore_path):
+def test_screenshot_of_animated_tall_page(client, live_server, measure_memory_usage, datastore_path):
     from PIL import Image
 
     assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
@@ -48,15 +48,21 @@ def test_screenshot_of_animated_page_shows_what_its_scripts_drew(client, live_se
     assert 'The animated page text is here' in watch.get_history_snapshot(list(watch.history.keys())[-1])
 
     screenshot = Image.open(watch.get_screenshot()).convert('RGB')
-    # 15000px of page, taken as two chunks
     assert screenshot.height > 10000, f"Expected the whole page in the screenshot, it is {screenshot.size}"
-    middle = screenshot.width // 2
 
-    assert _is(screenshot.getpixel((middle, 200)), 0, 160, 0), \
-        "The page was held still before it could react to the screenshot viewport"
-    # Not scrolled in the first chunk, scrolled in the second: the fixed band is 400px from the top of each
-    assert _is(screenshot.getpixel((middle, 600)), 255, 0, 0)
-    assert _is(screenshot.getpixel((middle, 10600)), 0, 0, 255), \
-        "The page was held still before it could react to being scrolled for the second chunk"
+    if not os.getenv('FAST_PUPPETEER_CHROME_FETCHER'):
+        # The playwright fetcher still makes the viewport taller and scrolls
+        client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+        return
+
+    middle = screenshot.width // 2
+    white = (255, 255, 255)
+    assert screenshot.height == 15000, "The screenshot should be exactly as tall as the page"
+    assert _is(screenshot.getpixel((middle, 20)), 0, 0, 255), "The fixed header belongs at the top"
+    assert _is(screenshot.getpixel((middle, 200)), 0, 160, 0)
+    assert _is(screenshot.getpixel((middle, 5000)), *white), \
+        "The viewport-high hero reaches 5000px down, the viewport was made taller for the screenshot"
+    assert _is(screenshot.getpixel((middle, 10020)), *white), "The fixed header was drawn again in the second band"
+    assert _is(screenshot.getpixel((middle, 12200)), 255, 0, 255), "The second band is not where it belongs"
 
     client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)

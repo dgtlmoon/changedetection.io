@@ -24,20 +24,9 @@ async def _configure_puppeteer_csp(page):
         await page.setBypassCSP(True)
 
 
-# Bug 3 in Playwright screenshot handling
-# Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-
-# How long a page gets to react to the taller viewport / the new scroll position before it is held
-# still for a screenshot chunk. One rendered frame is not enough: a page that swaps its content as
-# you scroll does it over several frames, and was drawn as if never scrolled.
-SCREENSHOT_SETTLE_SECONDS = float(os.getenv("SCREENSHOT_SETTLE_SECONDS", 1))
-
-# Resolves once the page has rendered a frame, for a browser so busy that the settle time above
-# passed without one. Bounded, a page that is not being painted never runs a frame.
-WAIT_FOR_NEXT_FRAME_JS = """() => new Promise(resolve => {
-    const done = setTimeout(resolve, 2000);
-    requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(done); resolve(); }));
-})"""
+# Resuming happens on the way out, also of a capture that failed or ran out of time on a browser that
+# has stopped answering - waiting on it there would hold up the worker long after the fetch was given up on
+RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS = 5
 
 
 async def _set_page_scripts_paused(page, paused):
@@ -45,141 +34,105 @@ async def _set_page_scripts_paused(page, paused):
     evaluate() still answers, but timers and frames stop too: an evaluate() that waits on one never
     returns, so nothing is extracted while paused. Returns False when the browser would not do it."""
     try:
-        await page._client.send('Emulation.setScriptExecutionDisabled', {'value': paused})
+        request = page._client.send('Emulation.setScriptExecutionDisabled', {'value': paused})
+        if paused:
+            await request
+        else:
+            await asyncio.wait_for(request, timeout=RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS)
         return True
     except Exception as e:
-        logger.debug(f"Could not {'pause' if paused else 'resume'} the page's scripts: {e}")
+        logger.debug(f"Could not {'pause' if paused else 'resume'} the page's scripts: {type(e).__name__} {e}")
         return False
 
+
+async def _capture_chunk_beyond_viewport(page, y, width, height, screenshot_type, screenshot_quality):
+    """One horizontal band of the page, from y down, as image bytes. The viewport is left as it is."""
+    params = {
+        'format': screenshot_type,
+        'captureBeyondViewport': True,
+        'clip': {'x': 0, 'y': y, 'width': width, 'height': height, 'scale': 1},
+    }
+    if screenshot_type == 'jpeg':
+        params['quality'] = screenshot_quality
+    result = await page._client.send('Page.captureScreenshot', params)
+    return base64.b64decode(result['data'])
+
+
+# Bug 3 in Playwright screenshot handling
+# Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
 
 # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
 # acceptable screenshot quality here
 async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
-    import os
+    """The whole page as one image, up to SCREENSHOT_MAX_HEIGHT.
+
+    The page is captured as it stands, in bands "beyond the viewport". The viewport is never made
+    taller and the page is never scrolled, both of which change what a page looks like and costs:
+    anything sized to the viewport (a 100vh hero, a full-window canvas or video) grew to the height
+    of a whole band, a fixed header was drawn once per band, and a page that animates repainted all
+    of that on every frame - on a busy browser that alone used up the whole fetch. So the page looks
+    the way the element positions of the Visual Selector were measured, and
+    lock_viewport_elements has nothing left to do here (kept for the callers that pass it).
+    """
     import time
 
     start = time.time()
     watch_info = f"[{watch_uuid}] " if watch_uuid else ""
 
-    setup_start = time.time()
     page_height = await page.evaluate("document.documentElement.scrollHeight")
     page_width = await page.evaluate("document.documentElement.scrollWidth")
-    original_viewport = page.viewport
-    dimensions_time = time.time() - setup_start
-
-    logger.debug(f"{watch_info}Puppeteer viewport size {page.viewport} page height {page_height} page width {page_width} (got dimensions in {dimensions_time:.2f}s)")
-
-    # Bug 3 in Playwright screenshot handling
-    # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-    # JPEG is better here because the screenshots can be very very large
-
-    # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
-    # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
-    # acceptable screenshot quality here
+    viewport = page.viewport
+    logger.debug(f"{watch_info}Puppeteer viewport size {viewport} page height {page_height} page width {page_width} "
+                 f"(got dimensions in {time.time() - start:.2f}s)")
 
     # Use PNG for better quality (no compression artifacts), JPEG for smaller size
     screenshot_type = screenshot_format.lower() if screenshot_format else 'jpeg'
     # PNG should use quality 100, JPEG uses configurable quality
     screenshot_quality = 100 if screenshot_type == 'png' else int(os.getenv("SCREENSHOT_QUALITY", 72))
 
-    step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Something that will not cause the GPU to overflow when taking the screenshot
+    capture_height = min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
     screenshot_chunks = []
-    y = 0
-    elements_locked = False
-
-    # Only lock viewport elements if explicitly enabled (for image_ssim_diff processor)
-    # This prevents headers/ads from resizing when viewport changes
-    if lock_viewport_elements and page_height > page.viewport['height']:
-        lock_start = time.time()
-        lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
-        file_read_start = time.time()
-        with open(lock_elements_js_path, 'r', encoding='utf-8') as f:
-            lock_elements_js = f.read()
-        file_read_time = time.time() - file_read_start
-
-        evaluate_start = time.time()
-        await page.evaluate(lock_elements_js)
-        evaluate_time = time.time() - evaluate_start
-
-        elements_locked = True
-        lock_time = time.time() - lock_start
-        logger.debug(f"{watch_info}Viewport element locking enabled - File read: {file_read_time:.3f}s, Browser evaluate: {evaluate_time:.2f}s, Total: {lock_time:.2f}s")
-
-    # Only a page taller than the viewport is resized and scrolled, see the settle time in the loop
-    viewport_resized = page_height > page.viewport['height']
-    if viewport_resized:
-        if page_height < step_size:
-            step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
-        # Never set viewport taller than our max capture height - otherwise one screenshot chunk
-        # captures the whole page even when SCREENSHOT_MAX_HEIGHT is set smaller
-        step_size = min(step_size, SCREENSHOT_MAX_TOTAL_HEIGHT)
-        viewport_start = time.time()
-        await page.setViewport({'width': page.viewport['width'], 'height': step_size})
-        viewport_time = time.time() - viewport_start
-        logger.debug(f"{watch_info}Viewport changed to {page.viewport['width']}x{step_size} (took {viewport_time:.2f}s)")
-
-    capture_start = time.time()
     chunk_times = []
-    while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
-        # better than scrollTo incase they override it in the page
-        await page.evaluate(
-            """(y) => {
-                const el = document.scrollingElement;
-                if (el) el.scrollTop = y;
-            }""",
-            y
-        )
 
-        screenshot_kwargs = {
-            'type_': screenshot_type,
-            'fullPage': False
-        }
-        # PNG doesn't support quality parameter in Puppeteer
-        if screenshot_type == 'jpeg':
-            screenshot_kwargs['quality'] = screenshot_quality
-
-        # A page that animates (a scroll-driven story, a large canvas or SVG animation) repaints the
-        # whole of this very tall viewport on every frame, and the capture has to queue behind
-        # that: measured on one core, 50s per chunk against 0.2s with the page's scripts paused -
-        # enough on its own to use up the whole fetch. So the page is held still while the chunk is
-        # taken, and only then. Pausing any earlier loses its reaction to the new viewport size and
-        # scroll position: a page that sizes itself by script is drawn at its old size inside the
-        # tall viewport, one that changes as you scroll is drawn as if never scrolled.
-        if viewport_resized:
-            await asyncio.sleep(SCREENSHOT_SETTLE_SECONDS)
-            try:
-                await page.evaluate(WAIT_FOR_NEXT_FRAME_JS)
-            except Exception as e:
-                logger.debug(f"{watch_info}Waiting for the page to render before the chunk failed: {e}")
-        scripts_paused = await _set_page_scripts_paused(page, True)
-
-        chunk_start = time.time()
-        try:
+    # The page's own scripts are held still for as long as it is being captured: an animating page
+    # otherwise keeps every capture waiting behind its repaints (15s a band against 0.3s). Nothing
+    # here asks the page to react to anything, so there is nothing for it to miss meanwhile.
+    scripts_paused = await _set_page_scripts_paused(page, True)
+    capture_start = time.time()
+    try:
+        if page_height <= viewport['height']:
+            # Fits the viewport as it is
+            screenshot_kwargs = {'type_': screenshot_type, 'fullPage': False}
+            # PNG doesn't support quality parameter in Puppeteer
+            if screenshot_type == 'jpeg':
+                screenshot_kwargs['quality'] = screenshot_quality
             screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
-        finally:
-            # Always handed back: the next scroll, and everything extracted after the screenshot,
-            # is for a page that runs as normal
-            if scripts_paused:
-                await _set_page_scripts_paused(page, False)
-        chunk_time = time.time() - chunk_start
-        chunk_times.append(chunk_time)
-        logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} captured in {chunk_time:.2f}s")
-        y += step_size
+            chunk_times.append(time.time() - capture_start)
+        else:
+            try:
+                # As page.screenshot() does, a tab in the background is not painted
+                await page._client.send('Target.activateTarget', {'targetId': page._target._targetId})
+            except Exception as e:
+                logger.debug(f"{watch_info}Could not bring the page to the front before capturing: {e}")
 
-    await page.setViewport({'width': original_viewport['width'], 'height': original_viewport['height']})
-
-    # Unlock element dimensions if they were locked
-    if elements_locked:
-        unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
-        with open(unlock_elements_js_path, 'r', encoding='utf-8') as f:
-            unlock_elements_js = f.read()
-        await page.evaluate(unlock_elements_js)
-        logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
+            # In bands, something that will not cause the GPU to overflow when taking the screenshot
+            y = 0
+            while y < capture_height:
+                chunk_start = time.time()
+                chunk_height = min(SCREENSHOT_SIZE_STITCH_THRESHOLD, capture_height - y)
+                screenshot_chunks.append(await _capture_chunk_beyond_viewport(
+                    page, y, viewport['width'], chunk_height, screenshot_type, screenshot_quality))
+                chunk_times.append(time.time() - chunk_start)
+                logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} ({chunk_height}px from {y}) captured in {chunk_times[-1]:.2f}s")
+                y += chunk_height
+    finally:
+        # Always handed back, everything extracted after the screenshot is for a page that runs as normal
+        if scripts_paused:
+            await _set_page_scripts_paused(page, False)
 
     capture_time = time.time() - capture_start
-    total_capture_time = sum(chunk_times)
-    logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {total_capture_time:.2f}s)")
+    logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {sum(chunk_times):.2f}s)")
 
     if len(screenshot_chunks) > 1:
         stitch_start = time.time()
@@ -223,45 +176,6 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         f"{watch_info}Screenshot complete - Page height: {page_height}px, Capture height: {SCREENSHOT_MAX_TOTAL_HEIGHT}px | "
         f"Setup: {setup_time:.2f}s, Single chunk: {capture_time:.2f}s, Total: {total_time:.2f}s")
     return screenshot_chunks[0]
-
-
-# The icons a page declares, in the order the browser would consider them, plus the /favicon.ico every browser tries
-FAVICON_CANDIDATE_URLS_JS = """() => Array.from(document.querySelectorAll('link[rel~="icon"], link[rel~="apple-touch-icon"]'))
-    .map(l => l.href).filter(h => h && !h.startsWith('data:')).concat([location.origin + '/favicon.ico'])"""
-# Same limit as the in-page fetcher and bump_favicon()
-FAVICON_MAX_BYTES = 1 * 1024 * 1024
-
-
-async def favicon_from_browser_requests(page, browser_fetched, watch_uuid=None):
-    """The favicon the browser downloaded for itself, as {'url', 'mime_type', 'base64'}, or None.
-
-    Fallback for when the in-page fetcher (FAVICON_FETCHER_JS) comes back empty: page script may not
-    read an icon on another host unless that host allows it, but the browser's own icon request is not
-    page script and is not held to that. browser_fetched is {url: (requestId, mimeType)} of the
-    responses seen during the fetch; only a URL the page declares as its icon is ever used.
-    """
-    if not browser_fetched:
-        return None
-    try:
-        candidates = await page.evaluate(FAVICON_CANDIDATE_URLS_JS)
-        for url in candidates or []:
-            if url not in browser_fetched:
-                continue
-            request_id, mime_type = browser_fetched[url]
-            try:
-                r = await page._client.send('Network.getResponseBody', {'requestId': request_id})
-            except Exception as e:
-                logger.debug(f"[{watch_uuid}] Favicon {url} was requested by the browser but its body is gone: {e}")
-                continue
-            body = r.get('body') or ''
-            icon = body if r.get('base64Encoded') else base64.b64encode(body.encode('utf-8')).decode('ascii')
-            if not icon or len(icon) * 0.75 > FAVICON_MAX_BYTES:
-                continue
-            logger.debug(f"[{watch_uuid}] Favicon taken from the browser's own request for {url}")
-            return {'url': url, 'mime_type': mime_type, 'base64': icon}
-    except Exception as e:
-        logger.debug(f"[{watch_uuid}] No favicon from the browser's own requests: {e}")
-    return None
 
 
 class fetcher(Fetcher):
