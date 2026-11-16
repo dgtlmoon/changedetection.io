@@ -41,6 +41,28 @@ def test_notification_url_that_cannot_be_read_is_masked_whole():
     assert mask_notification_url(SECRET) == '****'
 
 
+def test_notification_url_for_logs_is_scheme_and_host_only():
+    from changedetectionio.notification.masking import notification_url_for_logs
+
+    assert notification_url_for_logs(f'mailto://someuser:{SECRET}@example.com?to=someone@example.com') == 'mailto://example.com/****'
+    assert notification_url_for_logs(f'post://example.com/hook/{SECRET}?token={SECRET}') == 'post://example.com/****'
+    assert notification_url_for_logs('null://just-a-test') == 'null://just-a-test/****'
+    assert notification_url_for_logs(SECRET) == '****'
+
+
+def test_naming_a_notification_url_in_the_logs_does_not_ask_apprise(monkeypatch):
+    """Apprise logs a warning for a URL it has no service for, and a warning while a notification is
+    being processed is taken for a failed send (the RSS feed renders through null://)"""
+    import apprise
+    from changedetectionio.notification.masking import notification_url_for_logs
+
+    def not_expected(*args, **kwargs):
+        raise AssertionError("Apprise was asked about the URL")
+
+    monkeypatch.setattr(apprise.Apprise, 'instantiate', staticmethod(not_expected))
+    assert notification_url_for_logs('null://just-sending-a-null-test-for-the-render-in-RSS')
+
+
 def test_sent_notifications_are_masked_as_a_copy():
     from changedetectionio.notification.masking import mask_sent_notifications
 

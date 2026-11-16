@@ -4,7 +4,7 @@ import re
 from loguru import logger
 from urllib.parse import urlparse
 from .email_helpers import as_monospaced_html_email
-from .masking import mask_notification_url
+from .masking import notification_url_for_logs
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE, HTML_CHANGED_INTO_STYLE
@@ -430,7 +430,7 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             url = jinja_render(template_str=url, **notification_parameters)
             # Never the URL itself, its password or token would be in the logs with it
-            logger.info(f">> Process Notification: AppRise start notifying '{mask_notification_url(url)}'")
+            logger.info(f">> Process Notification: AppRise start notifying '{notification_url_for_logs(url)}'")
 
             if 'html' in requested_output_format:
                 # Since the n_body is always some kind of text from the 'diff' engine, attempt to preserve whitespaces that get sent to the HTML output

@@ -25,6 +25,25 @@ def mask_notification_url(url):
     return f"{scheme}://****" if scheme else '****'
 
 
+def notification_url_for_logs(url):
+    """Where a notification goes, for a log line: its scheme and host and nothing else.
+
+    Unlike mask_notification_url() this does not ask Apprise about the URL. process_notification()
+    collects everything Apprise logs while it works and treats a warning in there as a failed send,
+    and reading a URL Apprise has no service for (null://) logs one.
+    """
+    from urllib.parse import urlsplit
+    try:
+        parts = urlsplit(url)
+        if parts.scheme and parts.hostname:
+            return f"{parts.scheme}://{parts.hostname}/****"
+        if parts.scheme:
+            return f"{parts.scheme}://****"
+    except Exception:
+        pass
+    return '****'
+
+
 def mask_sent_notifications(sent_objs):
     """What process_notification() returns, as a copy with every notification URL in it masked"""
     masked = []
