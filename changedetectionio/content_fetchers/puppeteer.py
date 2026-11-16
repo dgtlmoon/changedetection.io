@@ -49,9 +49,24 @@ async def _set_page_scripts_paused(page, paused):
 # from ever returning. Measured on a browser without a GPU: a 2600x2600 WebGL canvas far down a page
 # hung the capture (the page with it hidden took 3s), a 2300x800 one made its band take 27s against
 # 7s. Canvases with more pixels than this - a little more than a whole 1280x1024 screen - are left
-# blank below the first screen, which is captured the ordinary way with everything on it. A graph is
-# smaller than a screen (the ones measured: 1.2 million pixels at most).
+# blank, except on the first screen: when one is there the first screen is captured the ordinary
+# way, with everything on it. A graph is smaller than a screen (the ones measured: 1.2 million
+# pixels at most).
 SCREENSHOT_MAX_CANVAS_PIXELS = int(os.getenv("SCREENSHOT_MAX_CANVAS_PIXELS", 1_500_000))
+
+# How many canvases are over the limit, and whether one of them is (partly) on the first screen. The
+# height of the screen is passed in, window.innerHeight is not to be trusted with stealth scripts loaded.
+FIND_LARGE_CANVASES_JS = """(maxPixels, screenHeight) => {
+    let count = 0, onFirstScreen = false;
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.width * canvas.height > maxPixels) {
+            count++;
+            const box = canvas.getBoundingClientRect();
+            if (box.width && box.height && box.bottom > 0 && box.top < screenHeight) onFirstScreen = true;
+        }
+    }
+    return {count, onFirstScreen};
+}"""
 
 # Hidden, not removed: the space it takes up stays, so nothing below it moves
 HIDE_LARGE_CANVASES_JS = """(maxPixels) => {
@@ -98,8 +113,8 @@ async def _capture_chunk_beyond_viewport(page, y, width, height, screenshot_type
 async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False, pause_scripts=True):
     """The whole page as one image, up to SCREENSHOT_MAX_HEIGHT.
 
-    The first screen is an ordinary screenshot, the rest of the page is captured as it stands, in
-    bands "beyond the viewport". The viewport is never made
+    The page is captured as it stands, in bands "beyond the viewport" (one band for a page shorter
+    than SCREENSHOT_CHUNK_HEIGHT, so nothing to stitch). The viewport is never made
     taller and the page is never scrolled, both of which change what a page looks like and costs:
     anything sized to the viewport (a 100vh hero, a full-window canvas or video) grew to the height
     of a whole band, a fixed header was drawn once per band, and a page that animates repainted all
@@ -146,13 +161,19 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
             chunk_times.append(time.time() - capture_start)
         else:
             y = 0
-            # The first screen the ordinary way, with everything on it as it is - that one always
-            # answers. Only what is below it has to come from beyond the viewport.
             try:
+                large_canvases = await page.evaluate(FIND_LARGE_CANVASES_JS, SCREENSHOT_MAX_CANVAS_PIXELS, viewport['height']) or {}
                 at_the_top = not await page.evaluate("window.scrollX || window.scrollY")
-            except Exception:
-                at_the_top = False
-            if at_the_top:
+            except Exception as e:
+                logger.debug(f"{watch_info}Could not look for very large canvases: {e}")
+                large_canvases, at_the_top = {}, False
+
+            if large_canvases.get('onFirstScreen') and at_the_top:
+                # A large canvas on the first screen would be left blank with the others. The first
+                # screen is taken the ordinary way instead, with everything on it (that one always
+                # answers), and only what is below it comes from beyond the viewport. Not done for
+                # every page: two chunks have to be stitched, in a subprocess of its own, where a
+                # page shorter than a band is otherwise a single capture.
                 chunk_start = time.time()
                 screenshot_chunks.append(await page.screenshot(**viewport_screenshot_kwargs))
                 chunk_times.append(time.time() - chunk_start)
@@ -165,13 +186,13 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
                 except Exception as e:
                     logger.debug(f"{watch_info}Could not bring the page to the front before capturing: {e}")
 
-            try:
-                canvases_hidden = await page.evaluate(HIDE_LARGE_CANVASES_JS, SCREENSHOT_MAX_CANVAS_PIXELS)
-                if canvases_hidden:
+            if large_canvases.get('count'):
+                try:
+                    canvases_hidden = await page.evaluate(HIDE_LARGE_CANVASES_JS, SCREENSHOT_MAX_CANVAS_PIXELS)
                     logger.debug(f"{watch_info}{canvases_hidden} canvas(es) of more than {SCREENSHOT_MAX_CANVAS_PIXELS} pixels "
-                                 f"left blank below the first screen")
-            except Exception as e:
-                logger.debug(f"{watch_info}Could not look for very large canvases: {e}")
+                                 f"left blank{' below the first screen' if y else ''}")
+                except Exception as e:
+                    logger.debug(f"{watch_info}Could not hide the very large canvases: {e}")
 
             # In bands, something that will not cause the GPU to overflow when taking the screenshot
             while y < capture_height:
