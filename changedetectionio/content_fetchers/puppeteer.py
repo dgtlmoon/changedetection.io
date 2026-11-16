@@ -670,6 +670,15 @@ class fetcher(Fetcher):
                     if goto_task in done:
                         try:
                             response = goto_task.result()
+                            if response is None and navigation_response.get('response'):
+                                # goto() hands back nothing when the page starts its next navigation
+                                # from its own load event (a parked domain: an empty document whose
+                                # onload sets location.href). That is not "the page did not fetch" -
+                                # retrying gets the same answer three times in a row and ends as an
+                                # EmptyReply, on a page that goes on to load perfectly well.
+                                response = navigation_response['response']
+                                logger.debug(f"goto() returned no response (the page navigated again as it loaded), "
+                                             f"continuing with the one seen for {response.url} - status {response.status}")
                         except Exception as e:
                             if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
                                 raise
