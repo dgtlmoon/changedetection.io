@@ -12,13 +12,15 @@ Environment variables (all optional except the switch):
   FLASKAPI_GUARD_ENABLED          true/false, default false
   FLASKAPI_GUARD_RATE_LIMIT       max requests per client IP per 60 seconds, default 600
   FLASKAPI_GUARD_MCP_RATE_LIMIT   max requests per client IP per 60 seconds to the MCP server (/mcp/v1), default 300
+  FLASKAPI_GUARD_LOGIN_RATE_LIMIT max requests per client IP per 300 seconds to /login and to each of the MCP sign-in
+                                  routes (/oauth/authorize, /oauth/token), default 30
   FLASKAPI_GUARD_TRUSTED_PROXIES  comma separated IPs/CIDRs allowed to set X-Forwarded-*, default 127.0.0.1,::1
                                   (with USE_X_SETTINGS also set, USE_X_SETTINGS_TRUSTED_PROXIES takes precedence for
                                   the X-Forwarded-* filter, see forwarded_headers.py)
   FLASKAPI_GUARD_ALLOWED_IPS      comma separated IPs/CIDRs, when set ONLY these clients may connect (and are not rate limited)
 
 Scanning skips /api (it has its own API key check, the guard's ban list, allow list and rate limit still apply there)
-and /language/auto-detect. /login has its own budget, see LOGIN_RATE_LIMIT, the MCP sign-in routes get the same one,
+and /language/auto-detect. /login has its own budget, see LOGIN_RATE_LIMIT (the default), the MCP sign-in routes get the same one,
 see MCP_SIGN_IN_PATHS, and the MCP server has its own, see DEFAULT_MCP_RATE_LIMIT.
 
 Request bodies are never scanned (watch settings, filters and notification templates are free text), and
@@ -83,6 +85,7 @@ def init_guard(app):
 
     allowed_ips = _csv_env('FLASKAPI_GUARD_ALLOWED_IPS')
     mcp_rate_limit = int(os.getenv('FLASKAPI_GUARD_MCP_RATE_LIMIT', DEFAULT_MCP_RATE_LIMIT))
+    login_rate_limit = (int(os.getenv('FLASKAPI_GUARD_LOGIN_RATE_LIMIT', LOGIN_RATE_LIMIT[0])), LOGIN_RATE_LIMIT[1])
     config = SecurityConfig(
         enable_redis=False,
         enable_agent=False,
@@ -96,8 +99,8 @@ def init_guard(app):
         # /api has its own key check (a bad key gets the app's 403). Bans, allow list and rate limit still apply there.
         exclude_paths=DEFAULT_EXCLUDE_PATHS + ['/api', '/language/auto-detect'],
         endpoint_rate_limits={
-            '/login': LOGIN_RATE_LIMIT,
-            **dict.fromkeys(MCP_SIGN_IN_PATHS, LOGIN_RATE_LIMIT),
+            '/login': login_rate_limit,
+            **dict.fromkeys(MCP_SIGN_IN_PATHS, login_rate_limit),
             '/mcp/v1': (mcp_rate_limit, 60),
         },
         rate_limit=int(os.getenv('FLASKAPI_GUARD_RATE_LIMIT', DEFAULT_RATE_LIMIT)),

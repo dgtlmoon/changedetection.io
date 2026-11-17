@@ -35,6 +35,8 @@ def unique_ip():
 
 def make_app(monkeypatch, **env):
     monkeypatch.setenv('FLASKAPI_GUARD_ENABLED', 'true')
+    # the CI job raises this for tests/test_mcp_oauth.py, the tests here that count to 30 want the default
+    monkeypatch.delenv('FLASKAPI_GUARD_LOGIN_RATE_LIMIT', raising=False)
     for k, v in env.items():
         monkeypatch.setenv(k, str(v))
     app = Flask(__name__)
@@ -334,3 +336,12 @@ def test_mcp_register_keeps_the_general_budget(monkeypatch):
     codes = [client.post('/oauth/register', environ_overrides={'REMOTE_ADDR': ip}).status_code for _ in range(31)]
     assert codes == [200] * 31
 
+
+
+@needs_guard
+@pytest.mark.parametrize('path', ('/login',) + MCP_SIGN_IN_PATHS)
+def test_login_budget_follows_the_environment(monkeypatch, path):
+    app = make_app(monkeypatch, FLASKAPI_GUARD_LOGIN_RATE_LIMIT=3)
+    ip = unique_ip()
+    codes = [app.test_client().post(path, environ_overrides={'REMOTE_ADDR': ip}).status_code for _ in range(5)]
+    assert codes == [200] * 3 + [429] * 2
