@@ -5535,6 +5535,14 @@ msgid "Content raw/before filters"
 msgstr "フィルタ前の生の内容"
 
 #: changedetectionio/templates/base.html
+msgid "Move this step up"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Move this step down"
+msgstr ""
+
+#: changedetectionio/templates/base.html
 msgid "Main navigation"
 msgstr ""
 

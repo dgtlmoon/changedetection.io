@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.70.4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-19 12:06+0100\n"
+"POT-Creation-Date: 2026-11-19 21:32+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5497,6 +5497,14 @@ msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Content raw/before filters"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Move this step up"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Move this step down"
 msgstr ""
 
 #: changedetectionio/templates/base.html
