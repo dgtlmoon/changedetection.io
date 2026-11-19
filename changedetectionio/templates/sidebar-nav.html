@@ -22,7 +22,8 @@
        blueprint's browser_config) - without one the page can only fail, so don't offer it #}
     {%- if has_visual_browser -%}
     <li class="action-sidebar-li">
-        <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
+        {# From inside a group on the watch list, the Add-Watch page starts with that group filled in #}
+        <a href="{{ url_for('add_watch_ui.add_watch_ui_index', tag=active_tag_uuid if ep == 'watchlist.index' else None) }}"
            class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
            title="{{ _('Add a page watch') }}">
             {# Inverted "add" glyph: a solid (currentColor) rounded square with the
