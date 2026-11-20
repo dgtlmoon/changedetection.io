@@ -163,9 +163,10 @@ $(function () {
         return $wrap;
     }
 
-    // "OAuth Access Token, or Token A + Token B + Token C": the ways a service can be set up
+    // "OAuth Access Token / Token A + Token B + Token C": the ways a service can be set up.
+    // Symbols rather than words between them, so nothing has to be translated in fragments.
     function oneOfText(groups) {
-        return $.map(groups, function (g) { return g.join(' + '); }).join(', ' + (t.or || 'or') + ' ');
+        return $.map(groups, function (g) { return g.join(' + '); }).join(' / ');
     }
 
     function fillInText(form) {
@@ -173,7 +174,7 @@ $(function () {
         var labels = {};
         $.each(form.fields, function (i, f) { labels[f.key] = f.label; });
         var groups = $.map(form.one_of, function (g) { return [$.map(g, function (k) { return labels[k] || k; })]; });
-        return (t.fillInOneOf || 'Fill in') + ': ' + oneOfText(groups);
+        return (t.fillInOneOf || 'Fill in one of: __CHOICES__').replace('__CHOICES__', oneOfText(groups));
     }
 
     function renderCard(form) {

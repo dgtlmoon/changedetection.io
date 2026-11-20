@@ -4978,6 +4978,11 @@ msgid "Fill in the fields to build the URL"
 msgstr "Vyplňte pole pro sestavení URL"
 
 #: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"
 msgstr "Přidáno do seznamu níže"
 

@@ -4920,6 +4920,11 @@ msgid "Fill in the fields to build the URL"
 msgstr "填写字段以生成 URL"
 
 #: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"
 msgstr "已添加到下方列表"
 

@@ -87,7 +87,7 @@ def test_build_slack_either_way():
         result = build_url('slack', values)
         assert 'url' not in result
         assert result['one_of'] == [['OAuth Access Token'], ['Token A', 'Token B', 'Token C']]
-        assert result['error'] == 'Required: OAuth Access Token, or Token A + Token B + Token C'
+        assert result['error'] == 'Required: OAuth Access Token / Token A + Token B + Token C'
 
 
 def test_describe_secure_toggle_and_headers():

@@ -351,7 +351,7 @@ def build_url(schema, values=None, secure=True, extra=None):
     if one_of and not any(all(specs[key].get('map_to', key) in kwargs for key in group) for group in one_of):
         labels = {f['key']: f['label'] for f in form['fields']}
         choices = [[labels[key] for key in group] for group in one_of]
-        return {'error': 'Required: ' + ', or '.join(' + '.join(c) for c in choices), 'one_of': choices}
+        return {'error': 'Required: ' + ' / '.join(' + '.join(c) for c in choices), 'one_of': choices}
 
     # Some services (Telegram) take the target list as a required argument, even when it may be empty
     for field in form['fields']:
