@@ -5504,6 +5504,14 @@ msgid "Content raw/before filters"
 msgstr "過濾前的原始內容"
 
 #: changedetectionio/templates/base.html
+msgid "Move this step up"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Move this step down"
+msgstr ""
+
+#: changedetectionio/templates/base.html
 msgid "Main navigation"
 msgstr "主導覽列"
 
