@@ -49,6 +49,47 @@ def test_describe_telegram():
     assert 'silent' in option_keys
 
 
+def test_describe_alternative_credentials():
+    """Apprise marks a token required when the URL forms that use it need it. Slack has two ways in
+    (bot token, or the three webhook tokens): neither is required on its own, one of them is."""
+    form = describe_service('slack')
+    fields = {f['key']: f for f in form['fields']}
+    assert not any(fields[k]['required'] for k in ('access_token', 'token_a', 'token_b', 'token_c'))
+    assert form['one_of'] == [['access_token'], ['token_a', 'token_b', 'token_c']]
+    # The credentials come before the optional fields
+    assert [f['key'] for f in form['fields'][:4]] == ['access_token', 'token_a', 'token_b', 'token_c']
+
+    # Services with one way in are unchanged
+    telegram = describe_service('tgram')
+    assert 'one_of' not in telegram
+    assert [f['key'] for f in telegram['fields'] if f['required']] == ['bot_token']
+
+
+def test_describe_list_of_several_kinds():
+    """A list that takes several kinds of item keeps its own name and says what it accepts, the same
+    way on every load (Apprise's `group` is a set, picking "the first" gave a different label each time)."""
+    for _ in range(3):
+        targets = next(f for f in describe_service('slack')['fields'] if f['key'] == 'targets')
+        assert targets['label'] == 'Targets'
+        assert targets['accepts'] == ['Target Encoded ID', 'Target Email', 'Target User', 'Target Channel']
+
+
+def test_build_slack_either_way():
+    webhook = build_url('slack', {'token_a': 'T0123ABCD', 'token_b': 'B0456EFGH',
+                                  'token_c': 'abcdEFGHijklMNOPqrstUVWX', 'targets': '#website-changes'})
+    assert webhook['url'] == 'slack://T0123ABCD/B0456EFGH/abcdEFGHijklMNOPqrstUVWX/%23website-changes/?mode=hook'
+
+    bot = build_url('slack', {'access_token': 'xoxb-1234-5678-abcdefghijkl', 'targets': '#website-changes'})
+    assert bot['url'] == 'slack://xoxb-1234-5678-abcdefghijkl/%23website-changes/?mode=bot'
+
+    # Half of one way in is not enough, and the message names both
+    for values in ({}, {'token_a': 'T0123ABCD'}, {'targets': '#website-changes'}):
+        result = build_url('slack', values)
+        assert 'url' not in result
+        assert result['one_of'] == [['OAuth Access Token'], ['Token A', 'Token B', 'Token C']]
+        assert result['error'] == 'Required: OAuth Access Token, or Token A + Token B + Token C'
+
+
 def test_describe_secure_toggle_and_headers():
     form = describe_service('jsons')
     assert form['secure_toggle'] is True
