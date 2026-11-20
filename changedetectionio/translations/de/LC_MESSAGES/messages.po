@@ -5044,6 +5044,11 @@ msgid "Fill in the fields to build the URL"
 msgstr "Felder ausfüllen, um die URL zu erstellen"
 
 #: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"
 msgstr "Zur Liste unten hinzugefügt"
 

@@ -4932,6 +4932,11 @@ msgid "Fill in the fields to build the URL"
 msgstr "필드를 채우면 URL이 만들어집니다"
 
 #: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"
 msgstr "아래 목록에 추가됨"
 

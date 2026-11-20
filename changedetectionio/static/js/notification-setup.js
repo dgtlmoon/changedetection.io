@@ -155,7 +155,26 @@ $(function () {
             if (f.min !== undefined) $input.attr('min', f.min);
             if (f.max !== undefined) $input.attr('max', f.max);
         }
-        return $wrap.append($label, $input.attr('id', id));
+        $wrap.append($label, $input.attr('id', id));
+        // A list that takes several kinds of item (Slack: channel, user, e-mail...) says which
+        if (f.accepts && f.accepts.length) {
+            $wrap.append($('<span class="pure-form-message-inline ns-accepts"></span>').text(f.accepts.join(', ')));
+        }
+        return $wrap;
+    }
+
+    // "OAuth Access Token / Token A + Token B + Token C": the ways a service can be set up.
+    // Symbols rather than words between them, so nothing has to be translated in fragments.
+    function oneOfText(groups) {
+        return $.map(groups, function (g) { return g.join(' + '); }).join(' / ');
+    }
+
+    function fillInText(form) {
+        if (!form.one_of) return t.fillIn || 'Fill in the fields to build the URL';
+        var labels = {};
+        $.each(form.fields, function (i, f) { labels[f.key] = f.label; });
+        var groups = $.map(form.one_of, function (g) { return [$.map(g, function (k) { return labels[k] || k; })]; });
+        return (t.fillInOneOf || 'Fill in one of: __CHOICES__').replace('__CHOICES__', oneOfText(groups));
     }
 
     function renderCard(form) {
@@ -181,7 +200,7 @@ $(function () {
 
         $url.text('').attr('title', '');
         $add.add($test).prop('disabled', true);
-        $msg.removeClass('error ok').text(t.fillIn || 'Fill in the fields to build the URL');
+        $msg.removeClass('error ok').text(fillInText(form));
         $card.prop('hidden', false);
         $fields.find('input, select, textarea').first().trigger('focus');
     }
@@ -226,7 +245,9 @@ $(function () {
             } else {
                 builtUrl = null;
                 $url.text('').attr('title', '');
-                var text = res.missing ? (t.required || 'Required') + ': ' + res.missing.join(', ') : (res.error || '');
+                var text = res.missing ? (t.required || 'Required') + ': ' + res.missing.join(', ')
+                    : res.one_of ? (t.required || 'Required') + ': ' + oneOfText(res.one_of)
+                    : (res.error || '');
                 $msg.removeClass('ok').addClass('error').text(text);
             }
             $add.add($test).prop('disabled', !builtUrl);
