@@ -9,8 +9,23 @@ from flask import Response
 
 from changedetectionio.time_handler import default_timezone_name
 
-# First line of the report, in column A, followed by the timezone name
-TIMEZONE_NOTE = 'All dates are in timezone'
+# First line of the report: this label in column A, the timezone in column B
+TIMEZONE_LABEL = 'Timezone of all dates is'
+
+
+def _timezone_description(tz, name, now=None):
+    """"GMT+2 Europe/Prague": the offset in force right now, then the timezone's name.
+
+    The name is what defines the dates (a zone with daylight saving has two offsets over a year,
+    and every date in the report is written in the one that applied on that date); the offset is
+    there so a reader does not have to look the zone up.
+    """
+    offset = (now or datetime.now(tz)).utcoffset()
+    minutes = int(offset.total_seconds() // 60) if offset is not None else 0
+    sign = '-' if minutes < 0 else '+'
+    hours, rest = divmod(abs(minutes), 60)
+    gmt = f'GMT{sign}{hours}' + (f':{rest:02d}' if rest else '')
+    return gmt if name.upper() in ('UTC', 'GMT') else f'{gmt} {name}'
 
 
 def _report_timezone(datastore):
@@ -28,7 +43,7 @@ def _checked_at(epoch, tz):
 
     Written without a timezone suffix on purpose: LibreOffice Calc and Google Sheets only turn a
     CSV value into a real, sortable date when it has none (with "+01:00", "Z" or "UTC" on it they
-    keep it as text). Which timezone it is, is stated once, on the first line of the report.
+    keep it as text). Which timezone it is, is stated once, on the first line of the report (see TIMEZONE_LABEL).
     Never checked -> empty.
     """
     if not epoch:
@@ -59,8 +74,8 @@ def selected_watches_csv(datastore, uuids):
             return buffer.getvalue()
 
         tz, tz_name = _report_timezone(datastore)
-        # Line 1, column A: which timezone the dates below are in. The column names are on line 2.
-        yield encode((f'{TIMEZONE_NOTE} {tz_name}',))
+        # Line 1: column A the label, column B the timezone. The column names are on line 2.
+        yield encode((TIMEZONE_LABEL, _timezone_description(tz, tz_name)))
         # uuid goes last: it is for machines, the columns a person reads come first
         yield encode(('url', 'title', 'last_error', 'last_checked', 'in_stock', 'price', 'currency', 'uuid'))
         for uuid in uuids:

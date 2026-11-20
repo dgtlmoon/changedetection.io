@@ -33,8 +33,8 @@ def test_export_selected_watches(client):
     assert 'attachment;' in response.headers['Content-Disposition']
     assert response.headers['Cache-Control'] == 'no-store'
     note, header, rows = _report(response)
-    # Line 1, column A says which timezone the dates are in; nothing else is on that line
-    assert note == ['All dates are in timezone UTC']
+    # Line 1: the label in column A, the timezone in column B, nothing else on that line
+    assert note == ['Timezone of all dates is', 'GMT+0']
     # People-readable columns first, the uuid last
     assert header == ['url', 'title', 'last_error', 'last_checked', 'in_stock', 'price', 'currency', 'uuid']
     assert [row['uuid'] for row in rows] == [second, first]
@@ -60,7 +60,7 @@ def test_export_does_not_default_to_all_watches(client):
     response = client.post(endpoint, data={'uuids': ['deleted-watch']})
     assert response.status_code == 200
     note, header, rows = _report(response)
-    assert note[0].startswith('All dates are in timezone ') and header[-1] == 'uuid' and rows == []
+    assert note[0] == 'Timezone of all dates is' and len(note) == 2 and header[-1] == 'uuid' and rows == []
     # The application's catch-all GET route returns 404 for POST-only form URLs.
     assert client.get(endpoint).status_code == 404
 

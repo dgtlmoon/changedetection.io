@@ -5,8 +5,11 @@ bar. The download includes the selected watches across pages, using the existing
 selection controls. Filtering does not automatically select every matching watch:
 use the watch list's select-all-matching control when that is what you want.
 
-The first line of the UTF-8 CSV is a note in column A, for example
-`All dates are in timezone Europe/Prague`. The column names are on the second
+The first line of the UTF-8 CSV says which timezone the dates are in: column A
+holds `Timezone of all dates is`, column B the timezone, for example
+`GMT+2 Europe/Prague` (the offset in force at the time of the export, then the
+zone name; in a zone with daylight saving each date is written in the offset
+that applied on that date). The column names are on the second
 line: `url`, `title`, `last_error`, `last_checked`, `in_stock`, `price`,
 `currency` and `uuid`. Scripts reading the file should skip the first line.
 

@@ -4,7 +4,7 @@ import unittest.mock
 from io import StringIO
 from types import SimpleNamespace
 
-from changedetectionio.blueprint.watchlist.export import selected_watches_csv
+from changedetectionio.blueprint.watchlist.export import _timezone_description, selected_watches_csv
 
 
 def _lines(response):
@@ -59,8 +59,10 @@ class TestWatchlistExport(unittest.TestCase):
         })
         response = selected_watches_csv(store, ['summer', 'winter', 'never'])
         lines = _lines(response)
-        # Column A of the first line names the timezone, and that line has no other cell
-        self.assertEqual(lines[0], ['All dates are in timezone Europe/Prague'])
+        # First line: the label in column A and, in column B, the current offset plus the zone name
+        self.assertEqual(lines[0][0], 'Timezone of all dates is')
+        self.assertRegex(lines[0][1], r'^GMT\+[12] Europe/Prague$')
+        self.assertEqual(len(lines[0]), 2)
         self.assertEqual(lines[1], ['url', 'title', 'last_error', 'last_checked', 'in_stock', 'price', 'currency', 'uuid'])
         rows = _rows(response)
         # Local wall-clock time, daylight saving included, and no suffix a spreadsheet would choke on
@@ -82,5 +84,20 @@ class TestWatchlistExport(unittest.TestCase):
                     env.pop('TZ', None)
                     response = selected_watches_csv(SimpleNamespace(data=data), ['first'])
                     lines = _lines(response)
-                self.assertEqual(lines[0], ['All dates are in timezone UTC'])
+                self.assertEqual(lines[0], ['Timezone of all dates is', 'GMT+0'])
                 self.assertEqual(_rows(response)[0]['last_checked'], '2025-06-15 15:06:40')
+
+    def test_timezone_description(self):
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        cases = [
+            ('Europe/Prague', datetime(2026, 7, 1, 12, 0), 'GMT+2 Europe/Prague'),     # summer time
+            ('Europe/Prague', datetime(2026, 11, 20, 12, 0), 'GMT+1 Europe/Prague'),   # winter time
+            ('America/New_York', datetime(2026, 1, 15, 12, 0), 'GMT-5 America/New_York'),
+            ('Asia/Kolkata', datetime(2026, 1, 15, 12, 0), 'GMT+5:30 Asia/Kolkata'),
+            ('UTC', datetime(2026, 1, 15, 12, 0), 'GMT+0'),
+        ]
+        for name, when, expected in cases:
+            with self.subTest(name=name, when=when):
+                tz = ZoneInfo(name)
+                self.assertEqual(_timezone_description(tz, name, now=when.replace(tzinfo=tz)), expected)
