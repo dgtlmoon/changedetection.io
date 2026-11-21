@@ -48,9 +48,10 @@
                     </div>
                 </td>
                 <td class="watch-processor">
-                    {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
+                    {%- set processor_badge_text = (processor_badge_texts_by_watch|default({})).get(watch.uuid, processor_badge_texts.get(watch['processor'])) -%}
+                    {%- if watch['processor'] and processor_badge_text -%}
                         <a href="{{ url_for('watchlist.index', tag=active_tag_uuid, processor=watch['processor']) }}"  class="processor-badge processor-badge-{{ watch['processor'] }}{{ ' active' if active_processor == watch['processor'] else '' }}"
-                           title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</a>
+                           title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_text }}</a>
                     {%- endif -%}
                 </td>
                 <td class="title-col inline">
