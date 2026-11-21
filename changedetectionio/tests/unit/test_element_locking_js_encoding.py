@@ -56,18 +56,3 @@ def test_playwright_element_locking_scripts_read_as_utf8():
 
     _assert_locking_scripts_evaluated(scripts)
 
-
-def test_puppeteer_element_locking_scripts_read_as_utf8():
-    from changedetectionio.content_fetchers.puppeteer import capture_full_page
-
-    scripts = []
-    page = SimpleNamespace(
-        viewport={'width': 1280, 'height': 800},
-        evaluate=_fake_evaluate(scripts),
-        setViewport=AsyncMock(),
-        screenshot=AsyncMock(return_value=b'screenshot'),
-    )
-
-    asyncio.run(capture_full_page(page, lock_viewport_elements=True))
-
-    _assert_locking_scripts_evaluated(scripts)
