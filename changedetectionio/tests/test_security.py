@@ -10,6 +10,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from changedetectionio.tests.util import set_modified_response
 from .util import live_server_setup, wait_for_all_checks, delete_all_watches
 from .. import strtobool
+from ..guard import guard_enabled
 
 
 def set_original_response(datastore_path):
@@ -340,12 +341,15 @@ def test_login_redirect_safe_urls(client, live_server, measure_memory_usage, dat
     assert b'value="/evil.com' not in res.data
     assert b'name="redirect"' in res.data
 
+    # With flaskapi-guard enabled it refuses these attack URLs itself with a 400
+    login_ok_codes = (200, 400) if guard_enabled() else (200,)
+
     # Test 4: Double-slash attack should be blocked
     res = client.get(
         url_for("login", redirect="//evil.com"),
         follow_redirects=False
     )
-    assert res.status_code == 200
+    assert res.status_code in login_ok_codes
     # Should not have the malicious URL in the redirect input value
     assert b'value="//evil.com"' not in res.data
 
@@ -354,7 +358,7 @@ def test_login_redirect_safe_urls(client, live_server, measure_memory_usage, dat
         url_for("login", redirect="javascript:alert(document.domain)"),
         follow_redirects=False
     )
-    assert res.status_code == 200
+    assert res.status_code in login_ok_codes
     # Should not have javascript: in the redirect input value
     assert b'value="javascript:' not in res.data
 
@@ -372,7 +376,7 @@ def test_login_redirect_safe_urls(client, live_server, measure_memory_usage, dat
         url_for("login", redirect="////evil.com"),
         follow_redirects=False
     )
-    assert res.status_code == 200
+    assert res.status_code in login_ok_codes
     # Should not have the malicious URL in the redirect input value
     assert b'value="////evil.com"' not in res.data
 
@@ -597,13 +601,16 @@ def test_static_directory_traversal(client, live_server, measure_memory_usage, d
     The fix changed the regex from r'[^\w.-]+' to r'[^a-z0-9_]+' which blocks dots.
     """
 
+    # With flaskapi-guard enabled it refuses the path traversal itself with a 400
+    blocked_codes = [404, 403, 400] if guard_enabled() else [404, 403]
+
     # Test 1: Direct .. traversal attempt (URL-encoded)
     res = client.get(
         "/static/%2e%2e/flask_app.py",
         follow_redirects=False
     )
     # Should be blocked (404 or 403)
-    assert res.status_code in [404, 403], f"Expected 404/403, got {res.status_code}"
+    assert res.status_code in blocked_codes, f"Expected one of {blocked_codes}, got {res.status_code}"
     # Should NOT contain application source code
     assert b"def static_content" not in res.data
     assert b"changedetection_app" not in res.data
@@ -613,7 +620,7 @@ def test_static_directory_traversal(client, live_server, measure_memory_usage, d
         "/static/../flask_app.py",
         follow_redirects=False
     )
-    assert res.status_code in [404, 403], f"Expected 404/403, got {res.status_code}"
+    assert res.status_code in blocked_codes, f"Expected one of {blocked_codes}, got {res.status_code}"
     assert b"def static_content" not in res.data
 
     # Test 3: Multiple dots traversal
