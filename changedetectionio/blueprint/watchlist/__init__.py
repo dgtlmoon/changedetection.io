@@ -55,6 +55,22 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         # Redirect for the old rss path which used the /?rss=true
         if request.args.get('rss'):
             return redirect(url_for('rss.feed', tag=active_tag_uuid))
+        # Remember last selected tag per session
+        session_key = 'selected_tag_uuid'
+        tag_param_present = 'tag' in request.args
+        if tag_param_present:
+            if active_tag_uuid:
+                session[session_key] = active_tag_uuid
+            else:
+                session.pop(session_key, None)
+        else:
+            stored_uuid = session.get(session_key)
+            if stored_uuid and stored_uuid in datastore.data['settings']['application'].get('tags', {}):
+                args = request.args.to_dict()
+                args['tag'] = stored_uuid
+                return redirect(url_for('watchlist.index', **args))
+            else:
+                session.pop(session_key, None)
 
         # Sort by last_changed and add the uuid which is usually the key..
         sorted_watches = []
