@@ -517,6 +517,27 @@ Line 3 with tabs and spaces"""
         self.assertEqual(raw, '@changed_PLACEMARKER_OPEN73@changed_PLACEMARKER_CLOSED\n'
                                '@changed_into_PLACEMARKER_OPEN100@changed_into_PLACEMARKER_CLOSED')
 
+    def test_diff_type_filter_keeps_old_and_new_on_separate_lines(self):
+        """The added/removed/replaced line filters must not glue old+new inline word changes together."""
+        from unittest.mock import MagicMock
+
+        from changedetectionio.processors.text_json_diff.processor import perform_site_check
+
+        watch = MagicMock()
+        watch.get_last_fetched_text_before_filters.return_value = 'Price: 10 USD\nfoo'
+        watch.get.side_effect = lambda key, default=None: default
+
+        processor = perform_site_check.__new__(perform_site_check)
+        result = processor._apply_diff_filtering(watch, 'Price: 12 USD\nfoo', 'Price: 12 USD\nfoo')
+        self.assertEqual(result, 'Price: 10 USD\nPrice: 12 USD')
+
+        # Only the replaced filter active
+        only_replaced = {'filter_text_added': False, 'filter_text_removed': False}
+        watch.get.side_effect = lambda key, default=None: only_replaced.get(key, default)
+        result = processor._apply_diff_filtering(watch, 'Price: 12 USD\nfoo', 'Price: 12 USD\nfoo')
+        self.assertEqual(result, 'Price: 10 USD\nPrice: 12 USD')
+        self.assertNotIn('PLACEMARKER', result)
+
 
 if __name__ == '__main__':
     unittest.main()
