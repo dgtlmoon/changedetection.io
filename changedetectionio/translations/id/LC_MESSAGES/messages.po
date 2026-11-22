@@ -2005,6 +2005,10 @@ msgstr ""
 "dibuka di tab saat ini."
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "When enabled, opening the external page link from the watch list marks that watch as viewed."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Realtime UI Updates Enabled - (Restart required if this is changed)"
 msgstr "Pembaruan UI Realtime Diaktifkan - (Perlu mulai ulang jika diubah)"
 
@@ -4238,6 +4242,10 @@ msgstr "Nama dan URL Proksi wajib diisi."
 #: changedetectionio/forms.py
 msgid "Open 'History' page in a new tab"
 msgstr "Buka halaman 'Riwayat' di tab baru"
+
+#: changedetectionio/forms.py
+msgid "Mark a watch as viewed when opening its page"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Realtime UI Updates Enabled"
