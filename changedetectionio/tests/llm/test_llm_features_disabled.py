@@ -22,6 +22,13 @@ def _llm_markers_absent(body: bytes, where: str = ''):
 def test_llm_features_disabled_hides_ui(client, live_server, monkeypatch):
     monkeypatch.setenv('LLM_FEATURES_DISABLED', 'true')
 
+    # The Add-Watch page (checked at the end) is gated on having a browser that can render a
+    # live preview, which a plain test container doesn't - pretend one is installed so this
+    # test stays about LLM surfaces, not about which fetchers happen to be available.
+    from changedetectionio.blueprint.add_watch_ui import browser_config
+    monkeypatch.setattr(browser_config, 'list_visual_browser_choices',
+                        lambda datastore: [('html_webdriver', 'WebDriver Chrome/Javascript')])
+
     # Sanity: helper reports the env var is in effect
     from changedetectionio.llm.evaluator import is_llm_features_disabled, get_llm_config
     assert is_llm_features_disabled() is True
@@ -39,14 +46,34 @@ def test_llm_features_disabled_hides_ui(client, live_server, monkeypatch):
     assert res.status_code == 200
     _llm_markers_absent(res.data, where='settings')
 
+    # 2b. The AI / LLM settings page is refused (and not registered at all when the env var is set at
+    # startup), and /settings has no tab linking to it - checked by _llm_markers_absent above
+    assert client.get(url_for('settings.llm.llm_settings_page')).status_code == 404
+
     # 3. Edit page for a watch (should not have an AI / LLM tab or include_llm_intent body)
-    uuid = datastore.add_watch(url='http://example.com', extras={'title': 'Disabled LLM watch'})
+    uuid = datastore.add_watch(url='http://example.com', extras={'title': 'Disabled LLM watch'}, tag="LLMgroup")
+    tag_uuid = live_server.app.config['DATASTORE'].data['watching'][uuid]['tags'][0]
     res = client.get(url_for('ui.ui_edit.edit_page', uuid=uuid))
     assert res.status_code == 200
     _llm_markers_absent(res.data, where='edit')
     # The watch-edit-only intent textarea should also be absent
     assert b'name="llm_intent"' not in res.data
     assert b'name="llm_change_summary"' not in res.data
+
+    res = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid))
+    assert res.status_code == 200
+    assert b'id="ai-llm"' not in res.data
+    assert b'llm_intent' not in res.data
+
+    # 4. Add-watch page - with no "what matters" intent box there is nothing to choose
+    # between, so element selection is always on and the opt-in checkbox is not rendered.
+    res = client.get(url_for('add_watch_ui.add_watch_ui_index'))
+    assert res.status_code == 200
+    _llm_markers_absent(res.data, where='add-watch-ui')
+    assert b'name="llm_intent"' not in res.data
+    assert b'id="by-element-toggle"' not in res.data
+    assert b'for="by-element-toggle"' not in res.data   # no label either - it isn't a choice
+    assert b'id="by-element-toggle-group"' in res.data
 
 
 def test_llm_features_enabled_by_default(client, live_server, monkeypatch):
@@ -56,7 +83,30 @@ def test_llm_features_enabled_by_default(client, live_server, monkeypatch):
     from changedetectionio.llm.evaluator import is_llm_features_disabled
     assert is_llm_features_disabled() is False
 
+    # The AI settings have their own pages, linked from an "AI / LLM / MCP" tab on /settings (a real link like
+    # Backups, not an #anchor) and no longer from the left sidebar
+    llm_page = url_for('settings.llm.llm_settings_page')
     res = client.get(url_for('settings.settings_page'))
     assert res.status_code == 200
-    # The AI / LLM settings tab anchor should be present when not disabled
-    assert b'href="#ai"' in res.data
+    assert b'href="#ai"' not in res.data
+    assert f'<li class="tab"><a href="{llm_page}'.encode() in res.data
+    assert b'title="AI / LLM settings"' not in client.get(url_for('watchlist.index')).data, "not in the sidebar"
+
+    res = client.get(llm_page)
+    assert res.status_code == 200
+    # Its tabs are links to their own pages (not #anchors), the current one marked active by the server
+    assert f'<li class="tab active"><a href="{llm_page}'.encode() in res.data
+    assert f'href="{url_for("settings.llm.mcp_settings_page")}#overview"'.encode() in res.data
+    assert b'id="ai"' in res.data
+    assert b'name="llm-model"' in res.data
+
+    # With an LLM configured, the Add-watch page offers both ways of narrowing a watch,
+    # so "Select by element" goes back to being an opt-in checkbox.
+    monkeypatch.setenv('LLM_MODEL', 'gemini/gemini-2.5-flash')
+    from changedetectionio.blueprint.add_watch_ui import browser_config
+    monkeypatch.setattr(browser_config, 'list_visual_browser_choices',
+                        lambda datastore: [('html_webdriver', 'WebDriver Chrome/Javascript')])
+    res = client.get(url_for('add_watch_ui.add_watch_ui_index'))
+    assert res.status_code == 200
+    assert b'name="llm_intent"' in res.data
+    assert b'id="by-element-toggle"' in res.data

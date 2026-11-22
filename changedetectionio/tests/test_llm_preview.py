@@ -47,7 +47,7 @@ def _add_and_fetch(client, live_server, datastore_path, html):
     _set_response(datastore_path, html)
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     time.sleep(0.5)
     wait_for_all_checks(client)
     return uuid

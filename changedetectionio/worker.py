@@ -1,11 +1,12 @@
 from blinker import signal
 from .processors.exceptions import ProcessorException
 import changedetectionio.content_fetchers.exceptions as content_fetchers_exceptions
-from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse
+from changedetectionio.processors.text_json_diff.processor import FilterNotFoundInResponse, PDFNotAvailableFromFetcher
 from changedetectionio import html_tools
 from changedetectionio import worker_pool
 from changedetectionio.queuedWatchMetaData import PrioritizedItem
 from changedetectionio.pluggy_interface import apply_update_handler_alter, apply_update_finalize
+from changedetectionio import gc_debounce
 
 import asyncio
 import os
@@ -77,6 +78,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
     while not app.config.exit.is_set():
         update_handler = None
+        finalize_handler = None  # The handler update_finalize gets, see below
         watch = None
         processing_exception = None  # Reset at start of each iteration to prevent state bleeding
 
@@ -97,6 +99,16 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                 deferred_priority = max(1000, queued_item_data.priority * 10)
                 deferred_item = PrioritizedItem(priority=deferred_priority, item=queued_item_data.item)
                 worker_pool.queue_item_async_safe(q, deferred_item, silent=True)
+                continue
+
+            # A scheduled check (the ticker stamps scheduled_at) for a monitor that was checked since it was scheduled:
+            # the ticker can queue it again while a worker has taken it off the queue but not claimed it yet, and that
+            # second copy is also re-queued above until the first check is done. One check is enough.
+            scheduled_at = queued_item_data.item.get('scheduled_at')
+            checked_watch = datastore.data['watching'].get(uuid)
+            if scheduled_at and checked_watch is not None and checked_watch.get('last_checked', 0) >= int(scheduled_at):
+                logger.debug(f"Worker {worker_id} skipping scheduled check of {uuid}, already checked since it was queued")
+                worker_pool.release_uuid_from_processing(uuid, worker_id=worker_id)
                 continue
 
         except asyncio.TimeoutError:
@@ -141,7 +153,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
         # UUID already claimed above immediately after getting from queue
         # to prevent race condition with wait_for_all_checks()
 
-        fetch_start_time = round(time.time())
+        # int(), not round(): rounding up would stamp last_checked and the snapshot up to half a second in the future
+        fetch_start_time = int(time.time())
 
         try:
             if uuid in list(datastore.data['watching'].keys()) and datastore.data['watching'][uuid].get('url'):
@@ -177,10 +190,17 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         raise ModuleNotFoundError(error_msg)
 
                     update_handler = processor_module.perform_site_check(datastore=datastore,
-                                                                         watch_uuid=uuid)
+                                                                         watch_uuid=uuid,
+                                                                         worker_id=worker_id)
+
+                    # Whatever this check was queued with, so one-shot options reach the processor and the fetcher
+                    update_handler.queued_metadata = queued_item_data.item
 
                     # Allow plugins to modify/wrap the update_handler
                     update_handler = apply_update_handler_alter(update_handler, watch, datastore)
+                    # Kept for the update_finalize hook: on success update_handler is deleted before the
+                    # finally block below, so capturing it there would hand plugins None
+                    finalize_handler = update_handler
 
                     set_watch_minitext_status(watch, "Fetching...")
 
@@ -211,6 +231,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     datastore.update_watch(uuid=uuid, update_obj={'last_error': e.message})
                     process_changedetection_results = False
 
+                except PDFNotAvailableFromFetcher as e:
+                    # Remember it's a PDF (normally only saved on success), so next time watch.is_pdf
+                    # makes resolve_content_fetcher() pick a fetcher that can supply the PDF
+                    content_type = str(update_handler.fetcher.get_all_headers().get('content-type', '') or "").lower()
+                    datastore.update_watch(uuid=uuid, update_obj={'last_error': str(e), 'content-type': content_type})
+                    process_changedetection_results = False
+
                 except content_fetchers_exceptions.ReplyWithContentButNoText as e:
                     extra_help = ""
                     if e.has_filters:
@@ -222,7 +249,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             extra_help = ", it's possible that the filters were found, but contained no usable text."
 
                     datastore.update_watch(uuid=uuid, update_obj={
-                        'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}"
+                        'last_error': f"Got HTML content but no text found (With {e.status_code} reply code){extra_help}",
+                        'last_check_status': e.status_code
                     })
 
                     if e.screenshot:
@@ -257,7 +285,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     if e.page_text:
                         watch.save_error_text(contents=e.page_text)
 
-                    datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text})
+                    datastore.update_watch(uuid=uuid, update_obj={'last_error': err_text,
+                                                                'last_check_status': e.status_code})
                     process_changedetection_results = False
 
                 except FilterNotFoundInResponse as e:
@@ -413,8 +442,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
 
                     update_obj['content-type'] = str(update_handler.fetcher.get_all_headers().get('content-type', '') or "").lower()
 
-                    if not watch.get('ignore_status_codes'):
-                        update_obj['consecutive_filter_failures'] = 0
+                    # Any successful check breaks the failure streak, "Ignore status codes" only affects HTTP status handling
+                    update_obj['consecutive_filter_failures'] = 0
 
                     update_obj['last_error'] = False
                     cleanup_error_artifacts(uuid, datastore)
@@ -455,15 +484,20 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         if changed_detected and watch.history_n >= 1:
                             try:
                                 from changedetectionio.llm.evaluator import (
-                                    evaluate_change, resolve_intent, resolve_llm_field,
-                                    summarise_change, _runtime_llm_config,
+                                    evaluate_change, llm_enabled_for_watch, resolve_intent,
+                                    resolve_llm_field, summarise_change, _runtime_llm_config,
                                 )
+                                # Per-watch (or group-wide) AI on/off — #4204. Checked before
+                                # any diff work so a switched-off watch costs nothing.
+                                _llm_on, _llm_on_source = llm_enabled_for_watch(watch, datastore)
+                                if not _llm_on:
+                                    logger.debug(f"LLM disabled for {uuid} (by {_llm_on_source}) — skipping AI intent/summary")
                                 # _runtime_llm_config returns None (and logs a debug skip
                                 # message) when the master 'llm_enabled' toggle is off, so
                                 # the whole block — diff computation, status minitext, and
                                 # the two executor dispatches — is skipped, not just the
                                 # inner LLM lookups.
-                                _llm_cfg = _runtime_llm_config(datastore)
+                                _llm_cfg = _runtime_llm_config(datastore) if _llm_on else None
                                 if _llm_cfg:
                                     # Compute unified diff once — used by both intent and summary
                                     _watch_dates = list(watch.history.keys())
@@ -584,6 +618,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                             empty_pages_are_a_change = datastore.data['settings']['application'].get('empty_pages_are_a_change', False)
                             if update_handler.fetcher.content or (not update_handler.fetcher.content and empty_pages_are_a_change):
                                 watch.save_last_fetched_html(contents=update_handler.fetcher.content, timestamp=int(fetch_start_time))
+                            watch.save_last_fetched_pdf(contents=getattr(update_handler.fetcher, 'raw_content', None), timestamp=int(fetch_start_time))
 
                             # Explicitly delete large content variables to free memory IMMEDIATELY after saving
                             # These are no longer needed after being saved to history
@@ -649,9 +684,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         del update_handler
                         update_handler = None
 
-                # Force garbage collection
-                import gc
-                gc.collect()
+                # Force garbage collection (debounced process-wide, see gc_debounce)
+                gc_debounce.collect('worker.after_processing')
 
         except Exception as e:
             # Store the processing exception for plugin finalization hook
@@ -669,7 +703,6 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
             if uuid:
                 # Capture references for plugin finalize hook BEFORE cleanup
                 # (cleanup may delete these variables, but plugins need the original references)
-                finalize_handler = update_handler  # Capture now, before cleanup deletes it
                 finalize_watch = watch              # Capture now, before any modifications
 
                 # Call quit() as backup (Puppeteer/Playwright have internal cleanup, but this acts as safety net)
@@ -696,8 +729,7 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                         del contents
 
                     # Force garbage collection after all references are cleared
-                    import gc
-                    gc.collect()
+                    gc_debounce.collect('worker.cleanup_finally')
 
                     logger.debug(f"Worker {worker_id} completed watch {uuid} in {time.time()-fetch_start_time:.2f}s")
                 except Exception as cleanup_error:

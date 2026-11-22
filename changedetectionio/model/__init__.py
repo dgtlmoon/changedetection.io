@@ -3,6 +3,7 @@ import uuid
 
 from changedetectionio import strtobool
 from .persistence import EntityPersistenceMixin, _determine_entity_type
+from .frozen import INTERNED_WATCH_KEYS, intern_frozen
 
 __all__ = ['EntityPersistenceMixin', 'watch_base']
 
@@ -171,6 +172,27 @@ class watch_base(dict):
         # We'll initialize it AFTER the initial update() call below
         # This prevents marking the watch as edited during initialization
 
+        # MEMORY: think before adding a key here, every watch carries all of them (100,000 watches on a big install).
+        # CPython sizes a dict's table in steps, 70 default keys (Nov 2026) fit the 85-key step at 1,584 bytes.
+        # The 86th key doubles it to 3,328 bytes: +1.7KB per watch, ~174MB at 100,000 watches.
+        # Watches loaded from an older watch.json can carry extra keys, so the real headroom may be under 15.
+        #
+        # Dict size by number of keys (measured on Python 3.14, top-level table only, values are extra):
+        #     1-5      184 bytes
+        #     6-10     272 bytes
+        #     11-21    464 bytes
+        #     22-42    832 bytes
+        #     43-85    1,584 bytes   <- we are here: exactly 70 keys on a Watch (15 spare), 72 on a Tag (13 spare)
+        #                               Recount with len(watch_base()) and update this line when adding a key.
+        #     86-170   3,328 bytes
+        #     171+     6,576 bytes
+        # The table grows in powers of two (8, 16, 32, 64, 128, 256 slots) and is filled to two thirds before
+        # doubling, hence the limits of 5, 10, 21, 42, 85 and 170. The space for a whole step is allocated up
+        # front, so the 43rd key costs the same as the 85th.
+        # A 10-key watch would be 272 bytes: ~27MB at 100,000 watches instead of ~158MB.
+        #
+        # For a rarely used option, leave it out of this dict and read it with watch.get('key', default),
+        # then only the watches that set it pay for it.
         self.update({
             # Custom notification content
             # Re #110, so then if this is set to None, we know to use the default value instead
@@ -184,15 +206,11 @@ class watch_base(dict):
             'check_count': 0,
             'check_unique_lines': False,  # On change-detected, compare against all history if its something new
             'consecutive_filter_failures': 0,  # Every time the CSS/xPath filter cannot be located, reset when all is fine.
+            # LLM intent-based evaluation
             'content-type': None,
             'date_created': None,
             'extract_lines_containing': [],  # Keep only lines containing these substrings (plain text, case-insensitive)
             'extract_text': [],  # Extract text by regex after filters
-            # LLM intent-based evaluation
-            'llm_intent': '',                # Plain-English description of what the user cares about (change filter)
-            'llm_change_summary': '',        # Prompt for AI Change Summary — replaces {{ diff }} in notifications
-            'llm_prefilter': None,           # CSS selector derived at setup time (semantic only, e.g. "footer")
-            'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
             'fetch_backend': 'system',  # plaintext, playwright etc
             'fetch_time': 0.0,
             'filter_failure_notification_send': strtobool(os.getenv('FILTER_FAILURE_NOTIFICATION_SEND_DEFAULT', 'True')),
@@ -201,16 +219,22 @@ class watch_base(dict):
             'filter_text_replaced': True,
             'follow_price_changes': True,
             'has_ldjson_price_data': None,
-            'history_snapshot_max_length': None,
             'headers': {},  # Extra headers to send
-            'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
+            'history_snapshot_max_length': None,
             'ignore_status_codes': None,
+            'ignore_text': [],  # List of text to ignore when calculating the comparison checksum
             'in_stock_only': True,  # Only trigger change on going to instock from out-of-stock
             'include_filters': [],
             'last_checked': 0,
             'last_error': False,
             'last_notification_error': None,
             'last_viewed': 0,  # history key value of the last viewed via the [diff] link
+            'link_to_open': '',  # Optional human-facing URL to open instead of 'url' (eg. watch an API/RSS endpoint, open the real page)
+            'llm_backend_profile': True, # @note - now its just a bool but in the near future we can select a LLM profile or 'off'/false
+            'llm_change_summary': '',        # Prompt for AI Change Summary — replaces {{ diff }} in notifications
+            'llm_change_summary_mode': 'replace',  # 'replace' the inherited prompt, or 'append' to it
+            'llm_evaluation_cache': {},      # {sha256(intent+diff): {important, summary}} - evaluated once, cached
+            'llm_intent': '',                # Plain-English description of what the user cares about (change filter)
             'method': 'GET',
             'notification_alert_count': 0,
             'notification_body': None,
@@ -306,6 +330,8 @@ class watch_base(dict):
         })
 
         super(watch_base, self).__init__(*arg, **kw)
+        # dict.__init__ bypasses our __setitem__/update, so intern here too
+        self._intern_shared_values()
 
         # Check if we're being initialized from an existing watch object
         # that has was_edited=True, so we can preserve the flag
@@ -353,6 +379,13 @@ class watch_base(dict):
                 and key not in SYSTEM_MANAGED_NON_SPEC_FIELDS):
             self.__watch_was_edited = True
 
+    def _intern_shared_values(self):
+        """Swap values that are identical across most watches for one shared read-only copy, see model/frozen.py"""
+        for key in INTERNED_WATCH_KEYS:
+            value = dict.get(self, key)
+            if type(value) is dict:
+                dict.__setitem__(self, key, intern_frozen(value))
+
     def __setitem__(self, key, value):
         """
         Override dict.__setitem__ to track when writable watch fields are modified.
@@ -363,6 +396,8 @@ class watch_base(dict):
 
         Only sets the edited flag when field is NOT in readonly_fields (from OpenAPI spec).
         """
+        if key in INTERNED_WATCH_KEYS:
+            value = intern_frozen(value)
         # Set the value first (always)
         super().__setitem__(key, value)
         # Mark as edited if writable field
@@ -381,6 +416,7 @@ class watch_base(dict):
         """Override dict.update() to track modifications to writable fields."""
         # Call parent update first
         super().update(*args, **kwargs)
+        self._intern_shared_values()
 
         # Mark as edited for any writable fields that were updated
         # Handle both update(dict) and update(key=value) forms
@@ -401,6 +437,8 @@ class watch_base(dict):
         """Override dict.setdefault() to track modifications to writable fields."""
         # Only marks as edited if key didn't exist (i.e., a new value was set)
         existed = key in self
+        if key in INTERNED_WATCH_KEYS:
+            default = intern_frozen(default)
         result = super().setdefault(key, default)
         if not existed:
             self._mark_field_as_edited(key)

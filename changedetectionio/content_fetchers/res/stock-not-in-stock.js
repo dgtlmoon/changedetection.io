@@ -40,8 +40,10 @@ async () => {
             'mail me when available',
             'message if back in stock',
             'mevcut değil',
+            'momentálně nedostupné',
             'more on order',
             'nachricht bei',
+            'není skladem',
             'nicht auf lager',
             'nicht lagernd',
             'nicht lieferbar',
@@ -71,6 +73,7 @@ async () => {
             'out of stock',
             'out-of-stock',
             'plus disponible',
+            'producto sin stock',
             'prodotto esaurito',
             'produkt niedostępny',
             'rupture',
@@ -96,6 +99,7 @@ async () => {
             'vergriffen',
             'vorbestellen',
             'vorbestellung ist bald möglich',
+            'vyprodáno',
             'we couldn\'t find any products that match',
             'we do not currently have an estimate of when this product will be back in stock.',
             'we don\'t currently have any',
@@ -108,7 +112,14 @@ async () => {
             '品切れ',
             '已售',
             '已售完',
-            '품절'
+            '품절',
+            "товар закінчився",
+            "немає в наявності",
+            "нема в наявності",
+            "закінчився",
+            "знято з виробництва",
+            "недоступний",
+            "немає на складі"
         ];
 
 

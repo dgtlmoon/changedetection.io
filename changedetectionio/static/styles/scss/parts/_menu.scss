@@ -15,6 +15,13 @@
 
 .pure-menu-item {
   height: initial;
+
+  // Mini POST forms (pause/mute/log out need a csrf_token) are layout-transparent,
+  // so the button inside sits where the plain <a> used to.
+  > form {
+    display: contents;
+  }
+
   svg {
     height: 1.2rem;
   }

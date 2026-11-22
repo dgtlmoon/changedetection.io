@@ -24,8 +24,15 @@ WORKDIR /install
 
 COPY requirements.txt /requirements.txt
 
-# Use cache mounts and multiple wheel sources for faster ARM builds
-ENV PIP_CACHE_DIR=/tmp/pip-cache
+# uv resolves and downloads in parallel, pip did ~170 serial index round-trips (~130s cold on amd64).
+# Installed via pip rather than the ghcr.io/astral-sh/uv image because that image doesn't cover arm/v7.
+RUN pip install --no-cache-dir uv~=0.9
+# UV_LINK_MODE=copy: the cache mount is a different filesystem from /dependencies, hardlinking would fail
+# UV_COMPILE_BYTECODE=1: pip writes .pyc at install time and uv doesn't, otherwise every container pays at startup
+ENV UV_CACHE_DIR=/tmp/uv-cache \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON=/usr/local/bin/python3
 # Help Rust find OpenSSL for cryptography package compilation on ARM
 ENV PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/arm-linux-gnueabihf/pkgconfig:/usr/lib/aarch64-linux-gnu/pkgconfig"
 ENV PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
@@ -35,41 +42,47 @@ ENV OPENSSL_INCLUDE_DIR="/usr/include/openssl"
 # Additional environment variables for cryptography Rust build
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
-  pip install \
-  --prefer-binary \
-  --extra-index-url https://www.piwheels.org/simple \
-  --extra-index-url https://pypi.anaconda.org/ARM-software/simple \
-  --cache-dir=/tmp/pip-cache \
+# Changing this re-resolves the unpinned requirements without invalidating the apt layers above (CI passes the date)
+ARG DEPS_REFRESH_DATE=''
+ARG TARGETPLATFORM
+
+# --only-binary litellm: never compile litellm's Rust extension from the sdist. Under QEMU that takes
+# hours and then fails, this makes a platform without a wheel fail in seconds instead (see requirements.txt)
+# piwheels / ARM-software only carry ARM wheels, on amd64 they're just an extra lookup per package.
+# unsafe-best-match keeps pip's behaviour of picking the best version across all indexes,
+# uv's default is to stop at the first index that has the package at all.
+RUN --mount=type=cache,id=uv,sharing=locked,target=/tmp/uv-cache \
+  case "$TARGETPLATFORM" in \
+    linux/arm*) EXTRA_INDEXES="--extra-index-url https://www.piwheels.org/simple --extra-index-url https://pypi.anaconda.org/ARM-software/simple" ;; \
+    *) EXTRA_INDEXES="" ;; \
+  esac && \
+  uv pip install \
+  --index-strategy unsafe-best-match \
+  $EXTRA_INDEXES \
+  --only-binary litellm \
   --target=/dependencies \
   -r /requirements.txt
 
 # Playwright is an alternative to Selenium
 # Excluded this package from requirements.txt to prevent arm/v6 and arm/v7 builds from failing
 # https://github.com/dgtlmoon/changedetection.io/pull/1067 also musl/alpine (not supported)
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
-  pip install \
-  --prefer-binary \
-  --cache-dir=/tmp/pip-cache \
+RUN --mount=type=cache,id=uv,sharing=locked,target=/tmp/uv-cache \
+  uv pip install \
   --target=/dependencies \
   playwright~=1.56.0 \
   || echo "WARN: Failed to install Playwright. The application can still run, but the Playwright option will be disabled."
 
 # OpenCV is optional for fast image comparison (pixelmatch is the fallback)
 # Skip on arm/v7 and arm/v8 where builds take weeks - excluded from requirements.txt
-ARG TARGETPLATFORM
-RUN --mount=type=cache,id=pip,sharing=locked,target=/tmp/pip-cache \
+RUN --mount=type=cache,id=uv,sharing=locked,target=/tmp/uv-cache \
   case "$TARGETPLATFORM" in \
     linux/arm/v7|linux/arm/v8) \
       echo "INFO: Skipping OpenCV on $TARGETPLATFORM (build takes too long), using pixelmatch fallback" \
       ;; \
     *) \
-      pip install \
-        --prefer-binary \
-        --extra-index-url https://www.piwheels.org/simple \
-        --cache-dir=/tmp/pip-cache \
+      uv pip install \
         --target=/dependencies \
-        opencv-python-headless>=4.8.0.76 \
+        "opencv-python-headless>=4.8.0.76" \
         || echo "WARN: OpenCV install failed, will use pixelmatch fallback" \
       ;; \
   esac
@@ -100,6 +113,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Actually generate the locales. Installing the `locales` package above only
+# ships /etc/locale.gen - it does not build any locale, so the image had just
+# C, C.utf8 and POSIX. That made the `ENV LC_ALL=en_US.UTF-8` below unsatisfiable:
+# locale.setlocale() in flask_app.py failed, fell back to C, and the
+# format_number_locale / format_int_locale Jinja filters silently lost their
+# thousands separators - 1234567.89 rendered as "1234567.89" rather than
+# "1,234,567.89" in the restock/price overview, which is the very thing the
+# `locales` package was added for.
+#
+# More than en_US is generated so that operators can override LC_ALL / LANG and
+# get formatting for their own region (de_DE gives 1.234.567,89, fr_FR gives
+# 1 234 567,89). Costs ~21MB and ~16s of build time.
+#
+# This list mirrors the UI translations in changedetectionio/translations - one
+# glibc locale per language we ship a translation for, so any language a user
+# can pick in the UI also has a working locale. Keep the two in sync when adding
+# a translation. The territory for each bare language code comes from CLDR's
+# likely-subtags (cs -> cs_CZ, ja -> ja_JP, ko -> ko_KR, uk -> uk_UA, zh ->
+# zh_CN, zh_Hant_TW -> zh_TW), NOT from uppercasing the language code.
+RUN for l in cs_CZ de_DE en_GB en_US es_ES fr_FR id_ID it_IT ja_JP ko_KR \
+             pl_PL pt_BR ru_RU tr_TR uk_UA zh_CN zh_TW; do \
+      sed -i "s/^# *${l}.UTF-8 UTF-8/${l}.UTF-8 UTF-8/" /etc/locale.gen; \
+    done \
+    && locale-gen
 
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops

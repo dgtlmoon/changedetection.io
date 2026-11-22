@@ -170,7 +170,7 @@ def test_watch_edited_flag_prevents_skip(client, live_server, measure_memory_usa
     watch['paused'] = False
 
     # Run first check to establish baseline
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Verify first check completed successfully - checksum file should exist
@@ -182,7 +182,7 @@ def test_watch_edited_flag_prevents_skip(client, live_server, measure_memory_usa
     assert not watch.was_edited, "Flag should be False after reset"
 
     # Run second check without any changes - should skip via checksumFromPreviousCheckWasTheSame
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Verify it was skipped (last_check_status should indicate skip)
@@ -194,7 +194,7 @@ def test_watch_edited_flag_prevents_skip(client, live_server, measure_memory_usa
     assert watch.was_edited, "Flag should be True after modifying watch"
 
     # Run third check - should NOT skip because was_edited=True even though content unchanged
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # After worker processing, the flag should be reset by the worker

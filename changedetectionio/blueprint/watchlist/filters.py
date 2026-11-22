@@ -22,6 +22,7 @@ def list_filters_from_args(datastore, args):
     active_tag_req = (args.get('tag') or '').lower().strip()
     return {
         'with_errors': args.get('with_errors') == "1",
+        'healthy': args.get('healthy') == "1",
         'unread_only': args.get('unread') == "1",
         'deals': args.get('deals') == "1",
         'processor': (args.get('processor') or '').strip(),
@@ -45,13 +46,16 @@ def watch_is_deal(watch):
     return pct is not None and pct < 0
 
 
-def watch_matches_tag(watch, f):
-    return not f['tag_uuid'] or f['tag_uuid'] in watch['tags']
+def watch_matches_tag(datastore, watch, f):
+    # Membership includes tags auto-applied via a Tag's url_match_pattern, not just
+    # watch['tags'] (manually-assigned) — otherwise a regex-matched watch shows its
+    # tag badge on the row but silently drops out of that tag's filtered/tab view.
+    return not f['tag_uuid'] or f['tag_uuid'] in datastore.get_all_tags_for_watch(watch['uuid'])
 
 
-def watch_in_context(watch, f):
+def watch_in_context(datastore, watch, f):
     """Tag + processor — the working set the operator is looking at."""
-    if not watch_matches_tag(watch, f):
+    if not watch_matches_tag(datastore, watch, f):
         return False
     if f['processor'] and watch.get('processor') != f['processor']:
         return False
@@ -59,8 +63,10 @@ def watch_in_context(watch, f):
 
 
 def watch_passes_status(watch, f):
-    """The mutually-presented status toggle (All / Unread / Deals / With errors)."""
+    """The mutually-presented status toggle (All / Unread / Deals / With errors / Healthy)."""
     if f['with_errors'] and not watch.get('last_error'):
+        return False
+    if f['healthy'] and watch.get('last_error'):
         return False
     if f['unread_only'] and (watch.viewed or watch.last_changed == 0):
         return False
@@ -80,19 +86,19 @@ def watch_passes_search(watch, f):
     return False
 
 
-def watch_matches_filters(watch, f):
+def watch_matches_filters(datastore, watch, f):
     """The full filter the watch list applies: context + status + search."""
-    return watch_in_context(watch, f) and watch_passes_status(watch, f) and watch_passes_search(watch, f)
+    return watch_in_context(datastore, watch, f) and watch_passes_status(watch, f) and watch_passes_search(watch, f)
 
 
 def matching_watch_uuids(datastore, args):
     """UUIDs of every watch matching the watch-list filters in `args` (no pagination)."""
     f = list_filters_from_args(datastore, args)
-    return [uuid for uuid, watch in datastore.data['watching'].items() if watch_matches_filters(watch, f)]
+    return [uuid for uuid, watch in datastore.data['watching'].items() if watch_matches_filters(datastore, watch, f)]
 
 
 # The query-string keys that define a watch-list view.
-FILTER_KEYS = ('tag', 'processor', 'unread', 'with_errors', 'deals', 'q')
+FILTER_KEYS = ('tag', 'processor', 'unread', 'with_errors', 'healthy', 'deals', 'q')
 
 
 def filter_query_args(args):

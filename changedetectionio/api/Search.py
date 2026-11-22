@@ -31,6 +31,8 @@ class Search(Resource):
                 'last_changed': watch.last_changed,
                 'last_checked': watch['last_checked'],
                 'last_error': watch['last_error'],
+                'notification_muted': bool(watch.get('notification_muted')),
+                'paused': bool(watch.get('paused')),
                 'title': watch['title'],
                 'url': watch['url'],
                 'viewed': watch.viewed

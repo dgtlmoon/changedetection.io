@@ -1,0 +1,41 @@
+{#
+  The MCP None / Read / Write grid, shared by the access token overlay (settings/llm/templates/llm-settings_mcp.html)
+  and the OAuth consent screen (blueprint/mcp/oauth/templates/mcp-oauth-consent.html).
+#}
+{# The None / Read / Write grid, one row per perm_<area> field of forms.MCPTokenForm, then the rows plugins added
+   (form.plugin_rows, set by settings/llm mcp_token_form()) #}
+{% macro permissions_grid(form) -%}
+  {% set rows = [
+      (form.perm_monitors, _('Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete.')),
+      (form.perm_tags, _('Read: list. Write: create, rename and delete.')),
+      (form.perm_notifications, _('Read: list them (secrets hidden) and look up services. Write: add, remove and mute.')),
+      (form.perm_browser, _('Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors.')),
+      (form.perm_system, _('Health, the check queue and what is being checked right now.')),
+  ] + (form.plugin_rows|default([])) %}
+  <table class="mcp-perms">
+    <thead>
+      <tr>
+        <th scope="col"></th>
+        <th scope="col">{{ _('None') }}</th>
+        <th scope="col">{{ _('Read') }}</th>
+        <th scope="col">{{ _('Write') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for field, description in rows %}
+      <tr>
+        <th scope="row"><span class="mcp-perm-name">{{ field.label.text }}</span><span class="mcp-perm-desc">{{ description }}</span></th>
+        {# One cell per column, a dash where this row doesn't have that level #}
+        {% for level in ('none', 'read', 'write') %}
+        {% set option = field|selectattr('data', 'equalto', level)|first %}
+        {% if option %}
+        <td><label class="mcp-perm-choice" title="{{ field.label.text }}: {{ option.label.text }}">{{ option() }}<span class="sr-only">{{ option.label.text }}</span></label></td>
+        {% else %}
+        <td class="mcp-perm-na" aria-hidden="true">&ndash;</td>
+        {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{%- endmacro %}

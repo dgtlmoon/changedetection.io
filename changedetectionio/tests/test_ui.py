@@ -38,7 +38,7 @@ def test_recheck_time_field_validation_single_watch(client, live_server, measure
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),
@@ -123,7 +123,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage
     assert b'Settings updated' in res.data
 
     # Force recheck
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -150,7 +150,7 @@ def test_checkbox_open_diff_in_new_tab(client, live_server, measure_memory_usage
     assert b'Settings updated' in res.data
 
     # Force recheck
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -264,7 +264,7 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
     wait_for_all_checks(client)
 
     set_modified_response(datastore_path=datastore_path)
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 2 watches for rechecking.' in res.data
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
@@ -284,7 +284,7 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
     assert b'id="unread-tab-counter">1<' in res.data
 
     # Mark all viewed test again - with 0 unread the Unread filter chip is hidden entirely
-    client.get(url_for("ui.mark_all_viewed"), follow_redirects=True)
+    client.post(url_for("ui.mark_all_viewed"), follow_redirects=True)
     time.sleep(0.2)
     res = client.get(url_for("watchlist.index"))
     assert b'unread-tab-counter' not in res.data, "Unread filter chip should disappear when there are no unread changes"
@@ -305,7 +305,7 @@ def test_open_watch_marks_it_viewed(client, live_server, measure_memory_usage, d
     wait_for_all_checks(client)
 
     set_modified_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     datastore = client.application.config.get('DATASTORE')
@@ -368,6 +368,13 @@ def test_open_watch_marks_it_viewed(client, live_server, measure_memory_usage, d
     assert res.headers['Referrer-Policy'] == 'no-referrer'
     assert watch.has_unviewed
 
+    # The redirect follows the optional 'Link to Open', like the direct link does.
+    watch['link_to_open'] = 'https://example.com/real-page'
+    res = client.get(open_url, follow_redirects=False)
+    assert res.status_code == 302
+    assert res.headers['Location'] == 'https://example.com/real-page'
+    watch['link_to_open'] = ''
+
     res = client.post(
         url_for("settings.settings_page"),
         data={"application-ui-mark_viewed_on_external_open": ""},
@@ -387,5 +394,41 @@ def test_open_watch_marks_it_viewed(client, live_server, measure_memory_usage, d
     assert external_link['rel'] == ['noopener', 'noreferrer']
     assert external_link['title'] == test_url
     assert watch.has_unviewed
+
+    delete_all_watches(client)
+
+
+def test_watchlist_healthy_filter(client, live_server, measure_memory_usage, datastore_path):
+    """#4245 - the 'Healthy' chip is the inverse of 'With errors' and both only appear when there is a mix."""
+    datastore = client.application.config.get('DATASTORE')
+    ok_uuid = datastore.add_watch(url='https://example.com/ok', extras={'paused': True})
+    err_uuid = datastore.add_watch(url='https://example.com/err', extras={'paused': True})
+
+    # Nothing failing - 'Healthy' would just equal 'All', so no chip
+    res = client.get(url_for("watchlist.index"))
+    assert b'post-list-healthy' not in res.data
+    assert b'post-list-with-errors' not in res.data
+
+    datastore.data['watching'][err_uuid]['last_error'] = 'Something went wrong'
+    res = client.get(url_for("watchlist.index"))
+    assert b'id="healthy-tab-counter">1<' in res.data
+    assert b'id="with-errors-tab-counter">1<' in res.data
+    assert res.data.count(b'data-watch-uuid') == 2
+
+    res = client.get(url_for("watchlist.index", healthy=1))
+    assert res.data.count(b'data-watch-uuid') == 1
+    assert ok_uuid.encode() in res.data
+    assert err_uuid.encode() not in res.data
+
+    res = client.get(url_for("watchlist.index", with_errors=1))
+    assert res.data.count(b'data-watch-uuid') == 1
+    assert err_uuid.encode() in res.data
+    assert ok_uuid.encode() not in res.data
+
+    # Every watch failing - no healthy watches left to offer
+    datastore.data['watching'][ok_uuid]['last_error'] = 'Also broken'
+    res = client.get(url_for("watchlist.index"))
+    assert b'post-list-healthy' not in res.data
+    assert b'post-list-with-errors' in res.data
 
     delete_all_watches(client)

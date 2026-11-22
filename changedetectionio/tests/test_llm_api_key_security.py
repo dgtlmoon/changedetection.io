@@ -13,12 +13,18 @@ API endpoint's response body for the key string.
 """
 
 import json
+from pathlib import Path
 
 from flask import url_for
 
 from changedetectionio.tests.util import live_server_setup, delete_all_watches
 
 CANARY_KEY = 'sk-CANARY-SECRET-DO-NOT-EXPOSE-12345'
+
+# Resolved from this file rather than the working directory: CI does not run pytest from
+# the repo root, and a cwd-relative path turns a security assertion into a FileNotFoundError
+# there. tests/ -> the changedetectionio package.
+APP_BASE = Path(__file__).resolve().parents[1]
 
 
 def _configure_llm(datastore, api_key=CANARY_KEY):
@@ -30,6 +36,16 @@ def _configure_llm(datastore, api_key=CANARY_KEY):
         'model': 'gpt-4o-mini',
         'api_key': api_key,
     })
+
+
+def _element(page: bytes, element_id: bytes, tag: bytes = b'<input') -> bytes:
+    """Return the whole opening tag carrying `element_id`.
+
+    Not page.split(id)[1] - WTForms emits attributes alphabetically, so `autocomplete` and
+    `disabled` land BEFORE `id=` and slicing forwards from the id silently misses them.
+    """
+    i = page.index(element_id)
+    return page[page.rindex(tag, 0, i):page.index(b'>', i) + 1]
 
 
 def _api_token(client):
@@ -308,7 +324,7 @@ def test_settings_page_does_not_render_llm_api_key_in_plaintext(
     ds = client.application.config.get('DATASTORE')
     _configure_llm(ds)
 
-    res = client.get(url_for('settings.settings_page'))
+    res = client.get(url_for('settings.llm.llm_settings_page'))
     assert res.status_code == 200
     body = res.data.decode('utf-8', errors='replace')
     assert CANARY_KEY not in body, \
@@ -327,7 +343,7 @@ def test_settings_form_preserves_api_key_when_submitted_blank(
     _configure_llm(ds, api_key='sk-should-be-kept')
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model': 'gpt-4o',
             'llm-api_key': '',           # blank — PasswordField behaviour
@@ -351,6 +367,128 @@ def test_settings_form_preserves_api_key_when_submitted_blank(
         f"Blank PasswordField submission must not clear the existing API key (got '{saved_key}')"
 
     delete_all_watches(client)
+
+
+def test_settings_form_preserves_api_key_when_field_is_absent(
+        client, live_server, measure_memory_usage, datastore_path):
+    """
+    Once a key is stored the field renders disabled, and a disabled input is not submitted
+    at all - so the save path sees no llm-api_key key whatsoever, not an empty one.
+
+    That must preserve the stored key. It does, because the form is built with data=default
+    and the merge is {**stored, **form_input}, but it is exactly the kind of thing a later
+    refactor breaks silently: the symptom is a working API key replaced by nothing, with no
+    copy kept anywhere to restore it from.
+    """
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds, api_key='sk-should-survive-absence')
+
+    res = client.post(
+        url_for('settings.llm.llm_settings_page'),
+        data={
+            'llm-model': 'gpt-4o',
+            # no 'llm-api_key' at all — this is what a disabled input submits
+            'llm-api_base': '',
+            'application-pager_size': '50',
+            'application-notification_format': 'System default',
+            'requests-time_between_check-days': '0',
+            'requests-time_between_check-hours': '0',
+            'requests-time_between_check-minutes': '5',
+            'requests-time_between_check-seconds': '0',
+            'requests-time_between_check-weeks': '0',
+            'requests-workers': '10',
+            'requests-timeout': '60',
+        },
+        follow_redirects=True,
+    )
+    assert res.status_code == 200
+
+    saved_key = ds.data['settings']['application'].get('llm', {}).get('api_key', '')
+    assert saved_key == 'sk-should-survive-absence', \
+        f"An absent llm-api_key must not clear the stored key (got '{saved_key}')"
+
+    delete_all_watches(client)
+
+
+def test_datastore_never_ends_up_with_a_blank_key(
+        client, live_server, measure_memory_usage, datastore_path):
+    """A stored key must never be replaced by an empty/whitespace value through the form.
+
+    Whatever the field submits - missing, empty, or whitespace - the stored key stands. The
+    only supported way to clear it is "Remove provider" (llm_clear).
+    """
+    ds = client.application.config.get('DATASTORE')
+
+    base = {
+        'llm-model': 'gpt-4o',
+        'llm-api_base': '',
+        'application-pager_size': '50',
+        'application-notification_format': 'System default',
+        'requests-time_between_check-days': '0',
+        'requests-time_between_check-hours': '0',
+        'requests-time_between_check-minutes': '5',
+        'requests-time_between_check-seconds': '0',
+        'requests-time_between_check-weeks': '0',
+        'requests-workers': '10',
+        'requests-timeout': '60',
+    }
+
+    for label, extra in (('absent', {}), ('empty', {'llm-api_key': ''}),
+                         ('whitespace', {'llm-api_key': '   '})):
+        _configure_llm(ds, api_key='sk-original')
+        client.post(url_for('settings.llm.llm_settings_page'), data={**base, **extra},
+                    follow_redirects=True)
+        saved = ds.data['settings']['application'].get('llm', {}).get('api_key', '')
+        assert saved == 'sk-original', f"{label} submission blanked the stored key (got '{saved}')"
+
+    delete_all_watches(client)
+
+
+def test_provider_and_key_are_locked_once_a_key_is_stored(
+        client, live_server, measure_memory_usage, datastore_path):
+    """Locked means disabled, not readonly: a disabled input never reaches the POST, so no
+    autofilled or mistyped value can overwrite the key."""
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds, api_key='sk-locked')
+
+    page = client.get(url_for('settings.llm.llm_settings_page')).data
+    key_field = _element(page, b'id="llm-api_key"')
+    assert b'disabled' in key_field, "stored key must render the field disabled"
+
+    provider = _element(page, b'id="llm-provider"', tag=b'<select')
+    assert b'disabled' in provider, "provider select must be locked alongside the key"
+
+    assert b'Remove provider' in page, "the only supported way out of the locked state"
+
+    delete_all_watches(client)
+
+
+def test_provider_and_key_are_editable_when_nothing_is_stored(
+        client, live_server, measure_memory_usage, datastore_path):
+    """The lock must not strand a fresh install with fields it can never fill in."""
+    page = client.get(url_for('settings.llm.llm_settings_page')).data
+
+    key_field = _element(page, b'id="llm-api_key"')
+    assert b'disabled' not in key_field, "no stored key - the field has to be usable"
+
+    provider = _element(page, b'id="llm-provider"', tag=b'<select')
+    assert b'disabled' not in provider
+
+    # While editable it still must not be autofillable. Chrome ignores autocomplete="off"
+    # on type=password, so a saved site password lands in the box and the next Save writes
+    # it over the real key. readonly (Chrome won't autofill one) is dropped by
+    # global-settings.js on first focus or click.
+    assert b'autocomplete="new-password"' in key_field, \
+        'Chrome ignores autocomplete="off" on password inputs'
+    assert b'autocomplete="off"' not in key_field
+    assert b'readonly' in key_field
+    assert b'data-unlock-on-interact' in key_field, "nothing would remove the readonly"
+
+    script = (APP_BASE / 'static' / 'js' / 'global-settings.js').read_bytes()
+    assert b'data-unlock-on-interact' in script and b"removeAttr('readonly')" in script, \
+        "a readonly field that nothing unlocks is just a broken field"
+    assert b'global-settings.js' in page, \
+        "the AI settings page must load the script that unlocks the field, or the key can't be typed in"
 
 
 # ---------------------------------------------------------------------------
@@ -393,12 +531,12 @@ def test_llm_models_endpoint_blocks_private_api_base(
 
 def test_llm_test_endpoint_blocks_private_api_base(
         client, live_server, measure_memory_usage, datastore_path, monkeypatch):
-    """GET /settings/llm/test must refuse api_base pointing at private/loopback
+    """POST /settings/llm/test must refuse api_base pointing at private/loopback
     hosts and must never reach litellm.completion()."""
     monkeypatch.delenv('ALLOW_IANA_RESTRICTED_ADDRESSES', raising=False)
 
     for bad in _SSRF_PRIVATE_HOSTS:
-        res = client.get(
+        res = client.post(
             url_for('settings.llm.llm_test'),
             query_string={'model': 'openai/gpt-4', 'api_base': bad},
         )
@@ -414,14 +552,14 @@ def test_llm_endpoints_allow_api_base_when_iana_bypass_enabled(
         client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """When ALLOW_IANA_RESTRICTED_ADDRESSES=true the SSRF guard is bypassed so
     operators can intentionally point at a local Ollama / vLLM endpoint.
-    We patch litellm so the test doesn't actually need a live model server —
+    We patch the model lister so the test doesn't actually need a live model server —
     we only need to confirm the guard didn't short-circuit."""
     monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')
 
-    # Stub get_valid_models so the call returns successfully without network.
-    import litellm
-    monkeypatch.setattr(litellm, 'get_valid_models',
-                        lambda **kwargs: ['llama3.2'])
+    # Stub list_models so the call returns successfully without network.
+    import changedetectionio.llm.model_list as model_list
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: ['openai/llama3.2'])
 
     # Supply api_key explicitly so we aren't tripped by the credential-exfil
     # guard (which refuses to substitute the stored key for a non-stored api_base).
@@ -450,7 +588,7 @@ def test_settings_form_rejects_private_api_base(
     ds.data['settings']['application'].pop('llm', None)
 
     res = client.post(
-        url_for('settings.settings_page'),
+        url_for('settings.llm.llm_settings_page'),
         data={
             'llm-model':    'gpt-4o',
             'llm-api_key':  '',
@@ -493,12 +631,12 @@ def test_llm_models_refuses_to_leak_stored_key_to_different_api_base(
     ds = client.application.config.get('DATASTORE')
     _configure_llm(ds)   # stores CANARY_KEY, leaves api_base unset
 
-    # Patch litellm.get_valid_models so that if the guard ever lets us through
+    # Patch list_models so that if the guard ever lets us through
     # we'd see it called — and we can assert it wasn't.
-    import litellm
+    import changedetectionio.llm.model_list as model_list
     calls = []
-    monkeypatch.setattr(litellm, 'get_valid_models',
-                        lambda **kwargs: calls.append(kwargs) or [])
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: calls.append(kwargs) or [])
 
     res = client.get(
         url_for('settings.llm.llm_get_models'),
@@ -513,7 +651,7 @@ def test_llm_models_refuses_to_leak_stored_key_to_different_api_base(
     body = res.get_json()
     assert 'api_key' in body['error'], \
         f"Error should call out that api_key is required: {body['error']!r}"
-    assert calls == [], "litellm must not have been invoked at all"
+    assert calls == [], "The provider must not have been contacted at all"
 
 
 def test_llm_test_refuses_to_leak_stored_key_to_different_api_base(
@@ -527,10 +665,10 @@ def test_llm_test_refuses_to_leak_stored_key_to_different_api_base(
     calls = []
     # Patch the completion wrapper so we'd notice if litellm were invoked.
     import changedetectionio.llm.client as llm_client
-    monkeypatch.setattr(llm_client, 'completion',
+    monkeypatch.setattr(llm_client, 'completion_isolated',
                         lambda **kw: calls.append(kw) or ('', 0, 0, 0))
 
-    res = client.get(
+    res = client.post(
         url_for('settings.llm.llm_test'),
         query_string={
             'model': 'gpt-4o-mini',
@@ -557,9 +695,9 @@ def test_llm_models_allows_stored_key_when_api_base_matches_saved(
     ds.data['settings']['application']['llm']['api_base'] = 'http://localhost:11434'
 
     received = []
-    import litellm
-    monkeypatch.setattr(litellm, 'get_valid_models',
-                        lambda **kwargs: (received.append(kwargs), ['llama3.2'])[1])
+    import changedetectionio.llm.model_list as model_list
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: (received.append(kwargs), ['openai/llama3.2'])[1])
 
     res = client.get(
         url_for('settings.llm.llm_get_models'),
@@ -673,3 +811,43 @@ def test_llm_clear_via_post_still_works(
     assert 'api_key' not in llm, f"api_key should have been wiped, got: {llm!r}"
     assert 'model' not in llm
     assert 'api_base' not in llm
+
+
+def test_llm_keyless_server_at_a_new_address(
+        client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """A local Ollama has no API key: with no key saved there is nothing to leak, so trying a new api_base before
+    Save works (it used to be refused with "api_key is required when api_base differs ...")."""
+    monkeypatch.setenv('ALLOW_IANA_RESTRICTED_ADDRESSES', 'true')  # so localhost passes SSRF
+    ds = client.application.config.get('DATASTORE')
+    _configure_llm(ds, api_key='')
+    ds.data['settings']['application']['llm'].pop('api_base', None)
+
+    import changedetectionio.llm.model_list as model_list
+    received = []
+    monkeypatch.setattr(model_list, 'list_models',
+                        lambda provider, **kwargs: (received.append(kwargs), ['ollama/llama3.2'])[1])
+    res = client.get(url_for('settings.llm.llm_get_models'),
+                     query_string={'provider': 'ollama', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 200, res.get_json()
+    assert res.get_json()['models'] == ['ollama/llama3.2']
+    assert received[0]['api_key'] == ''
+
+    # The connection test too, with a placeholder key so litellm can't fall back to one from the environment
+    import changedetectionio.llm.client as llm_client
+    calls = []
+    monkeypatch.setattr(llm_client, 'completion_isolated', lambda **kw: calls.append(kw) or ('ready', 1, 1, 0))
+    monkeypatch.setenv('OPENAI_API_KEY', 'sk-from-the-environment')
+    res = client.post(url_for('settings.llm.llm_test'),
+                      query_string={'model': 'ollama/llama3.2', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 200, res.get_json()
+    from changedetectionio.blueprint.settings.llm import NO_KEY_PLACEHOLDER
+    assert calls[0]['api_key'] == NO_KEY_PLACEHOLDER
+
+    # With a key saved, the guard still refuses a different address
+    ds.data['settings']['application']['llm']['api_key'] = CANARY_KEY
+    res = client.get(url_for('settings.llm.llm_get_models'),
+                     query_string={'provider': 'ollama', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 400 and 'api_key' in res.get_json()['error']
+    res = client.post(url_for('settings.llm.llm_test'),
+                      query_string={'model': 'ollama/llama3.2', 'api_base': 'http://127.0.0.1:11434'})
+    assert res.status_code == 400 and len(calls) == 1

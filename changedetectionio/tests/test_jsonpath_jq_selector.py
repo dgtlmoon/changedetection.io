@@ -121,6 +121,98 @@ and it can also be repeated
             html_tools.extract_json_as_string('COMPLETE GIBBERISH, NO JSON!', "jqraw:.id")
 
 
+def test_blank_content_does_not_raise_indexerror():
+    """Empty / whitespace-only content must take the normal JSONNotFound path, not crash.
+
+    The content-sniffing peeked at content_start[0] to see if the body looked like JSON.
+    A blank body left content_start empty, so that peek raised IndexError instead of
+    letting the caller report 'no JSON found' the way any other non-JSON body does.
+    See https://github.com/dgtlmoon/changedetection.io/issues/4531
+    """
+    from .. import html_tools
+
+    # Blank bodies with a json: filter set - the same as any other non-JSON content
+    for blank in ('', '   ', '\n', '\r\n\t '):
+        with pytest.raises(html_tools.JSONNotFound):
+            html_tools.extract_json_as_string(blank, "json:$.id")
+
+    # Same on the html blob path, where a whitespace-only <script> or <body> is skipped
+    # and the real ld+json that follows it is still found
+    html = '<html><script>\n</script><script type="application/ld+json">{"a":1}</script></html>'
+    assert html_tools.extract_json_blob_from_html(html, None, "json:$.a") == "1"
+
+    # A document that is nothing but blank markup has no JSON in it at all
+    with pytest.raises(html_tools.JSONNotFound):
+        html_tools.extract_json_blob_from_html('<html><body>   </body></html>', None, "json:$.a")
+
+
+def test_lone_surrogate_escapes_do_not_break_filters():
+    """A \\uD800-style escape in the watched JSON must not take the whole document down.
+
+    jq re-serializes the document for its own C parser, which rejects a lone high surrogate,
+    so every jq:/jqraw: filter on the page used to error even when pointing at an unrelated
+    field. On the json: path the surrogate instead reached the caller intact and blew up later
+    in checksums and history writes. Valid pairs must keep working untouched.
+    See: https://github.com/dgtlmoon/changedetection.io/issues/4273
+    """
+    from .. import html_tools
+
+    BS = chr(92)  # build the escapes at runtime so no quoting layer eats them
+    lone_high = '{"title": "Example ' + BS + 'uD800", "other": "untouched"}'
+    lone_low = '{"title": "Example ' + BS + 'uDC00", "other": "untouched"}'
+    valid_pair = '{"title": "smile ' + BS + 'uD83D' + BS + 'uDE00", "other": "untouched"}'
+
+    filters = ["json:$.%s", "jq:.%s", "jqraw:.%s"] if jq_support else ["json:$.%s"]
+
+    for content in (lone_high, lone_low):
+        for f in filters:
+            # An unrelated field must still be reachable
+            text = html_tools.extract_json_as_string(content, f % "other")
+            assert "untouched" in text
+
+            # And the offending field itself resolves, with the surrogate replaced
+            text = html_tools.extract_json_as_string(content, f % "title")
+            assert "Example" in text
+            assert not any(0xD800 <= ord(c) <= 0xDFFF for c in text)
+            # Whatever comes back has to survive the downstream checksum/history write
+            text.encode('utf-8')
+
+    # A well-formed surrogate pair is a normal emoji and must be preserved as-is
+    for f in filters:
+        text = html_tools.extract_json_as_string(valid_pair, f % "title")
+        assert '\U0001F600' in text
+        text.encode('utf-8')
+
+    # The surrogate can just as easily land in an object *key*, which has to be sanitized too -
+    # otherwise the whole-document re-serialization still trips over it
+    lone_key = '{"ti' + BS + 'uD800tle": "value", "other": "untouched"}'
+    for f in ("json:$.other", "jq:.other", "jqraw:.other") if jq_support else ("json:$.other",):
+        text = html_tools.extract_json_as_string(lone_key, f)
+        assert "untouched" in text
+        text.encode('utf-8')
+
+    # Dumping the whole document exercises the key path directly
+    for f in ("json:$", "jq:.") if jq_support else ("json:$",):
+        text = html_tools.extract_json_as_string(lone_key, f)
+        assert "value" in text
+        assert not any(0xD800 <= ord(c) <= 0xDFFF for c in text)
+        text.encode('utf-8')
+
+    # Nested arrays and non-string scalars have to be walked too. The scalars come first
+    # deliberately: detection short-circuits on the first surrogate it finds, so anything after
+    # the offending value would never be visited.
+    nested = ('{"count": 3, "flag": null, "ok": true, '
+              '"items": ["clean", "bad' + BS + 'uD800", [1, "deep' + BS + 'uDC00"]]}')
+    for f in ("json:$", "jq:.") if jq_support else ("json:$",):
+        text = html_tools.extract_json_as_string(nested, f)
+        assert "clean" in text and "deep" in text
+        assert not any(0xD800 <= ord(c) <= 0xDFFF for c in text)
+        text.encode('utf-8')
+
+    # ...and the scalars must survive the round-trip unmangled
+    assert html_tools.extract_json_as_string(nested, "json:$.count").strip() == "3"
+
+
 def test_unittest_inline_extract_body():
     content = """
     <html>
@@ -249,7 +341,7 @@ def test_check_json_without_filter(client, live_server, measure_memory_usage, da
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -273,7 +365,7 @@ def check_json_filter(json_filter, client, live_server, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": json_filter.splitlines()})
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -290,7 +382,7 @@ def check_json_filter(json_filter, client, live_server, datastore_path):
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -324,14 +416,14 @@ def check_json_filter_bool_val(json_filter, client, live_server, datastore_path)
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"include_filters": [json_filter]})
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     #  Make a change
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -366,7 +458,7 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Goto the edit page, add our ignore text
@@ -396,7 +488,7 @@ def check_json_ext_filter(json_filter, client, live_server, datastore_path):
     set_modified_ext_response(datastore_path=datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     # Give the thread time to pick it up
     wait_for_all_checks(client)
 
@@ -436,7 +528,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage, datastore_
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -444,7 +536,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage, datastore_
         f.write('{"world" : 123, "hello": 123}')
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
@@ -455,7 +547,7 @@ def test_ignore_json_order(client, live_server, measure_memory_usage, datastore_
         f.write('{"world" : 123, "hello": 124}')
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("watchlist.index"))
@@ -473,7 +565,7 @@ def test_correct_header_detect(client, live_server, measure_memory_usage, datast
     # Check weird casing is cleaned up and detected also
     test_url = url_for('test_endpoint', content_type="aPPlication/JSon", uppercase_headers=True, _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
 
@@ -512,7 +604,7 @@ def test_content_type_json_with_unparsable_body(client, live_server, measure_mem
 
     test_url = url_for('test_endpoint', content_type="application/json", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # The watch should not be left in an error state complaining about JSON parsing

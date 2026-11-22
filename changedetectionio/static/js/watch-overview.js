@@ -82,7 +82,7 @@ $(function () {
         var i18n       = window.watchOverviewI18n || {};
         var $btn       = $(this);
         var uuid       = $btn.data('uuid');
-        var dataUrl    = $btn.data('processor-data-url');
+        var chartUrl   = $btn.data('processor-chart-url');
         var historyUrl = $btn.attr('href');
         var $row       = $btn.closest('tr');
         var rowId      = 'restock-graph-row-' + uuid;
@@ -125,21 +125,15 @@ $(function () {
             );
         }
 
-        if (!dataUrl) { showError(); return; }
+        if (!chartUrl) { showError(); return; }
 
-        $.getJSON(dataUrl).done(function (data) {
-            var series = (data && data.series) || [];
-            var graphI18n = {
-                in_stock: i18n.inStock, out_of_stock: i18n.outOfStock,
-                no_data: i18n.noPriceData, load_error: i18n.priceHistoryError,
-                changes: i18n.changes, avg_price: i18n.avgPrice,
-                price_low: i18n.priceLow, price_typical: i18n.priceTypical, price_high: i18n.priceHigh,
-                cheaper_than: i18n.cheaperThan, pricier_than: i18n.pricierThan,
-                typical_note: i18n.typicalNote, avg_label: i18n.avgLabel
-            };
-            if (window.renderRestockGraph) {
-                // Shorter graph inline in the watchlist roll-down than on the full /diff page.
-                window.renderRestockGraph($r.find('.restock-inline-graph')[0], series, (data && data.currency) || '', graphI18n, (data && data.summary) || null, 230);
+        // The chart HTML is the built-in chart or a plugin's (restock_diff hook
+        // restock_diff_watchlist_overview_chart), the built-in one is drawn by initRestockGraphs()
+        $.get(chartUrl).done(function (html) {
+            var $graph = $r.find('.restock-inline-graph');
+            $graph.html(html);
+            if (window.initRestockGraphs) {
+                window.initRestockGraphs($graph);
             }
         }).fail(showError);
     });
@@ -279,6 +273,30 @@ $(function () {
     // Exposed so realtime.js can refresh the UI after it mutates the selection
     // (e.g. clearing it once a delete operation removes the rows).
     sel.refreshUI = refreshSelectionUI;
+
+    // Download through a normal authenticated, CSRF-protected POST rather than
+    // Socket.IO or a fetch Blob, so the browser can stream the attachment.
+    $('#checkbox-export').on('click', function (event) {
+        event.preventDefault();
+        const uuids = sel.all();
+        if (!uuids.length) return;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = this.formAction;
+        form.hidden = true;
+        const addField = (name, value) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        };
+        addField('csrf_token', $('#watch-list-form input[name="csrf_token"]').val());
+        uuids.forEach((uuid) => addField('uuids', uuid));
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
+    });
 
     // Shift-click to (de)select a contiguous range, anchored on the last checkbox
     // clicked — the usual "select many at once" gesture. Runs on 'click' (which
@@ -460,7 +478,7 @@ $(function () {
 
             var promptUrl = url + '/prompt';
 
-            // Fire both requests simultaneously — prompt returns immediately, summary after LLM
+            // Present the built prompt to the user
             $.getJSON(promptUrl)
                 .done(function (data) {
                     if (data.prompt && $summaryRow.find('.ai-inline-summary-content:not(.loaded)').length) {
@@ -469,34 +487,31 @@ $(function () {
                         );
                     }
                 });
-
-            $.getJSON(url)
-                .done(function (data) {
+            // And at the same time start the summary: POST kicks off generation (CSRF token
+            // added by csrf.js), then llm-summary.js polls until it lands. Polling stops by
+            // itself if the user toggles the row shut.
+            window.llmSummary.fetch({
+                url: url,
+                uuid: uuid,
+                isCancelled: function () {
+                    return !$.contains(document.documentElement, $summaryRow[0]);
+                },
+                onDone: function (summary) {
                     var $content = $summaryRow.find('.ai-inline-summary-content');
-                    var historyUrl = $btn.attr('href');
-                    if (data.summary) {
-                        $content.addClass('loaded');
-                        $content.find('.ai-inline-text').html(formatSummary(data.summary));
-                        $content.find('.ai-inline-prompt').remove();
-                    } else if (data.error) {
-                        $summaryRow.find('td').html(
-                            '<span class="ai-inline-error">' + $('<span>').text(data.error).html() + '</span>'
-                        );
-                    }
+                    $content.addClass('loaded');
+                    $content.find('.ai-inline-text').html(formatSummary(summary));
+                    $content.find('.ai-inline-prompt').remove();
                     $content.find('.ai-inline-body').append(
-                        '<a href="' + historyUrl + '" class="ai-inline-history-link">' +
+                        '<a href="' + $btn.attr('href') + '" class="ai-inline-history-link">' +
                         $('<span>').text(msgHistory).html() + '</a>'
                     );
-
-                })
-                .fail(function (xhr) {
-                    var msg = (xhr.responseJSON && xhr.responseJSON.error)
-                        ? xhr.responseJSON.error
-                        : 'AI summary request failed (HTTP ' + xhr.status + ').';
+                },
+                onError: function (msg) {
                     $summaryRow.find('td').html(
                         '<span class="ai-inline-error">' + $('<span>').text(msg).html() + '</span>'
                     );
-                });
+                }
+            });
         });
     }
 });

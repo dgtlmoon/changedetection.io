@@ -79,5 +79,69 @@ class TestTriggerConditions(unittest.TestCase):
         self.assertTrue(result.get('result'))
 
 
+
+    def test_conditions_filter_complete_rules_with_zero_values(self):
+        from changedetectionio.conditions import filter_complete_rules
+
+        rules = [
+            {"operator": "==", "field": "word_count", "value": 0},
+            {"operator": "<=", "field": "levenshtein_distance", "value": 0.0},
+            {"operator": "==", "field": "price", "value": "0"},
+            {"operator": "==", "field": "empty_val", "value": ""},
+            {"operator": "==", "field": "none_val", "value": None},
+            {"operator": "==", "field": "str_none", "value": "None"},
+            {"operator": "", "field": "missing_op", "value": 0},
+            {"operator": "None", "field": "str_none_op", "value": 0},
+            {"operator": "==", "field": "", "value": 0},
+        ]
+        complete = filter_complete_rules(rules)
+        self.assertEqual(len(complete), 3)
+        self.assertEqual(complete[0]["value"], 0)
+        self.assertEqual(complete[1]["value"], 0.0)
+        self.assertEqual(complete[2]["value"], "0")
+
+    def test_conditions_convert_to_jsonlogic_with_zero_values(self):
+        from json_logic import jsonLogic
+        from changedetectionio.conditions import convert_to_jsonlogic
+
+        rule_int_zero = [{"operator": "==", "field": "word_count", "value": 0}]
+        jl_int = convert_to_jsonlogic("and", rule_int_zero)
+        self.assertEqual(jl_int, {"==": [{"var": "word_count"}, 0]})
+        self.assertTrue(jsonLogic(jl_int, {"word_count": 0}))
+        self.assertFalse(jsonLogic(jl_int, {"word_count": 5}))
+
+        rule_float_zero = [{"operator": "<=", "field": "levenshtein_distance", "value": 0.0}]
+        jl_float = convert_to_jsonlogic("and", rule_float_zero)
+        self.assertEqual(jl_float, {"<=": [{"var": "levenshtein_distance"}, 0.0]})
+        self.assertTrue(jsonLogic(jl_float, {"levenshtein_distance": 0.0}))
+        self.assertFalse(jsonLogic(jl_float, {"levenshtein_distance": 2.5}))
+
+    def test_conditions_execution_zero_word_count(self):
+        # Test condition checking for empty page (word_count == 0)
+        self.store.data['watching'][self.watch_uuid].update(
+            {
+                "conditions_match_logic": "ALL",
+                "conditions": [
+                    {"operator": "==", "field": "word_count", "value": 0},
+                ],
+            }
+        )
+        # Empty text has word_count 0 -> condition should match (True)
+        res_empty = execute_ruleset_against_all_plugins(
+            current_watch_uuid=self.watch_uuid,
+            application_datastruct=self.store.data,
+            ephemeral_data={'text': ""},
+        )
+        self.assertTrue(res_empty.get('result'))
+
+        # Non-empty text has word_count > 0 -> condition should not match (False)
+        res_nonempty = execute_ruleset_against_all_plugins(
+            current_watch_uuid=self.watch_uuid,
+            application_datastruct=self.store.data,
+            ephemeral_data={'text': "Hello world"},
+        )
+        self.assertFalse(res_nonempty.get('result'))
+
+
 if __name__ == '__main__':
     unittest.main()

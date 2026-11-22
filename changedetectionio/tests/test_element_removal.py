@@ -186,7 +186,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
     assert bytes(subtractive_selectors_data.encode("utf-8")) in res.data
 
     # Trigger a check
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     wait_for_all_checks(client)
@@ -198,7 +198,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
     set_modified_response(datastore_path=datastore_path)
 
     # Trigger a check
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert b'Queued 1 watch for rechecking.' in res.data
 
     # Give the thread time to pick it up
@@ -206,7 +206,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
 
     # There should not be an unviewed change, as changes should be removed
     res = client.get(url_for("watchlist.index"))
-    assert b"unviewed" not in res.data
+    assert b'has-unread-changes' not in res.data
 
 # Re #2752
 def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage, datastore_path):
@@ -235,7 +235,7 @@ body > table > tr:nth-child(3) > td:nth-child(3)""",
         delete_all_watches(client)
 
         uuid = client.application.config.get('DATASTORE').add_watch(url=test_url, extras={"subtractive_selectors": selector_list.splitlines()})
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
         res = client.get(
@@ -277,7 +277,7 @@ def test_subtractive_selectors_applied_before_include_filters(client, live_serve
             "subtractive_selectors": [".main .advertisement"],
         },
     )
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(

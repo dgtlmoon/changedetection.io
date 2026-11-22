@@ -35,11 +35,40 @@ class SignalHandler:
         watch_small_status_comment_signal = signal('watch_small_status_comment')
         watch_small_status_comment_signal.connect(self.handle_watch_small_status_update, weak=False)
 
+        # The AI summary generator runs on a background thread; this lets the browser skip
+        # polling for the result.
+        llm_summary_ready_signal = signal('llm_summary_ready')
+        llm_summary_ready_signal.connect(self.handle_llm_summary_ready, weak=False)
+
         # Connect to the notification_event signal
         notification_event_signal = signal('notification_event')
         notification_event_signal.connect(self.handle_notification_event, weak=False)
         logger.info("SignalHandler: Connected to notification_event signal")
 
+        # One-shot stats refresh for bulk operations that deliberately skip the per-watch
+        # signal (see set_last_viewed(send_signal=False)) — n signals would mean n full
+        # rescans of every watch plus 3n broadcasts.
+        general_stats_signal = signal('general_stats_update')
+        general_stats_signal.connect(self.handle_general_stats_update, weak=False)
+
+
+    def handle_general_stats_update(self, *args, **kwargs):
+        """Emit the global counters once, without touching any individual row.
+
+        Sent after a bulk operation. The tab that triggered it is usually reloading anyway;
+        this is for OTHER open tabs so their unread/error counters don't sit stale.
+        Note their ROWS still keep a stale 'unviewed' class until the row resync lands —
+        tracked separately, this only fixes the counters.
+        """
+        try:
+            errored_count = sum(1 for w in self.datastore.data['watching'].values() if w.get('last_error'))
+            self.socketio_instance.emit("general_stats_update", {
+                'count_errors': errored_count,
+                'unread_changes_count': self.datastore.unread_changes_count,
+            })
+            logger.trace("Socket.IO: Emitted one-shot general_stats_update")
+        except Exception as e:
+            logger.error(f"Socket.IO error in handle_general_stats_update: {str(e)}")
 
     def handle_watch_small_status_update(self, *args, **kwargs):
         """Small simple status update, for example 'Connecting...'"""
@@ -89,6 +118,23 @@ class SignalHandler:
                 "event_timestamp": time.time()
             })
         logger.debug(f"Watch UUID {watch_uuid} got its favicon updated")
+
+    def handle_llm_summary_ready(self, *args, **kwargs):
+        """An on-demand AI change summary finished generating (successfully or not).
+
+        Only identifiers are broadcast: the client turns this into one authenticated request to
+        the /llm-summary poll route, so the summary text itself never goes to every connected
+        browser. Clients that do not care about this watch simply ignore the event.
+        """
+        watch_uuid = kwargs.get('watch_uuid')
+        if watch_uuid:
+            self.socketio_instance.emit("llm_summary_ready", {
+                "uuid": watch_uuid,
+                "from_version": kwargs.get('from_version'),
+                "to_version": kwargs.get('to_version'),
+                "event_timestamp": time.time()
+            })
+        logger.debug(f"Watch UUID {watch_uuid} AI summary job settled")
 
     def handle_deleted_signal(self, *args, **kwargs):
         watch_uuid = kwargs.get('watch_uuid')

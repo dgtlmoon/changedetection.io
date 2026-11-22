@@ -16,6 +16,10 @@ services:
   #        Log output levels: TRACE, DEBUG(default), INFO, SUCCESS, WARNING, ERROR, CRITICAL
   #      - LOGGER_LEVEL=TRACE
   #
+  #        Debugging: save the network traffic (HAR) of each check of these watch UUIDs to {datastore}/{uuid}/har-record.zip
+  #        Optional: HAR_FORMAT=har for a plain .har file, HAR_INCLUDE_BINARY=true to also keep image/font content
+  #      - HAR_UUID_RECORD=aa4bd6db-e0c9-4ec6-9b95-2b7d8394e333,another-uuid
+  #
   #        Plugins! See https://changedetection.io/plugins for more plugins.
   #        Install additional Python packages (processor plugins, etc.)
   #        Example: Install the OSINT reconnaissance processor plugin
@@ -26,6 +30,8 @@ services:
   #
   #       Uncomment below and the "sockpuppetbrowser" to use a real Chrome browser (It uses the "playwright" protocol)
   #      - PLAYWRIGHT_DRIVER_URL=ws://browser-sockpuppet-chrome:3000
+  #      # Disable when the remote CDP implementation does not support `Page.setBypassCSP` - like with Obscura browser.
+  #      - PLAYWRIGHT_BYPASS_CSP=false
   #
   #
   #       Alternative WebDriver/selenium URL, do not use "'s or 's! (old, deprecated, does not support screenshots very well, Can't handle custom headers etc)
@@ -64,8 +70,15 @@ services:
   #        Absolute minimum seconds to recheck, overrides any watch minimum, change to 0 to disable
   #      - MINIMUM_SECONDS_RECHECK_TIME=3
   #
+  #        Cap the total number of watches this instance will hold - adding more (UI, API, import)
+  #        is refused until one is deleted. Unset means unlimited.
+  #      - PAGE_WATCH_LIMIT=100
+  #
   #        If you want to watch local files file:///path/to/file.txt (careful! security implications!)
   #      - ALLOW_FILE_URI=False
+  #
+  #        Off by default - Private lan, local-only, testing/documentation, multicast, protocol infrastructure, and ranges intentionally not usable as normal public unicast IPs
+  #      - ALLOW_IANA_RESTRICTED_ADDRESSES=true
   #
   #        For complete privacy if you don't want to use the 'check version' / telemetry service
   #      - DISABLE_VERSION_CHECK=true
@@ -80,15 +93,19 @@ services:
   #        In Ollama: run `ollama run <model>` then `/set parameter num_ctx 8192`
   #      - LLM_RESTOCK_MAX_CONTENT_CHARS=15000
   #
+  #        Fetch the latest LLM model pricing (used for the estimated cost counter) from GitHub, default false.
+  #        When false the pricing list that ships with this version is used, so no outbound request is made. (Off by default for privacy)
+  #      - LITELLM_FETCH_PRICING_FROM_GITHUB=false
+  #
   #        A valid timezone name to run as (for scheduling watch checking) see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   #      - TZ=America/Los_Angeles
   #
   #        Text processing locale, en_US.UTF-8 used by default unless defined as something else here, UTF-8 should cover 99.99% of cases.
   #      - LC_ALL=en_US.UTF-8
   #
-  #        Maximum height of screenshots, default is 16000 px, screenshots will be clipped to this if exceeded.
+  #        Maximum height of screenshots, default is 20000 px, screenshots will be clipped to this if exceeded.
   #        RAM usage will be higher if you increase this.
-  #      - SCREENSHOT_MAX_HEIGHT=16000
+  #      - SCREENSHOT_MAX_HEIGHT=20000
   #
   #        HTTPS SSL Mode for webserver, unset both of these, you may need to volume mount these files also.
   #        ./cert.pem:/app/cert.pem and ./privkey.pem:/app/privkey.pem
@@ -155,4 +172,3 @@ services:
 
 volumes:
   changedetection-data:
-

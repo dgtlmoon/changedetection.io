@@ -54,57 +54,98 @@
       return 0;
     });
 
-    const timeoutMs = 2000;
+    // All candidates are fetched concurrently under one shared deadline.
+    //
+    // Sequentially, each icon got its own fresh 2s AbortController, so a site declaring
+    // five <link rel="icon"> variants spent 10s+ here - inside the page, holding a browser
+    // and a worker the whole time. Simply capping the total made it worse: giving up early
+    // returns no icon, nothing gets saved, favicon_is_expired() stays true and the cost is
+    // paid again on the very next check, forever. Fetching in parallel bounds the wall time
+    // *and* still finds a working icon, so it saves and the watch stops asking.
+    //
+    // Measured against a page with five hanging icons, one 404 and one good one:
+    //   sequential, 2s each : 10.1s, found the icon
+    //   total cap only      :  3.0s, found nothing (then repeats every check)
+    //   parallel + deadline :  ~3s,  found the icon
+    const TOTAL_BUDGET_MS = 3000;
     // 1 MB — matches the server-side limit in bump_favicon()
     const MAX_BYTES = 1 * 1024 * 1024;
 
-    for (const icon of icons) {
+    const toBase64 = (blob) => new Promise(resolve => {
+      // Always resolves. The previous version resolved only from onloadend and read
+      // reader.result unguarded, so a FileReader failure threw inside the callback and left
+      // the promise permanently pending - the whole favicon fetch then hung with nothing
+      // bounding it, because clearTimeout had already fired.
+      try {
+        const reader = new FileReader();
+        reader.onerror = () => resolve(null);
+        reader.onloadend = () => {
+          try {
+            const result = reader.result;
+            resolve(result ? String(result).split(',')[1] : null);
+          } catch (e) {
+            resolve(null);
+          }
+        };
+        reader.readAsDataURL(blob);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+
+    const controller = new AbortController();
+    const budget = setTimeout(() => controller.abort(), TOTAL_BUDGET_MS);
+
+    const fetchOne = async (icon) => {
       try {
         // Inline data URI — no network fetch needed, data is already here
         if (icon.href.startsWith('data:')) {
           const match = icon.href.match(/^data:([^;]+);base64,([A-Za-z0-9+/=]+)$/);
-          if (!match) continue;
+          if (!match) return null;
           const mime_type = match[1];
           const base64 = match[2];
           // Rough size check: base64 is ~4/3 the binary size
-          if (base64.length * 0.75 > MAX_BYTES) continue;
+          if (base64.length * 0.75 > MAX_BYTES) return null;
           return { url: icon.href, mime_type, base64 };
         }
-
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         const resp = await fetch(icon.href, {
           signal: controller.signal,
           redirect: 'follow'
         });
 
-        clearTimeout(timeout);
+        if (!resp.ok) return null;
 
-        if (!resp.ok) {
-          continue;
-        }
+        // Skip an oversized icon before pulling its body down the wire, where the server
+        // tells us the size up front.
+        const declared = parseInt(resp.headers.get('content-length') || '0', 10);
+        if (declared > MAX_BYTES) return null;
 
+        // Still covered by the shared signal: aborting errors the body stream too. The
+        // previous version cleared its timer before this line, leaving a slow or
+        // never-ending body read completely unguarded.
         const blob = await resp.blob();
+        if (blob.size > MAX_BYTES) return null;
 
-        if (blob.size > MAX_BYTES) continue;
+        const base64 = await toBase64(blob);
+        if (!base64) return null;
 
-        // Convert blob to base64
-        const reader = new FileReader();
-        return await new Promise(resolve => {
-          reader.onloadend = () => {
-            resolve({
-              url: icon.href,
-              mime_type: blob.type,
-              base64: reader.result.split(",")[1]
-            });
-          };
-          reader.readAsDataURL(blob);
-        });
-
+        return { url: icon.href, mime_type: blob.type, base64 };
       } catch (e) {
-        continue;
+        return null;
       }
+    };
+
+    try {
+      const settled = await Promise.all(icons.map(fetchOne));
+      // icons[] is already in preference order (largest, then apple-touch-icon), so the
+      // first success in that order is the one we want - not merely the fastest to answer.
+      const best = settled.find(r => r);
+      if (best) return best;
+    } catch (e) {
+      // fall through to "nothing found"
+    } finally {
+      clearTimeout(budget);
     }
 
     // nothing found

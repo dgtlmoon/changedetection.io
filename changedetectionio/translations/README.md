@@ -198,6 +198,7 @@ Never fix one language and move on.
 | `en_US` | English (US) |
 | `es` | Spanish (Español) |
 | `fr` | French (Français) |
+| `id` | Indonesian (Bahasa Indonesia) |
 | `it` | Italian (Italiano) |
 | `ja` | Japanese (日本語) |
 | `ko` | Korean (한국어) |

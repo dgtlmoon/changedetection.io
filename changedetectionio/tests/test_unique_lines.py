@@ -81,7 +81,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage, d
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Add our URL to the import page
@@ -100,7 +100,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage, d
     set_modified_swapped_lines(datastore_path)
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -111,7 +111,7 @@ def test_unique_lines_functionality(client, live_server, measure_memory_usage, d
 
     # Now set the content which contains the new text and re-ordered existing text
     set_modified_with_trigger_text_response(datastore_path=datastore_path)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("watchlist.index"))
     assert b'has-unread-changes' in res.data
@@ -125,7 +125,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage, dat
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Add our URL to the import page
@@ -141,7 +141,7 @@ def test_sort_lines_functionality(client, live_server, measure_memory_usage, dat
 
 
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -171,7 +171,7 @@ def test_extra_filters(client, live_server, measure_memory_usage, datastore_path
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     # Add our URL to the import page
@@ -189,7 +189,7 @@ def test_extra_filters(client, live_server, measure_memory_usage, datastore_path
     # Give the thread time to pick it up
     wait_for_all_checks(client)
     # Trigger a check
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)

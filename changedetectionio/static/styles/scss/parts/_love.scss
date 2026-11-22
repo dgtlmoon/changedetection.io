@@ -10,16 +10,19 @@
   top: 50px;
   right: -350px;
   background-color: var(--color-table-stripe);
-  border: 1px solid #aaa;
   z-index: 2;
+  border-top-left-radius: var(--common-round-border);
 
+  // Slides in by moving its own width to the left (right: -350px -> flush with
+  // the right edge). The transition MUST name `transform` - it used to say
+  // `width`, which never changes here, so the slide snapped with no animation.
   transform: translateX(0);
-  transition: transform .5s ease;
-
+  will-change: transform;
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.22s ease;
 
   &.visible {
     transform: translateX(-100%);
-
+    box-shadow: var(--color-sidebar-shadow);
   }
 
   .content {

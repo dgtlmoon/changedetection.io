@@ -132,8 +132,9 @@ def environment(mocker):
     # Fixed datetime: Wed, 09 Dec 2015 23:33:01 UTC
     # This is calculated to match the test expectations when offsets are applied
     fixed_datetime = arrow.Arrow(2015, 12, 9, 23, 33, 1, tzinfo='UTC')
-    # Patch arrow.now in the TimeExtension module where it's actually used
-    mocker.patch('changedetectionio.jinja2_custom.extensions.TimeExtension.arrow.now', return_value=fixed_datetime)
+    # Patch on the arrow module itself - TimeExtension imports arrow lazily inside its methods
+    # (import diet), so there is no module-level TimeExtension.arrow attribute to patch
+    mocker.patch('arrow.now', return_value=fixed_datetime)
     return fixed_datetime
 
 
@@ -202,7 +203,7 @@ def pytest_configure(config):
     LiveServer uses nested functions that can't be pickled.
 
     Setting 'fork' explicitly:
-    - Maintains compatibility with Python 3.10-3.13 (where 'fork' was already default)
+    - Maintains compatibility with Python 3.11-3.13 (where 'fork' was already default)
     - Fixes Python 3.14 pickling errors
     - Only affects Unix-like systems (Windows uses 'spawn' regardless)
 
@@ -429,6 +430,12 @@ def app(request, datastore_path):
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)
+
+    # pytest-flask falls back to 'localhost.localdomain' for the live_server, nothing in a container
+    # resolves that locally so every test fetch then depends on the upstream DNS answering for it.
+    # 'localhost' is always in /etc/hosts. (FLASK_SERVER_NAME still wins, set in flask_app.py)
+    if not app.config.get('SERVER_NAME'):
+        app.config['SERVER_NAME'] = 'localhost'
 
     # Disable CSRF while running tests
     app.config['WTF_CSRF_ENABLED'] = False

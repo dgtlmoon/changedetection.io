@@ -1,22 +1,17 @@
 $(document).ready(function () {
-    $("#api-key").hover(
-        function () {
-            $("#api-key-copy").html('copy').fadeIn();
-        },
-        function () {
-            $("#api-key-copy").hide();
-        }
-    ).click(function (e) {
-        $("#api-key-copy").html('copied');
-        var range = document.createRange();
-        var n = $("#api-key")[0];
-        range.selectNode(n);
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(range);
-        document.execCommand("copy");
-        window.getSelection().removeAllRanges();
-
+    // Secret fields (the LLM API key) render with readonly set, because Chrome ignores
+    // autocomplete="off" on type=password and will happily drop the saved site password in.
+    // That is destructive rather than merely annoying: the field renders blank so that
+    // saving it untouched PRESERVES the stored key, so anything prefilled silently replaces
+    // a working key on the next Save, with no copy kept anywhere to restore from.
+    //
+    // readonly rather than disabled - a disabled input is never submitted, so the key could
+    // never be set at all. Unlocked on focus as well as click so keyboard tabbing works.
+    $('[data-unlock-on-interact]').on('focus click', function () {
+        $(this).removeAttr('readonly');
     });
+
+    // The API key's click to copy is click-to-copy.js
 
     $(".toggle-show").click(function (e) {
         e.preventDefault();

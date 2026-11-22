@@ -18,12 +18,12 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
 
     # Add the test URL twice, we will check
     uuidA = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
     uuidB = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     cookie_header = '_ga=GA1.2.1022228332; cookie-preferences=analytics:accepted;'
@@ -42,7 +42,7 @@ def test_headers_in_request(client, live_server, measure_memory_usage, datastore
     )
     assert b"Updated watch." in res.data
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick up the first version
     wait_for_all_checks(client)
@@ -87,7 +87,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
         test_url = test_url.replace('localhost', 'cdio')
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -140,7 +140,7 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     ####### data sanity checks
     # Add the test URL twice, we will check
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     watches_with_body = 0
 
@@ -171,6 +171,39 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     assert b"Body must be empty when Request Method is set to GET" in res.data
     delete_all_watches(client)
 
+
+def test_body_with_literal_jinja_like_text_is_sent_as_is(client, live_server, measure_memory_usage, datastore_path):
+    """#4452 - '{%22' (URL-encoded JSON) is not Jinja2. The form accepts it, so the fetch must not try to render it."""
+    test_url = url_for('test_body', _external=True)
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        test_url = test_url.replace('localhost', 'cdio')
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    wait_for_all_checks(client)
+
+    body_value = 'q={%22key%22:1}'
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+              "url": test_url,
+              "tags": "",
+              "method": "POST",
+              "fetch_backend": "html_requests",
+              "body": body_value,
+              "time_between_check_use_default": "y"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    watch = client.application.config.get('DATASTORE').data['watching'][uuid]
+    assert not watch.get('last_error'), watch.get('last_error')
+
+    # The service echoes the body back, unrendered
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+    assert str.encode(body_value) in res.data
+    delete_all_watches(client)
+
 def test_method_in_request(client, live_server, measure_memory_usage, datastore_path):
     import os
     # Add our URL to the import page
@@ -181,11 +214,11 @@ def test_method_in_request(client, live_server, measure_memory_usage, datastore_
 
     # Add the test URL twice, we will check
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -262,7 +295,7 @@ def test_ua_global_override(client, live_server, measure_memory_usage, datastore
     assert b'Settings updated' in res.data
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
     res = client.get(
@@ -337,7 +370,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
 
     # Add the test URL twice, we will check
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 
@@ -366,7 +399,7 @@ def test_headers_textfile_in_request(client, live_server, measure_memory_usage, 
         f.write("watch-header: nice\r\nurl-header-watch: http://example.com/watch")
 
     wait_for_all_checks(client)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up, this actually is not super reliable and pytest can terminate before the check is ran
     wait_for_all_checks(client)
@@ -412,7 +445,7 @@ def test_headers_validation(client, live_server, measure_memory_usage, datastore
 
     test_url = url_for('test_headers', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     res = client.post(
         url_for("ui.ui_edit.edit_page", uuid="first"),

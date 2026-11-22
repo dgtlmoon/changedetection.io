@@ -31,6 +31,7 @@
                 <div class="pure-control-group" id="notification-base-url">
                     {{ render_field(form.base_url, class="m-d") }}
                     <span class="pure-form-message-inline">
+                        {# TRANSLATORS: FIXME: fragment msgids (#4074) #}
                         {{ _('Base URL used for the') }} <code>{{ '{{ base_url }}' }}</code> {{ _('token in notification links.') }}<br>
                         {{ _('Default value is the system environment variable') }} '<code>BASE_URL</code>' - <a href="https://github.com/dgtlmoon/changedetection.io/wiki/Configurable-BASE_URL-setting">{{ _('read more here') }}</a>.
                     </span>

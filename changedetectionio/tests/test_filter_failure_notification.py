@@ -34,7 +34,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     test_url = url_for('test_endpoint', _external=True)
 
     # cleanup for the next
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -48,7 +48,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     assert b'No web page change detection watches configured' not in res.data
 
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     uuid = next(iter(live_server.app.config['DATASTORE'].data['watching']))
@@ -113,7 +113,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     ATTEMPT_THRESHOLD_SETTING = live_server.app.config['DATASTORE'].data['settings']['application'].get('filter_failure_notification_threshold_attempts', 0)
     for i in range(0, ATTEMPT_THRESHOLD_SETTING - 2):
         checked += 1
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         res = client.get(url_for("watchlist.index"))
         assert b'Warning, no filters were found' in res.data
@@ -126,7 +126,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
 
     time.sleep(2)
     # One more check should trigger the _FILTER_FAILURE_THRESHOLD_ATTEMPTS_DEFAULT threshold
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
 
@@ -160,7 +160,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
 
     # Try several times, it should NOT have 'filter not found'
     for i in range(0, ATTEMPT_THRESHOLD_SETTING + 2):
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
 
     wait_for_notification_endpoint_output(datastore_path=datastore_path)
@@ -175,7 +175,7 @@ def run_filter_test(client, live_server, content_filter, app_notification_format
     assert uuid in notification
 
     # cleanup for the next
-    client.get(
+    client.post(
         url_for("ui.form_delete", uuid="all"),
         follow_redirects=True
     )
@@ -202,4 +202,47 @@ def test_basic_markup_from_text(client, live_server, measure_memory_usage, datas
     from ..notification.handler import markup_text_links_to_html
     x = markup_text_links_to_html("hello https://google.com")
     assert 'a href' in x
+    delete_all_watches(client)
+
+
+def test_filter_failure_count_resets_with_ignore_status_codes(client, live_server, measure_memory_usage, datastore_path):
+    # Re #4620 - With "Ignore status codes" on, a successful check must still reset the failure streak,
+    # otherwise isolated failures hours apart add up and send a false "not found in N consecutive checks" alert
+    datastore = live_server.app.config['DATASTORE']
+    datastore.data['settings']['application']['filter_failure_notification_threshold_attempts'] = 2
+
+    notification_file = os.path.join(datastore_path, "notification.txt")
+    if os.path.isfile(notification_file):
+        os.unlink(notification_file)
+
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={
+        'include_filters': ['#nope-doesnt-exist'],
+        'ignore_status_codes': True,
+        'filter_failure_notification_send': True,
+        'notification_urls': [url_for('test_notification_endpoint', _external=True).replace('http', 'post')],
+    })
+    wait_for_all_checks(client)
+    # Fail - filter not in the page
+    set_original_response(datastore_path=datastore_path)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert datastore.data['watching'][uuid]['consecutive_filter_failures'] == 1
+
+    # Succeed - filter is in the page, the streak is broken
+    set_response_with_filter(datastore_path)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert datastore.data['watching'][uuid]['consecutive_filter_failures'] == 0
+
+    # Fail again - this is the first of a new streak, not the second consecutive
+    set_original_response(datastore_path=datastore_path)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert datastore.data['watching'][uuid]['consecutive_filter_failures'] == 1
+
+    time.sleep(3)
+    if os.path.isfile(notification_file):
+        with open(notification_file, 'r') as f:
+            assert 'Your configured CSS/xPath filters' not in f.read()
+
     delete_all_watches(client)

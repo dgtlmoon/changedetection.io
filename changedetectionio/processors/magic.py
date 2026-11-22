@@ -73,7 +73,8 @@ class guess_stream_type():
             content_bytes = content[:200].encode('utf-8') if isinstance(content, str) else content[:200]
 
             # puremagic returns a list of PureMagic objects with confidence scores
-            detections = puremagic.magic_string(content_bytes)
+            # (it raises ValueError on empty input, and there is nothing to detect then anyway)
+            detections = puremagic.magic_string(content_bytes) if content_bytes else []
             if detections:
                 # Get the highest confidence detection
                 mime = detections[0].mime_type
@@ -87,6 +88,12 @@ class guess_stream_type():
                     elif mime not in ['text/html', 'text/plain']:
                         magic_content_header = mime
 
+        except ImportError as e:
+            logger.warning(f"The 'puremagic' library is not available ({str(e)}), using content-based detection")
+        except puremagic.PureError as e:
+            # Only evaluated when the import above succeeded, since ImportError is caught first
+            # No signature matched, which is normal for plain text and most HTML
+            logger.debug(f"puremagic could not identify the content ({str(e)}), using content-based detection")
         except Exception as e:
             logger.warning(f"Error getting a more precise mime type from 'puremagic' library ({str(e)}), using content-based detection")
 
@@ -114,7 +121,7 @@ class guess_stream_type():
         # This also triggers the automatic CDATA text parser so the RSS goes back a nice content list
         elif '<rss' in test_content_normalized or '<feed' in test_content_normalized or any(s in magic_content_header for s in RSS_XML_CONTENT_TYPES) or '<rdf:' in test_content_normalized:
             self.is_rss = True
-        elif has_html_patterns or http_content_header == 'text/html':
+        elif has_html_patterns or http_content_header.split(';')[0].strip() == 'text/html':
             self.is_html = True
         elif any(s in magic_content_header for s in JSON_CONTENT_TYPES):
             self.is_json = True

@@ -6,6 +6,7 @@ and makes the call easy to mock in tests.
 
 import logging
 import os
+
 from loguru import logger
 
 # Default output token cap for JSON-returning calls (intent eval, preview, setup).
@@ -24,6 +25,21 @@ DEFAULT_TIMEOUT = int(os.getenv('LLM_TIMEOUT', 300))
 # longer deadline (Hermes-style, 30 min). Overridable via LLM_LOCAL_TIMEOUT; see
 # evaluator.resolve_llm_timeout() for how the endpoint is classified.
 DEFAULT_LOCAL_TIMEOUT = int(os.getenv('LLM_LOCAL_TIMEOUT', 1800))
+# Models and reasoning architectures that reject explicit sampling parameters (temperature/top_p).
+# Substring match against the lowercased model name, so 'gpt-5' also covers gpt-5-mini, gpt-5.1 etc.
+#
+# This is only an optimisation - the BadRequestError handler below strips and retries for
+# anything not listed. Being listed just avoids paying a rejected round trip on every call.
+#
+# NOT all GPT models: gpt-4o, gpt-4-turbo and gpt-3.5-turbo take temperature normally. It is
+# reasoning that forbids it. gpt-5 reports "only temperature=1 is supported unless
+# reasoning_effort resolves to 'none'" - we never set reasoning_effort=none, so it is always
+# in that state for us. Claude 5.x (haiku/sonnet/opus/fable) refuses sampling params itself, not
+# because of thinking: Opus 5/5.5, Sonnet 5 and Fable reject any temperature, Haiku 5.5 and
+# Sonnet 5.5 any non-default one (which our 0 is).
+_NO_TEMPERATURE_MODEL_KEYWORDS = ('flash-lite', 'thinking-exp', 'o1', 'o3', 'o4', 'gpt-5',
+                                  'haiku-5', 'sonnet-5', 'opus-5', 'fable-5')
+
 DEFAULT_RETRIES = 3
 
 
@@ -63,10 +79,16 @@ def _install_litellm_debug():
     logger.info("LLM client: litellm debug logging routed through loguru")
 
 
-def completion(model: str, messages: list, api_key: str = None,
-               api_base: str = None, timeout: int = DEFAULT_TIMEOUT,
-               max_tokens: int = None, extra_body: dict = None,
-               debug: bool = False) -> tuple[str, int, int, int]:
+def completion(  # noqa: C901
+    model: str,
+    messages: list,
+    api_key: str = None,
+    api_base: str = None,
+    timeout: int = DEFAULT_TIMEOUT,
+    max_tokens: int = None,
+    extra_body: dict = None,
+    debug: bool = False,
+) -> tuple[str, int, int, int]:
     """
     Call the LLM and return (response_text, total_tokens, input_tokens, output_tokens).
     Retries up to DEFAULT_RETRIES times on timeout or connection errors.
@@ -79,7 +101,7 @@ def completion(model: str, messages: list, api_key: str = None,
     try:
         import litellm
     except ImportError:
-        raise RuntimeError("litellm is not installed. Add it to requirements.txt.")
+        raise RuntimeError("litellm is not installed. Add it to requirements.txt.") from None
 
     if debug:
         _install_litellm_debug()
@@ -90,15 +112,23 @@ def completion(model: str, messages: list, api_key: str = None,
         'model': model,
         'messages': messages,
         'timeout': _timeout,
-        'temperature': 0,
         'max_tokens': max_tokens if max_tokens is not None else _MAX_COMPLETION_TOKENS,
     }
+    _m_lower = (model or '').lower()
+    if not any(k in _m_lower for k in _NO_TEMPERATURE_MODEL_KEYWORDS):
+        kwargs['temperature'] = 0
+
     if api_key:
         kwargs['api_key'] = api_key
     if api_base:
         kwargs['api_base'] = api_base
     if extra_body:
-        kwargs['extra_body'] = extra_body
+        extra_body = dict(extra_body)
+        # Anthropic takes thinking as a top-level field and 400s on extra_body ("Extra inputs are not permitted")
+        if 'thinking' in extra_body and (_m_lower.startswith('claude') or _m_lower.startswith('anthropic/')):
+            kwargs['thinking'] = extra_body.pop('thinking')
+        if extra_body:
+            kwargs['extra_body'] = extra_body
 
     _retryable = (litellm.Timeout, litellm.APIConnectionError)
 
@@ -122,9 +152,9 @@ def completion(model: str, messages: list, api_key: str = None,
         attempt += 1
         try:
             response = litellm.completion(**kwargs)
-            choice   = response.choices[0]
-            message  = choice.message
-            finish   = getattr(choice, 'finish_reason', None)
+            choice = response.choices[0]
+            message = choice.message
+            finish = getattr(choice, 'finish_reason', None)
 
             text = message.content or ''
 
@@ -133,7 +163,9 @@ def completion(model: str, messages: list, api_key: str = None,
                 parts = getattr(message, 'parts', None)
                 if parts:
                     text = ''.join(getattr(p, 'text', '') or '' for p in parts).strip()
-                    logger.debug(f"LLM client: extracted text from message.parts ({len(parts)} parts) model={model!r}")
+                    logger.debug(
+                        f"LLM client: extracted text from message.parts ({len(parts)} parts) model={model!r}"
+                    )
 
             if finish == 'length':
                 logger.warning(
@@ -149,9 +181,13 @@ def completion(model: str, messages: list, api_key: str = None,
                 )
 
             usage = getattr(response, 'usage', None)
-            input_tokens  = int(getattr(usage, 'prompt_tokens',     0) or 0) if usage else 0
+            input_tokens = int(getattr(usage, 'prompt_tokens', 0) or 0) if usage else 0
             output_tokens = int(getattr(usage, 'completion_tokens', 0) or 0) if usage else 0
-            total_tokens  = int(getattr(usage, 'total_tokens',      0) or 0) if usage else (input_tokens + output_tokens)
+            total_tokens = (
+                int(getattr(usage, 'total_tokens', 0) or 0)
+                if usage
+                else (input_tokens + output_tokens)
+            )
             logger.debug(
                 f"LLM client: model={model!r} finish={finish!r} "
                 f"tokens={total_tokens} (in={input_tokens} out={output_tokens}) "
@@ -181,24 +217,114 @@ def completion(model: str, messages: list, api_key: str = None,
             raise
 
         except litellm.BadRequestError as e:
-            # If the provider rejected an unsupported sampling param (and we haven't
-            # already stripped them), drop them and retry once. attempt-=1 keeps this
-            # off the timeout-retry budget; _stripped_sampling prevents a loop.
-            msg = str(e).lower()
-            if (not _stripped_sampling
-                    and any(p in kwargs for p in _sampling_params)
-                    and any(p in msg for p in _sampling_params)):
+            # If the provider rejected an unsupported sampling param or extra_body
+            # (e.g. Gemini INVALID_ARGUMENT on thinkingConfig or temperature), drop
+            # them and retry once.
+            if not _stripped_sampling:
                 dropped = [p for p in _sampling_params if kwargs.pop(p, None) is not None]
-                _stripped_sampling = True
-                attempt -= 1
-                logger.warning(
-                    f"LLM client: model={model!r} rejected sampling params {dropped} "
-                    f"({e}); retrying without them"
-                )
-                continue
+                # Only when the error is about it, so an unrelated 400 (prompt too long) isn't retried
+                if 'thinking' in kwargs and 'thinking' in str(e).lower():
+                    kwargs.pop('thinking')
+                    dropped.append('thinking')
+                extra_body = kwargs.get('extra_body')
+                if isinstance(extra_body, dict):
+                    gen_cfg = extra_body.get('generationConfig')
+                    if (
+                        isinstance(gen_cfg, dict)
+                        and gen_cfg.pop('thinkingConfig', None) is not None
+                    ):
+                        dropped.append('thinkingConfig')
+                        if not gen_cfg:
+                            extra_body.pop('generationConfig', None)
+                        if not extra_body:
+                            kwargs.pop('extra_body', None)
+                    elif 'thinkingConfig' in extra_body:
+                        extra_body.pop('thinkingConfig', None)
+                        dropped.append('thinkingConfig')
+                        if not extra_body:
+                            kwargs.pop('extra_body', None)
+
+                if dropped:
+                    _stripped_sampling = True
+                    attempt -= 1
+                    logger.warning(
+                        f"LLM client: model={model!r} rejected request ({e}); "
+                        f"stripped {dropped} and retrying once"
+                    )
+                    continue
             logger.warning(f"LLM call failed: model={model!r} error={e}")
             raise
 
         except Exception as e:
             logger.warning(f"LLM call failed: model={model!r} error={e}")
             raise
+
+
+def _completion_worker(conn, log_level):
+    # Runs in a spawned child: litellm is imported here, and all of it (~200MB RSS) goes
+    # back to the OS when the process exits.
+    import json
+    import sys
+    logger.remove()
+    logger.add(sys.stderr, level=log_level)
+    try:
+        kwargs = json.loads(conn.recv_bytes().decode('utf-8'))
+        result = {'ok': True, 'result': list(completion(**kwargs))}
+    except Exception as e:
+        result = {'ok': False, 'error': str(e), 'error_type': type(e).__name__}
+    try:
+        conn.send_bytes(json.dumps(result).encode('utf-8'))
+    finally:
+        conn.close()
+
+
+def completion_isolated(**kwargs):
+    """Same as completion(), but runs it in a short-lived subprocess when litellm isn't loaded yet.
+
+    For one-off calls like the settings "Test connection" button, so trying out a provider
+    doesn't leave litellm resident for the life of the process. If litellm is already
+    imported (AI is configured and in use) that memory is spent anyway, so just call
+    completion() directly. Linux only, same as the extruct isolation in restock_diff.
+
+    Errors from the child are re-raised as RuntimeError carrying the original message.
+    """
+    import json
+    import platform
+    import sys
+
+    if 'litellm' in sys.modules or platform.system() != 'Linux':
+        return completion(**kwargs)
+
+    import multiprocessing
+    try:
+        log_level = logger._core.min_level
+    except AttributeError:
+        log_level = 'DEBUG'
+
+    ctx = multiprocessing.get_context('spawn')
+    parent_conn, child_conn = ctx.Pipe()
+    p = ctx.Process(target=_completion_worker, args=(child_conn, log_level), daemon=True)
+    p.start()
+    child_conn.close()
+    try:
+        parent_conn.send_bytes(json.dumps(kwargs).encode('utf-8'))
+        # completion() retries timeouts/connection errors, so allow for every attempt
+        # plus the child's start-up (importing litellm takes a few seconds)
+        _timeout = kwargs.get('timeout') or DEFAULT_TIMEOUT
+        deadline = _timeout * (DEFAULT_RETRIES + 1) + 60
+        if not parent_conn.poll(deadline):
+            raise TimeoutError(f"LLM call did not finish within {deadline}s")
+        try:
+            result = json.loads(parent_conn.recv_bytes().decode('utf-8'))
+        except EOFError:
+            raise RuntimeError("LLM subprocess exited without a result, check the logs") from None
+    finally:
+        parent_conn.close()
+        p.join(timeout=5)
+        if p.is_alive():
+            p.kill()
+            p.join()
+
+    if not result['ok']:
+        raise RuntimeError(result['error'])
+    return tuple(result['result'])

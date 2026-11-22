@@ -9,14 +9,23 @@ import re
 def test_share_watch(client, live_server, measure_memory_usage, datastore_path):
     set_original_response(datastore_path=datastore_path)
 
-   #  live_server_setup(live_server) # Setup on conftest per function
+    # Turn it on
+    res = client.post(
+        url_for('settings.settings_page'),
+        data={
+            'application-ui-use_share_watch': '1',
+            'requests-timeout': '60',
+        },
+        follow_redirects=True,
+    )
 
+    assert res.status_code == 200
     test_url = url_for('test_endpoint', _external=True)
     include_filters = ".nice-filter"
 
     # Add our URL to the import page
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Goto the edit page, add our ignore text
     # Add our URL to the import page
@@ -33,7 +42,7 @@ def test_share_watch(client, live_server, measure_memory_usage, datastore_path):
     assert bytes(include_filters.encode('utf-8')) in res.data
 
     # click share the link
-    res = client.get(
+    res = client.post(
         url_for("ui.form_share_put_watch", uuid=uuid),
         follow_redirects=True
     )
@@ -71,5 +80,22 @@ def test_share_watch(client, live_server, measure_memory_usage, datastore_path):
     # Check it saved the URL
     res = client.get(url_for("watchlist.index"))
     assert bytes(test_url.encode('utf-8')) in res.data
+
+    # Turn it off
+    res = client.post(
+        url_for('settings.settings_page'),
+        data={
+            'application-ui-use_share_watch': '',
+            'requests-timeout': '60',
+        },
+        follow_redirects=True,
+    )
+
+    # click share the link
+    res = client.post(
+        url_for("ui.form_share_put_watch", uuid=uuid),
+        follow_redirects=True
+    )
+    assert res.status_code == 403
 
     delete_all_watches(client)

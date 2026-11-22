@@ -86,35 +86,8 @@ class processor_settings_form(processor_text_json_diff_form):
         """Tab label for processor-specific settings."""
         return _l('Screenshot Comparison')
 
-    def extra_form_content(self):
-        """Render processor-specific form fields.
+    def extra_form_template(self):
+        """Processor-specific form fields, rendered with Flask's render_template() so they are translatable.
         @NOTE: prepend processor_config_* to the field name so it will save into its own datadir/uuid/image_ssim_diff.json and be read at process time
         """
-        return '''
-        {% from '_helpers.html' import render_field %}
-        <fieldset>
-            <legend>Screenshot Comparison Settings</legend>
-
-            <div class="pure-control-group">
-                {{ render_field(form.processor_config_min_change_percentage) }}
-                <span class="pure-form-message-inline">
-                    <strong>What percentage of pixels must change to trigger a detection?</strong><br>
-                    For example, <strong>0.1%</strong> means if 0.1% or more of the pixels change, it counts as a change.<br>
-                    Lower values = more sensitive (detect smaller changes).<br>
-                    Higher values = less sensitive (only detect larger changes).<br>
-                    Leave blank to use global default (0.1%).
-                </span>
-            </div>
-
-            <div class="pure-control-group">
-                {{ render_field(form.processor_config_pixel_difference_threshold_sensitivity) }}
-                <span class="pure-form-message-inline">
-                    <strong>How different must an individual pixel be to count as "changed"?</strong><br>
-                    <strong>Low sensitivity (75)</strong> = Only count pixels that changed significantly (0-255 scale).<br>
-                    <strong>High sensitivity (20)</strong> = Count pixels with small changes as different.<br>
-                    <strong>Very high (0)</strong> = Any pixel change counts.<br>
-                    Select "Use global default" to inherit the system-wide setting.
-                </span>
-            </div>
-        </fieldset>
-        '''
+        return 'image_ssim_diff/edit-extras.html'

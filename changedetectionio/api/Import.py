@@ -9,6 +9,10 @@ import json
 # Number of URLs above which import switches to background processing
 IMPORT_SWITCH_TO_BACKGROUND_THRESHOLD = 20
 
+# Query params whose accepted values are wider than the `enum:` in the spec and are checked
+# separately further down (plugin processors aren't listed in the static spec enum).
+ENUM_VALIDATED_ELSEWHERE = {'processor'}
+
 
 def default_content_type(content_type='text/plain'):
     """Decorator to set a default Content-Type header if none is provided."""
@@ -143,9 +147,22 @@ class Import(Resource):
             # Convert to appropriate type based on schema
             try:
                 converted_value = convert_query_param_to_type(param_value, schema_properties[param_name])
-                extras[param_name] = converted_value
             except (ValueError, json.JSONDecodeError) as e:
                 return f"Invalid value for parameter '{param_name}': {str(e)}", 400
+
+            # Enforce any `enum:` declared in the OpenAPI spec (notification_format, method,
+            # conditions_match_logic ...). /api/v1/watch gets this for free because its JSON body is
+            # unmarshalled against the spec, but the import query params never were - so something
+            # like ?notification_format=Text used to be stored verbatim and then raise
+            # "Invalid notification format" at notification-send time, long after the import.
+            # `processor` is exempt: plugin processors are legal but aren't in the static spec enum,
+            # it has its own check against available_processors() below.
+            allowed_values = schema_properties[param_name].get('enum')
+            if allowed_values and param_name not in ENUM_VALIDATED_ELSEWHERE and converted_value not in allowed_values:
+                return (f"Invalid value for parameter '{param_name}': '{param_value}'. "
+                        f"Must be one of: {', '.join(str(v) for v in allowed_values)}"), 400
+
+            extras[param_name] = converted_value
 
         # Validate processor if provided
         if 'processor' in extras:
@@ -193,6 +210,15 @@ class Import(Resource):
                 continue
 
             urls_to_import.append(url)
+
+        # PAGE_WATCH_LIMIT - refuse the whole batch rather than importing an arbitrary prefix of
+        # it, so a 429 always means "nothing was created" and the caller can retry as-is
+        watch_limit = self.datastore.watch_limit
+        if watch_limit is not None:
+            current_watch_count = len(self.datastore.data['watching'])
+            if current_watch_count + len(urls_to_import) > watch_limit:
+                return (f"Watch limit reached ({current_watch_count}/{watch_limit} watches), importing "
+                        f"{len(urls_to_import)} URL(s) would exceed it. No watches were imported.", 429)
 
         # For small imports, process synchronously for immediate feedback
         if len(urls_to_import) < IMPORT_SWITCH_TO_BACKGROUND_THRESHOLD:

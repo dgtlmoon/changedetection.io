@@ -46,7 +46,7 @@ def test_utf8_content_without_charset_header(client, live_server, datastore_path
 
     test_url = url_for('test_endpoint', content_type="text/html", _external=True)
     client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"), follow_redirects=True)
@@ -68,7 +68,7 @@ def test_shiftjis_with_meta_charset(client, live_server, datastore_path):
 
     test_url = url_for('test_endpoint', content_type="text/html", _external=True)
     client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     res = client.get(url_for("ui.ui_preview.preview_page", uuid="first"), follow_redirects=True)
@@ -94,7 +94,7 @@ def test_check_encoding_detection(client, live_server, measure_memory_usage, dat
     # Add our URL to the import page
     test_url = url_for('test_endpoint', content_type="text/html", _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -122,7 +122,7 @@ def test_check_encoding_detection_missing_content_type_header(client, live_serve
     # Add our URL to the import page
     test_url = url_for('test_endpoint', _external=True)
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     wait_for_all_checks(client)
 

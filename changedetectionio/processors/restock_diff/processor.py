@@ -13,9 +13,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 def _(x): return x  # Translation marker for extraction only
 name = _('Re-stock & Price detection for pages with a SINGLE product')
 description = _('Detects if the product goes back to in-stock')
+list_badge_text = _('Restock')
 del _  # Remove marker function
 processor_weight = 1
-list_badge_text = "Restock"  # _()
 
 class UnableToExtractRestockData(Exception):
     def __init__(self, status_code):
@@ -47,12 +47,14 @@ def _deduplicate_prices(data):
 
         if isinstance(datum.value, list):
             # Process each item in the list
-            normalized_value = set([float(re.sub(r'[^\d.]', '', str(item))) for item in datum.value if str(item).strip()])
-            unique_data.update(normalized_value)
+            # parse_currency() understands decimal commas ("39,99"), stripping to [^\d.] first would turn that into 3999
+            normalized_value = set([Restock().parse_currency(str(item)) for item in datum.value if str(item).strip()])
+            unique_data.update(v for v in normalized_value if v is not None)
         else:
             # Process single value
-            v = float(re.sub(r'[^\d.]', '', str(datum.value)))
-            unique_data.add(v)
+            v = Restock().parse_currency(str(datum.value))
+            if v is not None:
+                unique_data.add(v)
 
     return list(unique_data)
 
@@ -364,12 +366,8 @@ def get_itemprop_availability(html_content) -> Restock:
         if availability_result:
             value['availability'] = availability_result[0].value
 
-        if value.get('availability'):
-            value['availability'] = re.sub(r'(?i)^(https|http)://schema.org/', '',
-                                           value.get('availability').strip(' "\'').lower()) if value.get('availability') else None
-
         # Second, go dig OpenGraph which is something that jsonpath_ng cant do because of the tuples and double-dots (:)
-        if not value.get('price') or value.get('availability'):
+        if not value.get('price') or not value.get('availability') or not value.get('currency'):
             logger.debug("Alternatively digging through OpenGraph properties for restock/price info..")
             jsonpath_expr = parse('$..properties')
 
@@ -380,6 +378,14 @@ def get_itemprop_availability(html_content) -> Restock:
                     value['availability'] = _search_prop_by_value([match.value], "product:availability")
                 if not value.get('currency'):
                     value['currency'] = _search_prop_by_value([match.value], "price:currency")
+
+        # Normalise after both sources have been tried, otherwise an availability that came from
+        # OpenGraph stays raw. The OpenGraph vocabulary spells it "in stock" while the in-stock
+        # matcher looks for "instock", so the spaces have to go too.
+        if value.get('availability'):
+            value['availability'] = re.sub(r'(?i)^(https|http)://schema.org/', '',
+                                           value.get('availability').strip(' "\'').lower())
+            value['availability'] = re.sub(r'\s+', '', value['availability'])
     logger.trace(f"Processed with Extruct in {time.time()-now:.3f}s")
 
     return value
@@ -403,6 +409,53 @@ def is_between(number, lower=None, upper=None):
 class perform_site_check(difference_detection_processor):
     screenshot = None
     xpath_data = None
+
+    def _price_from_user_filters(self, watch):
+        """The user picked the price with 'Filters & Triggers' (#2707): include filters, subtractive
+        selectors, 'Extract text', 'Extract lines containing'. Run text mode's own filter pipeline
+        over the page, so the filters behave exactly as they do there, then pick the price out of
+        what's left. Returns None when none of those are set (auto-detection is used).
+
+        FilterNotFoundInResponse (filter matched nothing) is raised as-is, the same as text mode,
+        so the "filter not found" error and notification work unchanged."""
+        from changedetectionio.processors.text_json_diff.processor import (
+            FilterConfig, ContentProcessor, ContentTransformer, guess_stream_type, DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER)
+        from .filtered_price import (extract_price_from_filtered_text, NoPriceInFilteredText,
+                                     MoreThanOnePriceInFilteredText)
+
+        # No LD+JSON selector injection, that's text mode's price tracker, restock reads that itself
+        filter_config = FilterConfig(watch, self.datastore, inject_ldjson_price_selectors=False)
+        # Subtractive selectors alone only clean the page, they don't point at a price
+        has_extract = any(r.strip() for r in [*filter_config.extract_text, *filter_config.extract_lines_containing])
+        if not (filter_config.has_include_filters or has_extract):
+            return None
+
+        ctype_header = self.fetcher.get_all_headers().get('content-type', DEFAULT_WHEN_NO_CONTENT_TYPE_HEADER).lower()
+        stream_content_type = guess_stream_type(http_content_header=ctype_header, content=self.fetcher.content)
+        content_processor = ContentProcessor(self.fetcher, watch, filter_config, self.datastore)
+
+        content = content_processor.preprocess(self.fetcher.content, stream_content_type)
+        _, text = content_processor.filter_to_text(content, stream_content_type)
+        if filter_config.extract_lines_containing:
+            text = ContentTransformer.extract_lines_containing(text, filter_config.extract_lines_containing)
+        if filter_config.extract_text:
+            text = ContentTransformer.extract_by_regex(text, filter_config.extract_text)
+
+        shown = ' '.join(text.split())[:100]
+        try:
+            return extract_price_from_filtered_text(text)
+        except NoPriceInFilteredText:
+            message = f"Your filters matched \"{shown}\" but no price was found in it, point the filter at the price itself."
+        except MoreThanOnePriceInFilteredText as e:
+            message = f"Your filters matched more than one price ({', '.join(str(a) for a in e.amounts)}) in \"{shown}\", narrow the filter down to just the price."
+
+        raise ProcessorException(
+            message=message,
+            url=watch.get('url'),
+            status_code=self.fetcher.get_last_status_code(),
+            screenshot=self.fetcher.screenshot,
+            xpath_data=self.fetcher.xpath_data
+        )
 
     def run_changedetection(self, watch, force_reprocess=False):
         import hashlib
@@ -502,8 +555,11 @@ class perform_site_check(difference_detection_processor):
             # Try plugin override - plugins can decide if they support this fetcher
             if fetcher_name:
                 logger.debug(f"Calling extra plugins for getting item price/availability (fetcher: {fetcher_name})")
-                from changedetectionio.llm.evaluator import resolve_intent
-                _llm_intent, _ = resolve_intent(watch, self.datastore)
+                from changedetectionio.llm.evaluator import llm_enabled_for_watch, resolve_intent
+                # AI off for this watch (or for its group) means no intent is handed to the
+                # LLM restock plugin, so it doesn't spend tokens here either — #4204.
+                _llm_on, _ = llm_enabled_for_watch(watch, self.datastore)
+                _llm_intent, _ = resolve_intent(watch, self.datastore) if _llm_on else ('', '')
                 plugin_availability = get_itemprop_availability_from_plugin(self.fetcher.content, fetcher_name, self.fetcher, watch.link, llm_intent=_llm_intent or None)
 
                 if plugin_availability:
@@ -529,6 +585,20 @@ class perform_site_check(difference_detection_processor):
                         logger.info(f"Using plugin-provided availability data for fetcher '{fetcher_name}' (built-in had price={has_price}, availability={has_availability}; plugin has price={plugin_has_price}, availability={plugin_has_availability})")
                 if not plugin_availability:
                     logger.debug("No item price/availability from plugins")
+
+        # The user pointed 'Filters & Triggers' straight at the price (#2707), that beats any
+        # automatic guess and also settles "more than one price". Only the price comes from the
+        # filters, stock still comes from the page metadata / stock-not-in-stock.js on the WHOLE
+        # page, the selected snippet rarely holds the "out of stock" text.
+        filtered = self._price_from_user_filters(watch)
+        if filtered:
+            filtered_price, filtered_currency = filtered
+            itemprop_availability = dict(itemprop_availability or {})
+            itemprop_availability['price'] = filtered_price
+            # Prefer the page's own ISO currency code ("USD") over the "$" the snippet shows
+            if not itemprop_availability.get('currency'):
+                itemprop_availability['currency'] = filtered_currency
+            logger.debug(f"Watch UUID {watch.get('uuid')} price {filtered_price} {filtered_currency} from the user's filters")
 
         # If we had multiple prices and plugins also failed, NOW raise the exception
         if multiple_prices_found and not itemprop_availability.get('price'):
@@ -580,8 +650,16 @@ class perform_site_check(difference_detection_processor):
             update_obj['restock']['last_price'] = old_restock.get('last_price')  # unchanged: keep the existing reference
 
         if not self.fetcher.instock_data and not itemprop_availability.get('availability') and not itemprop_availability.get('price'):
+            # Availability/restock checking may be turned off ('in_stock_processing' == 'off'),
+            # but there's still nothing here to track at all - that's always worth raising on.
+            # Just don't blame "restock"/stock data for it when the user turned stock checking
+            # off; the actual failure in that case is that no price could be found either.
+            if restock_settings.get('in_stock_processing') == 'off':
+                message = f"Unable to extract price data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded price information was found and nothing interesting in the text, try using this watch with Chrome."
+            else:
+                message = f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome."
             raise ProcessorException(
-                message=f"Unable to extract restock data for this page unfortunately. (Got code {self.fetcher.get_last_status_code()} from server), no embedded stock information was found and nothing interesting in the text, try using this watch with Chrome.",
+                message=message,
                 url=watch.get('url'),
                 status_code=self.fetcher.get_last_status_code(),
                 screenshot=self.fetcher.screenshot,

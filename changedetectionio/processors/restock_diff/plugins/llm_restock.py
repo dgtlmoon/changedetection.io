@@ -8,6 +8,32 @@ LLM and asks it to return a structured JSON answer.
 
 The module-level `datastore` variable is injected at startup by
 `inject_datastore_into_plugins()` in pluggy_interface.py.
+
+Reusable by other LLM backends: a plugin that talks to a provider some other way
+(without litellm) can reuse the prompt, page trimming, cache and reply parsing,
+and only supply the HTTP call itself. Register it under the 'changedetectionio' setuptools
+entrypoint; it runs before this one (trylast), and this one is skipped once it answers:
+
+    from changedetectionio.pluggy_interface import hookimpl
+    from changedetectionio.processors.restock_diff.plugins.llm_restock import (
+        build_restock_messages, restock_cache_key, restock_cache_get, restock_cache_put, parse_restock_reply)
+
+    @hookimpl
+    def get_itemprop_availability_override(content, url, llm_intent, text):
+        # `content` is the fetched HTML, `text` the same page through html_to_text().
+        # No default values here, pluggy silently never passes an argument that has one.
+        messages = build_restock_messages(content, url, llm_intent)
+        key = restock_cache_key(MODEL, messages)
+        result = restock_cache_get(key)
+        if result is None:
+            raw = <POST messages to your provider with requests>
+            result = parse_restock_reply(raw, url)
+            if result:
+                restock_cache_put(key, result)
+        return result   # None lets the next plugin try
+
+None of these import litellm. Avoid evaluator._thinking_extra_body(), it does, and
+pass cost_usd= to accumulate_global_tokens() so it doesn't look the price up in litellm.
 """
 import json
 import os
@@ -108,11 +134,16 @@ _LLM_RESULT_CACHE = OrderedDict()
 _LLM_RESULT_CACHE_MAX = 500
 
 
-def _llm_cache_get(key):
+def restock_cache_key(model: str, messages: list) -> str:
+    """Cache key for one extraction - the model plus the exact user prompt sent to it."""
+    return hashlib.md5(((model or '') + '\n' + messages[-1]['content']).encode('utf-8')).hexdigest()
+
+
+def restock_cache_get(key):
     return _LLM_RESULT_CACHE.get(key)
 
 
-def _llm_cache_put(key, value):
+def restock_cache_put(key, value):
     _LLM_RESULT_CACHE[key] = value
     _LLM_RESULT_CACHE.move_to_end(key)
     while len(_LLM_RESULT_CACHE) > _LLM_RESULT_CACHE_MAX:
@@ -146,6 +177,9 @@ def _extract_jsonld(html_content: str) -> str:
 # Semantic tags always treated as chrome (nav/header/footer)
 _CHROME_TAGS = {'nav', 'header', 'footer', 'aside'}
 
+# Never removed, a class on the root (e.g. Amazon's "mn-nav-stripe-moved" on <html>) would wipe the whole page
+_ROOT_TAGS = {'html', 'body'}
+
 # id/class fragments that strongly indicate navigation or site-chrome
 _CHROME_PATTERNS = re.compile(
     r'\b(nav|navigation|navbar|menu|mega-menu|breadcrumb|breadcrumbs?|'
@@ -175,6 +209,8 @@ def _remove_chrome(html_content: str) -> str:
             if not isinstance(tag, Tag) or tag.parent is None:
                 continue
             name = tag.name or ''
+            if name in _ROOT_TAGS:
+                continue
             if name in _CHROME_TAGS:
                 tag.decompose()
                 continue
@@ -193,25 +229,15 @@ def _remove_chrome(html_content: str) -> str:
         return html_content
 
 
-def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
-    """HTML-to-text for LLM consumption.
+# Removing site chrome must leave at least this share of the page's text. Less means a page-wide wrapper matched a
+# chrome pattern (e.g. <div class="has-sidebar"> around everything) and took the content with it
+_CHROME_MIN_KEPT = 0.1
 
-    1. Extracts JSON-LD (structured product data) to prepend.
-    2. Strips nav/header/footer/recommendation blocks via BS4.
-    3. Removes all remaining tags and collapses whitespace.
-    JSON-LD is prepended so reliable price/availability data is always visible
-    to the LLM regardless of how deep it sits in the page.
 
-    `max_chars` caps the total returned length — callers pass the app's
-    configured `max_input_chars` setting so the prompt size obeys the UI.
-    """
-    jsonld = _extract_jsonld(html_content)
-
-    # Remove site-chrome before generic tag stripping
-    cleaned = _remove_chrome(html_content)
-
+def _html_text(html_content: str) -> str:
+    """The text of some HTML: no comments, scripts, styles or tags, common entities decoded, whitespace collapsed."""
     # Drop HTML comments (can contain large disabled markup blocks)
-    text = re.sub(r'<!--.*?-->', ' ', cleaned, flags=re.DOTALL)
+    text = re.sub(r'<!--.*?-->', ' ', html_content, flags=re.DOTALL)
     # Drop all <script> and <style> blocks
     text = re.sub(r'<(script|style)[^>]*>.*?</(script|style)>', ' ', text, flags=re.DOTALL | re.IGNORECASE)
     # Strip remaining tags
@@ -224,7 +250,31 @@ def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
             .replace('&gt;', '>')
             .replace('&quot;', '"')
             .replace('&#39;', "'"))
-    text = re.sub(r'\s+', ' ', text).strip()
+    return re.sub(r'\s+', ' ', text).strip()
+
+
+def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
+    """HTML-to-text for LLM consumption.
+
+    1. Extracts JSON-LD (structured product data) to prepend.
+    2. Strips nav/header/footer/recommendation blocks via BS4, unless that would remove nearly all the text
+       (a page-wide wrapper whose class looks like chrome), then the page is kept whole.
+    3. Removes all remaining tags and collapses whitespace.
+    JSON-LD is prepended so reliable price/availability data is always visible
+    to the LLM regardless of how deep it sits in the page.
+
+    `max_chars` caps the total returned length — callers pass the app's
+    configured `max_input_chars` setting so the prompt size obeys the UI.
+    """
+    jsonld = _extract_jsonld(html_content)
+
+    # Remove site-chrome before generic tag stripping
+    text = _html_text(_remove_chrome(html_content))
+    whole = _html_text(html_content)
+    if len(text) < len(whole) * _CHROME_MIN_KEPT:
+        logger.info(f"LLM restock fallback: removing site chrome left {len(text)} of {len(whole)} characters, "
+                    f"a page-wide element must have matched, using the whole page instead")
+        text = whole
 
     if jsonld:
         # The structured metadata is extra CONTEXT, not a replacement for the page text — the
@@ -236,8 +286,85 @@ def _strip_html(html_content: str, max_chars: int = _MAX_CONTENT_CHARS) -> str:
     return text[:max_chars]
 
 
-@hookimpl
-def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, url, llm_intent=None):
+def build_restock_messages(content: str, url: str, llm_intent: str = None,
+                           max_chars: int = _MAX_CONTENT_CHARS) -> list | None:
+    """Chat messages (system + user) for extracting price/stock from *content* (HTML).
+
+    Returns None when there's no text left after stripping the HTML, nothing worth sending.
+    """
+    text_content = _strip_html(content, max_chars=max_chars) if content else ''
+    logger.debug(f"LLM restock fallback: stripped HTML to {len(text_content)} chars for {url}")
+    if not text_content.strip():
+        # INFO, not debug: otherwise the fallback silently never runs for this page
+        logger.info(f"LLM restock fallback: no text left after stripping the HTML of {url}, not asking the LLM")
+        return None
+
+    user_prompt = f'URL: {url or "unknown"}\n\nPage content:\n{text_content}'
+    if llm_intent:
+        user_prompt += f'\n\nUser notification intent: {llm_intent}'
+
+    return [
+        {'role': 'system', 'content': SYSTEM_PROMPT},
+        {'role': 'user', 'content': user_prompt},
+    ]
+
+
+def parse_restock_reply(raw: str, url: str = None) -> dict | None:
+    """{'price', 'currency', 'availability'} from the model's raw reply.
+
+    Returns None when the reply isn't JSON or carries neither a price nor an availability.
+    """
+    # Strip optional markdown fences the model might add
+    raw = (raw or '').strip()
+    if raw.startswith('```'):
+        raw = re.sub(r'^```[a-z]*\n?', '', raw)
+        raw = raw.rstrip('`').strip()
+
+    logger.debug(f"LLM restock fallback raw response: {raw!r}")
+
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError as e:
+        logger.warning(f"LLM restock fallback: JSON parse failed ({e}) - raw response was: {raw!r}")
+        return None
+    if not isinstance(result, dict):
+        logger.warning(f"LLM restock fallback: expected a JSON object - raw response was: {raw!r}")
+        return None
+
+    price = result.get('price')
+    currency = result.get('currency') or None
+    availability = result.get('availability') or None
+
+    # Normalise price to float
+    if price is not None:
+        try:
+            if isinstance(price, str):
+                # The model sometimes returns the price as page text ("1.299,95 €"), stripping
+                # everything but digits and dots would turn that into 1.29995. Same parser as the
+                # structured-data extractors, see Restock.parse_currency() for every caller.
+                from changedetectionio.processors.restock_diff import Restock
+                price = Restock().parse_currency(price)
+            else:
+                price = float(price)
+        except (ValueError, TypeError):
+            logger.warning(f"LLM restock fallback: could not convert price {price!r} to float, ignoring")
+            price = None
+
+    if price is None and not availability:
+        logger.info(f"LLM restock fallback: LLM returned no usable price or availability for {url} (raw: {raw!r})")
+        return None
+
+    logger.info(
+        f"LLM restock fallback result: price={price} currency={currency} "
+        f"availability={availability!r} url={url}"
+    )
+    return {'price': price, 'currency': currency, 'availability': availability}
+
+
+# trylast: plugins that talk to a provider some other way get the first go, and since the
+# hook is firstresult this one (and litellm) is skipped when one of them already answered.
+@hookimpl(trylast=True)
+def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, url, llm_intent):
     """Use an LLM as a last-resort fallback for price and restock extraction."""
     global datastore
 
@@ -266,36 +393,26 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
         return None
 
     # Prompt size obeys the app's "Max input characters" setting (env → datastore → 100k)
-    max_input_chars = _get_max_input_chars(datastore)
-    text_content = _strip_html(content, max_chars=max_input_chars) if content else ''
-    logger.debug(f"LLM restock fallback: stripped HTML to {len(text_content)} chars for {url}")
-    if not text_content.strip():
-        logger.debug("LLM restock fallback: no text content after stripping HTML")
+    messages = build_restock_messages(content, url, llm_intent, max_chars=_get_max_input_chars(datastore))
+    if not messages:
         return None
 
     logger.info(f"LLM restock fallback: using LLM ({llm_cfg['model']}) for price/stock extraction - {url}")
 
-    user_prompt = f'URL: {url or "unknown"}\n\nPage content:\n{text_content}'
-    if llm_intent:
-        user_prompt += f'\n\nUser notification intent: {llm_intent}'
-
     # Skip the (billed) LLM call entirely if we've already extracted this exact input — the page
     # content that matters hasn't changed since last time, only noisy raw HTML around it.
-    cache_key = hashlib.md5(((llm_cfg.get('model') or '') + '\n' + user_prompt).encode('utf-8')).hexdigest()
-    cached = _llm_cache_get(cache_key)
+    cache_key = restock_cache_key(llm_cfg['model'], messages)
+    cached = restock_cache_get(cache_key)
     if cached is not None:
         logger.info(f"LLM restock fallback: content unchanged since last LLM call, reusing cached result - {url}")
         return {**cached, '_tokens': 0, '_input_tokens': 0, '_output_tokens': 0, '_model': llm_cfg['model']}
 
     logger.debug(f"LLM System Prompt: {SYSTEM_PROMPT}")
-    logger.debug(f"LLM Prompt: {user_prompt}")
+    logger.debug(f"LLM Prompt: {messages[-1]['content']}")
     try:
         raw, tokens, input_tokens, output_tokens = llm_client.completion(
             model=llm_cfg['model'],
-            messages=[
-                {'role': 'system', 'content': SYSTEM_PROMPT},
-                {'role': 'user', 'content': user_prompt},
-            ],
+            messages=messages,
             api_key=llm_cfg.get('api_key'),
             api_base=llm_cfg.get('api_base'),
             timeout=resolve_llm_timeout(llm_cfg),
@@ -306,7 +423,7 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             # reasoning on for accuracy) and add plenty of headroom for the answer and any
             # provider-default reasoning we don't explicitly control.
             max_tokens=apply_local_token_multiplier(max(1000, settings.thinking_budget + 800), llm_cfg),
-            extra_body=_thinking_extra_body(llm_cfg['model'], settings.thinking_budget),
+            extra_body=_thinking_extra_body(llm_cfg['model'], settings.thinking_budget, llm_cfg),
         )
 
         accumulate_global_tokens(
@@ -316,42 +433,11 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             model=llm_cfg['model'],
         )
 
-        # Strip optional markdown fences the model might add
-        raw = raw.strip()
-        if raw.startswith('```'):
-            raw = re.sub(r'^```[a-z]*\n?', '', raw)
-            raw = raw.rstrip('`').strip()
-
-        logger.debug(f"LLM restock fallback raw response: {raw!r}")
-
-        result = json.loads(raw)
-
-        price = result.get('price')
-        currency = result.get('currency') or None
-        availability = result.get('availability') or None
-
-        # Normalise price to float
-        if price is not None:
-            try:
-                if isinstance(price, str):
-                    price = float(re.sub(r'[^\d.]', '', price))
-                else:
-                    price = float(price)
-            except (ValueError, TypeError):
-                logger.warning(f"LLM restock fallback: could not convert price {price!r} to float, ignoring")
-                price = None
-
-        if price is None and not availability:
-            logger.info(f"LLM restock fallback: LLM returned no usable price or availability for {url} (raw: {raw!r})")
+        result_clean = parse_restock_reply(raw, url)
+        if not result_clean:
             return None
-
-        logger.info(
-            f"LLM restock fallback result: price={price} currency={currency} "
-            f"availability={availability!r} url={url}"
-        )
-        result_clean = {'price': price, 'currency': currency, 'availability': availability}
         # Remember this result so an identical next check doesn't re-bill the LLM.
-        _llm_cache_put(cache_key, result_clean)
+        restock_cache_put(cache_key, result_clean)
         return {
             **result_clean,
             '_tokens': tokens,
@@ -360,9 +446,6 @@ def get_itemprop_availability_override(content, fetcher_name, fetcher_instance, 
             '_model': llm_cfg['model'],
         }
 
-    except json.JSONDecodeError as e:
-        logger.warning(f"LLM restock fallback: JSON parse failed ({e}) - raw response was: {raw!r}")
-        return None
     except Exception as e:
         logger.warning(f"LLM restock fallback: extraction failed for {url}: {e}")
         return None

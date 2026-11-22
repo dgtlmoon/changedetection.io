@@ -1,3 +1,12 @@
+body:has(#browser-steps:target) .edit-form {
+  max-width: min(var(--browser-steps-max-width, 1280px), 95vw);
+  width: 95%;
+}
+
+body:has(#visualselector:target) .edit-form {
+  width: 95%;
+  max-width: min(var(--visualselector-max-width, 1280px), 95vw);
+}
 
 #selector-wrapper {
   height: 100%;

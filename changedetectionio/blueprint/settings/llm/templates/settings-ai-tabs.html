@@ -1,0 +1,22 @@
+{#
+  The AI pages' own two pages, a segmented switch inside the box under the /settings tab row (settings-tabs.html,
+  where "AI / LLM / MCP" is the active tab). Each is its own page and route, not an #anchor, so each page's form
+  stands alone; the current one is marked by the server (active_tab).
+#}
+<nav class="settings-subtabs" aria-label="{{ _('AI / LLM / MCP') }}">
+    {# Which way each one points: AI / LLM reaches out to an AI provider, the MCP server is reached into by assistants #}
+    <a href="{{ url_for('settings.llm.llm_settings_page') }}#overview" class="settings-subtab subtab-outgoing{% if active_tab == 'llm' %} active" aria-current="page{% endif %}">
+        <span class="settings-subtab-icon" aria-hidden="true"><i data-feather="arrow-up-right"></i></span>
+        <span class="settings-subtab-text">
+            {{ _('AI / LLM') }}
+            <small>{{ _('Outgoing · your AI provider') }}</small>
+        </span>
+    </a>
+    <a href="{{ url_for('settings.llm.mcp_settings_page') }}#overview" class="settings-subtab subtab-incoming{% if active_tab == 'mcp' %} active" aria-current="page{% endif %}">
+        <span class="settings-subtab-icon" aria-hidden="true"><i data-feather="arrow-down-left"></i></span>
+        <span class="settings-subtab-text">
+            {{ _('MCP Server') }}
+            <small>{{ _('Incoming · AI assistants') }}</small>
+        </span>
+    </a>
+</nav>

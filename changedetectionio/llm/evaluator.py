@@ -1,11 +1,11 @@
 """
 LLM evaluation orchestration.
 
-Two public entry points:
-  - run_setup(watch, datastore)        — one-time: decide if pre-filter needed
+Public entry point:
   - evaluate_change(watch, datastore, diff, current_snapshot) — per-change evaluation
 
-Intent resolution: watch.llm_intent → first tag with llm_intent → None (no evaluation)
+Intent resolution: watch.llm_intent → first tag with llm_intent whose AI switch is "on"
+                   (see tag_llm_applies_to_watches) → None (no evaluation)
 Cache: each (intent, diff) pair is evaluated exactly once, result stored in watch.
 
 Environment variable overrides (take priority over datastore settings):
@@ -32,9 +32,8 @@ from .prompt_builder import (
     build_change_summary_prompt, build_change_summary_system_prompt,
     build_eval_prompt, build_eval_system_prompt,
     build_preview_prompt, build_preview_system_prompt,
-    build_setup_prompt, build_setup_system_prompt,
 )
-from .response_parser import parse_eval_response, parse_preview_response, parse_setup_response
+from .response_parser import parse_eval_response, parse_preview_response
 
 from changedetectionio.model.LLMSettings import (
     LLMSettings,
@@ -85,8 +84,12 @@ def _check_input_size(text: str, max_chars: int) -> None:
         )
 
 
-def _thinking_extra_body(model: str, budget: int) -> dict | None:
+def _thinking_extra_body(model: str, budget: int, llm_cfg: dict | None = None) -> dict | None:
     """Return litellm extra_body to control thinking for models that support it.
+
+    Self-hosted servers (Ollama, OpenAI-compatible: llama.cpp, vLLM, LM Studio) take no per-request budget, only
+    on/off, so that's its own opt-in (local_thinking_off, #4638). Not the budget: it defaults to Off, following it
+    would switch thinking off for every existing self-hosted user.
 
     The `thinkingConfig.thinkingBudget` payload is Gemini-specific (Anthropic and
     OpenAI reasoning models use different parameters), so we gate on the gemini/
@@ -94,8 +97,36 @@ def _thinking_extra_body(model: str, budget: int) -> dict | None:
     "does this model think?" decision. That picks up new Gemini variants and
     rolling aliases (`gemini-flash-latest`, etc.) as litellm's registry tracks
     them, without us hardcoding model names here.
+
+    Claude 5.x thinks by default and has no token budget any more (budget_tokens is a 400), so for Anthropic
+    only Off (0) does anything: thinking={'type': 'disabled'} on Haiku/Sonnet 5.x, or 'between_tools' on
+    Sonnet 5.5 which rejects 'disabled'. Left alone: Opus 5 (with thinking disabled it can leak <thinking>
+    tags into the answer), Opus 5.5 / Fable (thinking can't be switched off) and 4.x (no thinking unless asked).
+    client.completion() lifts 'thinking' out of extra_body, Anthropic rejects unknown body fields.
     """
+    llm_cfg = llm_cfg or {}
+    if llm_cfg.get('local_thinking_off'):
+        if llm_cfg.get('provider_kind') == 'ollama':
+            return {'think': False}
+        if llm_cfg.get('provider_kind') == 'openai_compatible':
+            return {'chat_template_kwargs': {'enable_thinking': False}}
+    if model.startswith('claude') or model.startswith('anthropic/'):
+        if budget or not any(k in model.lower() for k in ('haiku-5', 'sonnet-5')):
+            return None
+        # litellm's registry has no flag for which models take 'between_tools'
+        if 'sonnet-5-5' in model.lower():
+            return {'thinking': {'type': 'between_tools'}}
+        try:
+            import litellm
+            info = litellm.get_model_info(model)
+            if not info.get('supports_adaptive_thinking') or info.get('thinking_always_on'):
+                return None
+        except Exception:
+            return None
+        return {'thinking': {'type': 'disabled'}}
     if not model.startswith('gemini/'):
+        return None
+    if 'flash-lite' in model.lower():
         return None
     try:
         import litellm
@@ -119,7 +150,7 @@ def _cached_system(text: str, model: str = '') -> dict:
     return {'role': 'system', 'content': text}
 
 
-# Output-token cap for the JSON-returning calls (intent eval, preview, setup/prefilter).
+# Output-token cap for the JSON-returning calls (intent eval, preview).
 # Mirrors client.py's _MAX_COMPLETION_TOKENS so the multiplier helper has a base value
 # to scale; cloud-LLM users hit this default unmodified, preserving prior cost defaults.
 JSON_RESPONSE_MAX_TOKENS = 400
@@ -149,10 +180,25 @@ DEFAULT_CHANGE_SUMMARY_PROMPT = (
     "Do not give partial listings such as 'Examples include:', always be thorough."
 )
 
+# How a watch's or tag's llm_change_summary combines with the prompt it inherits.
+# 'replace' is the default and the historical behaviour; 'append' lets a watch add a line
+# or two to the inherited prompt instead of holding a full private copy of it, so later
+# edits to the global prompt still reach that watch. Re #4251.
+LLM_PROMPT_MODE_REPLACE = 'replace'
+LLM_PROMPT_MODE_APPEND = 'append'
+
 
 def _summary_max_tokens(diff: str, max_cap: int = LLM_DEFAULT_MAX_SUMMARY_TOKENS) -> int:
     """Scale completion tokens to diff size: floor 400, ~1 token per 4 chars, ceiling max_cap."""
     return max(400, min(len(diff) // 4, max_cap))
+
+
+# Models that emit chain-of-thought before the answer, on any provider. Reasoning tokens are
+# billed and counted against max_tokens, so these need headroom or the answer never lands.
+# Kept in step with client._NO_TEMPERATURE_MODEL_KEYWORDS - reasoning is what drives both.
+# Claude 5.x (haiku/sonnet/opus) thinks by default and Fable always does: same empty content on
+# the 400 cap as gpt-5. The keywords don't match claude-*-4-5 or claude-3-5-*.
+REASONING_MODEL_KEYWORDS = ('o1', 'o3', 'o4', 'gpt-5', 'thinking-exp', 'haiku-5', 'sonnet-5', 'opus-5', 'fable-5')
 
 
 def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
@@ -172,10 +218,25 @@ def apply_local_token_multiplier(base_max_tokens: int, llm_cfg: dict) -> int:
     cost change. Ollama / OpenAI-compatible users can dial the multiplier down to 1x
     in Settings → AI → Provider if they want to keep costs tight on a paid endpoint.
 
-    Activated when `llm_cfg['provider_kind']` is `'ollama'` or `'openai_compatible'`.
+    Activated when `llm_cfg['provider_kind']` is `'ollama'` or `'openai_compatible'`, OR
+    when the model itself is a known reasoning model on any provider.
+
+    That second case was missing and it broke gpt-5 completely. The "cloud providers have
+    non-reasoning defaults" assumption above held for gpt-4o and friends, but gpt-5 reasons
+    by default: with the tight 400 cap it spent all 400 tokens on reasoning
+    (`completion_tokens_details.reasoning_tokens == 400`), returned content='' with
+    finish_reason='length', and still billed for the call. Every summary was empty and every
+    summary cost money. What decides whether headroom is needed is whether the MODEL reasons,
+    not whether the ENDPOINT is local.
+
     Multiplier defaults to 5x and is user-configurable in Settings → AI → Provider.
     """
-    if (llm_cfg or {}).get('provider_kind') not in ('ollama', 'openai_compatible'):
+    llm_cfg = llm_cfg or {}
+    _model = (llm_cfg.get('model') or '').lower()
+    _is_reasoning_model = any(k in _model for k in REASONING_MODEL_KEYWORDS)
+
+    if (llm_cfg.get('provider_kind') not in ('ollama', 'openai_compatible')
+            and not _is_reasoning_model):
         return base_max_tokens
     try:
         multiplier = int(llm_cfg.get('local_token_multiplier') or 5)
@@ -207,7 +268,7 @@ def _is_local_llm_endpoint(llm_cfg: dict) -> bool:
         from urllib.parse import urlparse
         from changedetectionio.validate_url import is_private_hostname
         host = urlparse(api_base).hostname
-        return bool(host) and is_private_hostname(host)
+        return bool(host) and is_private_hostname(host, classify_only=True)
     except Exception:
         # Never let timeout resolution break an LLM call — fall back to "not local".
         return False
@@ -237,6 +298,70 @@ def resolve_llm_timeout(llm_cfg: dict) -> int:
 # Intent resolution
 # ---------------------------------------------------------------------------
 
+# A group/tag has exactly one AI control (`llm_backend_profile`), and it is ternary:
+#
+#   True  — AI on for every watch in the group, using the group's AI settings
+#           (llm_intent / llm_change_summary cascade down to the watches)
+#   False — AI off for every watch in the group; its prompts are stored but never used
+#   None  — the group has no opinion: each watch's own AI switch and prompts apply
+#
+# On a *watch* the same key is a plain bool (on/off, default on). One control per level, so
+# there is nothing to reconcile between an "override?" flag and an "enabled?" flag.
+def tag_llm_decision(tag):
+    """This group's AI decision: True (on, use its settings), False (off), or None (no opinion)."""
+    if not tag:
+        return None
+    value = tag.get('llm_backend_profile')
+    return None if value is None else bool(value)
+
+
+def tag_llm_applies_to_watches(tag) -> bool:
+    """True when this group hands its AI settings down to its watches.
+
+    Only the "on" state does that: a group set to "off" suppresses AI for its watches rather
+    than lending them prompts, and a group with no opinion leaves them alone entirely. This is
+    the single gate behind both the evaluator cascade and the watch edit page's
+    "From group ..." placeholder.
+    """
+    return tag_llm_decision(tag) is True
+
+
+def _watch_tags(watch, datastore):
+    """Yield this watch's tag dicts, in the watch's own tag order, skipping unknown UUIDs."""
+    for tag_uuid in watch.get('tags', []):
+        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
+        if tag:
+            yield tag
+
+
+def _tags_applying_llm(watch, datastore):
+    """Yield this watch's groups, in order, that hand their AI settings to their watches."""
+    for tag in _watch_tags(watch, datastore):
+        if tag_llm_applies_to_watches(tag):
+            yield tag
+
+
+def llm_enabled_for_watch(watch, datastore) -> tuple[bool, str]:
+    """Is automatic AI evaluation switched on for this watch? Returns (enabled, source).
+
+    See #4204 — users with hundreds of watches want AI on only a select few.
+
+    A group with an opinion decides for all of its watches ("the group setting overrides any
+    watch on/off"), so the first such group wins over the watch's own switch; groups set to
+    "leave it to each watch" are skipped. With no group deciding, the watch decides — and a
+    missing key means on, so watches predating this switch keep working.
+
+    Only gates *automatic* spend (the worker's intent/summary passes and the restock AI
+    plugin). Explicit user actions — the diff page "Summary" button, the intent preview —
+    stay available, since those cost tokens only when someone deliberately clicks.
+    """
+    for tag in _watch_tags(watch, datastore):
+        decision = tag_llm_decision(tag)
+        if decision is not None:
+            return decision, tag.get('title', 'tag')
+    return bool(watch.get('llm_backend_profile', True)), 'watch'
+
+
 def resolve_llm_field(watch, datastore, field: str) -> tuple[str, str]:
     """
     Generic cascade resolver for any LLM per-watch field.
@@ -247,12 +372,10 @@ def resolve_llm_field(watch, datastore, field: str) -> tuple[str, str]:
     if value:
         return value, 'watch'
 
-    for tag_uuid in watch.get('tags', []):
-        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-        if tag:
-            tag_value = (tag.get(field) or '').strip()
-            if tag_value:
-                return tag_value, tag.get('title', 'tag')
+    for tag in _tags_applying_llm(watch, datastore):
+        tag_value = (tag.get(field) or '').strip()
+        if tag_value:
+            return tag_value, tag.get('title', 'tag')
 
     return '', ''
 
@@ -266,12 +389,10 @@ def resolve_intent(watch, datastore) -> tuple[str, str]:
     if intent:
         return intent, 'watch'
 
-    for tag_uuid in watch.get('tags', []):
-        tag = datastore.data['settings']['application'].get('tags', {}).get(tag_uuid)
-        if tag:
-            tag_intent = (tag.get('llm_intent') or '').strip()
-            if tag_intent:
-                return tag_intent, tag.get('title', 'tag')
+    for tag in _tags_applying_llm(watch, datastore):
+        tag_intent = (tag.get('llm_intent') or '').strip()
+        if tag_intent:
+            return tag_intent, tag.get('title', 'tag')
 
     return '', ''
 
@@ -389,11 +510,13 @@ def _estimate_cost_usd(model: str, input_tokens: int, output_tokens: int) -> flo
 
 def accumulate_global_tokens(datastore, tokens: int,
                               input_tokens: int = 0, output_tokens: int = 0,
-                              model: str = '') -> None:
+                              model: str = '', cost_usd: float = None) -> None:
     """
     Add *tokens* to both the all-time and this-month global counters.
     When input_tokens / output_tokens / model are supplied the estimated
     USD cost is accumulated alongside the token counts.
+    cost_usd, when given, is used as-is instead of the estimate - callers that
+    don't use litellm pass their own, as the estimate imports litellm's pricing.
     Resets monthly counters automatically on month rollover.
 
     These counters live at datastore.data['settings']['application']['llm']
@@ -404,24 +527,26 @@ def accumulate_global_tokens(datastore, tokens: int,
         return
 
     current_month = _get_month_key()
-    cost = _estimate_cost_usd(model, input_tokens, output_tokens)
-    settings = get_llm_settings(datastore)
+    cost = cost_usd if cost_usd is not None else _estimate_cost_usd(model, input_tokens, output_tokens)
 
-    # Month rollover: reset monthly counters
-    if settings.tokens_month_key != current_month:
-        settings.tokens_this_month = 0
-        settings.cost_usd_this_month = 0.0
-        settings.tokens_month_key = current_month
+    with datastore.lock:
+        settings = get_llm_settings(datastore)
 
-    settings.tokens_total_cumulative += tokens
-    settings.tokens_this_month       += tokens
-    settings.cost_usd_total_cumulative += cost
-    settings.cost_usd_this_month       += cost
+        # Month rollover: reset monthly counters
+        if settings.tokens_month_key != current_month:
+            settings.tokens_this_month = 0
+            settings.cost_usd_this_month = 0.0
+            settings.tokens_month_key = current_month
 
-    # Round-trip through model_dump so storage stays a plain dict and the schema
-    # contract (extra='forbid', type coercion) is re-enforced on every write.
-    datastore.data['settings']['application']['llm'] = settings.model_dump()
-    datastore.commit()
+        settings.tokens_total_cumulative += tokens
+        settings.tokens_this_month += tokens
+        settings.cost_usd_total_cumulative += cost
+        settings.cost_usd_this_month += cost
+
+        # Round-trip through model_dump so storage stays a plain dict and the schema
+        # contract (extra='forbid', type coercion) is re-enforced on every write.
+        datastore.data['settings']['application']['llm'] = settings.model_dump()
+        datastore.commit()
 
 
 def is_global_token_budget_exceeded(datastore) -> bool:
@@ -443,7 +568,7 @@ def is_global_token_budget_exceeded(datastore) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# One-time setup: derive pre-filter
+# Token budget
 # ---------------------------------------------------------------------------
 
 def _check_token_budget(watch, cfg, tokens_this_call: int = 0) -> bool:
@@ -490,63 +615,57 @@ def _check_token_budget(watch, cfg, tokens_this_call: int = 0) -> bool:
     return True
 
 
-def run_setup(watch, datastore, snapshot_text: str) -> None:
-    """
-    Ask the LLM whether a CSS pre-filter would improve precision for this intent.
-    Stores result in watch['llm_prefilter'] (str selector or None).
-    Called once when intent is first set, and again if pre-filter returns zero matches.
-    """
-    cfg = _runtime_llm_config(datastore)
-    if not cfg:
-        return
-
-    intent, _ = resolve_intent(watch, datastore)
-    if not intent:
-        return
-
-    url = watch.get('url', '')
-    system_prompt = build_setup_system_prompt()
-    user_prompt = build_setup_prompt(intent, snapshot_text, url=url)
-    settings = get_llm_settings(datastore)
-
-    try:
-        raw, tokens, *_ = llm_client.completion(
-            model=cfg['model'],
-            messages=[
-                _cached_system(system_prompt, model=cfg['model']),
-                {'role': 'user', 'content': user_prompt},
-            ],
-            api_key=cfg.get('api_key'),
-            api_base=cfg.get('api_base'),
-            timeout=resolve_llm_timeout(cfg),
-            max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
-            extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
-            debug=settings.debug,
-        )
-        _check_token_budget(watch, cfg, tokens)
-        accumulate_global_tokens(datastore, tokens, model=cfg['model'])
-        result = parse_setup_response(raw)
-        watch['llm_prefilter'] = result['selector']
-        logger.debug(f"LLM setup for {watch.get('uuid')}: prefilter={result['selector']} reason={result['reason']}")
-    except Exception as e:
-        logger.warning(f"LLM setup call failed for {watch.get('uuid')}: {e}")
-        watch['llm_prefilter'] = None
-
-
 # ---------------------------------------------------------------------------
 # AI Change Summary — human-readable description of what changed
 # ---------------------------------------------------------------------------
 
+def _first_tag_with_field(watch, datastore, field: str):
+    """Return (value, tag) for the first linked tag with a non-empty `field`, else ('', None).
+
+    Same first-match-wins order as resolve_llm_field() (so only groups opted in via
+    tag_llm_applies_to_watches() count); this variant also hands back the tag itself so
+    the caller can read sibling keys such as the prompt mode.
+    """
+    for tag in _tags_applying_llm(watch, datastore):
+        value = (tag.get(field) or '').strip()
+        if value:
+            return value, tag
+    return '', None
+
+
+def _apply_prompt_layer(inherited: str, value: str, mode: str) -> str:
+    """Fold one cascade level's prompt onto what it inherited.
+
+    'append' keeps the inherited prompt and adds `value` after it, so a watch can add a
+    sentence or two without pinning a private copy of the prompt above it (see #4251).
+    Anything else replaces, which is the historical behaviour and stays the default.
+    """
+    if not value:
+        return inherited
+    if mode == LLM_PROMPT_MODE_APPEND and inherited:
+        return f"{inherited}\n\n{value}"
+    return value
+
+
 def get_effective_summary_prompt(watch, datastore) -> str:
     """Return the prompt that summarise_change will use.
 
-    Cascade: watch → tag → global settings default → hardcoded fallback.
+    Cascade: hardcoded fallback → global settings default → tag → watch. Each level with a
+    value either replaces what it inherited or appends to it, per its own
+    `llm_change_summary_mode`. With every level left on the default 'replace' this reduces
+    to the original watch → tag → global → hardcoded first-non-empty-wins behaviour.
     """
-    prompt, _ = resolve_llm_field(watch, datastore, 'llm_change_summary')
-    if prompt:
-        return prompt
-    global_default = get_llm_settings(datastore).change_summary_default.strip()
-    return global_default or DEFAULT_CHANGE_SUMMARY_PROMPT
+    prompt = get_llm_settings(datastore).change_summary_default.strip() or DEFAULT_CHANGE_SUMMARY_PROMPT
+
+    tag_value, tag = _first_tag_with_field(watch, datastore, 'llm_change_summary')
+    if tag_value:
+        prompt = _apply_prompt_layer(prompt, tag_value, tag.get('llm_change_summary_mode'))
+
+    watch_value = (watch.get('llm_change_summary') or '').strip()
+    if watch_value:
+        prompt = _apply_prompt_layer(prompt, watch_value, watch.get('llm_change_summary_mode'))
+
+    return prompt
 
 
 def compute_summary_cache_key(diff_text: str, prompt: str) -> str:
@@ -656,7 +775,7 @@ def summarise_change(watch, datastore, diff: str, current_snapshot: str = '') ->
     )
 
     settings = get_llm_settings(datastore)
-    _extra_body = _thinking_extra_body(cfg['model'], settings.thinking_budget)
+    _extra_body = _thinking_extra_body(cfg['model'], settings.thinking_budget, cfg)
 
     try:
         _resp = llm_client.completion(
@@ -737,7 +856,7 @@ def preview_extract(watch, datastore, content: str) -> dict | None:
             api_base=cfg.get('api_base'),
             timeout=resolve_llm_timeout(cfg),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
-            extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
+            extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget, cfg),
             debug=settings.debug,
         )
         accumulate_global_tokens(datastore, tokens, model=cfg['model'])
@@ -824,13 +943,12 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
             api_base=cfg.get('api_base'),
             timeout=resolve_llm_timeout(cfg),
             max_tokens=apply_local_token_multiplier(JSON_RESPONSE_MAX_TOKENS, cfg),
-            extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget),
+            extra_body=_thinking_extra_body(cfg['model'], settings.thinking_budget, cfg),
             debug=settings.debug,
         )
         raw, tokens = _resp[0], _resp[1]
         input_tokens  = _resp[2] if len(_resp) > 2 else 0
         output_tokens = _resp[3] if len(_resp) > 3 else 0
-        result = parse_eval_response(raw)
     except Exception as e:
         logger.warning(f"LLM evaluation failed for {watch.get('uuid')}: {e}")
         # On failure: don't suppress the notification — pass through as important
@@ -844,6 +962,14 @@ def evaluate_change(watch, datastore, diff: str, current_snapshot: str = '') -> 
                              input_tokens=input_tokens,
                              output_tokens=output_tokens,
                              model=cfg['model'])
+
+    try:
+        result = parse_eval_response(raw)
+    except ValueError as e:
+        # Empty/unparsable answer (e.g. cut off at max_tokens) is no verdict: pass the change
+        # through like the other failures, and don't cache it as one.
+        logger.warning(f"LLM evaluation for {watch.get('uuid')} returned no usable answer ({e}) — passing change through as important")
+        return {'important': True, 'summary': ''}
 
     # Store in cache
     if 'llm_evaluation_cache' not in watch or watch['llm_evaluation_cache'] is None:

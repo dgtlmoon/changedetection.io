@@ -1,0 +1,48 @@
+{#
+  The top of the MCP Server tab's Overview, under the on/off switch: the access tokens at a glance, or the "Get
+  started" steps until the server is on and has a token. Included by llm-settings_mcp.html, and rendered on its own by the
+  token routes after every ajax change, so it never goes stale (mcp-tokens.js swaps it in).
+  Requires template context: mcp_enabled, mcp_tokens (see mcp_tokens_context()).
+#}
+  {% if mcp_enabled and mcp_tokens %}
+  {# The access tokens at a glance, each one opens the Access tokens sub-tab #}
+  <div class="mcp-perm-summary">
+    <span class="mcp-perm-summary-title">{{ _('Access tokens') }}</span>
+    {% for token in mcp_tokens %}
+    <button type="button" class="mcp-chip" data-stab-goto="tokens">{{ token.name }}</button>
+    {% endfor %}
+  </div>
+  {% else %}
+  {# Until it's set up: what to do, in order, each step done or with its button #}
+  <div class="mcp-steps">
+    <p class="mcp-steps-title">{{ _('Get started') }}</p>
+    <ol>
+      <li class="{{ 'done' if mcp_enabled else 'todo' }}">
+        <span class="mcp-step-mark" aria-hidden="true">{% if mcp_enabled %}&#10003;{% else %}1{% endif %}</span>
+        <span class="mcp-step-text">
+          <strong>{{ _('Switch on the MCP server') }}</strong>
+          {% if not mcp_enabled %}<span>{{ _('Tick the box above, then Save.') }}</span>{% endif %}
+        </span>
+      </li>
+      <li class="{{ 'done' if mcp_tokens else 'todo' }}">
+        <span class="mcp-step-mark" aria-hidden="true">{% if mcp_tokens %}&#10003;{% else %}2{% endif %}</span>
+        <span class="mcp-step-text">
+          <strong>{{ _('Add an access token') }}</strong>
+          <span>{{ _('Every assistant needs one to connect.') }}</span>
+        </span>
+        {% if not mcp_tokens %}
+        {# Opens the Access tokens sub-tab and the add overlay in one click #}
+        <button type="button" class="cdio-btn pure-button-primary button-small" data-stab-goto="tokens" data-mcp-token-add>+ {{ _('Add access token') }}</button>
+        {% endif %}
+      </li>
+      <li class="todo">
+        <span class="mcp-step-mark" aria-hidden="true">3</span>
+        <span class="mcp-step-text">
+          <strong>{{ _('Connect an assistant') }}</strong>
+          <span>{{ _('Copy the command or config for your assistant.') }}</span>
+        </span>
+        <button type="button" class="cdio-btn button-small" data-stab-goto="connect">{{ _('Connect') }}</button>
+      </li>
+    </ol>
+  </div>
+  {% endif %}

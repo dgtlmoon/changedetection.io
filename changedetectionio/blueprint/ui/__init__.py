@@ -1,10 +1,12 @@
 import time
 import threading
-from flask import Blueprint, request, redirect, url_for, flash, render_template, session, current_app
-from flask_babel import gettext
+from blinker import signal
+from flask import Blueprint, request, redirect, url_for, flash, render_template, session, current_app, abort
+from flask_babel import gettext, ngettext
 from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.pluggy_interface import set_watch_last_viewed
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
@@ -47,8 +49,21 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
     elif (op == 'mark-viewed'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
-                datastore.set_last_viewed(uuid, int(time.time()))
+                set_watch_last_viewed(datastore, uuid, time.time(), source='mark_viewed')
         result_message = gettext("{} watches updated").format(len(uuids))
+
+    elif (op == 'mark-unviewed'):
+        # Re #4382 - wind last_viewed back to the second-newest snapshot, so the row is unviewed
+        # again and [diff] still opens on the latest change (see get_from_version_based_on_last_viewed).
+        # With fewer than two snapshots there is no change to un-view, so those are skipped.
+        updated = 0
+        for uuid in uuids:
+            watch = datastore.data['watching'].get(uuid)
+            if watch and watch.history_n >= 2:
+                sorted_keys = sorted(watch.history.keys(), key=lambda x: int(x))
+                set_watch_last_viewed(datastore, uuid, sorted_keys[-2], source='mark_unviewed')
+                updated += 1
+        result_message = gettext("{} watches updated").format(updated)
 
     elif (op == 'mute'):
         for uuid in uuids:
@@ -181,7 +196,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
     # Import the login decorator
     from changedetectionio.auth_decorator import login_optionally_required
 
-    @ui_blueprint.route("/clear_history/<uuid_str:uuid>", methods=['GET'])
+    @ui_blueprint.route("/clear_history/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def clear_watch_history(uuid):
         try:
@@ -233,7 +248,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             flash(gettext('Watch not found'), 'error')
             return redirect(url_for('watchlist.index'))
 
-        target_url = watch.link
+        target_url = watch.open_link
         try:
             datastore.set_last_viewed(uuid, int(time.time()))
         except Exception as e:
@@ -245,7 +260,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         return response
 
     # Clear all statuses, so we do not see the 'unviewed' class
-    @ui_blueprint.route("/form/mark-all-viewed", methods=['GET'])
+    @ui_blueprint.route("/form/mark-all-viewed", methods=['POST'])
     @login_optionally_required
     def mark_all_viewed():
         # Save the current newest history as the most recently viewed. Operate on
@@ -256,36 +271,36 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
         list_filters = wl_filters.list_filters_from_args(datastore, request.args)
         now = int(time.time())
 
-        # Mark watches as viewed - use background thread only for large watch counts
-        def mark_viewed_impl():
-            """Mark watches as viewed - can run synchronously or in background thread."""
-            marked_count = 0
-            try:
-                for watch_uuid, watch in datastore.data['watching'].items():
-                    if not wl_filters.watch_matches_filters(watch, list_filters):
-                        continue
+        # Runs SYNCHRONOUSLY, and must stay that way. Re #4021: this used to hand the work to a
+        # background thread and redirect immediately, so the watch list re-rendered from a
+        # datastore that was still being marked and showed rows as unviewed until a manual
+        # refresh. The realtime events that would have corrected it were emitted while the
+        # browser was mid-navigation with no socket connected, so they went nowhere.
+        # It is cheap enough to do inline: the per-watch signal is suppressed below (that was
+        # the actual cost, not the disk write, which measures ~0.05ms per watch).
+        marked_count = 0
+        try:
+            for watch_uuid, watch in datastore.data['watching'].items():
+                if not wl_filters.watch_matches_filters(datastore, watch, list_filters):
+                    continue
 
-                    datastore.set_last_viewed(watch_uuid, now)
-                    marked_count += 1
+                set_watch_last_viewed(datastore, watch_uuid, now, source='mark_all_viewed', send_signal=False)
+                marked_count += 1
 
-                logger.info(f"Marking complete: {marked_count} watches marked as viewed")
-            except Exception as e:
-                logger.error(f"Error marking as viewed: {e}")
+            logger.info(f"Marking complete: {marked_count} watches marked as viewed")
+        except Exception as e:
+            logger.error(f"Error marking as viewed: {e}")
 
-        # For small watch counts (< 10), run synchronously to avoid race conditions in tests
-        # For larger counts, use background thread to avoid blocking the UI
-        watch_count = len(datastore.data['watching'])
-        if watch_count < 10:
-            # Run synchronously for small watch counts
-            mark_viewed_impl()
-        else:
-            # Start background thread for large watch counts
-            thread = threading.Thread(target=mark_viewed_impl, daemon=True)
-            thread.start()
+        # One summary event instead of one per watch, so other open tabs refresh their counters.
+        # This page doesn't need it - the redirect below re-renders it from the marked datastore.
+        if marked_count:
+            general_stats_update = signal('general_stats_update')
+            if general_stats_update:
+                general_stats_update.send()
 
         return redirect(url_for('watchlist.index', **wl_filters.filter_query_args(request.args)))
 
-    @ui_blueprint.route("/delete", methods=['GET'])
+    @ui_blueprint.route("/delete", methods=['POST'])
     @login_optionally_required
     def form_delete():
         uuid = request.args.get('uuid')
@@ -302,7 +317,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index'))
 
-    @ui_blueprint.route("/clone", methods=['GET'])
+    @ui_blueprint.route("/clone", methods=['POST'])
     @login_optionally_required
     def form_clone():
         uuid = request.args.get('uuid')
@@ -311,6 +326,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             uuid = list(datastore.data['watching'].keys()).pop()
 
         new_uuid = datastore.clone(uuid)
+        if not new_uuid:
+            # Refused (e.g. PAGE_WATCH_LIMIT) - the reason is already flashed
+            return redirect(url_for('watchlist.index'))
 
         if not datastore.data['watching'].get(uuid).get('paused'):
             worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=5, item={'uuid': new_uuid}))
@@ -319,7 +337,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for("ui.ui_edit.edit_page", uuid=new_uuid))
 
-    @ui_blueprint.route("/checknow", methods=['GET'])
+    @ui_blueprint.route("/checknow", methods=['POST'])
     @login_optionally_required
     def form_watch_checknow():
         # Forced recheck will skip the 'skip if content is the same' rule (, 'reprocess_existing_data': True})))
@@ -332,7 +350,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 flash(gettext("Watch is already queued or being checked."))
             else:
                 worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-                flash(gettext("Queued 1 watch for rechecking."))
+                flash(ngettext("Queued %(count)s watch for rechecking", "Queued %(count)s watches for rechecking", 1, count=1) + gettext("."))
         else:
             # Multiple watches - operate on the SAME set the watch list is showing
             # (tag/processor/status/search) via the shared filter, skipping paused.
@@ -341,7 +359,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
             for k in sorted(datastore.data['watching'].items(), key=lambda item: item[1].get('last_checked', 0)):
                 watch_uuid = k[0]
                 watch = k[1]
-                if not watch['paused'] and watch_uuid and wl_filters.watch_matches_filters(watch, list_filters):
+                if not watch['paused'] and watch_uuid and wl_filters.watch_matches_filters(datastore, watch, list_filters):
                     watches_to_queue.append(watch_uuid)
 
             # If less than 20 watches, queue synchronously for immediate feedback
@@ -362,14 +380,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
                 # Provide feedback about skipped watches
                 skipped_count = len(watches_to_queue) - len(watches_to_queue_filtered)
+                queued_count = len(watches_to_queue_filtered)
+                msg = ngettext(
+                    "Queued %(count)s watch for rechecking",
+                    "Queued %(count)s watches for rechecking",
+                    queued_count, count=queued_count)
                 if skipped_count > 0:
-                    flash(gettext("Queued {count} watches for rechecking ({skipped_count} already queued or running).").format(
-                        count=len(watches_to_queue_filtered), skipped_count=skipped_count))
-                else:
-                    if len(watches_to_queue_filtered) == 1:
-                        flash(gettext("Queued 1 watch for rechecking."))
-                    else:
-                        flash(gettext("Queued {} watches for rechecking.").format(len(watches_to_queue_filtered)))
+                    msg += gettext(" (%(skipped_count)s already queued or running)",
+                                   skipped_count=skipped_count)
+                # TRANSLATORS: sentence-final full stop
+                msg += gettext(".")
+                flash(msg)
             else:
                 # 20+ watches - queue in background thread to avoid blocking HTTP response
                 # Capture queued/running state before background thread
@@ -402,6 +423,16 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index', **wl_filters.filter_query_args(request.args)))
 
+    @ui_blueprint.route("/form/export-selected-watches", methods=['POST'])
+    @login_optionally_required
+    def export_selected_watches():
+        from changedetectionio.blueprint.watchlist.export import selected_watches_csv
+
+        uuids = list(dict.fromkeys(u.strip() for u in request.form.getlist('uuids') if u.strip()))
+        if not uuids:
+            abort(400)
+        return selected_watches_csv(datastore, uuids)
+
     @ui_blueprint.route("/form/checkbox-operations", methods=['POST'])
     @login_optionally_required
     def form_watch_list_checkbox_operations():
@@ -421,10 +452,12 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index'))
 
-
-    @ui_blueprint.route("/share-url/<uuid_str:uuid>", methods=['GET'])
+    @ui_blueprint.route("/share-url/<uuid_str:uuid>", methods=['POST'])
     @login_optionally_required
     def form_share_put_watch(uuid):
+        if not datastore.data['settings']['application']['ui'].get('use_share_watch'):
+            abort(403, description="Access denied")
+
         """Given a watch UUID, upload the info and return a share-link
            the share-link can be imported/added"""
         import requests
@@ -470,7 +503,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
         return redirect(url_for('watchlist.index'))
 
-    @ui_blueprint.route("/language/auto-detect", methods=['GET'])
+    @ui_blueprint.route("/language/auto-detect", methods=['POST'])
     def delete_locale_language_session_var_if_it_exists():
         """Clear the session locale preference to auto-detect from browser Accept-Language header"""
         if 'locale' in session:

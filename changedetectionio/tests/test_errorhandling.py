@@ -21,7 +21,7 @@ def _runner_test_http_errors(client, live_server, http_code, expected_text, data
                        _external=True)
 
     uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -64,7 +64,7 @@ def test_DNS_errors(client, live_server, measure_memory_usage, datastore_path):
         follow_redirects=True
     )
     assert b"1 Imported" in res.data
-    res = client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    res = client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
 
     # Give the thread time to pick it up
     wait_for_all_checks(client)
@@ -134,5 +134,56 @@ def test_low_level_errors_clear_correctly(client, live_server, measure_memory_us
         b"Connection error occurred" in res.data
     )
     assert not found_name_resolution_error
+
+    delete_all_watches(client)
+
+
+def test_non200_records_last_check_status(client, live_server, measure_memory_usage, datastore_path):
+    # A watch that was fine (200) and then starts getting 403 must not keep reporting the old 200
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write("<html><body>Hello world</body></html>")
+
+    datastore = client.application.config.get('DATASTORE')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True))
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][uuid]
+    assert watch.get('last_check_status') == 200
+    assert not watch.get('last_error')
+
+    datastore.update_watch(uuid=uuid, update_obj={'url': url_for('test_endpoint', status_code=403, _external=True)})
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][uuid]
+    assert watch.get('last_check_status') == 403
+    assert 'Access denied' in watch.get('last_error')
+
+    delete_all_watches(client)
+
+
+def test_no_text_records_last_check_status(client, live_server, measure_memory_usage, datastore_path):
+    # Same as above but for ReplyWithContentButNoText, a page that renders no text must not keep reporting the old 200
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write("<html><body>Hello world</body></html>")
+
+    datastore = client.application.config.get('DATASTORE')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True))
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][uuid]
+    assert watch.get('last_check_status') == 200
+
+    # ignore_status_codes lets the 500 through to the processor, which then finds no text
+    datastore.update_watch(uuid=uuid, update_obj={'ignore_status_codes': True,
+                                                  'url': url_for('test_endpoint', status_code=500, content='<html><body></body></html>', _external=True)})
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][uuid]
+    assert watch.get('last_check_status') == 500
+    assert 'Got HTML content but no text found (With 500 reply code)' in watch.get('last_error')
 
     delete_all_watches(client)

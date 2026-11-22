@@ -225,6 +225,31 @@ class RecheckPriorityQueue:
         """Check if queue is empty"""
         return self.qsize() == 0
 
+    def get_queue_positions(self) -> dict:
+        """{uuid: 1-based position} in the order the workers will take them (lowest priority value first). Items of
+        the same priority have no fixed order between them, so this is close, not exact."""
+        try:
+            with self._lock:
+                ordered = sorted(self._priority_items)
+            return {item.item['uuid']: n for n, item in enumerate(
+                (i for i in ordered if hasattr(i, 'item') and 'uuid' in i.item), start=1)}
+        except Exception as e:
+            logger.error(f"Failed to get queue positions: {str(e)}")
+            return {}
+
+    def update_queued_metadata(self, uuid: str, metadata: dict) -> bool:
+        """Merge metadata into the item already queued for uuid, False when it isn't queued (any more).
+
+        For one-shot options of a check (the worker hands the item to the processor and fetcher as
+        queued_metadata) asked for while that monitor is already waiting in the queue.
+        """
+        with self._lock:
+            for item in self._priority_items:
+                if hasattr(item, 'item') and isinstance(item.item, dict) and item.item.get('uuid') == uuid:
+                    item.item.update(metadata)
+                    return True
+        return False
+
     def get_queued_uuids(self) -> list:
         """Get list of all queued UUIDs efficiently with single lock"""
         try:

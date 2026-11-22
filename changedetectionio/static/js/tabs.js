@@ -34,9 +34,13 @@ function focus_error_tab() {
     // activate the tab with the error
     var tabs = document.querySelectorAll('.tabs li a'), i;
     for (i = 0; i < tabs.length; ++i) {
+        // Skip tabs that link to another page (e.g. Backups), they have no in-page pane
         var tab_name = tabs[i].hash.replace('#', '');
-        var pane_errors = document.querySelectorAll('#' + tab_name + ' .error')
-        if (pane_errors.length) {
+        if (!tab_name) {
+            continue;
+        }
+        var pane = document.getElementById(tab_name);
+        if (pane && pane.querySelector('.error')) {
             document.location.hash = '#' + tab_name;
             return true;
         }

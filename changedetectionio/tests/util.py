@@ -13,6 +13,29 @@ import threading
 _test_endpoint_content_lock = threading.Lock()
 _test_endpoint_content = {}
 
+def import_example_plugin(example_dir, package):
+    """Import an example_plugins/<example_dir> package as its own top-level package, the way
+    `pip install .` makes it importable, e.g. import_example_plugin('processor/wordcounter', 'cdio_example_wordcounter')"""
+    import importlib
+    import sys
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'example_plugins', example_dir))
+    sys.path.insert(0, path)
+    try:
+        return importlib.import_module(package)
+    finally:
+        sys.path.remove(path)
+
+
+def clear_plugin_discovery_caches():
+    """Processor discovery and the merged API spec are cached at first use, a plugin registered
+    afterwards (like in a test) is only seen once these are cleared."""
+    from changedetectionio import processors, api
+    for f in (processors.find_processors, processors.get_plugin_processor_metadata, processors._available_processors_cached,
+              api.build_merged_spec_dict, api.get_openapi_spec, api.get_openapi_schema_dict,
+              api._resolve_schema_properties, api.get_watch_schema_properties, api.get_tag_schema_properties):
+        f.cache_clear()
+
+
 def write_test_file_and_sync(filepath, content, mode='w'):
     """
     Write test data to file and ensure it's synced to disk.
@@ -159,6 +182,17 @@ def extract_UUID_from_client(client):
     uuid = m.group(1)
     return uuid.strip()
 
+
+def get_form_field(html, name):
+    """Return the <input>, <select> or <textarea> named `name` in the page, or None.
+
+    Use this to assert a field's value (field['value'], field.has_attr('checked')) instead of matching raw
+    bytes like b'type="text" value="5"', which breaks on attribute order, quoting or a changed input type
+    (WTForms 3.3 renders FloatField as type="number"). Keep raw byte checks where the escaping is the point.
+    """
+    from bs4 import BeautifulSoup
+    return BeautifulSoup(html, 'html.parser').find(['input', 'select', 'textarea'], attrs={'name': name})
+
 def delete_all_watches(client=None):
     wait_for_all_checks(client)
 
@@ -205,6 +239,26 @@ def wait_for_all_checks(client=None):
     """
     from changedetectionio.flask_app import update_q as global_update_q
     from changedetectionio import worker_pool
+    done = worker_pool.wait_for_all_checks(global_update_q, timeout=150)
+    if client is None:
+        return done
+
+    # A monitor that was just added (an import, the API) isn't queued by that request, the scheduler finds it on its
+    # next pass, up to a second later. Until then the queue is empty and the workers idle, so the wait above can return
+    # before its first check has even started, and the test changes the page under it. Wait for the scheduler to pick
+    # up every unpaused monitor that was never checked, a few seconds at most (a time schedule may keep one waiting).
+    datastore = client.application.config.get('DATASTORE')
+    if not datastore or datastore.data['settings']['application'].get('all_paused'):
+        return done
+    deadline = time.time() + 5
+    while time.time() < deadline:
+        unchecked = [w for w in list(datastore.data['watching'].values())
+                     if not w.get('paused') and not w.get('last_checked')]
+        if not unchecked:
+            break
+        time.sleep(0.2)
+    else:
+        return done
     return worker_pool.wait_for_all_checks(global_update_q, timeout=150)
 
 
@@ -238,6 +292,27 @@ def wait_for_watch_history(client, min_history_count=2, timeout=10):
     return False
 
 
+def fetch_llm_summary(client, url, timeout=15):
+    """Drive the /llm-summary start-then-poll flow the way static/js/llm-summary.js does.
+
+    Generation runs on a background thread now, so a single request can only ever return
+    202 "pending". POST starts it (and answers straight away when the summary is already cached),
+    then the GET poll is read-only. Returns the final response.
+    """
+    res = client.post(url)
+    if res.status_code != 202:
+        return res
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        res = client.get(url)
+        if res.status_code != 202 and (res.get_json() or {}).get('status') != 'pending':
+            return res
+        time.sleep(0.05)
+
+    raise AssertionError(f"LLM summary at {url} still pending after {timeout}s")
+
+
 # Replaced by new_live_server_setup and calling per function scope in conftest.py
 def  live_server_setup(live_server):
     return True
@@ -248,6 +323,70 @@ def new_live_server_setup(live_server):
     def test_random_content_endpoint():
         import secrets
         return "Random content - {}\n".format(secrets.token_hex(64))
+
+    # Re-navigation gate: the first hit answers with an error status AND a client-side meta
+    # refresh, the second serves the real page. This mirrors sites that gate visitors they have
+    # not seen recently (reported against fotokoch.de, which answers 503 + meta refresh and then
+    # serves a 200). The browser follows the refresh, so the fetch has to be judged on the
+    # document we actually end up extracting rather than on the interstitial.
+    # What a parked domain serves: an empty document that sends the browser on from its load event
+    @live_server.app.route('/test-onload-redirect')
+    def test_onload_redirect():
+        landing = url_for('test_onload_redirect_landing')
+        return ('<!DOCTYPE html><html><head><script>window.onload=function(){window.location.href="'
+                + landing + '"}</script></head></html>')
+
+    @live_server.app.route('/test-onload-redirect-landing')
+    def test_onload_redirect_landing():
+        return '<html><body><h1>This domain is for sale</h1></body></html>'
+
+    # Keyed on last-seen time rather than a hit count, so EVERY fresh check starts out gated -
+    # a counter would serve a clean 200 to the second check and let the test pass without the fix.
+    _interstitial_last_seen = {}
+
+    @live_server.app.route('/test-interstitial')
+    def test_interstitial():
+        key = request.args.get('key', 'default')
+        now = time.time()
+        seen_recently = (now - _interstitial_last_seen.get(key, 0)) < 10
+        _interstitial_last_seen[key] = now
+        if not seen_recently:
+            resp = make_response(
+                '<html><head><meta http-equiv="refresh" content="1"></head>'
+                '<body>Browser check in progress, you will be redirected</body></html>', 503)
+        else:
+            resp = make_response(
+                '<html><body><h1>The real page content is here</h1></body></html>', 200)
+        resp.headers['Content-Type'] = 'text/html'
+        return resp
+
+    # A page whose icon the browser may load for itself, but page script may not read - what a browser
+    # that enforces cross-origin rules does with an icon on another host. Told apart by the Accept
+    # header: the browser's own icon request asks for images ('image/avif,image/webp,...'), a fetch()
+    # from page script asks for '*/*'. (Sec-Fetch-Dest would say it too, but is not sent over plain http)
+    @live_server.app.route('/test-favicon-page')
+    def test_favicon_page():
+        icon = url_for('test_favicon_browser_only', key=request.args.get('key', 'default'))
+        return (f'<html><head><title>favicon</title><link rel="icon" type="image/png" href="{icon}"></head>'
+                f'<body>A page with an icon only the browser itself may fetch</body></html>')
+
+    _favicon_requests = {}
+
+    @live_server.app.route('/test-favicon-browser-only.png')
+    def test_favicon_browser_only():
+        import base64
+        by = 'browser' if request.headers.get('Accept', '').startswith('image/') else 'script'
+        _favicon_requests.setdefault(request.args.get('key', 'default'), []).append(by)
+        if by != 'browser':
+            return make_response('Not for scripts', 403)
+        png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
+        resp = make_response(png, 200)
+        resp.headers['Content-Type'] = 'image/png'
+        return resp
+
+    @live_server.app.route('/test-favicon-requests')
+    def test_favicon_requests():
+        return {'requested_by': _favicon_requests.get(request.args.get('key', 'default'), [])}
 
     @live_server.app.route('/test-endpoint2')
     def test_endpoint2():
@@ -379,6 +518,19 @@ def new_live_server_setup(live_server):
     def test_return_query():
         return request.query_string
 
+    # A stand-in scraping API with the JSON contract of example_plugins/fetcher/fallback_fetcher
+    @live_server.app.route('/test-scrape-api', methods=['POST'])
+    def test_scrape_api():
+        body = request.get_json()
+        one_pixel_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        return {
+            'status_code': int(request.args.get('status_code', 200)),
+            'content': f"<html><body><p>Fetched by the scraping API</p><p>url:{body.get('url')}</p>"
+                       f"<p>key:{request.headers.get('X-Api-Key')}</p></body></html>",
+            'content_type': 'text/html',
+            'screenshot': one_pixel_png if body.get('screenshot') else None,
+        }
+
 
     @live_server.app.route('/endpoint-test.pdf')
     def test_pdf_endpoint():
@@ -433,3 +585,12 @@ def new_live_server_setup(live_server):
         return resp
 
     live_server.start()
+
+
+def new_mcp_token(client, name='test', tags=None, **permissions):
+    """A new MCP access token (blueprint/mcp/tokens.py), every row at write unless given, e.g. notifications='read'.
+    tags: the tag uuids it's limited to, None for every monitor."""
+    from changedetectionio.blueprint.mcp.tokens import add_token
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'browser': 'write', 'system': 'read', **permissions}
+    return add_token(settings, name, levels, tags)[1]

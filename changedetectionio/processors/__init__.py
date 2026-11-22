@@ -5,6 +5,7 @@ import importlib
 import inspect
 import os
 import pkgutil
+import re
 
 def find_sub_packages(package_name):
     """
@@ -80,6 +81,20 @@ def get_parent_module(module):
 
     return False
 
+
+
+def register_processor_plugin_hooks():
+    """Let every installed processor add its own plugin hooks: a processor package can define
+    register_plugin_hooks(plugin_manager) in its __init__.py, e.g. restock_diff adds its chart hooks and
+    their built-in implementations. Called once at startup from flask_app.changedetection_app()."""
+    from changedetectionio.pluggy_interface import plugin_manager
+    for module, processor_name in find_processors():
+        parent = get_parent_module(module)
+        if parent and hasattr(parent, 'register_plugin_hooks'):
+            try:
+                parent.register_plugin_hooks(plugin_manager)
+            except Exception as e:
+                logger.error(f"Processor '{processor_name}' failed to register its plugin hooks: {e}")
 
 
 def get_custom_watch_obj_for_processor(processor_name):
@@ -416,11 +431,21 @@ def get_processor_badge_css():
             f"}}"
         )
 
-        # Dark mode rule
-        css_rules.append(
-            f"html[data-darkmode=\"true\"] .processor-badge.processor-badge-{sub_package_name} {{\n"
+        # Dark mode rules - explicit choice (cookie), and 'auto' following the device setting
+        dark_declarations = (
             f"  background-color: {colors['dark']['bg']};\n"
             f"  color: {colors['dark']['color']};\n"
+        )
+        css_rules.append(
+            f"html[data-darkmode=\"true\"] .processor-badge.processor-badge-{sub_package_name} {{\n"
+            f"{dark_declarations}"
+            f"}}"
+        )
+        css_rules.append(
+            f"@media (prefers-color-scheme: dark) {{\n"
+            f"html[data-darkmode=\"auto\"] .processor-badge.processor-badge-{sub_package_name} {{\n"
+            f"{dark_declarations}"
+            f"}}\n"
             f"}}"
         )
 
@@ -456,6 +481,15 @@ def save_processor_config(datastore, watch_uuid, config_data):
 
         processor_name = watch.get('processor', 'text_json_diff')
 
+        # The processor name becomes a filename below, and it is not enum-validated on every
+        # write path (/imports/import accepts it verbatim), so treat it as untrusted: a value
+        # like '../../../../tmp/pwned' would otherwise escape the watch directory.
+        # update_extra_watch_config() also contains the path, this is the second layer.
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', processor_name or ''):
+            logger.error(f"Refusing to save processor config: unsafe processor name {processor_name!r} "
+                         f"on watch {watch_uuid}")
+            return False
+
         # Create a processor instance to access config methods
         processor_instance = difference_detection_processor(datastore, watch_uuid)
 
@@ -469,6 +503,40 @@ def save_processor_config(datastore, watch_uuid, config_data):
     except Exception as e:
         logger.error(f"Failed to save processor config: {e}")
         return False
+
+
+def get_resolved_processor_config(datastore, watch):
+    """
+    Return (config, source) for the watch's own processor, the same way the processor resolves it.
+
+    The first tag with 'overrides_watch' wins (its processor_config_{processor_name}), otherwise the
+    watch's own {data_dir}/{processor_name}.json written by save_processor_config().
+
+    Returns:
+        tuple: (dict config, str source) - source is 'watch' or 'tag:<uuid>'
+    """
+    import json
+
+    processor_name = watch.get('processor') or 'text_json_diff'
+
+    tags = datastore.data['settings']['application'].get('tags', {})
+    for tag_uuid in (watch.get('tags') or []):
+        tag = tags.get(tag_uuid, {})
+        if tag.get('overrides_watch'):
+            return dict(tag.get(f'processor_config_{processor_name}') or {}), f'tag:{tag_uuid}'
+
+    config = {}
+    # Same untrusted-name guard as save_processor_config(), the name becomes a filename
+    if watch.data_dir and re.fullmatch(r'[A-Za-z0-9_-]+', processor_name):
+        config_path = os.path.join(watch.data_dir, f'{processor_name}.json')
+        if os.path.isfile(config_path):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f).get(processor_name) or {}
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning(f"Failed to read {processor_name}.json for watch {watch.get('uuid')}: {e}")
+
+    return config, 'watch'
 
 
 def extract_processor_config_from_form_data(form_data):

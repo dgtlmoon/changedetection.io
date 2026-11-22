@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 /**
  * Modal dialog styles using HTML5 <dialog> element
  * Provides modern, accessible confirmation dialogs
@@ -140,7 +142,7 @@
 }
 
 // Dark mode adjustments
-html[data-darkmode="true"] {
+@include dark-mode {
   .modal-dialog {
     box-shadow: 0 5px 30px rgba(0, 0, 0, 0.7);
 

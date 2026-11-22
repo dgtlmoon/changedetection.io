@@ -8,3 +8,28 @@ $desktop-wide-breakpoint: 980px;
 
 $common-gap: 0.55rem;
 $top-menu-icon-size: 1.3rem;
+
+// Dark mode styles. <html data-darkmode> is "true"/"false" when the user picked a theme
+// (css_dark_mode cookie), or "auto" to follow the device's prefers-color-scheme.
+// Use at the top level, or nested where the parent selector should follow html[...].
+@mixin dark-mode {
+  @if & {
+    html[data-darkmode="true"] & {
+      @content;
+    }
+    @media (prefers-color-scheme: dark) {
+      html[data-darkmode="auto"] & {
+        @content;
+      }
+    }
+  } @else {
+    html[data-darkmode="true"] {
+      @content;
+    }
+    @media (prefers-color-scheme: dark) {
+      html[data-darkmode="auto"] {
+        @content;
+      }
+    }
+  }
+}
