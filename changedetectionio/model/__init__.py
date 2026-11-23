@@ -172,6 +172,27 @@ class watch_base(dict):
         # We'll initialize it AFTER the initial update() call below
         # This prevents marking the watch as edited during initialization
 
+        # MEMORY: think before adding a key here, every watch carries all of them (100,000 watches on a big install).
+        # CPython sizes a dict's table in steps, 70 default keys (Nov 2026) fit the 85-key step at 1,584 bytes.
+        # The 86th key doubles it to 3,328 bytes: +1.7KB per watch, ~174MB at 100,000 watches.
+        # Watches loaded from an older watch.json can carry extra keys, so the real headroom may be under 15.
+        #
+        # Dict size by number of keys (measured on Python 3.14, top-level table only, values are extra):
+        #     1-5      184 bytes
+        #     6-10     272 bytes
+        #     11-21    464 bytes
+        #     22-42    832 bytes
+        #     43-85    1,584 bytes   <- we are here: exactly 70 keys on a Watch (15 spare), 72 on a Tag (13 spare)
+        #                               Recount with len(watch_base()) and update this line when adding a key.
+        #     86-170   3,328 bytes
+        #     171+     6,576 bytes
+        # The table grows in powers of two (8, 16, 32, 64, 128, 256 slots) and is filled to two thirds before
+        # doubling, hence the limits of 5, 10, 21, 42, 85 and 170. The space for a whole step is allocated up
+        # front, so the 43rd key costs the same as the 85th.
+        # A 10-key watch would be 272 bytes: ~27MB at 100,000 watches instead of ~158MB.
+        #
+        # For a rarely used option, leave it out of this dict and read it with watch.get('key', default),
+        # then only the watches that set it pay for it.
         self.update({
             # Custom notification content
             # Re #110, so then if this is set to None, we know to use the default value instead

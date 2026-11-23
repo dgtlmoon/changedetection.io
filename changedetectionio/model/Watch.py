@@ -1327,34 +1327,44 @@ class model(EntityPersistenceMixin, watch_base):
 
 
     def extract_regex_from_all_history(self, regex):
+        """Run the regex over every text snapshot, the matches go to a CSV in the watch's data dir.
+
+        :return: the CSV filename, or False when nothing matched
+        :raises ValueError: the regex is invalid or longer than FIND_CHANGE_MAX_PATTERN
+        :raises TimeoutError: the regex took longer than REGEX_TIMEOUT_SECONDS on one snapshot (catastrophic
+            backtracking), the rest of the history is not scanned
+        """
         import csv
-        import re
         import datetime
+        # The 'regex' package enforces the timeout inside the matcher, so it works in any thread
+        import regex as regex_lib
+        from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
+
+        if len(regex) > self.FIND_CHANGE_MAX_PATTERN:
+            raise ValueError(f"The regex is too long, at most {self.FIND_CHANGE_MAX_PATTERN} characters")
+        try:
+            compiled = regex_lib.compile(regex, regex_lib.MULTILINE)
+        except regex_lib.error as e:
+            raise ValueError(f"Invalid regex: {e}")
+        timeout = regex_plugin.REGEX_TIMEOUT_SECONDS
+
         csv_output_filename = False
         csv_writer = False
         f = None
 
-        # self.history will be keyed with the full path
-        for k, fname in self.history.items():
-            if os.path.isfile(fname):
-                if True:
+        try:
+            # self.history will be keyed with the full path
+            for k, fname in self.history.items():
+                if os.path.isfile(fname):
                     contents = self.get_history_snapshot(timestamp=k)
-                    res = re.findall(regex, contents, re.MULTILINE)
+                    res = compiled.findall(contents, timeout=timeout)
                     if res:
                         if not csv_writer:
                             # A file on the disk can be transferred much faster via flask than a string reply
                             csv_output_filename = f"report-{self.get('uuid')}.csv"
                             f = open(os.path.join(self.data_dir, csv_output_filename), 'w')
-                            # @todo some headers in the future
-                            #fieldnames = ['Epoch seconds', 'Date']
-                            csv_writer = csv.writer(f,
-                                                    delimiter=',',
-                                                    quotechar='"',
-                                                    quoting=csv.QUOTE_MINIMAL,
-                                                    #fieldnames=fieldnames
-                                                    )
+                            csv_writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                             csv_writer.writerow(['Epoch seconds', 'Date'])
-                            # csv_writer.writeheader()
 
                         date_str = datetime.datetime.fromtimestamp(int(k)).strftime('%Y-%m-%d %H:%M:%S')
                         for r in res:
@@ -1362,11 +1372,11 @@ class model(EntityPersistenceMixin, watch_base):
                             if isinstance(r, str):
                                 row.append(r)
                             else:
-                                row+=r
+                                row += r
                             csv_writer.writerow(row)
-
-        if f:
-            f.close()
+        finally:
+            if f:
+                f.close()
 
         return csv_output_filename
 

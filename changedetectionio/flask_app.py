@@ -717,6 +717,18 @@ from changedetectionio.auth_decorator import (
 )
 
 
+USER_ID_FINGERPRINT_SEPARATOR = '|'
+
+
+def password_fingerprint():
+    """Identifies the password that is set right now, without revealing anything about it (cookies are
+    signed, not encrypted). Changes whenever the password is changed, removed or set again."""
+    import hmac
+
+    current_password = os.getenv("SALTED_PASS") or datastore.data['settings']['application'].get('password') or ''
+    return hmac.new(str(app.secret_key).encode('utf-8'), str(current_password).encode('utf-8'), hashlib.sha256).hexdigest()
+
+
 # When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
     id = None
@@ -737,7 +749,9 @@ class User(flask_login.UserMixin):
         return False
 
     def get_id(self):
-        return str(self.id)
+        # Stored in the session and "remember me" cookies. Carrying the password's fingerprint means
+        # every cookie issued for an earlier password stops working when the password changes.
+        return f"{self.id}{USER_ID_FINGERPRINT_SEPARATOR}{password_fingerprint()}"
 
     # Compare given password against JSON store or Env var
     def check_password(self, password):
@@ -1049,9 +1063,16 @@ def changedetection_app(config=None, datastore_o=None):
     register_processor_plugin_hooks()
 
     @login_manager.user_loader
-    def user_loader(email):
+    def user_loader(user_id):
+        import hmac
+
+        # Only a cookie issued for the password that is set right now is a login, see User.get_id()
+        email, _, fingerprint = str(user_id).rpartition(USER_ID_FINGERPRINT_SEPARATOR)
+        if not email or not hmac.compare_digest(fingerprint, password_fingerprint()):
+            return None
+
         user = User()
-        user.get_user(email)
+        user.id = email
         return user
 
     @login_manager.unauthorized_handler
@@ -1592,6 +1613,14 @@ def changedetection_app(config=None, datastore_o=None):
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     logger.info(f"Starting {n_workers} workers during app initialization")
     worker_pool.start_workers(n_workers, update_q, notification_q, app, datastore)
+
+    # Deleting a watch that is being checked stops that check, the worker is replaced
+    def stop_check_of_deleted_watch(sender=None, watch_uuid=None, **kwargs):
+        if watch_uuid and worker_pool.is_watch_running(watch_uuid):
+            worker_pool.cancel_running_uuid(watch_uuid, update_q=update_q, notification_q=notification_q,
+                                            app=app, datastore=datastore)
+
+    signal('watch_deleted').connect(stop_check_of_deleted_watch, weak=False)
 
     # Skip background threads in batch mode (just process queue and exit)
     batch_mode = app.config.get('batch_mode', False)

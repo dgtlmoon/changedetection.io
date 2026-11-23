@@ -207,6 +207,11 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     # All fetchers are now async, so call directly
                     await update_handler.call_browser()
 
+                    # The fetch is the long part of a check, the watch can be deleted while it runs
+                    if uuid not in datastore.data['watching']:
+                        logger.debug(f"Worker {worker_id} watch {uuid} was deleted during its fetch, skipping")
+                        continue
+
                     # Run change detection in executor to avoid blocking event loop
                     # This includes CPU-intensive operations like HTML parsing (lxml/inscriptis)
                     # which can take 2-10ms and cause GIL contention across workers
@@ -430,10 +435,13 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     logger.error(f"Exception (BrowserStepsInUnsupportedFetcher) reached processing watch UUID: {uuid}")
 
                 except Exception as e:
-                    import traceback
-                    logger.error(f"Worker {worker_id} exception processing watch UUID: {uuid}")
-                    logger.exception(f"Worker {worker_id} full exception details:")
-                    datastore.update_watch(uuid=uuid, update_obj={'last_error': "Exception: " + str(e)})
+                    if uuid not in datastore.data['watching']:
+                        # Whatever went wrong, it went wrong because the watch was deleted under its check
+                        logger.debug(f"Worker {worker_id} watch {uuid} was deleted during its check, ignoring: {e}")
+                    else:
+                        logger.error(f"Worker {worker_id} exception processing watch UUID: {uuid}")
+                        logger.exception(f"Worker {worker_id} full exception details:")
+                        datastore.update_watch(uuid=uuid, update_obj={'last_error': "Exception: " + str(e)})
                     process_changedetection_results = False
 
                 else:

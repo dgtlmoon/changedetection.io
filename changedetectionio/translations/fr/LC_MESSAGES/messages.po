@@ -3379,6 +3379,10 @@ msgid "Set proxy for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Download CSV"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
 msgstr "Marquer consulté"
 
@@ -3778,6 +3782,11 @@ msgstr "Le corps et le titre de la notification sont requis lorsqu'une URL de no
 #, python-format
 msgid "'%s' is not a valid AppRise URL."
 msgstr "'%s' n'est pas une URL AppRise valide."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "Le RegEx est trop long, %(max)s caractères au maximum."
 
 #: changedetectionio/forms.py
 #, python-format
@@ -4612,6 +4621,10 @@ msgid "The URL must start with http:// or https://"
 msgstr "L'URL doit commencer par http:// ou https://"
 
 #: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "Ce RegEx a pris trop de temps, essayez-en un plus simple."
+
+#: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr ""
 
@@ -4993,6 +5006,11 @@ msgstr "Un par ligne, Nom=Valeur"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Fill in the fields to build the URL"
 msgstr "Remplissez les champs pour générer l'URL"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"
