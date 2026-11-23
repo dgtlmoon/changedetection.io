@@ -3355,6 +3355,10 @@ msgid "Set proxy for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Download CSV"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
 msgstr "Označit jako shlédnuté"
 
@@ -3761,6 +3765,11 @@ msgstr "Při použití adresy URL oznámení je vyžadováno tělo a název ozn�
 #, python-format
 msgid "'%s' is not a valid AppRise URL."
 msgstr "'%s' není platná URL AppRise."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegEx je příliš dlouhý, nejvýše %(max)s znaků."
 
 #: changedetectionio/forms.py
 #, python-format
@@ -4595,6 +4604,10 @@ msgid "The URL must start with http:// or https://"
 msgstr "URL musí začínat http:// nebo https://"
 
 #: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "Tento RegEx běžel příliš dlouho, zkuste jednodušší."
+
+#: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr ""
 
@@ -4976,6 +4989,11 @@ msgstr "Jedna na řádek, Název=Hodnota"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Fill in the fields to build the URL"
 msgstr "Vyplňte pole pro sestavení URL"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"

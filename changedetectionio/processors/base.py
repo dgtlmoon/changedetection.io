@@ -452,7 +452,8 @@ class difference_detection_processor():
         import os
 
         watch = self.datastore.data['watching'].get(self.watch_uuid)
-        data_dir = watch.data_dir
+        # The watch can be deleted while its check is still running
+        data_dir = watch.data_dir if watch else None
 
         if not data_dir:
             return {}
@@ -484,6 +485,9 @@ class difference_detection_processor():
         import os
 
         watch = self.datastore.data['watching'].get(self.watch_uuid)
+        if not watch:
+            # Deleted while its check was still running, nothing to save to
+            return
         data_dir = watch.data_dir
 
         if not data_dir:

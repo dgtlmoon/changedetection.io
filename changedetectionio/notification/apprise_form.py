@@ -140,11 +140,53 @@ def _field(key, spec, list_label=None):
     return field
 
 
+_TEMPLATE_TOKEN = re.compile(r'\{(\w+)\}')
+
+
+def _required_sets(details):
+    """What has to be filled in, read from the service's URL templates.
+
+    Apprise's `required` on a token means "required in the URL forms that use it", not "always
+    required": Slack marks both its webhook tokens (token_a/b/c) and its bot token (access_token) as
+    required, and lists templates for each, because they are two ways in. So a token is only always
+    required when every template has it; the rest are alternatives.
+
+    Returns (always, alternatives):
+        always: set of token keys every URL form needs
+        alternatives: [set, ...] of further keys, one of these sets has to be complete as well.
+                      Empty when nothing more is needed (one URL form needs only `always`).
+    """
+    tokens = details.get('tokens', {})
+    required = {key for key, spec in tokens.items() if spec.get('required') and key != 'schema'}
+    templates = details.get('templates') or ()
+    if not templates:
+        return required, []
+
+    # A template names the list ({targets}) or one item of it ({target_channel}), both mean the list
+    member_of = {member: key for key, spec in tokens.items() for member in spec.get('group') or ()}
+    needs = []
+    for template in templates:
+        used = {member_of.get(token, token) for token in _TEMPLATE_TOKEN.findall(template)}
+        needs.append(frozenset(used & required))
+    # Only the smallest combinations count: {a} makes {a, b} pointless as an alternative
+    minimal = [n for n in set(needs) if not any(other < n for other in needs)]
+    always = set(frozenset.intersection(*minimal)) if minimal else set()
+    alternatives = [set(n - always) for n in minimal]
+    if not all(alternatives):
+        alternatives = []
+    return always, sorted(alternatives, key=lambda a: (len(a), sorted(a)))
+
+
 def describe_service(schema, lang=None):
     """The form for one service, or None if the schema isn't a listed service.
 
     {'schema', 'name', 'setup_url', 'secure_toggle': bool,
-     'fields': [...], 'options': [...], 'kwargs': [{'key', 'label', 'prefix'}]}
+     'fields': [...], 'options': [...], 'kwargs': [{'key', 'label', 'prefix'}],
+     'one_of': [[field key, ...], ...]}
+
+    `one_of` is only there when the service can be set up in more than one way: one of these groups
+    of fields has to be filled in (Slack: the bot token, or the three webhook tokens). Those fields
+    are not `required` on their own.
     """
     if schema == CUSTOM_HTTP:
         return _describe_custom_http()
@@ -166,17 +208,31 @@ def describe_service(schema, lang=None):
             for member in spec.get('group') or ():
                 member_of[member] = key
 
+        always, alternatives = _required_sets(details)
+
         fields = []
         for key, spec in tokens.items():
             if key == 'schema' or key in member_of:
                 continue
             list_label = None
+            accepts = None
             if spec.get('group'):
-                member = next(iter(spec['group']))
-                list_label = tokens.get(member, {}).get('name')
-            fields.append(_field(key, spec, list_label=list_label))
-        # Required first, otherwise Apprise's order
-        fields.sort(key=lambda f: not f['required'])
+                # `group` is a set, so take the names in the order Apprise declares the tokens
+                names = [str(tokens[m]['name']) for m in tokens if m in spec['group'] and tokens[m].get('name')]
+                if len(names) == 1:
+                    list_label = names[0]
+                elif names:
+                    # Several kinds of item (Slack: channel, user, e-mail, ID): no single one of them
+                    # describes the box, so it keeps the list's own name and says what it takes
+                    accepts = names
+            field = _field(key, spec, list_label=list_label)
+            field['required'] = key in always
+            if accepts:
+                field['accepts'] = accepts
+            fields.append(field)
+        # Required first, then the alternative ways in, otherwise Apprise's order
+        in_alternative = set().union(*alternatives) if alternatives else set()
+        fields.sort(key=lambda f: 0 if f['required'] else 1 if f['key'] in in_alternative else 2)
 
         options = [_field(key, spec) for key, spec in details.get('args', {}).items()
                    if key not in GENERIC_ARGS and key not in tokens and 'alias_of' not in spec]
@@ -192,6 +248,8 @@ def describe_service(schema, lang=None):
         'fields': fields,
         'options': options,
         'kwargs': kwargs,
+        **({'one_of': [[f['key'] for f in fields if f['key'] in group] for group in alternatives]}
+           if alternatives else {}),
     }
 
 
@@ -287,6 +345,13 @@ def build_url(schema, values=None, secure=True, extra=None):
                if f['required'] and specs[f['key']].get('map_to', f['key']) not in kwargs]
     if missing:
         return {'error': f"Required: {', '.join(missing)}", 'missing': missing}
+
+    # More than one way to set the service up: one of the groups has to be complete
+    one_of = form.get('one_of')
+    if one_of and not any(all(specs[key].get('map_to', key) in kwargs for key in group) for group in one_of):
+        labels = {f['key']: f['label'] for f in form['fields']}
+        choices = [[labels[key] for key in group] for group in one_of]
+        return {'error': 'Required: ' + ' / '.join(' + '.join(c) for c in choices), 'one_of': choices}
 
     # Some services (Telegram) take the target list as a required argument, even when it may be empty
     for field in form['fields']:

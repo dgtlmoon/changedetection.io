@@ -180,8 +180,29 @@ class SignalHandler:
 
 
 
+def has_connected_clients(socketio):
+    """True when at least one client has completed the Socket.IO connect on the default namespace.
+
+    Asks the Socket.IO manager (the same record emit() sends to), so test clients and any transport count, and a
+    client that was rejected by the connect handler or is still handshaking does not.
+
+    If that can't be read (an unexpected Flask-SocketIO layout, or the server not created yet) this returns True, so
+    callers fall back to always emitting rather than silently going quiet.
+    """
+    try:
+        return next(iter(socketio.server.manager.get_participants('/', None)), None) is not None
+    except AttributeError:
+        return True
+
+
 def handle_watch_update(socketio, **kwargs):
     """Handle watch update signal from blinker"""
+    # This runs on the worker thread at the start and end of every check, and the counters below are rebuilt by
+    # looping over every watch (twice). With nobody connected there is nobody to send them to, and a browser that
+    # connects later gets its numbers from the rendered page, so skip all of it.
+    if not has_connected_clients(socketio):
+        return
+
     try:
         watch = kwargs.get('watch')
         datastore = kwargs.get('datastore')

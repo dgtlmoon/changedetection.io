@@ -1,6 +1,6 @@
 # Third-party licences
 
-Generated 2026-11-09 from the built container.
+Generated 2026-11-19 from the built container.
 **Do not edit by hand** - run `.github/scripts/generate-third-party-licenses.sh`.
 
 Every third-party Python package bundled in the distributed image
@@ -22,14 +22,14 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [apprise](https://appriseit.com) | 2.2.0 | BSD-2-Clause |
 | [arrow](https://github.com/arrow-py/arrow) | 1.4.0 | Apache Software License |
 | [attrs](https://www.attrs.org/en/stable/changelog.html) | 26.1.0 | MIT |
-| [Authlib](https://github.com/authlib/authlib) | 1.9.5 | BSD License |
+| [Authlib](https://github.com/authlib/authlib) | 1.9.9 | BSD License |
 | [babel](https://babel.pocoo.org/) | 2.18.0 | BSD License |
 | [backports.zstd](https://github.com/rogdham/backports.zstd) | 1.8.0 | PSF-2.0 |
 | [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/bs4/) | 4.15.0 | MIT License |
 | [bidict](https://github.com/jab/bidict) | 0.24.1 | MPL-2.0 |
 | [blinker](https://github.com/pallets-eco/blinker/) | 1.9.0 | MIT License |
-| [boto3](https://github.com/boto/boto3) | 1.43.126 | Apache-2.0 |
-| [botocore](https://github.com/boto/botocore) | 1.43.126 | Apache-2.0 |
+| [boto3](https://github.com/boto/boto3) | 1.44.6 | Apache-2.0 |
+| [botocore](https://github.com/boto/botocore) | 1.44.6 | Apache-2.0 |
 | [brotli](https://github.com/google/brotli) | 1.2.1 | MIT |
 | [certifi](https://github.com/certifi/python-certifi) | 2026.10.23 | Mozilla Public License 2.0 (MPL 2.0) |
 | [cffi](https://cffi.readthedocs.io/en/latest/whatsnew.html) | 2.1.1 | MIT-0 |
@@ -46,7 +46,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [feedgen](https://lkiesow.github.io/python-feedgen) | 1.0.0 | BSD License; GNU Lesser General Public License v3 or later (LGPLv3+) |
 | [feedparser](https://github.com/kurtmckee/feedparser) | 6.0.14 | BSD-2-Clause |
 | [feedparser-sgmllib](https://github.com/python-syndication/feedparser-sgmllib) | 2.1.0 | PSF-2.0 |
-| [filelock](https://github.com/tox-dev/filelock) | 4.2.9 | MIT |
+| [filelock](https://github.com/tox-dev/filelock) | 4.2.12 | MIT |
 | [Flask](https://github.com/pallets/flask/) | 3.1.3 | BSD-3-Clause |
 | [flask-babel](https://github.com/python-babel/flask-babel) | 4.0.0 | BSD License |
 | [Flask-Compress](https://github.com/colour-science/flask-compress) | 1.26 | MIT License |
@@ -68,10 +68,10 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [html-text](https://github.com/zytedata/html-text) | 0.7.1 | MIT |
 | [html5lib](https://github.com/html5lib/html5lib-python) | 1.1 | MIT License |
 | [httpcore](https://www.encode.io/httpcore/) | 1.0.9 | BSD-3-Clause |
-| [httpcore2](https://github.com/pydantic/httpx2) | 2.16.0 | BSD-3-Clause |
+| [httpcore2](https://github.com/pydantic/httpx2) | 2.16.2 | BSD-3-Clause |
 | [httpx](https://github.com/encode/httpx) | 0.28.1 | BSD License |
-| [httpx2](https://github.com/pydantic/httpx2) | 2.16.0 | BSD-3-Clause |
-| [huggingface_hub](https://github.com/huggingface/huggingface_hub) | 1.33.0 | Apache Software License |
+| [httpx2](https://github.com/pydantic/httpx2) | 2.16.2 | BSD-3-Clause |
+| [huggingface_hub](https://github.com/huggingface/huggingface_hub) | 2.4.0 | Apache Software License |
 | [hyperframe](https://github.com/python-hyper/hyperframe/) | 6.1.0 | MIT License |
 | [idna](https://github.com/kjd/idna) | 3.20 | BSD-3-Clause |
 | [importlib_metadata](https://github.com/python/importlib_metadata) | 8.9.0 | Apache-2.0 |
@@ -91,8 +91,8 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [jstyleson](https://github.com/linjackson78/jstyleson) | 0.0.2 | MIT License |
 | [lazy-object-proxy](https://python-lazy-object-proxy.readthedocs.io/en/latest/changelog.html) | 1.13.0 | BSD-2-Clause |
 | [linkify-it-py](https://github.com/tsutsu3/linkify-it-py) | 2.2.0 | MIT License |
-| [litellm](https://litellm.ai) | 1.108.3 | MIT |
-| [loguru](https://github.com/Delgan/loguru) | 0.7.3 | MIT License |
+| [litellm](https://litellm.ai) | 1.110.1 | MIT |
+| [loguru](https://github.com/Delgan/loguru) | 0.8.0 | MIT License |
 | [lxml](https://lxml.de/) | 6.1.3 | BSD-3-Clause |
 | [lxml_html_clean](https://github.com/fedora-python/lxml_html_clean/) | 0.4.6 | BSD-3-Clause |
 | [Markdown](https://Python-Markdown.github.io/) | 3.11.3 | BSD-3-Clause |
@@ -104,11 +104,11 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [mypy_extensions](https://github.com/python/mypy_extensions) | 1.2.0 | MIT |
 | [numpy](https://numpy.org) | 2.4.6 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 |
 | [oauthlib](https://github.com/oauthlib/oauthlib) | 4.0.1 | BSD-3-Clause |
-| [openai](https://github.com/openai/openai-python) | 3.46.0 | Apache-2.0 |
+| [openai](https://github.com/openai/openai-python) | 3.55.1 | Apache-2.0 |
 | [openapi-core](https://github.com/python-openapi/openapi-core) | 0.23.1 | BSD License |
 | [openapi-schema-validator](https://github.com/python-openapi/openapi-schema-validator) | 0.8.1 | BSD License |
 | [openapi-spec-validator](https://github.com/python-openapi/openapi-spec-validator) | 0.8.5 | Apache-2.0 |
-| [opencv-python-headless](https://github.com/opencv/opencv-python) | 5.0.0.93 | Apache Software License |
+| [opencv-python-headless](https://github.com/opencv/opencv-python) | 5.1.0.95 | Apache Software License |
 | [openpyxl](https://openpyxl.readthedocs.io) | 3.1.5 | MIT License |
 | ordered-set | 4.1.0 | MIT License |
 | [orjson](https://github.com/ijl/orjson) | 3.13.0 | MPL-2.0 AND (Apache-2.0 OR MIT) |
@@ -127,7 +127,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [puremagic](https://github.com/cdgriffith/puremagic) | 1.30 | MIT License |
 | [pycparser](https://github.com/eliben/pycparser) | 3.12 | BSD-3-Clause |
 | [pydantic](https://github.com/pydantic/pydantic) | 2.14.3 | MIT |
-| [pydantic-settings](https://github.com/pydantic/pydantic-settings) | 2.16.2 | MIT |
+| [pydantic-settings](https://github.com/pydantic/pydantic-settings) | 2.16.3 | MIT |
 | [pydantic_core](https://github.com/pydantic) | 2.50.4 | MIT |
 | [pyee](https://github.com/jfhbrook/pyee) | 13.0.1 | MIT License |
 | [Pygments](https://pygments.org) | 2.21.0 | BSD-2-Clause |
@@ -150,7 +150,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [RapidFuzz](https://github.com/rapidfuzz/RapidFuzz) | 3.14.6 | MIT |
 | [rdflib](https://github.com/RDFLib/rdflib) | 7.6.0 | BSD License |
 | [referencing](https://github.com/python-jsonschema/referencing) | 0.37.0 | MIT |
-| [regex](https://github.com/mrabarnett/mrab-regex) | 2026.11.9 | Apache-2.0 AND CNRI-Python |
+| [regex](https://github.com/mrabarnett/mrab-regex) | 2026.11.19 | Apache-2.0 AND CNRI-Python |
 | [requests](https://github.com/psf/requests) | 2.34.2 | Apache Software License |
 | [requests-file](https://codeberg.org/dashea/requests-file) | 3.0.1 | Apache Software License |
 | [requests-oauthlib](https://github.com/requests/requests-oauthlib) | 2.0.0 | BSD License |
@@ -163,7 +163,7 @@ For copyright ownership and our licence elections, see `NOTICE`.
 | [six](https://github.com/benjaminp/six) | 1.17.0 | MIT License |
 | [sniffio](https://github.com/python-trio/sniffio) | 1.3.1 | Apache Software License; MIT License |
 | [sortedcontainers](http://www.grantjenks.com/docs/sortedcontainers/) | 2.4.0 | Apache Software License |
-| [soupsieve](https://github.com/facelessuser/soupsieve) | 4.0.1 | MIT |
+| [soupsieve](https://github.com/facelessuser/soupsieve) | 4.1.2 | MIT |
 | [tiktoken](https://github.com/openai/tiktoken) | 0.14.0 | MIT License Copyright (c) 2022 OpenAI, Shantanu Jain Permission is hereby granted, free... |
 | [timeago](https://github.com/hustcc/timeago) | 1.0.16 | MIT |
 | [tokenizers](https://github.com/huggingface/tokenizers) | 0.23.3 | Apache Software License |

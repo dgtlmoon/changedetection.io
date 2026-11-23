@@ -687,9 +687,15 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
 
     def url_exists(self, url):
 
-        # Probably their should be dict...
-        for watch in self.data['watching'].values():
-            if watch['url'].lower() == url.lower():
+        # Snapshot under the lock: a large API import adds watches from a background
+        # thread, and walking the live dict while it grows raises
+        # "dictionary changed size during iteration".
+        with self.lock:
+            watches = list(self.__data['watching'].values())
+
+        url = url.lower()
+        for watch in watches:
+            if watch['url'].lower() == url:
                 return True
 
         return False
@@ -891,7 +897,8 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                 logger.error(f"Could not seed watch {new_uuid} from {seed_data_dir}: {e}")
 
         new_watch.ensure_data_dir_exists()
-        self.__data['watching'][new_uuid] = new_watch
+        with self.lock:
+            self.__data['watching'][new_uuid] = new_watch
 
         if save_immediately:
             # Save immediately using commit

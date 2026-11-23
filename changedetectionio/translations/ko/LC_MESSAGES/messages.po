@@ -3325,6 +3325,10 @@ msgid "Set proxy for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Download CSV"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
 msgstr "본 것으로 표시"
 
@@ -3715,6 +3719,11 @@ msgstr "알림 URL을 사용하는 경우 알림 본문 및 제목이 필요합�
 #, python-format
 msgid "'%s' is not a valid AppRise URL."
 msgstr "'%s'은(는) 유효한 AppRise URL이 아닙니다."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegEx가 너무 깁니다. 최대 %(max)s자입니다."
 
 #: changedetectionio/forms.py
 #, python-format
@@ -4549,6 +4558,10 @@ msgid "The URL must start with http:// or https://"
 msgstr "URL은 http:// 또는 https://로 시작해야 합니다"
 
 #: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "해당 RegEx 실행 시간이 너무 깁니다. 더 단순한 것을 사용하세요."
+
+#: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "해당 정규식으로 모든 모니터링 기록을 검사했지만 일치하는 항목을 찾지 못했습니다."
 
@@ -4930,6 +4943,11 @@ msgstr "한 줄에 하나씩, 이름=값"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Fill in the fields to build the URL"
 msgstr "필드를 채우면 URL이 만들어집니다"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"
