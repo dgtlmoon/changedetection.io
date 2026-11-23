@@ -306,6 +306,9 @@ def test_group_notification_mode_senders(client, live_server, measure_memory_usa
         group_on_its_own,
         {'notification_urls': second_group_urls, 'notification_title': 'Second title', 'notification_body': 'Second body',
          'notification_format': 'markdown'}]
+    # ..and when one of them replaces the watch's own, both groups are still sent, only the watch's is left out
+    second_tag['notification_group_mode'] = 'replace'
+    assert [s['notification_urls'] for s in notification_senders(datastore, watch)] == [group_urls, second_group_urls]
     watch['tags'].remove(second_tag_uuid)
     tag['notification_group_mode'] = 'replace'
 
