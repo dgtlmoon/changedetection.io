@@ -1,5 +1,3 @@
-import re
-
 from loguru import logger
 from flask_babel import lazy_gettext as _l
 
@@ -20,15 +18,32 @@ def register_operators():
     def length_max(_, text, strlen):
         return len(text) <= int(strlen)
 
+    def regex_found(text, pattern):
+        """True when `pattern` is found in `text`, case-insensitive.
+
+        Uses the 'regex' package so the search has a time limit: the text is the watched page and one that
+        happens to (or is made to) backtrack badly against the pattern would otherwise hold the check forever.
+        A search that runs out of time fails the check with a message, it is never taken as "not found".
+        """
+        # Imported here: only needed by watches that use a regex condition
+        import regex as regex_lib
+        from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
+        try:
+            return bool(regex_lib.search(pattern, str(text), regex_lib.IGNORECASE, timeout=regex_plugin.REGEX_TIMEOUT_SECONDS))
+        except TimeoutError:
+            raise TimeoutError(
+                f"A 'matches regex' condition took longer than {regex_plugin.REGEX_TIMEOUT_SECONDS} seconds, try a simpler RegEx"
+            ) from None
+
     # Custom function for case-insensitive regex matching
     def contains_regex(_, text, pattern):
         """Returns True if `text` contains `pattern` (case-insensitive regex match)."""
-        return bool(re.search(pattern, str(text), re.IGNORECASE))
+        return regex_found(text, pattern)
 
     # Custom function for NOT matching case-insensitive regex
     def not_contains_regex(_, text, pattern):
         """Returns True if `text` does NOT contain `pattern` (case-insensitive regex match)."""
-        return not bool(re.search(pattern, str(text), re.IGNORECASE))
+        return not regex_found(text, pattern)
 
     def not_contains(_, text, pattern):
         return not pattern in text
