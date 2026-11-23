@@ -616,3 +616,49 @@ def test_tag_json_migration_update_27(client, live_server, measure_memory_usage,
         assert not os.path.exists(tag_json_path), f"tag.json should be deleted for {tag_uuid}"
 
     delete_all_watches(client)
+
+
+def test_add_watch_from_inside_group(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """Adding a watch while a group is open on the watch list puts it in that group (#4749)"""
+    from changedetectionio.blueprint.add_watch_ui import browser_config
+    # The sidebar "Add a page watch" link is only offered with a browser that can render a live preview
+    monkeypatch.setattr(browser_config, 'list_visual_browser_choices',
+                        lambda datastore: [('html_webdriver', 'WebDriver Chrome/Javascript')])
+
+    datastore = live_server.app.config['DATASTORE']
+    tag_uuid = datastore.add_tag('Shopping list')
+    test_url = url_for('test_endpoint', _external=True)
+
+    # Outside a group, nothing is preselected
+    res = client.get(url_for("watchlist.index"))
+    assert b'type="hidden" name="tags"' not in res.data
+    assert f'href="{url_for("add_watch_ui.add_watch_ui_index")}"'.encode() in res.data
+    res = client.get(url_for("add_watch_ui.add_watch_ui_index"))
+    assert b'value="Shopping list"' not in res.data
+
+    res = client.get(url_for("watchlist.index", tag=tag_uuid))
+    # The quick-add form posts the open group, and returns to it afterwards
+    assert f'<input type="hidden" name="tags" value="{tag_uuid}">'.encode() in res.data
+    assert url_for("ui.ui_views.form_quick_watch_add", tag=tag_uuid).encode() in res.data
+    # The sidebar "Add a page watch" link takes the open group along
+    add_watch_ui_url = url_for("add_watch_ui.add_watch_ui_index", tag=tag_uuid)
+    assert f'href="{add_watch_ui_url}"'.encode() in res.data
+
+    # and the Add-Watch page starts with that group filled in
+    res = client.get(add_watch_ui_url)
+    assert b'value="Shopping list"' in res.data
+
+    # Same as submitting the quick-add form from inside the group
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add", tag=tag_uuid),
+        data={"url": test_url, "tags": tag_uuid},
+    )
+    assert res.status_code == 302
+    assert res.location.endswith(url_for("watchlist.index", tag=tag_uuid))
+
+    watch = next(iter(datastore.data['watching'].values()))
+    assert watch['tags'] == [tag_uuid]
+    # No duplicate group was created from the UUID
+    assert len(datastore.data['settings']['application']['tags']) == 1
+
+    delete_all_watches(client)

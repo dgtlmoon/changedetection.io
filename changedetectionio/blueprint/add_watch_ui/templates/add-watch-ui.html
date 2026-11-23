@@ -93,7 +93,7 @@
                     {% endif %}
 
                     <div class="add-watch-option-group" id="watch-group-tag">
-                        {{ render_field(form.tags, value='', placeholder=_("Watch group / tag"), class="transparent-field") }}
+                        {{ render_field(form.tags, value=active_tag_title, placeholder=_("Watch group / tag"), class="transparent-field") }}
                     </div>
 
                     <div class="add-watch-option-group" id="add-watch-submit-row">
