@@ -387,6 +387,65 @@ def test_group_notification_mode_sends_in_group_format(client, live_server, meas
     delete_all_watches(client)
 
 
+def test_group_notification_mode_every_group_sends(client, live_server, measure_memory_usage, datastore_path):
+    """End to end, a watch in two groups that each have their own notification (#3959): by default
+    one notification is sent, as always. With both groups set to send as well as the watch's own,
+    each group's notification arrives with that group's own body."""
+    delete_all_watches(client)
+    set_original_response(datastore_path=datastore_path)
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": 'first-group, second-group'},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+    wait_for_all_checks(client)
+
+    notification_url_endpoint = url_for('test_notification_endpoint', _external=True).replace('http', 'post')
+    received = {name: os.path.join(datastore_path, f"{name}.txt") for name in ('first-group', 'second-group')}
+
+    def save_groups(mode=None):
+        for name in received:
+            form_data = {"notification_urls": f"{notification_url_endpoint}?outputfilename={name}.txt",
+                         "notification_title": f"Title of {name}",
+                         "notification_body": f"Body of {name} for {{{{watch_url}}}}",
+                         "notification_format": 'text',
+                         "title": name}
+            if mode:
+                form_data['notification_group_mode'] = mode
+            res = client.post(url_for("tags.form_tag_edit_submit", uuid=get_UUID_for_tag_name(client, name=name)),
+                              data=form_data, follow_redirects=True)
+            assert b"Updated" in res.data
+
+    def change_page_and_collect(set_response):
+        set_response(datastore_path=datastore_path)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+        time.sleep(3)
+        bodies = {}
+        for name, path in received.items():
+            if os.path.isfile(path):
+                with open(path, "r") as f:
+                    bodies[name] = f.read()
+                os.unlink(path)
+        return bodies
+
+    # As it has always been: one notification, from the first group that has one
+    save_groups()
+    assert len(change_page_and_collect(set_modified_response)) == 1
+
+    # Both groups send on their own
+    save_groups(mode='add')
+    bodies = change_page_and_collect(set_original_response)
+    assert set(bodies) == set(received)
+    for name, body in bodies.items():
+        assert f"Body of {name} for {test_url}" in body
+
+    delete_all_watches(client)
+
+
 def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path):
 
     test_url = url_for('test_random_content_endpoint', _external=True)

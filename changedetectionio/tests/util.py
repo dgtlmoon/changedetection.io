@@ -517,7 +517,9 @@ def new_live_server_setup(live_server):
     def test_notification_endpoint():
         datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
 
-        with open(os.path.join(datastore_path, "notification.txt"), "wb") as f:
+        # ?outputfilename= lets a test tell several notifications apart, the name only, never a path
+        notification_filename = os.path.basename(request.args.get('outputfilename') or '') or "notification.txt"
+        with open(os.path.join(datastore_path, notification_filename), "wb") as f:
             # Debug method, dump all POST to file also, used to prove #65
             data = request.stream.read()
             if data != None:
