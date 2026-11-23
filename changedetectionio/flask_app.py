@@ -1224,10 +1224,14 @@ def changedetection_app(config=None, datastore_o=None):
         if not group or not filename:
             abort(404)
 
+        # The password can be kept in the settings or given in the environment, a watch's own files
+        # (screenshot, favicon, selector data) need a login either way
+        password_is_set = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+
         if group == 'screenshot':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 if not datastore.data['settings']['application'].get('shared_diff_access'):
@@ -1259,7 +1263,7 @@ def changedetection_app(config=None, datastore_o=None):
         if group == 'favicon':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 abort(403)
@@ -1290,7 +1294,7 @@ def changedetection_app(config=None, datastore_o=None):
         if group == 'visual_selector_data':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 abort(403)
