@@ -244,6 +244,21 @@ def test_regex_replace_with_notification_context():
 
     assert "value1 value2 " in finalRender
 
+def test_regex_replace_outside_main_thread():
+    """Test regex_replace also works when rendered outside the main thread, like in the notification runners."""
+    import threading
+
+    results = []
+
+    def render_in_thread():
+        results.append(render("{{ 'hello world 123' | regex_replace('[0-9]+', 'no-more-numbers') }}"))
+
+    thread = threading.Thread(target=render_in_thread)
+    thread.start()
+    thread.join()
+
+    assert results == ["hello world no-more-numbers"]
+
 def test_regex_replace_security_large_input():
     """Test regex_replace handles large input safely."""
 
@@ -296,26 +311,28 @@ def test_regex_replace_security_dangerous_pattern():
         # Should return original value when dangerous pattern is detected
         assert finalRender == "aaaaaaaaaa"
 
-def test_regex_replace_security_timeout_protection():
-    """Test that regex_replace has timeout protection (if SIGALRM available)."""
-    import signal
+def test_regex_replace_security_timeout_protection(monkeypatch):
+    """Test the ReDoS timeout fires, including outside the main thread like in the notification runners."""
+    import threading
+    import time
+    from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
 
-    # Only test on systems that support SIGALRM
-    if not hasattr(signal, 'SIGALRM'):
-        # Skip test on Windows and other systems without SIGALRM
-        return
+    monkeypatch.setattr(regex_plugin, 'REGEX_TIMEOUT_SECONDS', 1)
 
-    # This pattern is known to cause exponential backtracking on certain inputs
-    # but should be caught by our dangerous pattern detector
-    # We're mainly testing that the timeout mechanism works
+    # Catastrophic backtracking that slips past the nested quantifier check
+    test_input = "a" * 40 + "b"
+    results = []
 
-    from changedetectionio.jinja2_custom import regex_replace
+    def run_in_thread():
+        start = time.time()
+        results.append((regex_plugin.regex_replace(test_input, r"(a|aa)+$", "x"), time.time() - start))
 
-    # Create input that could trigger slow regex
-    test_input = "a" * 50 + "b"
+    thread = threading.Thread(target=run_in_thread)
+    thread.start()
+    thread.join(timeout=30)
 
-    # This shouldn't take long due to our protections
-    result = regex_replace(test_input, "a+b", "x")
-
-    # Should complete and return a result
-    assert result is not None
+    assert not thread.is_alive(), "regex_replace did not time out"
+    result, elapsed = results[0]
+    # Should return the original value once the timeout is hit
+    assert result == test_input
+    assert elapsed < 5

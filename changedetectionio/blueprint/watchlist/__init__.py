@@ -14,6 +14,8 @@ from changedetectionio.auth_decorator import login_optionally_required
 # bulk actions so a filtered view and the actions taken on it always agree.
 from changedetectionio.blueprint.watchlist import filters as wl_filters
 from changedetectionio.blueprint.watchlist.row_context import watch_row_context
+# The manifest points share_target at this page, so an Android share lands in index()
+from changedetectionio.blueprint.pwa.service import is_share, pwa_preset_url
 
 def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMetaData):
     watchlist_blueprint = Blueprint('watchlist', __name__, template_folder="templates")
@@ -59,8 +61,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         active_processor = request.args.get('processor', '').strip()
         # Toolbar facet counts are tallied over the tag/processor/search context but
         # independently of the active status toggle, so the .seg numbers stay stable
-        # as you switch between All / Unread / Deals / With errors.
+        # as you switch between All / Unread / Deals / With errors / Healthy.
         errored_count = 0
+        healthy_count = 0
         deals_count = 0
         unread_count = 0
         processor_counts = {}
@@ -82,6 +85,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 continue
             if watch.get('last_error'):
                 errored_count += 1
+            else:
+                healthy_count += 1
             if wl_filters.watch_is_deal(watch):
                 deals_count += 1
             # Unread = changed and not yet viewed — same test the 'unread' status
@@ -92,6 +97,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 sorted_watches.append(watch)
 
         form = forms.quickWatchForm(request.form)
+
+        # A share from the Android share sheet lands here (see pwa_preset_url). Prefill only -
+        # the operator still picks a mode and presses Watch.
+        if not form.url.data and is_share(request.args):
+            form.url.data = pwa_preset_url(request.args)
+            if not form.url.data:
+                # Sharing a photo, or a note with no link in it, otherwise just opens an
+                # ordinary-looking empty page and leaves the user wondering. Gated on
+                # is_share so tapping the home screen icon (same URL, no params) says nothing.
+                flash(_('Nothing shareable was found - no web page link in what you shared.'), 'notice')
+
         page = request.args.get(get_page_parameter(), type=int, default=1)
         total_count = len(sorted_watches)
 
@@ -125,6 +141,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             checking_now_size=len(worker_pool.get_running_uuids()),
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             errored_count=errored_count,
+            healthy_count=healthy_count,
             deals_count=deals_count,
             unread_count=unread_count,
             processor_counts=processor_counts,

@@ -3,6 +3,7 @@ include docs/api-spec.yaml
 recursive-include changedetectionio/blueprint *
 recursive-include changedetectionio/conditions *
 recursive-include changedetectionio/content_fetchers *
+recursive-include changedetectionio/example_plugins *
 recursive-include changedetectionio/jinja2_custom *
 recursive-include changedetectionio/model *
 recursive-include changedetectionio/notification *

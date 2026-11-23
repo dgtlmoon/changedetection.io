@@ -255,3 +255,68 @@ def test_restock_detection(client, live_server, measure_memory_usage, datastore_
     res = client.get(url_for("watchlist.index"))
     assert b'not-in-stock' in res.data, "Correctly showing NOT IN STOCK in the list after it changed from IN STOCK"
 
+
+
+def test_restock_api_processor_state(client, live_server, measure_memory_usage, datastore_path):
+    """processor_state_restock_diff (the current stock/price) is in both the single watch GET and
+    the watch list, processor_config_restock_diff only in the single watch GET, and neither is added
+    to a watch using another processor."""
+    import json
+    api_key = live_server.app.config['DATASTORE'].data['settings']['application'].get('api_access_token')
+    headers = {'content-type': 'application/json', 'x-api-key': api_key}
+    test_url = url_for('test_endpoint', _external=True)
+
+    set_price_response(datastore_path=datastore_path, price="100.00")
+    res = client.post(url_for("createwatch"), headers=headers,
+                      data=json.dumps({"url": test_url, "processor": "restock_diff", "fetch_backend": "html_requests"}))
+    assert res.status_code == 201
+    restock_uuid = res.json.get('uuid')
+
+    res = client.post(url_for("createwatch"), headers=headers,
+                      data=json.dumps({"url": test_url + "?text", "fetch_backend": "html_requests"}))
+    assert res.status_code == 201
+    text_uuid = res.json.get('uuid')
+    wait_for_all_checks(client)
+
+    # Price drops, last_price should then be the previous price
+    set_price_response(datastore_path=datastore_path, price="82.00")
+    client.get(url_for("watch", uuid=restock_uuid, recheck=1), headers=headers)
+    wait_for_all_checks(client)
+
+    expected_state = {'in_stock': True, 'price': 82.0, 'currency': 'USD', 'last_price': 100.0}
+
+    res = client.get(url_for("watch", uuid=restock_uuid), headers=headers)
+    assert res.status_code == 200
+    assert res.json.get('processor_state_restock_diff') == expected_state
+    assert res.json.get('processor_config_restock_diff_source') == 'watch'
+    assert 'processor_config_restock_diff' in res.json
+    assert 'restock' not in res.json, "The internal restock dict should stay hidden"
+
+    res = client.get(url_for("createwatch"), headers=headers)
+    assert res.status_code == 200
+    assert res.json[restock_uuid].get('processor') == 'restock_diff'
+    assert res.json[restock_uuid].get('processor_state_restock_diff') == expected_state
+    assert 'processor_config_restock_diff' not in res.json[restock_uuid], "Config is a disk read, it stays on the single watch GET"
+
+    # A text_json_diff watch gets no restock fields at all
+    assert res.json[text_uuid].get('processor') == 'text_json_diff'
+    assert not any(k.startswith('processor_state_') or k.startswith('processor_config_') for k in res.json[text_uuid])
+    res = client.get(url_for("watch", uuid=text_uuid), headers=headers)
+    assert not any(k.startswith('processor_state_') or k.startswith('processor_config_') for k in res.json)
+
+    # Round-tripping the GET response back through PUT must not write the read-only fields anywhere
+    data = client.get(url_for("watch", uuid=restock_uuid), headers=headers).json
+    res = client.put(url_for("watch", uuid=restock_uuid), headers=headers, data=json.dumps(data))
+    assert res.status_code == 200, res.data
+    datastore = client.application.config.get('DATASTORE')
+    with open(os.path.join(datastore.data['watching'][restock_uuid].data_dir, 'restock_diff.json')) as f:
+        saved_config = json.load(f)
+    assert 'restock_diff_source' not in saved_config, "processor_config_restock_diff_source must not be saved as config"
+    assert 'processor_state_restock_diff' not in datastore.data['watching'][restock_uuid]
+
+    # The merged OpenAPI spec documents it as read-only on the Watch schema
+    from changedetectionio.api import build_merged_spec_dict
+    spec = build_merged_spec_dict()
+    assert 'processor_state_restock_diff' in spec['components']['schemas']
+    watch_props = next(s for s in spec['components']['schemas']['Watch']['allOf'] if 'properties' in s)['properties']
+    assert watch_props['processor_state_restock_diff']['readOnly'] is True

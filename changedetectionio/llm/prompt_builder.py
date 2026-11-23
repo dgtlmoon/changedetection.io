@@ -185,38 +185,3 @@ def build_change_summary_system_prompt() -> str:
         "Do not add preamble, meta-commentary, or self-introduction. Produce only the output "
         "the user asked for — nothing before it, nothing after it."
     )
-
-
-def build_setup_prompt(intent: str, snapshot_text: str, url: str = '') -> str:
-    """
-    Build the prompt for the one-time setup call that decides whether
-    a CSS pre-filter would improve evaluation precision.
-    """
-    excerpt = trim_to_relevant(snapshot_text, intent, max_chars=4_000)
-
-    parts = []
-    if url:
-        parts.append(f"URL: {url}")
-    parts.append(f"Intent: {intent}")
-    parts.append(f"\nPage content excerpt:\n{excerpt}")
-
-    return '\n'.join(parts)
-
-
-def build_setup_system_prompt() -> str:
-    return (
-        "You help configure a website change monitor.\n"
-        "Given a monitoring intent and a sample of the page content, decide if a CSS pre-filter "
-        "would improve evaluation precision by scoping the content to a specific structural section.\n\n"
-        "Respond with ONLY a JSON object:\n"
-        '{"needs_prefilter": true/false, "selector": "CSS selector or null", "reason": "one sentence"}\n\n'
-        "Rules:\n"
-        "- Only recommend a pre-filter when the intent references a specific structural section "
-        "(e.g. 'footer', 'sidebar', 'nav', 'header', 'main', 'article') OR the page clearly "
-        "has high-noise sections unrelated to the intent\n"
-        "- Use ONLY semantic element selectors: footer, nav, header, main, article, aside, "
-        "or attribute-based like [id*='price'], [class*='sidebar'] — NEVER positional selectors "
-        "like div:nth-child(3) or //*[2]\n"
-        "- Default to needs_prefilter=false — most intents don't need one\n"
-        "- selector must be null when needs_prefilter=false"
-    )

@@ -8,10 +8,24 @@ so update_q is a single instance.
 """
 
 import time
+
+import pytest
 from flask import url_for
 
 
-def _quiesce(live_server, timeout=3.0):
+@pytest.fixture(autouse=True)
+def restore_workers(live_server):
+    """These tests stop every worker. Put them back afterwards, or the next test on this pytest worker starts with
+    none until the scheduler's health check (every 60s) restarts them."""
+    from changedetectionio import worker_pool
+    before = worker_pool.get_worker_count()
+    yield
+    if before and worker_pool.get_worker_count() != before:
+        live_server.app.set_workers(0)
+        live_server.app.set_workers(before)
+
+
+def _quiesce(live_server, monkeypatch, timeout=3.0):
     """Pause scheduler, shut down all workers, wait for in-flight async workers
     to fully drain, clear queue. Returns (update_q, worker_pool, queuedWatchMetaData).
 
@@ -24,6 +38,11 @@ def _quiesce(live_server, timeout=3.0):
     from changedetectionio.flask_app import update_q
 
     live_server.app.config['DATASTORE'].data['settings']['application']['all_paused'] = True
+    # The scheduler's health check (every 60s, paused or not) restarts workers up to FETCH_WORKERS / the workers
+    # setting; if it ran during the test the workers came back and took the sentinel, "Could not get queue to a
+    # quiescent state". Expect none while these tests run, restore_workers puts them back after.
+    monkeypatch.setenv('FETCH_WORKERS', '0')
+    monkeypatch.setitem(live_server.app.config['DATASTORE'].data['settings']['requests'], 'workers', 0)
     live_server.app.set_workers(0)
 
     deadline = time.time() + timeout
@@ -62,9 +81,9 @@ def _push(update_q, worker_pool, qmeta, uuid, priority=1):
     assert ok, f"queue_item_async_safe returned falsy for {uuid}"
 
 
-def test_queue_page_renders_when_empty(client, live_server, measure_memory_usage, datastore_path):
+def test_queue_page_renders_when_empty(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """Empty queue: HTML 200, JSON shape matches contract."""
-    _quiesce(live_server)
+    _quiesce(live_server, monkeypatch)
 
     res = client.get(url_for("ui.ui_queue.queue_page"))
     assert res.status_code == 200
@@ -83,13 +102,13 @@ def test_queue_page_renders_when_empty(client, live_server, measure_memory_usage
     assert data["running_count"] == 0
 
 
-def test_queue_state_full_lifecycle(client, live_server, measure_memory_usage, datastore_path):
+def test_queue_state_full_lifecycle(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """One consolidated test of pushed items, priority labels, deleted-watch handling, and Clear Queue.
 
     Combined into one test deliberately — having separate tests revealed cross-test state leakage
     (workers occasionally surviving teardown) that this single test avoids.
     """
-    update_q, worker_pool, qmeta = _quiesce(live_server)
+    update_q, worker_pool, qmeta = _quiesce(live_server, monkeypatch)
 
     running_uuid = "11111111-1111-1111-1111-111111111111"
     immediate_uuid = "22222222-2222-2222-2222-222222222222"
@@ -158,9 +177,9 @@ def test_queue_state_full_lifecycle(client, live_server, measure_memory_usage, d
         update_q.clear()
 
 
-def test_queue_includes_timestamps(client, live_server, measure_memory_usage, datastore_path):
+def test_queue_includes_timestamps(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """Queue items carry enqueued_at; running items carry started_at."""
-    update_q, worker_pool, qmeta = _quiesce(live_server)
+    update_q, worker_pool, qmeta = _quiesce(live_server, monkeypatch)
 
     # Push something — enqueued_at should be ~now
     before = time.time()
@@ -194,9 +213,9 @@ def test_queue_includes_timestamps(client, live_server, measure_memory_usage, da
     update_q.clear()
 
 
-def test_queue_pagination(client, live_server, measure_memory_usage, datastore_path):
+def test_queue_pagination(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """Page math: per_page from settings.pager_size, total_pages, page slicing."""
-    update_q, worker_pool, qmeta = _quiesce(live_server)
+    update_q, worker_pool, qmeta = _quiesce(live_server, monkeypatch)
 
     # Override pager_size for this test so we don't have to push 50+ items
     live_server.app.config['DATASTORE'].data['settings']['application']['pager_size'] = 2
@@ -229,9 +248,9 @@ def test_queue_pagination(client, live_server, measure_memory_usage, datastore_p
     update_q.clear()
 
 
-def test_cancel_running_uuid_helper(client, live_server, measure_memory_usage, datastore_path):
+def test_cancel_running_uuid_helper(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """worker_pool.cancel_running_uuid() drops tracking and returns cancelled flag."""
-    update_q, worker_pool, qmeta = _quiesce(live_server)
+    update_q, worker_pool, qmeta = _quiesce(live_server, monkeypatch)
 
     synth = "cccccccc-cccc-cccc-cccc-cccccccccccc"
     assert worker_pool.claim_uuid_for_processing(synth, worker_id=999) is True
@@ -253,9 +272,9 @@ def test_cancel_running_uuid_helper(client, live_server, measure_memory_usage, d
     assert result2["worker_id"] is None
 
 
-def test_cancel_running_endpoint(client, live_server, measure_memory_usage, datastore_path):
+def test_cancel_running_endpoint(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """POST /queue/cancel-running: 200 on success, 400 on empty uuid, 404 on unknown uuid."""
-    update_q, worker_pool, qmeta = _quiesce(live_server)
+    update_q, worker_pool, qmeta = _quiesce(live_server, monkeypatch)
 
     synth = "dddddddd-dddd-dddd-dddd-dddddddddddd"
     assert worker_pool.claim_uuid_for_processing(synth, worker_id=999) is True

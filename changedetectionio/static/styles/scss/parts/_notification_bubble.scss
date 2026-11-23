@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 // Reusable notification bubble for action sidebar icons
 
 .action-sidebar-item {
@@ -66,7 +68,7 @@
 }
 
 // Dark mode adjustments
-html[data-darkmode=true] {
+@include dark-mode {
   .notification-bubble {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
   }

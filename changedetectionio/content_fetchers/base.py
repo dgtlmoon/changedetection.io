@@ -18,6 +18,7 @@ class FetcherCapabilities(BaseModel):
     supports_browser_steps: bool = False       # Can execute browser automation steps
     supports_screenshots: bool = False         # Can capture page screenshots
     supports_xpath_element_data: bool = False  # Can extract xpath element positions for visual selector
+    supports_pdf: bool = False                 # Can supply the original PDF bytes as raw_content
 
     @classmethod
     def from_fetcher(cls, fetcher_class):
@@ -71,6 +72,18 @@ def manage_user_agent(headers, current_ua=''):
 
     return None
 
+
+def browser_address_for_logs(browser_connection_url):
+    """Where the browser is, without the rest of its connection URL: the query string carries the
+    access token of the browser service and the proxy of the watch."""
+    from urllib.parse import urlsplit
+    try:
+        parts = urlsplit(browser_connection_url)
+        return f"{parts.scheme}://{parts.hostname}{':' + str(parts.port) if parts.port else ''}"
+    except Exception:
+        return '(browser address not readable)'
+
+
 class Fetcher():
     # The fully-resolved concrete backend name this fetcher was chosen as
     # (e.g. 'html_requests', 'html_webdriver'). Set by resolve_content_fetcher()
@@ -82,14 +95,23 @@ class Fetcher():
     browser_steps_screenshot_path = None
     content = None
     error = None
+    # Set when this fetcher is a retry after another one failed (the select_fetch_backend hook): the failed one's name
+    fallback_from = None
     fetcher_description = "No description"
     headers = {}
     favicon_blob = None
     instock_data = None
     instock_data_js = ""
+    # The queue 'item' dict of this check, one-shot options that apply to this fetch only (e.g. 'record_har')
+    queued_metadata = None
+    # Original response bytes (needed for PDF etc), fetchers that can't provide them leave this as None
+    raw_content = None
     screenshot_format = None
     status_code = None
+    # The watch's own directory in the datastore, for fetchers that write per-watch files
+    watch_data_dir = None
     webdriver_js_execute_code = None
+    worker_id = None
     xpath_data = None
     xpath_element_js = ""
 
@@ -106,6 +128,7 @@ class Fetcher():
     supports_browser_steps = False      # Can execute browser automation steps
     supports_screenshots = False        # Can capture page screenshots
     supports_xpath_element_data = False # Can extract xpath element positions/data for visual selector
+    supports_pdf = False                # Can supply the original PDF bytes as raw_content
 
     # Screenshot element locking - prevents layout shifts during screenshot capture
     # Only needed for visual comparison (image_ssim_diff processor)
@@ -119,6 +142,11 @@ class Fetcher():
         # Allow lock_viewport_elements to be set via kwargs
         if kwargs and 'lock_viewport_elements' in kwargs:
             self.lock_viewport_elements = kwargs.get('lock_viewport_elements')
+
+        # Which async worker is driving this fetch, subclasses use it to keep per-worker browser
+        # state (profile dirs etc) apart, stays None when we're not called from a worker
+        if kwargs and 'worker_id' in kwargs:
+            self.worker_id = kwargs.get('worker_id')
 
 
     @classmethod
@@ -145,11 +173,21 @@ class Fetcher():
         Call this after content has been saved to disk.
         """
         self.content = None
-        if hasattr(self, 'raw_content'):
-            self.raw_content = None
+        self.raw_content = None
         self.screenshot = None
         self.xpath_data = None
         # Keep headers and status_code as they're small
+
+    def har_record_wanted(self, watch_uuid):
+        """Record this fetch's network traffic? Asked for on this one check, or the watch is in HAR_UUID_RECORD"""
+        if not self.watch_data_dir:
+            return False
+        if (self.queued_metadata or {}).get('record_har'):
+            return True
+        if not os.getenv('HAR_UUID_RECORD'):
+            return False
+        from changedetectionio.content_fetchers.har_recorder import har_recording_wanted
+        return har_recording_wanted(watch_uuid)
 
     @abstractmethod
     def get_error(self):
@@ -202,7 +240,7 @@ class Fetcher():
     async def iterate_browser_steps(self, start_url=None):
         from changedetectionio.browser_steps.browser_steps import steppable_browser_interface, browser_steps_get_valid_steps
         from playwright._impl._errors import TimeoutError, Error
-        from changedetectionio.jinja2_custom import render as jinja_render
+        from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
         step_n = 0
 
         if self.browser_steps:
@@ -220,9 +258,9 @@ class Fetcher():
                     optional_value = step['optional_value']
                     selector = step['selector']
                     # Support for jinja2 template in step values, with date module added
-                    if '{%' in step['optional_value'] or '{{' in step['optional_value']:
+                    if JINJA2_MARKER_PATTERN.search(step['optional_value']):
                         optional_value = jinja_render(template_str=step['optional_value'])
-                    if '{%' in step['selector'] or '{{' in step['selector']:
+                    if JINJA2_MARKER_PATTERN.search(step['selector']):
                         selector = jinja_render(template_str=step['selector'])
 
                     await getattr(interface, "call_action")(action_name=step['operation'],

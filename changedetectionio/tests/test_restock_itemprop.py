@@ -3,7 +3,8 @@ import os
 import time
 
 from flask import url_for
-from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client, delete_all_watches
+from .util import live_server_setup, wait_for_all_checks, wait_for_notification_endpoint_output, extract_UUID_from_client, delete_all_watches, \
+    get_form_field
 from ..notification import default_notification_format
 
 instock_props = [
@@ -339,7 +340,8 @@ def test_itemprop_percent_threshold(client, live_server, measure_memory_usage, d
     # And back again
     live_server.app.config['DATASTORE'].data['watching'][uuid]['processor'] = 'restock_diff'
     res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
-    assert b'type="text" value="5.05"' in res.data
+    threshold_input = get_form_field(res.data, 'processor_config_restock_diff-price_change_threshold_percent')
+    assert threshold_input and threshold_input['value'] == '5.05'
 
     delete_all_watches(client)
 

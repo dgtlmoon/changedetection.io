@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=77"]  # 77+ for the SPDX license string
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdio-example-check-stats"
+version = "0.1.0"
+description = "Example changedetection.io plugin: times every check, shows it in the watch list and edit page"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+# No dependency on changedetection.io itself: install this into the same environment that runs it
+# (it needs plugin API 0.3.0 or newer, changedetectionio.plugin_api.PLUGIN_API_VERSION)
+dependencies = []
+
+# This is what makes changedetection.io load the plugin at startup
+[project.entry-points.changedetectionio]
+cdio_example_check_stats = "cdio_example_check_stats"
+
+[tool.setuptools]
+packages = ["cdio_example_check_stats"]
+
+[tool.setuptools.package-data]
+cdio_example_check_stats = ["static/*"]

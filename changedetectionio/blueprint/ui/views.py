@@ -49,6 +49,7 @@ def run_preloaded_first_check(datastore, uuid):
                                 snapshot_id=update_obj.get('previous_md5', 'none'))
         if handler.fetcher.content:
             watch.save_last_fetched_html(timestamp=timestamp, contents=handler.fetcher.content)
+        watch.save_last_fetched_pdf(timestamp=timestamp, contents=getattr(handler.fetcher, 'raw_content', None))
 
         # Page title is shown in the list / used in notifications.
         try:

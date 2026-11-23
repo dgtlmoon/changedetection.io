@@ -105,7 +105,7 @@ def construct_single_watch_routes(rss_blueprint, datastore):
             fe = fg.add_entry()
             title_suffix = f"Change @ {res['original_context']['change_datetime']}"
             populate_feed_entry(fe, watch, res.get('body', ''), guid, timestamp_to,
-                              link={'href': watch.get('url')}, title_suffix=title_suffix)
+                              link={'href': watch.open_link_override or watch.get('url')}, title_suffix=title_suffix)
             add_watch_categories(fe, watch, datastore)
 
         response = make_response(fg.rss_str())

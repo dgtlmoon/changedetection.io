@@ -6,7 +6,7 @@ from loguru import logger
 from changedetectionio.blueprint.tags.colour import safe_css_colour
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
-from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config
+from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config, is_llm_features_disabled
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -194,31 +194,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'llm_group_edit': True,
         }
 
-        included_content = {}
-        if form.extra_form_content():
-            # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
-            # And then render the code from the module
-            from jinja2 import Environment, FileSystemLoader
-            import importlib.resources
-            templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
-            env = Environment(loader=FileSystemLoader(templates_dir))
-            template_str = """{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
-        <script>        
-            $(document).ready(function () {
-                toggleOpacity('#overrides_watch', '#restock-fieldset-price-group', true);
-            });
-        </script>            
-                <fieldset>
-                    <div class="pure-control-group">
-                        <fieldset class="pure-group">
-                        {{ render_checkbox_field(form.overrides_watch) }}
-                        <span class="pure-form-message-inline">Used for watches in "Restock & Price detection" mode</span>
-                        </fieldset>
-                </fieldset>
-                """
-            template_str += form.extra_form_content()
-            template = env.from_string(template_str)
-            included_content = template.render(**template_args)
+        # The group form is always the restock form, rendered as real template files so its text is translatable (#4612)
+        included_content = render_template("edit-tag-extra-form.html",
+                                           extra_form_template=form.extra_form_template(),
+                                           **template_args)
 
         # Watches whose URL currently matches this tag's pattern
         matching_watches = {
@@ -230,6 +209,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         output = render_template("edit-tag.html",
                                  extra_form_content=included_content,
                                  extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
+                                 llm_features_disabled=is_llm_features_disabled(),
                                  matching_watches=matching_watches,
                                  settings_application=datastore.data['settings']['application'],
                                  **template_args

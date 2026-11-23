@@ -171,6 +171,39 @@ def test_body_in_request(client, live_server, measure_memory_usage, datastore_pa
     assert b"Body must be empty when Request Method is set to GET" in res.data
     delete_all_watches(client)
 
+
+def test_body_with_literal_jinja_like_text_is_sent_as_is(client, live_server, measure_memory_usage, datastore_path):
+    """#4452 - '{%22' (URL-encoded JSON) is not Jinja2. The form accepts it, so the fetch must not try to render it."""
+    test_url = url_for('test_body', _external=True)
+    if os.getenv('PLAYWRIGHT_DRIVER_URL'):
+        test_url = test_url.replace('localhost', 'cdio')
+
+    uuid = client.application.config.get('DATASTORE').add_watch(url=test_url)
+    wait_for_all_checks(client)
+
+    body_value = 'q={%22key%22:1}'
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={
+              "url": test_url,
+              "tags": "",
+              "method": "POST",
+              "fetch_backend": "html_requests",
+              "body": body_value,
+              "time_between_check_use_default": "y"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    wait_for_all_checks(client)
+
+    watch = client.application.config.get('DATASTORE').data['watching'][uuid]
+    assert not watch.get('last_error'), watch.get('last_error')
+
+    # The service echoes the body back, unrendered
+    res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
+    assert str.encode(body_value) in res.data
+    delete_all_watches(client)
+
 def test_method_in_request(client, live_server, measure_memory_usage, datastore_path):
     import os
     # Add our URL to the import page

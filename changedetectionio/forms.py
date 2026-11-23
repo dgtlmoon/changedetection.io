@@ -2,8 +2,9 @@ import os
 import re
 from loguru import logger
 from wtforms.widgets.core import TimeInput
-from flask_babel import lazy_gettext as _l, gettext
+from flask_babel import gettext, lazy_gettext as _l, lazy_pgettext
 
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_TEMPLATE_TYPE_OPTIONS, RSS_TEMPLATE_HTML_DEFAULT
 from changedetectionio.llm.ui_strings import LLM_INTENT_WATCH_PLACEHOLDER
 from changedetectionio.llm.evaluator import (
@@ -28,6 +29,7 @@ from wtforms import (
     PasswordField,
     RadioField,
     SelectField,
+    SelectMultipleField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -50,6 +52,7 @@ from changedetectionio.browser_steps.browser_steps import browser_step_ui_config
 from changedetectionio import html_tools, content_fetchers
 
 from changedetectionio.notification import (
+    USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
     valid_notification_formats,
 )
 
@@ -641,9 +644,17 @@ class ValidateSinglePythonRegexString(object):
         self.message = message
 
     def __call__(self, form, field):
+        # Same engine and length limit as where it is run, see Watch.extract_regex_from_all_history()
+        import regex as regex_lib
+        from changedetectionio.model.Watch import model as watch_model
+
+        pattern = field.data or ''
+        if len(pattern) > watch_model.FIND_CHANGE_MAX_PATTERN:
+            raise ValidationError(gettext('RegEx is too long, at most %(max)s characters.', max=watch_model.FIND_CHANGE_MAX_PATTERN))
+
         try:
-            re.compile(field.data)
-        except re.error:
+            regex_lib.compile(pattern)
+        except regex_lib.error:
             message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
             raise ValidationError(message % (field.data))
 
@@ -696,14 +707,18 @@ class ValidateCSSJSONXPATHInput(object):
                     raise ValidationError("XPath not permitted in this field!")
                 from lxml import etree, html
                 import elementpath
-                from changedetectionio.html_tools import get_safe_xpath3_parser, lxml_guard, lxml_html_parser
+                from changedetectionio.html_tools import get_safe_xpath3_parser, lxml_guard, lxml_html_parser, \
+                    XPATH_CODEPOINT_COLLATION
                 line = line.replace('xpath:', '')
 
                 try:
                     # Runs on a Flask request thread - must share the worker's lxml lock.
                     with lxml_guard():
                         tree = html.fromstring("<html></html>", parser=lxml_html_parser())
-                        elementpath.select(tree, line.strip(), parser=get_safe_xpath3_parser())
+                        # Same collation the filter will actually run under, so validation
+                        # cannot accept an expression that then behaves differently at check time.
+                        elementpath.select(tree, line.strip(), parser=get_safe_xpath3_parser(),
+                                           default_collation=XPATH_CODEPOINT_COLLATION)
                 except elementpath.ElementPathError as e:
                     message = field.gettext('\'%(expression)s\' is not a valid XPath expression. (%(error)s)')
                     raise ValidationError(message % {'expression': line, 'error': str(e)})
@@ -855,21 +870,37 @@ class quickWatchForm(Form):
     edit_and_watch_submit_button = SubmitField(_l('Edit > Watch'), render_kw={"class": "pure-button pure-button-primary"})
 
 
+# Apprise notification fields, common to a single watch and the global
+# /settings/notifications page (NOT the main /settings page, which no longer
+# renders them - a hidden field there can fail validation with no visible error, see #4554)
+class commonNotificationSettingsForm(Form):
+    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
+        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
+        extra = kwargs.get('extra_notification_tokens', {})
+        self.notification_body.extra_notification_tokens = extra
+        self.notification_title.extra_notification_tokens = extra
+        self.notification_urls.extra_notification_tokens = extra
+
+    notification_urls = StringListField(_l('Notification URL List'),
+                                        validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
+    notification_title = StringField(_l('Notification Title'),
+                                     default='ChangeDetection.io Notification - {{ watch_url }}',
+                                     validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_body = TextAreaField(_l('Notification Body'),
+                                      default='{{ watch_url }} had a change.',
+                                      validators=[validators.Optional(), ValidateJinja2Template()])
+    notification_format = SelectField(_l('Notification format'),
+                                      choices=list(valid_notification_formats.items()))
+
+
 # Common to a single watch and the global settings
 class commonSettingsForm(Form):
     from . import processors
 
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        self.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
     fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
-    notification_body = TextAreaField(_l('Notification Body'), default='{{ watch_url }} had a change.', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_format = SelectField(_l('Notification format'), choices=list(valid_notification_formats.items()))
-    notification_title = StringField(_l('Notification Title'), default='ChangeDetection.io Notification - {{ watch_url }}', validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_urls = StringListField(_l('Notification URL List'), validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
@@ -895,24 +926,11 @@ class commonSettingsForm(Form):
 #
 # Named for the backend (apprise) on purpose: future backends (simple_email,
 # webhook, etc.) will land as their own forms next to this one.
-class globalSettingsAppriseNotificationForm(Form):
-    def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
-        super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        extra = kwargs.get('extra_notification_tokens', {})
-        self.notification_body.extra_notification_tokens = extra
-        self.notification_title.extra_notification_tokens = extra
-        self.notification_urls.extra_notification_tokens = extra
-
-    notification_urls = StringListField(_l('Notification URL List'),
-                                        validators=[validators.Optional(), ValidateAppRiseServers(), ValidateJinja2Template()])
-    notification_title = StringField(_l('Notification Title'),
-                                     default='ChangeDetection.io Notification - {{ watch_url }}',
-                                     validators=[validators.Optional(), ValidateJinja2Template()])
-    notification_body = TextAreaField(_l('Notification Body'),
-                                      default='{{ watch_url }} had a change.',
-                                      validators=[validators.Optional(), ValidateJinja2Template()])
+class globalSettingsAppriseNotificationForm(commonNotificationSettingsForm):
+    # 'System default' only makes sense per-watch (it means "use this global value")
     notification_format = SelectField(_l('Notification format'),
-                                      choices=list(valid_notification_formats.items()))
+                                      choices=[(k, v) for k, v in valid_notification_formats.items()
+                                               if k != USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH])
     base_url = StringField(_l('Notification base URL override'),
                            validators=[validators.Optional()],
                            render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))})
@@ -936,9 +954,10 @@ class SingleBrowserStep(Form):
 #    remove_button = SubmitField(_l('-'), render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Remove'})
 #    add_button = SubmitField(_l('+'), render_kw={"type": "button", "class": "pure-button pure-button-primary", 'title': 'Add new step after'})
 
-class processor_text_json_diff_form(commonSettingsForm):
+class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettingsForm):
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
+    link_to_open = StringField(_l('Open Link Override'), validators=[validators.Optional(), validateURL()], default='')
     tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
@@ -1009,7 +1028,8 @@ class processor_text_json_diff_form(commonSettingsForm):
     notification_muted = TernaryNoneBooleanField(_l('Notifications'), default=None, yes_text=_l("Muted"), no_text=_l("On"))
     notification_screenshot = BooleanField(_l('Attach screenshot to notification (where possible)'), default=False)
 
-    conditions_match_logic = RadioField(_l('Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
+    # TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
+    conditions_match_logic = RadioField(lazy_pgettext('condition', 'Match'), choices=[('ALL', _l('Match all of the following')),('ANY', _l('Match any of the following'))], default='ALL')
     conditions = FieldList(FormField(ConditionFormRow), min_entries=1)  # Add rule logic here
     use_page_title_in_list = TernaryNoneBooleanField(_l('Use page <title> in list'), default=None)
 
@@ -1018,14 +1038,20 @@ class processor_text_json_diff_form(commonSettingsForm):
     def extra_tab_content(self):
         return None
 
+    def extra_form_template(self):
+        # Template name (on the Flask loader) for the processor's extra tab, rendered with render_template()
+        # so its text is translatable. Preferred over extra_form_content().
+        return None
+
     def extra_form_content(self):
+        # Legacy: raw Jinja2 source for the extra tab, kept for third-party processor plugins.
+        # Text in a Python string is never extracted by Babel, use extra_form_template() instead.
         return None
 
     def validate(self, **kwargs):
         if not super().validate():
             return False
 
-        from changedetectionio.jinja2_custom import render as jinja_render
         result = True
 
         # Fail form validation when a body is set for a GET
@@ -1033,47 +1059,15 @@ class processor_text_json_diff_form(commonSettingsForm):
             self.body.errors.append(gettext('Body must be empty when Request Method is set to GET'))
             result = False
 
-        # Attempt to validate jinja2 templates in the URL
-        try:
-            jinja_render(template_str=self.url.data)
-        except ModuleNotFoundError as e:
-            # incase jinja2_time or others is missing
-            logger.error(e)
-            self.url.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
+        # Jinja2 templates in the URL, "Link to Open", body and headers - shared with the API
+        from changedetectionio.jinja2_custom.validate import validate_jinja2_fields
+        jinja2_errors = validate_jinja2_fields(url=self.url.data,
+                                               link_to_open=self.link_to_open.data,
+                                               body=self.body.data,
+                                               headers=self.headers.data)
+        for field_name, error in jinja2_errors.items():
+            getattr(self, field_name).errors.append(error)
             result = False
-        except Exception as e:
-            logger.error(e)
-            self.url.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-            result = False
-
-        # Attempt to validate jinja2 templates in the body
-        if self.body.data and self.body.data.strip():
-            try:
-                jinja_render(template_str=self.body.data)
-            except ModuleNotFoundError as e:
-                # incase jinja2_time or others is missing
-                logger.error(e)
-                self.body.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                result = False
-            except Exception as e:
-                logger.error(e)
-                self.body.errors.append(gettext('Invalid template syntax: %(error)s') % {'error': e})
-                result = False
-
-        # Attempt to validate jinja2 templates in the headers
-        if len(self.headers.data) > 0:
-            try:
-                for header, value in self.headers.data.items():
-                    jinja_render(template_str=value)
-            except ModuleNotFoundError as e:
-                # incase jinja2_time or others is missing
-                logger.error(e)
-                self.headers.errors.append(gettext('Invalid template syntax configuration: %(error)s') % {'error': e})
-                result = False
-            except Exception as e:
-                logger.error(e)
-                self.headers.errors.append(gettext('Invalid template syntax in \"%(header)s\" header: %(error)s') % {'header': header, 'error': e})
-                result = False
 
         return result
 
@@ -1160,22 +1154,18 @@ class globalSettingsApplicationUIForm(Form):
     socket_io_enabled = BooleanField(_l('Realtime UI Updates Enabled'), default=True, validators=[validators.Optional()])
     favicons_enabled = BooleanField(_l('Favicons Enabled'), default=True, validators=[validators.Optional()])
     use_page_title_in_list = BooleanField(_l('Use page <title> in watch overview list')) #BooleanField=True
+    use_share_watch = BooleanField(_l('Enable watch "sharing"'))
     timeago_format = SelectField(_l('Relative time format'),
                                  choices=[('long', _l('Long (1 minute ago)')), ('short', _l('Short (1m ago)'))],
                                  default='long', validators=[validators.Optional()])
     sidebar_mode = SelectField(_l('Navigation sidebar'),
-                               choices=[('collapsed', _l('Collapsed icon rail (expands on hover)')),
-                                        ('pinned', _l('Always expanded'))],
-                               default='collapsed', validators=[validators.Optional()])
+                               choices=MENU_SIDEBAR_ACTIONMODES,
+                               default=MENU_SIDEBAR_ACTIONMODES_DEFAULT, validators=[validators.Optional()])
 
 # datastore.data['settings']['application']..
 class globalSettingsApplicationForm(commonSettingsForm):
 
     api_access_token_enabled = BooleanField(_l('API access token security check enabled'), default=True, validators=[validators.Optional()])
-    base_url = StringField(_l('Notification base URL override'),
-                           validators=[validators.Optional()],
-                           render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))}
-                           )
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
     fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
@@ -1246,7 +1236,23 @@ class globalSettingsLLMForm(Form):
         _l('API Key'),
         validators=[validators.Optional()],
         render_kw={
-            "autocomplete": "off",
+            # NOT "off": Chrome deliberately ignores autocomplete="off" on type=password,
+            # so the browser's saved site password was being prefilled here. This field
+            # renders blank precisely so that submitting it untouched PRESERVES the stored
+            # key - a prefilled value therefore silently overwrote a working API key on the
+            # next Save. "new-password" is the value Chrome honours; the data-* attributes
+            # ask 1Password and LastPass to keep out of it too.
+            "autocomplete": "new-password",
+            "data-1p-ignore": "true",
+            "data-lpignore": "true",
+            "data-form-type": "other",
+            # Belt and braces, for when no key is stored yet and the field is editable
+            # (once one IS stored the template disables it outright). Chrome will not
+            # autofill a readonly input, and global-settings.js drops the attribute the
+            # moment the field is focused or clicked. readonly rather than disabled here,
+            # because a disabled input is not submitted and the key could never be set.
+            "readonly": True,
+            "data-unlock-on-interact": "1",
             "style": "width: 24em;",
         },
     )
@@ -1278,6 +1284,11 @@ class globalSettingsLLMForm(Form):
         validators=[validators.Optional(), validators.NumberRange(min=1, max=20)],
         default=5,
         render_kw={"placeholder": "5", "style": "width: 6em;"},
+    )
+    # Ollama / OpenAI-compatible endpoints only, off by default so the server's own thinking default applies (#4638)
+    local_thinking_off = BooleanField(
+        _l('Switch thinking off'),
+        default=False,
     )
     change_summary_default = TextAreaField(
         _l('Default AI Change Summary prompt'),
@@ -1381,14 +1392,68 @@ class globalSettingsForm(Form):
     # datastore.data['settings']['requests']..
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
-        self.application.notification_body.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.application.notification_title.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
-        self.application.notification_urls.extra_notification_tokens = kwargs.get('extra_notification_tokens', {})
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class globalLLMSettingsPageForm(Form):
+    """The /settings/llm page. Still stored under datastore['settings']['application']['llm'], the
+    sub-form keeps the `llm-` field prefix so settings/llm/templates/llm-settings_llm.html renders it unchanged."""
     llm = FormField(globalSettingsLLMForm)
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+def normalise_mcp_public_url(value):
+    """The "Public MCP address" as stored (settings.application.mcp_base_url): no trailing slash, and the instance's
+    address rather than its MCP endpoint when someone pastes .../mcp/v1."""
+    value = (value or '').strip().rstrip('/')
+    if value.endswith('/mcp/v1'):
+        value = value[:-len('/mcp/v1')].rstrip('/')
+    return value
+
+
+def validate_mcp_public_url(form, field):
+    from urllib.parse import urlsplit
+    value = normalise_mcp_public_url(field.data)
+    if not value:
+        return
+    parts = urlsplit(value)
+    if parts.scheme not in ('http', 'https') or not parts.hostname or parts.query or parts.fragment or parts.username:
+        raise ValidationError(_l('Use a full http:// or https:// address, without ?query or #fragment.'))
+
+
+class globalMCPSettingsPageForm(Form):
+    """The /settings/ai/mcp page ("MCP Server" tab), stored in datastore['settings']['application']['mcp_enabled']. The
+    access tokens have their own form, MCPTokenForm."""
+    # Also the switch for the OAuth endpoints once they exist (MCP-config.md, point 3)
+    enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
+    # Empty for the built-in note (blueprint/mcp INSTRUCTIONS, shown as the placeholder), stored as mcp_note
+    note = TextAreaField(_l('MCP Note'), validators=[validators.Optional(), validators.Length(max=4000)])
+    # Stored as mcp_anonymous_read: a request with no credentials gets read-only access (blueprint/mcp
+    # ANONYMOUS_PERMISSIONS) instead of a 401
+    anonymous_read = BooleanField(_l('Allow read-only access without sign-in'), default=False)
+    # Empty to build it from each request, stored as mcp_base_url (blueprint/mcp/oauth issuer()). Not the notification
+    # Base URL: that one is only for links in notifications
+    public_url = StringField(_l('Public MCP address'), validators=[validators.Optional(), validators.Length(max=500),
+                                                                   validate_mcp_public_url])
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class MCPTokenForm(Form):
+    """Add or edit one MCP access token (the overlay on the "Access tokens" sub-tab, sent with ajax): its name and its
+    None / Read / Write grid, one perm_<area> field per row (see blueprint/mcp/tools.py)."""
+    name = StringField(_l('Name'), validators=[validators.DataRequired(), validators.Length(max=64)],
+                       render_kw={'placeholder': _l('e.g. Claude Code, laptop'), 'maxlength': 64})
+    perm_monitors = RadioField(_l('Monitors'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_tags = RadioField(_l('Groups (tags)'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_notifications = RadioField(_l('Notifications'), default='read', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_browser = RadioField(_l('Browser steps & JavaScript'), default='none', choices=[('none', _l('None')), ('write', _l('Write'))])
+    perm_system = RadioField(_l('System info'), default='read', choices=[('none', _l('None')), ('read', _l('Read'))])
+    # The groups (tags) the token is limited to, none ticked for every monitor. Choices are the tags, set by the routes
+    tags = SelectMultipleField(_l('Only these groups'), choices=[], validate_choice=True,
+                               widget=widgets.ListWidget(prefix_label=False), option_widget=widgets.CheckboxInput())
 
 
 class extractDataForm(Form):

@@ -1,6 +1,7 @@
 import ipaddress
+import re
 import socket
-from functools import lru_cache
+import sys
 from loguru import logger
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode, quote, unquote
 
@@ -141,6 +142,12 @@ def is_special_purpose_ip(ip):
     return False, ''
 
 
+# fe80::/10 itself. Not ip.is_link_local: from Python 3.13 that is also True for an IPv4-mapped
+# address such as ::ffff:169.254.169.254, which is not link-local IPv6 at all - it is IPv4 cloud
+# metadata, and connecting to it works.
+_IPV6_LINK_LOCAL_NETWORK = ipaddress.ip_network('fe80::/10')
+
+
 def _is_unreachable_link_local(family, ip, sockaddr):
     """True for an IPv6 link-local address that arrived with no zone id, i.e. one nothing can
     connect to.
@@ -151,21 +158,31 @@ def _is_unreachable_link_local(family, ip, sockaddr):
     record, not a route into the fetcher's link segment.
 
     Deliberately narrow:
-      * IPv4 link-local (169.254.0.0/16, and with it 169.254.169.254 cloud metadata) is NOT
-        covered - that one IS reachable and must stay blocked.
+      * Only a real fe80::/10 address. IPv4 link-local (169.254.0.0/16, and with it
+        169.254.169.254 cloud metadata) is NOT covered, however it is written: as an A record
+        or wrapped in IPv6 (::ffff:169.254.169.254). That one IS reachable and must stay blocked.
       * A scoped literal such as http://[fe80::1%25eth0]/ resolves with scope_id != 0 and so
         is not covered either.
+      * Only on Linux, where the refusal by connect() is known. Other systems can pick a default
+        interface for an address without a zone id, so there the record still blocks the hostname.
     """
     return (
-        family == socket.AF_INET6
-        and ip.is_link_local
+        sys.platform.startswith('linux')
+        and family == socket.AF_INET6
+        and isinstance(ip, ipaddress.IPv6Address)
+        and ip.ipv4_mapped is None
+        and ip in _IPV6_LINK_LOCAL_NETWORK
         and len(sockaddr) > 3
         and sockaddr[3] == 0
     )
 
 
-def is_private_hostname(hostname):
+def is_private_hostname(hostname, classify_only=False):
     """Return True if hostname resolves to an IANA-restricted (private/reserved/non-global) IP address.
+
+    classify_only=True is for callers that only want to know whether a host is local
+    (e.g. picking a longer LLM timeout) and are not refusing anything - logs at debug
+    instead of a misleading "refused" warning (issue #4700).
 
     Unresolvable hostnames return False (allow them) — DNS may be temporarily unavailable
     or the domain not yet live. The actual DNS rebinding attack is mitigated by fetch-time
@@ -196,10 +213,13 @@ def is_private_hostname(hostname):
             if _is_unreachable_link_local(family, ip, sockaddr):
                 deferred.append(ip)
                 continue
-            logger.warning(f"Hostname '{hostname}' resolves to {ip} which is {why} — refused.")
+            if classify_only:
+                logger.debug(f"Hostname '{hostname}' resolves to {ip} which is {why}.")
+            else:
+                logger.warning(f"Hostname '{hostname}' resolves to {ip} which is {why} — refused.")
             return True
     except socket.gaierror as e:
-        logger.warning(f"{hostname} error checking {str(e)}")
+        (logger.debug if classify_only else logger.warning)(f"{hostname} error checking {str(e)}")
         return False
     except ValueError as e:
         # getaddrinfo handed back something ip_address() won't parse - fail closed.
@@ -210,15 +230,18 @@ def is_private_hostname(hostname):
         # Every answer was link-local. Nothing legitimate looks like this, and it is what
         # deliberately pointing a public name at the fetcher's own link segment would look
         # like, so keep refusing it.
-        logger.warning(f"Hostname '{hostname}' resolves only to link-local addresses "
-                       f"({', '.join(str(i) for i in deferred)}) — refused.")
+        link_local_addresses = ', '.join(str(i) for i in deferred)
+        if classify_only:
+            logger.debug(f"Hostname '{hostname}' resolves only to link-local addresses ({link_local_addresses}).")
+        else:
+            logger.warning(f"Hostname '{hostname}' resolves only to link-local addresses ({link_local_addresses}) — refused.")
         return True
     if deferred:
         logger.debug(f"Hostname '{hostname}' has unroutable link-local AAAA record(s) "
                      f"({', '.join(str(i) for i in deferred)}) - ignored, it also resolves to "
                      f"{allowed_addresses} usable address(es).")
 
-    logger.info(f"Hostname '{hostname}' is NOT private/IANA restricted.")
+    (logger.debug if classify_only else logger.info)(f"Hostname '{hostname}' is NOT private/IANA restricted.")
     return False
 
 
@@ -311,7 +334,7 @@ def is_fetch_url_allowed(url):
     import os
     import re
     from changedetectionio.strtobool import strtobool
-    from changedetectionio.jinja2_custom import render as jinja_render
+    from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
 
     if not url or not isinstance(url, str) or not url.strip():
         return False, "No URL specified."
@@ -319,7 +342,7 @@ def is_fetch_url_allowed(url):
     url = url.strip()
 
     # Jinja2 first — the fetch uses the rendered value, so the rendered value is what must pass.
-    if '{%' in url or '{{' in url:
+    if JINJA2_MARKER_PATTERN.search(url):
         try:
             url = jinja_render(template_str=url).strip()
         except Exception as e:
@@ -385,7 +408,7 @@ def is_llm_api_base_safe(api_base):
     Call this from EVERY write path that accepts `llm.api_base` from the user —
     form validation, AJAX endpoints, and any future REST/import endpoint. The
     existing call sites are forms.py (validateLLMApiBaseSafe) and
-    blueprint/settings/llm.py (both /models and /test).
+    blueprint/settings/llm/__init__.py (both /models and /test).
     """
     import os
     from changedetectionio.strtobool import strtobool
@@ -416,9 +439,8 @@ def is_llm_api_base_safe(api_base):
 
 def is_safe_valid_url(test_url):
     from changedetectionio import strtobool
-    from changedetectionio.jinja2_custom import render as jinja_render
+    from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
     import os
-    import re
     import validators
 
     # Validate input type first - must be a non-empty string
@@ -461,7 +483,7 @@ def is_safe_valid_url(test_url):
     # Check the actual rendered URL in case of any Jinja markup
     # Only run jinja_render when the URL actually contains Jinja2 syntax - creating a new
     # ImmutableSandboxedEnvironment is expensive and is called once per watch per page load
-    if '{%' in test_url or '{{' in test_url:
+    if JINJA2_MARKER_PATTERN.search(test_url):
         try:
             test_url = jinja_render(test_url)
         except Exception as e:

@@ -29,7 +29,9 @@
             <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>
             {# Always shown, like the watch edit page: with no provider configured the pane
                explains how to set one up (and carries the AI switches through on save). #}
+{%- if not llm_features_disabled %}
             <li class="tab"><a href="#ai-llm">{{ _('AI / LLM') }}</a></li>
+{%- endif -%}
             <li class="tab"><a href="#filters-and-triggers">{{ _('Filters & Triggers') }}</a></li>
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
@@ -91,11 +93,11 @@
                     </script>
                 </fieldset>
             </div>
-
+{%- if not llm_features_disabled %}
             <div class="tab-pane-inner" id="ai-llm">
                 {% include "edit/include_llm_intent.html" %}
             </div>
-
+{%- endif -%}
             <div class="tab-pane-inner" id="filters-and-triggers">
                 {# TRANSLATORS: CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303 #}
                 <p>{{ _('These settings are <strong><i>added</i></strong> to any existing watch configurations.')|safe }}</p>

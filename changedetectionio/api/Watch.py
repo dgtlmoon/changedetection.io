@@ -2,7 +2,6 @@ import os
 import re
 import threading
 
-from changedetectionio.validate_url import is_safe_valid_url
 from changedetectionio.favicon_utils import get_favicon_mime_type
 
 from . import auth
@@ -13,7 +12,7 @@ from flask_restful import abort, Resource
 from loguru import logger
 import copy
 
-from . import validate_openapi_request, get_readonly_watch_fields, strip_internal_api_fields
+from . import validate_openapi_request, strip_internal_api_fields, get_processor_api_fields
 from ..notification import valid_notification_formats
 from ..notification.handler import newline_re
 
@@ -54,37 +53,24 @@ def validate_time_schedule_limit(json_data):
     return None
 
 
-def validate_time_between_check_required(json_data):
+def validate_jinja2_templates(json_data):
     """
-    Validate that at least one time interval is specified when not using default settings.
-    Returns None if valid, or error message string if invalid.
-    Defaults to using global settings if time_between_check_use_default is not provided.
+    Reject broken Jinja2 in url, link_to_open, body and headers, the same check the edit form runs.
+
+    Without it a broken template saved through the API is only noticed at fetch time, and the watch
+    then fails on every check. Values that are not Jinja2 (e.g. URL-encoded JSON {%22) are not rendered.
+
+    Returns None if valid, or an error message string if invalid.
     """
-    # Default to using global settings if not specified
-    use_default = json_data.get('time_between_check_use_default', True)
-
-    # If using default settings, no validation needed
-    if use_default:
-        return None
-
-    # If not using defaults, check if time_between_check exists and has at least one non-zero value
-    time_check = json_data.get('time_between_check')
-    if not time_check:
-        # No time_between_check provided and not using defaults - this is an error
-        return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
-
-    # time_between_check exists, check if it has at least one non-zero value
-    if any([
-        (time_check.get('weeks') or 0) > 0,
-        (time_check.get('days') or 0) > 0,
-        (time_check.get('hours') or 0) > 0,
-        (time_check.get('minutes') or 0) > 0,
-        (time_check.get('seconds') or 0) > 0
-    ]):
-        return None
-
-    # time_between_check exists but all values are 0 or empty - this is an error
-    return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+    from changedetectionio.jinja2_custom.validate import validate_jinja2_fields
+    headers = json_data.get('headers')
+    errors = validate_jinja2_fields(url=json_data.get('url'),
+                                    link_to_open=json_data.get('link_to_open'),
+                                    body=json_data.get('body'),
+                                    headers=headers if isinstance(headers, dict) else None)
+    if errors:
+        return '; '.join(f"{field}: {error}" for field, error in errors.items())
+    return None
 
 
 class Watch(Resource):
@@ -141,30 +127,14 @@ class Watch(Resource):
         watch['last_changed'] = watch_obj.last_changed
         watch['viewed'] = watch_obj.viewed
         watch['link'] = watch_obj.link
-
-        # Resolved processor config: tag override wins over watch-level config (mirrors restock processor logic)
-        import json
-        _restock_path = os.path.join(watch_obj.data_dir, 'restock_diff.json') if watch_obj.data_dir else None
-        restock_config = {}
-        if _restock_path and os.path.isfile(_restock_path):
-            try:
-                with open(_restock_path, 'r', encoding='utf-8') as _f:
-                    restock_config = json.load(_f).get('restock_diff') or {}
-            except (json.JSONDecodeError, IOError) as e:
-                logger.warning(f"Failed to read restock_diff.json for watch {uuid}: {e}")
-        restock_source = 'watch'
-        tags = self.datastore.data['settings']['application'].get('tags', {})
-        for tag_uuid in (watch_obj.get('tags') or []):
-            tag = tags.get(tag_uuid, {})
-            if tag.get('overrides_watch'):
-                restock_config = dict(tag.get('processor_config_restock_diff') or {})
-                restock_source = f'tag:{tag_uuid}'
-                break
-        watch['processor_config_restock_diff'] = restock_config
-        watch['processor_config_restock_diff_source'] = restock_source
+        watch['open_link'] = watch_obj.open_link
 
         # Never expose `__`-prefixed transient/internal fields (e.g. __check_status)
-        return strip_internal_api_fields(watch)
+        watch = strip_internal_api_fields(watch)
+
+        # Resolved processor config (tag override wins) and processor state, keyed by processor name
+        watch.update(get_processor_api_fields(watch_obj, self.datastore, context='get'))
+        return watch
 
     @auth.check_token
     @validate_openapi_request('deleteWatch')
@@ -180,100 +150,13 @@ class Watch(Resource):
     @validate_openapi_request('updateWatch')
     def put(self, uuid):
         """Update watch information."""
-        watch = self.datastore.data['watching'].get(uuid)
-        if not watch:
+        from changedetectionio.api.operations import ApiError, update_watch
+        if not self.datastore.data['watching'].get(uuid):
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
-
-        if request.json.get('proxy'):
-            plist = self.datastore.proxy_list
-            if not plist or request.json.get('proxy') not in plist:
-                proxy_list_str = ', '.join(plist) if plist else 'none configured'
-                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
-
-        # Validate time_between_check when not using defaults
-        validation_error = validate_time_between_check_required(request.json)
-        if validation_error:
-            return validation_error, 400
-
-        # An invalid timezone here makes the watch permanently unschedulable
-        validation_error = validate_time_schedule_limit(request.json)
-        if validation_error:
-            return validation_error, 400
-
-        # Validate notification_urls if provided
-        if 'notification_urls' in request.json:
-            from wtforms import ValidationError
-            from changedetectionio.api.Notifications import validate_notification_urls
-            try:
-                notification_urls = request.json.get('notification_urls', [])
-                validate_notification_urls(notification_urls)
-            except ValidationError as e:
-                return str(e), 400
-
-        # XSS etc protection - validate URL if it's being updated
-        if 'url' in request.json:
-            new_url = request.json.get('url')
-
-            # URL must be a non-empty string
-            if new_url is None:
-                return "URL cannot be null", 400
-
-            if not isinstance(new_url, str):
-                return "URL must be a string", 400
-
-            if not new_url.strip():
-                return "URL cannot be empty or whitespace only", 400
-
-            if not is_safe_valid_url(new_url.strip()):
-                return "Invalid or unsupported URL format. URL must use http://, https://, or ftp:// protocol", 400
-
-        # Handle processor-config-* fields separately (save to JSON, not datastore)
-        from changedetectionio import processors
-
-        # Make a mutable copy of request.json for modification.
-        # Silently discard `__`-prefixed transient/internal keys — they are not part of the
-        # public schema and must never be writable (e.g. clients that round-trip GET → PUT).
-        json_data = strip_internal_api_fields(dict(request.json))
-
-        # Extract and remove processor config fields from json_data
-        processor_config_data = processors.extract_processor_config_from_form_data(json_data)
-
-        # Filter out readOnly fields (extracted from OpenAPI spec Watch schema)
-        # These are system-managed fields that should never be user-settable
-        readonly_fields = get_readonly_watch_fields()
-
-        # Also filter out @property attributes (computed/derived values from the model)
-        # These are not stored and should be ignored in PUT requests
-        from changedetectionio.model.Watch import model as WatchModel
-        property_fields = WatchModel.get_property_names()
-
-        # Combine both sets of fields to ignore
-        fields_to_ignore = readonly_fields | property_fields
-
-        # Remove all ignored fields from update data
-        for field in fields_to_ignore:
-            json_data.pop(field, None)
-
-        # Validate remaining fields - reject truly unknown fields
-        # Get valid fields from WatchBase schema
-        from . import get_watch_schema_properties
-        valid_fields = set(get_watch_schema_properties().keys())
-
-        # Also allow last_viewed (explicitly defined in UpdateWatch schema)
-        valid_fields.add('last_viewed')
-
-        # Check for unknown fields
-        unknown_fields = set(json_data.keys()) - valid_fields
-        if unknown_fields:
-            return f"Unknown field(s): {', '.join(sorted(unknown_fields))}", 400
-
-        # Update watch with regular (non-processor-config) fields
-        watch.update(json_data)
-        watch.commit()
-
-        # Save processor config to JSON file
-        processors.save_processor_config(self.datastore, uuid, processor_config_data)
-
+        try:
+            update_watch(self.datastore, uuid, request.json)
+        except ApiError as e:
+            return e.message, e.status
         return "OK", 200
 
 
@@ -292,6 +175,20 @@ class WatchHistory(Resource):
         if not watch:
             abort(404, message='No watch exists with the UUID of {}'.format(uuid))
         return watch.history, 200
+
+    # Delete all history/snapshots for a watch, but keep the watch itself
+    # curl -X DELETE http://localhost:5000/api/v1/watch/<uuid_str:uuid>/history
+    @auth.check_token
+    @validate_openapi_request('deleteWatchHistory')
+    def delete(self, uuid):
+        """Clear all snapshot history for a watch (the watch itself is kept)."""
+        if not self.datastore.data['watching'].get(uuid):
+            abort(404, message='No watch exists with the UUID of {}'.format(uuid))
+
+        # Same call as the UI "Clear history" button - wipes snapshots/screenshots and
+        # resets last_checked etc, while preserving the watch and its processor config
+        self.datastore.clear_watch_history(uuid)
+        return 'OK', 204
 
 
 class WatchSingleHistory(Resource):
@@ -510,73 +407,13 @@ class CreateWatch(Resource):
     @validate_openapi_request('createWatch')
     def post(self):
         """Create a single watch."""
-
-        # Silently discard `__`-prefixed transient/internal keys (not part of the public schema).
-        json_data = strip_internal_api_fields(request.get_json())
-        url = json_data['url'].strip()
-
-        if not is_safe_valid_url(url):
-            return "Invalid or unsupported URL", 400
-
-        if json_data.get('proxy'):
-            plist = self.datastore.proxy_list
-            if not plist or json_data.get('proxy') not in plist:
-                proxy_list_str = ', '.join(plist) if plist else 'none configured'
-                return f"Invalid proxy choice, currently supported proxies are '{proxy_list_str}'", 400
-
-        # Validate time_between_check when not using defaults
-        validation_error = validate_time_between_check_required(json_data)
-        if validation_error:
-            return validation_error, 400
-
-        # An invalid timezone here makes the watch permanently unschedulable
-        validation_error = validate_time_schedule_limit(json_data)
-        if validation_error:
-            return validation_error, 400
-
-        # Validate notification_urls if provided
-        if 'notification_urls' in json_data:
-            from wtforms import ValidationError
-            from changedetectionio.api.Notifications import validate_notification_urls
-            try:
-                notification_urls = json_data.get('notification_urls', [])
-                validate_notification_urls(notification_urls)
-            except ValidationError as e:
-                return str(e), 400
-
-        # Handle processor-config-* fields separately (save to JSON, not watch)
-        from changedetectionio import processors
-
-        extras = copy.deepcopy(json_data)
-
-        # Extract and remove processor config fields from extras
-        processor_config_data = processors.extract_processor_config_from_form_data(extras)
-
-        # Because we renamed 'tag' to 'tags' but don't want to change the API (can do this in v2 of the API)
-        tags = None
-        if extras.get('tag'):
-            tags = extras.get('tag')
-            del extras['tag']
-
-        del extras['url']
-
-        # PAGE_WATCH_LIMIT - checked up front so a blocked add is reported as 429 rather than
-        # being guessed at from add_watch() returning None
-        if self.datastore.watch_limit_reached():
-            current_watch_count = len(self.datastore.data['watching'])
-            return f"Watch limit reached ({current_watch_count}/{self.datastore.watch_limit} watches). Cannot add more watches.", 429
-
-        new_uuid = self.datastore.add_watch(url=url, extras=extras, tag=tags)
-
-        # Save processor config to separate JSON file
-        if new_uuid and processor_config_data:
-            processors.save_processor_config(self.datastore, new_uuid, processor_config_data)
-        if new_uuid:
-# Dont queue because the scheduler will check that it hasnt been checked before anyway
-#            worker_pool.queue_item_async_safe(self.update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': new_uuid}))
-            return {'uuid': new_uuid}, 201
-        else:
-            return "Invalid or unsupported URL", 400
+        from changedetectionio.api.operations import ApiError, create_watch
+        try:
+            new_uuid = create_watch(self.datastore, request.get_json())
+        except ApiError as e:
+            return e.message, e.status
+        # Dont queue because the scheduler will check that it hasnt been checked before anyway
+        return {'uuid': new_uuid}, 201
 
     @auth.check_token
     @validate_openapi_request('listWatches')
@@ -585,10 +422,13 @@ class CreateWatch(Resource):
         list = {}
 
         tag_limit = request.args.get('tag', '').lower()
+        with_errors = request.args.get('with_errors') == '1'
         for uuid, watch in self.datastore.data['watching'].items():
             # Watch tags by name (replace the other calls?)
             tags = self.datastore.get_all_tags_for_watch(uuid=uuid)
             if tag_limit and not any(v.get('title').lower() == tag_limit for k, v in tags.items()):
+                continue
+            if with_errors and not watch.get('last_error'):
                 continue
 
             list[uuid] = {
@@ -596,16 +436,22 @@ class CreateWatch(Resource):
                 'last_checked': watch['last_checked'],
                 'last_error': watch['last_error'],
                 'link': watch.link,
+                'notification_muted': bool(watch.get('notification_muted')),
+                'open_link': watch.open_link,
                 'page_title': watch['page_title'],
+                'paused': bool(watch.get('paused')),
+                'processor': watch.get('processor') or 'text_json_diff',
                 'tags': [*tags],  # Unpack dict keys to list (can't use list() since variable named 'list')
                 'title': watch['title'],
                 'url': watch['url'],
                 'viewed': watch.viewed
             }
+            # processor_state_{name} only, the processor config is a disk read so it stays on the single watch GET
+            list[uuid].update(get_processor_api_fields(watch, self.datastore, context='list'))
 
         if request.args.get('recheck_all'):
-            # Collect all watches to queue
-            watches_to_queue = self.datastore.data['watching'].keys()
+            # Recheck the same set that was listed (tag/with_errors filters), but never paused watches
+            watches_to_queue = [uuid for uuid in list.keys() if not self.datastore.data['watching'][uuid].get('paused')]
 
             # If less than 20 watches, queue synchronously for immediate feedback
             if len(watches_to_queue) < 20:

@@ -35,6 +35,11 @@ class SignalHandler:
         watch_small_status_comment_signal = signal('watch_small_status_comment')
         watch_small_status_comment_signal.connect(self.handle_watch_small_status_update, weak=False)
 
+        # The AI summary generator runs on a background thread; this lets the browser skip
+        # polling for the result.
+        llm_summary_ready_signal = signal('llm_summary_ready')
+        llm_summary_ready_signal.connect(self.handle_llm_summary_ready, weak=False)
+
         # Connect to the notification_event signal
         notification_event_signal = signal('notification_event')
         notification_event_signal.connect(self.handle_notification_event, weak=False)
@@ -114,6 +119,23 @@ class SignalHandler:
             })
         logger.debug(f"Watch UUID {watch_uuid} got its favicon updated")
 
+    def handle_llm_summary_ready(self, *args, **kwargs):
+        """An on-demand AI change summary finished generating (successfully or not).
+
+        Only identifiers are broadcast: the client turns this into one authenticated request to
+        the /llm-summary poll route, so the summary text itself never goes to every connected
+        browser. Clients that do not care about this watch simply ignore the event.
+        """
+        watch_uuid = kwargs.get('watch_uuid')
+        if watch_uuid:
+            self.socketio_instance.emit("llm_summary_ready", {
+                "uuid": watch_uuid,
+                "from_version": kwargs.get('from_version'),
+                "to_version": kwargs.get('to_version'),
+                "event_timestamp": time.time()
+            })
+        logger.debug(f"Watch UUID {watch_uuid} AI summary job settled")
+
     def handle_deleted_signal(self, *args, **kwargs):
         watch_uuid = kwargs.get('watch_uuid')
         if watch_uuid:
@@ -158,8 +180,29 @@ class SignalHandler:
 
 
 
+def has_connected_clients(socketio):
+    """True when at least one client has completed the Socket.IO connect on the default namespace.
+
+    Asks the Socket.IO manager (the same record emit() sends to), so test clients and any transport count, and a
+    client that was rejected by the connect handler or is still handshaking does not.
+
+    If that can't be read (an unexpected Flask-SocketIO layout, or the server not created yet) this returns True, so
+    callers fall back to always emitting rather than silently going quiet.
+    """
+    try:
+        return next(iter(socketio.server.manager.get_participants('/', None)), None) is not None
+    except AttributeError:
+        return True
+
+
 def handle_watch_update(socketio, **kwargs):
     """Handle watch update signal from blinker"""
+    # This runs on the worker thread at the start and end of every check, and the counters below are rebuilt by
+    # looping over every watch (twice). With nobody connected there is nobody to send them to, and a browser that
+    # connects later gets its numbers from the rendered page, so skip all of it.
+    if not has_connected_clients(socketio):
+        return
+
     try:
         watch = kwargs.get('watch')
         datastore = kwargs.get('datastore')

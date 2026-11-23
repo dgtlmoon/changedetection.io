@@ -1,8 +1,10 @@
+import os
+
 from flask import Blueprint, render_template, request, jsonify, make_response, flash, redirect, url_for
 from flask_babel import gettext
 from loguru import logger
 
-from changedetectionio import forms
+from changedetectionio import forms, strtobool
 from changedetectionio.auth_decorator import login_optionally_required
 from . import browser_config
 from changedetectionio.store import ChangeDetectionStore
@@ -34,6 +36,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return render_template(
             "add-watch-ui.html",
+            browser_backend_disabled=strtobool(os.getenv('ADD_WATCH_UI_BROWSER_BACKEND_DISABLED', 'False')),
             form=form,
             llm_configured=llm_configured,
             llm_intent_watch_placeholder=LLM_INTENT_WATCH_PLACEHOLDER,
@@ -76,6 +79,9 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Note this fetch never reaches difference_detection_processor.call_browser(), so it gets
         # no gating from there - it has to validate for itself.
         url = (request.form.get('url') or '').strip()
+        if not url.lower().startswith('http'):
+            url='https://' + url
+
         ok, reason = is_fetch_url_allowed(url)
         if not ok:
             logger.warning(f"Add-watch snapshot: refused '{url}' - {reason}")

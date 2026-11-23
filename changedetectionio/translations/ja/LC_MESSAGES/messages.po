@@ -2,17 +2,17 @@
 # Copyright (C) 2026 ORGANIZATION
 # This file is distributed under the same license as the changedetection.io
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+# skkzsh <skkzsh@users.noreply.github.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: changedetection.io 0.53.6\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"Project-Id-Version: changedetection.io VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/dgtlmoon/changedetection.io/issues\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
-"PO-Revision-Date: 2026-03-31 23:52+0900\n"
+"PO-Revision-Date: 2026-12-31 23:59+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
-"Language-Team: ja <LL@li.org>\n"
+"Language-Team: ja ninjas\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -26,12 +26,12 @@ msgstr ""
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
-msgstr ""
+msgstr "システム設定のデフォルト（%(browser)s）"
 
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s - no live preview)"
-msgstr ""
+msgstr "システム設定のデフォルト（%(browser)s - ライブプレビューなし）"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Add a new web page change detection watch"
@@ -44,19 +44,27 @@ msgstr "移動"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Enter a URL to get started!"
-msgstr ""
+msgstr "URLを入力して始めましょう！"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Enter a URL in the input box above to get started."
-msgstr ""
+msgstr "上の入力欄にURLを入力して始めましょう。"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 msgid "Fetching screenshot and element information…"
-msgstr ""
+msgstr "スクリーンショットと要素情報を取得中…"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Currently:"
 msgstr "現在:"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "What do you want to achieve?"
+msgstr "何を達成したいですか？"
+
+#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
+msgid "Select a browser"
+msgstr "ブラウザを選択"
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #, python-format
@@ -66,10 +74,6 @@ msgstr ""
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Select by element"
 msgstr "要素で選択"
-
-#: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
-msgid "Hover & click the preview to watch just one part of the page."
-msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -118,8 +122,8 @@ msgid "Backups were deleted."
 msgstr "バックアップが削除されました。"
 
 #: changedetectionio/blueprint/backups/restore.py
-msgid "Backup zip file"
-msgstr "バックアップ ZIP ファイル"
+msgid "Backup .ZIP file(s)"
+msgstr "バックアップ .ZIP ファイル"
 
 #: changedetectionio/blueprint/backups/restore.py
 msgid "Must be a .zip backup file!"
@@ -295,6 +299,7 @@ msgstr ".XLSX & Wachete"
 msgid "Backup Restore"
 msgstr "バックアップ復元"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Restoring changedetection.io backups is in the"
 msgstr "changedetection.io のバックアップ復元は"
@@ -338,6 +343,7 @@ msgstr "エクスポート方法は？"
 msgid "Be sure to set your default fetcher to Chrome if required."
 msgstr "必要に応じてデフォルトのフェッチャーを Chrome に設定してください。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/imports/templates/import.html
 msgid "Table of custom column and data types mapping for the"
 msgstr "カスタム列とデータ型マッピングの表："
@@ -378,6 +384,83 @@ msgstr "再チェック時間（分）"
 msgid "Import"
 msgstr "インポート"
 
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Sign-in failed"
+msgstr "サインインに失敗しました"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "OAuth authentication request needs your permission"
+msgstr "OAuth 認証リクエストにはあなたの許可が必要です"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#, python-format
+msgid "%(name)s wants to use your changedetection.io"
+msgstr "%(name)s があなたの changedetection.io の使用を求めています"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#, python-format
+msgid "from %(host)s"
+msgstr "%(host)s から"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "The name is what the assistant says about itself, it is not verified."
+msgstr "名前はアシスタントが自称しているもので、確認されていません。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid ""
+"This assistant only sends you back to this computer (localhost). Only allow it if you started this sign-in yourself, "
+"from an app on this computer."
+msgstr "このアシスタントはこのコンピューター（localhost）にしか戻しません。このコンピューター上のアプリから自分でサインインを始めた場合だけ許可してください。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "It will be able to"
+msgstr "できること"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Change what it can do"
+msgstr "できることを変更"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked."
+msgstr "MCP サーバー設定の「OAuth」サブタブに表示され、そこで取り消せます。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer."
+msgstr "未選択: すべてのモニター。選択: そのグループのモニターのみ（例: 案件や顧客ごとに1グループ）。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Connects to"
+msgstr "接続先"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#, python-format
+msgid "You will be sent back to %(host)s."
+msgstr "%(host)s に戻ります。"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+msgid "Allow"
+msgstr "許可"
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Expand on hover"
+msgstr "ホバーで展開"
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Always expanded"
+msgstr "常に展開"
+
+#: changedetectionio/blueprint/menu_modes.py
+msgid "Stays minimal"
+msgstr "最小表示のまま"
+
 #: changedetectionio/blueprint/rss/single_watch.py
 #, python-format
 msgid "Watch with UUID %(uuid)s not found"
@@ -415,12 +498,14 @@ msgstr "ワーカー数の調整中にエラーが発生しました: {}"
 msgid "Password protection enabled."
 msgstr "パスワード保護が有効になりました。"
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py
 msgid "Settings updated."
 msgstr "設定を更新しました。"
 
-#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/notifications/__init__.py
-#: changedetectionio/blueprint/ui/edit.py changedetectionio/processors/extract.py
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/processors/extract.py
 msgid "An error occurred, please see below."
 msgstr "エラーが発生しました。以下をご確認ください。"
 
@@ -444,32 +529,989 @@ msgstr "すべての通知をミュートしました。"
 msgid "All notifications unmuted."
 msgstr "すべての通知のミュートを解除しました。"
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP settings saved."
+msgstr "MCP の設定を保存しました。"
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP server switched on."
+msgstr "MCP サーバーをオンにしました。"
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "MCP server switched off."
+msgstr "MCP サーバーをオフにしました。"
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+msgid "The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."
+msgstr "公開 MCP アドレスが変更されました。サインイン（OAuth）で接続したアシスタントは再接続が必要です。"
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid ""
 "api_key is required when api_base differs from the saved configuration. Refusing to send the stored API key to a "
 "different endpoint."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "AI / LLM configuration removed."
-msgstr ""
+msgstr "AI / LLM の設定を削除しました。"
 
-#: changedetectionio/blueprint/settings/llm.py
+#: changedetectionio/blueprint/settings/llm/__init__.py
 #, python-brace-format
 msgid "AI summary cache cleared ({} file(s) removed)."
+msgstr "AI 要約のキャッシュを削除しました（{} 件のファイル）。"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#, python-format
+msgid "Last used %(when)s"
+msgstr "最終使用 %(when)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Never used"
+msgstr "未使用"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Revoke"
+msgstr "取り消す"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+msgid "No assistant has signed in yet."
+msgstr "まだサインインしたアシスタントはいません。"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access tokens"
+msgstr "アクセストークン"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Get started"
+msgstr "はじめに"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Switch on the MCP server"
+msgstr "MCP サーバーをオンにする"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Tick the box above, then Save."
+msgstr "上のボックスにチェックを入れて保存します。"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Add an access token"
+msgstr "アクセストークンを追加"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Every assistant needs one to connect."
+msgstr "アシスタントの接続には必ず必要です。"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add access token"
+msgstr "アクセストークンを追加"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Connect an assistant"
+msgstr "アシスタントを接続"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Copy the command or config for your assistant."
+msgstr "アシスタント用のコマンドまたは設定をコピーします。"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-overview-status.html
+msgid "Connect"
+msgstr "接続"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Only"
+msgstr "のみ"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "deleted groups"
+msgstr "削除されたグループ"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Edit"
+msgstr "編集"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Add your first access token"
+msgstr "最初のアクセストークンを追加"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
+msgid "Add one for each assistant, so each has its own permissions and can be revoked on its own."
+msgstr "アシスタントごとに 1 つ追加すると、それぞれに権限を設定でき、個別に取り消せます。"
+
+#. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgctxt "AI usage stats"
+msgid "Usage"
+msgstr "使用量"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Overview"
+msgstr "概要"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Provider"
+msgstr "プロバイダー"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Prompts"
+msgstr "プロンプト"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Behaviour"
+msgstr "動作"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "AI-powered change monitoring"
 msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"Configure the connection to your favorite AI assistant service, such as OpenAI, Claude, Google Gemini - move from "
+"\"something changed\" to \"only the thing you care about changed\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "For a short tutorial on how to setup AI integration, see this tutorial."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Intent filtering"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid ""
+"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
+"diff against it and suppresses irrelevant noise."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid ""
+"Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
+"small models (≤3B) may misjudge numeric comparisons."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid ""
+"Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
+"prompt here, or override per watch or tag."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Minimal cost"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid ""
+"The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
+"handle this well, typically fractions of a cent per check."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "AI / LLM configured:"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Edit provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Configure AI Provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "AI Provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Third-party data transfer — please read"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
+" sent to an external AI provider of your choice."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
+"data that may appear in monitored content."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
+"control over those charges."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
+"fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
+"AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any "
+"kind."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
+" from any claims, damages, or liability arising from this data transfer or your use of AI features."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html changedetectionio/templates/_common_fields.html
+msgid "Note"
+msgstr "注意"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid ""
+"AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
+"<code>LLM_MODEL</code> environment variable to configure via this form instead."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "select a provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Saved. Use \"Remove provider\" below to change the provider or key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid ""
+"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
+"scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it"
+" if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
+"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
+"original tight caps."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"Asks the server to answer without thinking first, which is much faster. Unticked, the server decides (llama.cpp: "
+"--reasoning-budget). Works with Ollama, and on OpenAI-compatible servers (llama.cpp, vLLM) with models whose chat "
+"template supports enable_thinking (Qwen3 and others)."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Load available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "choose a model"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Type a model name or choose from available models"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"You can edit the model name directly or load available models above. Click Save to apply your change. Leave the API "
+"key blank to keep your saved key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Change model"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Remove AI / LLM configuration?"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "This will remove your saved AI provider, model, and API key."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Remove"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Remove provider"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Test connection"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
+"extracted text are sent to the LLM — no full page HTML."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Clear all summary cache?"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "This will remove all cached AI change summaries across all watches."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "They will be regenerated on the next check."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Clear cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Clear all summary cache"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
+"Leave off in production — generates a lot of log volume."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Default AI Change Summary"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Used for all watches unless overridden by the watch or its tag/group."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/templates/edit/include_llm_intent.html
+msgid "Modify default prompt"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid ""
+"When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use "
+"<code>%(raw_diff)s</code> to always get the original."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
+"structured metadata (JSON-LD, microdata, OpenGraph) is found."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"For Gemini 2.5+ models. For Claude Haiku 5.5, Sonnet 5 and Sonnet 5.5, Off switches thinking off and any other value "
+"keeps the model default. Thinking tokens improve reasoning quality but count against the output budget. Set to Off if"
+" summaries are being cut short."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
+"more."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Configure a provider first to unlock behaviour settings."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Token & Cost Tracking"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "This month"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "tokens"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid "%(percent)s%% of %(budget)s"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "All-time total"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Monthly token budget reached. AI summarisation is paused until next month."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Token budget this period"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "0 = unlimited"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "tokens (0 = unlimited)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Current billing period"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#, python-format
+msgid "characters — currently enforcing: %(limit)s"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid ""
+"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
+"unlimited)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "No AI usage recorded yet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Token budget"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "tokens per month (0 = unlimited)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "platform.openai.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "console.anthropic.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "aistudio.google.com → Get API key"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "No API key needed for local Ollama"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "openrouter.ai → Keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "platform.deepseek.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "console.groq.com → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "console.mistral.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "api.together.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "console.x.ai → API keys"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Select a provider first."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Loading…"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "No models returned by the provider."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "— choose a model —"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "models available with your key"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Request failed"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Testing…"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Connected"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+msgid "Failed"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copy"
+msgstr "コピー"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "copied"
+msgstr "コピーしました"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Connect AI assistants with MCP"
+msgstr "MCP で AI アシスタントを接続"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "The MCP server is switched off on this installation."
+msgstr "このインストールでは MCP サーバーがオフになっています。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Connect: %(method)s"
+msgstr "接続：%(method)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/_common_fields.html
+msgid "Token"
+msgstr "トークン"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "設定"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
+"use other applications as tools."
+msgstr "MCP（Model Context Protocol）は、Claude、ChatGPT、Cursor、VS Code などの AI アシスタントが他のアプリをツールとして使えるようにするオープンな標準です。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Off: the MCP and OAuth endpoints are switched off and no assistant can connect. Everything here can still be set up "
+"first."
+msgstr "オフ：MCP と OAuth のエンドポイントはオフで、アシスタントは接続できません。ここの設定は先に済ませておけます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Off"
+msgstr "オフ"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Look"
+msgstr "閲覧"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"List monitors and groups, what changed between two dates, diffs, page snapshots, errors and what is being checked "
+"right now."
+msgstr "モニターとグループの一覧、2 つの日付間の変更、差分、ページのスナップショット、エラー、現在チェック中のもの。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Change"
+msgstr "変更"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add monitors, change their settings, tag them, recheck them and set up notifications, as far as the permissions allow."
+msgstr "権限の範囲内で、モニターの追加、設定の変更、タグ付け、再チェック、通知の設定。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Safe by default"
+msgstr "初期状態で安全"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Text from monitored pages is passed on to the assistant as data. Notification URLs are never shown to it in full."
+msgstr "監視しているページのテキストは、データとしてアシスタントに渡されます。通知 URL が完全な形で見せられることはありません。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Server"
+msgstr "サーバー"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Server address"
+msgstr "サーバーアドレス"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "MCP access token"
+msgstr "MCP アクセストークン"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add a token for each assistant on the Access tokens sub-tab. It is shown once, when it is created."
+msgstr "「アクセストークン」サブタブでアシスタントごとにトークンを追加してください。表示されるのは作成時の一度だけです。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Treat it like a password."
+msgstr "パスワードと同じように扱ってください。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"It does not expire, and anyone who has it can use these tools and read what they return. Never paste it into a file "
+"you commit or share."
+msgstr "有効期限がなく、これを持っている人は誰でもこれらのツールを使い、その結果を読めます。コミットや共有するファイルには絶対に貼り付けないでください。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Most assistants below can read it from an environment variable, so it stays out of their config files. Set it once, "
+"for example in ~/.bashrc or ~/.zshrc:"
+msgstr "下のほとんどのアシスタントは環境変数から読み取れるので、設定ファイルにトークンを書かずに済みます。一度だけ設定してください (例: ~/.bashrc や ~/.zshrc):"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Run this in a terminal, then start a new Claude Code session and ask, for example, \"Which of my monitors have "
+"errors?\""
+msgstr "ターミナルでこれを実行し、新しい Claude Code セッションを開始して、たとえば「エラーのあるモニターは？」と尋ねてください。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "To remove it again:"
+msgstr "削除するには:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"By default (--scope local) Claude Code saves this in ~/.claude.json, only for you and only in the current project. "
+"Add --scope user to have it in all your projects."
+msgstr "既定 (--scope local) では、Claude Code はこれを ~/.claude.json に保存し、あなた専用かつ現在のプロジェクトでのみ使われます。--scope user を付けるとすべてのプロジェクトで使えます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"--scope project writes .mcp.json into the project, which is usually committed. Use this form there instead, it saves "
+"a reference to the environment variable, not the token:"
+msgstr "--scope project はプロジェクトに .mcp.json を書き込み、これは通常コミットされます。その場合はこの形式を使ってください。トークンではなく環境変数への参照が保存されます:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "This file contains the token: keep it in your own settings, not in anything you commit or share."
+msgstr "このファイルにはトークンが含まれます。自分の設定にだけ置き、コミットや共有するものには入れないでください。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "VS Code asks for the token once and stores it securely, so this file is safe to commit."
+msgstr "VS Code はトークンを一度だけ尋ねて安全に保存するので、このファイルはコミットしても安全です。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Uses httpUrl, not url (url means the older SSE transport)."
+msgstr "url ではなく httpUrl を使います (url は古い SSE トランスポートを意味します)。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Through the mcp-remote bridge (needs Node.js), since Claude Desktop connectors only support sign-in, not an access "
+"token."
+msgstr "mcp-remote ブリッジ経由（Node.js が必要）。Claude Desktop のコネクタはサインインのみ対応で、アクセストークンには対応していないためです。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Any other assistant (Windsurf, Devin and others)"
+msgstr "その他のアシスタント (Windsurf、Devin など)"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Most assistants can run a local command: the same mcp-remote bridge (needs Node.js), in the format of that "
+"assistant's MCP settings."
+msgstr "ほとんどのアシスタントはローカルコマンドを実行できます: 同じ mcp-remote ブリッジ (Node.js が必要) を、そのアシスタントの MCP 設定の形式で指定します。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add token"
+msgstr "トークンを追加"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "One for each assistant, each with its own permissions. Revoking one disconnects only that assistant."
+msgstr "アシスタントごとに 1 つ、それぞれ独自の権限付き。取り消すとそのアシスタントだけが切断されます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Revoke this access token?"
+msgstr "このアクセストークンを取り消しますか？"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "The assistant using it is disconnected at once."
+msgstr "これを使っているアシスタントはすぐに切断されます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Something went wrong, please try again."
+msgstr "問題が発生しました。もう一度お試しください。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Notifications are read-only by default. A page an assistant reads could try to get it to send your alerts, and the "
+"page text in them, somewhere else."
+msgstr "通知は初期状態で読み取り専用です。アシスタントが読むページが、あなたの通知をページの本文ごと別の宛先へ送らせようとする可能性があります。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "To make only one assistant read-only, use this address for it instead:"
+msgstr "1 つのアシスタントだけを読み取り専用にするには、代わりにこのアドレスを使います:"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "OAuth connections"
+msgstr "OAuth 接続"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"ChatGPT and claude.ai in the browser connect with sign-in (OAuth) instead of an access token: you log in here and "
+"choose what the assistant may do."
+msgstr "ブラウザーの ChatGPT と claude.ai はアクセストークンではなくサインイン（OAuth）で接続します。ここでログインし、アシスタントに許可する操作を選びます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Add this address as a custom connector in the assistant, it needs to be reachable over HTTPS://"
+msgstr "このアドレスをアシスタントのカスタムコネクターとして追加してください。HTTPS:// でアクセスできる必要があります"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Sign-in needs a login to sit behind: %(link_start)sset a password%(link_end)s (Settings > General) to allow it."
+msgstr "サインインにはログインが必要です。%(link_start)sパスワードを設定%(link_end)sしてください（設定 > 一般）。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Switch on the MCP server (Overview) to allow sign-in."
+msgstr "サインインを許可するには MCP サーバーをオンにしてください（概要）。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Open %(link_start)sCustomize > Connectors%(link_end)s on claude.ai."
+msgstr "claude.ai で %(link_start)sCustomize > Connectors%(link_end)s を開きます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click the add button, then \"Add custom connector\"."
+msgstr "追加ボタンをクリックし、「Add custom connector」を選びます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, for example changedetection.io, and paste this as the remote MCP server URL:"
+msgstr "名前（例：changedetection.io）を入力し、リモート MCP サーバーの URL としてこれを貼り付けます："
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Leave the sign-in setting as Claude detects it, then click Add."
+msgstr "サインイン設定は Claude が検出したままにして、Add をクリックします。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Click Connect: you come here to log in, choose what Claude may do and click Allow, then you are sent back to Claude."
+msgstr "Connect をクリックすると、ここでログインし、Claude に許可する操作を選んで「許可」をクリックすると Claude に戻ります。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"On Team and Enterprise plans an Owner adds it under Organization settings > Connectors, then each member clicks "
+"Connect."
+msgstr "Team と Enterprise プランでは、Owner が Organization settings > Connectors で追加し、各メンバーが Connect をクリックします。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "%(link_start)sClaude help: custom connectors%(link_end)s"
+msgstr "%(link_start)sClaude ヘルプ：カスタムコネクター%(link_end)s"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"In ChatGPT, open Settings > Apps & Connectors > Advanced settings and switch on Developer mode. On some accounts it "
+"is under Settings > Security."
+msgstr ""
+"ChatGPT で Settings > Apps & Connectors > Advanced settings を開き、Developer mode をオンにします。アカウントによっては Settings > Security "
+"にあります。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Back in Apps & Connectors, click Create (or \"Add custom connector\")."
+msgstr "Apps & Connectors に戻り、Create（または「Add custom connector」）をクリックします。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Give it a name, paste this as the MCP server URL and choose OAuth as the authentication:"
+msgstr "名前を入力し、MCP サーバーの URL としてこれを貼り付け、認証に OAuth を選びます："
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Confirm and click Create: you come here to log in, choose what ChatGPT may do and click Allow."
+msgstr "確認して Create をクリックすると、ここでログインし、ChatGPT に許可する操作を選んで「許可」をクリックします。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "In a chat, click +, choose Developer mode and pick the connector."
+msgstr "チャットで + をクリックし、Developer mode を選んでコネクターを選択します。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Custom connectors need a paid ChatGPT plan; on Business and Enterprise plans an admin may need to allow them first."
+msgstr "カスタムコネクターには有料の ChatGPT プランが必要です。Business と Enterprise プランでは、先に管理者の許可が必要な場合があります。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Signed in"
+msgstr "サインイン済み"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Revoke this sign-in?"
+msgstr "このサインインを取り消しますか？"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "The assistant is disconnected at once, it can sign in again."
+msgstr "アシスタントはすぐに切断されます。もう一度サインインできます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The address assistants reach this instance on, for example when it is served through another domain or proxy. Sign-in"
+" (OAuth) hands this address out, so it must be the one assistants connect to. Leave it empty to use the address of "
+"each request, shown in grey."
+msgstr ""
+"アシスタントがこのインスタンスに接続するアドレスです（例: "
+"別のドメインやプロキシ経由で公開している場合）。サインイン（OAuth）はこのアドレスを伝えるため、アシスタントが接続するアドレスと一致させてください。空欄にすると各リクエストのアドレス（グレー表示）を使います。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"The MCP server is then at this address followed by /mcp/v1. Changing it signs out assistants connected with sign-in "
+"(OAuth), they need to connect again. Access tokens keep working."
+msgstr "MCP サーバーはこのアドレスの後ろに /mcp/v1 を付けた場所になります。変更すると、サインイン（OAuth）で接続したアシスタントはサインアウトされ、再接続が必要です。アクセストークンはそのまま使えます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access without sign-in"
+msgstr "サインインなしのアクセス"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Anyone with the MCP address can then list your monitors and read their changes, snapshots and screenshots, without a "
+"token or password, for example for a public demo. Notifications, system info and any change still need sign-in or an "
+"access token."
+msgstr ""
+"MCP "
+"アドレスを知っていれば誰でも、トークンやパスワードなしでモニターの一覧と、その変更・スナップショット・スクリーンショットを読めるようになります（公開デモなど）。通知、システム情報、変更操作には引き続きサインインかアクセストークンが必要です。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#, python-format
+msgid "Without sign-in, each address can make %(count)s tool calls a minute."
+msgstr "サインインなしでは、各アドレスは 1 分あたり %(count)s 回までツールを呼び出せます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"What every assistant is told when it connects: what this server is for and how to use its tools. Leave it empty to "
+"use the built-in note, shown in grey."
+msgstr "接続時にすべてのアシスタントに伝えられる内容: このサーバーの用途とツールの使い方。空欄にすると、灰色で表示されている組み込みのノートが使われます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace what is in the MCP Note with the built-in note?"
+msgstr "MCPノートの内容を組み込みのノートで置き換えますか？"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Replace existing MCP Note"
+msgstr "既存のMCPノートを置き換える"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid ""
+"Copies the built-in note into the box, so you can change it. For example, on a demo, say how to sign up or where to "
+"download it."
+msgstr "組み込みのノートを入力欄にコピーし、編集できるようにします。たとえばデモでは、登録方法やダウンロード先を書きます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Read-only tokens, and tokens limited to some groups, are always told that after this note."
+msgstr "読み取り専用のトークンと、一部のグループに限定されたトークンには、このノートの後に必ずそのことが伝えられます。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Edit access token"
+msgstr "アクセストークンを編集"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "There are no groups yet. Add some to limit a token to them."
+msgstr "まだグループがありません。トークンを制限するにはグループを追加してください。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Access token created"
+msgstr "アクセストークンを作成しました"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Copy it now, it is not shown again."
+msgstr "今すぐコピーしてください。再表示されません。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Set it once, for example in ~/.bashrc or ~/.zshrc, then use the configs on the Connect sub-tab:"
+msgstr "~/.bashrc や ~/.zshrc などで一度設定し、「接続」サブタブの設定を使ってください："
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+msgid "Done"
+msgstr "完了"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "AI / LLM"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "Outgoing · your AI provider"
+msgstr "送信 · AI プロバイダー"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "MCP Server"
+msgstr "MCP サーバー"
+
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+msgid "Incoming · AI assistants"
+msgstr "受信 · AI アシスタント"
+
+#: changedetectionio/blueprint/settings/notifications/__init__.py
+msgid "Unknown notification service"
+msgstr "不明な通知サービス"
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Default Notifications"
-msgstr ""
+msgstr "デフォルト通知"
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
-msgstr ""
+msgstr "これらの通知はすべてのウェブページウォッチに適用されます。グループやウォッチごとに個別設定もできます。"
 
 # 訳注: "Base URL used for the {{base_url}} token in notification links."
 # → 「通知リンクの {{base_url}} トークンに使用するベースURL。」
 # 修飾語と被修飾語の訳を入れ替えた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
 msgstr "通知リンクの"
@@ -489,7 +1531,7 @@ msgstr "詳しくはこちら"
 
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Back to settings"
-msgstr ""
+msgstr "設定に戻る"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "Notification debug log"
@@ -497,46 +1539,46 @@ msgstr "通知デバッグログ"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
-msgstr ""
+msgstr "セキュリティのため、このログは再起動時に消去されます。"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "General"
 msgstr "全般"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Fetching"
 msgstr "取得"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Global Filters"
 msgstr "グローバルフィルタ"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "UI オプション"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Backups"
 msgstr "バックアップ"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
 msgstr "時刻と日付"
 
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "CAPTCHA & Proxies"
 msgstr "CAPTCHA とプロキシ"
 
-#: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/tags/templates/edit-tag.html
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "AI / LLM"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Info"
 msgstr "情報"
 
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install and create shortcut - then \"install\""
+msgstr ""
+
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Default recheck time for all watches, current system minimum is"
 msgstr "すべてのウォッチのデフォルト再チェック時間、現在のシステム最小値は"
@@ -582,6 +1624,27 @@ msgid "When a request returns no content, or the HTML does not contain any text,
 msgstr "リクエストがコンテンツを返さない、またはHTMLにテキストが含まれていない場合、これを変更とみなしますか？"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "QR code linking to this changedetection.io instance"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Install on your phone"
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+#, python-format
+msgid "Scan this, then use your phone browser's menu%(icon)s and choose \"%(action)s\"."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On Android you can then share any web page straight to this install from the share sheet."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "On iPhone the app installs but Safari has no share sheet support."
+msgstr ""
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Choose a default proxy for all watches"
 msgstr "すべてのウォッチのデフォルトプロキシを選択"
 
@@ -609,6 +1672,7 @@ msgstr "テキスト抽出前に <i>n</i> 秒間待機します。"
 msgid "Number of concurrent workers to process watches. More workers = faster processing but higher memory usage."
 msgstr "ウォッチを処理する同時ワーカー数。ワーカーが多いほど処理は速くなりますが、メモリ使用量も増えます。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Currently running:"
 msgstr "現在稼働中："
@@ -637,6 +1701,7 @@ msgstr "通常のプレーンリクエスト（Chrome以外）の場合、タイ
 msgid "Applied to all requests."
 msgstr "すべてのリクエストに適用されます。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Note: Simply changing the User-Agent often does not defeat anti-robot technologies, it's important to consider"
 msgstr "注意：User-Agentを変更するだけではボット対策技術を回避できない場合が多く、以下を考慮することが重要です"
@@ -650,7 +1715,7 @@ msgid "Connect using Bright Data proxies, find out more here."
 msgstr "Bright Data プロキシを使用して接続します。詳細はこちら。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/templates/_common_fields.html
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Tip:"
 msgstr "ヒント："
 
@@ -722,6 +1787,7 @@ msgstr "API で changedetection.io を操作できます。詳細は"
 msgid "API access and examples here"
 msgstr "APIアクセスと例はこちら"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Restrict API access limit by using"
 msgstr "以下を使用してAPIアクセスを制限："
@@ -731,8 +1797,12 @@ msgid "header - required for the Chrome Extension to work"
 msgstr "ヘッダー（Chrome拡張機能の動作に必要）"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
-msgid "copy"
-msgstr "コピー"
+msgid "Regenerate API key?"
+msgstr "API キーを再生成しますか？"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Anything using the current API key stops working until it is given the new one."
+msgstr "現在の API キーを使っているものは、新しいキーを設定するまで動作しなくなります。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Regenerate API key"
@@ -827,18 +1897,28 @@ msgid "Enable or Disable Favicons next to the watch list"
 msgstr "ウォッチリスト横のファビコンを有効または無効にする"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
+msgid "Disabling this can speed up your page fetches because the favicon does not need to be fetched."
+msgstr "無効にするとfaviconの取得が不要になるため、ページ取得が高速化する場合があります。"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
+msgid ""
+"This copies your watch to a temporary hosted database and returns a link to make sharing/copying the watch to other "
+"people"
+msgstr "ウォッチを一時的なホスト側データベースにコピーし、他の人と共有・コピーするためのリンクを発行します。"
+
+#: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Number of items per page in the watch overview list, 0 to disable."
 msgstr "ウォッチ一覧ページの1ページあたりの表示件数（0で無効化）。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "How \"Checked\" and \"Changed\" times are shown in the watch overview list."
-msgstr ""
+msgstr "ウォッチ一覧での「前回チェック」「前回変更」時刻の表示形式。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid ""
 "\"Collapsed icon rail\" keeps the left navigation slim and reveals labels on mouse-over; \"Always expanded\" keeps "
 "labels visible."
-msgstr ""
+msgstr "「折りたたみアイコンレール」は左ナビを細く保ち、マウスオーバーでラベルを表示します。「常に展開」はラベルを常時表示します。"
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "Tip"
@@ -877,420 +1957,6 @@ msgstr "有効なプラグイン："
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
 msgstr "有効なプラグインはありません"
-
-#. 'Usage' here means token consumption/cost stats for the AI provider, not a how-to guide
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgctxt "AI usage stats"
-msgid "Usage"
-msgstr "使用量"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Overview"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Provider"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Prompts"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Behaviour"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI-powered change monitoring"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Connect an LLM to move from \"something changed\" to \"only the thing you care about changed\"."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Intent filtering"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Each watch or tag can carry a plain-text intent — %(ex1)s or %(ex2)s. On every detected change the AI evaluates the "
-"diff against it and suppresses irrelevant noise."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Tip: intent evaluation benefits from a capable model — recommended %(local)s locally, or %(gpt)s / %(gemini)s. Very "
-"small models (≤3B) may misjudge numeric comparisons."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Instead of raw diffs, receive plain-language summaries in notifications — %(ex1)s or %(ex2)s. Set a global default "
-"prompt here, or override per watch or tag."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Minimal cost"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"The AI sees only a unified diff of what changed — never full page HTML. Low-cost models like %(gpt)s or %(gemini)s "
-"handle this well, typically fractions of a cent per check."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI / LLM configured:"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Configure AI Provider"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "AI Provider"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Master switch — when off, all AI lookups are skipped even if a provider is configured below."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Third-party data transfer — please read"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"When AI features are active, change data from the websites you monitor — including page diffs and extracted text — is"
-" sent to an external AI provider of your choice."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "You are solely responsible for ensuring this complies with the terms of service of each website you monitor."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"You are solely responsible for compliance with applicable data-protection laws (e.g. GDPR) regarding any personal "
-"data that may appear in monitored content."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"API costs charged by your chosen provider are your own responsibility; this software has no visibility into or "
-"control over those charges."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"AI / LLM models are known to hallucinate — producing plausible-sounding but factually incorrect or entirely "
-"fabricated output with apparent confidence — and by design may omit or truncate relevant data during summarisation. "
-"AI output must never be relied upon as complete or accurate. This software is provided as-is with no warranty of any "
-"kind."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"By enabling AI features you personally indemnify and hold harmless the creator(s) and contributor(s) of this software"
-" from any claims, damages, or liability arising from this data transfer or your use of AI features."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "I have read and understood the above. I accept full responsibility and indemnify the creator(s) of this software."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/templates/_common_fields.html
-msgid "Note"
-msgstr "注意"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"AI / LLM is configured via environment variables (<code>LLM_MODEL=%(model)s</code>%(api_base)s). Remove the "
-"<code>LLM_MODEL</code> environment variable to configure via this form instead."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "select a provider"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "OpenAI-compatible (vLLM, LM Studio, llama.cpp)"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Only needed for Ollama or custom/self-hosted endpoints. Leave blank for cloud providers."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"Reasoning models (Qwen3, DeepSeek-R1, Gemma 3, etc.) emit chain-of-thought before the final answer. This multiplier "
-"scales every <code>max_tokens</code> cap for this endpoint to leave reasoning room. Defaults to %(default)s; raise it"
-" if responses come back truncated or empty, lower it (down to 1x) if you want tighter limits on a paid endpoint. "
-"Applied to Ollama and OpenAI-compatible endpoints — other cloud providers (OpenAI, Anthropic, Gemini) keep their "
-"original tight caps."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Load available models"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Available models"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "choose a model"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Enter API key and click 'Load available models'"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Remove AI / LLM configuration?"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This will remove your saved AI provider, model, and API key."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Remove"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/blueprint/ui/templates/clear_all_history.html changedetectionio/templates/base.html
-msgid "Cancel"
-msgstr "キャンセル"
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Test connection"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Your API key is stored locally and sent only to your chosen provider. On each detected change, the watch's diff and "
-"extracted text are sent to the LLM — no full page HTML."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Cache"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear all summary cache?"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This will remove all cached AI change summaries across all watches."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "They will be regenerated on the next check."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear cache"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Clear all summary cache"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Removes all cached AI change summaries across all watches. They will be regenerated on the next check."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Enables litellm verbose output (routed through loguru). Useful when diagnosing provider errors or empty responses. "
-"Leave off in production — generates a lot of log volume."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Default AI Change Summary"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Used for all watches unless overridden by the watch or its tag/group."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#: changedetectionio/templates/edit/include_llm_intent.html
-msgid "Modify default prompt"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid ""
-"When enabled, the <code>%(diff)s</code> notification token shows the AI summary instead of the raw diff. Use "
-"<code>%(raw_diff)s</code> to always get the original."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"When enabled, the AI will be used as a last resort to extract price and stock status from product pages where no "
-"structured metadata (JSON-LD, microdata, OpenGraph) is found."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"For Gemini 2.5+ models only. Thinking tokens improve reasoning quality but count against the output budget. Set to "
-"Off if summaries are being cut short."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"Upper limit on tokens the AI may use when writing a change summary. Higher values allow longer summaries but cost "
-"more."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Which baseline the watchlist “Summary” link compares the latest version against by default."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Configure a provider first to unlock behaviour settings."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token & Cost Tracking"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "This month"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid "%(percent)s%% of %(budget)s"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "All-time total"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Monthly token budget reached. AI summarisation is paused until next month."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token budget this period"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "(set via <code>LLM_TOKEN_BUDGET_MONTH</code>)"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "0 = unlimited"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens (0 = unlimited)"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Current billing period"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "(set via <code>LLM_MAX_INPUT_CHARS</code>)"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-#, python-format
-msgid "characters — currently enforcing: %(limit)s"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid ""
-"tokens — skips AI evaluation on a watch once its usage within the current period (monthly) hits this cap (0 = "
-"unlimited)"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No AI usage recorded yet."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Token budget"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "tokens per month (0 = unlimited)"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "platform.openai.com → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "console.anthropic.com → API keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "aistudio.google.com → Get API key"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No API key needed for local Ollama"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Bearer token for your self-hosted server (vLLM, LM Studio, etc.)"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "openrouter.ai → Keys"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Select a provider first."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Loading…"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "No models returned by the provider."
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "— choose a model —"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "models available with your key"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Request failed"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Testing…"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Connected"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html
-msgid "Failed"
-msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py
 #, python-brace-format
@@ -1361,6 +2027,10 @@ msgstr ""
 msgid "Tag name"
 msgstr "タグ名"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag-extra-form.html
+msgid "Used for watches in \"Restock & Price detection\" mode"
+msgstr "「再入荷＆価格検知」モードのウォッチで使用されます"
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "フィルタとトリガー"
@@ -1421,8 +2091,8 @@ msgid "Use system defaults"
 msgstr "システムデフォルトを使用"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
-msgid "Add a new organisational tag"
-msgstr "新しい組織タグを追加"
+msgid "Add a new organisational tag / group name."
+msgstr "新しいタグ / グループ名を追加。"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 msgid "Groups allows you to manage filters and notifications for multiple watches under a single organisational tag."
@@ -1443,11 +2113,6 @@ msgstr "ウェブサイトの組織タグ/グループが設定されていま�
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/templates/menu.html
 msgid "Mute notifications"
 msgstr "通知をミュート"
-
-#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/edit.py
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Edit"
-msgstr "編集"
 
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
@@ -1549,7 +2214,7 @@ msgstr "{} 件のウォッチをデフォルト通知設定に変更しました
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "Browser / fetch method updated on {} watches"
-msgstr ""
+msgstr "{} 件のウォッチのブラウザ / 取得方式を更新しました"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Invalid browser / fetch method selected"
@@ -1580,7 +2245,7 @@ msgstr "ウォッチ {} のスナップショット履歴をクリアしまし�
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "clear"
-msgstr "clear"
+msgstr "クリア"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "History clearing started in background"
@@ -1608,18 +2273,20 @@ msgid "Watch is already queued or being checked."
 msgstr "ウォッチはすでにキュー済みまたはチェック中です。"
 
 #: changedetectionio/blueprint/ui/__init__.py
-msgid "Queued 1 watch for rechecking."
-msgstr "1件のウォッチを再チェックのためキューに追加しました。"
+#, python-format
+msgid "Queued %(count)s watch for rechecking"
+msgid_plural "Queued %(count)s watches for rechecking"
+msgstr[0] "%(count)s件のウォッチを再チェックのためキューに追加しました"
+
+#. TRANSLATORS: sentence-final full stop
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "."
+msgstr "。"
 
 #: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {count} watches for rechecking ({skipped_count} already queued or running)."
-msgstr "{count} 件のウォッチを再チェックのためキューに追加しました（{skipped_count} 件はすでにキュー済みまたは実行中）。"
-
-#: changedetectionio/blueprint/ui/__init__.py
-#, python-brace-format
-msgid "Queued {} watches for rechecking."
-msgstr "{} 件のウォッチを再チェックのためキューに追加しました。"
+#, python-format
+msgid " (%(skipped_count)s already queued or running)"
+msgstr "（%(skipped_count)s 件はすでにキュー済みまたは実行中）"
 
 #: changedetectionio/blueprint/ui/__init__.py
 msgid "Queueing watches for rechecking in background..."
@@ -1645,6 +2312,11 @@ msgstr "このウォッチの差分ページを表示するための履歴が不
 #: changedetectionio/blueprint/ui/diff.py
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py
+#, python-brace-format
+msgid "Could not save the '{}' settings, see the log."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
@@ -1707,7 +2379,7 @@ msgstr ""
 #: changedetectionio/blueprint/ui/queue.py
 #, python-brace-format
 msgid "Queue cleared ({} items removed)."
-msgstr ""
+msgstr "キューをクリアしました（{}件削除）。"
 
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "This will remove version history (snapshots) for ALL watches, but keep your list of URLs!"
@@ -1716,6 +2388,7 @@ msgstr "これにより、すべてのウォッチのバージョン履歴（ス
 # 訳注: "You may like to use the [BACKUP] link first."
 # → 「先に[バックアップ]リンクをご利用ください。」
 # 副詞と述語の訳を入れ替えた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "You may like to use the"
 msgstr "先に"
@@ -1732,6 +2405,7 @@ msgstr "リンクをご利用ください。"
 msgid "Confirmation text"
 msgstr "確認テキスト"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/clear_all_history.html
 msgid "Type in the word"
 msgstr "次の単語を入力してください："
@@ -1773,6 +2447,10 @@ msgid "To"
 msgstr "変更後"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Filters"
+msgstr "フィルタ"
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Words"
 msgstr "単語"
 
@@ -1788,17 +2466,23 @@ msgstr "空白を無視"
 msgid "Same/non-changed"
 msgstr "同じ/変更なし"
 
+#. 'Removed' is a noun label for a diff display filter (toggles removed lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgctxt "diff filter"
 msgid "Removed"
-msgstr "削除済み"
+msgstr "削除"
 
+#. 'Added' is a noun label for a diff display filter (toggles added lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Added"
-msgstr "追加済み"
+msgstr "追加"
 
+#. 'Replaced' is a noun label for a diff display filter (toggles replaced lines), not a verb phrase or status badge
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/edit.html
+msgctxt "diff filter"
 msgid "Replaced"
-msgstr "置換済み"
+msgstr "置換"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Include all intermediate snapshots between the selected versions in the AI summary"
@@ -1839,14 +2523,13 @@ msgid "Error Screenshot"
 msgstr "エラースクリーンショット"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/processors/templates/extract.html
+#: changedetectionio/processors/templates/extract.html changedetectionio/processors/text_json_diff/processor.py
 msgid "Text"
 msgstr "テキスト"
 
-#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Current screenshot"
-msgstr "現在のスクリーンショット"
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/templates/extract.html
+msgid "Screenshot"
+msgstr "スクリーンショット"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/processors/extract.py
 #: changedetectionio/processors/templates/extract.html
@@ -1866,6 +2549,10 @@ msgid "Current error-ing screenshot from most recent request"
 msgstr "最新のリクエストからの現在のエラースクリーンショット"
 
 #: changedetectionio/blueprint/ui/templates/diff.html
+msgid "Where in the document the differences are, not when they happened"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Pro-tip: You can enable <strong>\"share access when password is enabled\"</strong> from settings."
 msgstr "プロのヒント：設定から<strong>「パスワードが有効な場合でも共有アクセスを許可」</strong>を有効にできます。"
 
@@ -1883,7 +2570,7 @@ msgstr "テキストをハイライトして共有したり、無視リストに
 
 #: changedetectionio/blueprint/ui/templates/diff.html
 msgid "Download difference patch"
-msgstr ""
+msgstr "差分パッチをダウンロード"
 
 #: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/blueprint/ui/templates/preview.html
 msgid "For now, Differences are performed on text, not graphically, only the latest screenshot is available."
@@ -1923,6 +2610,7 @@ msgstr "条件"
 msgid "Stats"
 msgstr "統計"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Some sites use JavaScript to create the content, for this you should"
 msgstr "一部のサイトはJavaScriptでコンテンツを生成します。その場合は以下を使用してください。"
@@ -1952,14 +2640,16 @@ msgid "Automatically uses the page title if found, you can also use your own tit
 msgstr "ページタイトルが見つかった場合は自動的に使用されます。ここで独自のタイトル/説明を使用することもできます。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "各チェック間の間隔/時間。"
+msgid "Extra Page Title and Link options"
+msgstr "ページタイトルとリンクの追加オプション"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid ""
-"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
-"your filter will not work anymore."
-msgstr "フィルタがページで見つからなくなったときに通知を送信します。ページが変更されてフィルタが機能しなくなったことを把握するのに便利です。"
+msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
+msgstr "任意 - 一覧・履歴・通知内のリンクは、チェック対象のURLではなくこのURLを開きます。チェック対象のURLは変更されません。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "各チェック間の間隔/時間。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -2051,6 +2741,7 @@ msgstr "申し訳ありませんが、この機能はインタラクティブな
 msgid "to one that supports interactive Javascript."
 msgstr "インタラクティブなJavascriptをサポートするものに変更してください。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "You need to"
 msgstr "次の操作が必要です："
@@ -2060,9 +2751,16 @@ msgid "Set the fetch method"
 msgstr "取得方式を設定する"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
+msgid ""
+"Sends a notification when the filter can no longer be seen on the page, good for knowing when the page changed and "
+"your filter will not work anymore."
+msgstr "フィルタがページで見つからなくなったときに通知を送信します。ページが変更されてフィルタが機能しなくなったことを把握するのに便利です。"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use the verify (✓) button to test if a condition passes against the current snapshot."
 msgstr "確認ボタン（✓）を使用して、現在のスナップショットに対して条件が満たされるかテストできます。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Read a quick tutorial about"
 msgstr "次のクイックチュートリアルをご覧ください："
@@ -2096,6 +2794,7 @@ msgstr "注意：各行のテキストの長さと類似度によっては、ア
 # 訳注: "So it's always better to select [X] when you're interested in new content."
 # → 「そのため、新しいコンテンツに興味がある場合は [X] を選択することをおすすめします。」
 # 条件節と述語の訳を入れ替えた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "So it's always better to select"
 msgstr "そのため、新しいコンテンツに興味がある場合は"
@@ -2104,6 +2803,7 @@ msgstr "そのため、新しいコンテンツに興味がある場合は"
 msgid "when you're interested in new content."
 msgstr "を選択することをおすすめします。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "When content is merely moved in a list, it will also trigger an"
 msgstr "リスト内でコンテンツが移動しただけでも"
@@ -2144,6 +2844,7 @@ msgstr ""
 msgid "Loading..."
 msgstr "読み込み中..."
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "The Visual Selector tool lets you select the"
 msgstr "ビジュアルセレクターツールを使用すると、変更検知に使用する"
@@ -2208,7 +2909,7 @@ msgstr "履歴の件数"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Last fetch duration"
-msgstr "最後の取得時間"
+msgstr "前回の取得時間"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Notification alert count"
@@ -2217,6 +2918,18 @@ msgstr "通知アラート回数"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Server type reply"
 msgstr "サーバーの応答タイプ"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/widgets/ternary_boolean.py
+msgid "Yes"
+msgstr "はい"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/widgets/ternary_boolean.py
+msgid "No"
+msgstr "いいえ"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI tokens (last check)"
@@ -2271,6 +2984,11 @@ msgid "Select timestamp"
 msgstr "タイムスタンプを選択"
 
 #: changedetectionio/blueprint/ui/templates/preview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Current screenshot"
+msgstr "現在のスクリーンショット"
+
+#: changedetectionio/blueprint/ui/templates/preview.html
 msgid "Current erroring screenshot from most recent request"
 msgstr "最新のリクエストからの現在のエラースクリーンショット"
 
@@ -2281,27 +2999,27 @@ msgstr "スクリーンショットには、スクリーンショットをサポ
 #: changedetectionio/blueprint/ui/templates/queue.html
 #, python-format
 msgid "Worker %(num)s"
-msgstr ""
+msgstr "ワーカー%(num)s"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "— idle"
-msgstr ""
+msgstr "— 待機中"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "running"
-msgstr ""
+msgstr "実行中"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "idle"
-msgstr ""
+msgstr "待機中"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "done"
-msgstr ""
+msgstr "完了"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "cancel"
-msgstr ""
+msgstr "キャンセル"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "No workers configured and queue is empty"
@@ -2317,19 +3035,19 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Check queue"
-msgstr ""
+msgstr "キューのチェック"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Live view of what the workers are doing right now and what is waiting in line."
-msgstr ""
+msgstr "ワーカーの現在の動作と待機中の内容のライブ表示。"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Workers"
-msgstr ""
+msgstr "ワーカー"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Running now"
-msgstr ""
+msgstr "実行中"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
@@ -2338,31 +3056,31 @@ msgstr "キュー済み"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear Queue?"
-msgstr ""
+msgstr "キューをクリアしますか？"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "<p>This will remove every pending check from the queue.</p><p>Running checks will continue.</p>"
-msgstr ""
+msgstr "<p>キュー内の保留中のチェックをすべて削除します。</p><p>実行中のチェックは継続します。</p>"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear"
-msgstr ""
+msgstr "クリア"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Clear Queue"
-msgstr ""
+msgstr "キューをクリア"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Workers & queue"
-msgstr ""
+msgstr "ワーカーとキュー"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Elapsed"
-msgstr ""
+msgstr "経過"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Status"
-msgstr ""
+msgstr "状態"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "No workers configured (FETCH_WORKERS=0) and queue is empty"
@@ -2370,7 +3088,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Waiting for new pages to check…"
-msgstr ""
+msgstr "新しいチェック対象のページを待機中…"
 
 #: changedetectionio/blueprint/ui/views.py
 #, python-brace-format
@@ -2384,6 +3102,10 @@ msgstr "ウォッチは一時停止状態で追加されました。保存する
 #: changedetectionio/blueprint/ui/views.py
 msgid "Watch added."
 msgstr "ウォッチを追加しました。"
+
+#: changedetectionio/blueprint/watchlist/__init__.py
+msgid "Nothing shareable was found - no web page link in what you shared."
+msgstr ""
 
 #: changedetectionio/blueprint/watchlist/__init__.py
 msgid "records"
@@ -2407,7 +3129,11 @@ msgstr "通知のミュートを解除"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Goto web page"
-msgstr ""
+msgstr "ウェブページへ移動"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+msgid "Switch to Restock & Price watch mode?"
+msgstr "再入荷＆価格のウォッチモードに切り替えますか？"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Create a link to share watch config with others"
@@ -2415,15 +3141,15 @@ msgstr "ウォッチ設定を他の人と共有するリンクを作成"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Detecting restock and price"
-msgstr "在庫補充と価格を検知中"
+msgstr "再入荷と価格を検知中"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Not in stock"
 msgstr "在庫なし"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "In stock"
 msgstr "在庫あり"
@@ -2437,30 +3163,34 @@ msgstr "価格"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #, python-format
 msgid "Price change since previous price (%(prev)s)"
-msgstr ""
+msgstr "前回価格からの変動（%(prev)s）"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "No information"
 msgstr "情報なし"
 
+#. 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Checked"
-msgstr "チェック済み"
+msgstr "前回チェック"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/templates/base.html
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Checking now"
-msgstr "今すぐチェック"
+msgstr "チェック中"
 
+#. 'Changed' labels the last-changed time column in the watch overview list, not a status badge
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgctxt "timestamp"
 msgid "Changed"
-msgstr "変更済み"
+msgstr "前回変更"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 msgid "Summary"
-msgstr ""
+msgstr "要約"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/processors/text_json_diff/difference.py
@@ -2490,94 +3220,22 @@ msgstr ""
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Loading price history…"
-msgstr ""
+msgstr "価格履歴を読み込み中…"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Out of stock"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "No price data available to graph yet."
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Could not load price history."
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Changes"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Average price"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Currently low"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Currently typical"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Currently high"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-#, python-format
-msgid "cheaper than %s% of tracked prices"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-#, python-format
-msgid "more expensive than %s% of tracked prices"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "around the usual price"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "avg"
-msgstr ""
+msgstr "価格履歴を読み込めませんでした。"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page URL"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "All %(page)s on this page are selected."
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "Select all %(total)s matching"
-msgstr ""
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-#, python-format
-msgid "All %(total)s matching are selected."
-msgstr ""
+msgstr "ウェブページURL"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
-msgstr ""
+msgstr "%(count)s 件選択中"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Searching"
@@ -2597,19 +3255,23 @@ msgstr "未読"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Deals"
-msgstr ""
+msgstr "値下がり"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "With errors"
 msgstr "エラーあり"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Filter by type"
+msgid "Healthy"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Filter by type"
+msgstr "種類で絞り込む"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "All types"
-msgstr ""
+msgstr "全種類"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark all viewed"
@@ -2626,11 +3288,16 @@ msgstr "'%(title)s' 内"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "RSS Feed"
-msgstr ""
+msgstr "RSSフィード"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/base.html
+msgid "Close"
+msgstr "閉じる"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Invert"
-msgstr ""
+msgstr "反転"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Pause"
@@ -2654,19 +3321,27 @@ msgstr "タグ"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set browser / fetch method for selected"
-msgstr ""
+msgstr "選択項目のブラウザ／取得方式を設定"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
-msgstr ""
+msgstr "適用"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set proxy for selected"
+msgstr "選択項目のプロキシを設定"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Download CSV"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
 msgstr "既読にする"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Mark unviewed"
+msgstr "未読にする"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Use default notification"
@@ -2701,18 +3376,30 @@ msgstr "ウォッチを削除しますか?"
 msgid "<p><strong>Are you sure you want to delete the selected watches?</strong></p><p>This action cannot be undone.</p>"
 msgstr "<p><strong>選択したウォッチを削除してもよいですか？</strong></p><p>この操作は元に戻せません。</p>"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
-msgid "Close"
-msgstr ""
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "All %(page)s on this page are selected."
+msgstr "このページの%(page)s件すべてを選択中。"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "Select all %(total)s matching"
+msgstr "条件に一致する%(total)s件すべてを選択"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+#, python-format
+msgid "All %(total)s matching are selected."
+msgstr "条件に一致する%(total)s件すべてを選択中。"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Web page"
-msgstr ""
+msgstr "ウェブページ"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Restock & Price"
-msgstr "在庫補充＆価格"
+msgstr "再入荷＆価格"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "No web page change detection watches configured, please add a URL in the box above, or"
 msgstr "ウェブページ変更検知ウォッチが設定されていません。上のボックスにURLを追加するか、"
@@ -2894,59 +3581,38 @@ msgstr "0秒"
 
 #: changedetectionio/flask_app.py
 msgid "year"
-msgstr "年"
-
-#: changedetectionio/flask_app.py
-msgid "years"
-msgstr "年"
+msgid_plural "years"
+msgstr[0] "年"
 
 #: changedetectionio/flask_app.py
 msgid "month"
-msgstr "ヶ月"
-
-#: changedetectionio/flask_app.py
-msgid "months"
-msgstr "ヶ月"
+msgid_plural "months"
+msgstr[0] "ヶ月"
 
 #: changedetectionio/flask_app.py
 msgid "week"
-msgstr "週"
-
-#: changedetectionio/flask_app.py
-msgid "weeks"
-msgstr "週"
+msgid_plural "weeks"
+msgstr[0] "週"
 
 #: changedetectionio/flask_app.py
 msgid "day"
-msgstr "日"
-
-#: changedetectionio/flask_app.py
-msgid "days"
-msgstr "日"
+msgid_plural "days"
+msgstr[0] "日"
 
 #: changedetectionio/flask_app.py
 msgid "hour"
-msgstr "時間"
-
-#: changedetectionio/flask_app.py
-msgid "hours"
-msgstr "時間"
+msgid_plural "hours"
+msgstr[0] "時間"
 
 #: changedetectionio/flask_app.py
 msgid "minute"
-msgstr "分"
-
-#: changedetectionio/flask_app.py
-msgid "minutes"
-msgstr "分"
-
-#: changedetectionio/flask_app.py
-msgid "second"
-msgstr "秒"
+msgid_plural "minutes"
+msgstr[0] "分"
 
 #: changedetectionio/blueprint/settings/templates/settings.html changedetectionio/flask_app.py
-msgid "seconds"
-msgstr "秒"
+msgid "second"
+msgid_plural "seconds"
+msgstr[0] "秒"
 
 #: changedetectionio/flask_app.py
 msgid "Already logged in"
@@ -2986,7 +3652,7 @@ msgstr "開始時刻"
 
 #: changedetectionio/forms.py
 msgid "Run duration"
-msgstr "実行期間"
+msgstr "実行時間"
 
 #: changedetectionio/forms.py
 msgid "Use time scheduler"
@@ -3063,6 +3729,11 @@ msgstr "'%s' は有効なAppRise URLではありません。"
 
 #: changedetectionio/forms.py
 #, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegExが長すぎます。最大%(max)s文字です。"
+
+#: changedetectionio/forms.py
+#, python-format
 msgid "RegEx '%s' is not a valid regular expression."
 msgstr "正規表現 '%s' は有効な正規表現ではありません。"
 
@@ -3104,15 +3775,19 @@ msgstr "プロセッサー"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Browser"
-msgstr ""
+msgstr "ブラウザ"
 
 #: changedetectionio/forms.py
 msgid "Edit > Watch"
 msgstr "編集 > ウォッチ"
 
 #: changedetectionio/forms.py
-msgid "Fetch Method"
-msgstr "取得方式"
+msgid "Notification URL List"
+msgstr "通知URLリスト"
+
+#: changedetectionio/forms.py
+msgid "Notification Title"
+msgstr "通知タイトル"
 
 #: changedetectionio/forms.py
 msgid "Notification Body"
@@ -3123,12 +3798,8 @@ msgid "Notification format"
 msgstr "通知フォーマット"
 
 #: changedetectionio/forms.py
-msgid "Notification Title"
-msgstr "通知タイトル"
-
-#: changedetectionio/forms.py
-msgid "Notification URL List"
-msgstr "通知URLリスト"
+msgid "Fetch Method"
+msgstr "取得方式"
 
 #: changedetectionio/forms.py
 msgid "Processor - What do you want to achieve?"
@@ -3154,8 +3825,8 @@ msgstr "通知ベースURLの上書き"
 msgid "Not set"
 msgstr "未設定"
 
-#: changedetectionio/blueprint/tags/form.py changedetectionio/blueprint/tags/templates/groups-overview.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/blueprint/tags/form.py
+#: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
 msgid "Save"
 msgstr "保存"
 
@@ -3200,6 +3871,10 @@ msgid "Web Page URL"
 msgstr "ウェブページ URL"
 
 #: changedetectionio/forms.py
+msgid "Open Link Override"
+msgstr "リンク先URLの上書き"
+
+#: changedetectionio/forms.py
 msgid "Group Tag"
 msgstr "グループタグ"
 
@@ -3215,8 +3890,8 @@ msgstr "チェック間隔とスケジューラーにはグローバル設定を
 msgid "AI Change Intent - Notify me when.."
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/blueprint/ui/templates/diff.html
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
+#: changedetectionio/blueprint/ui/templates/diff.html changedetectionio/forms.py
 msgid "AI Change Summary"
 msgstr ""
 
@@ -3324,10 +3999,12 @@ msgstr "プロキシ"
 msgid "Send a notification when the filter can no longer be found on the page"
 msgstr "フィルタがページで見つからなくなったときに通知を送信"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
 msgid "On"
 msgstr "オン"
 
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
@@ -3341,7 +4018,9 @@ msgstr "ミュート済み"
 msgid "Attach screenshot to notification (where possible)"
 msgstr "通知にスクリーンショットを添付（可能な場合）"
 
+#. TRANSLATORS: Label for the setting combining condition rules with AND/OR. Noun; not the verb 'to match'.
 #: changedetectionio/forms.py
+msgctxt "condition"
 msgid "Match"
 msgstr "一致条件"
 
@@ -3364,21 +4043,6 @@ msgstr "ウォッチごとに保持する履歴の件数"
 #: changedetectionio/forms.py
 msgid "Body must be empty when Request Method is set to GET"
 msgstr "リクエストメソッドがGETの場合、ボディは空にしてください"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax configuration: %(error)s"
-msgstr "無効なテンプレート構文設定: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax: %(error)s"
-msgstr "無効なテンプレート構文: %(error)s"
-
-#: changedetectionio/forms.py
-#, python-format
-msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
-msgstr "\"%(header)s\" ヘッダーのテンプレート構文が無効です: %(error)s"
 
 #: changedetectionio/blueprint/tags/form.py changedetectionio/forms.py
 msgid "Name"
@@ -3457,28 +4121,24 @@ msgid "Use page <title> in watch overview list"
 msgstr "ウォッチ一覧リストでページの <title> を使用"
 
 #: changedetectionio/forms.py
+msgid "Enable watch \"sharing\""
+msgstr "ウォッチの「共有」を有効化"
+
+#: changedetectionio/forms.py
 msgid "Relative time format"
-msgstr ""
+msgstr "相対時刻の形式"
 
 #: changedetectionio/forms.py
 msgid "Long (1 minute ago)"
-msgstr ""
+msgstr "長形式（1分前）"
 
 #: changedetectionio/forms.py
 msgid "Short (1m ago)"
-msgstr ""
+msgstr "短形式（1m前）"
 
 #: changedetectionio/forms.py
 msgid "Navigation sidebar"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Collapsed icon rail (expands on hover)"
-msgstr ""
-
-#: changedetectionio/forms.py
-msgid "Always expanded"
-msgstr ""
+msgstr "ナビゲーションサイドバー"
 
 #: changedetectionio/forms.py
 msgid "API access token security check enabled"
@@ -3504,7 +4164,7 @@ msgstr "スクリーンショット: 最小変化率"
 msgid "Must be between 0 and 100"
 msgstr "0から100の間で指定してください"
 
-#: changedetectionio/forms.py changedetectionio/templates/login.html
+#: changedetectionio/forms.py changedetectionio/notification/apprise_form.py changedetectionio/templates/login.html
 msgid "Password"
 msgstr "パスワード"
 
@@ -3577,10 +4237,14 @@ msgid "Token multiplier for local reasoning models"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Switch thinking off"
+msgstr "思考をオフにする"
+
+#: changedetectionio/forms.py
 msgid "Default AI Change Summary prompt"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html changedetectionio/forms.py
 msgid "Max tokens per watch per period"
 msgstr ""
 
@@ -3588,7 +4252,7 @@ msgstr ""
 msgid "Monthly token budget"
 msgstr ""
 
-#: changedetectionio/blueprint/settings/templates/settings_llm_tab.html changedetectionio/forms.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html changedetectionio/forms.py
 msgid "Max input characters"
 msgstr ""
 
@@ -3645,12 +4309,98 @@ msgid "Changes since you last viewed the watch"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Use a full http:// or https:// address, without ?query or #fragment."
+msgstr "?クエリや #フラグメントを含まない、完全な http:// または https:// のアドレスを入力してください。"
+
+#: changedetectionio/forms.py
+msgid "Switch on the MCP and OAuth endpoints"
+msgstr "MCP と OAuth のエンドポイントをオンにする"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "MCP Note"
+msgstr "MCPノート"
+
+#: changedetectionio/forms.py
+msgid "Allow read-only access without sign-in"
+msgstr "サインインなしで読み取り専用アクセスを許可"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/forms.py
+msgid "Public MCP address"
+msgstr "公開 MCP アドレス"
+
+#: changedetectionio/forms.py
+msgid "e.g. Claude Code, laptop"
+msgstr "例：Claude Code、ノート PC"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Monitors"
+msgstr "モニター"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Write"
+msgstr "書き込み"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "None"
+msgstr "なし"
+
+#: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Read"
+msgstr "読み取り"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Groups (tags)"
+msgstr "グループ（タグ）"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "Browser steps & JavaScript"
+msgstr "ブラウザステップとJavaScript"
+
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
+#: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html changedetectionio/forms.py
+msgid "System info"
+msgstr "システム情報"
+
+#: changedetectionio/forms.py
+msgid "Only these groups"
+msgstr "これらのグループのみ"
+
+#: changedetectionio/forms.py
 msgid "RegEx to extract"
 msgstr "抽出する正規表現"
 
 #: changedetectionio/forms.py
 msgid "Extract as CSV"
 msgstr "CSVとして抽出"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax configuration: %(error)s"
+msgstr "無効なテンプレート構文設定: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax: %(error)s"
+msgstr "無効なテンプレート構文: %(error)s"
+
+#: changedetectionio/jinja2_custom/validate.py
+#, python-format
+msgid "Invalid template syntax in \"%(header)s\" header: %(error)s"
+msgstr "\"%(header)s\" ヘッダーのテンプレート構文が無効です: %(error)s"
 
 #: changedetectionio/languages.py
 msgid "just now"
@@ -3778,6 +4528,46 @@ msgstr ""
 msgid "in %syr"
 msgstr ""
 
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom e-mail"
+msgstr "カスタムメール"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Custom POST/GET/PUT/DELETE…"
+msgstr "カスタム POST/GET/PUT/DELETE…"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "URL"
+msgstr "URL"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Method"
+msgstr "メソッド"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Username"
+msgstr "ユーザー名"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "HTTP headers"
+msgstr "HTTPヘッダー"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "Query parameters"
+msgstr "クエリパラメータ"
+
+#: changedetectionio/notification/apprise_form.py changedetectionio/templates/_common_fields-notification.html
+msgid "Required"
+msgstr "必須"
+
+#: changedetectionio/notification/apprise_form.py
+msgid "The URL must start with http:// or https://"
+msgstr "URLは http:// または https:// で始まる必要があります"
+
+#: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "そのRegExは時間がかかりすぎました。より単純なものをお試しください。"
+
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "その正規表現についてウォッチ履歴全体をスキャンしましたが、一致するものが見つかりませんでした。"
@@ -3856,38 +4646,93 @@ msgstr "ビジュアル / 画像スクリーンショット変更検知"
 msgid "Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM"
 msgstr "高速OpenCVアルゴリズムを使用してスクリーンショットを比較します。SSIMより10〜100倍高速です。"
 
+#: changedetectionio/processors/image_ssim_diff/processor.py
+msgid "Visual"
+msgstr "ビジュアル"
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "Screenshot Comparison Settings"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "What percentage of pixels must change to trigger a detection?"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+#, python-format
+msgid "For example, <strong>0.1%</strong> means if 0.1% or more of the pixels change, it counts as a change."
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "Lower values = more sensitive (detect smaller changes)."
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "Higher values = less sensitive (only detect larger changes)."
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "Leave blank to use global default (0.1%)."
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "How different must an individual pixel be to count as \"changed\"?"
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "<strong>Low sensitivity (75)</strong> = Only count pixels that changed significantly (0-255 scale)."
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "<strong>High sensitivity (20)</strong> = Count pixels with small changes as different."
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "<strong>Very high (0)</strong> = Any pixel change counts."
+msgstr ""
+
+#: changedetectionio/processors/image_ssim_diff/templates/image_ssim_diff/edit-extras.html
+msgid "Select \"Use global default\" to inherit the system-wide setting."
+msgstr ""
+
 #: changedetectionio/processors/restock_diff/difference.py
 msgid "Date"
-msgstr ""
+msgstr "日付"
 
 #: changedetectionio/processors/restock_diff/difference.py
 msgid "Stock status"
-msgstr ""
+msgstr "在庫状況"
 
 #: changedetectionio/processors/restock_diff/difference.py
 msgid "Currency"
-msgstr ""
+msgstr "通貨"
+
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgid "Out of stock"
+msgstr "在庫切れ"
 
 #: changedetectionio/processors/restock_diff/difference.py
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price history"
-msgstr ""
+msgstr "価格履歴"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Re-stock detection"
-msgstr "在庫補充検知"
+msgstr "再入荷検知"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "In Stock only (Out Of Stock -> In Stock only)"
-msgstr "在庫あり時のみ（在庫切れ → 在庫ありの変化のみ）"
+msgstr "在庫あり時のみ（在庫切れ → 在庫ありへの変化のみ）"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Any availability changes"
-msgstr "在庫状態のいかなる変化も"
+msgstr "在庫状況の変化なら何でも"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Off, don't follow availability/restock"
-msgstr "オフ：在庫状態を追跡しない"
+msgstr "オフ：在庫状況・再入荷を追跡しない"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Below price to trigger notification"
@@ -3915,39 +4760,120 @@ msgstr "価格変動を追跡"
 
 #: changedetectionio/processors/restock_diff/forms.py
 msgid "Restock & Price Detection"
-msgstr "在庫補充＆価格検知"
+msgstr "再入荷＆価格検知"
 
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Re-stock & Price detection for pages with a SINGLE product"
-msgstr "単一製品ページの在庫補充＆価格検知"
+msgstr "単一製品ページの再入荷＆価格検知"
 
 #: changedetectionio/processors/restock_diff/processor.py
 msgid "Detects if the product goes back to in-stock"
-msgstr "製品が在庫ありに戻ったかどうかを検知します"
+msgstr "商品が再入荷したかどうかを検知します"
+
+#: changedetectionio/processors/restock_diff/processor.py
+msgid "Restock"
+msgstr "再入荷"
+
+#. FIXME: fragment msgids (#4074)
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+msgid "Changes"
+msgstr ""
+
+#. {pct} is a percentage including the % sign, e.g. "80%"
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+#, python-brace-format
+msgid "cheaper than {pct} of tracked prices"
+msgstr "追跡中の価格の{pct}より安い"
+
+#. {pct} is a percentage including the % sign, e.g. "80%"
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+#, python-brace-format
+msgid "more expensive than {pct} of tracked prices"
+msgstr "追跡中の価格の{pct}より高い"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+msgid "No price data available to graph yet."
+msgstr "グラフ化できる価格データがまだありません。"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+msgid "Average price"
+msgstr "平均価格"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+msgid "Currently low"
+msgstr "現在低い"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+msgid "Currently typical"
+msgstr "現在平均的"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+msgid "Currently high"
+msgstr "現在高い"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+msgid "around the usual price"
+msgstr "通常価格の前後"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+msgid "avg"
+msgstr "平均"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Price & stock history"
-msgstr ""
+msgstr "価格・在庫履歴"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Download as XLSX"
-msgstr ""
+msgstr "XLSXでダウンロード"
 
+#. 'When' is a date/time column header, not the question word
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+msgctxt "datetime"
 msgid "When"
-msgstr ""
+msgstr "日時"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Stock"
-msgstr ""
+msgstr "在庫"
 
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Not enough price data points yet to draw a graph - keep monitoring and the price history will appear here."
+msgstr "グラフを描くにはまだ価格データが足りません。監視を続けると、ここに価格履歴が表示されます。"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
+msgid "Note! A Group tag overrides the restock and price detection here."
+msgstr "注意！グループタグがここでの再入荷・価格検知を上書きします。"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
+msgid "Changes in price should trigger a notification"
+msgstr "価格が変化したら通知をトリガーします"
+
+# 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
+#: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
+msgid "Minimum amount, Trigger a change/notification when the price drops <i>below</i> this value."
+msgstr "最小金額：価格がこの値を<strong>下回った</strong>ときに変更/通知をトリガーします。"
+
+# 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
+#. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
+#: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
+msgid "Maximum amount, Trigger a change/notification when the price rises <i>above</i> this value."
+msgstr "最大金額：価格がこの値を<strong>上回った</strong>ときに変更/通知をトリガーします。"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
+#, python-format
+msgid "Price must change more than this % since the previous check to trigger a change."
 msgstr ""
 
-#: changedetectionio/processors/templates/extract.html
-msgid "Screenshot"
-msgstr "スクリーンショット"
+# 訳注: 原文はUSD建ての例だが、日本向けに円建てに置き換え、2%の関係を保っている。
+#. Amounts are illustrative. You may localise the currency and adjust both figures, as long as the 2% relationship is
+#. preserved.
+#: changedetectionio/processors/restock_diff/templates/restock_diff/edit-extras.html
+msgid ""
+"For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change "
+"more than $20 since then."
+msgstr "例えば、前回のチェックで商品価格が10万円だった場合、<strong>2%</strong> はそれ以降 2,000円 を超えて変化する必要があることを意味します。"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "This tool will extract text data from all of the watch history."
@@ -3973,6 +4899,7 @@ msgstr "抽出用の正規表現："
 msgid "Be sure to test your RegEx here."
 msgstr "ここで正規表現をテストしてください。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/processors/templates/extract.html
 msgid "Each RegEx group bracket"
 msgstr "正規表現の各グループ括弧"
@@ -4003,6 +4930,90 @@ msgstr "{} のメタデータ取得中にエラーが発生しました"
 msgid "Watch protocol is not permitted or invalid URL format"
 msgstr "ウォッチのプロトコルが許可されていないか、URL形式が無効です"
 
+#: changedetectionio/store/__init__.py
+msgid "No proxy"
+msgstr "プロキシなし"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "No matching service"
+msgstr "一致するサービスがありません"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Separate several with commas"
+msgstr "複数ある場合はカンマで区切ります"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Secure connection (TLS)"
+msgstr "セキュア接続 (TLS)"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "One per line, Name=Value"
+msgstr "1行に1つ、名前=値"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Fill in the fields to build the URL"
+msgstr "フィールドを入力するとURLが作成されます"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Added to the list below"
+msgstr "下のリストに追加しました"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Processing.."
+msgstr "処理中.."
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Add a notification service:"
+msgstr "通知サービスを追加:"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Webhook / API"
+msgstr "ウェブフック / API"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "E-mail"
+msgstr "メール"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Popular services"
+msgstr "人気のサービス"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "+ Search over %(count)d other services"
+msgstr "+ 他の%(count)d以上のサービスを検索"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "List all"
+msgstr "すべて表示"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Notification services <a href=\"%(url)s\" target=\"_blank\">powered by Apprise</a>."
+msgstr "通知サービスは <a href=\"%(url)s\" target=\"_blank\">Apprise を利用しています</a>。"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "How do I get these?"
+msgstr "入手方法"
+
+#: changedetectionio/templates/_common_fields-notification.html
+msgid "Options"
+msgstr "オプション"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Send test notification"
+msgstr "テスト通知を送信"
+
+#: changedetectionio/templates/_common_fields-notification.html changedetectionio/templates/_common_fields.html
+msgid "Add to list"
+msgstr "リストに追加"
+
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Body for all notifications — You can use"
 msgstr "すべての通知の本文 — 以下を使用できます："
@@ -4016,10 +5027,6 @@ msgid "Show token/placeholders"
 msgstr "トークン/プレースホルダーを表示"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Token"
-msgstr "トークン"
-
-#: changedetectionio/templates/_common_fields.html
 msgid "Description"
 msgstr "説明"
 
@@ -4030,6 +5037,12 @@ msgstr "実行中の changedetection.io インスタンスのURL。"
 #: changedetectionio/templates/_common_fields.html
 msgid "The URL being watched."
 msgstr "監視中のURL。"
+
+#: changedetectionio/templates/_common_fields.html
+msgid ""
+"The Open Link Override set on the watch, otherwise the same as watch_url. Use this when the watched URL is an API "
+"endpoint or RSS feed but you want to link to the real page."
+msgstr "ウォッチに設定したリンク先URLの上書き。未設定の場合は watch_url と同じ。監視対象のURLがAPIエンドポイントやRSSフィードで、実際のページにリンクしたい場合に使用します。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "The UUID of the watch."
@@ -4063,6 +5076,7 @@ msgstr "差分出力 - 変更、追加、削除のみ"
 # 訳注: "All diff variants accept [codes] args, e.g. [examples]"
 # → 「各種差分出力は [codes] 引数を受け付けます。例: [examples]」
 # 述語の訳を後半にまとめた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "All diff variants accept"
 msgstr "各種差分出力は"
@@ -4129,7 +5143,7 @@ msgstr "フィルタからトリガーを発動させたテキスト"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "(upgraded)"
-msgstr ""
+msgstr "（アップグレード済み）"
 
 #: changedetectionio/templates/_common_fields.html
 msgid ""
@@ -4152,6 +5166,7 @@ msgstr ""
 # 訳注: "Warning: Contents of [token1] and [token2] depend on how the difference algorithm perceives the change."
 # → 「警告： [token1] および [token2] の内容は、差分アルゴリズムが変更をどのように認識するかによって異なります。」
 # 主語の訳を後半にまとめた
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Warning: Contents of"
 msgstr "警告："
@@ -4174,32 +5189,23 @@ msgstr "詳細はこちら"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add email notification:"
-msgstr ""
-
-#: changedetectionio/templates/_common_fields.html
-msgid "Add to list"
-msgstr ""
+msgstr "メール通知を追加:"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Add an email address"
 msgstr "メールアドレスを追加"
 
 #: changedetectionio/templates/_common_fields.html
-msgid "Send test notification"
-msgstr "テスト通知を送信"
+msgid "Configured list of notifications - Use the \"Add a notification service\" to add to this."
+msgstr "設定済みの通知一覧 - 「通知サービスを追加」から追加できます。"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Notification debug logs"
 msgstr "通知デバッグログ"
 
-#: changedetectionio/templates/_common_fields.html
-msgid "Processing.."
-msgstr "処理中.."
-
-#: changedetectionio/templates/_common_fields.html
-#, python-format
-msgid "Use <a target=\"newwindow\" href=\"%(url)s\">AppRise Notification URLs</a> for notification to just about any service!"
-msgstr "<a target=\"newwindow\" href=\"%(url)s\">AppRise 通知URL</a> を使えば、ほぼすべてのサービスへの通知に対応できます！"
+#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
+msgid "Show advanced help and tips"
+msgstr "詳細なヘルプとヒントを表示"
 
 # 訳注: 日本語を斜体にすると字形が崩れるため、強調表示は<strong>に置き換える。
 #. CJK fonts lack native italics; allow substitution with conventional local styling. dennis-ignore: W303
@@ -4207,10 +5213,7 @@ msgstr "<a target=\"newwindow\" href=\"%(url)s\">AppRise 通知URL</a> を使え
 msgid "<i>Please read the notification services wiki here for important configuration notes</i>"
 msgstr "<strong>重要な設定に関するメモについては、通知サービスのWikiをこちらでお読みください</strong>"
 
-#: changedetectionio/templates/_common_fields.html changedetectionio/templates/edit/include_subtract.html
-msgid "Show advanced help and tips"
-msgstr "詳細なヘルプとヒントを表示"
-
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "(or"
 msgstr "（または"
@@ -4234,6 +5237,7 @@ msgstr "です（タイトルを含む）。"
 msgid "bots can't send messages to other bots, so you should specify chat ID of non-bot user."
 msgstr "ボットは他のボットにメッセージを送信できないため、ボット以外のユーザーのチャットIDを指定してください。"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "only supports very limited HTML and can fail when extra tags are sent,"
 msgstr "非常に限られたHTMLのみをサポートしており、追加タグが送信されると失敗する場合があります。"
@@ -4242,6 +5246,7 @@ msgstr "非常に限られたHTMLのみをサポートしており、追加タ�
 msgid "(or use plaintext/markdown format)"
 msgstr "（またはプレーンテキスト/マークダウン形式を使用）"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "for direct API calls (or omit the"
 msgstr "直接APIコールの場合（または省略："
@@ -4261,12 +5266,13 @@ msgstr "下記の <code>%(token)s</code> プレースホルダーを受け付け
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Customise notifications"
-msgstr ""
+msgstr "通知をカスタマイズ"
 
 #: changedetectionio/templates/_common_fields.html
 msgid "Title for all notifications"
 msgstr "すべての通知のタイトル"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "For JSON payloads, use"
 msgstr "JSONペイロードの場合は以下を使用："
@@ -4275,6 +5281,7 @@ msgstr "JSONペイロードの場合は以下を使用："
 msgid "without quotes for automatic escaping, for example -"
 msgstr "自動エスケープのための引用符なし。例："
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "URL encoding, use"
 msgstr "URLエンコードの場合は使用："
@@ -4283,6 +5290,7 @@ msgstr "URLエンコードの場合は使用："
 msgid "for example -"
 msgstr "例："
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Regular-expression replace, use"
 msgstr "正規表現による置換の場合は使用："
@@ -4299,6 +5307,7 @@ msgstr "すべての通知のフォーマット"
 # literally in your notifications."
 # → 「Discord は HTML をレンダリングしません。プレーンテキスト形式に切り替えて、通知で &nbsp; などの HTML エンティティがそのまま表示されるのを回避してください。」
 # 3分割された文をプレースホルダー位置に合わせて再配分
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/_common_fields.html
 msgid "Discord does not render HTML — switch to"
 msgstr "Discord は HTML をレンダリングしません。"
@@ -4399,6 +5408,26 @@ msgstr "ブロックされたテキスト"
 msgid "No change-detection will occur because this text exists."
 msgstr "このテキストが存在するため、変更検知は実行されません。"
 
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Read: list, changes, diffs and snapshots. Write: add, change, recheck, tag and delete."
+msgstr "読み取り：一覧、変更、差分、スナップショット。書き込み：追加、変更、再チェック、タグ付け、削除。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Read: list. Write: create, rename and delete."
+msgstr "読み取り：一覧。書き込み：作成、名前の変更、削除。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Read: list them (secrets hidden) and look up services. Write: add, remove and mute."
+msgstr "読み取り：一覧（秘密情報は非表示）とサービスの検索。書き込み：追加、削除、ミュート。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Browser steps and JavaScript run in the browser that fetches pages. Write: set them on monitors."
+msgstr "ブラウザステップとJavaScriptは、ページを取得するブラウザで実行されます。書き込み: モニターに設定します。"
+
+#: changedetectionio/templates/_mcp-permissions-grid.html
+msgid "Health, the check queue and what is being checked right now."
+msgstr "状態、チェックキュー、現在チェック中のもの。"
+
 #: changedetectionio/templates/_stab.html
 msgid "Settings sections"
 msgstr ""
@@ -4460,11 +5489,11 @@ msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Fetching element data.."
-msgstr ""
+msgstr "要素データを取得中…"
 
 #: changedetectionio/templates/base.html
 msgid "Rendering.."
-msgstr ""
+msgstr "レンダリング中…"
 
 #: changedetectionio/templates/base.html
 msgid "Draw mode - click and drag to select an area"
@@ -4517,11 +5546,11 @@ msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Content after filters"
-msgstr ""
+msgstr "フィルタ後の内容"
 
 #: changedetectionio/templates/base.html
 msgid "Content raw/before filters"
-msgstr ""
+msgstr "フィルタ前の生の内容"
 
 #: changedetectionio/templates/base.html
 msgid "Main navigation"
@@ -4564,17 +5593,17 @@ msgid "Search"
 msgstr "検索"
 
 #: changedetectionio/templates/base.html
-#, python-format
-msgid "URL or Title in '%(title)s'"
-msgstr "'%(title)s' 内のURLまたはタイトル"
-
-#: changedetectionio/templates/base.html
-msgid "URL or Title"
-msgstr "URLまたはタイトル"
+msgid "URL, title or error text"
+msgstr "URL、タイトル、エラーテキスト"
 
 #: changedetectionio/templates/base.html
 msgid "Enter search term..."
 msgstr "検索語を入力..."
+
+#: changedetectionio/templates/base.html
+#, python-format
+msgid "Searching in current group '%(title)s' only"
+msgstr "グループ「%(title)s」内のみを検索"
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid ""
@@ -4608,6 +5637,7 @@ msgstr ""
 msgid "From group '%(name)s': %(value)s"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "e.g. Alert me when the price drops below $300, or a new product is launched. Ignore footer and navigation changes."
 msgstr ""
@@ -4620,6 +5650,7 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
+#. Amounts are illustrative. You may localise the currency.
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Only notify if the price drops below $200, or a limited-time deal is added"
 msgstr ""
@@ -4634,11 +5665,6 @@ msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
 msgid "Only important if package versions change or a CVE is mentioned"
-msgstr ""
-
-#: changedetectionio/templates/edit/include_llm_intent.html
-#, python-format
-msgid "AI pre-filter active: <code>%(filter)s</code> — narrows content scope before evaluation"
 msgstr ""
 
 #: changedetectionio/templates/edit/include_llm_intent.html
@@ -4762,6 +5788,7 @@ msgstr "各行は個別に処理されます（各行を「OR」として考え�
 msgid "Note: Wrap in forward slash / to use regex example:"
 msgstr "注意：正規表現を使用する場合はスラッシュで囲んでください。例："
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "You can also use"
 msgstr "次も使用できます："
@@ -4847,6 +5874,7 @@ msgstr "<code>//(?aiLmsux))</code> タイプフラグを使用できます（詳
 msgid "Keyword example - example: <code>Out of stock</code>"
 msgstr "キーワード例 - 例: <code>在庫切れ</code>"
 
+#. FIXME: fragment msgids (#4074)
 #: changedetectionio/templates/edit/text-options.html
 msgid "Use groups to extract just that text - example"
 msgstr "グループを使用してテキストのみを抽出する - 例"
@@ -4877,19 +5905,19 @@ msgstr "ウォッチの自動キュースケジューリングを一時停止"
 
 #: changedetectionio/templates/menu.html
 msgid "Scheduling paused — click to resume"
-msgstr ""
+msgstr "スケジューリング一時停止中 — クリックで再開"
 
 #: changedetectionio/templates/menu.html
 msgid "Scheduling active — click to pause all"
-msgstr ""
+msgstr "スケジューリング実行中 — クリックですべて一時停止"
 
 #: changedetectionio/templates/menu.html
 msgid "Paused"
-msgstr ""
+msgstr "一時停止中"
 
 #: changedetectionio/templates/menu.html
 msgid "Running"
-msgstr ""
+msgstr "実行中"
 
 #: changedetectionio/templates/menu.html
 msgid "Unmute notifications"
@@ -4901,15 +5929,11 @@ msgstr "通知はミュート中 - クリックして解除"
 
 #: changedetectionio/templates/menu.html
 msgid "Alerts on"
-msgstr ""
+msgstr "アラートオン"
 
 #: changedetectionio/templates/menu.html
 msgid "Log out"
-msgstr ""
-
-#: changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr ""
+msgstr "ログアウト"
 
 #: changedetectionio/templates/menu.html
 msgid "EDIT"
@@ -4921,11 +5945,11 @@ msgstr "ウェブサイト変更検知と通知。"
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle AI Mode"
-msgstr ""
+msgstr "AIモード切替"
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle AI mode"
-msgstr ""
+msgstr "AIモード切替"
 
 #: changedetectionio/templates/menu.html
 msgid "Toggle Light/Dark Mode"
@@ -4937,35 +5961,35 @@ msgstr "ライト/ダークモードを切り替え"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Add a page watch"
-msgstr ""
+msgstr "ページウォッチを追加"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Page Watches"
-msgstr ""
+msgstr "ページウォッチ"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Unread changes"
-msgstr ""
+msgstr "未読の変更"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Watch Groups"
-msgstr ""
+msgstr "ウォッチグループ"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Import lists of web pages"
-msgstr ""
+msgstr "ウェブページのリストをインポート"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Browsers (coming soon)"
-msgstr ""
+msgstr "ブラウザ（準備中）"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Browsers"
-msgstr ""
+msgstr "ブラウザ"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "soon"
-msgstr ""
+msgstr "まもなく"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Search, or Use Alt+S Key"
@@ -4973,11 +5997,11 @@ msgstr "検索、またはAlt+Sキーを使用"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Queue"
-msgstr ""
+msgstr "キュー"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "Live activity"
-msgstr ""
+msgstr "ライブアクティビティ"
 
 #: changedetectionio/templates/sidebar-nav.html
 msgid "A new version is available"
@@ -4993,14 +6017,6 @@ msgid ""
 "allow LLM endpoints on private networks (e.g. a local Ollama server) set the environment variable "
 "ALLOW_IANA_RESTRICTED_ADDRESSES=true and restart."
 msgstr ""
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "Yes"
-msgstr "はい"
-
-#: changedetectionio/widgets/ternary_boolean.py
-msgid "No"
-msgstr "いいえ"
 
 #: changedetectionio/widgets/ternary_boolean.py
 msgid "Main settings"

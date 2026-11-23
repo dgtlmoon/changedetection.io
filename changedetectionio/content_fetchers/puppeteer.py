@@ -1,5 +1,6 @@
 import asyncio
-import gc
+import base64
+import hashlib
 import json
 import os
 import websockets.exceptions
@@ -10,7 +11,9 @@ from loguru import logger
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
-from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio import gc_debounce
+from changedetectionio.content_fetchers.base import Fetcher, browser_address_for_logs, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
 
@@ -66,7 +69,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
         lock_start = time.time()
         lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
         file_read_start = time.time()
-        with open(lock_elements_js_path, 'r') as f:
+        with open(lock_elements_js_path, 'r', encoding='utf-8') as f:
             lock_elements_js = f.read()
         file_read_time = time.time() - file_read_start
 
@@ -121,7 +124,7 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     # Unlock element dimensions if they were locked
     if elements_locked:
         unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
-        with open(unlock_elements_js_path, 'r') as f:
+        with open(unlock_elements_js_path, 'r', encoding='utf-8') as f:
             unlock_elements_js = f.read()
         await page.evaluate(unlock_elements_js)
         logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
@@ -174,6 +177,45 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     return screenshot_chunks[0]
 
 
+# The icons a page declares, in the order the browser would consider them, plus the /favicon.ico every browser tries
+FAVICON_CANDIDATE_URLS_JS = """() => Array.from(document.querySelectorAll('link[rel~="icon"], link[rel~="apple-touch-icon"]'))
+    .map(l => l.href).filter(h => h && !h.startsWith('data:')).concat([location.origin + '/favicon.ico'])"""
+# Same limit as the in-page fetcher and bump_favicon()
+FAVICON_MAX_BYTES = 1 * 1024 * 1024
+
+
+async def favicon_from_browser_requests(page, browser_fetched, watch_uuid=None):
+    """The favicon the browser downloaded for itself, as {'url', 'mime_type', 'base64'}, or None.
+
+    Fallback for when the in-page fetcher (FAVICON_FETCHER_JS) comes back empty: page script may not
+    read an icon on another host unless that host allows it, but the browser's own icon request is not
+    page script and is not held to that. browser_fetched is {url: (requestId, mimeType)} of the
+    responses seen during the fetch; only a URL the page declares as its icon is ever used.
+    """
+    if not browser_fetched:
+        return None
+    try:
+        candidates = await page.evaluate(FAVICON_CANDIDATE_URLS_JS)
+        for url in candidates or []:
+            if url not in browser_fetched:
+                continue
+            request_id, mime_type = browser_fetched[url]
+            try:
+                r = await page._client.send('Network.getResponseBody', {'requestId': request_id})
+            except Exception as e:
+                logger.debug(f"[{watch_uuid}] Favicon {url} was requested by the browser but its body is gone: {e}")
+                continue
+            body = r.get('body') or ''
+            icon = body if r.get('base64Encoded') else base64.b64encode(body.encode('utf-8')).decode('ascii')
+            if not icon or len(icon) * 0.75 > FAVICON_MAX_BYTES:
+                continue
+            logger.debug(f"[{watch_uuid}] Favicon taken from the browser's own request for {url}")
+            return {'url': url, 'mime_type': mime_type, 'base64': icon}
+    except Exception as e:
+        logger.debug(f"[{watch_uuid}] No favicon from the browser's own requests: {e}")
+    return None
+
+
 class fetcher(Fetcher):
     fetcher_description = "Puppeteer/direct {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
@@ -190,6 +232,7 @@ class fetcher(Fetcher):
     supports_browser_steps = True
     supports_screenshots = True
     supports_xpath_element_data = True
+    supports_pdf = True
 
     @classmethod
     def get_status_icon_data(cls):
@@ -206,6 +249,8 @@ class fetcher(Fetcher):
         # Renderer crashes recorded during the fetch, see the 'error' handler in fetch_page().
         # Set up here so run()'s finally can always report, even if we never got as far as a page.
         self.page_errors = []
+        # Only set while this fetch's network traffic is being recorded
+        self.har_recorder = None
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
@@ -221,7 +266,8 @@ class fetcher(Fetcher):
             # Playwright needs separate username and password values
             parsed = urlparse(proxy_override)
             if parsed:
-                self.proxy = {'username': parsed.username, 'password': parsed.password}
+                username, password = proxy_credentials(proxy_override)
+                self.proxy = {'username': username, 'password': password}
                 # Add the proxy server chrome start option, the username and password never gets added here
                 # (It always goes in via await self.page.authenticate(self.proxy))
 
@@ -236,6 +282,7 @@ class fetcher(Fetcher):
 
     async def quit(self, watch=None):
         watch_uuid = watch.get('uuid') if watch else 'unknown'
+        closed_something = bool(getattr(self, 'page', None) or getattr(self, 'browser', None))
 
         # Close page
         try:
@@ -263,8 +310,16 @@ class fetcher(Fetcher):
 
         logger.info(f"[{watch_uuid}] Cleanup puppeteer complete")
 
-        # Force garbage collection to release resources
-        gc.collect()
+        # Only collect if this call actually closed something.
+        #
+        # quit() runs twice per check - from run()'s finally, then again from the worker's
+        # safety net - and it sets self.page/self.browser to None in its own finally
+        # blocks. The second call therefore closes nothing, creates no garbage and breaks
+        # no cycles, but still paid for a full stop-the-world collection: measured at 88
+        # calls across 51 checks, roughly half of them reclaiming nothing. The pyppeteer
+        # page/connection/session graph is genuinely cyclic, so the first call still runs.
+        if closed_something:
+            gc_debounce.collect('puppeteer.quit')
 
     async def fetch_page(self,
                          current_include_filters,
@@ -294,7 +349,7 @@ class fetcher(Fetcher):
         # Connect directly using the specified browser_ws_endpoint
         # @todo timeout
         try:
-            logger.debug(f"[{watch_uuid}] Connecting to browser at {self.browser_connection_url}")
+            logger.debug(f"[{watch_uuid}] Connecting to browser at {browser_address_for_logs(self.browser_connection_url)}")
             self.browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
                                                             ignoreHTTPSErrors=True
                                                             )
@@ -338,6 +393,14 @@ class fetcher(Fetcher):
             logger.error(f"[{watch_uuid}] Page error (the renderer likely crashed, often OOM): {e}")
 
         self.page.on('error', _handle_page_error)
+
+        # Opt-in network recording for debugging a single watch, see Fetcher.har_record_wanted()
+        # Attached before anything is requested so the very first document is in there too
+        if self.har_record_wanted(watch_uuid):
+            from changedetectionio.content_fetchers.har_recorder import HarRecorder
+            logger.info(f"[{watch_uuid}] Recording network traffic (HAR) of this fetch")
+            self.har_recorder = HarRecorder(self.page._client, title=url)
+            self.har_recorder.start()
 
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
@@ -399,56 +462,276 @@ class fetcher(Fetcher):
         # Enable Network domain to detect when first bytes arrive
         await self.page._client.send('Network.enable')
 
-        # Now set up the frame navigation handlers
-        async def handle_frame_navigation(event=None):
-            # Wait n seconds after the frameStartedLoading, not from any frameStartedLoading/frameStartedNavigating
-            logger.debug(f"Frame navigated: {event}")
-            w = extra_wait - 2 if extra_wait > 4 else 2
-            logger.debug(f"Waiting {w} seconds before calling Page.stopLoading...")
-            await asyncio.sleep(w)
+        # Remember which responses the browser got, so favicon_from_browser_requests() can find the icon
+        # the browser fetched for itself. Only when a favicon is wanted on this check.
+        browser_fetched = {}
 
-            # Check if page still exists (might have been closed due to error during sleep)
-            if not self.page or not hasattr(self.page, '_client'):
-                logger.debug("Page already closed, skipping stopLoading")
-                return
+        def _note_response(event):
+            # Must never raise, an exception escaping a CDP listener can take the connection down
+            try:
+                response = event.get('response') or {}
+                if 200 <= response.get('status', 0) < 300 and event.get('type') in ('Other', 'Image'):
+                    browser_fetched[response.get('url')] = (event.get('requestId'), response.get('mimeType'))
+            except Exception:
+                pass
 
-            logger.debug("Issuing stopLoading command...")
-            await self.page._client.send('Page.stopLoading')
-            logger.debug("stopLoading command sent!")
+        if fetch_favicon:
+            self.page._client.on('Network.responseReceived', _note_response)
 
-        async def setup_frame_handlers_on_first_response(event):
-            # Only trigger for the main document response
-            if event.get('type') == 'Document':
-                logger.debug("First response received, setting up frame handlers for forced page stop load.")
-                self.page._client.on('Page.frameStartedNavigating', lambda e: asyncio.create_task(handle_frame_navigation(e)))
-                self.page._client.on('Page.frameStartedLoading', lambda e: asyncio.create_task(handle_frame_navigation(e)))
-                self.page._client.on('Page.frameStoppedLoading', lambda e: logger.debug(f"Frame stopped loading: {e}"))
-                logger.debug("First response received, setting up frame handlers for forced page stop load DONE SETUP")
-                # De-register this listener - we only need it once
-                self.page._client.remove_listener('Network.responseReceived', setup_frame_handlers_on_first_response)
+        # Navigate (bounded), then wait the configured "wait n seconds before extracting text"
+        # delay, then stop whatever is still loading, then extract. The delay is measured from
+        # when navigation finished, not from when it started, because the point of it is to let
+        # JS-rendered content appear *after* load - anchoring it to the start would quietly give a
+        # slow-loading page almost no settle time.
+        #
+        # Only that delay is a user-facing setting. The navigation bound above is a safety net with
+        # a sane default, not a tuning knob, so there is still one number for users to think about.
+        #
+        # There is no way to know a page is "finished" - plenty of sites navigate as part of their
+        # normal design, and some sit forever on a subresource that never answers. So the delay
+        # restarts if the MAIN frame replaces its document (a redirect or interstitial gets the
+        # same settle time the first document got), iframes do not restart it, and it is capped so
+        # a page that re-navigates in a loop cannot extend it indefinitely.
+        max_content_ready_resets = int(os.getenv("BROWSER_CONTENT_READY_MAX_RESETS", 2))
 
-        # Listen for first response to trigger frame handler setup
-        self.page._client.on('Network.responseReceived', setup_frame_handlers_on_first_response)
+        async def wait_for_content_ready_then_stop_loading():
+            main_frame_id = self.page.mainFrame._id
+            renavigated = asyncio.Event()
+
+            def _on_main_frame_navigation(event):
+                if event.get('frameId') == main_frame_id:
+                    renavigated.set()
+
+            self.page._client.on('Page.frameStartedLoading', _on_main_frame_navigation)
+            self.page._client.on('Page.frameStoppedLoading', lambda e: logger.debug(f"Frame stopped loading: {e}"))
+            try:
+                resets = 0
+                while True:
+                    renavigated.clear()
+                    try:
+                        await asyncio.wait_for(renavigated.wait(), timeout=extra_wait)
+                        # Main frame started a new document
+                        resets += 1
+                        if resets > max_content_ready_resets:
+                            # The cap is there to stop a page that re-navigates in a loop from
+                            # extending the fetch forever - it is NOT permission to extract
+                            # immediately. Breaking straight out here landed on whatever document
+                            # happened to be mid-flight, with zero settle time: measured against a
+                            # page that hops every 500ms, the fetch ended after 2.7s holding 130
+                            # bytes of an intermediate hop, no final document and no JS-rendered
+                            # content, while logging "content-ready wait of 12s elapsed".
+                            #
+                            # So spend the delay one last time, just without arming another reset.
+                            # Total stays bounded at (max_resets + 2) * extra_wait, and whatever we
+                            # extract has had the same settle time every other fetch gets.
+                            logger.debug(f"Main frame re-navigated {resets} times (cap "
+                                         f"{max_content_ready_resets}), waiting {extra_wait}s once "
+                                         f"more without restarting, then extracting regardless")
+                            await asyncio.sleep(extra_wait)
+                            break
+                        logger.debug(f"Main frame started a new document, restarting the {extra_wait}s "
+                                     f"content-ready wait ({resets}/{max_content_ready_resets})")
+                    except asyncio.TimeoutError:
+                        # Quiet for the whole delay - the page is as ready as it is going to get
+                        break
+            finally:
+                self.page._client.remove_listener('Page.frameStartedLoading', _on_main_frame_navigation)
+
+            # Stop whatever is still in flight so the DOM and screenshot come from what rendered,
+            # rather than waiting on a subresource that may never answer
+            try:
+                logger.debug(f"Content-ready wait finished, issuing Page.stopLoading before extracting")
+                await self.page._client.send('Page.stopLoading')
+                logger.debug("stopLoading command sent!")
+
+                # stopLoading stops the network, not script execution. A page whose JS has pegged
+                # the renderer's main thread (a runaway loop, a rAF that never settles) holds that
+                # thread indefinitely, and every CDP call that needs to run script then queues
+                # behind it and never returns - page.content, the xPath scraper, the favicon
+                # fetcher. The fetch dies at PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS having
+                # extracted nothing, with a core spinning the entire time.
+                #
+                # Nothing else recovers this. Runtime.evaluate's own `timeout` parameter bounds an
+                # evaluation once it starts, not time spent queued behind the running task, and
+                # wrapping the call in asyncio.wait_for is worse than useless: cancelling a
+                # pyppeteer request mid-flight leaves the connection unusable ("Target closed" on
+                # everything after it). Terminating execution is what releases the thread -
+                # measured against a deliberately spinning page, extraction went from timing out
+                # to returning the full DOM in 0.0s and the renderer dropped from 1.00 to 0.08
+                # cores. Safe here because stopLoading has already declared "give me what
+                # rendered", and the content-ready wait above has already had its chance to let
+                # late JS-rendered content appear.
+                await self.page._client.send('Runtime.terminateExecution')
+                logger.debug("Runtime.terminateExecution sent, any runaway page script is stopped")
+            except Exception as e:
+                logger.debug(f"Page.stopLoading/Runtime.terminateExecution skipped, page is most "
+                             f"likely already gone: {e}")
+
+        # Track the LATEST main-frame document response for the whole fetch, not just the one that
+        # goto() happens to return. This app compares the text of the page the browser ends up on,
+        # and plenty of sites navigate again after the first response:
+        #  - an interstitial answering 503/429 with a meta-refresh into the real 200 page, where
+        #    judging the first response fails a watch whose content is sitting right there
+        #  - a plain client-side redirect to another host (slated.com -> get.slated.com)
+        # It also covers Chrome 153+, which refuses to commit a navigation when an error status
+        # arrives with a zero-length body: goto() raises net::ERR_HTTP_RESPONSE_CODE_FAILURE rather
+        # than returning the response, but the response itself still arrives on this event.
+        navigation_response = {}
+
+        def _keep_navigation_response(response):
+            # Note pyppeteer exposes these as properties, unlike playwright where they are methods
+            if response.frame == self.page.mainFrame and response.request.isNavigationRequest:
+                navigation_response['response'] = response
+
+        self.page.on('response', _keep_navigation_response)
+
+        # Chrome hands a PDF straight to its built-in viewer, after which page.content and
+        # Network.getResponseBody both only give the viewer's HTML, never the PDF. Pause each
+        # document response once its headers arrive (we can't know beforehand that it's a PDF),
+        # and if it is a PDF copy the body out of the paused response - no second download.
+        main_frame_pdf = {}
+
+        async def _handle_document_response(event):
+            try:
+                # Request-stage pauses only exist when proxy auth is on (see the Fetch.enable below), nothing to inspect
+                if 'responseStatusCode' not in event and 'responseErrorReason' not in event:
+                    return
+                if event.get('frameId') != self.page.mainFrame._id:
+                    return
+                # Any new main-frame document replaces whatever was captured before
+                main_frame_pdf.pop('body', None)
+                content_type = next((h.get('value', '') for h in event.get('responseHeaders') or []
+                                     if h.get('name', '').lower() == 'content-type'), '')
+                if 'application/pdf' not in content_type.lower():
+                    return
+                r = await self.page._client.send('Fetch.getResponseBody', {'requestId': event['requestId']})
+                main_frame_pdf['body'] = base64.b64decode(r['body']) if r.get('base64Encoded') else r['body'].encode('utf-8')
+                logger.debug(f"Captured PDF body ({len(main_frame_pdf['body'])} bytes) for {event['request']['url']}")
+            except Exception as e:
+                logger.warning(f"Could not capture the PDF response body: {e}")
+            finally:
+                # Every paused request MUST be continued, otherwise the page hangs
+                try:
+                    await self.page._client.send('Fetch.continueRequest', {'requestId': event['requestId']})
+                except Exception as e:
+                    logger.debug(f"Fetch.continueRequest failed, page is most likely already gone: {e}")
+
+        def _on_request_paused(event):
+            asyncio.ensure_future(_handle_document_response(event))
+
+        # Fetch.enable REPLACES any earlier Fetch.enable, including the one page.authenticate() did for
+        # proxy credentials ({'handleAuthRequests': True, 'patterns': [{'urlPattern': '*'}]}), without
+        # handleAuthRequests Chrome never asks for the credentials and the proxy answers 407.
+        proxy_auth = bool(self.proxy and self.proxy.get('username'))
+        fetch_patterns = [{'resourceType': 'Document', 'requestStage': 'Response'}]
+        if proxy_auth:
+            # Every request (not just documents) must be matched for Chrome to emit Fetch.authRequired for it
+            fetch_patterns.append({'urlPattern': '*', 'requestStage': 'Request'})
+            # pyppeteer's NetworkManager still answers Fetch.authRequired with the credentials, but stop it from
+            # blindly continuing every paused request, it would continue our paused PDF responses before we copy
+            # the body out. _handle_document_response continues everything itself.
+            self.page._frameManager.networkManager._protocolRequestInterceptionEnabled = False
+
+        self.page._client.on('Fetch.requestPaused', _on_request_paused)
+        await self.page._client.send('Fetch.enable', {'handleAuthRequests': proxy_auth, 'patterns': fetch_patterns})
+
+        # pyppeteer's navigation watcher is bound to the loaderId of the navigation it started. If
+        # the page replaces that document (redirect/interstitial) the 'load' it waits for never
+        # arrives for that loaderId, so goto() never returns - and with timeout=0 it would block
+        # until the hard PUPPETEER_MAX_PROCESSING_TIMEOUT_SECONDS kill, burning a worker slot for
+        # minutes on a page that is fully loaded. Bound it, then fall back to the document we can
+        # see. Verified against slated.com and getastra.com, which hang indefinitely otherwise.
+        nav_timeout = int(os.getenv("BROWSER_NAVIGATION_TIMEOUT_SECONDS", 30))
 
         response = None
         attempt=0
-        while not response:
-            logger.debug(f"Attempting page fetch {url} attempt {attempt}")
-            asyncio.create_task(handle_frame_navigation())
-            response = await self.page.goto(url, timeout=0)
-            await asyncio.sleep(1 + extra_wait)
-            # Check if page still exists before sending command
-            if self.page and hasattr(self.page, '_client'):
-                await self.page._client.send('Page.stopLoading')
+        try:
+            while not response:
+                logger.debug(f"Attempting page fetch {url} attempt {attempt}")
+                # Race goto() against the main frame actually firing 'load'. In the re-navigation
+                # case goto() can never resolve, but the replacement document does fire 'load' -
+                # usually within a few seconds - so this returns then instead of sitting out the
+                # whole nav_timeout. Whichever arrives first means "the document is loaded".
+                main_frame_loaded = asyncio.Event()
+                main_frame_id = self.page.mainFrame._id
 
-            if response:
-                break
-            if not response:
-                logger.warning("Page did not fetch! trying again!")
-            if response is None and attempt>=2:
-                logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attempt {attempt}")
-                raise EmptyReply(url=url, status_code=None)
-            attempt+=1
+                def _on_lifecycle(event):
+                    if event.get('name') == 'load' and event.get('frameId') == main_frame_id:
+                        main_frame_loaded.set()
+
+                self.page._client.on('Page.lifecycleEvent', _on_lifecycle)
+                goto_task = asyncio.ensure_future(self.page.goto(url, timeout=0))
+                load_task = asyncio.ensure_future(main_frame_loaded.wait())
+                try:
+                    done, _pending = await asyncio.wait({goto_task, load_task},
+                                                        timeout=nav_timeout,
+                                                        return_when=asyncio.FIRST_COMPLETED)
+
+                    if goto_task in done:
+                        try:
+                            response = goto_task.result()
+                            if response is None and navigation_response.get('response'):
+                                # goto() hands back nothing when the page starts its next navigation
+                                # from its own load event (a parked domain: an empty document whose
+                                # onload sets location.href). That is not "the page did not fetch" -
+                                # retrying gets the same answer three times in a row and ends as an
+                                # EmptyReply, on a page that goes on to load perfectly well.
+                                response = navigation_response['response']
+                                logger.debug(f"goto() returned no response (the page navigated again as it loaded), "
+                                             f"continuing with the one seen for {response.url} - status {response.status}")
+                        except Exception as e:
+                            if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
+                                raise
+                            response = navigation_response['response']
+                            logger.debug(f"Navigation was aborted by the browser (empty body on an error status), "
+                                         f"recovered status {response.status} from the response event")
+                    else:
+                        # Either the replacement document loaded, or we ran out of patience
+                        response = navigation_response.get('response')
+                        if not response:
+                            raise BrowserFetchTimedOut(msg=f"Browser did not finish navigating to {url} within "
+                                                           f"{nav_timeout}s and no main-frame response was seen.")
+                        why = ("the page replaced the document it started on" if load_task in done
+                               else f"navigation did not settle within {nav_timeout}s")
+                        logger.warning(f"Continuing with the document actually loaded ({why}) - "
+                                       f"status {response.status} for {response.url}")
+                finally:
+                    self.page._client.remove_listener('Page.lifecycleEvent', _on_lifecycle)
+                    for t in (goto_task, load_task):
+                        if not t.done():
+                            t.cancel()
+                if response:
+                    break
+                if not response:
+                    logger.warning("Page did not fetch! trying again!")
+                if response is None and attempt>=2:
+                    logger.warning(f"Content Fetcher > Response object was none (as in, the response from the browser was empty, not just the content) exiting attempt {attempt}")
+                    raise EmptyReply(url=url, status_code=None)
+                attempt+=1
+
+            # Navigation is done; now honour "wait n seconds before extracting text" and then
+            # force-stop whatever is still loading, so extraction always gets what rendered.
+            # Awaited inline rather than fired off as a task, so nothing can outlive the fetch.
+            await wait_for_content_ready_then_stop_loading()
+
+            # That wait is where a meta-refresh interstitial typically swaps in the real page, so
+            # re-check which document we are actually on before judging the status code.
+            latest = navigation_response.get('response')
+            if latest is not None and latest is not response:
+                logger.debug(f"Page navigated again while waiting, judging the fetch on {latest.url} "
+                             f"(status {latest.status}) instead of {response.url} (status {response.status})")
+                response = latest
+        finally:
+            self.page.remove_listener('response', _keep_navigation_response)
+            self.page._client.remove_listener('Fetch.requestPaused', _on_request_paused)
+            try:
+                if proxy_auth:
+                    # Hand Fetch back to pyppeteer as page.authenticate() left it, so later requests still get the credentials
+                    await self.page.authenticate(self.proxy)
+                else:
+                    await self.page._client.send('Fetch.disable')
+            except Exception as e:
+                logger.debug(f"Resetting Fetch failed, page is most likely already gone: {e}")
 
         self.headers = response.headers
 
@@ -474,6 +757,11 @@ class fetcher(Fetcher):
                 self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
             except Exception as e:
                 logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+            # The in-page fetch can't read an icon another host doesn't share with page script, the
+            # browser's own copy of it can still be used
+            if not (self.favicon_blob and self.favicon_blob.get('base64')):
+                self.favicon_blob = await favicon_from_browser_requests(self.page, browser_fetched, watch_uuid)
+            self.page._client.remove_listener('Network.responseReceived', _note_response)
 
         if self.status_code != 200 and not ignore_status_codes:
             screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
@@ -502,15 +790,20 @@ class fetcher(Fetcher):
 
         MAX_TOTAL_HEIGHT = int(os.getenv("SCREENSHOT_MAX_HEIGHT", SCREENSHOT_MAX_HEIGHT_DEFAULT))
 
-        self.content = await self.page.content
+        pdf_body = main_frame_pdf.get('body')
+        if pdf_body and 'application/pdf' in (response.headers.get('content-type') or '').lower():
+            # Same as the requests fetcher does for binary files, the processor converts raw_content
+            self.content = hashlib.md5(pdf_body).hexdigest()
+            self.raw_content = pdf_body
+        else:
+            self.content = await self.page.content
 
         # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
         logger.debug(f"Screenshot format {self.screenshot_format}")
         self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
 
         # Force garbage collection - pyppeteer base64 decode creates temporary buffers
-        import gc
-        gc.collect()
+        gc_debounce.collect('puppeteer.after_screenshot')
         self.xpath_data = await self.page.evaluate(XPATH_ELEMENT_JS, {
             "visualselector_xpath_selectors": visualselector_xpath_selectors,
             "max_height": MAX_TOTAL_HEIGHT
@@ -526,6 +819,19 @@ class fetcher(Fetcher):
 
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
+
+    async def save_har_record(self, watch_uuid):
+        """Write the recorded traffic to {watch dir}/har-record.zip, must run while the page is still open."""
+        recorder, self.har_recorder = self.har_recorder, None
+        if not recorder:
+            return
+        try:
+            await recorder.stop()
+            os.makedirs(self.watch_data_dir, exist_ok=True)
+            destination, n = await asyncio.to_thread(recorder.save, self.watch_data_dir)
+            logger.info(f"[{watch_uuid}] HAR record with {n} requests saved to {destination}")
+        except Exception as e:
+            logger.error(f"[{watch_uuid}] Could not save the HAR record: {e}")
 
     async def run(self,
                   fetch_favicon=True,
@@ -573,6 +879,10 @@ class fetcher(Fetcher):
                     f"[{watch_uuid}] {len(self.page_errors)} page error(s) during this fetch of '{url}', "
                     f"content may be incomplete: {'; '.join(str(e) for e in self.page_errors)}"
                 )
+
+            # Saved here rather than at the end of fetch_page() so a failed fetch is recorded too,
+            # a blocked or broken page is exactly when the recording is wanted
+            await self.save_har_record(watch_uuid)
 
             # Internal cleanup on any exception/timeout - call quit() immediately
             # This prevents connection leaks during exception bursts

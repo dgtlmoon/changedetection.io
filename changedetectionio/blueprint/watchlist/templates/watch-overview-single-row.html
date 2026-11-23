@@ -11,8 +11,12 @@
                 {%- set checking_now = is_checking_now(watch) -%}
                 {%- set history_n = watch.history_n -%}
                 {%- set favicon = watch.get_favicon_filename() -%}
+                {#  Resolved once per row: each read re-validates the URL and, for a Jinja2 templated
+                    URL, builds a fresh sandboxed environment - see validate_url.py #}
+                {%- set open_link = watch.open_link -%}
                 {%- set error_texts = watch.compile_error_texts(has_proxies=has_proxies) -%}
                 {%- set system_use_url_watchlist = datastore.data['settings']['application']['ui'].get('use_page_title_in_list')  -%}
+                {%- set system_use_share = datastore.data['settings']['application']['ui'].get('use_share_watch')  -%}
                 {#  Class settings mirrored in changedetectionio/static/js/realtime.js for the frontend #}
 {#                    loop.cycle('pure-table-odd', 'pure-table-even'),#}
                 {%- set row_classes = [
@@ -43,12 +47,17 @@
                         <button type="submit" formmethod="post" formaction="{{ mute_action }}" class="bare-btn ajax-op state-on mute-toggle" data-op="mute" style="display: none" aria-label="{{ _('UnMute notification') }}" title="{{ _('UnMute notification') }}"><i data-feather="bell-off" class="icon icon-mute"></i></button>
                     </div>
                 </td>
-
+                <td class="watch-processor">
+                    {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
+                        <a href="{{ url_for('watchlist.index', tag=active_tag_uuid, processor=watch['processor']) }}"  class="processor-badge processor-badge-{{ watch['processor'] }}{{ ' active' if active_processor == watch['processor'] else '' }}"
+                           title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</a>
+                    {%- endif -%}
+                </td>
                 <td class="title-col inline">
                     <div class="grid-wrapper">
                     {% if 'favicons_enabled' not in ui_settings or ui_settings['favicons_enabled'] %}
                         <div class="favicon">
-                            <a target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">
+                            <a target="_blank" rel="noopener" href="{{ open_link }}">
                                 {# Intersection Observer lazy loading: store real URL in data-src, load only when visible in viewport #}
                                 <img alt="Favicon thumbnail"
                                      class="favicon lazy-favicon"
@@ -65,38 +74,45 @@
                         </div>
                     {%  endif %}
                         <div class="watch-text-info">
-                            {%- if watch['processor'] and watch['processor'] in processor_badge_texts -%}
-                                <a href="{{ url_for('watchlist.index', tag=active_tag_uuid, processor=watch['processor']) }}" class="processor-badge processor-badge-{{ watch['processor'] }}{{ ' active' if active_processor == watch['processor'] else '' }}" title="{{ processor_descriptions.get(watch['processor'], watch['processor']) }}">{{ processor_badge_texts[watch['processor']] }}</a>
-                            {%- endif -%}
                             <span class="watch-title">
                                 {% if system_use_url_watchlist or watch.get('use_page_title_in_list') %}
                                     {{ watch.label }}
                                 {% else %}
                                     {{ watch.get('title') or watch.link }}
                                 {% endif %}
-                                <a class="external" target="_blank" rel="noopener" href="{{ watch.link.replace('source:','') }}">&nbsp;</a>
+                                <a class="external" target="_blank" rel="noopener" href="{{ open_link }}" title="{{ open_link }}"><i data-feather="external-link"></i></a>
                             </span>
 
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
                               <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
                             {%- endfor -%}
                             <div class="error-text" style="display:none;">{{ error_texts|safe }}</div>
+                            {%- for note in watch_list_extra_text(watch) %}
+                            <div class="extra-watch-text">{{ note }}</div>
+                            {%- endfor %}
                             {%- if watch['processor'] == 'text_json_diff'  -%}
                                 {%- if watch['has_ldjson_price_data'] and not watch['track_ldjson_price_data']  -%}
-                                <div class="ldjson-price-track-offer">Switch to Restock & Price watch mode? <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">Yes</button> <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="bare-btn bare-btn--link">No</button></div>
+                                <div class="ldjson-price-track-offer">{{ _('Switch to Restock & Price watch mode?') }} <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.accept', uuid=watch.uuid)}}" class="pure-button button-xsmall">{{ _('Yes') }}</button> <button type="submit" formmethod="post" formaction="{{url_for('price_data_follower.reject', uuid=watch.uuid)}}" class="bare-btn bare-btn--link">{{ _('No') }}</button></div>
                                 {%- endif -%}
                             {%- endif -%}
 
                         </div>
                     <div class="status-icons">
-                            <button type="submit" formmethod="post" formaction="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}" class="bare-btn link-spread"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="{{ _('Create a link to share watch config with others') }}" ></button>
+{%- if system_use_share -%}  <button type="submit" formmethod="post" formaction="{{url_for('ui.form_share_put_watch', uuid=watch.uuid)}}" class="bare-btn link-spread"><img src="{{url_for('static_content', group='images', filename='spread.svg')}}" class="status-icon icon icon-spread" title="{{ _('Create a link to share watch config with others') }}" ></button>{%-  endif -%}
                             {%- set effective_fetcher = watch.get_fetch_backend if watch.get_fetch_backend != "system" else system_default_fetcher -%}
                             {%- if effective_fetcher and ("html_webdriver" in effective_fetcher or "html_" in effective_fetcher or "extra_browser_" in effective_fetcher) -%}
                                 {{ effective_fetcher|fetcher_status_icons }}
                             {%- endif -%}
-                            {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" alt="Converting PDF to text" >{%- endif -%}
+                            {%- if watch.is_pdf  -%}<img class="status-icon" src="{{url_for('static_content', group='images', filename='pdf-icon.svg')}}" title="Converting PDF to text" alt="Converting PDF to text" >{%- endif -%}
                             {%- if watch.has_browser_steps -%}<img class="status-icon status-browsersteps" src="{{url_for('static_content', group='images', filename='steps.svg')}}" alt="Browser Steps is enabled" >{%- endif -%}
                     </div>
+
+                </div>
+
+                </td>
+
+{%- if any_has_restock_price_processor -%}
+                <td class="restock-and-price col-restock-price">
 {%- if watch['processor'] == 'restock_diff'  -%}
     {#-  @todo - this could be injected somehow watch.extra_row_info or something -#}
                     <div class="restock-info-wrap">
@@ -115,8 +131,8 @@
                                 {%- if price is not none and (price|string)|regex_search('\d') -%}
                                   <span class="restock-label price" title="{{ _('Price') }}">
                                   {# @todo: make parse_currency/parse_decimal aware of the locale of the actual web page and use that instead changedetectionio/processors/restock_diff/__init__.py #}
-                                    {%- if price is number -%}{# It's a number so we can convert it to their locale' #}
-                                      {{ price|format_number_locale }} {{ currency }}<!-- as number -->
+                                    {%- if price is number -%}{# A number, so in their language with the currency's decimal places #}
+                                      {{ price|format_price(currency) }}<!-- as number -->
                                     {%- else -%}{# It's totally fine if it arrives as something else, the website might be something weird in this field #}
                                       {{ price }} {{ currency }}<!-- as string -->
                                     {%- endif -%}
@@ -124,7 +140,7 @@
                                   {%- set price_change_pct = restock.get_price_change_percent() -%}
                                   {%- if price_change_pct is not none -%}
                                     {%- set prev_price = restock.get('last_price') -%}
-                                    {%- set prev_disp = (prev_price|format_number_locale ~ ' ' ~ currency) if prev_price is number else prev_price -%}
+                                    {%- set prev_disp = prev_price|format_price(currency) if prev_price is number else prev_price -%}
                                     {%- if price_change_pct < 0 -%}
                                       <span class="price-change down" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▼ {{ '%g'|format(price_change_pct) }}%</span>
                                     {%- else -%}
@@ -137,23 +153,17 @@
                             {%- endif -%}
                     </div>
 {%- endif -%}
-                </div>
-
-                </td>
-{#
-{%- if any_has_restock_price_processor -%}
-                <td class="restock-and-price">
                 </td>
 {%- endif -%}
-#}
+
             {#last_checked becomes fetch-start-time#}
-                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ _('Checked') }}">
+                <td class="last-checked" data-timestamp="{{ watch.last_checked }}" data-fetchduration={{ watch.fetch_time }} data-eta_complete="{{ watch.last_checked+watch.fetch_time }}" data-label="{{ pgettext('timestamp', 'Checked') }}">
                     <div class="spinner-wrapper" style="display:none;" >
                         <span class="spinner"></span><span class="status-text">&nbsp;{{ watch['__check_status'] or _('Checking now') }}</span>
                     </div>
                     <span class="innertext">{{watch|format_last_checked_time|safe}}</span>
                 </td>
-                <td class="last-changed" data-timestamp="{{ watch.last_changed }}" data-label="{{ _('Changed') }}">
+                <td class="last-changed" data-timestamp="{{ watch.last_changed }}" data-label="{{ pgettext('timestamp', 'Changed') }}">
                     <span class="innertext">{%- if watch.history_n >=2 and watch.last_changed >0 -%}
                     {{watch.last_changed|format_timestamp_timeago}}
                     {%- else -%}
@@ -169,7 +179,7 @@
                             formaction="{{ url_for('ui.form_watch_checknow', uuid=watch.uuid, tag=request.args.get('tag')) }}"
                             data-op='recheck' class="ajax-op recheck cdio-btn cdio-btn--primary cdio-btn--sm"><i data-feather="refresh-cw"></i>{{ _('Recheck') }}</button>
                     <a href="{{ url_for('ui.ui_edit.edit_page', uuid=watch.uuid, tag=active_tag_uuid)}}#general" class="cdio-btn cdio-btn--primary cdio-btn--sm">{{ _('Edit') }}</a>
-                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}" data-processor-data-url="{{ url_for('ui.ui_diff.diff_history_page_processor_data', uuid=watch.uuid) }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>
+                    <a href="{{ url_for('ui.ui_diff.diff_history_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm history-link ai-history-btn" style="display: none;" data-uuid="{{ watch.uuid }}" data-summary-url="{{ url_for('ui.ui_diff.diff_llm_summary', uuid=watch.uuid) }}" data-processor-chart-url="{{ url_for('ui.ui_diff.diff_history_page_processor_chart', uuid=watch.uuid, context='watchlist') }}"><span class="btn-label-history">{{ _('History') }}</span><span class="btn-label-summary">&#x2728; {{ _('Summary') }}</span></a>
                     <a href="{{ url_for('ui.ui_preview.preview_page', uuid=watch.uuid)}}" {{target_attr}} class="cdio-btn cdio-btn--primary cdio-btn--sm preview-link" style="display: none;">{{ _('Preview') }}</a>
                     </div>
                 </td>

@@ -431,6 +431,12 @@ def app(request, datastore_path):
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)
 
+    # pytest-flask falls back to 'localhost.localdomain' for the live_server, nothing in a container
+    # resolves that locally so every test fetch then depends on the upstream DNS answering for it.
+    # 'localhost' is always in /etc/hosts. (FLASK_SERVER_NAME still wins, set in flask_app.py)
+    if not app.config.get('SERVER_NAME'):
+        app.config['SERVER_NAME'] = 'localhost'
+
     # Disable CSRF while running tests
     app.config['WTF_CSRF_ENABLED'] = False
     app.config['STOP_THREADS'] = True

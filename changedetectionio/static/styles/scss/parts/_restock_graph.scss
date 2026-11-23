@@ -1,3 +1,5 @@
+@use "../settings" as *;
+
 // Restock price/stock history graph + inline watchlist roll-down.
 // Used by the diff page (#restock-graph) and the watchlist inline graph (.restock-inline-graph);
 // both containers get the .js-restock-graph class from restock-price-graph.js.
@@ -179,11 +181,13 @@ html[data-ai-mode="true"] body.llm-configured tr.processor-restock_diff {
     line-height: 1.5;
   }
 
-  html[data-darkmode="true"] & td {
-    background: linear-gradient(135deg, #0c2a1c, #0d2230) !important;
-    border-top: 1px solid #1f5e40 !important;
-    border-left-color: #1fa463 !important;
-    color: #d6ffe9 !important;
+  td {
+    @include dark-mode {
+      background: linear-gradient(135deg, #0c2a1c, #0d2230) !important;
+      border-top: 1px solid #1f5e40 !important;
+      border-left-color: #1fa463 !important;
+      color: #d6ffe9 !important;
+    }
   }
 
   .restock-inline-graph {

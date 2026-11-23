@@ -6,8 +6,41 @@ from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT
 from changedetectionio.content_fetchers.base import get_playwright_bypass_csp, manage_user_agent
-from changedetectionio.jinja2_custom import render as jinja_render
+from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
 from changedetectionio.validate_url import validate_fetch_url_async
+
+def track_latest_navigation_response(page):
+    """Record the latest main-frame document response seen on this page, and return the holder.
+
+    Idempotent on purpose - every navigation would otherwise add another 'response' listener, and
+    that event fires once per HTTP response (hundreds on a heavy page), so the callbacks are worth
+    not duplicating. One tracker per page is installed and then shared by the fetcher and by every
+    action_goto_url() call on it.
+
+    Returns a dict that holds {'response': <latest main-frame document response>}, or None if the
+    page does not support event listeners (the unit test stubs, mainly).
+    """
+    if not hasattr(page, 'on'):
+        return None
+
+    existing = getattr(page, '_cdio_latest_navigation_response', None)
+    if existing is not None:
+        return existing
+
+    latest = {}
+
+    def _keep(response):
+        try:
+            if response.frame == page.main_frame and response.request.is_navigation_request():
+                latest['response'] = response
+        except Exception as e:
+            # Never let a bookkeeping listener break a fetch
+            logger.debug(f"Could not record navigation response: {e}")
+
+    page.on("response", _keep)
+    page._cdio_latest_navigation_response = latest
+    return latest
+
 
 def browser_steps_get_valid_steps(browser_steps: list):
     if browser_steps is not None and len(browser_steps):
@@ -22,42 +55,8 @@ def browser_steps_get_valid_steps(browser_steps: list):
     return []
 
 
-# Two flags, tell the JS which of the "Selector" or "Value" field should be enabled in the front end
-# 0- off, 1- on
-browser_step_ui_config = {'Choose one': '0 0',
-                          #                 'Check checkbox': '1 0',
-                          #                 'Click button containing text': '0 1',
-                          #                 'Scroll to bottom': '0 0',
-                          #                 'Scroll to element': '1 0',
-                          #                 'Scroll to top': '0 0',
-                          #                 'Switch to iFrame by index number': '0 1'
-                          #                 'Uncheck checkbox': '1 0',
-                          # @todo
-                          'Check checkbox': '1 0',
-                          'Click X,Y': '0 1',
-                          'Click element if exists': '1 0',
-                          'Click element': '1 0',
-                          'Click element containing text': '0 1',
-                          'Click element containing text if exists': '0 1',
-                          'Enter text in field': '1 1',
-                          'Execute JS': '0 1',
-#                          'Extract text and use as filter': '1 0',
-                          'Goto site': '0 0',
-                          'Goto URL': '0 1',
-                          'Make all child elements visible': '1 0',
-                          'Press Enter': '0 0',
-                          'Select by label': '1 1',
-                          '<select> by option text': '1 1',
-                          'Scroll down': '0 0',
-                          'Uncheck checkbox': '1 0',
-                          'Wait for seconds': '0 1',
-                          'Wait for text': '0 1',
-                          'Wait for text in element': '1 1',
-                          'Remove elements': '1 0',
-                          #                          'Press Page Down': '0 0',
-                          #                          'Press Page Up': '0 0',
-                          # weird bug, come back to it later
-                          }
+# The operations and what each takes live with the checks in model/browser_steps.py, kept here for importers
+from changedetectionio.model.browser_steps import browser_step_ui_config  # noqa: F401
 
 
 # Good reference - https://playwright.dev/python/docs/input
@@ -96,10 +95,10 @@ class steppable_browser_interface():
         action_handler = getattr(self, "action_" + call_action_name)
 
         # Support for Jinja2 variables in the value and selector
-        if selector and ('{%' in selector or '{{' in selector):
+        if selector and JINJA2_MARKER_PATTERN.search(selector):
             selector = jinja_render(template_str=selector)
 
-        if optional_value and ('{%' in optional_value or '{{' in optional_value):
+        if optional_value and JINJA2_MARKER_PATTERN.search(optional_value):
             optional_value = jinja_render(template_str=optional_value)
 
         # Trigger click and cautiously handle potential navigation
@@ -145,8 +144,23 @@ class steppable_browser_interface():
         # and private-IP SSRF possible via a browser step (GHSA-hm22-wg2m-35v4).
         await validate_fetch_url_async(value)
 
+        # Chrome 153+ refuses to commit a navigation when an error status arrives with a
+        # zero-length body, so page.goto() raises net::ERR_HTTP_RESPONSE_CODE_FAILURE instead of
+        # handing back the response. The response was received fine, we just never get it as a
+        # return value, so fall back to the page's navigation-response tracker and hand that back -
+        # callers then report a real "Error - 404" instead of a raw net:: string.
+        navigation_response = track_latest_navigation_response(self.page)
+
         now = time.time()
-        response = await self.page.goto(value, timeout=0, wait_until='load')
+        try:
+            response = await self.page.goto(value, timeout=0, wait_until='load')
+        except Exception as e:
+            if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
+                raise
+            response = navigation_response['response']
+            logger.debug(f"Navigation was aborted by the browser (empty body on an error status), "
+                         f"recovered status {response.status} from the response event")
+
         logger.debug(f"Time to goto URL {time.time()-now:.2f}s")
         return response
 

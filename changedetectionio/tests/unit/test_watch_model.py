@@ -5,6 +5,9 @@
 
 import unittest
 import os
+import time
+import glob
+import base64
 import pickle
 import tempfile
 from copy import deepcopy
@@ -279,6 +282,126 @@ class TestFaviconFilenameCache(unittest.TestCase):
             self.assertIsNone(watch.get_favicon_filename())
 
 
+class TestFaviconExpiry(unittest.TestCase):
+    """favicon_is_expired() must judge the icon the watch actually has now."""
+
+    def _watch(self, datastore_path):
+        from changedetectionio.model.Watch import _FAVICON_FILENAME_CACHE
+        watch = Watch.model(
+            datastore_path=datastore_path,
+            __datastore={'settings': {'application': {}}, 'watching': {}},
+            default={'url': 'https://example.com'}
+        )
+        watch.ensure_data_dir_exists()
+        self.addCleanup(_FAVICON_FILENAME_CACHE.pop, watch.data_dir, None)
+        return watch
+
+    def test_fresh_favicon_wins_over_a_stale_one_of_another_extension(self):
+        """A leftover favicon.<other ext> must not force a refetch on every check.
+
+        bump_favicon() names the file after the icon's type, so a watch whose icon changed
+        type could hold two. glob order is decided by filename hash, so picking the first
+        match meant some extension pairs always chose the stale file - the age check failed
+        every time and the favicon was refetched forever.
+        """
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+
+            stale = os.path.join(watch.data_dir, 'favicon.png')
+            with open(stale, 'wb') as f:
+                f.write(b'stale')
+            old = time.time() - (40 * 86400)
+            os.utime(stale, (old, old))
+
+            fresh = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(fresh, 'wb') as f:
+                f.write(b'fresh')
+
+            self.assertFalse(watch.favicon_is_expired(),
+                             "a favicon saved seconds ago must not count as expired just "
+                             "because an older one of a different extension is also present")
+
+    def test_expired_when_the_newest_favicon_is_old(self):
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            path = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(path, 'wb') as f:
+                f.write(b'old')
+            old = time.time() - (40 * 86400)
+            os.utime(path, (old, old))
+
+            self.assertTrue(watch.favicon_is_expired())
+
+    def test_no_favicon_file_is_expired_and_does_not_raise(self):
+        """The filename cache can say yes after the file is gone; that is a refetch, not an error."""
+        from changedetectionio.model.Watch import _FAVICON_FILENAME_CACHE
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            _FAVICON_FILENAME_CACHE[watch.data_dir] = 'favicon.ico'   # stale positive
+
+            self.assertTrue(watch.favicon_is_expired())
+
+    def test_bump_favicon_removes_the_superseded_file(self):
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            previous = os.path.join(watch.data_dir, 'favicon.ico')
+            with open(previous, 'wb') as f:
+                f.write(b'previous')
+
+            watch.bump_favicon(url='https://example.com/icon.png',
+                               favicon_base_64=base64.b64encode(b'newicon').decode(),
+                               mime_type='image/png')
+
+            remaining = sorted(os.path.basename(x) for x in
+                               glob.glob(os.path.join(watch.data_dir, 'favicon.*')))
+            self.assertEqual(remaining, ['favicon.png'],
+                             "the old favicon.ico should have been removed")
+
+    def _save_favicon(self, watch):
+        watch.bump_favicon(url='https://example.com/icon.png',
+                           favicon_base_64=base64.b64encode(b'icon').decode(),
+                           mime_type='image/png')
+        self.assertEqual(watch.get_favicon_filename(), 'favicon.png')
+
+    def test_url_change_clears_favicon(self):
+        """#4569 - the old site's icon must not outlive a URL change."""
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            self._save_favicon(watch)
+
+            watch.update({'url': 'https://another-site.com'})
+
+            self.assertEqual(glob.glob(os.path.join(watch.data_dir, 'favicon.*')), [])
+            self.assertIsNone(watch.get_favicon_filename())
+            self.assertTrue(watch.favicon_is_expired())
+
+    def test_same_url_or_other_fields_keep_favicon(self):
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            self._save_favicon(watch)
+
+            watch.update({'url': ' https://example.com '})   # same URL, only whitespace differs
+            watch.update({'title': 'Renamed'})
+
+            self.assertEqual(watch.get_favicon_filename(), 'favicon.png')
+
+    def test_loading_a_watch_from_storage_keeps_favicon(self):
+        """A fresh object starts with url '' and is filled via update(); that is not a URL change."""
+        with tempfile.TemporaryDirectory() as datastore_path:
+            watch = self._watch(datastore_path)
+            self._save_favicon(watch)
+
+            reloaded = Watch.model(
+                datastore_path=datastore_path,
+                __datastore={'settings': {'application': {}}, 'watching': {}},
+                default=dict(watch)
+            )
+            self.assertEqual(reloaded.data_dir, watch.data_dir)
+            self.assertEqual(reloaded.get_favicon_filename(), 'favicon.png')
+            deepcopy(reloaded)
+            self.assertTrue(os.path.isfile(os.path.join(watch.data_dir, 'favicon.png')))
+
+
 class TestLLMDiffSummaryCache(unittest.TestCase):
     """Tests for get_llm_diff_summary / save_llm_diff_summary — version-pair + prompt-hash caching."""
 
@@ -370,6 +493,23 @@ class TestHistoryPathTraversal(unittest.TestCase):
         history = watch.history
         self.assertEqual(history, {}, "Path traversal entry must be rejected")
 
+    def test_parent_dir_entry_is_rejected_by_the_containment_check(self):
+        """A bare '..' is the shortest entry that reaches and fails the containment check.
+
+        os.path.basename() reduces '/etc/passwd' and '../../etc/passwd' to
+        'passwd', so those two stop at the os.path.exists() check below the
+        guard rather than at the guard itself. '..' survives basename() intact
+        and resolves to the parent of data_dir, which does exist, so the
+        containment check is what rejects it. Not the only such input —
+        '../..' and 'foo/..' collapse to the same thing — and not the only
+        reason the check exists: it also blocks a filename inside data_dir
+        that is itself a symlink pointing outside.
+        """
+        watch = self._make_watch()
+        self._write_history_txt(watch, ['1000000000,..\n'])
+        history = watch.history
+        self.assertEqual(history, {}, "Parent-directory entry must be rejected")
+
     def test_normal_snapshot_entry_is_accepted(self):
         """A bare filename written by save_history_blob must still load correctly."""
         import uuid as uuid_builder
@@ -377,10 +517,54 @@ class TestHistoryPathTraversal(unittest.TestCase):
         watch.save_history_blob(contents="hello world", timestamp=1000000000, snapshot_id=str(uuid_builder.uuid4()))
         history = watch.history
         self.assertEqual(len(history), 1, "Normal snapshot entry must be accepted")
+        # Watch.history resolves entries with os.path.realpath, so compare against a
+        # resolved data_dir. On macOS the datastore lives under /tmp, which is a symlink
+        # to /private/tmp, and an unresolved comparison fails there for a correct path.
         self.assertTrue(
-            list(history.values())[0].startswith(watch.data_dir),
+            list(history.values())[0].startswith(os.path.realpath(watch.data_dir)),
             "Resolved path must be inside the watch data directory"
         )
+
+    def test_symlink_pointing_outside_data_dir_is_rejected(self):
+        """A plain-named entry that is a symlink to a file outside data_dir must be rejected."""
+        watch = self._make_watch()
+        with tempfile.NamedTemporaryFile(delete=False) as outside:
+            outside.write(b'secret')
+        try:
+            os.symlink(outside.name, os.path.join(watch.data_dir, 'evil.txt'))
+            self._write_history_txt(watch, ['1000000000,evil.txt\n'])
+            self.assertEqual(watch.history, {}, "Symlink escaping data_dir must be rejected")
+        finally:
+            os.unlink(outside.name)
+
+    def test_symlink_inside_data_dir_is_accepted(self):
+        """A symlink that resolves to a file inside data_dir is fine."""
+        watch = self._make_watch()
+        target = os.path.join(watch.data_dir, 'real.txt')
+        with open(target, 'w') as f:
+            f.write('hello')
+        os.symlink(target, os.path.join(watch.data_dir, 'link.txt'))
+        self._write_history_txt(watch, ['1000000000,link.txt\n'])
+        self.assertEqual(list(watch.history.values()), [os.path.realpath(target)])
+
+    def test_dangling_symlink_is_skipped(self):
+        watch = self._make_watch()
+        os.symlink(os.path.join(watch.data_dir, 'gone.txt'), os.path.join(watch.data_dir, 'dangling.txt'))
+        self._write_history_txt(watch, ['1000000000,dangling.txt\n'])
+        self.assertEqual(watch.history, {})
+
+    def test_missing_snapshot_and_junk_lines_are_skipped(self):
+        """Entries whose snapshot file is gone, blank and whitespace-only lines don't count."""
+        import uuid as uuid_builder
+        watch = self._make_watch()
+        watch.save_history_blob(contents="one", timestamp=1000000001, snapshot_id=str(uuid_builder.uuid4()))
+        watch.save_history_blob(contents="two", timestamp=1000000002, snapshot_id=str(uuid_builder.uuid4()))
+        fname = os.path.join(watch.data_dir, watch.history_index_filename)
+        with open(fname, 'a', encoding='utf-8') as f:
+            f.write('\n   \n1000000003,does-not-exist.txt\n\n')
+        self.assertEqual(list(watch.history.keys()), ['1000000001', '1000000002'])
+        self.assertEqual(watch.history_n, 2)
+        self.assertEqual(watch.newest_history_key, '1000000002')
 
     def test_get_history_snapshot_blocks_outside_path_directly(self):
         """get_history_snapshot(filepath=...) must raise if the path escapes data_dir."""
@@ -406,6 +590,48 @@ class TestHistoryPathTraversal(unittest.TestCase):
                 os.path.realpath(path).startswith(safe_dir),
                 f"Path {path!r} escapes the watch data directory"
             )
+
+
+class TestLinkToOpen(unittest.TestCase):
+    """`link_to_open` - the optional human-facing URL used instead of the watched URL."""
+
+    def _make_watch(self, **fields):
+        mock_datastore = {'settings': {'application': {}}, 'watching': {}}
+        return Watch.model(datastore_path='/tmp', __datastore=mock_datastore, default=fields)
+
+    def test_defaults_to_the_watched_url(self):
+        watch = self._make_watch(url='https://example.com/feed.xml')
+        assert watch.open_link_override == ''
+        assert watch.open_link == 'https://example.com/feed.xml'
+        assert watch.open_link == watch.link
+
+    def test_override_wins_when_set(self):
+        watch = self._make_watch(url='https://example.com/api/v1/items.json',
+                                 link_to_open='https://example.com/shop/items')
+        assert watch.link == 'https://example.com/api/v1/items.json'
+        assert watch.open_link == 'https://example.com/shop/items'
+        assert watch.open_link_override == 'https://example.com/shop/items'
+
+    def test_whitespace_only_override_is_ignored(self):
+        watch = self._make_watch(url='https://example.com/feed.xml', link_to_open='   ')
+        assert watch.open_link_override == ''
+        assert watch.open_link == 'https://example.com/feed.xml'
+
+    def test_unsafe_override_falls_back_to_the_watched_url(self):
+        watch = self._make_watch(url='https://example.com/feed.xml',
+                                 link_to_open='javascript:alert(1)')
+        assert watch.open_link_override == ''
+        assert watch.open_link == 'https://example.com/feed.xml'
+
+    def test_source_prefix_is_stripped_from_the_override(self):
+        watch = self._make_watch(url='source:https://example.com/feed.xml',
+                                 link_to_open='source:https://example.com/page')
+        assert watch.open_link == 'https://example.com/page'
+
+    def test_jinja2_in_the_override_is_rendered(self):
+        watch = self._make_watch(url='https://example.com/feed.xml',
+                                 link_to_open='https://example.com/page?id={{ 1+1 }}')
+        assert watch.open_link == 'https://example.com/page?id=2'
 
 
 if __name__ == '__main__':

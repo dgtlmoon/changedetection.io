@@ -1,0 +1,76 @@
+{#
+  PWA manifest. Served by site_webmanifest() in the pwa blueprint, NOT as a static file.
+
+  Every URL below is deliberately RELATIVE. Relative URLs in a manifest resolve against the
+  manifest's own URL, so an instance reverse-proxied at https://example.com/my-instance/ gets
+  a scope and start_url of /my-instance/ without ever being told its own prefix. That is why
+  these are not url_for(): url_for only produces the prefix when USE_X_SETTINGS is on AND the
+  proxy actually sends X-Forwarded-Prefix, whereas the URL the browser used to fetch this
+  file is always right.
+
+  "id" pins the app identity. It resolves to the same value that the old manifest's implicit
+  id (its start_url of "/") had on a root-hosted instance, so an already-installed PWA updates
+  in place rather than appearing as a second icon on the home screen.
+#}
+{
+  "id": "./",
+  "name": {{ name|tojson }},
+  "short_name": {{ short_name|tojson }},
+  "description": {{ description|tojson }},
+  "icons": [
+    {
+      "src": "static/favicons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "static/favicons/android-chrome-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {#
+      A separate file rather than "any maskable" on the two above. Android crops maskable
+      icons to whatever shape the launcher uses and only guarantees a circle of 80% of the
+      icon's width; the full-bleed art puts the white logo ring at 80.5% and 5px below centre,
+      so the ring was being clipped. This variant is recentred and inset to clear the safe
+      zone. One file cannot serve both purposes - "any" wants full-bleed, "maskable" wants
+      padding - which is what the old "any maskable" on a single entry was claiming.
+    #}
+    {
+      "src": "static/favicons/android-chrome-256x256-maskable.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  {#
+    Android share sheet integration. "action" is the watch list itself, so a shared link just
+    prefills the quick-add form's URL field and the processor radios already under it handle
+    picking a mode - no separate confirm screen to keep in sync with the real one.
+
+    method GET on purpose: a POST share target requires a service worker to intercept it,
+    whereas GET is a plain navigation. It also means nothing is created by the share itself -
+    adding the watch is still the form's POST, with its CSRF token.
+
+    Not supported by Safari on iOS at any version; the equivalent there is an Apple Shortcut
+    pointed at this same URL.
+  #}
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {
+      "url": "pwa_preset_url",
+      "text": "pwa_preset_text",
+      "title": "pwa_preset_title"
+    }
+  },
+  "scope": "./",
+  "start_url": "./",
+  "display": "standalone",
+  "theme_color": "#5bbad5",
+  "background_color": "#ffffff",
+  "categories": ["utilities", "productivity"],
+  "orientation": "any"
+}

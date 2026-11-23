@@ -9,3 +9,14 @@ Install the development and test dependencies with `pip install -r requirements-
 Please be sure that all new functionality has a matching test!
 
 Use `pytest` to validate/test, you can run the existing tests as `pytest tests/test_notification.py` for example
+
+### New dependencies
+
+Please check the licence before adding anything to `requirements.txt`. MIT, BSD,
+Apache-2.0, LGPL and MPL are fine; GPL and AGPL are not, since they would
+relicense the whole project. CI enforces this. There is usually a permissive
+equivalent - ask in the PR if you're not sure.
+
+### Translations
+
+See the [translation guide](changedetectionio/translations/README.md) for i18n template patterns and workflow.

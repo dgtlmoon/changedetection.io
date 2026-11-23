@@ -29,7 +29,8 @@ from blinker import signal
 from changedetectionio.validate_url import is_safe_valid_url
 
 from changedetectionio.strtobool import strtobool
-from changedetectionio.jinja2_custom import render as jinja_render
+from changedetectionio.jinja2_custom import JINJA2_MARKER_PATTERN, render as jinja_render
+from changedetectionio import gc_debounce
 from . import watch_base
 from .persistence import EntityPersistenceMixin
 import os
@@ -47,9 +48,59 @@ BROTLI_COMPRESS_SIZE_THRESHOLD = int(os.getenv('SNAPSHOT_BROTLI_COMPRESSION_THRE
 # Keyed by data_dir so it survives Watch object recreation, deepcopy, and concurrent requests.
 # Invalidated explicitly when the favicon is saved or the watch history is cleared.
 _FAVICON_FILENAME_CACHE: dict = {}
+# Held while looking a favicon up and while forgetting one, so a lookup that globbed before a save can't store its
+# stale "no favicon" after the save cleared the cache
+import threading as _threading
+_FAVICON_FILENAME_LOCK = _threading.Lock()
+_MISSING = object()
+
+
+def _forget_favicon_filename(data_dir):
+    with _FAVICON_FILENAME_LOCK:
+        _FAVICON_FILENAME_CACHE.pop(data_dir, None)
 
 minimum_seconds_recheck_time = int(os.getenv('MINIMUM_SECONDS_RECHECK_TIME', 3))
 mtable = {'seconds': 1, 'minutes': 60, 'hours': 3600, 'days': 86400, 'weeks': 86400 * 7}
+
+
+def time_between_check_to_seconds(value):
+    """A time_between_check dict ({'weeks': .., 'days': .., 'hours': .., 'minutes': .., 'seconds': ..}, any part
+    may be missing or None) as seconds."""
+    return sum((value or {}).get(m) * n for m, n in mtable.items() if (value or {}).get(m))
+
+
+def validate_time_between_check_required(json_data):
+    """
+    Validate that at least one time interval is specified when not using default settings.
+    Returns None if valid, or error message string if invalid.
+    Defaults to using global settings if time_between_check_use_default is not provided.
+    """
+    # Default to using global settings if not specified
+    use_default = json_data.get('time_between_check_use_default', True)
+
+    # If using default settings, no validation needed
+    if use_default:
+        return None
+
+    # If not using defaults, check if time_between_check exists and has at least one non-zero value
+    time_check = json_data.get('time_between_check')
+    if not time_check:
+        # No time_between_check provided and not using defaults - this is an error
+        return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+
+    # time_between_check exists, check if it has at least one non-zero value
+    if any([
+        (time_check.get('weeks') or 0) > 0,
+        (time_check.get('days') or 0) > 0,
+        (time_check.get('hours') or 0) > 0,
+        (time_check.get('minutes') or 0) > 0,
+        (time_check.get('seconds') or 0) > 0
+    ]):
+        return None
+
+    # time_between_check exists but all values are 0 or empty - this is an error
+    return "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
+
 
 def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
     """
@@ -107,9 +158,21 @@ def _brotli_save(contents, filepath, mode=None, fallback_uncompressed=False):
 
         logger.debug(f"Finished brotli compression - From {original_size} to {total_compressed_size} bytes.")
 
-        # Cleanup: Delete compressor, force Python GC, then force C-level memory release
+        # Cleanup: drop the compressor, then force C-level memory back to the OS.
+        #
+        # There is deliberately no gc.collect() here. brotli.Compressor is not gc-tracked,
+        # so the collector can never reclaim it - `del` frees it immediately by refcount.
+        # Measured over 60 x 2.2MB compressions, RSS growth was:
+        #
+        #   neither              +0.9MB
+        #   gc.collect() only    +0.2MB
+        #   malloc_trim() only   +0.0MB   <- does all of the work
+        #   both (previous)      +0.0MB   <- the collect contributed nothing
+        #
+        # malloc_trim below is the load-bearing line: brotli's retention is glibc holding
+        # freed arenas, which only a trim returns. The collect cost ~31ms of stop-the-world
+        # per snapshot save for no reclamation.
         del compressor
-        gc.collect()
 
         # Force release of C-level memory back to OS (since brotli is a C library)
         try:
@@ -257,6 +320,20 @@ class model(EntityPersistenceMixin, watch_base):
         # Be sure the cached timestamp is ready
         bump = self.history
 
+    def update(self, *args, **kwargs):
+        """Clear the saved favicon when the URL changes, so the next check fetches the new site's icon.
+
+        Both the UI edit form and the API save through update(). Only a change from a non-empty URL
+        counts - a fresh object starts with url '' and is filled from storage via update() on every
+        load, which must not wipe the favicon.
+        """
+        old_url = (self.get('url') or '').strip()
+        super().update(*args, **kwargs)
+        new_url = (self.get('url') or '').strip()
+        if old_url and new_url != old_url:
+            logger.debug(f"UUID: {self.get('uuid')} URL changed from '{old_url}' to '{new_url}', clearing favicon")
+            self.clear_favicon()
+
     # Note: __deepcopy__, __getstate__, and __setstate__ are inherited from watch_base
     # This prevents memory leaks by sharing __datastore reference instead of copying it
 
@@ -272,25 +349,31 @@ class model(EntityPersistenceMixin, watch_base):
     def has_unviewed(self):
         return int(self.newest_history_key) > int(self['last_viewed']) and self.__history_n >= 2
 
-    @property
-    def link(self):
+    def _resolve_link(self, url, flash_on_template_error=True):
+        """Validate, Jinja2-render and de-'source:' a URL so it is safe to put in an href.
 
-        url = self.get('url', '')
+        Returns 'DISABLED' when the URL is missing/unsafe, or '' when its Jinja2 template
+        could not be rendered.
+        """
         if not is_safe_valid_url(url):
             return 'DISABLED'
 
         ready_url = url
-        if '{%' in url or '{{' in url:
+        if JINJA2_MARKER_PATTERN.search(url):
             # Jinja2 available in URLs along with https://pypi.org/project/jinja2-time/
             try:
                 ready_url = jinja_render(template_str=url)
             except Exception as e:
                 logger.critical(f"Invalid URL template for: '{url}' - {str(e)}")
-                from flask import flash, url_for
-                from markupsafe import Markup
-                message = Markup('<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
-                    url_for('ui.ui_edit.edit_page', uuid=self.get('uuid')), self.get('url', '')))
-                flash(message, 'error')
+                # has_request_context() guard: this is also reached from worker threads and the
+                # notification path, where flash() would raise "Working outside of request context".
+                from flask import has_request_context
+                if flash_on_template_error and has_request_context():
+                    from flask import flash, url_for
+                    from markupsafe import Markup
+                    message = Markup('<a href="{}#general">The URL {} is invalid and cannot be used, click to edit</a>'.format(
+                        url_for('ui.ui_edit.edit_page', uuid=self.get('uuid')), url))
+                    flash(message, 'error')
                 return ''
 
         if ready_url.startswith('source:'):
@@ -300,6 +383,34 @@ class model(EntityPersistenceMixin, watch_base):
         if not is_safe_valid_url(ready_url):
             return 'DISABLED'
         return ready_url
+
+    @property
+    def link(self):
+        """The URL that actually gets fetched/checked."""
+        return self._resolve_link(self.get('url', ''))
+
+    @property
+    def open_link_override(self):
+        """The resolved optional 'Link to Open', or '' when unset/unusable."""
+        override = str(self.get('link_to_open') or '').strip()
+        if not override:
+            return ''
+
+        # Don't flash on a broken template here - `link` already surfaces that for the watched URL,
+        # and a bad "Link to Open" should never stop the page rendering.
+        ready = self._resolve_link(override, flash_on_template_error=False)
+        if not ready or ready == 'DISABLED':
+            return ''
+        return ready
+
+    @property
+    def open_link(self):
+        """The URL a human should be sent to when they click through to "the site".
+
+        Some watches point at an API endpoint or RSS feed that is useless in a browser -
+        'Link to Open' lets the user store the real page for those. Falls back to `link`.
+        """
+        return self.open_link_override or self.link
 
     @property
     def domain_only_from_link(self):
@@ -324,6 +435,9 @@ class model(EntityPersistenceMixin, watch_base):
         from changedetectionio.processors import find_processors
         processor_names = [name for cls, name in find_processors()]
         processor_config_files = {f"{name}.json" for name in processor_names}
+        # and the files plugins keep their settings for this watch in (watch_settings_files hook)
+        from changedetectionio.pluggy_interface import collect_watch_settings_files
+        processor_config_files |= collect_watch_settings_files(self)
 
         # JSON Data, Screenshots, Textfiles (history index and snapshots), HTML in the future etc
         # But preserve processor config files (they're configuration, not history data)
@@ -332,9 +446,10 @@ class model(EntityPersistenceMixin, watch_base):
             # Skip processor config files
             if item.name in processor_config_files:
                 continue
-            os.unlink(item)
+            # A save or check running now may rename its .tmp file away between glob() and here
+            item.unlink(missing_ok=True)
 
-        _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+        _forget_favicon_filename(self.data_dir)
 
         # Force the attr to recalculate
         bump = self.history
@@ -392,9 +507,17 @@ class model(EntityPersistenceMixin, watch_base):
             return self._datastore.settings.fetch_backend
         """
         # Maybe also if is_image etc?
-        # This is because chrome/playwright wont render the PDF in the browser and we will just fetch it and use pdf2html to see the text.
+        # Browsers show a PDF in their built-in viewer, only some fetchers can get the original PDF out of it,
+        # the others fall back to html_requests (same as resolve_content_fetcher() does at fetch time)
         if self.is_pdf:
-            return 'html_requests'
+            from changedetectionio import content_fetchers
+            fetcher_name = self.get('fetch_backend')
+            if not fetcher_name or fetcher_name == 'system':
+                fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
+            if fetcher_name and fetcher_name.startswith('extra_browser_'):
+                fetcher_name = 'html_webdriver'
+            if not getattr(getattr(content_fetchers, fetcher_name or '', None), 'supports_pdf', False):
+                return 'html_requests'
 
         return self.get('fetch_backend')
 
@@ -408,7 +531,7 @@ class model(EntityPersistenceMixin, watch_base):
         from changedetectionio import content_fetchers
         from changedetectionio.content_fetchers.base import FetcherCapabilities
 
-        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests
+        fetcher_name = self.get_fetch_backend  # already handles is_pdf → html_requests when needed
         if not fetcher_name or fetcher_name == 'system':
             fetcher_name = self._datastore['settings']['application'].get('fetch_backend', 'html_requests')
 
@@ -469,24 +592,35 @@ class model(EntityPersistenceMixin, watch_base):
         fname = os.path.join(self.data_dir, self.history_index_filename)
         if os.path.isfile(fname):
             logger.debug(f"Reading watch history index for {self.get('uuid')}")
+
+            # Entries restored from backup could contain absolute or traversal paths, never trust them.
+            # basename() reduces every entry to a plain name, so the only remaining way out of data_dir
+            # is a symlink. One directory listing replaces the per-line realpath() + exists() calls
+            # (~10 syscalls per snapshot); only symlinks still pay for a realpath() containment check.
+            # Note: scandir() never lists '.' or '..', so those are rejected as "not found".
+            safe_data_dir = os.path.realpath(self.data_dir)
+            with os.scandir(safe_data_dir) as it:
+                dir_entries = {e.name: e for e in it}
+
             with open(fname, "r", encoding='utf-8') as f:
                 for i in f.readlines():
                     if ',' in i:
                         k, v = i.strip().split(',', 2)
 
-                        # Always resolve history entries to within the watch's own data directory.
-                        # Entries restored from backup could contain absolute or traversal paths —
-                        # never trust them. Use realpath to also block symlink-based escapes.
-                        safe_data_dir = os.path.realpath(self.data_dir)
                         snapshot_fname = os.path.basename(v.strip())
-                        resolved_path = os.path.realpath(os.path.join(self.data_dir, snapshot_fname))
-
-                        if not resolved_path.startswith(safe_data_dir + os.sep) and resolved_path != safe_data_dir:
-                            logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                        entry = dir_entries.get(snapshot_fname)
+                        if entry is None:
                             continue
 
-                        if not os.path.exists(resolved_path):
-                            continue
+                        resolved_path = os.path.join(safe_data_dir, snapshot_fname)
+                        if entry.is_symlink():
+                            resolved_path = os.path.realpath(resolved_path)
+                            if not resolved_path.startswith(safe_data_dir + os.sep):
+                                logger.warning(f"Skipping unsafe history entry for {self.get('uuid')}: {v!r}")
+                                continue
+                            # Dangling symlink, same as the file not existing
+                            if not os.path.exists(resolved_path):
+                                continue
 
                         tmp_history[k] = resolved_path
 
@@ -655,7 +789,7 @@ class model(EntityPersistenceMixin, watch_base):
 
         # reimport
         bump = self.history
-        gc.collect()
+        gc_debounce.collect('watch.history_bump')
 
     # Save some text file to the appropriate path and bump the history
     # result_obj from fetch_site_status.run()
@@ -741,16 +875,25 @@ class model(EntityPersistenceMixin, watch_base):
     def has_empty_checktime(self):
         # using all() + dictionary comprehension
         # Check if all values are 0 in dictionary
-        res = all(x == None or x == False or x==0 for x in self.get('time_between_check', {}).values())
+        res = all(x == None or x == False or x==0 for x in (self.get('time_between_check') or {}).values())
         return res
 
+    def ensure_valid_time_between_check(self):
+        """
+        "Don't use the default" with no interval of its own leaves no threshold at all, so force it back to
+        the system default. Returns True if the watch was changed.
+        """
+        if not validate_time_between_check_required(self):
+            return False
+
+        logger.warning(f"Watch '{self.get('url')}' - {self.get('uuid')} - 'time_between_check' has no interval set but "
+                       f"'time_between_check_use_default' is False, forcing 'time_between_check_use_default' "
+                       f"to True so the system default recheck time is used.")
+        self['time_between_check_use_default'] = True
+        return True
+
     def threshold_seconds(self):
-        seconds = 0
-        for m, n in mtable.items():
-            x = self.get('time_between_check', {}).get(m, None)
-            if x:
-                seconds += x * n
-        return seconds
+        return time_between_check_to_seconds(self.get('time_between_check'))
 
     # Iterate over all history texts and see if something new exists
     # Always applying .strip() to start/end but optionally replace any other whitespace
@@ -801,15 +944,30 @@ class model(EntityPersistenceMixin, watch_base):
         if not favicon_fname:
             return True
         try:
-            fname = next(iter(glob.glob(os.path.join(self.data_dir, "favicon.*"))), None)
-            logger.trace(f"Favicon file maybe found at {fname}")
-            if os.path.isfile(fname):
-                file_age = int(time.time() - os.path.getmtime(fname))
-                logger.trace(f"Favicon file age is {file_age}s")
-                if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
-                    return False
+            # Newest by mtime rather than whatever the directory happens to list first.
+            # Older versions of bump_favicon() left any previous save under a different
+            # extension in place, so a watch whose icon changed type can have more than one
+            # favicon.* file. glob order is os.scandir order - stable, but decided by
+            # filename hash - so for some extension pairs the stale file wins every single
+            # time, the age check always fails, and the favicon is refetched on every check
+            # forever. Measured: 3 of 10 realistic extension pairs lose that way.
+            candidates = glob.glob(os.path.join(self.data_dir, "favicon.*"))
+            if not candidates:
+                # get_favicon_filename() is served from a module-level cache, so it can say
+                # yes after the file has been removed. Not an error, just a refetch.
+                logger.trace(f"No favicon file in {self.data_dir}, treating as expired")
+                return True
+            fname = max(candidates, key=os.path.getmtime)
+            logger.trace(f"Favicon file found at {fname}")
+            file_age = int(time.time() - os.path.getmtime(fname))
+            logger.trace(f"Favicon file age is {file_age}s")
+            if file_age < FAVICON_RESAVE_THRESHOLD_SECONDS:
+                return False
         except Exception as e:
-            logger.critical(f"Exception checking Favicon age {str(e)}")
+            # Deliberately broad: this runs inline on the check path (it is an argument to
+            # fetcher.run()), so it must never be the reason a watch fails. Not critical
+            # either - the only cost of getting it wrong is one extra favicon fetch.
+            logger.warning(f"Could not check favicon age in {self.data_dir}, will refetch: {e}")
             return True
 
         # Also in the case that the file didnt exist
@@ -877,8 +1035,21 @@ class model(EntityPersistenceMixin, watch_base):
             with open(fname, 'wb') as f:
                 f.write(decoded)
 
+            # Drop any previous save under a different extension, or the watch ends up
+            # holding several favicon.* files and favicon_is_expired() has to guess which one
+            # describes the current icon. Only after the write, so a failed write keeps the old icon.
+            import glob
+            for stale in glob.glob(os.path.join(self.data_dir, "favicon.*")):
+                if os.path.abspath(stale) == os.path.abspath(fname):
+                    continue
+                try:
+                    os.unlink(stale)
+                    logger.debug(f"UUID: {self.get('uuid')} removed superseded favicon {stale}")
+                except OSError as e:
+                    logger.debug(f"UUID: {self.get('uuid')} could not remove {stale}: {e}")
+
             # Invalidate module-level favicon filename cache for this watch
-            _FAVICON_FILENAME_CACHE.pop(self.data_dir, None)
+            _forget_favicon_filename(self.data_dir)
 
             # A signal that could trigger the socket server to update the browser also
             watch_check_update = signal('watch_favicon_bump')
@@ -892,24 +1063,38 @@ class model(EntityPersistenceMixin, watch_base):
         # @todo - Store some checksum and only write when its different
         logger.debug(f"UUID: {self.get('uuid')} updated favicon to at {fname}")
 
+    def clear_favicon(self) -> None:
+        """Remove any saved favicon.* so favicon_is_expired() reports it missing and it gets refetched."""
+        import glob
+        if not self.data_dir:
+            return
+        for fname in glob.glob(os.path.join(self.data_dir, "favicon.*")):
+            try:
+                os.unlink(fname)
+            except OSError as e:
+                logger.warning(f"UUID: {self.get('uuid')} could not remove favicon {fname}: {e}")
+        _forget_favicon_filename(self.data_dir)
+
     def get_favicon_filename(self) -> str | None:
         """
         Find any favicon.* file in the watch data directory.
 
         Uses a module-level cache keyed by data_dir to survive Watch object recreation,
         deepcopy (which drops instance attrs), and concurrent request races.
-        Invalidated when a favicon is saved or the watch history is cleared.
+        Invalidated when a favicon is saved or cleared, or the watch history is cleared.
 
         Returns:
             str: Basename of the favicon file, or None if not found.
         """
-        if self.data_dir in _FAVICON_FILENAME_CACHE:
-            return _FAVICON_FILENAME_CACHE[self.data_dir]
+        cached = _FAVICON_FILENAME_CACHE.get(self.data_dir, _MISSING)
+        if cached is not _MISSING:
+            return cached
 
         import glob
-        files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
-        fname = os.path.basename(files[0]) if files else None
-        _FAVICON_FILENAME_CACHE[self.data_dir] = fname
+        with _FAVICON_FILENAME_LOCK:
+            files = glob.glob(os.path.join(self.data_dir, "favicon.*"))
+            fname = os.path.basename(files[0]) if files else None
+            _FAVICON_FILENAME_CACHE[self.data_dir] = fname
         return fname
 
     def get_screenshot_as_thumbnail(self, max_age=3200):
@@ -975,6 +1160,31 @@ class model(EntityPersistenceMixin, watch_base):
         except Exception as e:
             logger.error(f"Error creating thumbnail for {self.get('uuid')}: {str(e)}")
             return None
+
+    def get_screenshot_part(self, which='latest', offset=0, max_width=1024, max_height=1568, quality=70):
+        """A readable slice of a screenshot, as JPEG bytes, for an AI model or anything else that can't take a
+        20000 pixel tall full-page capture: scaled to at most max_width wide, then max_height of it from `offset`
+        (in pixels of the scaled image) down. Page through a long capture by raising offset.
+
+        :param which: 'latest' (last-screenshot.png) or 'error' (the one taken when the last check failed)
+        :return: (jpeg_bytes, info) or (None, None) without that screenshot. info: {'width', 'height' (the scaled
+                 full capture), 'offset', 'part_height', 'taken' (unix seconds)}
+        """
+        path = self.get_screenshot() if which == 'latest' else self.get_error_snapshot()
+        if not path:
+            return None, None
+        from io import BytesIO
+        from PIL import Image
+        with Image.open(path) as img:
+            img = img.convert('RGB')
+            if img.width > max_width:
+                img = img.resize((max_width, max(1, round(img.height * max_width / img.width))), Image.BILINEAR)
+            offset = max(0, min(int(offset or 0), max(0, img.height - 1)))
+            part = img.crop((0, offset, img.width, min(img.height, offset + max_height)))
+            out = BytesIO()
+            part.save(out, 'JPEG', quality=quality, optimize=True)
+            return out.getvalue(), {'width': img.width, 'height': img.height, 'offset': offset,
+                                    'part_height': part.height, 'taken': int(os.path.getmtime(path))}
 
     def __get_file_ctime(self, filename):
         fname = os.path.join(self.data_dir, filename)
@@ -1117,34 +1327,44 @@ class model(EntityPersistenceMixin, watch_base):
 
 
     def extract_regex_from_all_history(self, regex):
+        """Run the regex over every text snapshot, the matches go to a CSV in the watch's data dir.
+
+        :return: the CSV filename, or False when nothing matched
+        :raises ValueError: the regex is invalid or longer than FIND_CHANGE_MAX_PATTERN
+        :raises TimeoutError: the regex took longer than REGEX_TIMEOUT_SECONDS on one snapshot (catastrophic
+            backtracking), the rest of the history is not scanned
+        """
         import csv
-        import re
         import datetime
+        # The 'regex' package enforces the timeout inside the matcher, so it works in any thread
+        import regex as regex_lib
+        from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
+
+        if len(regex) > self.FIND_CHANGE_MAX_PATTERN:
+            raise ValueError(f"The regex is too long, at most {self.FIND_CHANGE_MAX_PATTERN} characters")
+        try:
+            compiled = regex_lib.compile(regex, regex_lib.MULTILINE)
+        except regex_lib.error as e:
+            raise ValueError(f"Invalid regex: {e}")
+        timeout = regex_plugin.REGEX_TIMEOUT_SECONDS
+
         csv_output_filename = False
         csv_writer = False
         f = None
 
-        # self.history will be keyed with the full path
-        for k, fname in self.history.items():
-            if os.path.isfile(fname):
-                if True:
+        try:
+            # self.history will be keyed with the full path
+            for k, fname in self.history.items():
+                if os.path.isfile(fname):
                     contents = self.get_history_snapshot(timestamp=k)
-                    res = re.findall(regex, contents, re.MULTILINE)
+                    res = compiled.findall(contents, timeout=timeout)
                     if res:
                         if not csv_writer:
                             # A file on the disk can be transferred much faster via flask than a string reply
                             csv_output_filename = f"report-{self.get('uuid')}.csv"
                             f = open(os.path.join(self.data_dir, csv_output_filename), 'w')
-                            # @todo some headers in the future
-                            #fieldnames = ['Epoch seconds', 'Date']
-                            csv_writer = csv.writer(f,
-                                                    delimiter=',',
-                                                    quotechar='"',
-                                                    quoting=csv.QUOTE_MINIMAL,
-                                                    #fieldnames=fieldnames
-                                                    )
+                            csv_writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                             csv_writer.writerow(['Epoch seconds', 'Date'])
-                            # csv_writer.writeheader()
 
                         date_str = datetime.datetime.fromtimestamp(int(k)).strftime('%Y-%m-%d %H:%M:%S')
                         for r in res:
@@ -1152,14 +1372,158 @@ class model(EntityPersistenceMixin, watch_base):
                             if isinstance(r, str):
                                 row.append(r)
                             else:
-                                row+=r
+                                row += r
                             csv_writer.writerow(row)
-
-        if f:
-            f.close()
+        finally:
+            if f:
+                f.close()
 
         return csv_output_filename
 
+
+    # A find_change()/line_timeline() regex longer than this is refused, same limit as the regex_replace Jinja2 filter
+    FIND_CHANGE_MAX_PATTERN = 500
+    # Lines are cut at this before they're compared and returned
+    FIND_CHANGE_MAX_LINE = 300
+    # line_timeline() stops collecting (and says it's incomplete) past this many distinct lines
+    LINE_TIMELINE_MAX_LINES = 100_000
+
+    def _line_matcher(self, text, regex=False, case_sensitive=False):
+        """A function(line) -> bool for plain text (substring) or a regex.
+
+        :raises ValueError: no text, or the regex is invalid or too long
+        The regex matcher raises TimeoutError when one line takes longer than REGEX_TIMEOUT_SECONDS (catastrophic
+        backtracking), the same ReDoS protection as the regex_replace Jinja2 filter. It's left to propagate so the
+        caller can say so instead of reporting "not found".
+        """
+        text = str(text or '')
+        if not text.strip():
+            raise ValueError("Give some text to look for")
+        if regex:
+            if len(text) > self.FIND_CHANGE_MAX_PATTERN:
+                raise ValueError(f"The regex is too long, at most {self.FIND_CHANGE_MAX_PATTERN} characters")
+            # The 'regex' package enforces the timeout inside the matcher, so it works in any thread
+            import regex as regex_lib
+            from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
+            try:
+                compiled = regex_lib.compile(text, 0 if case_sensitive else regex_lib.IGNORECASE)
+            except regex_lib.error as e:
+                raise ValueError(f"Invalid regex: {e}")
+            timeout = regex_plugin.REGEX_TIMEOUT_SECONDS
+            return lambda line: compiled.search(line, timeout=timeout) is not None
+        if case_sensitive:
+            return lambda line: text in line
+        needle = text.casefold()
+        return lambda line: needle in line.casefold()
+
+    def _history_texts(self, from_ts=None, to_ts=None, deadline=None, state=None):
+        """(timestamp, text) of each snapshot in the range, oldest first, reading the history index once
+        (get_history_snapshot(timestamp=...) re-reads it on every call).
+
+        Fills `state` with snapshots_total, snapshots_searched and incomplete (stopped at `deadline`, a
+        time.monotonic() value). Binary history (image/PDF processors) gives '' as there's no text to search.
+        """
+        import time
+        state = state if state is not None else {}
+        history = self.history or {}
+        keys = sorted(history.keys(), key=int)
+        state.update({'snapshots_total': len(keys), 'snapshots_searched': 0, 'incomplete': False})
+        for k in keys:
+            ts = int(k)
+            if (from_ts is not None and ts < from_ts) or (to_ts is not None and ts > to_ts):
+                continue
+            if deadline and time.monotonic() > deadline:
+                state['incomplete'] = True
+                return
+            # Lets other requests/greenlets run between snapshots, this runs inside a web request
+            time.sleep(0)
+            content = self.get_history_snapshot(filepath=history[k])
+            state['snapshots_searched'] += 1
+            yield ts, content if isinstance(content, str) else ''
+
+    def find_change(self, text, regex=False, case_sensitive=False, from_ts=None, to_ts=None, deadline=None):
+        """When `text` was on the page, searched line by line in one pass over the history.
+
+        Answers "when did the price become 319?" or "when did 'Out of stock' go away?" without fetching snapshots
+        one by one to narrow it down. Snapshots are only saved when the page changed, so first_seen is when it was
+        first detected.
+
+        :param text: plain text to look for, or a regular expression when regex=True (matched against each line)
+        :param from_ts/to_ts: only search snapshots inside this range of unix seconds (both included)
+        :param deadline: a time.monotonic() value, stop there and return what was found with 'incomplete': True
+        :return: {'periods': [{'first_seen', 'last_seen', 'gone_at', 'snapshots', 'line'}],
+                  'lines': [{'line', 'first_seen', 'last_seen', 'snapshots'}],
+                  'snapshots_searched', 'snapshots_total', 'matching_snapshots', 'incomplete'}
+                 periods: runs of consecutive snapshots with a match (a text can come and go), gone_at is the first
+                 later snapshot without one, None when there was still one at the last snapshot searched, line is
+                 the first matching line of the period's first snapshot.
+                 lines: every distinct matching line, by when it first appeared, e.g. every headline that mentions
+                 a word, not only the first one of each period.
+        :raises ValueError: no text, or the regex is invalid or too long
+        :raises TimeoutError: the regex took longer than REGEX_TIMEOUT_SECONDS on one line
+        """
+        matches = self._line_matcher(text, regex, case_sensitive)
+        state, periods, current, matching, lines = {}, [], None, 0, {}
+        for ts, content in self._history_texts(from_ts, to_ts, deadline, state):
+            found = [line[:self.FIND_CHANGE_MAX_LINE] for line in (raw.strip() for raw in content.splitlines())
+                     if line and matches(line)]
+            if not found:
+                if current is not None:
+                    current['gone_at'] = ts
+                    current = None
+                continue
+            matching += 1
+            if current is None:
+                current = {'first_seen': ts, 'last_seen': ts, 'gone_at': None, 'snapshots': 0, 'line': found[0]}
+                periods.append(current)
+            current['last_seen'] = ts
+            current['snapshots'] += 1
+            for line in dict.fromkeys(found):
+                entry = lines.setdefault(line, {'line': line, 'first_seen': ts, 'last_seen': ts, 'snapshots': 0})
+                entry['last_seen'] = ts
+                entry['snapshots'] += 1
+        return {'periods': periods, 'lines': list(lines.values()), 'matching_snapshots': matching, **state}
+
+    def line_timeline(self, from_ts=None, to_ts=None, deadline=None, text=None, regex=False, case_sensitive=False,
+                      min_length=2):
+        """Every line that was ever on the page, with when it first and last appeared.
+
+        For lists that grow and shrink (tour dates, a festival line-up, headlines, a changelog) this is the answer
+        to "what was added, and when?" in one pass, where diffs would repeat the same lines over and over. A line
+        that disappears and comes back (a page flipping between two layouts) is not new again: it keeps its first
+        first_seen.
+
+        :param text: optional, only lines containing this (or matching it with regex=True)
+        :param min_length: lines shorter than this are skipped (stray punctuation, list bullets)
+        :return: {'lines': [{'line', 'first_seen', 'last_seen', 'snapshots', 'at_start', 'still_there'}],
+                  'first_snapshot', 'last_snapshot', 'snapshots_searched', 'snapshots_total', 'incomplete'}
+                 lines are oldest first (page order within a snapshot); at_start: already on the first snapshot
+                 searched, so first_seen isn't when it was added; still_there: on the last snapshot searched.
+        :raises ValueError/TimeoutError: as find_change(), for `text`
+        """
+        matches = self._line_matcher(text, regex, case_sensitive) if str(text or '').strip() else None
+        state, lines, first_ts, last_ts = {}, {}, None, None
+        for ts, content in self._history_texts(from_ts, to_ts, deadline, state):
+            first_ts = ts if first_ts is None else first_ts
+            last_ts = ts
+            for line in dict.fromkeys(raw.strip()[:self.FIND_CHANGE_MAX_LINE] for raw in content.splitlines()):
+                if len(line) < min_length or (matches and not matches(line)):
+                    continue
+                entry = lines.get(line)
+                if entry is None:
+                    if len(lines) >= self.LINE_TIMELINE_MAX_LINES:
+                        state['incomplete'] = True
+                        continue
+                    lines[line] = {'line': line, 'first_seen': ts, 'last_seen': ts, 'snapshots': 1}
+                else:
+                    entry['last_seen'] = ts
+                    entry['snapshots'] += 1
+        for entry in lines.values():
+            entry['at_start'] = entry['first_seen'] == first_ts
+            entry['still_there'] = entry['last_seen'] == last_ts
+        # sorted() is stable, so lines first seen in the same snapshot keep their page order
+        return {'lines': sorted(lines.values(), key=lambda e: e['first_seen']), 'first_snapshot': first_ts,
+                'last_snapshot': last_ts, **state}
 
     def has_special_diff_filter_options_set(self):
 
@@ -1251,6 +1615,32 @@ class model(EntityPersistenceMixin, watch_base):
 
         return False
 
+
+    def save_last_fetched_pdf(self, timestamp, contents):
+        """Keep the original PDF for a snapshot (the snapshot itself is only the converted text),
+        so the newest two versions can be compared. Does nothing unless contents is a PDF."""
+        if not isinstance(contents, bytes) or b'%PDF' not in contents[:1024]:
+            return
+        self.ensure_data_dir_exists()
+        self._write_atomic(os.path.join(self.data_dir, f"{timestamp}.pdf"), contents)
+        self._prune_last_fetched_pdf_snapshots()
+
+    def get_fetched_pdf(self, timestamp):
+        filepath = os.path.join(self.data_dir, f"{timestamp}.pdf")
+        if os.path.isfile(filepath):
+            with open(filepath, 'rb') as f:
+                return f.read()
+
+        return False
+
+    def _prune_last_fetched_pdf_snapshots(self):
+        # Keep only the PDFs of the newest two history entries. Matched by filename rather than by
+        # walking the history, so PDFs of entries that history_trim() already removed go too.
+        # (Binary history snapshots are named by md5, so a digits-only name is always ours)
+        keep = set(str(k) for k in list(self.history.keys())[-2:])
+        for f in Path(self.data_dir).glob('*.pdf'):
+            if f.stem.isdigit() and f.stem not in keep:
+                f.unlink(missing_ok=True)
 
     def _prune_last_fetched_html_snapshots(self):
 

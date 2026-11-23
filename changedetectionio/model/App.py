@@ -1,6 +1,7 @@
 from os import getenv
 from copy import deepcopy
 
+from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.blueprint.rss import RSS_FORMAT_TYPES, RSS_CONTENT_FORMAT_DEFAULT
 from changedetectionio.model.Tags import TagsDict
 
@@ -76,11 +77,12 @@ class model(dict):
                     'webdriver_delay': None , # Extra delay in seconds before extracting text
                     'ui': {
                         'use_page_title_in_list': True,
+                        'use_share_watch': False,  # "Share watch" link is a power-user feature, off by default
                         'open_diff_in_new_tab': True,
                         'socket_io_enabled': True,
                         'favicons_enabled': True,
                         'timeago_format': 'long',  # 'long' = "1 minute ago", 'short' = "1m ago"
-                        'sidebar_mode': 'collapsed',  # 'collapsed' = slim icon rail, expands on hover; 'pinned' = always expanded
+                        'sidebar_mode': MENU_SIDEBAR_ACTIONMODES_DEFAULT,  # one of blueprint.menu_modes.MENU_SIDEBAR_ACTIONMODES
                     },
                 }
             }

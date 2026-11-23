@@ -16,6 +16,11 @@ _price_re = re.compile(r"Price:\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
 
 class Restock(dict):
 
+    # The one place price text becomes a number - keep it that way, don't strip to [^\d.] and float()
+    # at the call site, that turns "39,99" into 3999 (#4493). Used by:
+    #   processor.py _deduplicate_prices()                        (itemprop/JSON-LD prices)
+    #   pure_python_extractor.py MicrodataExtractor, query_price_availability()
+    #   plugins/llm_restock.py get_itemprop_availability_override() (price the LLM returns as a string)
     def parse_currency(self, raw_value: str) -> Union[float, None]:
         # Clean and standardize the value (ie 1,400.00 should be 1400.00), even better would be store the whole thing as an integer.
         standardized_value = raw_value
@@ -26,6 +31,9 @@ class Restock(dict):
                 standardized_value = standardized_value.replace(',', '')
             else:
                 standardized_value = standardized_value.replace('.', '').replace(',', '.')
+        elif re.fullmatch(r'\D*\d{1,3}(,\d{3})+\D*', standardized_value):
+            # Only thousands separators ie "1,299"
+            standardized_value = standardized_value.replace(',', '')
         else:
             standardized_value = standardized_value.replace(',', '.')
 
@@ -136,3 +144,16 @@ class Watch(BaseWatch):
 
         return values
 
+
+def register_plugin_hooks(plugin_manager):
+    """Called once at startup (processors.register_processor_plugin_hooks()): adds this processor's own
+    hooks (hookspecs.py) and the built-in charts that implement them (plugins/default_charts.py)."""
+    from . import hookspecs
+    from .plugins import default_charts
+
+    caller = getattr(plugin_manager.hook, 'restock_diff_watch_history_page_chart', None)
+    if caller is None or caller.spec is None:
+        plugin_manager.add_hookspecs(hookspecs)
+    # 'builtin_' names are hidden from the active plugins list
+    if not plugin_manager.is_registered(default_charts):
+        plugin_manager.register(default_charts, 'builtin_restock_default_charts')

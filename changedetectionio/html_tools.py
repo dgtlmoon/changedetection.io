@@ -95,7 +95,17 @@ TEXT_FILTER_LIST_LINE_SUFFIX = "<br>"
 TRANSLATE_WHITESPACE_TABLE = str.maketrans('', '', '\r\n\t ')
 PERL_STYLE_REGEX = r'^/(.*?)/([a-z]*)?$'
 
-TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
+# 'br', 'hr', 'div' and 'p' already make Inscriptis break the line, so a filter match on one of
+# them is never suffixed with TEXT_FILTER_LIST_LINE_SUFFIX (a div becomes 4 whitespaces).
+FILTER_TAGS_WITH_OWN_NEWLINE = ('br', 'hr', 'div', 'p')
+
+# Whitespace is allowed after the tag name ("</title >") but not after "<" - "< title>" is text, not a tag
+TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title\s*>", re.I | re.S)
+# Locate the tag with pos/endpos instead of data.lower(), which copies the whole document (67MB seen
+# for one page) and, for str, can change its length ('İ' lowers to 2 chars) so the offset is wrong.
+TITLE_TAG_STR_RE = re.compile(r"<title", re.I | re.A)
+TITLE_TAG_BYTES_RE = re.compile(rb"<title", re.I)
+TITLE_TAG_UTF32_RE = re.compile(rb"<\x00\x00\x00[tT]\x00\x00\x00")
 META_CS  = re.compile(r'<meta[^>]+charset=["\']?\s*([a-z0-9_\-:+.]+)', re.I)
 
 # jq builtins that can leak sensitive data or cause harm when user-supplied expressions are executed.
@@ -164,6 +174,25 @@ _DEFAULT_UNSAFE_XPATH3_FUNCTIONS = [
 ]
 
 
+# XPath 3.1 says the default collation is Unicode codepoint collation. elementpath instead leaves
+# its collation functions pointing at locale.strxfrm / locale.strcoll, so the process-wide
+# LC_COLLATE decides what contains() means:
+#
+#     def contains(self, a, b):  return self.strxfrm(b) in self.strxfrm(a)
+#
+# With LC_COLLATE=C, strxfrm() is the identity and that is an ordinary substring test. With
+# LC_COLLATE=en_US.UTF-8 it returns a binary collation key, and a substring of a collation key is
+# not the collation key of the substring - so contains(), starts-with(), ends-with() and
+# substring-before/after() return false for every input, and a filter that matches 67 elements
+# matches 0 (#4437). Name tests, axes and '=' are unaffected, which is what made it look like the
+# page had changed layout.
+#
+# flask_app.py keeps LC_COLLATE in "C" for this reason, but a filter must not depend on a distant
+# module's locale bookkeeping, nor on what an operator puts in LANG/LC_ALL. Pinning the collation
+# per evaluation makes the filter mean the same thing in every deployment.
+XPATH_CODEPOINT_COLLATION = 'http://www.w3.org/2005/xpath-functions/collation/codepoint'
+
+
 def get_safe_xpath3_parser():
     """Return an XPath3Parser subclass with filesystem/environment access functions removed.
 
@@ -212,6 +241,38 @@ def perl_style_slash_enclosed_regex_to_options(regex):
 
     return regex
 
+def filter_match_separator(append_pretty_line_formatting, html_block, tag):
+    """What to append after a filter match so that each match gets its own line in the diff.
+
+    Always empty for the first match, so no leading separator is ever emitted.
+
+    :param append_pretty_line_formatting: True while the result still has to survive
+        html_to_text() (Inscriptis). `source:` watches pass False - see processor.py,
+        `append_pretty_line_formatting=not self.watch.is_source_type_url`.
+    :param html_block: the output accumulated so far, used to skip the first match
+    :param tag: the matched element's tag name, or None when the match is a plain string
+               (an attribute or text() node) and so is not HTML at all
+    """
+    if not append_pretty_line_formatting:
+        # A `source:` watch keeps the filtered text verbatim and never runs html_to_text(),
+        # so a literal '<br>' would reach the snapshot as visible text. A real newline is
+        # the only separator that survives there - and with no separator at all every match
+        # ran straight into the next on a single line, see #4477.
+        if not len(html_block):
+            return ""
+
+        # xpath_filter/xpath1_filter serialise whole elements with
+        # etree.tostring(pretty_print=True), which already ends every match with a newline.
+        # Adding one here as well would double-space those matches, so only separate when
+        # the accumulated output does not already end on a line break. Attribute and
+        # text() matches return plain strings and do need the separator.
+        return "" if html_block.endswith("\n") else "\n"
+
+    if not len(html_block) or tag in FILTER_TAGS_WITH_OWN_NEWLINE:
+        return ""
+
+    return TEXT_FILTER_LIST_LINE_SUFFIX
+
 # Given a CSS Rule, and a blob of HTML, return the blob of HTML that matches
 def include_filters(include_filters, html_content, append_pretty_line_formatting=False):
     from bs4 import BeautifulSoup
@@ -224,8 +285,7 @@ def include_filters(include_filters, html_content, append_pretty_line_formatting
         # And where the matched result doesn't include something that will cause Inscriptis to add a newline
         # (This way each 'match' reliably has a new-line in the diff)
         # Divs are converted to 4 whitespaces by inscriptis
-        if append_pretty_line_formatting and len(html_block) and not element.name in (['br', 'hr', 'div', 'p']):
-            html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+        html_block += filter_match_separator(append_pretty_line_formatting, html_block, getattr(element, 'name', None))
 
         html_block += str(element)
 
@@ -304,46 +364,25 @@ def element_removal(selectors: List[str], html_content):
 
     return modified_html
 
+@lru_cache(maxsize=1)
+def _xpath3_string_token():
+    from elementpath.xpath3 import XPath3Parser
+    return XPath3Parser().parse('.')
+
+
 def elementpath_tostring(obj):
     """
-    change elementpath.select results to string type
-    # The MIT License (MIT), Copyright (c), 2018-2021, SISSA (Scuola Internazionale Superiore di Studi Avanzati)
-    # https://github.com/sissaschool/elementpath/blob/dfcc2fd3d6011b16e02bf30459a7924f547b47d0/elementpath/xpath_tokens.py#L1038
+    Convert an elementpath.select() result item to its XPath fn:string() value
+    (booleans as 'true'/'false', 1.0 as '1', NaN/INF etc), using elementpath's own
+    XPathToken.string_value() rather than a copy of it.
     """
+    from elementpath import ElementPathError
 
-    import elementpath
-    from decimal import Decimal
-    import math
-
-    if obj is None:
-        return ''
-    # https://elementpath.readthedocs.io/en/latest/xpath_api.html#elementpath.select
-    elif isinstance(obj, elementpath.XPathNode):
-        return obj.string_value
-    elif isinstance(obj, bool):
-        return 'true' if obj else 'false'
-    elif isinstance(obj, Decimal):
-        value = format(obj, 'f')
-        if '.' in value:
-            return value.rstrip('0').rstrip('.')
-        return value
-
-    elif isinstance(obj, float):
-        if math.isnan(obj):
-            return 'NaN'
-        elif math.isinf(obj):
-            return str(obj).upper()
-
-        value = str(obj)
-        if '.' in value:
-            value = value.rstrip('0').rstrip('.')
-        if '+' in value:
-            value = value.replace('+', '')
-        if 'e' in value:
-            return value.upper()
-        return value
-
-    return str(obj)
+    try:
+        return _xpath3_string_token().string_value(obj)
+    except ElementPathError:
+        # Maps, arrays and functions have no XPath string value, keep the old repr fallback
+        return str(obj)
 
 # Return str Utf-8 of matched rules
 @lxml_guarded
@@ -383,7 +422,9 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             # This allows //title to match elements in the default namespace
             namespaces[''] = tree.nsmap[None]
 
-        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces, parser=get_safe_xpath3_parser())
+        r = elementpath.select(tree, xpath_filter.strip(), namespaces=namespaces,
+                               parser=get_safe_xpath3_parser(),
+                               default_collation=XPATH_CODEPOINT_COLLATION)
         #@note: //title/text() now works with default namespaces (fixed by registering '' prefix)
         #@note: //title/text() wont work where <title>CDATA.. (use cdata_in_document_to_text first)
 
@@ -395,8 +436,7 @@ def xpath_filter(xpath_filter, html_content, append_pretty_line_formatting=False
             # And where the matched result doesn't include something that will cause Inscriptis to add a newline
             # (This way each 'match' reliably has a new-line in the diff)
             # Divs are converted to 4 whitespaces by inscriptis
-            if append_pretty_line_formatting and len(html_block) and (not hasattr( element, 'tag' ) or not element.tag in (['br', 'hr', 'div', 'p'])):
-                html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+            html_block += filter_match_separator(append_pretty_line_formatting, html_block, getattr(element, 'tag', None))
 
             if type(element) == str:
                 html_block += element
@@ -456,8 +496,7 @@ def xpath1_filter(xpath_filter, html_content, append_pretty_line_formatting=Fals
             # And where the matched result doesn't include something that will cause Inscriptis to add a newline
             # (This way each 'match' reliably has a new-line in the diff)
             # Divs are converted to 4 whitespaces by inscriptis
-            if append_pretty_line_formatting and len(html_block) and (not hasattr(element, 'tag') or not element.tag in (['br', 'hr', 'div', 'p'])):
-                html_block += TEXT_FILTER_LIST_LINE_SUFFIX
+            html_block += filter_match_separator(append_pretty_line_formatting, html_block, getattr(element, 'tag', None))
 
             # Some kind of text, UTF-8 or other
             if isinstance(element, (str, bytes)):
@@ -603,7 +642,7 @@ def extract_json_blob_from_html(content, ensure_is_ldjson_info_type, json_filter
         # result.text is how bs4 magically strips JSON from the body
         content_start = result.text.lstrip("\ufeff").strip()[:100] if result.text else ''
         # Skip empty tags, and things that dont even look like JSON
-        if not result.text or not (content_start[0] == '{' or content_start[0] == '['):
+        if not content_start or not (content_start[0] == '{' or content_start[0] == '['):
             continue
         try:
             json_data = json.loads(result.text)
@@ -655,7 +694,7 @@ def extract_json_as_string(content, json_filter, ensure_is_ldjson_info_type=None
 
     content_start = content.lstrip("\ufeff").strip()[:100]
 
-    if content_start[0] == '{' or content_start[0] == '[':
+    if content_start and (content_start[0] == '{' or content_start[0] == '['):
         try:
             # .lstrip("\ufeff") strings ByteOrderMark from UTF8 and still lets the UTF work
             stripped_text_from_html = _parse_json(json.loads(content.lstrip("\ufeff")), json_filter)
@@ -755,19 +794,36 @@ def strip_ignore_text(content, wordlist, mode="content"):
 
     # Used for finding out what to highlight
     if mode == "line numbers":
-        return [i + 1 for i in ignored_lines]
+        return sorted(i + 1 for i in ignored_lines)
 
-    output_lines = set(range(len(lines))) - ignored_lines
-    return ''.join([lines[i] for i in output_lines])
+    return ''.join([line for i, line in enumerate(lines) if i not in ignored_lines])
 
 def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
-    from xml.sax.saxutils import escape as xml_escape
-    pattern = '<!\[CDATA\[(\s*(?:.(?<!\]\]>)\s*)*)\]\]>'
-    def repl(m):
-        text = m.group(1)
-        return xml_escape(html_to_text(html_content=text)).strip()
+    """Replace each <![CDATA[ ... ]]> section with its content as text.
 
-    return re.sub(pattern, repl, html_content)
+    A plain left-to-right scan, so the time taken grows with the size of the document only. The regex this
+    replaces took exponentially longer on a CDATA section that was opened and never closed (30 spaces after
+    the opening were enough to hang the check), and the document comes from the watched site.
+    """
+    from xml.sax.saxutils import escape as xml_escape
+    cdata_start, cdata_end = '<![CDATA[', ']]>'
+
+    out = []
+    pos = 0
+    while True:
+        start = html_content.find(cdata_start, pos)
+        if start == -1:
+            break
+        end = html_content.find(cdata_end, start + len(cdata_start))
+        if end == -1:
+            # Never closed, so nothing that is opened after it can be closed either: the rest is left as it is
+            break
+        out.append(html_content[pos:start])
+        out.append(xml_escape(html_to_text(html_content=html_content[start + len(cdata_start):end])).strip())
+        pos = end + len(cdata_end)
+
+    out.append(html_content[pos:])
+    return ''.join(out)
 
 
 # NOTE!! ANYTHING LIBXML, HTML5LIB ETC WILL CAUSE SOME SMALL MEMORY LEAK IN THE LOCAL "LIB" IMPLEMENTATION OUTSIDE PYTHON
@@ -897,14 +953,18 @@ def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 
     # rare but possible.  We read up to 128 KiB from the tag onwards to handle
     # even pathological cases without scanning the whole document.
     _TITLE_WINDOW = 131072
+    # Only look for the tag in the first 1 MiB (chars, or bytes for 8-bit). Well past any real <head>,
+    # and a huge page is never scanned end to end.
+    _TITLE_SEARCH_LIMIT = 1024 * 1024
 
     try:
         match data:
             case bytes() if data.startswith((b"\xff\xfe\x00\x00", b"\x00\x00\xfe\xff")):
                 # UTF-32: locate the tag in the raw bytes, then decode the window.
-                tag_pos = data.lower().find(b"<\x00\x00\x00t\x00\x00\x00")
-                if tag_pos == -1:
+                tag_m = TITLE_TAG_UTF32_RE.search(data, 0, _TITLE_SEARCH_LIMIT * 4)
+                if not tag_m:
                     return None
+                tag_pos = tag_m.start()
                 chunk = data[tag_pos: tag_pos + _TITLE_WINDOW * 4].decode("utf-32", errors="replace")
                 prefix = chunk
             case bytes() if data.startswith((b"\xff\xfe", b"\xfe\xff")):
@@ -913,9 +973,10 @@ def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 
                 prefix = data[: max(scan_chars * 2, _TITLE_WINDOW)].decode("utf-16", errors="replace")
             case bytes():
                 # UTF-8 / legacy 8-bit: find the tag cheaply in raw bytes.
-                tag_pos = data.lower().find(b"<title")
-                if tag_pos == -1:
+                tag_m = TITLE_TAG_BYTES_RE.search(data, 0, _TITLE_SEARCH_LIMIT)
+                if not tag_m:
                     return None
+                tag_pos = tag_m.start()
                 raw_chunk = data[tag_pos: tag_pos + _TITLE_WINDOW]
                 try:
                     chunk = raw_chunk.decode("utf-8")
@@ -932,9 +993,10 @@ def extract_title(data: bytes | str, sniff_bytes: int = 2048, scan_chars: int = 
                         return None
                 prefix = chunk
             case str():
-                tag_pos = data.lower().find("<title")
-                if tag_pos == -1:
+                tag_m = TITLE_TAG_STR_RE.search(data, 0, _TITLE_SEARCH_LIMIT)
+                if not tag_m:
                     return None
+                tag_pos = tag_m.start()
                 prefix = data[tag_pos: tag_pos + _TITLE_WINDOW]
             case _:
                 logger.error(f"Title extraction received unsupported data type: {type(data)}")

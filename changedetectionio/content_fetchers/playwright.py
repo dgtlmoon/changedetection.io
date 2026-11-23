@@ -2,13 +2,14 @@ import asyncio
 import gc
 import json
 import os
-from urllib.parse import urlparse
+from contextlib import asynccontextmanager
 
 from loguru import logger
 
 from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, visualselector_xpath_selectors, \
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_MAX_TOTAL_HEIGHT, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, FAVICON_FETCHER_JS
 from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, ScreenshotUnavailable, \
     BrowserStepsStepException
 
@@ -39,7 +40,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     if lock_viewport_elements and page_height > page.viewport_size['height']:
         lock_start = time.time()
         lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
-        with open(lock_elements_js_path, 'r') as f:
+        with open(lock_elements_js_path, 'r', encoding='utf-8') as f:
             lock_elements_js = f.read()
         await page.evaluate(lock_elements_js)
         elements_locked = True
@@ -96,7 +97,7 @@ async def capture_full_page_async(page, screenshot_format='JPEG', watch_uuid=Non
     # Unlock element dimensions if they were locked
     if elements_locked:
         unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
-        with open(unlock_elements_js_path, 'r') as f:
+        with open(unlock_elements_js_path, 'r', encoding='utf-8') as f:
             unlock_elements_js = f.read()
         await page.evaluate(unlock_elements_js)
         logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
@@ -209,10 +210,10 @@ class fetcher(Fetcher):
 
         if self.proxy:
             # Playwright needs separate username and password values
-            parsed = urlparse(self.proxy.get('server'))
-            if parsed.username:
-                self.proxy['username'] = parsed.username
-                self.proxy['password'] = parsed.password
+            username, password = proxy_credentials(self.proxy.get('server'))
+            if username:
+                self.proxy['username'] = username
+                self.proxy['password'] = password
 
     async def screenshot_step(self, step_n=''):
         super().screenshot_step(step_n=step_n)
@@ -247,6 +248,40 @@ class fetcher(Fetcher):
         del content
         gc.collect()
 
+    @asynccontextmanager
+    async def _har_record(self, watch_uuid):
+        """Opt-in network recording for debugging a single watch, see Fetcher.har_record_wanted()
+
+        Yields the extra new_context() arguments that switch on playwright's own HAR recording.
+        Playwright only writes the HAR when the context closes, and not every exit from run() closes
+        it, so this closes the context itself on the way out - a failed fetch is exactly when the
+        recording is wanted. Entered alongside async_playwright() so it unwinds while the driver is
+        still running.
+        """
+        har = {'context_args': {}, 'context': None}
+        har_tmp = None
+        if self.har_record_wanted(watch_uuid):
+            logger.info(f"[{watch_uuid}] Recording network traffic (HAR) of this fetch")
+            os.makedirs(self.watch_data_dir, exist_ok=True)
+            har_tmp = os.path.join(self.watch_data_dir, 'har-record.tmp.har')
+            har['context_args'] = {'record_har_path': har_tmp, 'record_har_content': 'embed'}
+        try:
+            yield har
+        finally:
+            if har_tmp:
+                try:
+                    if har['context']:
+                        # A no-op when run() already closed it
+                        await asyncio.wait_for(har['context'].close(), timeout=10.0)
+                    from changedetectionio.content_fetchers.har_recorder import save_har_file
+                    destination = await asyncio.to_thread(save_har_file, self.watch_data_dir, har_tmp)
+                    logger.info(f"[{watch_uuid}] HAR record saved to {destination}")
+                except Exception as e:
+                    logger.error(f"[{watch_uuid}] Could not save the HAR record: {e}")
+                finally:
+                    if os.path.exists(har_tmp):
+                        os.unlink(har_tmp)
+
     async def run(self,
                   fetch_favicon=True,
                   current_include_filters=None,
@@ -269,7 +304,7 @@ class fetcher(Fetcher):
         self.watch_uuid = watch_uuid  # Store for use in screenshot_step
         response = None
 
-        async with async_playwright() as p:
+        async with async_playwright() as p, self._har_record(watch_uuid) as har:
             browser_type = getattr(p, self.browser_type)
 
             # Seemed to cause a connection Exception even tho I can see it connect
@@ -292,9 +327,25 @@ class fetcher(Fetcher):
                 proxy=self.proxy,
                 service_workers=os.getenv('PLAYWRIGHT_SERVICE_WORKERS', 'allow'), # Should be `allow` or `block` - sites like YouTube can transmit large amounts of data via Service Workers
                 user_agent=manage_user_agent(headers=request_headers),
+                **har['context_args'],
             )
+            har['context'] = context
 
             self.page = await context.new_page()
+
+            # Track the LATEST main-frame document response for the whole fetch, not just the one
+            # goto() returns. This app compares the text of the page the browser ends up on, and a
+            # site that gates with an interstitial (503/429 + meta-refresh) navigates to the real
+            # page *during* the extra_wait below - judging the fetch on the first response fails a
+            # watch whose content is present and fine. Same for plain client-side redirects.
+            # Shared with action_goto_url() so only one 'response' listener exists on the page.
+            from changedetectionio.browser_steps.browser_steps import track_latest_navigation_response
+            # Must be an identity check - the tracker hands back the same (initially empty, so
+            # falsy) dict the listener writes into, and `or {}` would quietly swap in a different
+            # one that never gets updated.
+            latest_navigation_response = track_latest_navigation_response(self.page)
+            if latest_navigation_response is None:
+                latest_navigation_response = {}
 
             # Listen for all console events and handle errors
             self.page.on("console", lambda msg: logger.debug(f"Playwright console: Watch URL: {url} {msg.type}: {msg.text} {msg.args}"))
@@ -335,6 +386,25 @@ class fetcher(Fetcher):
 
             extra_wait = int(os.getenv("WEBDRIVER_DELAY_BEFORE_CONTENT_READY", 5)) + self.render_extract_delay
             await self.page.wait_for_timeout(extra_wait * 1000)
+
+            # A meta-refresh or client-side redirect usually lands during that wait, so judge the
+            # fetch on the document we are actually about to extract rather than the first one.
+            latest = latest_navigation_response.get('response')
+            if latest is not None and latest is not response:
+                logger.debug(f"Page navigated again while waiting, judging the fetch on {latest.url} "
+                             f"(status {latest.status}) instead of the first response for {url}")
+                response = latest
+                try:
+                    self.headers = await response.all_headers()
+                except Exception as e:
+                    logger.debug(f"Could not refresh headers from the final document: {e}")
+
+            # Don't extract while a navigation is mid-flight, that is what produces
+            # "Execution context was destroyed, most likely because of a navigation"
+            try:
+                await self.page.wait_for_load_state('load', timeout=extra_wait * 1000)
+            except Exception as e:
+                logger.debug(f"Page did not reach a settled load state, continuing anyway: {e}")
 
             try:
                 self.status_code = response.status

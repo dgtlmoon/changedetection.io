@@ -224,6 +224,31 @@ class TestFetchUrlGate(unittest.TestCase):
                 self.assertTrue(is_private_hostname('metadata.example'))
                 self.assertBlocked('https://metadata.example/')
 
+    def test_link_local_exception_does_not_extend_to_ipv4_wrapped_in_ipv6(self):
+        """::ffff:169.254.169.254 is cloud metadata written as an IPv6 address, and connecting to
+        it works. From Python 3.13 ipaddress calls it 'link-local' too, so the exception has to
+        look at the address itself (fe80::/10), not at that flag."""
+        with patch.dict('os.environ', LOCKED_DOWN):
+            for wrapped in ('::ffff:169.254.169.254', '::ffff:169.254.1.1', '::ffff:a9fe:a9fe'):
+                with self.subTest(wrapped=wrapped):
+                    with patch('socket.getaddrinfo', return_value=_gai(
+                            ('93.184.216.34', 4), (wrapped, 6))):
+                        self.assertTrue(is_private_hostname('metadata6.example'))
+                        self.assertBlocked('https://metadata6.example/')
+
+    def test_link_local_exception_is_for_linux_only(self):
+        """The 'nothing can connect to it' reasoning is the Linux kernel's behaviour. Elsewhere an
+        address without a zone id can be given a default interface, so the record still blocks."""
+        with patch.dict('os.environ', LOCKED_DOWN):
+            with patch('socket.getaddrinfo', return_value=_gai(
+                    ('149.210.194.177', 4), ('fe80::5054:ff:fe3b:3cbd', 6))):
+                for platform in ('win32', 'darwin', 'freebsd14'):
+                    with self.subTest(platform=platform):
+                        with patch('sys.platform', platform):
+                            self.assertTrue(is_private_hostname('competa.example'))
+                with patch('sys.platform', 'linux'):
+                    self.assertFalse(is_private_hostname('competa.example'))
+
     def test_link_local_exception_does_not_extend_to_other_blocked_ranges(self):
         """Only link-local is deferred; a public record alongside CGNAT/private/reserved space
         still refuses the hostname (GHSA-gwph-fp79-379w)."""

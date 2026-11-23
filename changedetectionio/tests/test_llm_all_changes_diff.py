@@ -13,7 +13,7 @@ from unittest.mock import patch, call
 
 from flask import url_for
 
-from changedetectionio.tests.util import delete_all_watches
+from changedetectionio.tests.util import delete_all_watches, fetch_llm_summary
 
 
 SNAP1 = "apple\nbanana\n"
@@ -60,7 +60,7 @@ def test_all_changes_sends_multi_segment_diff_to_llm(
         return 'Multi-step summary.'
 
     with patch('changedetectionio.llm.evaluator.summarise_change', side_effect=fake_summarise):
-        res = client.get(url_for(
+        res = fetch_llm_summary(client, url_for(
             'ui.ui_diff.diff_llm_summary', uuid=uuid,
             from_version=TS1, to_version=TS3, all_changes=1,
         ))
@@ -98,7 +98,7 @@ def test_default_mode_sends_single_diff_to_llm(
         return 'Single-range summary.'
 
     with patch('changedetectionio.llm.evaluator.summarise_change', side_effect=fake_summarise):
-        res = client.get(url_for(
+        res = fetch_llm_summary(client, url_for(
             'ui.ui_diff.diff_llm_summary', uuid=uuid,
             from_version=TS1, to_version=TS3, all_changes=0,
         ))
@@ -131,12 +131,12 @@ def test_all_changes_and_direct_use_separate_cache_keys(
 
     with patch('changedetectionio.llm.evaluator.summarise_change', side_effect=fake_summarise):
         # First call: all_changes=1
-        r1 = client.get(url_for(
+        r1 = fetch_llm_summary(client, url_for(
             'ui.ui_diff.diff_llm_summary', uuid=uuid,
             from_version=TS1, to_version=TS3, all_changes=1,
         ))
         # Second call: all_changes=0 — must NOT hit the cache from above
-        r2 = client.get(url_for(
+        r2 = fetch_llm_summary(client, url_for(
             'ui.ui_diff.diff_llm_summary', uuid=uuid,
             from_version=TS1, to_version=TS3, all_changes=0,
         ))
@@ -167,11 +167,11 @@ def test_all_changes_result_is_cached(
         return 'Cached multi-step summary.'
 
     with patch('changedetectionio.llm.evaluator.summarise_change', side_effect=fake_summarise):
-        r1 = client.get(url_for(
+        r1 = fetch_llm_summary(client, url_for(
             'ui.ui_diff.diff_llm_summary', uuid=uuid,
             from_version=TS1, to_version=TS3, all_changes=1,
         ))
-        r2 = client.get(url_for(
+        r2 = fetch_llm_summary(client, url_for(
             'ui.ui_diff.diff_llm_summary', uuid=uuid,
             from_version=TS1, to_version=TS3, all_changes=1,
         ))

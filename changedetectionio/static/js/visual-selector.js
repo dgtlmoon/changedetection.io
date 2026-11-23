@@ -115,7 +115,9 @@ window.initVisualSelector = function (opts) {
                 $('#selector-current-xpath, #clear-selector').hide();
             })
             .on('load', () => {
-                console.log("Loaded background...");
+                console.log(`Loaded background ${$selectorBackgroundElem[0].naturalWidth}px`);
+                // For the UI width of the whole edit area
+                document.documentElement.style.setProperty('--visualselector-max-width', `${$selectorBackgroundElem[0].naturalWidth}px` );
                 c = $selectorCanvasElem[0];
                 xctx = c.getContext("2d");
                 ctx = c.getContext("2d");

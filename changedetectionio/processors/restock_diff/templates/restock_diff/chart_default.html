@@ -1,0 +1,29 @@
+{# The built-in restock chart (plugins/default_charts.py). static/js/restock-price-graph.js finds
+   .restock-graph-default and draws it from these attributes, see window.initRestockGraphs() #}
+{#- TRANSLATORS: FIXME: fragment msgids (#4074) -#}
+{%- set changes_label = _('Changes') -%}
+{#- TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" -#}
+{%- set cheaper_than = _('cheaper than {pct} of tracked prices') -%}
+{#- TRANSLATORS: {pct} is a percentage including the % sign, e.g. "80%" -#}
+{%- set pricier_than = _('more expensive than {pct} of tracked prices') -%}
+{%- set i18n = {
+    'in_stock': _('In stock'),
+    'out_of_stock': _('Out of stock'),
+    'no_data': _('No price data available to graph yet.'),
+    'load_error': _('Could not load price history.'),
+    'changes': changes_label,
+    'avg_price': _('Average price'),
+    'price_low': _('Currently low'),
+    'price_typical': _('Currently typical'),
+    'price_high': _('Currently high'),
+    'cheaper_than': cheaper_than,
+    'pricier_than': pricier_than,
+    'typical_note': _('around the usual price'),
+    'avg_label': _('avg'),
+} -%}
+<div class="restock-graph-default"
+     data-series='{{ series|tojson }}'
+     data-currency="{{ currency or '' }}"
+     data-summary='{{ summary|tojson }}'
+     data-height="{{ height|int }}"
+     data-i18n='{{ i18n|tojson }}'></div>
