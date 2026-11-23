@@ -237,6 +237,138 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
     #@todo Test that each of multiple notifications with different settings
     delete_all_watches(client)
 
+def test_group_notification_mode_senders(client, live_server, measure_memory_usage, datastore_path):
+    """Which notifications a change sends, for each "Send this group's notifications" choice.
+    The default choice has to give exactly what the watch > group > system lookup always gave."""
+    from changedetectionio.notification import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH, default_notification_body
+    from changedetectionio.notification_service import _check_cascading_vars, notification_senders
+
+    delete_all_watches(client)
+    datastore = live_server.app.config['DATASTORE']
+    app_settings = datastore.data['settings']['application']
+    app_settings['notification_urls'] = []
+    app_settings['notification_format'] = 'htmlcolor'
+
+    test_url = url_for('test_endpoint', _external=True)
+    watch_uuid = datastore.add_watch(url=test_url, tag='mode-tag')
+    watch = datastore.data['watching'][watch_uuid]
+    tag = app_settings['tags'][get_UUID_for_tag_name(client, name="mode-tag")]
+
+    group_urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json') + '?from=group']
+    watch_urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json') + '?from=watch']
+    system_urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json') + '?from=system']
+    tag.update({'notification_urls': group_urls, 'notification_title': 'Group title', 'notification_body': 'Group body',
+                'notification_format': 'text'})
+
+    def lookup_as_always():
+        return [{k: _check_cascading_vars(datastore, k, watch)
+                 for k in ('notification_urls', 'notification_title', 'notification_body', 'notification_format')}]
+
+    group_on_its_own = {'notification_urls': group_urls, 'notification_title': 'Group title',
+                        'notification_body': 'Group body', 'notification_format': 'text'}
+
+    # A group that never had the setting, and one saved with the default: the lookup as it always was.
+    # The watch is on "System default", so the system format is used, not the group's
+    assert watch.get('notification_format') == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+    for mode in (None, 'fallback', 'not-a-mode'):
+        tag['notification_group_mode'] = mode
+        assert notification_senders(datastore, watch) == lookup_as_always()
+        assert notification_senders(datastore, watch) == [{'notification_urls': group_urls, 'notification_title': 'Group title',
+                                                            'notification_body': 'Group body', 'notification_format': 'htmlcolor'}]
+
+    # ..and the watch's own URLs are sent instead of the group's, still with the group's title and body
+    watch['notification_urls'] = watch_urls
+    assert notification_senders(datastore, watch) == lookup_as_always()
+    assert notification_senders(datastore, watch) == [{'notification_urls': watch_urls, 'notification_title': 'Group title',
+                                                        'notification_body': 'Group body', 'notification_format': 'htmlcolor'}]
+
+    # "As well as the watch's own": the watch's, then the group's with everything set on the group
+    tag['notification_group_mode'] = 'add'
+    senders = notification_senders(datastore, watch)
+    assert len(senders) == 2
+    assert senders[0]['notification_urls'] == watch_urls
+    assert senders[0]['notification_body'] == default_notification_body, "The group is not part of the watch's lookup any more"
+    assert senders[1] == group_on_its_own
+
+    # "Instead of the watch's own"
+    tag['notification_group_mode'] = 'replace'
+    assert notification_senders(datastore, watch) == [group_on_its_own]
+
+    # A muted group sends nothing, the watch's own carries on
+    tag['notification_muted'] = True
+    assert [s['notification_urls'] for s in notification_senders(datastore, watch)] == [watch_urls]
+    tag['notification_muted'] = False
+
+    # The system-wide URLs are only for when nothing else is sent
+    watch['notification_urls'] = []
+    app_settings['notification_urls'] = system_urls
+    tag['notification_group_mode'] = 'add'
+    assert notification_senders(datastore, watch) == [group_on_its_own]
+    # The group leaves its format to the system
+    tag['notification_format'] = USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+    assert notification_senders(datastore, watch)[0]['notification_format'] == 'htmlcolor'
+    # No URLs on a group that sends on its own: nothing from it, the system-wide ones as always
+    tag['notification_urls'] = []
+    assert [s['notification_urls'] for s in notification_senders(datastore, watch)] == [system_urls]
+    assert notification_senders(datastore, watch) == lookup_as_always()
+
+    app_settings['notification_urls'] = []
+    delete_all_watches(client)
+
+
+def test_group_notification_mode_sends_in_group_format(client, live_server, measure_memory_usage, datastore_path):
+    """End to end: by default a group's notification goes out in the system format (as always),
+    set to send as well as the watch's own it goes out in the format chosen on the group."""
+    delete_all_watches(client)
+    set_original_response(datastore_path=datastore_path)
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": 'format-tag'},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+    wait_for_all_checks(client)
+
+    notification_file = os.path.join(datastore_path, "notification.txt")
+    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    tag_uuid = get_UUID_for_tag_name(client, name="format-tag")
+    tag_form_data = {"notification_urls": notification_url,
+                     "notification_title": "Group format",
+                     "notification_body": "first line\nsecond line {{watch_url}}",
+                     "notification_format": 'text',
+                     "title": "format-tag"}
+
+    def save_group_and_change_page(form_data, set_response):
+        res = client.post(url_for("tags.form_tag_edit_submit", uuid=tag_uuid), data=form_data, follow_redirects=True)
+        assert b"Updated" in res.data
+        set_response(datastore_path=datastore_path)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+        time.sleep(3)
+        assert os.path.isfile(notification_file)
+        with open(notification_file, "r") as f:
+            notification_submission = f.read()
+        os.unlink(notification_file)
+        assert test_url in notification_submission
+        return notification_submission
+
+    # The form was posted without the new field, like any group saved before it existed
+    assert '<br' in save_group_and_change_page(tag_form_data, set_modified_response), \
+        "By default the system format (HTML) is used, the line break became <br>"
+    assert live_server.app.config['DATASTORE'].data['settings']['application']['tags'][tag_uuid]['notification_group_mode'] == 'fallback'
+
+    tag_form_data['notification_group_mode'] = 'add'
+    assert '<br' not in save_group_and_change_page(tag_form_data, set_original_response), \
+        "Sent on its own the group's notification is plain text"
+
+    res = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid))
+    assert b"As well as the watch" in res.data
+
+    delete_all_watches(client)
+
+
 def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path):
 
     test_url = url_for('test_random_content_endpoint', _external=True)

@@ -51,6 +51,8 @@ class model(EntityPersistenceMixin, watch_base):
         # See llm/evaluator.py:tag_llm_decision().
         self['llm_backend_profile'] = kw.get('default', {}).get('llm_backend_profile', None)
         self['url_match_pattern'] = kw.get('default', {}).get('url_match_pattern', '')
+        # 'fallback' is how groups have always behaved, see notification_service.notification_senders()
+        self['notification_group_mode'] = kw.get('default', {}).get('notification_group_mode', 'fallback')
 
         if kw.get('default'):
             self.update(kw['default'])

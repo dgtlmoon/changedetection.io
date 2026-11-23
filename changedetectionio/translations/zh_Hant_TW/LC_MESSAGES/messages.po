@@ -2020,6 +2020,22 @@ msgid "Leave it to each watch"
 msgstr "由個別監測任務自行決定"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Send this group's notifications"
+msgstr "傳送此群組的通知"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch has none of its own"
+msgstr "僅當監測任務沒有自己的通知時"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "As well as the watch's own"
+msgstr "與監測任務自己的通知一併傳送"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's own"
+msgstr "取代監測任務自己的通知"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "標籤名稱"
 
@@ -2057,6 +2073,10 @@ msgstr "這些設定會<strong><i>新增</i></strong>至任何現有的監測設
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "文字過濾"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "The last two send this group's notification separately, with the title, body and format set here."
+msgstr "後兩項會以此處設定的標題、內文與格式另外傳送此群組的通知。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use with caution!"

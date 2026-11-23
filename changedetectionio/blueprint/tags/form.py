@@ -10,6 +10,11 @@ from wtforms.fields.simple import BooleanField
 from flask_babel import lazy_gettext as _l
 
 from changedetectionio.blueprint.tags.colour import CSS_HEX_COLOUR_REGEX
+from changedetectionio.notification import (
+    GROUP_NOTIFICATION_MODE_ADD,
+    GROUP_NOTIFICATION_MODE_FALLBACK,
+    GROUP_NOTIFICATION_MODE_REPLACE,
+)
 from changedetectionio.widgets.ternary_boolean import TernaryNoneBooleanField
 from changedetectionio.processors.restock_diff.forms import processor_settings_form as restock_settings_form
 from changedetectionio.llm.ui_strings import LLM_INTENT_TAG_PLACEHOLDER
@@ -60,6 +65,18 @@ class group_restock_settings_form(restock_settings_form):
             (LLM_PROMPT_MODE_APPEND,  _l('Append to the inherited prompt')),
         ],
         default=LLM_PROMPT_MODE_REPLACE,
+    )
+
+    # The first choice is how groups have always worked, the other two send the group's
+    # notification on its own - see notification_service.notification_senders()
+    notification_group_mode = RadioField(
+        _l("Send this group's notifications"),
+        choices=[
+            (GROUP_NOTIFICATION_MODE_FALLBACK, _l("Only if the watch has none of its own")),
+            (GROUP_NOTIFICATION_MODE_ADD, _l("As well as the watch's own")),
+            (GROUP_NOTIFICATION_MODE_REPLACE, _l("Instead of the watch's own")),
+        ],
+        default=GROUP_NOTIFICATION_MODE_FALLBACK,
     )
 
 class SingleTag(Form):
