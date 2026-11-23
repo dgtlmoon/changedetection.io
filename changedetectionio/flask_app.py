@@ -1587,6 +1587,14 @@ def changedetection_app(config=None, datastore_o=None):
     logger.info(f"Starting {n_workers} workers during app initialization")
     worker_pool.start_workers(n_workers, update_q, notification_q, app, datastore)
 
+    # Deleting a watch that is being checked stops that check, the worker is replaced
+    def stop_check_of_deleted_watch(sender=None, watch_uuid=None, **kwargs):
+        if watch_uuid and worker_pool.is_watch_running(watch_uuid):
+            worker_pool.cancel_running_uuid(watch_uuid, update_q=update_q, notification_q=notification_q,
+                                            app=app, datastore=datastore)
+
+    signal('watch_deleted').connect(stop_check_of_deleted_watch, weak=False)
+
     # Skip background threads in batch mode (just process queue and exit)
     batch_mode = app.config.get('batch_mode', False)
     if not batch_mode:
