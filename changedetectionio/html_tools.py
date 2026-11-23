@@ -799,13 +799,31 @@ def strip_ignore_text(content, wordlist, mode="content"):
     return ''.join([line for i, line in enumerate(lines) if i not in ignored_lines])
 
 def cdata_in_document_to_text(html_content: str, render_anchor_tag_content=False) -> str:
-    from xml.sax.saxutils import escape as xml_escape
-    pattern = '<!\[CDATA\[(\s*(?:.(?<!\]\]>)\s*)*)\]\]>'
-    def repl(m):
-        text = m.group(1)
-        return xml_escape(html_to_text(html_content=text)).strip()
+    """Replace each <![CDATA[ ... ]]> section with its content as text.
 
-    return re.sub(pattern, repl, html_content)
+    A plain left-to-right scan, so the time taken grows with the size of the document only. The regex this
+    replaces took exponentially longer on a CDATA section that was opened and never closed (30 spaces after
+    the opening were enough to hang the check), and the document comes from the watched site.
+    """
+    from xml.sax.saxutils import escape as xml_escape
+    cdata_start, cdata_end = '<![CDATA[', ']]>'
+
+    out = []
+    pos = 0
+    while True:
+        start = html_content.find(cdata_start, pos)
+        if start == -1:
+            break
+        end = html_content.find(cdata_end, start + len(cdata_start))
+        if end == -1:
+            # Never closed, so nothing that is opened after it can be closed either: the rest is left as it is
+            break
+        out.append(html_content[pos:start])
+        out.append(xml_escape(html_to_text(html_content=html_content[start + len(cdata_start):end])).strip())
+        pos = end + len(cdata_end)
+
+    out.append(html_content[pos:])
+    return ''.join(out)
 
 
 # NOTE!! ANYTHING LIBXML, HTML5LIB ETC WILL CAUSE SOME SMALL MEMORY LEAK IN THE LOCAL "LIB" IMPLEMENTATION OUTSIDE PYTHON
