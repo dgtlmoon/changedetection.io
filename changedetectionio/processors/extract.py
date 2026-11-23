@@ -114,7 +114,11 @@ def process_extraction(watch, datastore, request, url_for, make_response, send_f
         )
 
     extract_regex = request.form.get('extract_regex', '').strip()
-    output = watch.extract_regex_from_all_history(extract_regex)
+    try:
+        output = watch.extract_regex_from_all_history(extract_regex)
+    except TimeoutError:
+        flash(gettext('That RegEx took too long to run, try a simpler one.'), 'error')
+        return redirect(url_for('ui.ui_diff.diff_history_page_extract_GET', uuid=uuid))
 
     if output:
         watch_dir = os.path.join(datastore.datastore_path, uuid)

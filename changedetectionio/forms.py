@@ -644,9 +644,17 @@ class ValidateSinglePythonRegexString(object):
         self.message = message
 
     def __call__(self, form, field):
+        # Same engine and length limit as where it is run, see Watch.extract_regex_from_all_history()
+        import regex as regex_lib
+        from changedetectionio.model.Watch import model as watch_model
+
+        pattern = field.data or ''
+        if len(pattern) > watch_model.FIND_CHANGE_MAX_PATTERN:
+            raise ValidationError(gettext('RegEx is too long, at most %(max)s characters.', max=watch_model.FIND_CHANGE_MAX_PATTERN))
+
         try:
-            re.compile(field.data)
-        except re.error:
+            regex_lib.compile(pattern)
+        except regex_lib.error:
             message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
             raise ValidationError(message % (field.data))
 

@@ -3880,6 +3880,11 @@ msgstr "«%s» не является допустимым URL-адресом App
 
 #: changedetectionio/forms.py
 #, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegEx слишком длинный, не более %(max)s символов."
+
+#: changedetectionio/forms.py
+#, python-format
 msgid "RegEx '%s' is not a valid regular expression."
 msgstr "RegEx «%s» не является допустимым регулярным выражением."
 
@@ -4709,6 +4714,10 @@ msgstr "Обязательно"
 #: changedetectionio/notification/apprise_form.py
 msgid "The URL must start with http:// or https://"
 msgstr "URL должен начинаться с http:// или https://"
+
+#: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "Этот RegEx выполнялся слишком долго, попробуйте проще."
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."

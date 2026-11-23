@@ -3921,6 +3921,11 @@ msgstr "„%s” nie jest prawidłowym adresem URL serwisu AppRise."
 
 #: changedetectionio/forms.py
 #, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegEx jest za długi, maksymalnie %(max)s znaków."
+
+#: changedetectionio/forms.py
+#, python-format
 msgid "RegEx '%s' is not a valid regular expression."
 msgstr "Wyrażenie regularne „%s” nie jest prawidłowym wyrażeniem regularnym."
 
@@ -4750,6 +4755,10 @@ msgstr "Wymagane"
 #: changedetectionio/notification/apprise_form.py
 msgid "The URL must start with http:// or https://"
 msgstr "URL musi zaczynać się od http:// lub https://"
+
+#: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "Ten RegEx działał zbyt długo, spróbuj prostszego."
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."

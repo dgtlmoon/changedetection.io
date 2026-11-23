@@ -3722,6 +3722,11 @@ msgstr "'%s'은(는) 유효한 AppRise URL이 아닙니다."
 
 #: changedetectionio/forms.py
 #, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegEx가 너무 깁니다. 최대 %(max)s자입니다."
+
+#: changedetectionio/forms.py
+#, python-format
 msgid "RegEx '%s' is not a valid regular expression."
 msgstr "정규식 '%s'은(는) 유효하지 않습니다."
 
@@ -4551,6 +4556,10 @@ msgstr "필수"
 #: changedetectionio/notification/apprise_form.py
 msgid "The URL must start with http:// or https://"
 msgstr "URL은 http:// 또는 https://로 시작해야 합니다"
+
+#: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "해당 RegEx 실행 시간이 너무 깁니다. 더 단순한 것을 사용하세요."
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."

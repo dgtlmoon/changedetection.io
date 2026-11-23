@@ -3712,6 +3712,11 @@ msgstr ""
 
 #: changedetectionio/forms.py
 #, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr ""
+
+#: changedetectionio/forms.py
+#, python-format
 msgid "RegEx '%s' is not a valid regular expression."
 msgstr ""
 
@@ -4540,6 +4545,10 @@ msgstr ""
 
 #: changedetectionio/notification/apprise_form.py
 msgid "The URL must start with http:// or https://"
+msgstr ""
+
+#: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
 msgstr ""
 
 #: changedetectionio/processors/extract.py
