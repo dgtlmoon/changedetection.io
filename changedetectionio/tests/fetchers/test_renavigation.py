@@ -60,6 +60,35 @@ def test_interstitial_redirect_is_followed(client, live_server, measure_memory_u
     client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
 
 
+def test_redirect_from_the_load_event_is_followed(client, live_server, measure_memory_usage, datastore_path):
+    """An empty page that navigates on from its own load event (a parked domain) is not an EmptyReply"""
+    assert os.getenv('PLAYWRIGHT_DRIVER_URL'), "Needs PLAYWRIGHT_DRIVER_URL set for this test"
+
+    res = client.post(
+        url_for("settings.settings_page"),
+        data={
+            "application-empty_pages_are_a_change": "",
+            "requests-time_between_check-minutes": 180,
+            'application-fetch_backend': "html_webdriver",
+        },
+        follow_redirects=True
+    )
+    assert b"Settings updated." in res.data
+
+    datastore = live_server.app.config['DATASTORE']
+    uuid = datastore.add_watch(url=_cdio(url_for('test_onload_redirect', _external=True)))
+    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+
+    watch = datastore.data['watching'][uuid]
+    assert not watch.get('last_error'), \
+        f"The page it was sent on to loaded fine, but the fetch failed: {watch.get('last_error')}"
+    assert watch.history_n >= 1, "Fetch succeeded but no snapshot was stored"
+    assert 'This domain is for sale' in watch.get_history_snapshot(list(watch.history.keys())[-1])
+
+    client.post(url_for("ui.form_delete", uuid="all"), follow_redirects=True)
+
+
 def test_har_record_env_writes_har_zip(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """HAR_UUID_RECORD=<uuid> saves the network traffic of that watch's fetch to har-record.zip"""
     import json

@@ -14,7 +14,7 @@ inscriptis>=2.7.6,<2.7.7
 python-engineio>=4.15.1,<5
 python-socketio>=5.18.1,<6
 pytz
-regex>=2026.11.9 # regex_replace Jinja2 filter, thread-safe timeout= for ReDoS protection
+regex>=2026.11.15 # regex_replace Jinja2 filter, thread-safe timeout= for ReDoS protection
 timeago~=1.0
 validators~=0.36
 werkzeug==3.1.9
@@ -84,6 +84,8 @@ selenium~=4.52.0
 jinja2~=3.1
 arrow
 openpyxl
+# Safe XML parsing for the XLSX import
+defusedxml
 # https://peps.python.org/pep-0508/#environment-markers
 # https://github.com/dgtlmoon/changedetection.io/pull/1009
 jq~=1.13; python_version >= "3.8" and sys_platform == "darwin"
@@ -170,7 +172,7 @@ pydantic>=2.14.3,<3.0
 # (starlette/uvicorn). ~15MB once loaded, so only imported on the first authenticated /mcp request.
 mcp-types>=2.3.0,<3.0
 # For MCP LLM server
-authlib>=1.9.5,<2.0
+authlib>=1.9.8,<2.0
 # BM25 relevance trimming for large snapshots (pure Python, no ML)
 rank-bm25>=0.2.2
 

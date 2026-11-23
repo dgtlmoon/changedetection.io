@@ -1,6 +1,7 @@
 import ipaddress
 import re
 import socket
+import sys
 from loguru import logger
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode, quote, unquote
 
@@ -141,6 +142,41 @@ def is_special_purpose_ip(ip):
     return False, ''
 
 
+# fe80::/10 itself. Not ip.is_link_local: from Python 3.13 that is also True for an IPv4-mapped
+# address such as ::ffff:169.254.169.254, which is not link-local IPv6 at all - it is IPv4 cloud
+# metadata, and connecting to it works.
+_IPV6_LINK_LOCAL_NETWORK = ipaddress.ip_network('fe80::/10')
+
+
+def _is_unreachable_link_local(family, ip, sockaddr):
+    """True for an IPv6 link-local address that arrived with no zone id, i.e. one nothing can
+    connect to.
+
+    fe80::/10 is only routable together with an interface scope ('fe80::1%eth0'). DNS AAAA
+    records cannot carry a zone id, so a link-local answer from getaddrinfo() comes back with
+    sin6_scope_id == 0 and connect() rejects it outright (EINVAL on Linux) - it is a dead
+    record, not a route into the fetcher's link segment.
+
+    Deliberately narrow:
+      * Only a real fe80::/10 address. IPv4 link-local (169.254.0.0/16, and with it
+        169.254.169.254 cloud metadata) is NOT covered, however it is written: as an A record
+        or wrapped in IPv6 (::ffff:169.254.169.254). That one IS reachable and must stay blocked.
+      * A scoped literal such as http://[fe80::1%25eth0]/ resolves with scope_id != 0 and so
+        is not covered either.
+      * Only on Linux, where the refusal by connect() is known. Other systems can pick a default
+        interface for an address without a zone id, so there the record still blocks the hostname.
+    """
+    return (
+        sys.platform.startswith('linux')
+        and family == socket.AF_INET6
+        and isinstance(ip, ipaddress.IPv6Address)
+        and ip.ipv4_mapped is None
+        and ip in _IPV6_LINK_LOCAL_NETWORK
+        and len(sockaddr) > 3
+        and sockaddr[3] == 0
+    )
+
+
 def is_private_hostname(hostname, classify_only=False):
     """Return True if hostname resolves to an IANA-restricted (private/reserved/non-global) IP address.
 
@@ -156,17 +192,32 @@ def is_private_hostname(hostname, classify_only=False):
 
     A hostname is refused if ANY of its A/AAAA records is off-limits: a name that answers
     with one public and one CGNAT address is still a route to the CGNAT address.
+
+    ONE exception, and it is narrow (see _is_unreachable_link_local): a bare IPv6 link-local
+    AAAA record alongside at least one address we would allow. Plenty of real sites publish a
+    junk 'fe80::...' AAAA - it is the server's own NIC autoconf address leaked into DNS by a
+    misconfigured control panel - and refusing the whole hostname over a record nothing can
+    connect to blocks legitimate sites for no security gain.
     """
+    allowed_addresses = 0
+    deferred = []  # unreachable link-local records - only fatal if nothing else resolves
+
     try:
         for info in socket.getaddrinfo(hostname, None):
-            ip = ipaddress.ip_address(info[4][0])
+            family, sockaddr = info[0], info[4]
+            ip = ipaddress.ip_address(sockaddr[0])
             blocked, why = is_special_purpose_ip(ip)
-            if blocked:
-                if classify_only:
-                    logger.debug(f"Hostname '{hostname}' resolves to {ip} which is {why}.")
-                else:
-                    logger.warning(f"Hostname '{hostname}' resolves to {ip} which is {why} — refused.")
-                return True
+            if not blocked:
+                allowed_addresses += 1
+                continue
+            if _is_unreachable_link_local(family, ip, sockaddr):
+                deferred.append(ip)
+                continue
+            if classify_only:
+                logger.debug(f"Hostname '{hostname}' resolves to {ip} which is {why}.")
+            else:
+                logger.warning(f"Hostname '{hostname}' resolves to {ip} which is {why} — refused.")
+            return True
     except socket.gaierror as e:
         (logger.debug if classify_only else logger.warning)(f"{hostname} error checking {str(e)}")
         return False
@@ -174,6 +225,22 @@ def is_private_hostname(hostname, classify_only=False):
         # getaddrinfo handed back something ip_address() won't parse - fail closed.
         logger.warning(f"Hostname '{hostname}' produced an unparseable address ({e}) — refused.")
         return True
+
+    if deferred and not allowed_addresses:
+        # Every answer was link-local. Nothing legitimate looks like this, and it is what
+        # deliberately pointing a public name at the fetcher's own link segment would look
+        # like, so keep refusing it.
+        link_local_addresses = ', '.join(str(i) for i in deferred)
+        if classify_only:
+            logger.debug(f"Hostname '{hostname}' resolves only to link-local addresses ({link_local_addresses}).")
+        else:
+            logger.warning(f"Hostname '{hostname}' resolves only to link-local addresses ({link_local_addresses}) — refused.")
+        return True
+    if deferred:
+        logger.debug(f"Hostname '{hostname}' has unroutable link-local AAAA record(s) "
+                     f"({', '.join(str(i) for i in deferred)}) - ignored, it also resolves to "
+                     f"{allowed_addresses} usable address(es).")
+
     (logger.debug if classify_only else logger.info)(f"Hostname '{hostname}' is NOT private/IANA restricted.")
     return False
 

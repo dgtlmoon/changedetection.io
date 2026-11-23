@@ -4,6 +4,7 @@ import re
 from loguru import logger
 from urllib.parse import urlparse
 from .email_helpers import as_monospaced_html_email
+from .masking import notification_url_for_logs
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE, HTML_CHANGED_INTO_STYLE
@@ -148,6 +149,18 @@ def apply_standard_markdown_to_body(n_body):
     return n_body
 
 
+# Red / yellow / green circles: Unicode, so they show the same in Slack's apps, e-mail digests and exports
+SLACK_REMOVED_MARK = '\U0001F534'
+SLACK_CHANGED_MARK = '\U0001F7E1'
+SLACK_ADDED_MARK = '\U0001F7E2'
+
+
+def is_slack_url(url):
+    """slack:// and anything addressed to a Slack webhook (https://, or our post:// posts:// handlers)."""
+    url = (url or '').strip().lower()
+    return url.startswith('slack://') or '://hooks.slack.com/' in url or '://hooks.slack-gov.com/' in url
+
+
 def replace_placemarkers_in_text(text, url, requested_output_format):
     """
     Replace diff placemarkers in text based on the URL service type and requested output format.
@@ -177,6 +190,19 @@ def replace_placemarkers_in_text(text, url, requested_output_format):
           or url.startswith('https://discord.com/api')) and requested_output_format == 'html':
         # Discord doesn't support HTML, use Discord markdown
         text = apply_discord_markdown_to_body(n_body=text)
+    elif is_slack_url(url):
+        # Slack renders neither HTML nor colours (the "HTML Color" spans would simply be stripped and
+        # the reader could no longer tell what was removed from what was added), so mark each line
+        # with a coloured emoji and a word. Same for every format, also for a JSON body posted
+        # straight to a Slack webhook, where HTML attributes would break the JSON.
+        text = text.replace(REMOVED_PLACEMARKER_OPEN, f'{SLACK_REMOVED_MARK} (removed) ')
+        text = text.replace(REMOVED_PLACEMARKER_CLOSED, '')
+        text = text.replace(ADDED_PLACEMARKER_OPEN, f'{SLACK_ADDED_MARK} (added) ')
+        text = text.replace(ADDED_PLACEMARKER_CLOSED, '')
+        text = text.replace(CHANGED_PLACEMARKER_OPEN, f'{SLACK_CHANGED_MARK} (changed) ')
+        text = text.replace(CHANGED_PLACEMARKER_CLOSED, '')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'{SLACK_ADDED_MARK} (into) ')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_CLOSED, '')
     elif requested_output_format == 'htmlcolor':
         # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
         text = text.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
@@ -424,11 +450,12 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             url = url.strip()
             if not url or url.startswith('#'):
-                logger.debug(f"Skipping commented out or empty notification URL - '{url}'")
+                logger.debug("Skipping commented out or empty notification URL")
                 continue
 
-            logger.info(f">> Process Notification: AppRise start notifying '{url}'")
             url = jinja_render(template_str=url, **notification_parameters)
+            # Never the URL itself, its password or token would be in the logs with it
+            logger.info(f">> Process Notification: AppRise start notifying '{notification_url_for_logs(url)}'")
 
             if 'html' in requested_output_format:
                 # Since the n_body is always some kind of text from the 'diff' engine, attempt to preserve whitespaces that get sent to the HTML output

@@ -12,7 +12,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio import gc_debounce
-from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.content_fetchers.base import Fetcher, browser_address_for_logs, get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
@@ -472,7 +472,7 @@ class fetcher(Fetcher):
         # Connect directly using the specified browser_ws_endpoint
         # @todo timeout
         try:
-            logger.debug(f"[{watch_uuid}] Connecting to browser at {self.browser_connection_url}")
+            logger.debug(f"[{watch_uuid}] Connecting to browser at {browser_address_for_logs(self.browser_connection_url)}")
             self.browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
                                                             ignoreHTTPSErrors=True
                                                             )
@@ -793,6 +793,15 @@ class fetcher(Fetcher):
                     if goto_task in done:
                         try:
                             response = goto_task.result()
+                            if response is None and navigation_response.get('response'):
+                                # goto() hands back nothing when the page starts its next navigation
+                                # from its own load event (a parked domain: an empty document whose
+                                # onload sets location.href). That is not "the page did not fetch" -
+                                # retrying gets the same answer three times in a row and ends as an
+                                # EmptyReply, on a page that goes on to load perfectly well.
+                                response = navigation_response['response']
+                                logger.debug(f"goto() returned no response (the page navigated again as it loaded), "
+                                             f"continuing with the one seen for {response.url} - status {response.status}")
                         except Exception as e:
                             if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
                                 raise

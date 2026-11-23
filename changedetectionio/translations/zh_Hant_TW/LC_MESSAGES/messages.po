@@ -3318,6 +3318,10 @@ msgid "Set proxy for selected"
 msgstr "為所選項目設定代理伺服器"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Download CSV"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
 msgstr "標記為已讀"
 
@@ -3708,6 +3712,11 @@ msgstr "使用通知 URL 時，必須填寫通知內容與標題"
 #, python-format
 msgid "'%s' is not a valid AppRise URL."
 msgstr "「%s」不是有效的 AppRise URL。"
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegEx 過長，最多 %(max)s 個字元。"
 
 #: changedetectionio/forms.py
 #, python-format
@@ -4542,6 +4551,10 @@ msgid "The URL must start with http:// or https://"
 msgstr "URL 必須以 http:// 或 https:// 開頭"
 
 #: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "該 RegEx 執行時間過長，請嘗試更簡單的表達式。"
+
+#: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr "掃描此 RegEx 的所有監測歷史記錄時找不到相符項目。"
 
@@ -4923,6 +4936,11 @@ msgstr "每行一個，名稱=值"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Fill in the fields to build the URL"
 msgstr "填寫欄位以產生 URL"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"
@@ -5502,6 +5520,14 @@ msgstr "過濾後的內容"
 #: changedetectionio/templates/base.html
 msgid "Content raw/before filters"
 msgstr "過濾前的原始內容"
+
+#: changedetectionio/templates/base.html
+msgid "Move this step up"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Move this step down"
+msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Main navigation"

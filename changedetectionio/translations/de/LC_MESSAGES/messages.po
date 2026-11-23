@@ -3421,6 +3421,10 @@ msgid "Set proxy for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Download CSV"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Mark viewed"
 msgstr "Markierung angesehen"
 
@@ -3824,6 +3828,11 @@ msgstr "Benachrichtigungstext und Titel sind erforderlich, wenn eine Benachricht
 #, python-format
 msgid "'%s' is not a valid AppRise URL."
 msgstr "„%s“ ist keine gültige AppRise-URL."
+
+#: changedetectionio/forms.py
+#, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegEx ist zu lang, höchstens %(max)s Zeichen."
 
 #: changedetectionio/forms.py
 #, python-format
@@ -4659,6 +4668,10 @@ msgid "The URL must start with http:// or https://"
 msgstr "Die URL muss mit http:// oder https:// beginnen"
 
 #: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "Dieser RegEx lief zu lange, bitte einen einfacheren verwenden."
+
+#: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."
 msgstr ""
 "Beim Durchsuchen des gesamten Überwachungsverlaufs nach diesem regulären Ausdruck wurden keine Übereinstimmungen "
@@ -5042,6 +5055,11 @@ msgstr "Eine pro Zeile, Name=Wert"
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Fill in the fields to build the URL"
 msgstr "Felder ausfüllen, um die URL zu erstellen"
+
+#: changedetectionio/templates/_common_fields-notification.html
+#, python-format
+msgid "Fill in one of: %(choices)s"
+msgstr ""
 
 #: changedetectionio/templates/_common_fields-notification.html
 msgid "Added to the list below"
@@ -5620,6 +5638,14 @@ msgstr ""
 
 #: changedetectionio/templates/base.html
 msgid "Content raw/before filters"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Move this step up"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Move this step down"
 msgstr ""
 
 #: changedetectionio/templates/base.html

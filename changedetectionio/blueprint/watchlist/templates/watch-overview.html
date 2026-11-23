@@ -143,9 +143,11 @@ window.watchOverviewI18n = {
 
 
 <div class="box" id="add-watch-ui">
-    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <div id="add-watch-url-row">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {# Adding from inside a group puts the new watch in that group #}
+            {% if active_tag_uuid %}<input type="hidden" name="tags" value="{{ active_tag_uuid }}">{% endif %}
             <label for="url"><strong>{{ _('Web page URL') }}</strong></label>
             {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1", span_wrap=false) }}
             <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
@@ -293,6 +295,8 @@ window.watchOverviewI18n = {
         {# Hidden real operation buttons triggered by the Browser/Proxy modals once a choice is made #}
         <button type="submit" name="op" value="set-fetch-backend" id="op-set-fetch-backend" hidden></button>
         <button type="submit" name="op" value="set-proxy" id="op-set-proxy" hidden></button>
+        <button type="submit" class="pure-button button-secondary button-xsmall" id="checkbox-export"
+                formmethod="post" formaction="{{ url_for('ui.export_selected_watches') }}"><i data-feather="download"></i>&nbsp;{{ _('Download CSV') }}</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="mark-viewed"><i data-feather="eye" ></i>&nbsp;{{ _('Mark viewed') }}</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="mark-unviewed"><i data-feather="eye-off" ></i>&nbsp;{{ _('Mark unviewed') }}</button>
         <button class="pure-button button-secondary button-xsmall" name="op" value="notification-default"><i data-feather="bell" ></i>&nbsp;{{ _('Use default notification') }}</button>

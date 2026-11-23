@@ -72,6 +72,18 @@ def manage_user_agent(headers, current_ua=''):
 
     return None
 
+
+def browser_address_for_logs(browser_connection_url):
+    """Where the browser is, without the rest of its connection URL: the query string carries the
+    access token of the browser service and the proxy of the watch."""
+    from urllib.parse import urlsplit
+    try:
+        parts = urlsplit(browser_connection_url)
+        return f"{parts.scheme}://{parts.hostname}{':' + str(parts.port) if parts.port else ''}"
+    except Exception:
+        return '(browser address not readable)'
+
+
 class Fetcher():
     # The fully-resolved concrete backend name this fetcher was chosen as
     # (e.g. 'html_requests', 'html_webdriver'). Set by resolve_content_fetcher()
