@@ -3768,6 +3768,11 @@ msgstr "'%s' není platná URL AppRise."
 
 #: changedetectionio/forms.py
 #, python-format
+msgid "RegEx is too long, at most %(max)s characters."
+msgstr "RegEx je příliš dlouhý, nejvýše %(max)s znaků."
+
+#: changedetectionio/forms.py
+#, python-format
 msgid "RegEx '%s' is not a valid regular expression."
 msgstr "RegEx '%s' není platný regulární výraz."
 
@@ -4597,6 +4602,10 @@ msgstr "Povinné"
 #: changedetectionio/notification/apprise_form.py
 msgid "The URL must start with http:// or https://"
 msgstr "URL musí začínat http:// nebo https://"
+
+#: changedetectionio/processors/extract.py
+msgid "That RegEx took too long to run, try a simpler one."
+msgstr "Tento RegEx běžel příliš dlouho, zkuste jednodušší."
 
 #: changedetectionio/processors/extract.py
 msgid "No matches found while scanning all of the watch history for that RegEx."

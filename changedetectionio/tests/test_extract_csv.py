@@ -71,3 +71,49 @@ def test_check_extract_text_from_diff(client, live_server, measure_memory_usage,
     assert(output[6][2] == last_date)
     # And nothing else, only that group () of the decimal and .
     assert "time flies" not in output[6][2]
+
+
+def test_extract_regex_is_time_limited(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """A regex that backtracks forever is stopped, and one that is too long is refused."""
+    from changedetectionio.jinja2_custom.plugins import regex as regex_plugin
+    from .util import delete_all_watches
+
+    # 'a' repeated then a 'b' makes (a+)+$ try every way of splitting the run of a's
+    with open(os.path.join(datastore_path, "endpoint-content.txt"), "w") as f:
+        f.write("a" * 5000 + "b")
+
+    datastore = client.application.config.get('DATASTORE')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True))
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert datastore.data['watching'][uuid].history_n == 1
+
+    monkeypatch.setattr(regex_plugin, 'REGEX_TIMEOUT_SECONDS', 1)
+    started = time.time()
+    res = client.post(
+        url_for("ui.ui_diff.diff_history_page_extract_POST", uuid=uuid),
+        data={"extract_regex": "(a+)+$", "extract_submit_button": "Extract as CSV"},
+        follow_redirects=True
+    )
+    assert time.time() - started < 8, "The regex should have been stopped by its time limit"
+    assert b'took too long' in res.data
+    assert res.content_type != 'text/csv'
+
+    res = client.post(
+        url_for("ui.ui_diff.diff_history_page_extract_POST", uuid=uuid),
+        data={"extract_regex": "a" * 501, "extract_submit_button": "Extract as CSV"},
+        follow_redirects=True
+    )
+    assert b'RegEx is too long' in res.data
+    assert res.content_type != 'text/csv'
+
+    # A normal one still works
+    res = client.post(
+        url_for("ui.ui_diff.diff_history_page_extract_POST", uuid=uuid),
+        data={"extract_regex": "a{3}(b)", "extract_submit_button": "Extract as CSV"},
+        follow_redirects=False
+    )
+    assert res.content_type == 'text/csv'
+    assert b',b' in res.data
+
+    delete_all_watches(client)
