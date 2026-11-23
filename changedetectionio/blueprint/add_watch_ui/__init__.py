@@ -34,9 +34,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         # Start on the browser the live preview would actually use
         form.fetch_backend.data = browser_config.default_visual_browser(datastore)
 
+        # Opened from inside a group on the watch list (?tag=<uuid>), start with that group filled in
+        active_tag = datastore.data['settings']['application'].get('tags', {}).get(request.args.get('tag', '').strip())
+        active_tag_title = active_tag.get('title', '') if active_tag else ''
+
         return render_template(
             "add-watch-ui.html",
             browser_backend_disabled=strtobool(os.getenv('ADD_WATCH_UI_BROWSER_BACKEND_DISABLED', 'False')),
+            active_tag_title=active_tag_title,
             form=form,
             llm_configured=llm_configured,
             llm_intent_watch_placeholder=LLM_INTENT_WATCH_PLACEHOLDER,

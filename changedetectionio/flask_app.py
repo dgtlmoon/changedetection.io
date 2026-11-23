@@ -186,6 +186,10 @@ app.config['BABEL_DEFAULT_LOCALE'] = 'en_GB'
 from datetime import timedelta
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)  # ~10 years (effectively unlimited)
+# Say it rather than rely on each browser's default: the login cookies are not sent on requests made by other sites
+# (a link someone follows to here still carries them).
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 
 # app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
@@ -776,7 +780,9 @@ class User(flask_login.UserMixin):
         )
         new_key = salt_from_storage + new_key
 
-        return new_key == raw_salt_pass
+        # Constant-time, so how long the comparison takes says nothing about how much of it matched
+        import hmac
+        return hmac.compare_digest(new_key, raw_salt_pass)
 
     pass
 
@@ -1230,10 +1236,14 @@ def changedetection_app(config=None, datastore_o=None):
         if not group or not filename:
             abort(404)
 
+        # The password can be kept in the settings or given in the environment, a watch's own files
+        # (screenshot, favicon, selector data) need a login either way
+        password_is_set = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+
         if group == 'screenshot':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 if not datastore.data['settings']['application'].get('shared_diff_access'):
@@ -1265,7 +1275,7 @@ def changedetection_app(config=None, datastore_o=None):
         if group == 'favicon':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 abort(403)
@@ -1296,7 +1306,7 @@ def changedetection_app(config=None, datastore_o=None):
         if group == 'visual_selector_data':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 abort(403)

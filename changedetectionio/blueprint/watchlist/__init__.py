@@ -29,14 +29,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         if not watch:
             flash(_('Watch not found'), 'error')
-        else:
-            if op == 'pause':
-                watch.toggle_pause()
-            elif op == 'mute':
-                watch.toggle_mute()
-            watch.commit()
+            return redirect(url_for('watchlist.index', tag=request.args.get('tag')))
 
-        return redirect(url_for('watchlist.index', tag=request.args.get('tag')))
+        if op == 'pause':
+            watch.toggle_pause()
+        elif op == 'mute':
+            watch.toggle_mute()
+        watch.commit()
+
+        # Each watch row has id="<uuid>", so the anchor brings the browser back to the
+        # row that was toggled instead of the top of a long list
+        return redirect(url_for('watchlist.index', tag=request.args.get('tag'), _anchor=uuid))
 
     @watchlist_blueprint.route("/", methods=['GET'])
     @login_optionally_required

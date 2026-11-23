@@ -143,9 +143,11 @@ window.watchOverviewI18n = {
 
 
 <div class="box" id="add-watch-ui">
-    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add') }}" method="POST" id="new-watch-form">
+    <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <div id="add-watch-url-row">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {# Adding from inside a group puts the new watch in that group #}
+            {% if active_tag_uuid %}<input type="hidden" name="tags" value="{{ active_tag_uuid }}">{% endif %}
             <label for="url"><strong>{{ _('Web page URL') }}</strong></label>
             {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1", span_wrap=false) }}
             <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
