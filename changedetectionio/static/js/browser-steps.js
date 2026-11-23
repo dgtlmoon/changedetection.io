@@ -357,13 +357,48 @@ $(document).ready(function () {
     function set_greyed_state() {
         $('ul#browser_steps select').not('option:selected[value="Choose one"]').closest('li').removeClass('empty');
         $('ul#browser_steps select option:selected[value="Choose one"]').closest('li').addClass('empty');
+        set_move_buttons_state();
+    }
+
+    // A step can't move above the first one, or down into the unused (empty) steps
+    function set_move_buttons_state() {
+        var steps = $('ul#browser_steps li');
+        steps.each(function (i) {
+            var next = steps[i + 1];
+            $('.move-up', this).toggleClass('pure-button-disabled', i === 0);
+            $('.move-down', this).toggleClass('pure-button-disabled', !next || $(next).hasClass('empty'));
+        });
+    }
+
+    function get_step_values(step) {
+        var inputs = $('input[type=text]', step);
+        return {
+            'operation': $('select', step).val(),
+            'selector': inputs[0].value,
+            'optional_value': inputs[1].value
+        };
+    }
+
+    function set_step_values(step, values) {
+        var inputs = $('input[type=text]', step);
+        $('select', step).val(values['operation']);
+        inputs[0].value = values['selector'];
+        inputs[1].value = values['optional_value'];
+        // Triggers reconfiguring the field based on the system config
+        $('select', step).change();
+        // The screenshots and error highlight from the last run belong to whatever step was in this
+        // position at the time, so they no longer describe what is here now
+        $('.show-screenshot', step).remove();
+        $(step).removeClass('browser-step-with-error');
     }
 
     // Add the extra buttons to the steps
     $('ul#browser_steps li').each(function (i) {
             var s = '<div class="control">' + '<a data-step-index=' + i + ' class="pure-button button-secondary button-green button-xsmall apply" >Apply</a>&nbsp;';
             s += `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall clear" >Clear</a>&nbsp;` +
-                `<a data-step-index="${i}" class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>`;
+                `<a data-step-index="${i}" class="pure-button button-secondary button-red button-xsmall remove" >Remove</a>&nbsp;` +
+                `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall move-up" >&uarr;</a>&nbsp;` +
+                `<a data-step-index="${i}" class="pure-button button-secondary button-xsmall move-down" >&darr;</a>`;
 
             // if a screenshot is available
             if (browser_steps_available_screenshots.includes(i.toString())) {
@@ -372,6 +407,9 @@ $(document).ready(function () {
             }
             s += '</div>';
             $(this).append(s)
+            // Set as attributes, a translated title could contain quotes
+            $('.move-up', this).attr('title', i18nT('bsMoveUp', 'Move this step up'));
+            $('.move-down', this).attr('title', i18nT('bsMoveDown', 'Move this step down'));
         }
     );
 
@@ -382,27 +420,33 @@ $(document).ready(function () {
 
 
     $('ul#browser_steps li .control .remove').click(function (element) {
+        var steps = $("#browser_steps li");
         // so you wanna remove the 2nd (3rd spot 0,1,2,...)
-        var p = $("#browser_steps li").index($(this).closest('li'));
+        var p = steps.index($(this).closest('li'));
 
-        var elem_to_remove = $("#browser_steps li")[p];
-        $('.clear', elem_to_remove).click();
-        $("#browser_steps li").slice(p, 10).each(function (index) {
-            // get the next one's value from where we clicked
-            var next = $("#browser_steps li")[p + index + 1];
-            if (next) {
-                // and set THIS ones value from the next one
-                var n = $('input', next);
-                $("select", $(this)).val($('select', next).val());
-                $('input', this)[0].value = $(n)[0].value;
-                $('input', this)[1].value = $(n)[1].value;
-                // Triggers reconfiguring the field based on the system config
-                $("select", $(this)).change();
-            }
-
-        });
+        // Shift every step after it up by one, the last step is then left over and gets emptied
+        for (var i = p; i < steps.length - 1; i++) {
+            set_step_values(steps[i], get_step_values(steps[i + 1]));
+        }
+        set_step_values(steps.last(), {'operation': 'Choose one', 'selector': '', 'optional_value': ''});
 
         // Reset their hidden/empty states
+        set_greyed_state();
+    });
+
+    $('ul#browser_steps li .control .move-up, ul#browser_steps li .control .move-down').click(function () {
+        if ($(this).hasClass('pure-button-disabled')) {
+            return;
+        }
+        var steps = $("#browser_steps li");
+        var p = steps.index($(this).closest('li'));
+        var target = $(this).hasClass('move-up') ? p - 1 : p + 1;
+
+        // Swap the two steps around
+        var values = get_step_values(steps[p]);
+        set_step_values(steps[p], get_step_values(steps[target]));
+        set_step_values(steps[target], values);
+
         set_greyed_state();
     });
 

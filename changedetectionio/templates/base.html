@@ -83,7 +83,9 @@
             highlightIgnored: {{ _('Ignored for calculating changes, but still shown.')|tojson }},
             highlightBlocked: {{ _('No change-detection will occur because this text exists.')|tojson }},
             tabContentAfter:  {{ _('Content after filters')|tojson }},
-            tabContentBefore: {{ _('Content raw/before filters')|tojson }}
+            tabContentBefore: {{ _('Content raw/before filters')|tojson }},
+            bsMoveUp:         {{ _('Move this step up')|tojson }},
+            bsMoveDown:       {{ _('Move this step down')|tojson }}
         };
         window.i18nT = function (key, fallback) {
             return (window.i18n && key in window.i18n) ? window.i18n[key] : fallback;

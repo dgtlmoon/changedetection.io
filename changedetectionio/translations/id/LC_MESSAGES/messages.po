@@ -5680,6 +5680,14 @@ msgid "Content raw/before filters"
 msgstr "Konten mentah/sebelum filter"
 
 #: changedetectionio/templates/base.html
+msgid "Move this step up"
+msgstr ""
+
+#: changedetectionio/templates/base.html
+msgid "Move this step down"
+msgstr ""
+
+#: changedetectionio/templates/base.html
 msgid "Main navigation"
 msgstr "Navigasi utama"
 
