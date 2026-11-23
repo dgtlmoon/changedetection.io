@@ -24,6 +24,86 @@ async def _configure_puppeteer_csp(page):
         await page.setBypassCSP(True)
 
 
+# Resuming happens on the way out, also of a capture that failed or ran out of time on a browser that
+# has stopped answering - waiting on it there would hold up the worker long after the fetch was given up on
+RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS = 5
+
+
+async def _set_page_scripts_paused(page, paused):
+    """Stop (or resume) the page's own scripts. What is already rendered stays and a plain
+    evaluate() still answers, but timers and frames stop too: an evaluate() that waits on one never
+    returns, so nothing is extracted while paused. Returns False when the browser would not do it."""
+    try:
+        request = page._client.send('Emulation.setScriptExecutionDisabled', {'value': paused})
+        if paused:
+            await request
+        else:
+            await asyncio.wait_for(request, timeout=RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS)
+        return True
+    except Exception as e:
+        logger.debug(f"Could not {'pause' if paused else 'resume'} the page's scripts: {type(e).__name__} {e}")
+        return False
+
+
+# A large canvas below the first screen is what makes a capture beyond the viewport slow, or keeps it
+# from ever returning. Measured on a browser without a GPU: a 2600x2600 WebGL canvas far down a page
+# hung the capture (the page with it hidden took 3s), a 2300x800 one made its band take 27s against
+# 7s. Canvases with more pixels than this - a little more than a whole 1280x1024 screen - are left
+# blank, except on the first screen: when one is there the first screen is captured the ordinary
+# way, with everything on it. A graph is smaller than a screen (the ones measured: 1.2 million
+# pixels at most).
+SCREENSHOT_MAX_CANVAS_PIXELS = int(os.getenv("SCREENSHOT_MAX_CANVAS_PIXELS", 1_500_000))
+
+# How many canvases are over the limit, and whether one of them is (partly) on the first screen. The
+# height of the screen is passed in, window.innerHeight is not to be trusted with stealth scripts loaded.
+FIND_LARGE_CANVASES_JS = """(maxPixels, screenHeight) => {
+    let count = 0, onFirstScreen = false;
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.width * canvas.height > maxPixels) {
+            count++;
+            const box = canvas.getBoundingClientRect();
+            if (box.width && box.height && box.bottom > 0 && box.top < screenHeight) onFirstScreen = true;
+        }
+    }
+    return {count, onFirstScreen};
+}"""
+
+# Hidden, not removed: the space it takes up stays, so nothing below it moves
+HIDE_LARGE_CANVASES_JS = """(maxPixels) => {
+    let hidden = 0;
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.width * canvas.height > maxPixels) {
+            canvas.__screenshotVisibility = [canvas.style.getPropertyValue('visibility'), canvas.style.getPropertyPriority('visibility')];
+            canvas.style.setProperty('visibility', 'hidden', 'important');
+            hidden++;
+        }
+    }
+    return hidden;
+}"""
+
+RESTORE_LARGE_CANVASES_JS = """() => {
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.__screenshotVisibility) {
+            canvas.style.setProperty('visibility', canvas.__screenshotVisibility[0], canvas.__screenshotVisibility[1]);
+            delete canvas.__screenshotVisibility;
+        }
+    }
+}"""
+
+
+async def _capture_chunk_beyond_viewport(page, y, width, height, screenshot_type, screenshot_quality):
+    """One horizontal band of the page, from y down, as image bytes. The viewport is left as it is."""
+    params = {
+        'format': screenshot_type,
+        'captureBeyondViewport': True,
+        'clip': {'x': 0, 'y': y, 'width': width, 'height': height, 'scale': 1},
+    }
+    if screenshot_type == 'jpeg':
+        params['quality'] = screenshot_quality
+    result = await page._client.send('Page.captureScreenshot', params)
+    return base64.b64decode(result['data'])
+
+
 # Bug 3 in Playwright screenshot handling
 # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
 
@@ -31,107 +111,109 @@ async def _configure_puppeteer_csp(page):
 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
 # acceptable screenshot quality here
 async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
-    import os
+    """The whole page as one image, up to SCREENSHOT_MAX_HEIGHT.
+
+    The page is captured as it stands, in bands "beyond the viewport" (one band for a page shorter
+    than SCREENSHOT_CHUNK_HEIGHT, so nothing to stitch). The viewport is never made
+    taller and the page is never scrolled, both of which change what a page looks like and costs:
+    anything sized to the viewport (a 100vh hero, a full-window canvas or video) grew to the height
+    of a whole band, a fixed header was drawn once per band, and a page that animates repainted all
+    of that on every frame - on a busy browser that alone used up the whole fetch. So the page looks
+    the way the element positions of the Visual Selector were measured, and
+    lock_viewport_elements has nothing left to do here (kept for the callers that pass it).
+    """
     import time
 
     start = time.time()
     watch_info = f"[{watch_uuid}] " if watch_uuid else ""
 
-    setup_start = time.time()
     page_height = await page.evaluate("document.documentElement.scrollHeight")
     page_width = await page.evaluate("document.documentElement.scrollWidth")
-    original_viewport = page.viewport
-    dimensions_time = time.time() - setup_start
-
-    logger.debug(f"{watch_info}Puppeteer viewport size {page.viewport} page height {page_height} page width {page_width} (got dimensions in {dimensions_time:.2f}s)")
-
-    # Bug 3 in Playwright screenshot handling
-    # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-    # JPEG is better here because the screenshots can be very very large
-
-    # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
-    # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
-    # acceptable screenshot quality here
+    viewport = page.viewport
+    logger.debug(f"{watch_info}Puppeteer viewport size {viewport} page height {page_height} page width {page_width} "
+                 f"(got dimensions in {time.time() - start:.2f}s)")
 
     # Use PNG for better quality (no compression artifacts), JPEG for smaller size
     screenshot_type = screenshot_format.lower() if screenshot_format else 'jpeg'
     # PNG should use quality 100, JPEG uses configurable quality
     screenshot_quality = 100 if screenshot_type == 'png' else int(os.getenv("SCREENSHOT_QUALITY", 72))
 
-    step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Something that will not cause the GPU to overflow when taking the screenshot
+    capture_height = min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
     screenshot_chunks = []
-    y = 0
-    elements_locked = False
-
-    # Only lock viewport elements if explicitly enabled (for image_ssim_diff processor)
-    # This prevents headers/ads from resizing when viewport changes
-    if lock_viewport_elements and page_height > page.viewport['height']:
-        lock_start = time.time()
-        lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
-        file_read_start = time.time()
-        with open(lock_elements_js_path, 'r', encoding='utf-8') as f:
-            lock_elements_js = f.read()
-        file_read_time = time.time() - file_read_start
-
-        evaluate_start = time.time()
-        await page.evaluate(lock_elements_js)
-        evaluate_time = time.time() - evaluate_start
-
-        elements_locked = True
-        lock_time = time.time() - lock_start
-        logger.debug(f"{watch_info}Viewport element locking enabled - File read: {file_read_time:.3f}s, Browser evaluate: {evaluate_time:.2f}s, Total: {lock_time:.2f}s")
-
-    if page_height > page.viewport['height']:
-        if page_height < step_size:
-            step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
-        # Never set viewport taller than our max capture height - otherwise one screenshot chunk
-        # captures the whole page even when SCREENSHOT_MAX_HEIGHT is set smaller
-        step_size = min(step_size, SCREENSHOT_MAX_TOTAL_HEIGHT)
-        viewport_start = time.time()
-        await page.setViewport({'width': page.viewport['width'], 'height': step_size})
-        viewport_time = time.time() - viewport_start
-        logger.debug(f"{watch_info}Viewport changed to {page.viewport['width']}x{step_size} (took {viewport_time:.2f}s)")
-
-    capture_start = time.time()
     chunk_times = []
-    while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
-        # better than scrollTo incase they override it in the page
-        await page.evaluate(
-            """(y) => {
-                const el = document.scrollingElement;
-                if (el) el.scrollTop = y;
-            }""",
-            y
-        )
+    canvases_hidden = 0
 
-        screenshot_kwargs = {
-            'type_': screenshot_type,
-            'fullPage': False
-        }
+    # The page's own scripts are held still for as long as it is being captured: an animating page
+    # otherwise keeps every capture waiting behind its repaints (15s a band against 0.3s). Nothing
+    # here asks the page to react to anything, so there is nothing for it to miss meanwhile.
+    scripts_paused = await _set_page_scripts_paused(page, True)
+    capture_start = time.time()
+    try:
+        viewport_screenshot_kwargs = {'type_': screenshot_type, 'fullPage': False}
         # PNG doesn't support quality parameter in Puppeteer
         if screenshot_type == 'jpeg':
-            screenshot_kwargs['quality'] = screenshot_quality
+            viewport_screenshot_kwargs['quality'] = screenshot_quality
 
-        chunk_start = time.time()
-        screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
-        chunk_time = time.time() - chunk_start
-        chunk_times.append(chunk_time)
-        logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} captured in {chunk_time:.2f}s")
-        y += step_size
+        if page_height <= viewport['height']:
+            # Fits the viewport as it is
+            screenshot_chunks.append(await page.screenshot(**viewport_screenshot_kwargs))
+            chunk_times.append(time.time() - capture_start)
+        else:
+            y = 0
+            try:
+                large_canvases = await page.evaluate(FIND_LARGE_CANVASES_JS, SCREENSHOT_MAX_CANVAS_PIXELS, viewport['height']) or {}
+                at_the_top = not await page.evaluate("window.scrollX || window.scrollY")
+            except Exception as e:
+                logger.debug(f"{watch_info}Could not look for very large canvases: {e}")
+                large_canvases, at_the_top = {}, False
 
-    await page.setViewport({'width': original_viewport['width'], 'height': original_viewport['height']})
+            if large_canvases.get('onFirstScreen') and at_the_top:
+                # A large canvas on the first screen would be left blank with the others. The first
+                # screen is taken the ordinary way instead, with everything on it (that one always
+                # answers), and only what is below it comes from beyond the viewport. Not done for
+                # every page: two chunks have to be stitched, in a subprocess of its own, where a
+                # page shorter than a band is otherwise a single capture.
+                chunk_start = time.time()
+                screenshot_chunks.append(await page.screenshot(**viewport_screenshot_kwargs))
+                chunk_times.append(time.time() - chunk_start)
+                logger.debug(f"{watch_info}Chunk 1 (the first screen, {viewport['height']}px) captured in {chunk_times[-1]:.2f}s")
+                y = viewport['height']
+            else:
+                try:
+                    # As page.screenshot() does, a tab in the background is not painted
+                    await page._client.send('Target.activateTarget', {'targetId': page._target._targetId})
+                except Exception as e:
+                    logger.debug(f"{watch_info}Could not bring the page to the front before capturing: {e}")
 
-    # Unlock element dimensions if they were locked
-    if elements_locked:
-        unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
-        with open(unlock_elements_js_path, 'r', encoding='utf-8') as f:
-            unlock_elements_js = f.read()
-        await page.evaluate(unlock_elements_js)
-        logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
+            if large_canvases.get('count'):
+                try:
+                    canvases_hidden = await page.evaluate(HIDE_LARGE_CANVASES_JS, SCREENSHOT_MAX_CANVAS_PIXELS)
+                    logger.debug(f"{watch_info}{canvases_hidden} canvas(es) of more than {SCREENSHOT_MAX_CANVAS_PIXELS} pixels "
+                                 f"left blank{' below the first screen' if y else ''}")
+                except Exception as e:
+                    logger.debug(f"{watch_info}Could not hide the very large canvases: {e}")
+
+            # In bands, something that will not cause the GPU to overflow when taking the screenshot
+            while y < capture_height:
+                chunk_start = time.time()
+                chunk_height = min(SCREENSHOT_SIZE_STITCH_THRESHOLD, capture_height - y)
+                screenshot_chunks.append(await _capture_chunk_beyond_viewport(
+                    page, y, viewport['width'], chunk_height, screenshot_type, screenshot_quality))
+                chunk_times.append(time.time() - chunk_start)
+                logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} ({chunk_height}px from {y}) captured in {chunk_times[-1]:.2f}s")
+                y += chunk_height
+    finally:
+        # Always handed back, everything extracted after the screenshot is for a page as it was
+        if canvases_hidden:
+            try:
+                await asyncio.wait_for(page.evaluate(RESTORE_LARGE_CANVASES_JS), timeout=RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS)
+            except Exception as e:
+                logger.debug(f"{watch_info}Could not show the hidden canvases again: {type(e).__name__} {e}")
+        if scripts_paused:
+            await _set_page_scripts_paused(page, False)
 
     capture_time = time.time() - capture_start
-    total_capture_time = sum(chunk_times)
-    logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {total_capture_time:.2f}s)")
+    logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {sum(chunk_times):.2f}s)")
 
     if len(screenshot_chunks) > 1:
         stitch_start = time.time()

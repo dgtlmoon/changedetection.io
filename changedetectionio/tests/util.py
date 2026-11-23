@@ -388,6 +388,40 @@ def new_live_server_setup(live_server):
     def test_favicon_requests():
         return {'requested_by': _favicon_requests.get(request.args.get('key', 'default'), [])}
 
+    # A tall page that never stops animating, with the things a taller viewport or a scroll changes:
+    # a hero the height of the viewport (green), a fixed header (blue) and a band far down (magenta).
+    # And three canvases: a very large one on the first screen (cyan), a very large one below it
+    # (red) and one the size of a graph far down (orange).
+    @live_server.app.route('/test-animated-tall-page')
+    def test_animated_tall_page():
+        return """<html><head><style>
+            body { margin: 0; height: 15000px; }
+            #hero, #header, #far-down { left: 0; width: 100%; }
+            #hero { position: absolute; top: 0; height: 100vh; background: rgb(0, 160, 0); }
+            #header { position: fixed; top: 0; height: 40px; background: rgb(0, 0, 255); }
+            #far-down { position: absolute; top: 12000px; height: 400px; background: rgb(255, 0, 255); }
+            p { position: absolute; top: 110vh; }
+            canvas { position: absolute; left: 0; width: 100%; height: 200px; }
+        </style></head><body>
+        <div id="hero"></div><div id="header"></div><div id="far-down"></div>
+        <p>The animated page text is here</p>
+        <canvas id="large-first-screen" width="3000" height="2000" style="top: 100px"></canvas>
+        <canvas id="large-below" width="3000" height="2000" style="top: 6000px"></canvas>
+        <canvas id="graph" width="600" height="300" style="top: 13000px"></canvas>
+        <script>
+            for (const [id, colour] of [['large-first-screen', 'rgb(0, 255, 255)'], ['large-below', 'rgb(255, 0, 0)'], ['graph', 'rgb(255, 165, 0)']]) {
+                const canvas = document.getElementById(id), context = canvas.getContext('2d');
+                context.fillStyle = colour;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            // Keeps the renderer busy on every frame, the way a large animation does
+            (function animate() {
+                const until = performance.now() + 30;
+                while (performance.now() < until) {}
+                requestAnimationFrame(animate);
+            })();
+        </script></body></html>"""
+
     @live_server.app.route('/test-endpoint2')
     def test_endpoint2():
         return "<html><body>some basic content</body></html>"
