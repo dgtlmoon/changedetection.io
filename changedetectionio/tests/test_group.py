@@ -294,6 +294,21 @@ def test_group_notification_mode_senders(client, live_server, measure_memory_usa
     tag['notification_group_mode'] = 'replace'
     assert notification_senders(datastore, watch) == [group_on_its_own]
 
+    # Two groups that each send on their own: both are sent, each with its own settings (#3959)
+    second_tag_uuid = datastore.add_tag(title='second-mode-tag')
+    second_tag = app_settings['tags'][second_tag_uuid]
+    second_group_urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json') + '?from=second-group']
+    second_tag.update({'notification_urls': second_group_urls, 'notification_title': 'Second title', 'notification_body': 'Second body',
+                       'notification_format': 'markdown', 'notification_group_mode': 'add'})
+    watch['tags'].append(second_tag_uuid)
+    tag['notification_group_mode'] = 'add'
+    assert notification_senders(datastore, watch)[1:] == [
+        group_on_its_own,
+        {'notification_urls': second_group_urls, 'notification_title': 'Second title', 'notification_body': 'Second body',
+         'notification_format': 'markdown'}]
+    watch['tags'].remove(second_tag_uuid)
+    tag['notification_group_mode'] = 'replace'
+
     # A muted group sends nothing, the watch's own carries on
     tag['notification_muted'] = True
     assert [s['notification_urls'] for s in notification_senders(datastore, watch)] == [watch_urls]
