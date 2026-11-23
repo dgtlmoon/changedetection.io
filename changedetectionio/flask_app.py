@@ -186,6 +186,10 @@ app.config['BABEL_DEFAULT_LOCALE'] = 'en_GB'
 from datetime import timedelta
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)  # ~10 years (effectively unlimited)
+# Say it rather than rely on each browser's default: the login cookies are not sent on requests made by other sites
+# (a link someone follows to here still carries them).
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 
 # app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
@@ -776,7 +780,9 @@ class User(flask_login.UserMixin):
         )
         new_key = salt_from_storage + new_key
 
-        return new_key == raw_salt_pass
+        # Constant-time, so how long the comparison takes says nothing about how much of it matched
+        import hmac
+        return hmac.compare_digest(new_key, raw_salt_pass)
 
     pass
 
