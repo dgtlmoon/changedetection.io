@@ -5,7 +5,7 @@ from flask import url_for
 
 def test_toggle_returns_to_the_toggled_row(client, live_server, measure_memory_usage, datastore_path):
     datastore = client.application.config.get('DATASTORE')
-    uuid = datastore.add_watch(url='https://example.com/toggle-anchor')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True))
 
     # Without JavaScript (or without a Socket.IO connection) the pause and mute buttons
     # submit the form, so the redirect must bring the browser back to the same row
