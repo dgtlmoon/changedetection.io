@@ -44,6 +44,9 @@ def run_socketio_watch_update_test(client, live_server, password_mode="", datast
     # Wait for initial check to complete
     wait_for_all_checks(client)
 
+    # Per-watch events are only sent for the watches a page says it is showing
+    socketio_test_client.emit('watch-subscribe', {'uuids': list(live_server.app.config['DATASTORE'].data['watching'].keys())})
+
     # Clear any initial messages
     socketio_test_client.get_received()
 

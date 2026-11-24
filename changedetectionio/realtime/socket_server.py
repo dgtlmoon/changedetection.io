@@ -9,12 +9,83 @@ from blinker import signal
 from changedetectionio import strtobool
 
 
+# A browser tells the server which watches it is showing (the 'watch-subscribe' event) and joins one room per watch.
+# Per-watch events go to that watch's room only, so a page of 200 rows is not sent - and the server does not build -
+# updates for the thousands of watches it is not showing.
+WATCH_ROOM_PREFIX = 'watch:'
+# More than any page shows, stops one connection joining an unbounded number of rooms
+MAX_WATCH_SUBSCRIPTIONS = 2000
+# Room for a selection of 200,000 watches in one bulk operation message
+MAX_SOCKET_MESSAGE_BYTES = 8 * 1024 * 1024
+# The counters in the page header (queue size, checking now, unread, errors) are sent at most this often
+GLOBAL_COUNTERS_MIN_INTERVAL_SECONDS = 1.0
+
+
+def watch_room(watch_uuid):
+    return f"{WATCH_ROOM_PREFIX}{watch_uuid}"
+
+
+def watch_has_viewers(socketio, watch_uuid):
+    """True when at least one connected browser is showing this watch. Same fallback as has_connected_clients()."""
+    try:
+        return next(iter(socketio.server.manager.get_participants('/', watch_room(watch_uuid))), None) is not None
+    except AttributeError:
+        return True
+
+
+class CoalescedEmit:
+    """Runs emit_fn straight away, then at most once per interval: calls that arrive in between collapse into a
+    single run at the end of the interval, so the last state always lands. emit_fn reads the current values itself."""
+
+    def __init__(self, socketio, emit_fn, interval=GLOBAL_COUNTERS_MIN_INTERVAL_SECONDS):
+        import threading
+        self.socketio = socketio
+        self.emit_fn = emit_fn
+        self.interval = interval
+        self._lock = threading.Lock()
+        self._last_run = 0.0
+        self._pending = False
+
+    def __call__(self):
+        with self._lock:
+            if self._pending:
+                return
+            wait = self._last_run + self.interval - time.monotonic()
+            if wait > 0:
+                self._pending = True
+            else:
+                self._last_run = time.monotonic()
+
+        if wait > 0:
+            self.socketio.start_background_task(self._run_later, wait)
+        else:
+            self._run()
+
+    def _run_later(self, wait):
+        self.socketio.sleep(wait)
+        with self._lock:
+            self._pending = False
+            self._last_run = time.monotonic()
+        self._run()
+
+    def _run(self):
+        try:
+            self.emit_fn()
+        except Exception as e:
+            logger.error(f"Socket.IO error in {getattr(self.emit_fn, '__name__', 'coalesced emit')}: {str(e)}")
+
+
 class SignalHandler:
     """A standalone class to receive signals"""
 
     def __init__(self, socketio_instance, datastore):
         self.socketio_instance = socketio_instance
         self.datastore = datastore
+
+        # Both are rebuilt from the whole datastore / queue, and signals arrive in bursts (every queue put and get,
+        # the start and end of every check), so they are sent at most once per interval.
+        self.emit_global_counters = CoalescedEmit(socketio_instance, self._emit_global_counters)
+        self.emit_queue_size = CoalescedEmit(socketio_instance, self._emit_queue_size)
 
         # Connect to the watch_check_update signal
         from changedetectionio.flask_app import watch_check_update as wcc
@@ -51,24 +122,63 @@ class SignalHandler:
         general_stats_signal = signal('general_stats_update')
         general_stats_signal.connect(self.handle_general_stats_update, weak=False)
 
+        # Many watches changed in one go (a bulk operation, a batch put into the queue)
+        watches_changed_signal = signal('watches_changed')
+        watches_changed_signal.connect(self.handle_watches_changed, weak=False)
+
+    def handle_watches_changed(self, *args, **kwargs):
+        """One signal for many watches: update the rows that browsers are showing, which is a page or two of them
+        however many changed, and the counters once."""
+        if not has_connected_clients(self.socketio_instance):
+            return
+        self.emit_global_counters()
+        shown = [u for u in kwargs.get('uuids') or [] if watch_has_viewers(self.socketio_instance, u)]
+        if not shown:
+            return
+
+        # Read the queue and the running list once for all of them, the queue can be very long
+        from changedetectionio.flask_app import update_q
+        from changedetectionio import worker_pool
+        queued_uuids = set(update_q.get_queued_uuids())
+        running_uuids = set(worker_pool.get_running_uuids())
+        for watch_uuid in shown:
+            self.send_watch_row(watch_uuid, kwargs.get('app_context'), queued_uuids=queued_uuids, running_uuids=running_uuids)
 
     def handle_general_stats_update(self, *args, **kwargs):
-        """Emit the global counters once, without touching any individual row.
+        """Emit the global counters, without touching any individual row.
 
         Sent after a bulk operation. The tab that triggered it is usually reloading anyway;
         this is for OTHER open tabs so their unread/error counters don't sit stale.
         Note their ROWS still keep a stale 'unviewed' class until the row resync lands —
         tracked separately, this only fixes the counters.
         """
-        try:
-            errored_count = sum(1 for w in self.datastore.data['watching'].values() if w.get('last_error'))
-            self.socketio_instance.emit("general_stats_update", {
-                'count_errors': errored_count,
-                'unread_changes_count': self.datastore.unread_changes_count,
-            })
-            logger.trace("Socket.IO: Emitted one-shot general_stats_update")
-        except Exception as e:
-            logger.error(f"Socket.IO error in handle_general_stats_update: {str(e)}")
+        if has_connected_clients(self.socketio_instance):
+            self.emit_global_counters()
+
+    def _emit_global_counters(self):
+        """The counters every page shows, whichever watches it lists. Loops over every watch, see emit_global_counters."""
+        from changedetectionio import worker_pool
+
+        errored_count = sum(1 for w in self.datastore.data['watching'].values() if w.get('last_error'))
+        self.socketio_instance.emit("general_stats_update", {
+            'count_errors': errored_count,
+            'unread_changes_count': self.datastore.unread_changes_count,
+        })
+        # The set of running UUIDs changes exactly when a worker claims/releases a watch, and the watch signal
+        # fires at both of those moments.
+        self.socketio_instance.emit("checking_now", {
+            "count": len(worker_pool.get_running_uuids()),
+            "event_timestamp": time.time()
+        })
+        logger.trace("Socket.IO: Emitted general_stats_update and checking_now")
+
+    def _emit_queue_size(self):
+        from changedetectionio.flask_app import update_q
+
+        self.socketio_instance.emit("queue_size", {
+            "q_length": update_q.qsize(),
+            "event_timestamp": time.time()
+        })
 
     def handle_watch_small_status_update(self, *args, **kwargs):
         """Small simple status update, for example 'Connecting...'"""
@@ -77,46 +187,58 @@ class SignalHandler:
 
         if watch_uuid and status:
             logger.debug(f"Socket.IO: Received watch small status update '{status}' for UUID {watch_uuid}")
-            # Emit the status update to all connected clients
+            # Only to the browsers showing this watch
             self.socketio_instance.emit("watch_small_status_comment", {
                 "uuid": watch_uuid,
                 "status": status,
                 "event_timestamp": time.time()
-            })
+            }, to=watch_room(watch_uuid))
 
 
 
     def handle_signal(self, *args, **kwargs):
         logger.trace(f"SignalHandler: Signal received with {len(args)} args and {len(kwargs)} kwargs")
-        # Safely extract the watch UUID from kwargs
+        # This runs on the worker thread at the start and end of every check, and on every queue put. With nobody
+        # connected there is nobody to send anything to, and a browser that connects later gets its numbers from
+        # the rendered page.
+        if not has_connected_clients(self.socketio_instance):
+            return
+
+        # The counters are for every page
+        self.emit_global_counters()
+
+        # The row itself is only for the browsers showing it, with none there is nothing to build
         watch_uuid = kwargs.get('watch_uuid')
         app_context = kwargs.get('app_context')
+        if not watch_uuid or not watch_has_viewers(self.socketio_instance, watch_uuid):
+            return
 
-        if watch_uuid:
-            # Get the watch object from the datastore
-            watch = self.datastore.data['watching'].get(watch_uuid)
-            if watch:
-                if app_context:
-                    # note
-                    with app_context.app_context():
-                        with app_context.test_request_context():
-                            # Forward to handle_watch_update with the watch parameter
-                            handle_watch_update(self.socketio_instance, watch=watch, datastore=self.datastore)
-                else:
-                    handle_watch_update(self.socketio_instance, watch=watch, datastore=self.datastore)
+        self.send_watch_row(watch_uuid, app_context)
 
-                logger.trace(f"Signal handler processed watch UUID {watch_uuid}")
+    def send_watch_row(self, watch_uuid, app_context=None, **row_state):
+        watch = self.datastore.data['watching'].get(watch_uuid)
+        if watch:
+            if app_context:
+                # note
+                with app_context.app_context():
+                    with app_context.test_request_context():
+                        # Forward to handle_watch_update with the watch parameter
+                        handle_watch_update(self.socketio_instance, watch=watch, datastore=self.datastore, **row_state)
             else:
-                logger.warning(f"Watch UUID {watch_uuid} not found in datastore")
+                handle_watch_update(self.socketio_instance, watch=watch, datastore=self.datastore, **row_state)
+
+            logger.trace(f"Signal handler processed watch UUID {watch_uuid}")
+        else:
+            logger.warning(f"Watch UUID {watch_uuid} not found in datastore")
 
     def handle_watch_bumped_favicon_signal(self, *args, **kwargs):
         watch_uuid = kwargs.get('watch_uuid')
         if watch_uuid:
-            # Emit the queue size to all connected clients
+            # Only to the browsers showing this watch
             self.socketio_instance.emit("watch_bumped_favicon", {
                 "uuid": watch_uuid,
                 "event_timestamp": time.time()
-            })
+            }, to=watch_room(watch_uuid))
         logger.debug(f"Watch UUID {watch_uuid} got its favicon updated")
 
     def handle_llm_summary_ready(self, *args, **kwargs):
@@ -147,19 +269,9 @@ class SignalHandler:
         logger.debug(f"Watch UUID {watch_uuid} was deleted")
 
     def handle_queue_length(self, *args, **kwargs):
-        """Handle queue_length signal and emit to all clients"""
-        try:
-            queue_length = kwargs.get('length', 0)
-            logger.debug(f"SignalHandler: Queue length update received: {queue_length}")
-
-            # Emit the queue size to all connected clients
-            self.socketio_instance.emit("queue_size", {
-                "q_length": queue_length,
-                "event_timestamp": time.time()
-            })
-
-        except Exception as e:
-            logger.error(f"Socket.IO error in handle_queue_length: {str(e)}")
+        """The queue grew or shrank. Sent to all clients, see emit_queue_size for how often."""
+        if has_connected_clients(self.socketio_instance):
+            self.emit_queue_size()
 
     def handle_notification_event(self, *args, **kwargs):
         """Handle notification_event signal and emit to all clients"""
@@ -196,27 +308,23 @@ def has_connected_clients(socketio):
 
 
 def handle_watch_update(socketio, **kwargs):
-    """Handle watch update signal from blinker"""
-    # This runs on the worker thread at the start and end of every check, and the counters below are rebuilt by
-    # looping over every watch (twice). With nobody connected there is nobody to send them to, and a browser that
-    # connects later gets its numbers from the rendered page, so skip all of it.
-    if not has_connected_clients(socketio):
-        return
-
+    """Send one watch's row state to the browsers that are showing it (see watch_room)"""
     try:
         watch = kwargs.get('watch')
-        datastore = kwargs.get('datastore')
 
-        # Emit the watch update to all connected clients
         from changedetectionio.flask_app import update_q
         from changedetectionio.flask_app import _jinja2_filter_datetime, _jinja2_filter_datetimestamp
         from changedetectionio import worker_pool
 
-        # Get list of watches that are currently running
-        running_uuids = worker_pool.get_running_uuids()
+        # Watches that are currently running, and those in the queue. A caller sending many rows passes these in
+        # so they are read once and not per row.
+        running_uuids = kwargs.get('running_uuids')
+        if running_uuids is None:
+            running_uuids = worker_pool.get_running_uuids()
 
-        # Get list of watches in the queue (efficient single-lock method)
-        queue_list = update_q.get_queued_uuids()
+        queue_list = kwargs.get('queued_uuids')
+        if queue_list is None:
+            queue_list = update_q.get_queued_uuids()
 
         # Get the error texts from the watch
         error_texts = watch.compile_error_texts()
@@ -241,29 +349,7 @@ def handle_watch_update(socketio, **kwargs):
             'uuid': watch.get('uuid'),
         }
 
-        errored_count = 0
-        for watch_uuid_iter, watch_iter in datastore.data['watching'].items():
-            if watch_iter.get('last_error'):
-                errored_count += 1
-
-        general_stats = {
-            'count_errors': errored_count,
-            'unread_changes_count': datastore.unread_changes_count
-        }
-
-        # Debug what's being emitted
-        # logger.debug(f"Emitting 'watch_update' event for {watch.get('uuid')}, data: {watch_data}")
-
-        # Emit to all clients (no 'broadcast' parameter needed - it's the default behavior)
-        socketio.emit("watch_update", {'watch': watch_data})
-        socketio.emit("general_stats_update", general_stats)
-
-        # The set of running UUIDs changes exactly when a worker claims/releases a watch,
-        # and this signal fires at both of those moments - so emit the live "checking now" count here.
-        socketio.emit("checking_now", {
-            "count": len(running_uuids),
-            "event_timestamp": time.time()
-        })
+        socketio.emit("watch_update", {'watch': watch_data}, to=watch_room(watch_data['uuid']))
 
         # Log after successful emit - use watch_data['uuid'] to avoid variable shadowing issues
         logger.trace(f"Socket.IO: Emitted update for watch {watch_data['uuid']}, Checking now: {watch_data['checking_now']}")
@@ -339,7 +425,10 @@ def init_socketio(app, datastore):
                         engineio_logger=strtobool(os.getenv('SOCKETIO_LOGGING', 'False')),
                         # Disable WebSocket compression to prevent memory accumulation
                         # Flask-Compress already handles HTTP response compression
-                        engineio_options={'http_compression': False, 'compression_threshold': 0})
+                        engineio_options={'http_compression': False, 'compression_threshold': 0},
+                        # A bulk operation sends the selected UUIDs in one message, about 40 bytes each. The
+                        # default of 1MB drops the connection at around 25,000 selected.
+                        max_http_buffer_size=MAX_SOCKET_MESSAGE_BYTES)
 
     # Set up event handlers
     logger.info("Socket.IO: Registering connect event handler")
@@ -383,6 +472,19 @@ def init_socketio(app, datastore):
         # Start operation in a disposable daemon thread
         thread = threading.Thread(target=run_operation, daemon=True, name=f"checkbox-op-{data.get('op')}")
         thread.start()
+
+    @socketio.on('watch-subscribe')
+    def event_watch_subscribe(data):
+        """The page lists the watches it is showing, from then on it gets the per-watch events for those only."""
+        from flask_socketio import join_room
+
+        uuids = (data or {}).get('uuids')
+        if not isinstance(uuids, list):
+            return
+        watching = socketio.datastore.data['watching']
+        for uuid in uuids[:MAX_WATCH_SUBSCRIPTIONS]:
+            if isinstance(uuid, str) and uuid in watching:
+                join_room(watch_room(uuid))
 
     @socketio.on('connect')
     def handle_connect():
