@@ -109,49 +109,6 @@ class RecheckPriorityQueue:
             # Item should have been cleaned up in the inner try/except if notification failed
             return False
     
-    def put_many(self, items) -> int:
-        """Queue a whole batch under one lock, then tell the UI once.
-
-        put() signals per item, and each of those signals rebuilds the counters by looping over every watch and
-        broadcasts several socket events - fine for one watch, quadratic for a few thousand. Here the UI gets a
-        single 'watches_queued' with all the UUIDs and a single 'queue_length'.
-
-        Returns how many items were queued.
-        """
-        import time as _t
-        items = list(items)
-        if not items:
-            return 0
-
-        now = _t.time()
-        queued_uuids = []
-        queued_count = 0
-        try:
-            with self._lock:
-                for item in items:
-                    if hasattr(item, 'item') and isinstance(item.item, dict):
-                        item.item.setdefault('enqueued_at', now)
-                    heapq.heappush(self._priority_items, item)
-                    # One notification per item, the same pairing put() keeps for get(). Never blocks, it is unbounded.
-                    self._notification_queue.put(True)
-                    queued_count += 1
-                    if hasattr(item, 'item') and isinstance(item.item, dict) and 'uuid' in item.item:
-                        queued_uuids.append(item.item['uuid'])
-        except Exception as e:
-            # Whatever was queued before this stays queued and is still announced below
-            logger.critical(f"CRITICAL: Batch put stopped after {queued_count} of {len(items)} items: {type(e).__name__}: {str(e)}")
-
-        try:
-            if queued_uuids:
-                signal('watches_queued').send(uuids=queued_uuids)
-            if self.queue_length_signal:
-                self.queue_length_signal.send(length=self.qsize())
-        except Exception as signal_e:
-            logger.error(f"Failed to emit batch put signals but {queued_count} items queued successfully: {signal_e}")
-
-        logger.debug(f"Queued a batch of {queued_count} items")
-        return queued_count
-
     def get(self, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync get with priority ordering"""
         logger.trace(f"RecheckQueue.get() called, block={block}, timeout={timeout}")

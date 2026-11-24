@@ -51,19 +51,6 @@ class SignalHandler:
         general_stats_signal = signal('general_stats_update')
         general_stats_signal.connect(self.handle_general_stats_update, weak=False)
 
-        # A batch of watches went into the queue in one go (see RecheckPriorityQueue.put_many)
-        watches_queued_signal = signal('watches_queued')
-        watches_queued_signal.connect(self.handle_watches_queued, weak=False)
-
-    def handle_watches_queued(self, *args, **kwargs):
-        """One event for a whole batch of newly queued watches, so their rows show as queued without a
-        'watch_update' each. Queueing changes no counters, so there is nothing else to send."""
-        try:
-            uuids = kwargs.get('uuids') or []
-            if uuids and has_connected_clients(self.socketio_instance):
-                self.socketio_instance.emit("watches_queued", {'uuids': uuids, 'event_timestamp': time.time()})
-        except Exception as e:
-            logger.error(f"Socket.IO error in handle_watches_queued: {str(e)}")
 
     def handle_general_stats_update(self, *args, **kwargs):
         """Emit the global counters once, without touching any individual row.

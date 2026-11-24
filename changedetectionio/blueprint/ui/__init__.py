@@ -80,10 +80,14 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         result_message = gettext("{} watches un-muted").format(len(uuids))
 
     elif (op == 'recheck'):
-        # One batch, not a put() per watch - see RecheckPriorityQueue.put_many()
+        # Skip what is already queued or being checked, and anything selected twice
         already_waiting = set(update_q.get_queued_uuids()) | set(worker_pool.get_running_uuids())
-        to_queue = [uuid for uuid in dict.fromkeys(uuids) if uuid not in already_waiting and datastore.data['watching'].get(uuid)]
-        queued_count = update_q.put_many(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}) for uuid in to_queue)
+        queued_count = 0
+        for uuid in dict.fromkeys(uuids):
+            if uuid not in already_waiting and datastore.data['watching'].get(uuid):
+                # Recheck and require a full reprocessing
+                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
+                queued_count += 1
         result_message = gettext("{} watches queued for rechecking").format(queued_count)
 
     elif (op == 'clear-errors'):
@@ -381,11 +385,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 def queue_watches_background():
                     """Background thread to queue watches - discarded after completion."""
                     try:
-                        # Skip anything already queued or running (state captured at start)
-                        to_queue = [u for u in watches_to_queue if u not in queued_uuids and u not in running_uuids]
-                        skipped_count = len(watches_to_queue) - len(to_queue)
-                        # One batch, not a put() per watch - see RecheckPriorityQueue.put_many()
-                        queued_count = update_q.put_many(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': u}) for u in to_queue)
+                        queued_count = 0
+                        skipped_count = 0
+                        for watch_uuid in watches_to_queue:
+                            # Check if already queued or running (state captured at start)
+                            if watch_uuid not in queued_uuids and watch_uuid not in running_uuids:
+                                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
+                                queued_count += 1
+                            else:
+                                skipped_count += 1
 
                         logger.info(f"Background queueing complete: {queued_count} watches queued, {skipped_count} skipped (already queued/running)")
                     except Exception as e:
