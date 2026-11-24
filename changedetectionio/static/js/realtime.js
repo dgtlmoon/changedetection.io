@@ -87,6 +87,18 @@ $(document).ready(function () {
     }
 
 
+    // The watch rows listed on this page, plus the watch this page is about (edit, preview, history..)
+    function watchUuidsOnThisPage() {
+        const uuids = new Set();
+        document.querySelectorAll('[data-watch-uuid]').forEach(function (el) {
+            uuids.add(el.dataset.watchUuid);
+        });
+        (window.location.href.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi) || []).forEach(function (uuid) {
+            uuids.add(uuid);
+        });
+        return Array.from(uuids);
+    }
+
     // Cache DOM elements for performance.
     // queue-size-int is a class (not an id) because the count is rendered in
     // BOTH the desktop sidebar and the hamburger drawer — keep them in sync.
@@ -118,6 +130,9 @@ $(document).ready(function () {
                 console.log('Socket.IO connected with path:', socketio_url);
                 console.log('Socket transport:', socket.io.engine.transport.name);
                 bindSocketHandlerButtonsEvents(socket);
+                // Per-watch events are only sent for the watches this page says it is showing. Sent on every
+                // (re)connect, the server forgets it when the connection drops.
+                socket.emit('watch-subscribe', {uuids: watchUuidsOnThisPage()});
             });
 
             socket.on('connect_error', function(error) {
