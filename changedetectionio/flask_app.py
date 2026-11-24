@@ -1068,11 +1068,36 @@ def changedetection_app(config=None, datastore_o=None):
 
         # Only a cookie issued for the password that is set right now is a login, see User.get_id()
         email, _, fingerprint = str(user_id).rpartition(USER_ID_FINGERPRINT_SEPARATOR)
+        if not email and strtobool(os.getenv('KEEP_OLD_SESSIONS', 'no')):
+            return load_user_from_cookie_without_fingerprint(user_id)
+
         if not email or not hmac.compare_digest(fingerprint, password_fingerprint()):
             return None
 
         user = User()
         user.id = email
+        return user
+
+    def load_user_from_cookie_without_fingerprint(user_id):
+        """KEEP_OLD_SESSIONS: cookies issued before logins carried the password's fingerprint hold only the
+        user id. Keep those logged in, but only while the password is still the one that was set when this
+        installation was upgraded (recorded by update_35) - the first password change or removal ends them."""
+        import hmac
+        from changedetectionio.store.updates import password_marker
+
+        application = datastore.data['settings']['application']
+        marker_at_upgrade = application.get('password_marker_at_login_fingerprint_upgrade')
+        current_password = os.getenv("SALTED_PASS") or application.get('password')
+        if not marker_at_upgrade or not current_password:
+            return None
+        if not hmac.compare_digest(str(marker_at_upgrade), password_marker(current_password)):
+            return None
+
+        user = User()
+        user.id = str(user_id)
+        # Swap the browser over to cookies that carry the fingerprint
+        session['_user_id'] = user.get_id()
+        session['_remember'] = 'set'
         return user
 
     @login_manager.unauthorized_handler
