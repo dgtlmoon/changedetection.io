@@ -2091,8 +2091,8 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
-"A fetch method or proxy set here is not used until it is switched on below, so it can be set up ahead of time. A "
-"watch in several groups takes the first group that is switched on."
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -4035,6 +4035,7 @@ msgstr ""
 msgid "Execute JavaScript before change detection"
 msgstr ""
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr ""

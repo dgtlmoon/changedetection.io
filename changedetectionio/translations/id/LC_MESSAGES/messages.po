@@ -2228,11 +2228,11 @@ msgstr "Pemfilteran teks"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
-"A fetch method or proxy set here is not used until it is switched on below, so it can be set up ahead of time. A "
-"watch in several groups takes the first group that is switched on."
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
 msgstr ""
-"Metode pengambilan atau proxy yang diatur di sini tidak digunakan sampai diaktifkan di bawah, sehingga dapat "
-"disiapkan lebih dulu. Monitor di beberapa grup memakai grup pertama yang diaktifkan."
+"Yang diatur di sini tidak digunakan sampai diaktifkan, sehingga dapat disiapkan lebih dulu. Monitor di beberapa grup "
+"memakai grup pertama yang diaktifkan."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -4190,6 +4190,7 @@ msgstr "Blokir deteksi perubahan selama teks cocok"
 msgid "Execute JavaScript before change detection"
 msgstr "Jalankan JavaScript sebelum deteksi perubahan"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Proksi"

@@ -1,6 +1,7 @@
 from wtforms import (
     Form,
     RadioField,
+    SelectField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -96,12 +97,12 @@ class group_restock_settings_form(restock_settings_form):
 
     # fetch_backend and proxy themselves are the same fields a watch has. Off by default, so a group
     # changes nothing for its watches until one of these is switched on.
-    fetch_backend_group_mode = RadioField(
+    fetch_backend_group_mode = SelectField(
         _l("Use this group's fetch method"),
         choices=GROUP_SETTING_MODE_CHOICES,
         default=GROUP_SETTING_MODE_OFF,
     )
-    proxy_group_mode = RadioField(
+    proxy_group_mode = SelectField(
         _l("Use this group's proxy"),
         choices=GROUP_SETTING_MODE_CHOICES,
         default=GROUP_SETTING_MODE_OFF,

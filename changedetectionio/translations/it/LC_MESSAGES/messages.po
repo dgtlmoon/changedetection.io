@@ -2149,11 +2149,11 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
-"A fetch method or proxy set here is not used until it is switched on below, so it can be set up ahead of time. A "
-"watch in several groups takes the first group that is switched on."
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
 msgstr ""
-"Un metodo di recupero o un proxy impostato qui non viene usato finché non viene attivato qui sotto, così può essere "
-"preparato in anticipo. Un monitor in più gruppi usa il primo gruppo attivato."
+"Ciò che è impostato qui non viene usato finché non viene attivato, così può essere preparato in anticipo. Un monitor "
+"in più gruppi usa il primo gruppo attivato."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -4095,6 +4095,7 @@ msgstr "Blocca rilevamento modifiche quando il testo corrisponde"
 msgid "Execute JavaScript before change detection"
 msgstr "Esegui JavaScript prima del rilevamento"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Proxy"

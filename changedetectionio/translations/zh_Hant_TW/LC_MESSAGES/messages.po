@@ -2100,9 +2100,9 @@ msgstr "文字過濾"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
-"A fetch method or proxy set here is not used until it is switched on below, so it can be set up ahead of time. A "
-"watch in several groups takes the first group that is switched on."
-msgstr "此處設定的抓取方式或代理在下方開啟之前不會被使用，因此可以預先設定。屬於多個群組的監測任務使用第一個已開啟的群組。"
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
+msgstr "此處的設定在開啟之前不會被使用，因此可以預先設定。屬於多個群組的監測任務使用第一個已開啟的群組。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -4038,6 +4038,7 @@ msgstr "當文字符合時，阻擋變更檢測"
 msgid "Execute JavaScript before change detection"
 msgstr "在變更檢測前執行 JavaScript"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "代理伺服器"

@@ -194,7 +194,7 @@ def test_fetch_route_alter_hook_for_plugins(client, live_server, measure_memory_
     assert resolve_fetch_route(watch, datastore)['fetch_backend'] == 'html_requests'
 
 
-def test_group_request_tab_and_watch_edit_note(client, live_server, measure_memory_usage, datastore_path, setup):
+def test_group_request_and_proxy_tabs_and_watch_edit_note(client, live_server, measure_memory_usage, datastore_path, setup):
     datastore = setup
     proxy_two = _proxy_key(datastore, 'two')
     group_uuid, group = _group(datastore, 'Shops <b>&</b> more')
@@ -202,6 +202,8 @@ def test_group_request_tab_and_watch_edit_note(client, live_server, measure_memo
 
     res = client.get(url_for("tags.form_tag_edit", uuid=group_uuid))
     assert b'name="fetch_backend_group_mode"' in res.data and b'name="proxy_group_mode"' in res.data
+    assert b'href="#request"' in res.data and b'id="request"' in res.data, "The fetch method is on the Request tab"
+    assert b'href="#proxy"' in res.data and b'id="proxy"' in res.data, "The proxy has its own tab"
     assert b"Don&#39;t use" in res.data or b"Don't use" in res.data
 
     # Nothing on the watch's page while the group is off
@@ -219,9 +221,9 @@ def test_group_request_tab_and_watch_edit_note(client, live_server, measure_memo
     assert (group['proxy'], group['proxy_group_mode']) == (proxy_two, 'fallback')
 
     res = client.get(url_for("ui.ui_edit.edit_page", uuid=watch_uuid))
-    group_link = url_for('tags.form_tag_edit', uuid=group_uuid).encode() + b'#request'
-    assert b'Decided by group <a href="' + group_link in res.data, "The fetch method names the group, with a link"
-    assert b'From group <a href="' + group_link in res.data, "So does the proxy, as a fallback"
+    group_link = url_for('tags.form_tag_edit', uuid=group_uuid).encode()
+    assert b'Decided by group <a href="' + group_link + b'#request"' in res.data, "The fetch method names the group, with a link to its Request tab"
+    assert b'From group <a href="' + group_link + b'#proxy"' in res.data, "So does the proxy, as a fallback"
     assert b'decided_fetch_backend="html_webdriver"' in res.data
     # The group's name is text, not markup
     assert b'<b>&</b> more' not in res.data and b'&lt;b&gt;&amp;&lt;/b&gt; more' in res.data
