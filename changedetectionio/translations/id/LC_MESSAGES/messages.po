@@ -2105,6 +2105,11 @@ msgstr "Semua tag dihapus, sedang dibersihkan dari monitor di latar belakang"
 msgid "Tag not found"
 msgstr "Tag tidak ditemukan"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "Grup: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "Diperbarui"

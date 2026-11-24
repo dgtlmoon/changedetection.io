@@ -1979,6 +1979,11 @@ msgstr "所有標籤已刪除，正在背景從監測任務中清除"
 msgid "Tag not found"
 msgstr "找不到標籤"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "群組：%(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "已更新"

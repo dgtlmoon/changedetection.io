@@ -2135,6 +2135,11 @@ msgstr "Wszystkie tagi zostały usunięte; są usuwane z obserwacji w tle"
 msgid "Tag not found"
 msgstr "Nie znaleziono tagu"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "Grupa: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "Zaktualizowano"

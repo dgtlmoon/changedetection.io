@@ -1975,6 +1975,11 @@ msgstr "已删除所有标签，正在后台从监控项中清理"
 msgid "Tag not found"
 msgstr "未找到标签"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "分组：%(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "已更新"

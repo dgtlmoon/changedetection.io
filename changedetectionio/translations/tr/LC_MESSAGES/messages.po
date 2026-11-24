@@ -2055,6 +2055,11 @@ msgstr "Tüm etiketler silindi, arka planda izleyicilerden temizleniyor"
 msgid "Tag not found"
 msgstr "Etiket bulunamadı"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "Grup: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "Güncellendi"

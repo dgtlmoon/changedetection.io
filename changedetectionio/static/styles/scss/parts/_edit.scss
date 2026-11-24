@@ -18,3 +18,13 @@ ul#conditions_match_logic {
     padding-right: 1em;
   }
 }
+
+// Says what is being edited, sits on the page background above the tabs
+.edit-form-heading {
+  margin: 0 0 0.7em 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text-tab);
+  overflow-wrap: anywhere;
+}

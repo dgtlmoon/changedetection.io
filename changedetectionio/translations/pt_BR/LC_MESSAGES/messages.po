@@ -2045,6 +2045,11 @@ msgstr "Todas as tags excluídas, limpando dos monitoramentos em segundo plano"
 msgid "Tag not found"
 msgstr "Tag não encontrada"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "Grupo: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "Atualizado"

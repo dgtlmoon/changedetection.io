@@ -2050,6 +2050,11 @@ msgstr ""
 msgid "Tag not found"
 msgstr "Tag nicht gefunden"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "Gruppe: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "Aktualisiert"
