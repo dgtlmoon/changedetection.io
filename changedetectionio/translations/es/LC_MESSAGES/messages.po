@@ -2117,6 +2117,22 @@ msgid "Leave it to each watch"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Send this group's notifications"
+msgstr "Enviar las notificaciones de este grupo"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch has none of its own"
+msgstr "Solo si el monitor no tiene propias"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "As well as the watch's own"
+msgstr "Además de las del monitor"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's own"
+msgstr "En lugar de las del monitor"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "Nombre de la etiqueta"
 
@@ -2154,6 +2170,10 @@ msgstr "Estas configuraciones son <strong><i>agregadas</i></strong> a cualquier 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Filtrado de texto"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "The last two send this group's notification separately, with the title, body and format set here."
+msgstr "Las dos últimas envían la notificación del grupo por separado, con el título, el cuerpo y el formato definidos aquí."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use with caution!"

@@ -2027,6 +2027,22 @@ msgid "Leave it to each watch"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Send this group's notifications"
+msgstr "이 그룹의 알림 보내기"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch has none of its own"
+msgstr "모니터링에 자체 알림이 없을 때만"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "As well as the watch's own"
+msgstr "모니터링 자체 알림과 함께"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's own"
+msgstr "모니터링 자체 알림 대신"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "태그 이름"
 
@@ -2064,6 +2080,10 @@ msgstr "이 설정은 기존 모니터링 설정에 <strong><i>추가</i></stron
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "텍스트 필터링"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "The last two send this group's notification separately, with the title, body and format set here."
+msgstr "마지막 두 옵션은 여기에서 설정한 제목, 본문, 형식으로 그룹 알림을 따로 보냅니다."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use with caution!"

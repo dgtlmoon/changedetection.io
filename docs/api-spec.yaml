@@ -887,6 +887,16 @@ components:
                 Supports fnmatch wildcards (* and ?): e.g. *://example.com/* or github.com/myorg.
                 Plain strings are matched as case-insensitive substrings.
                 Leave empty to disable auto-matching.
+            notification_group_mode:
+              type: string
+              enum: [fallback, add, replace]
+              default: fallback
+              description: |
+                How this group's notification settings relate to the notifications of its watches.
+                - fallback: Used only when the watch has no notification URLs of its own (how groups have always worked)
+                - add: Sent as a separate notification, as well as the watch's own
+                - replace: Sent as a separate notification, instead of the watch's own
+                With add and replace the group's notification uses the group's own title, body and format.
             tag_colour:
               type: string
               pattern: '^(#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$'

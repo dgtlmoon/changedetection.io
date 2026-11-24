@@ -1,5 +1,11 @@
 from changedetectionio.model import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
 
+# How a group's own notification settings relate to the notifications of its watches.
+# 'fallback' is how groups have always behaved and what a group without the setting gets.
+GROUP_NOTIFICATION_MODE_FALLBACK = 'fallback'  # One step in the watch > group > system lookup
+GROUP_NOTIFICATION_MODE_ADD = 'add'            # Sent on its own, as well as the watch's
+GROUP_NOTIFICATION_MODE_REPLACE = 'replace'    # Sent on its own, instead of the watch's
+
 default_notification_format = 'htmlcolor'
 default_notification_body = '{{watch_url}} had a change.\n---\n{{diff}}\n---\n'
 default_notification_title = 'ChangeDetection.io Notification - {{watch_url}}'

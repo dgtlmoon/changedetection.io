@@ -2053,6 +2053,22 @@ msgid "Leave it to each watch"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Send this group's notifications"
+msgstr "Odesílat oznámení této skupiny"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch has none of its own"
+msgstr "Jen pokud sledování nemá vlastní"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "As well as the watch's own"
+msgstr "Navíc k vlastním oznámením sledování"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's own"
+msgstr "Místo vlastních oznámení sledování"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -2090,6 +2106,10 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Filtrování textu"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "The last two send this group's notification separately, with the title, body and format set here."
+msgstr "Poslední dvě volby odešlou oznámení skupiny samostatně, s názvem, textem a formátem nastaveným zde."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use with caution!"

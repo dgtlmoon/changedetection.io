@@ -2146,6 +2146,22 @@ msgid "Leave it to each watch"
 msgstr "Biarkan ditentukan oleh masing-masing monitor"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Send this group's notifications"
+msgstr "Kirim notifikasi grup ini"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch has none of its own"
+msgstr "Hanya jika monitor tidak punya sendiri"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "As well as the watch's own"
+msgstr "Selain milik monitor"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's own"
+msgstr "Sebagai ganti milik monitor"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "Nama tag"
 
@@ -2185,6 +2201,10 @@ msgstr "Pengaturan ini <strong><i>ditambahkan</i></strong> ke konfigurasi monito
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Pemfilteran teks"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "The last two send this group's notification separately, with the title, body and format set here."
+msgstr "Dua pilihan terakhir mengirim notifikasi grup ini secara terpisah, dengan judul, isi, dan format yang diatur di sini."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Use with caution!"
