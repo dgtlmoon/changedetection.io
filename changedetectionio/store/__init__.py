@@ -1040,11 +1040,15 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
         # If it's a valid one
         watch = self.data['watching'].get(uuid)
 
-        if strtobool(os.getenv('ENABLE_NO_PROXY_OPTION', 'True')) and watch.get('proxy') == "no-proxy":
+        # The watch's own, or what its groups / a plugin decide for it. Only ever a proxy that exists or "no-proxy".
+        from changedetectionio.pluggy_interface import resolve_fetch_route
+        chosen_proxy = resolve_fetch_route(watch, self)['proxy']
+
+        if chosen_proxy == "no-proxy":
             return None
 
-        if watch.get('proxy') and watch.get('proxy') in list(self.proxy_list.keys()):
-            return watch.get('proxy')
+        if chosen_proxy:
+            return chosen_proxy
 
         # not valid (including None), try the system one
         else:

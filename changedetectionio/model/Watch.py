@@ -511,7 +511,7 @@ class model(EntityPersistenceMixin, watch_base):
         # the others fall back to html_requests (same as resolve_content_fetcher() does at fetch time)
         if self.is_pdf:
             from changedetectionio import content_fetchers
-            fetcher_name = self.get('fetch_backend')
+            fetcher_name = self._fetch_backend_after_groups
             if not fetcher_name or fetcher_name == 'system':
                 fetcher_name = self._datastore['settings']['application'].get('fetch_backend')
             if fetcher_name and fetcher_name.startswith('extra_browser_'):
@@ -519,7 +519,19 @@ class model(EntityPersistenceMixin, watch_base):
             if not getattr(getattr(content_fetchers, fetcher_name or '', None), 'supports_pdf', False):
                 return 'html_requests'
 
-        return self.get('fetch_backend')
+        return self._fetch_backend_after_groups
+
+    @property
+    def _fetch_backend_after_groups(self):
+        """This watch's fetch method, or the one its groups / a plugin decide for it. 'system' when none of
+        them has one. Same lookup as the check itself uses (pluggy_interface.resolve_fetch_route)."""
+        # This object only holds the datastore's data, the lookup needs the datastore itself
+        from changedetectionio import flask_app
+        datastore = getattr(flask_app, 'datastore', None)
+        if datastore is None:
+            return self.get('fetch_backend')
+        from changedetectionio.pluggy_interface import resolve_fetch_route
+        return resolve_fetch_route(self, datastore)['fetch_backend']
 
     @property
     def fetcher_supports_screenshots(self):

@@ -1988,6 +1988,18 @@ msgid "Updated"
 msgstr "更新しました"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Don't use"
+msgstr "使用しない"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch is left on the default"
+msgstr "ウォッチがデフォルトのままの場合のみ"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's choice"
+msgstr "ウォッチの選択の代わりに"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr "このタグ/グループ内の個別ウォッチに対して有効にしますか？"
 
@@ -2040,6 +2052,14 @@ msgid "Instead of the watch's own"
 msgstr "ウォッチ独自の通知の代わりに"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's fetch method"
+msgstr "このグループの取得方式を使用"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's proxy"
+msgstr "このグループのプロキシを使用"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "タグ名"
 
@@ -2050,6 +2070,10 @@ msgstr "「再入荷＆価格検知」モードのウォッチで使用されま
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "フィルタとトリガー"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "リクエスト"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
@@ -2078,6 +2102,12 @@ msgstr "これらの設定は既存のすべてのウォッチ設定に<strong>�
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "テキストフィルタリング"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"A fetch method or proxy set here is not used until it is switched on below, so it can be set up ahead of time. A "
+"watch in several groups takes the first group that is switched on."
+msgstr "ここで設定した取得方式やプロキシは、下で有効にするまで使用されないため、事前に準備できます。複数のグループに属するウォッチは、有効になっている最初のグループを使用します。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2611,8 +2641,19 @@ msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr "スクリーンショットには Playwright/WebDriver の有効化が必要です"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Request"
-msgstr "リクエスト"
+#, python-format
+msgid "Decided by group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "グループ <a href=\"%(url)s\">%(name)s</a> が決定: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "From group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "グループ <a href=\"%(url)s\">%(name)s</a> から: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Decided by %(name)s: %(value)s"
+msgstr "%(name)s が決定: %(value)s"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3841,7 +3882,7 @@ msgstr "1秒以上の値を入力してください"
 msgid "Notification base URL override"
 msgstr "通知ベースURLの上書き"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/forms.py
 msgid "Not set"
 msgstr "未設定"
 

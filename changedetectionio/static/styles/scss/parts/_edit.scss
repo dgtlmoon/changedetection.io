@@ -18,3 +18,20 @@ ul#conditions_match_logic {
     padding-right: 1em;
   }
 }
+
+// A group (or plugin) decides this setting, so the watch's own choice has no effect. Still submitted with the
+// form, the watch keeps it for when the group stops deciding.
+.decided-elsewhere {
+  ul, input, label {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+.decided-elsewhere-note {
+  margin: 0 0 0.5em 0;
+  padding: 0.5em 0.8em;
+  border-left: 3px solid var(--color-link);
+  background: var(--color-background-code);
+  border-radius: 0 3px 3px 0;
+}
