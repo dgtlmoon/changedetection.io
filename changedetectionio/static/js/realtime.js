@@ -259,6 +259,17 @@ $(document).ready(function () {
                 $('.js-unread-count').text(unreadText).toggle(general_stats.unread_changes_count !== 0);
             });
 
+            socket.on('watches_queued', function (data) {
+                // A whole batch was queued at once (e.g. "Recheck" on a large selection), only the rows
+                // on this page need marking.
+                const queued = new Set(data.uuids);
+                document.querySelectorAll('tr[data-watch-uuid]').forEach(function (row) {
+                    if (queued.has(row.dataset.watchUuid)) {
+                        row.classList.add('queued');
+                    }
+                });
+            });
+
             socket.on('watch_update', function (data) {
                 const watch = data.watch;
 
