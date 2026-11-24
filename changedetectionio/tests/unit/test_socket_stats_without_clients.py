@@ -1,28 +1,42 @@
 #!/usr/bin/env python3
-"""handle_watch_update must not rescan every watch when no browser is connected.
+"""A watch signal must not rescan every watch, or build anything, when no browser is connected.
 
-It runs on the worker thread at the start and end of every check and rebuilds the dashboard counters by looping
-over every watch twice. With no Socket.IO session open nothing can receive them, so the whole handler is skipped.
-Tested on the function directly: no live app, no sockets.
+The signal arrives on the worker thread at the start and end of every check, and the dashboard counters are rebuilt
+by looping over every watch. With no Socket.IO session open nothing can receive them, so the whole handler is
+skipped. With one open, the counters go to everyone and the watch's row only to the browsers that are showing it.
+Tested on the handler directly: no live app, no sockets.
 """
 import sys
 import types
 
 import pytest
 
-from changedetectionio.realtime.socket_server import handle_watch_update, has_connected_clients
+from changedetectionio.realtime.socket_server import CoalescedEmit, SignalHandler, has_connected_clients, watch_room
 
 
 class FakeSocketIO:
-    """Flask-SocketIO keeps the socketio.Server at .server; its manager lists who is connected to a namespace."""
+    """Flask-SocketIO keeps the socketio.Server at .server; its manager lists who is connected to a namespace,
+    and who is in a room of it (a browser joins one room per watch it is showing)."""
 
-    def __init__(self, sessions):
-        participants = lambda namespace, room: iter(sessions.items() if namespace == '/' and room is None else ())
+    def __init__(self, sessions, showing=()):
+        rooms = {None: sessions}
+        rooms.update({watch_room(uuid): sessions for uuid in showing})
+        participants = lambda namespace, room: iter(rooms.get(room, {}).items() if namespace == '/' else ())
         self.server = types.SimpleNamespace(manager=types.SimpleNamespace(get_participants=participants))
         self.emitted = []
 
     def emit(self, event, data=None, **kwargs):
-        self.emitted.append((event, data))
+        self.emitted.append((event, data, kwargs.get('to')))
+
+
+def _signal_handler(socketio, datastore):
+    """A SignalHandler that is not connected to the app's signals, so the test only drives it directly."""
+    handler = SignalHandler.__new__(SignalHandler)
+    handler.socketio_instance = socketio
+    handler.datastore = datastore
+    handler.emit_global_counters = CoalescedEmit(socketio, handler._emit_global_counters)
+    handler.emit_queue_size = CoalescedEmit(socketio, handler._emit_queue_size)
+    return handler
 
 
 class FakeWatch(dict):
@@ -101,23 +115,33 @@ def test_an_unrecognised_layout_counts_as_connected():
 
 def test_nothing_is_scanned_or_emitted_when_nobody_is_connected(app_stubs):
     socketio = FakeSocketIO({})
-    watches = _watches()
-    datastore = FakeDatastore(watches)
+    datastore = FakeDatastore(_watches())
 
-    handle_watch_update(socketio, watch=watches['a'], datastore=datastore)
+    _signal_handler(socketio, datastore).handle_signal(watch_uuid='a')
 
     assert datastore.scans == 0
     assert socketio.emitted == []
 
 
 def test_the_counters_are_still_sent_when_a_browser_is_connected(app_stubs):
-    socketio = FakeSocketIO({'sid-1': object()})
-    watches = _watches()
-    datastore = FakeDatastore(watches)
+    socketio = FakeSocketIO({'sid-1': object()}, showing=['a'])
+    datastore = FakeDatastore(_watches())
 
-    handle_watch_update(socketio, watch=watches['a'], datastore=datastore)
+    _signal_handler(socketio, datastore).handle_signal(watch_uuid='a')
 
-    events = dict(socketio.emitted)
+    events = {event: (data, to) for event, data, to in socketio.emitted}
     assert datastore.scans > 0
-    assert events['watch_update']['watch']['uuid'] == 'a'
-    assert events['general_stats_update'] == {'count_errors': 2, 'unread_changes_count': 1}
+    assert events['watch_update'][0]['watch']['uuid'] == 'a'
+    assert events['watch_update'][1] == watch_room('a'), "The row only goes to the browsers showing that watch"
+    assert events['general_stats_update'] == ({'count_errors': 2, 'unread_changes_count': 1}, None)
+
+
+def test_a_watch_nobody_is_showing_sends_the_counters_but_no_row(app_stubs):
+    socketio = FakeSocketIO({'sid-1': object()}, showing=['b'])
+    datastore = FakeDatastore(_watches())
+
+    _signal_handler(socketio, datastore).handle_signal(watch_uuid='a')
+
+    events = [event for event, data, to in socketio.emitted]
+    assert 'watch_update' not in events
+    assert 'general_stats_update' in events and 'checking_now' in events
