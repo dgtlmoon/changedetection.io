@@ -80,11 +80,15 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         result_message = gettext("{} watches un-muted").format(len(uuids))
 
     elif (op == 'recheck'):
-        for uuid in uuids:
-            if datastore.data['watching'].get(uuid):
+        # Skip what is already queued or being checked, and anything selected twice
+        already_waiting = set(update_q.get_queued_uuids()) | set(worker_pool.get_running_uuids())
+        queued_count = 0
+        for uuid in dict.fromkeys(uuids):
+            if uuid not in already_waiting and datastore.data['watching'].get(uuid):
                 # Recheck and require a full reprocessing
                 worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-        result_message = gettext("{} watches queued for rechecking").format(len(uuids))
+                queued_count += 1
+        result_message = gettext("{} watches queued for rechecking").format(queued_count)
 
     elif (op == 'clear-errors'):
         for uuid in uuids:
