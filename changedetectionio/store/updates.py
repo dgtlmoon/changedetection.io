@@ -17,6 +17,12 @@ from loguru import logger
 from copy import deepcopy
 
 
+def password_marker(password):
+    """Identifies a stored (already salted and hashed) password without keeping a second copy of it."""
+    import hashlib
+    return hashlib.sha256(str(password).encode('utf-8')).hexdigest()
+
+
 # Try to import orjson for faster JSON serialization
 try:
     import orjson
@@ -884,3 +890,12 @@ class DatastoreUpdatesMixin:
         if any(isinstance(g, dict) and g.get('resource') == base + '/mcp/v1' for g in grants.values()):
             application['mcp_base_url'] = base
             logger.info(f"update_34: kept existing MCP sign-ins working, Public MCP address set to {base}")
+
+    def update_35(self):
+        """Logins are now tied to the password that is currently set, so cookies issued before that carry no
+        password fingerprint. Record which password was set at upgrade time: with KEEP_OLD_SESSIONS=true those
+        older cookies stay logged in for as long as this is still the password, and stop at the first change."""
+        application = self.data['settings']['application']
+        password = os.getenv("SALTED_PASS") or application.get('password')
+        if password:
+            application['password_marker_at_login_fingerprint_upgrade'] = password_marker(password)

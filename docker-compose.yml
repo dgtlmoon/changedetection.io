@@ -83,6 +83,10 @@ services:
   #        For complete privacy if you don't want to use the 'check version' / telemetry service
   #      - DISABLE_VERSION_CHECK=true
   #
+  #        Upgrading signs out browsers that logged in on an older version. Set this to keep them logged in
+  #        until the password is next changed or removed.
+  #      - KEEP_OLD_SESSIONS=true
+  #
   #        Disable all LLM / AI features, prompts etc
   #      - LLM_FEATURES_DISABLED=true
   #
