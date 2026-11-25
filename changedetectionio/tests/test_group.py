@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client, delete_all_watches
@@ -842,8 +843,9 @@ def test_add_watch_from_inside_group(client, live_server, measure_memory_usage, 
     res = client.get(url_for("watchlist.index"))
     assert b'type="hidden" name="tags"' not in res.data
     assert f'href="{url_for("add_watch_ui.add_watch_ui_index")}"'.encode() in res.data
+    # (the field itself: every group is also listed next to it, for its suggestions)
     res = client.get(url_for("add_watch_ui.add_watch_ui_index"))
-    assert b'value="Shopping list"' not in res.data
+    assert b'value="Shopping list"' not in re.search(rb'<input[^>]*name="tags"[^>]*>', res.data).group(0)
 
     res = client.get(url_for("watchlist.index", tag=tag_uuid))
     # The quick-add form posts the open group, and returns to it afterwards
@@ -855,7 +857,7 @@ def test_add_watch_from_inside_group(client, live_server, measure_memory_usage, 
 
     # and the Add-Watch page starts with that group filled in
     res = client.get(add_watch_ui_url)
-    assert b'value="Shopping list"' in res.data
+    assert b'value="Shopping list"' in re.search(rb'<input[^>]*name="tags"[^>]*>', res.data).group(0)
 
     # Same as submitting the quick-add form from inside the group
     res = client.post(
