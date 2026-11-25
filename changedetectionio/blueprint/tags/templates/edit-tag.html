@@ -205,8 +205,8 @@
                       </span>
                     </div>
                     <hr class="settings-divider">
-                    {#- Dimmed while muted, and while they are only what a watch with none of its own falls back on -#}
-                    <div id="group-notification-settings" class="{{ 'group-setting-off' if form.notification_muted.data or form.notification_group_mode.data == 'fallback' }}">
+                    {#- Dimmed while muted, not used, and while they are only what a watch with none of its own falls back on -#}
+                    <div id="group-notification-settings" class="{{ 'group-setting-off' if form.notification_muted.data or form.notification_group_mode.data in ('off', 'fallback') }}">
                     {% if 1 %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
@@ -238,7 +238,7 @@
                             radio.addEventListener('change', function () {
                                 document.getElementById('group-notification-settings').classList.toggle(
                                     'group-setting-off',
-                                    checked('notification_muted') === 'true' || checked('notification_group_mode') === 'fallback'
+                                    checked('notification_muted') === 'true' || ['off', 'fallback'].indexOf(checked('notification_group_mode')) !== -1
                                 );
                             });
                         });
