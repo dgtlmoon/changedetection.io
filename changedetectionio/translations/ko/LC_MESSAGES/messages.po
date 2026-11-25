@@ -2116,6 +2116,13 @@ msgid ""
 "takes the first group that is switched on."
 msgstr "여기에 설정한 내용은 켜기 전까지 사용되지 않으므로 미리 준비해 둘 수 있습니다. 여러 그룹에 속한 모니터링은 켜져 있는 첫 번째 그룹을 사용합니다."
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr "각 확인 사이의 간격/시간입니다."

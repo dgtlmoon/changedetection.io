@@ -2144,6 +2144,13 @@ msgstr ""
 "Co zde nastavíte, se nepoužije, dokud to nezapnete, takže to lze připravit předem. Monitor ve více skupinách použije "
 "první zapnutou skupinu."
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr "Interval/doba mezi jednotlivými kontrolami."

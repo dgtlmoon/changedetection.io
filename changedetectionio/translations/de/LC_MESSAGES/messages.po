@@ -2182,6 +2182,13 @@ msgstr ""
 "Was hier gesetzt ist, wird erst verwendet, wenn es eingeschaltet wird, und kann so im Voraus eingerichtet werden. "
 "Eine Überwachung in mehreren Gruppen nimmt die erste eingeschaltete Gruppe."
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr "Das Intervall/die Zeitdauer zwischen den einzelnen Überprüfungen."

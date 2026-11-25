@@ -79,6 +79,9 @@ body.has-queue {
   max-width: 100%;
   position: sticky;
   top: 20px;
+  // Not hard against the list under it. With the "select all matching" banner showing the banner is what is
+  // under it, see below
+  margin-bottom: 1rem;
   // Hidden until watches are selected; shown via body.watch-selection-active (toggled in
   // watch-overview.js, replaces the old jQuery slideUp/slideDown).
   display: none;
@@ -101,6 +104,12 @@ body.has-queue {
 
 body.watch-selection-active #checkbox-operations {
   display: block;
+}
+
+// The "select all matching" banner follows the bar and belongs to it (body.select-all-banner-shown is set by
+// updateSelectAllBanner() in watch-overview.js, which shows and hides the banner)
+body.select-all-banner-shown #checkbox-operations {
+  margin-bottom: 0;
 }
 
 // Watch-list-specific styling layered on top of the shared .cdio-table base.
