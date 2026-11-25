@@ -38,6 +38,14 @@ ul#conditions_match_logic {
   }
 }
 
+// A thin line between two sets of settings on a form
+hr.settings-divider {
+  height: 0;
+  margin: 0 0 1em 0;
+  border: 0;
+  border-top: 1px solid var(--color-border-table-cell);
+}
+
 // Group edit: the settings of something that is switched off ("Don't use", or muted), they can still be filled in
 .group-setting-off {
   opacity: var(--opacity-setting-not-in-use);
