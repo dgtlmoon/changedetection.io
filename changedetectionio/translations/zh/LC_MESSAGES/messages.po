@@ -93,6 +93,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch group / tag"
 msgstr "分组 / 标签"
 
@@ -3281,6 +3282,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group"
+msgstr "分组"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Group name"
 msgstr "分组名称"
 
@@ -3370,10 +3375,6 @@ msgstr "取消静音"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add selected to group"
 msgstr "将所选项加入分组"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Group"
-msgstr "分组"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
