@@ -259,6 +259,8 @@ def test_group_dialog_can_remove_existing_groups(client, live_server, measure_me
     """The watch list's "Group" dialog has "Also remove any existing group assigned", which is never ticked when
     the dialog opens."""
     tick = '.modal-dialog[open] input[name="bulk_groups_replace"]'
+    # The dialog's field: the watch list can have another chips field, in the form that adds a watch
+    dialog_box = f'.modal-dialog[open] {BOX}'
 
     async def steps(page):
         await _add_groups(page, ['Was in this', 'Moved to this'])
@@ -295,21 +297,21 @@ def test_group_dialog_can_remove_existing_groups(client, live_server, measure_me
         # Ticked and then the dialog cancelled: nothing happens, and it is not ticked the next time
         await page.click('.modal-dialog[open] .bulk-group-replace')
         assert await page.evaluate(f"""() => document.querySelector('{tick}').checked""") is True
-        await page.type(BOX, 'Moved to this')
+        await page.type(dialog_box, 'Moved to this')
         await page.click('.modal-dialog[open] [data-action="cancel"]')
         assert await groups_of_the_watch(['Was in this']) == ['Was in this']
         await open_dialog()
         assert await page.evaluate(f"""() => document.querySelector('{tick}').checked""") is False
 
         # Left unticked: added to the group it is in
-        await page.type(BOX, 'Moved to this')
+        await page.type(dialog_box, 'Moved to this')
         await screenshot(page, 'group-dialog-remove-existing', '.modal-dialog[open]')
         await page.click('.modal-dialog[open] [data-action="confirm"]')
         assert sorted(await groups_of_the_watch(['Was in this', 'Moved to this'])) == ['Moved to this', 'Was in this']
 
         # Ticked: only the group named
         await open_dialog()
-        await page.type(BOX, 'moved to this')
+        await page.type(dialog_box, 'moved to this')
         await page.click(tick)
         await page.click('.modal-dialog[open] [data-action="confirm"]')
         assert await groups_of_the_watch(['Moved to this']) == ['Moved to this']
@@ -635,23 +637,35 @@ def test_group_action_of_the_watch_list(client, live_server, measure_memory_usag
             row.querySelector('input[name="uuids"]').click();
         }""", edit_url.rstrip('/').split('/')[-1])
         await page.click('#checkbox-assign-tag')
-        await page.waitForSelector(f'.modal-dialog {BOX}', visible=True)
+        # The dialog's own field: the watch list can have another chips field, in the form that adds a watch
+        dialog_box = f'.modal-dialog[open] {BOX}'
+        await page.waitForSelector(dialog_box, visible=True)
+
+        async def dialog_chips():
+            return await page.evaluate("""() => [...document.querySelectorAll('.modal-dialog[open] .tag-chips-list .tag-chip-text')].map((e) => e.textContent)""")
+
+        async def dialog_suggestions():
+            return await page.evaluate("""() => {
+                const list = document.querySelector('.modal-dialog[open] .tag-chips-suggestions');
+                return list.offsetParent === null ? [] : [...list.querySelectorAll('li')].map((li) => li.textContent);
+            }""")
 
         # Found in other capitals, here too
-        await page.type(BOX, 'audi')
-        await _wait_for_suggestions(page, ['Audi'])
+        await page.type(dialog_box, 'audi')
+        await wait_until(page, """JSON.stringify((() => { const list = document.querySelector('.modal-dialog[open] .tag-chips-suggestions'); return list.offsetParent === null ? [] : [...list.querySelectorAll('li')].map((li) => li.textContent); })()) === '["Audi"]'""", "Audi to be suggested in the dialog")
+        assert await dialog_suggestions() == ['Audi']
         await page.keyboard.press('Escape')   # the suggestions, not the dialog
-        await page.waitForSelector(f'.modal-dialog[open] {BOX}', visible=True)
+        await page.waitForSelector(dialog_box, visible=True)
         await page.keyboard.press('Enter')
-        await page.type(BOX, 'Made in the dialog')
+        await page.type(dialog_box, 'Made in the dialog')
         await page.keyboard.press('Enter')
-        assert await _chips(page) == ['Audi', 'Made in the dialog']
+        assert await dialog_chips() == ['Audi', 'Made in the dialog']
         assert await page.querySelector('.modal-dialog[open]'), "Enter on a name does not confirm the dialog"
-        colours = await _chip_colours(page)
-        assert all(colour[0] != DEFAULT_LABEL_COLOUR for colour in colours.values())
+        backgrounds = await page.evaluate("""() => [...document.querySelectorAll('.modal-dialog[open] .tag-chips-list .tag-chip')].map((chip) => getComputedStyle(chip).backgroundColor)""")
+        assert len(backgrounds) == 2 and all(colour != DEFAULT_LABEL_COLOUR for colour in backgrounds)
         await screenshot(page, 'group-chips-watch-list-dialog', '.modal-dialog[open]')
         # A name still in the box when the dialog is confirmed counts too
-        await page.type(BOX, 'Left in the dialog box')
+        await page.type(dialog_box, 'Left in the dialog box')
         await page.click('.modal-dialog [data-action="confirm"]')
 
         async def groups_of_the_watch():

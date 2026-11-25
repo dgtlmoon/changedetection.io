@@ -271,7 +271,10 @@
             suggest();
         });
 
-        $input.on('focus click', suggest);
+        // A click in the box offers the groups there are. Not the focus by itself: a dialog that opens with the
+        // cursor in this field (the watch list's "Group" action) would open with the list over what is under
+        // the field, and a click meant for that would pick a group.
+        $input.on('click', suggest);
         $input.on('compositionend', () => $input.trigger('input'));
 
         $input.on('keydown', (e) => {
