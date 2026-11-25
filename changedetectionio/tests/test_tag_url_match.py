@@ -94,6 +94,31 @@ def test_auto_applied_tag_shows_on_watch_edit(client, live_server, measure_memor
     assert "automatically applied" in html.lower() or "auto" in html.lower(), \
         "Watch edit page must indicate the tag is auto-applied by pattern"
 
+    # Under the "Group tag" field, as a label in the group's colours that is a link to the group
+    import re
+    listed = re.search(r'<div class="pure-form-message auto-applied-groups">(.*?)</div>', html, re.S)
+    assert listed, "The groups applied by their URL pattern are listed"
+    assert "automatically applied by URL pattern" in listed.group(1)
+    label = re.search(r'<a href="([^"]*)" class="tag-chip" title="([^"]*)"\s+style="([^"]*)"><span class="tag-chip-text">Auto Docs</span></a>', listed.group(1))
+    assert label, listed.group(1)
+    datastore = live_server.app.config['DATASTORE']
+    tag_uuid = next(u for u, t in datastore.data['settings']['application']['tags'].items() if t['title'] == 'Auto Docs')
+    assert label.group(1) == url_for('tags.form_tag_edit', uuid=tag_uuid)
+    assert label.group(2) == '*docs.example.com*'
+    from changedetectionio.blueprint.tags.colour import tag_display_colours
+    colours = tag_display_colours(datastore.data['settings']['application']['tags'][tag_uuid])
+    assert f"--tag-chip-bg: {colours['light']['bg']}" in label.group(3) and f"--tag-chip-dark-bg: {colours['dark']['bg']}" in label.group(3)
+
+    # It is not in the field itself: the watch was not put in that group
+    field = re.search(r'<input[^>]*name="tags"[^>]*>', html).group(0)
+    assert 'Auto Docs' not in field
+
+    # A group the watch was put in by hand is in the field and not in this list, whatever its pattern
+    datastore.data['watching'][watch_uuid]['tags'] = [tag_uuid]
+    html = client.get(url_for("ui.ui_edit.edit_page", uuid=watch_uuid)).get_data(as_text=True)
+    assert 'auto-applied-groups' not in html
+    assert 'value="Auto Docs"' in re.search(r'<input[^>]*name="tags"[^>]*>', html).group(0)
+
 
 def test_multiple_pattern_tags_all_applied(client, live_server, measure_memory_usage, datastore_path):
     """A watch matching multiple tag patterns must receive all of them, not just the first."""

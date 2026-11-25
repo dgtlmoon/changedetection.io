@@ -230,12 +230,12 @@
 .bulk-group-field {
   text-align: left;
 
-  // "Also remove any existing group assigned", under the field
+  // "Also remove any existing group assigned", above the field (the suggestions drop down under it)
   .bulk-group-replace {
     display: flex;
     align-items: center;
     gap: 0.5em;
-    margin-top: 0.9em;
+    margin: 0 0 0.9em 0;
     font-size: 0.875rem;
     cursor: pointer;
 

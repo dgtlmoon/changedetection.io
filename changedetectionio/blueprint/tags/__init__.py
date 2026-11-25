@@ -3,17 +3,21 @@ from flask import Blueprint, request, render_template, flash, url_for, redirect
 from flask_babel import gettext
 from loguru import logger
 
-from changedetectionio.blueprint.tags.colour import safe_css_colour
+from changedetectionio.blueprint.tags.colour import safe_css_colour, tag_display_colours
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config, is_llm_features_disabled
 
+
+from changedetectionio.model.Tag import group_name_has_separator
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     tags_blueprint = Blueprint('tags', __name__, template_folder="templates")
 
     # Used by any template that writes a tag colour into a <style> block
     tags_blueprint.add_app_template_filter(safe_css_colour, 'safe_css_colour')
+    # The colours of a group's label, for a template that shows a group outside the watch list
+    tags_blueprint.add_app_template_filter(tag_display_colours, 'tag_display_colours')
 
     @tags_blueprint.route("/list", methods=['GET'])
     @login_optionally_required
@@ -51,6 +55,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return redirect(url_for('tags.tags_overview_page'))
 
         title = request.form.get('name').strip()
+
+        if group_name_has_separator(title):
+            flash(gettext("A group name cannot have a comma in it, commas are what goes between several groups."), "error")
+            return redirect(url_for('tags.tags_overview_page'))
 
         if datastore.tag_exists_by_name(title):
             flash(gettext('The tag "{}" already exists').format(title), "error")
@@ -260,6 +268,12 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                data=tag,
                                extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                )
+        # A name with a comma in it: not as a new name. A group that has one from before can keep it.
+        new_title = (request.form.get('title') or '').strip()
+        if tag and group_name_has_separator(new_title) and new_title != (tag.get('title') or '').strip():
+            flash(gettext("A group name cannot have a comma in it, commas are what goes between several groups."), "error")
+            return redirect(url_for('tags.form_tag_edit', uuid=uuid))
+
         # @todo subclass form so validation works
         #if not form.validate():
 #            for widget, l in form.errors.items():
