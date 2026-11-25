@@ -207,7 +207,7 @@ def test_group_recheck_time_tab_and_watch_edit_note(client, live_server, measure
     assert group['time_between_check_group_mode'] == 'replace'
     assert (group['time_between_check']['hours'], group['time_between_check']['minutes']) == (2, 30)
     res = client.get(url_for("tags.form_tag_edit", uuid=group_uuid))
-    assert b'group-setting-off"' not in res.data, "Not dimmed once it is switched on"
+    assert b'group-setting-off" data-dimmed-while-off="time_between_check_group_mode"' not in res.data, "Not dimmed once it is switched on"
 
     res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
     group_link = url_for('tags.form_tag_edit', uuid=group_uuid).encode()

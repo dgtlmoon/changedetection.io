@@ -6,6 +6,8 @@
 
 :root {
   --body-main-text-size: 0.9rem;
+  // A setting that is filled in but not in use (switched off, muted, left on the default). Also used from plugins.js
+  --opacity-setting-not-in-use: 0.65;
   --color-white: #fff;
   --color-grey-50: #111;
   --color-grey-100: #262626;

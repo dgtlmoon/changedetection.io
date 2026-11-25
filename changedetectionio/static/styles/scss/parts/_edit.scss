@@ -38,9 +38,9 @@ ul#conditions_match_logic {
   }
 }
 
-// Group edit: the settings of something that is switched off ("Don't use"), they can still be filled in
+// Group edit: the settings of something that is switched off ("Don't use", or muted), they can still be filled in
 .group-setting-off {
-  opacity: 0.65;
+  opacity: var(--opacity-setting-not-in-use);
 }
 
 .decided-elsewhere-note {

@@ -135,7 +135,7 @@
                     <div class="pure-control-group">
                         {{ render_field(form.fetch_backend_group_mode) }}
                     </div>
-                    <div class="pure-control-group inline-radio">
+                    <div class="pure-control-group inline-radio {{ 'group-setting-off' if form.fetch_backend_group_mode.data == 'off' }}" data-dimmed-while-off="fetch_backend_group_mode">
                         {{ render_field(form.fetch_backend) }}
                     </div>
                 </fieldset>
@@ -151,7 +151,7 @@
                     <div class="pure-control-group">
                         {{ render_field(form.proxy_group_mode) }}
                     </div>
-                    <div class="pure-control-group inline-radio">
+                    <div class="pure-control-group inline-radio {{ 'group-setting-off' if form.proxy_group_mode.data == 'off' }}" data-dimmed-while-off="proxy_group_mode">
                         {{ render_field(form.proxy) }}
                     </div>
                 </fieldset>
@@ -167,8 +167,8 @@
                     <div class="pure-control-group">
                         {{ render_field(form.time_between_check_group_mode) }}
                     </div>
-                    {#- Dimmed while the mode above is "Don't use", still editable so it can be set up ahead of time -#}
-                    <div class="pure-control-group time-between-check border-fieldset {{ 'group-setting-off' if form.time_between_check_group_mode.data == 'off' }}" id="group-recheck-time-settings">
+                    {#- Dimmed while the mode above is "Don't use" (same on Request and Proxy), still editable so it can be set up ahead of time -#}
+                    <div class="pure-control-group time-between-check border-fieldset {{ 'group-setting-off' if form.time_between_check_group_mode.data == 'off' }}" data-dimmed-while-off="time_between_check_group_mode">
                         <div id="time-check-widget-wrapper">
                             {{ render_field(form.time_between_check, class="time-check-widget") }}
                             <span class="pure-form-message-inline">
@@ -185,19 +185,21 @@
                 </fieldset>
             </div>
             <script>
-            (function () {
-                var mode = document.getElementById('time_between_check_group_mode');
-                var settings = document.getElementById('group-recheck-time-settings');
+            // The settings of a mode dropdown are dimmed while it is on "Don't use"
+            document.querySelectorAll('[data-dimmed-while-off]').forEach(function (settings) {
+                var mode = document.getElementById(settings.dataset.dimmedWhileOff);
                 mode.addEventListener('change', function () {
                     settings.classList.toggle('group-setting-off', this.value === 'off');
                 });
-            })();
+            });
             </script>
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">
                       {{ render_ternary_field(form.notification_muted, BooleanField=True) }}
                     </div>
+                    {#- Dimmed while this group's notifications are muted, nothing below is sent then -#}
+                    <div id="group-notification-settings" class="{{ 'group-setting-off' if form.notification_muted.data }}">
                     <div class="pure-control-group inline-radio">
                       {{ render_field(form.notification_group_mode) }}
                       <span class="pure-form-message-inline">
@@ -223,6 +225,15 @@
 
                         {{ render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>
+                    </div>
+                    <script>
+                    document.querySelectorAll('input[name="notification_muted"]').forEach(function (radio) {
+                        radio.addEventListener('change', function () {
+                            document.getElementById('group-notification-settings')
+                                .classList.toggle('group-setting-off', this.checked && this.value === 'true');
+                        });
+                    });
+                    </script>
                 </fieldset>
             </div>
 

@@ -201,6 +201,11 @@ def test_group_request_and_proxy_tabs_and_watch_edit_note(client, live_server, m
     watch_uuid, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_requests')
 
     res = client.get(url_for("tags.form_tag_edit", uuid=group_uuid))
+    assert res.data.count(b'group-setting-off" data-dimmed-while-off=') == 3, "Fetch method, proxy and recheck time are dimmed while off"
+    assert b'id="group-notification-settings" class=""' in res.data, "Notifications are not muted, so not dimmed"
+    group['notification_muted'] = True
+    assert b'id="group-notification-settings" class="group-setting-off"' in client.get(url_for("tags.form_tag_edit", uuid=group_uuid)).data
+    group['notification_muted'] = False
     assert b'name="fetch_backend_group_mode"' in res.data and b'name="proxy_group_mode"' in res.data
     assert b'href="#request"' in res.data and b'id="request"' in res.data, "The fetch method is on the Request tab"
     assert b'href="#proxy"' in res.data and b'id="proxy"' in res.data, "The proxy has its own tab"
