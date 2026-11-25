@@ -143,6 +143,11 @@
             {% if form.proxy %}
             <div class="tab-pane-inner" id="proxy">
                 <fieldset>
+                    {#- First on the tab, and outside the part that is dimmed while the group's proxy is switched off -#}
+                    <div class="proxy-provider-tip">
+                        <img src="{{ url_for('static_content', group='images', filename='brightdata.svg') }}" alt="Bright Data">
+                        <span>{{ _('Getting <code>403 Access Denied</code>? Set up the <a href="%(url)s">Web Unlocker proxy with Bright Data</a>, choose it below, and put those watches in this group.', url=url_for('settings.settings_page') ~ '#proxies')|safe }}</span>
+                    </div>
                     <div class="pure-control-group">
                         <span class="pure-form-message-inline">
                             {{ _("What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups takes the first group that is switched on.") }}
