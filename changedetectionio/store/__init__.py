@@ -822,10 +822,7 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
             # a UUID for years, and honouring that beats creating a tag *titled* with the UUID.
             existing_tag_uuids = self.__data['settings']['application'].get('tags', {})
 
-            for tag_name in tag.split(','):
-                tag_name = tag_name.strip()
-                if not tag_name:
-                    continue
+            for tag_name in self.group_names_in(tag):
 
                 if _TAG_UUID_RE.match(tag_name):
                     if tag_name in existing_tag_uuids:
@@ -1122,6 +1119,12 @@ class ChangeDetectionStore(DatastoreUpdatesMixin, FileSavingDataStore):
                     ret = [*ret, *tag[attr]]
 
         return ret
+
+    def group_names_in(self, text):
+        """The group names in a comma separated text, see model.Tag.split_group_names()"""
+        from ..model.Tag import split_group_names
+        titles = [tag.get('title', '') for tag in self.__data['settings']['application'].get('tags', {}).values()]
+        return split_group_names(text, existing_titles=titles)
 
     def tag_uuid_for_title(self, title):
         """UUID of the tag with this title (case/space insensitive), or None. Creates nothing."""

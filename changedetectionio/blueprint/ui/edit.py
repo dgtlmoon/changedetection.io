@@ -327,7 +327,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 if type(form.data.get('tags')) == list:
                     extra_update_obj['tags'] = form.data.get('tags')
                 else:
-                    for t in form.data.get('tags').split(','):
+                    for t in datastore.group_names_in(form.data.get('tags')):
                         # An empty name ("a, , b" or a comma at the end) is not a group
                         tag_uuid = datastore.add_tag(title=t)
                         if tag_uuid and tag_uuid not in tag_uuids:

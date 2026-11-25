@@ -280,6 +280,10 @@ def create_tag(datastore, data):
     if colour_error:
         raise ApiError(colour_error)
 
+    from changedetectionio.model.Tag import group_name_has_separator
+    if group_name_has_separator(title) and not datastore.tag_uuid_for_title(title):
+        raise ApiError("title: a group name cannot have a comma in it, commas are what goes between several groups")
+
     new_uuid = datastore.add_tag(title=title)
     if not new_uuid:
         raise ApiError("Invalid or unsupported tag")
@@ -314,6 +318,11 @@ def update_tag(datastore, uuid, data):
     unknown_fields = set(json_data.keys()) - set(get_tag_schema_properties().keys())
     if unknown_fields:
         raise ApiError(f"Unknown field(s): {', '.join(sorted(unknown_fields))}")
+
+    from changedetectionio.model.Tag import group_name_has_separator
+    new_title = (json_data.get('title') or '').strip()
+    if group_name_has_separator(new_title) and new_title != (tag.get('title') or '').strip():
+        raise ApiError("title: a group name cannot have a comma in it, commas are what goes between several groups")
 
     colour_error = validate_tag_colour(json_data)
     if colour_error:

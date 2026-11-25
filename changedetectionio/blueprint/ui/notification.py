@@ -44,8 +44,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             logger.debug("Test notification - Trying by group/tag in the edit form if available")
             # On an edit page, we should also fire off to the tags if they have notifications
             if request.form.get('tags') and request.form['tags'].strip():
-                for k in request.form['tags'].split(','):
-                    tag = datastore.tag_exists_by_name(k.strip())
+                for k in datastore.group_names_in(request.form['tags']):
+                    tag = datastore.tag_exists_by_name(k)
                     notification_urls = tag.get('notifications_urls') if tag and tag.get('notifications_urls') else None
 
         if not notification_urls and not is_global_settings_form and not is_group_settings_form:

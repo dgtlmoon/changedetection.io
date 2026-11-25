@@ -156,3 +156,21 @@
     padding: 8px;
   }
 }
+
+// Watch edit page: the groups the watch is in by their URL pattern, under the field. The same labels as the
+// chips, each a link to its group.
+.auto-applied-groups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 0.4em;
+
+  a.tag-chip {
+    text-decoration: none;
+
+    &:hover {
+      filter: brightness(0.95);
+    }
+  }
+}
