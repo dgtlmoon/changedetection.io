@@ -1991,6 +1991,18 @@ msgid "Updated"
 msgstr "업데이트되었습니다."
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Don't use"
+msgstr "사용 안 함"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch is left on the default"
+msgstr "모니터링이 기본값으로 남아 있을 때만"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's choice"
+msgstr "모니터링의 선택 대신"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr "이 태그/그룹의 개별 모니터링에도 활성화할까요?"
 
@@ -2043,6 +2055,14 @@ msgid "Instead of the watch's own"
 msgstr "모니터링 자체 알림 대신"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's fetch method"
+msgstr "이 그룹의 가져오기 방식 사용"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's proxy"
+msgstr "이 그룹의 프록시 사용"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "태그 이름"
 
@@ -2053,6 +2073,10 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "필터 및 트리거"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "가져오기"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
@@ -2080,6 +2104,12 @@ msgstr "이 설정은 기존 모니터링 설정에 <strong><i>추가</i></stron
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "텍스트 필터링"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
+msgstr "여기에 설정한 내용은 켜기 전까지 사용되지 않으므로 미리 준비해 둘 수 있습니다. 여러 그룹에 속한 모니터링은 켜져 있는 첫 번째 그룹을 사용합니다."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2612,8 +2642,19 @@ msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr "스크린샷을 찍으려면 Playwright/WebDriver를 활성화해야 합니다."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Request"
-msgstr "가져오기"
+#, python-format
+msgid "Decided by group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "그룹 <a href=\"%(url)s\">%(name)s</a>에서 결정: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "From group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "그룹 <a href=\"%(url)s\">%(name)s</a>에서: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Decided by %(name)s: %(value)s"
+msgstr "%(name)s에서 결정: %(value)s"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3834,7 +3875,7 @@ msgstr "1초 이상을 포함해야 합니다."
 msgid "Notification base URL override"
 msgstr "알림 기본 URL 재정의"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/forms.py
 msgid "Not set"
 msgstr "설정되지 않음"
 
@@ -4004,6 +4045,7 @@ msgstr "텍스트가 일치하는 동안 변경 감지 차단"
 msgid "Execute JavaScript before change detection"
 msgstr "변경 감지 전에 JavaScript 실행"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "프록시"

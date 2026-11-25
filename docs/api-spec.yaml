@@ -897,6 +897,23 @@ components:
                 - add: Sent as a separate notification, as well as the watch's own
                 - replace: Sent as a separate notification, instead of the watch's own
                 With add and replace the group's notification uses the group's own title, body and format.
+            fetch_backend_group_mode:
+              type: string
+              enum: ['off', fallback, replace]
+              default: 'off'
+              description: |
+                How this group's `fetch_backend` relates to the one its watches chose.
+                - off: Not used, the group's `fetch_backend` has no effect (default)
+                - fallback: Used only when the watch is left on the system default
+                - replace: Used instead of the watch's own
+                A watch in several groups takes the first group that is switched on and has a value.
+            proxy_group_mode:
+              type: string
+              enum: ['off', fallback, replace]
+              default: 'off'
+              description: |
+                How this group's `proxy` relates to the one its watches chose. Same values as
+                `fetch_backend_group_mode`.
             tag_colour:
               type: string
               pattern: '^(#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$'
