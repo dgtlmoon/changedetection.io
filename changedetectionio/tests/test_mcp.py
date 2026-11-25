@@ -854,13 +854,14 @@ def test_mcp_recheck_wait_for_a_check_that_was_already_running(client, live_serv
     datastore.data['watching'][uuid]['paused'] = True
     count = datastore.data['watching'][uuid]['check_count']
 
-    # As the workers say it while a check is finishing: still running when asked, for two more looks, then not
+    # As the workers say it while a check is finishing: still running when asked and for a moment after, then not.
+    # By the clock, not by how often it is asked: the scheduler and the realtime code ask too.
+    import time
     real_running = worker_pool.get_running_uuids
-    looks = []
+    busy = {'uuid': uuid, 'until': time.monotonic() + 2}
 
     def running_for_a_moment():
-        looks.append(1)
-        return [uuid] if len(looks) <= 3 else real_running()
+        return [busy['uuid']] if time.monotonic() < busy['until'] else real_running()
 
     monkeypatch.setattr(worker_pool, 'get_running_uuids', running_for_a_moment)
 
@@ -876,8 +877,7 @@ def test_mcp_recheck_wait_for_a_check_that_was_already_running(client, live_serv
 
     # A monitor that was never checked: a check that was "going" and left nothing behind is not claimed as done
     never = datastore.add_watch(url=url_for('test_endpoint', _external=True) + '?never', extras={'title': 'Never', 'paused': True})
-    looks.clear()
-    monkeypatch.setattr(worker_pool, 'get_running_uuids', lambda: [never] if len(looks) < 3 and not looks.append(1) else real_running())
+    busy.update(uuid=never, until=time.monotonic() + 2)
     result = _call(client, api_key, 'recheck_watches', watches=[never], wait=True, wait_seconds=5)
     assert result['structuredContent']['queued'] == 0
     assert result['structuredContent']['checks'][0]['state'] == 'not queued', result['content'][0]['text']
