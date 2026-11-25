@@ -414,6 +414,20 @@ def test_changes_time_budget():
     assert 'Incomplete' in render_unified(report)
 
 
+def test_changes_time_budget_counts_only_watches_looked_at(monkeypatch):
+    """monitors_checked is how many watches were looked at, not how many were asked for."""
+    import time
+    from types import SimpleNamespace
+    from changedetectionio.changes_report import group_changes, render_unified
+    # One clock reading sets the deadline, the next is the first watch (in time), the one after is past it
+    clock = iter([0, 0, 100])
+    monkeypatch.setattr(time, 'monotonic', lambda: next(clock))
+    unchanged = SimpleNamespace(last_changed=T0)
+    report = group_changes([unchanged] * 3, T0, T0 + 100, time_budget=1)
+    assert report['incomplete'] is True and report['monitors_checked'] == 1
+    assert '0 of 1 monitors changed' in render_unified(report)
+
+
 def test_mcp_snapshot_unfiltered(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """get_snapshot unfiltered=true: the whole page from the HTML saved with the snapshot, for questions the filters
     don't cover ("the fried cheese prices on all my restaurant menus" when the filter picks out the beer)."""
