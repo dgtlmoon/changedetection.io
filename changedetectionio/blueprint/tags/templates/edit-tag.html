@@ -25,6 +25,9 @@
 
 <div class="edit-form monospaced-textarea">
 
+    {#- Which group this is, the tabs alone don't say #}
+    <h2 class="edit-form-heading">{{ _('Group: %(name)s', name=data.title) }}</h2>
+
     <div class="tabs collapsable">
         <ul>
             <li class="tab" id=""><a href="#general">{{ _('General') }}</a></li>

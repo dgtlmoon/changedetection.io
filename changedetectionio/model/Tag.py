@@ -62,19 +62,28 @@ class model(EntityPersistenceMixin, watch_base):
             self.update(kw['default'])
             del kw['default']
 
-    def matches_url(self, url: str) -> bool:
-        """Return True if this tag should be auto-applied to the given watch URL.
+    def url_matcher(self):
+        """A function that says whether a (lower-cased) URL matches this tag's pattern, None if no pattern is
+        configured. For asking about many URLs: the pattern is prepared once.
 
-        Wildcard patterns (*,?,[ ) use fnmatch; anything else is a case-insensitive
-        substring match. Returns False if no pattern is configured.
+        Wildcard patterns (*,?,[ ) use fnmatch; anything else is a case-insensitive substring match.
         """
         import fnmatch
-        pattern = self.get('url_match_pattern', '').strip()
-        if not pattern or not url:
-            return False
+        import re
+        pattern = self.get('url_match_pattern', '').strip().lower()
+        if not pattern:
+            return None
         if any(c in pattern for c in ('*', '?', '[')):
-            return fnmatch.fnmatch(url.lower(), pattern.lower())
-        return pattern.lower() in url.lower()
+            return re.compile(fnmatch.translate(pattern)).match
+        return lambda url: pattern in url
+
+    def matches_url(self, url: str) -> bool:
+        """Return True if this tag should be auto-applied to the given watch URL, see url_matcher().
+        Returns False if no pattern is configured."""
+        if not url:
+            return False
+        matcher = self.url_matcher()
+        return bool(matcher and matcher(url.lower()))
 
     # _save_to_disk() method provided by EntityPersistenceMixin
     # commit() and _get_commit_data() methods inherited from watch_base

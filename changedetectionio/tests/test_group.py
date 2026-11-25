@@ -871,3 +871,19 @@ def test_add_watch_from_inside_group(client, live_server, measure_memory_usage, 
     assert len(datastore.data['settings']['application']['tags']) == 1
 
     delete_all_watches(client)
+
+
+def test_group_edit_page_says_which_group(client, live_server, measure_memory_usage, datastore_path):
+    datastore = client.application.config.get('DATASTORE')
+    tag_uuid = datastore.add_tag(title="Shops <b>&</b> more")
+    title = datastore.data['settings']['application']['tags'][tag_uuid]['title']
+
+    res = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid))
+    assert res.status_code == 200
+    escaped = title.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').encode()
+    # Above the tabs and in the browser tab's title, the name is text and never markup
+    assert b'<h2 class="edit-form-heading">Group: ' + escaped + b'</h2>' in res.data
+    assert b'<title>Change Detection - Group: ' + escaped + b'</title>' in res.data
+    assert b'<b>&</b> more' not in res.data
+
+    datastore.data['settings']['application']['tags'].clear()

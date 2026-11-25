@@ -1986,6 +1986,11 @@ msgstr "모든 태그가 삭제되었습니다. 백그라운드에서 모니터�
 msgid "Tag not found"
 msgstr "태그를 찾을 수 없습니다."
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "그룹: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "업데이트되었습니다."
