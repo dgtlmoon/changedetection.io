@@ -183,11 +183,11 @@
   }
 }
 
-// The groups list: its "add a group" form is taller than the one above the watch list, and at 120px the message
-// lay over the name field and the Save button for as long as it showed - in the way of adding the next group.
-// Here it sits under the form, over the line of text above the table. (Small screens: the rule below.)
+// The groups list: at 120px the message lay over the name field and the Save button of its "add a group" form
+// for as long as it showed - in the way of adding the next group. Here it sits under the form, over the line of
+// text above the table. (Small screens: the rule below.)
 body:has(.group-overview-table) .toast-container.toast-top-center {
-  top: 186px;
+  top: 164px;
 }
 
 // Mobile adjustments

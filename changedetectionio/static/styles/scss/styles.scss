@@ -486,30 +486,40 @@ label {
   }
 
 
+  // The form to add a group (groups list): "Tag name", the field and Save on one line, level with each other.
+  // The two <div>s around them are left out of the layout, so their three parts line up in one grid.
   #watch-add-wrapper-zone {
+    display: grid;
+    grid-template-columns: auto minmax(0, 30em) auto;
+    justify-content: start;
+    align-items: center;
+    gap: 0.4rem 0.5rem;
+
+    > div {
+      display: contents;
+    }
+
+    label,
+    input {
+      margin: 0;
+    }
+
+    input[type=text] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    // As wide as the page was with the form that was here before, the box around it takes its width from this
     @media only screen and (min-width: 760px) {
-      display: flex;
-      gap: 0.3rem;
-      flex-direction: row;
       min-width: 70vw;
     }
-    /* URL field grows always, other stay static in width */
-    > span {
-      flex-grow: 0;
 
-      input {
-        width: 100%;
-        padding-right: 1em;
-      }
-
-      &:first-child {
-        flex-grow: 1;
-      }
-    }
-
+    // Small screens: "Tag name" on a line of its own, the field and Save share the line under it
     @media only screen and (max-width: 760px) {
-      #url {
-        width: 100%;
+      grid-template-columns: minmax(0, 1fr) auto;
+
+      .label {
+        grid-column: 1 / -1;
       }
     }
   }
