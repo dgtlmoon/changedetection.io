@@ -79,6 +79,8 @@ body.has-queue {
   max-width: 100%;
   position: sticky;
   top: 20px;
+  // Not hard against the list under it
+  margin-bottom: 1rem;
   // Hidden until watches are selected; shown via body.watch-selection-active (toggled in
   // watch-overview.js, replaces the old jQuery slideUp/slideDown).
   display: none;
