@@ -3701,7 +3701,6 @@ msgid "Basic fast Plaintext/HTTP Client"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
-#: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "Ще ні"
 

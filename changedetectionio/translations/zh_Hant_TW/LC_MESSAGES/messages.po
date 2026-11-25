@@ -3628,7 +3628,6 @@ msgid "Basic fast Plaintext/HTTP Client"
 msgstr "基礎快速純文字 / HTTP 用戶端"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html changedetectionio/flask_app.py
-#: changedetectionio/realtime/socket_server.py
 msgid "Not yet"
 msgstr "還沒有"
 

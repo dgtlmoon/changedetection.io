@@ -1,5 +1,4 @@
 from flask_socketio import SocketIO
-from flask_babel import gettext
 
 import time
 import os
@@ -23,6 +22,18 @@ GLOBAL_COUNTERS_MIN_INTERVAL_SECONDS = 1.0
 
 def watch_room(watch_uuid):
     return f"{WATCH_ROOM_PREFIX}{watch_uuid}"
+
+
+# The rendered row of a watch goes to the pages listing it. A list filtered by a group has that group in the row's
+# links (Edit, Recheck, pause ... come back to the filtered list), so there is one room per watch and group: a
+# page joins the one for the group it is filtered by ('' for none) and is sent the row rendered for that.
+WATCH_ROW_ROOM_PREFIX = 'watch-row:'
+# watch uuid -> the group filters ('' for none) of the pages that have asked for its row
+_row_filters_shown = {}
+
+
+def watch_row_room(watch_uuid, tag_uuid=''):
+    return f"{WATCH_ROW_ROOM_PREFIX}{watch_uuid}:{tag_uuid or ''}"
 
 
 def watch_has_viewers(socketio, watch_uuid):
@@ -353,28 +364,57 @@ def has_connected_clients(socketio):
         return True
 
 
-def _plugin_row_html(watch):
-    """The parts of the watch's row that plugins draw themselves (the watch_list_row_html hook), {selector: html}.
-    They render templates, and this is mostly called from a worker thread at the end of a check, where there is
-    no application or request to render one in."""
-    from flask import has_request_context
-    from changedetectionio.pluggy_interface import collect_watch_list_row_html
+def render_watch_list_row(watch, datastore, tag_uuid='', queued_uuids=None):
+    """The watch's row of the watch list, from the template the page itself is made with
+    (watch-overview-single-row.html with blueprint/watchlist/row_context.py), as the list filtered by `tag_uuid`
+    shows it. Mostly called from a worker thread at the end of a check, where there is no request to render in."""
+    from flask import render_template
+    from changedetectionio.blueprint.watchlist.row_context import watch_row_context
 
-    if has_request_context():
-        return collect_watch_list_row_html(watch)
+    def render():
+        return render_template('watch-overview-single-row.html', watch=watch,
+                               **watch_row_context(datastore, active_tag_uuid=tag_uuid or None, queued_uuids=queued_uuids))
 
+    # The row reads the group from the request too (the Recheck button), so always in a request of that list
     from changedetectionio.flask_app import app
-    with app.test_request_context():
-        return collect_watch_list_row_html(watch)
+    with app.test_request_context(query_string={'tag': tag_uuid} if tag_uuid else None):
+        return render()
+
+
+def send_watch_list_row(socketio, watch, datastore, queued_uuids=None):
+    """Send the watch's rendered row to the pages that list it, once for each group filter among them."""
+    uuid = watch.get('uuid')
+    for tag_uuid in list(_row_filters_shown.get(uuid, ())):
+        room = watch_row_room(uuid, tag_uuid)
+        try:
+            has_pages = next(iter(socketio.server.manager.get_participants('/', room)), None) is not None
+        except AttributeError:
+            has_pages = True
+        if not has_pages:
+            # The pages that asked have gone
+            _row_filters_shown[uuid].discard(tag_uuid)
+            if not _row_filters_shown[uuid]:
+                del _row_filters_shown[uuid]
+            continue
+        try:
+            html = render_watch_list_row(watch, datastore, tag_uuid=tag_uuid, queued_uuids=queued_uuids)
+        except Exception as e:
+            logger.error(f"Socket.IO: could not render the watch list row of {uuid}: {str(e)}")
+            continue
+        socketio.emit("watch_row", {'uuid': uuid, 'html': html, 'event_timestamp': time.time()}, to=room)
 
 
 def handle_watch_update(socketio, **kwargs):
-    """Send one watch's row state to the browsers that are showing it (see watch_room)"""
+    """Tell the browsers that are showing a watch that it was updated (see watch_room).
+
+    Two things go out: "watch_update", a few flags for any page about the watch (the edit, preview and history
+    pages show that it is being checked), and "watch_row" for the watch list, the row as the list draws it. The
+    list used to be pieced together in the browser from fields sent here (texts, counts, error markup), which is
+    what the row replaces."""
     try:
         watch = kwargs.get('watch')
 
         from changedetectionio.flask_app import update_q
-        from changedetectionio.flask_app import _jinja2_filter_datetime, _jinja2_filter_datetimestamp
         from changedetectionio import worker_pool
 
         # Watches that are currently running, and those in the queue. A caller sending many rows passes these in
@@ -387,32 +427,20 @@ def handle_watch_update(socketio, **kwargs):
         if queue_list is None:
             queue_list = update_q.get_queued_uuids()
 
-        # Get the error texts from the watch
-        error_texts = watch.compile_error_texts()
-        # Create a simplified watch data object to send to clients
-
         watch_data = {
             'checking_now': True if watch.get('uuid') in running_uuids else False,
-            'error_text': error_texts,
             'event_timestamp': time.time(),
-            'fetch_time': watch.get('fetch_time'),
-            'has_error': True if error_texts else False,
-            'has_favicon': True if watch.get_favicon_filename() else False,
-            'history_n': watch.history_n,
-            # Uses the same filter as the server-rendered list so the long/short (timeago_format) setting is honoured.
-            'last_changed_text': _jinja2_filter_datetimestamp(int(watch.last_changed)) if watch.history_n >= 2 and int(watch.last_changed) > 0 else gettext('Not yet'),
-            'last_checked': watch.get('last_checked'),
-            'last_checked_text': _jinja2_filter_datetime(watch),
             'notification_muted': True if watch.get('notification_muted') else False,
             'paused': True if watch.get('paused') else False,
             'queued': True if watch.get('uuid') in queue_list else False,
-            # Parts of the row that plugins draw themselves (stock and price of a restock watch), {selector: html}
-            'row_html': _plugin_row_html(watch),
-            'unviewed': watch.has_unviewed,
             'uuid': watch.get('uuid'),
         }
 
         socketio.emit("watch_update", {'watch': watch_data}, to=watch_room(watch_data['uuid']))
+
+        # And the row itself for the watch list, which shows it as the server draws it
+        if kwargs.get('datastore') is not None:
+            send_watch_list_row(socketio, watch, kwargs['datastore'], queued_uuids=queue_list)
 
         # Log after successful emit - use watch_data['uuid'] to avoid variable shadowing issues
         logger.trace(f"Socket.IO: Emitted update for watch {watch_data['uuid']}, Checking now: {watch_data['checking_now']}")
@@ -547,9 +575,16 @@ def init_socketio(app, datastore):
         if not isinstance(uuids, list):
             return
         watching = socketio.datastore.data['watching']
+        # A watch list says which group it is filtered by and gets the rendered rows for that, see watch_row_room()
+        rows_for = (data or {}).get('rows_for_tag')
+        if rows_for is not None and not (isinstance(rows_for, str) and (rows_for == '' or rows_for in socketio.datastore.data['settings']['application']['tags'])):
+            rows_for = None
         for uuid in uuids[:MAX_WATCH_SUBSCRIPTIONS]:
             if isinstance(uuid, str) and uuid in watching:
                 join_room(watch_room(uuid))
+                if rows_for is not None:
+                    join_room(watch_row_room(uuid, rows_for))
+                    _row_filters_shown.setdefault(uuid, set()).add(rows_for)
 
     @socketio.on('connect')
     def handle_connect():
