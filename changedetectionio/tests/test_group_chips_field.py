@@ -37,7 +37,9 @@ def test_group_field_lists_every_group(client, live_server, measure_memory_usage
 
     # The plain field, pointed at the datalist, with the script for the chips
     field = re.search(rb'<input[^>]*name="tags"[^>]*>', res.data).group(0)
-    assert b'type="text"' in field and b'value="Beta, Coloured"' in field
+    assert b'type="text"' in field
+    # (a watch's groups are not kept in the order they were given)
+    assert sorted(re.search(rb'value="([^"]*)"', field).group(1).decode().split(', ')) == ['Beta', 'Coloured']
     assert b'list="tags-groups"' in field and b'tag-chips' in field
     assert res.data.count(b'tag-chips.js') == 1
     assert b'<script>alert(1)</script>' not in res.data
