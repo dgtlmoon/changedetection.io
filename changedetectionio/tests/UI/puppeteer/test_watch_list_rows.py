@@ -49,6 +49,14 @@ async def _still_the_same_page(page):
     return await page.evaluate("""() => window.listWasNotReloaded === true""")
 
 
+async def _click_button_of_row(page, uuid, button):
+    """Click a button of a row, in one step inside the page. The row can be put in anew at any moment (its watch
+    was just checked, say): a click that first finds the button and then goes to where it is can find it gone."""
+    selector = f'tr[data-watch-uuid="{uuid}"] {button}'
+    await wait_until(page, f"""(() => {{ const b = document.querySelector('{selector}'); return !!b && b.offsetParent !== null; }})()""", f"{button} to show")
+    await page.evaluate("""(selector) => document.querySelector(selector).click()""", selector)
+
+
 def test_watch_list_rows_follow_what_happens_elsewhere(client, live_server, measure_memory_usage, datastore_path, running_app):
     async def steps(list_tab):
         first_edit = await _add_watch(list_tab, 'rows-first')
@@ -60,7 +68,7 @@ def test_watch_list_rows_follow_what_happens_elsewhere(client, live_server, meas
         # The realtime connection is up and knows which rows this page shows
         await wait_until(list_tab, "window.cdioSocket && window.cdioSocket.connected", "the realtime connection")
         # One row ticked: that is this tab's own, the server does not know it
-        await list_tab.click(f'tr[data-watch-uuid="{first}"] input[name="uuids"]')
+        await _click_button_of_row(list_tab, first, 'input[name="uuids"]')
         assert (await _row(list_tab, first))['ticked'] is True
         assert '1' in await list_tab.evaluate("""() => document.querySelector('#records-selected').innerText""")
 
@@ -97,12 +105,12 @@ def test_watch_list_rows_follow_what_happens_elsewhere(client, live_server, meas
 
         # The buttons of the row that was put in work, here in the list: pause, without leaving the page
         assert 'paused' not in row['classes']
-        await list_tab.click(f'tr[data-watch-uuid="{first}"] button.pause-toggle.state-off')
+        await _click_button_of_row(list_tab, first, 'button.pause-toggle.state-off')
         await wait_until(list_tab, f"""document.querySelector('tr[data-watch-uuid="{first}"]').classList.contains('paused')""", "the row to show as paused")
         assert await _still_the_same_page(list_tab), "Pause in a row that was put in is still done in the page"
         assert (await _row(list_tab, first))['ticked'] is True
         # And back
-        await list_tab.click(f'tr[data-watch-uuid="{first}"] button.pause-toggle.state-on')
+        await _click_button_of_row(list_tab, first, 'button.pause-toggle.state-on')
         await wait_until(list_tab, f"""!document.querySelector('tr[data-watch-uuid="{first}"]').classList.contains('paused')""", "the row to show as not paused")
 
         # A click on the row itself ticks it (the first row was put in several times by now), and unticks
@@ -135,7 +143,9 @@ def test_watch_list_rows_follow_what_happens_elsewhere(client, live_server, meas
         assert reloaded['title'] == live['title']
         assert [g['title'] for g in reloaded['groups']] == [g['title'] for g in live['groups']]
         assert reloaded['groups'][0]['colours'] == live_colours == live['groups'][0]['colours']
-        assert sorted(c for c in reloaded['classes'] if c not in ('pure-table-odd', 'pure-table-even')) == sorted(c for c in live['classes'] if c not in ('pure-table-odd', 'pure-table-even'))
+        # (not the stripe of the row, and not whether a check of it happens to be queued or going at either moment)
+        passing = ('pure-table-odd', 'pure-table-even', 'checking-now', 'queued')
+        assert sorted(c for c in reloaded['classes'] if c not in passing) == sorted(c for c in live['classes'] if c not in passing)
 
         await other_tab.close()
 
