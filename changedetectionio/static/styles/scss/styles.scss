@@ -74,7 +74,30 @@ a,
 body {
   color: var(--color-text);
   background: var(--color-background-page);
-  font-family: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+}
+
+// Fonts, from the variables in parts/_variables.scss. These take the place of the font rules of pure-min.css
+// selector for selector (it is loaded before this file, so the same selector here wins without !important):
+//   html {font-family: sans-serif}                      .pure-g [class*=pure-u] {font-family: sans-serif}
+//   pre, code, kbd, samp {font-family: monospace, monospace; font-size: 1em}
+// Form controls and buttons keep "inherit", as pure-min.css has them: they take the font of what they are in.
+html,
+body,
+.pure-g [class*=pure-u] {
+  font-family: var(--font-family-base);
+}
+
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--font-family-mono);
+}
+
+code,
+kbd,
+samp {
+  font-size: var(--font-size-code);
 }
 
 // Page-level layout primitive: holds the fixed left rail and the main content
@@ -619,7 +642,8 @@ footer {
 .monospaced-textarea {
   textarea {
     width: 100%;
-    font-family: monospace;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-mono-input);
     white-space: pre;
     overflow-wrap: normal;
     // No scrollbars until needed.
@@ -864,9 +888,6 @@ textarea::placeholder {
   .pure-form-message-inline {
     padding-left: 0;
     color: var(--color-text-input-description);
-    code {
-      font-size: .875em;
-    }
   }
 }
 
