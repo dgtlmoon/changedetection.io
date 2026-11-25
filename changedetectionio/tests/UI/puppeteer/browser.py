@@ -51,11 +51,20 @@ async def wait_until(page, js_condition, what, timeout=8):
         await asyncio.sleep(0.05)
 
 
+async def leave_page(page, action, what):
+    """Something that leaves the page (`await action()`: a click on Save, Enter in a form), done when the page
+    it lands on has loaded."""
+    await page.evaluate("() => { window.pageBeforeLeaving = true; }")
+    await action()
+    await wait_until(page, "!window.pageBeforeLeaving && document.readyState === 'complete'", f"the page after {what}", timeout=20)
+
+
 async def click_and_wait_for_new_page(page, selector):
-    """A click that leaves the page (a form's Save button), done when the page it lands on has loaded."""
-    await page.evaluate("() => { window.pageBeforeTheClick = true; }")
-    await page.click(selector)
-    await wait_until(page, "!window.pageBeforeTheClick && document.readyState === 'complete'", f"the page after clicking {selector}", timeout=20)
+    await leave_page(page, lambda: page.click(selector), f"clicking {selector}")
+
+
+async def press_enter_and_wait_for_new_page(page):
+    await leave_page(page, lambda: page.keyboard.press('Enter'), "pressing Enter")
 
 
 def run_in_browser(steps, name, dark_mode=False):

@@ -10,7 +10,7 @@ pages like a person would: nothing is put into or read from the datastore direct
 
 import json
 
-from .browser import click_and_wait_for_new_page, run_in_browser, screenshot, site_url, wait_until
+from .browser import click_and_wait_for_new_page, press_enter_and_wait_for_new_page, run_in_browser, screenshot, site_url, wait_until
 
 FIELD = '.tag-chips-field'
 BOX = f'{FIELD} input.tag-chips'
@@ -21,7 +21,8 @@ async def _add_groups(page, titles):
     await page.goto(site_url('tags.tags_overview_page'))
     for title in titles:
         await page.type('form#new-watch-form input[name="name"]', title)
-        await click_and_wait_for_new_page(page, 'form#new-watch-form [type="submit"]')
+        # Enter, not a click on Save: the "Tag added" message of the group before can be lying over the button
+        await press_enter_and_wait_for_new_page(page)
 
 
 async def _add_watch(page, marker):
