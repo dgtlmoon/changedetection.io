@@ -142,7 +142,7 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
             result_message = gettext("Invalid proxy selected")
             result_type = 'error'
 
-    elif (op == 'assign-tag'):
+    elif op in ('assign-tag', 'assign-tag-replace'):
         # One or more group names, comma separated like the "Group tag" field of a watch. A name that is not
         # a group yet becomes one.
         tag_uuids = []
@@ -159,6 +159,13 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
                 # Bug in old versions caused by bad edit page/tag handler
                 if isinstance(watch['tags'], str):
                     watch['tags'] = []
+                if op == 'assign-tag-replace':
+                    # "Also remove any existing group assigned": only the groups named, in the order given.
+                    # (Never reached without a name, so this cannot be used to take every group off by accident.)
+                    if watch['tags'] != tag_uuids:
+                        watch['tags'] = list(tag_uuids)
+                        watch.commit()
+                    continue
                 # A watch that is already in the group is left as it is
                 to_add = [tag_uuid for tag_uuid in tag_uuids if tag_uuid not in watch['tags']]
                 if to_add:

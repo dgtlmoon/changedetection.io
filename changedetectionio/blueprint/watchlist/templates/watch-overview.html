@@ -190,6 +190,8 @@ window.watchOverviewI18n = {
     {#- The "Group" action: the same chips field as a watch's "Group tag" (forms.py TagChipsWidget) #}
     <template id="bulk-group-options">
         {{ group_action_form.bulk_groups(placeholder=_('Group name')) }}
+        {#- Never ticked when the dialog opens: it takes the watches out of the groups they are in #}
+        <label class="bulk-group-replace">{{ group_action_form.bulk_groups_replace(checked=False) }} {{ group_action_form.bulk_groups_replace.label.text }}</label>
     </template>
     {% if has_proxies %}
     <template id="bulk-proxy-options">
@@ -307,6 +309,7 @@ window.watchOverviewI18n = {
         {% endif %}
         {# Hidden real operation buttons triggered by the Group/Browser/Proxy modals once a choice is made #}
         <button type="submit" name="op" value="assign-tag" id="op-assign-tag" hidden></button>
+        <button type="submit" name="op" value="assign-tag-replace" id="op-assign-tag-replace" hidden></button>
         <button type="submit" name="op" value="set-fetch-backend" id="op-set-fetch-backend" hidden></button>
         <button type="submit" name="op" value="set-proxy" id="op-set-proxy" hidden></button>
         <button type="submit" class="pure-button button-secondary button-xsmall" id="checkbox-export"

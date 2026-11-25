@@ -187,6 +187,8 @@ class StringTagUUIDAutocompleteChip(StringTagUUID):
 class WatchListGroupForm(Form):
     """The "Group" action of the watch list: the groups (as chips) to add the selected watches to"""
     bulk_groups = StringTagUUIDAutocompleteChip(_l('Group tag'), [validators.Optional()], default='')
+    # Off unless ticked: the groups named are added to the ones a watch is in. Ticked, they take their place.
+    bulk_groups_replace = BooleanField(_l('Also remove any existing group assigned'), default=False)
 
 
 class LabelAfterInputTableWidget(widgets.TableWidget):

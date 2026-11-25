@@ -6,7 +6,7 @@ from changedetectionio.store import ChangeDetectionStore
 
 from functools import wraps
 
-from flask import Blueprint
+from flask import Blueprint, abort
 from changedetectionio.auth_decorator import login_optionally_required
 
 STATUS_CHECKING = 0
@@ -47,6 +47,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                                                  )
 
             asyncio.run(update_handler.call_browser(preferred_proxy_id=preferred_proxy))
+            contents = getattr(update_handler.fetcher, 'content', '') or ''
         # title, size is len contents not len xfer
         except content_fetcher_exceptions.Non200ErrorCodeReceived as e:
             if e.status_code == 404:
@@ -66,7 +67,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             txt = f"Got reply but with no content - Status code {e.status_code} - It's possible that the filters were found, but contained no usable text (or contained only an image)."
             status.update({'status': 'ERROR', 'text': txt})
         except Exception as e:
-            status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': 'Error: '+type(e).__name__+str(e)})
+            status.update({'status': 'ERROR OTHER', 'length': len(contents) if contents else 0, 'text': f"Error: {type(e).__name__}: {e}"})
         else:
             status.update({'status': 'OK', 'length': len(contents), 'text': ''})
 
@@ -103,23 +104,22 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     @check_proxies_blueprint.route("/<uuid_str:uuid>/start", methods=['POST'])
     @login_optionally_required
     def start_check(uuid):
+        """Fetch the watch through every proxy there is, a new scan each time it is asked for."""
+        if uuid not in datastore.data['watching']:
+            abort(404)
 
         if not datastore.proxy_list:
-            return
+            return {}
 
-        if checks_in_progress.get(uuid):
-            state = _recalc_check_status(uuid=uuid)
-            for proxy_key, v in state.items():
-                if v.get('status') == 'RUNNING':
-                    return state
-        else:
-            checks_in_progress[uuid] = {}
+        # One scan of a watch at a time: asked again while it is running, say how it is going
+        state = _recalc_check_status(uuid=uuid)
+        if any(v.get('status') == 'RUNNING' for v in state.values()):
+            return state
 
-        for k, v in datastore.proxy_list.items():
-            if not checks_in_progress[uuid].get(k):
-                checks_in_progress[uuid][k] = long_task(uuid=uuid, preferred_proxy=k)
+        # The results of the scan before are not an answer to "check again": they stayed for as long as the
+        # application ran, so a proxy that had stopped working (or started to) kept its first result
+        checks_in_progress[uuid] = {k: long_task(uuid=uuid, preferred_proxy=k) for k in datastore.proxy_list}
 
-        results = _recalc_check_status(uuid=uuid)
-        return results
+        return _recalc_check_status(uuid=uuid)
 
     return check_proxies_blueprint
