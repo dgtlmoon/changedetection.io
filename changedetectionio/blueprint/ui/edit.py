@@ -301,7 +301,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                     extra_update_obj['tags'] = form.data.get('tags')
                 else:
                     for t in form.data.get('tags').split(','):
-                        tag_uuids.append(datastore.add_tag(title=t))
+                        # An empty name ("a, , b" or a comma at the end) is not a group
+                        tag_uuid = datastore.add_tag(title=t)
+                        if tag_uuid and tag_uuid not in tag_uuids:
+                            tag_uuids.append(tag_uuid)
                     extra_update_obj['tags'] = tag_uuids
 
             plugin_field_names = {section['field_name'] for section in plugin_request_settings}

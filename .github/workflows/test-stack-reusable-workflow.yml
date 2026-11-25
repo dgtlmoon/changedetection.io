@@ -428,6 +428,51 @@ jobs:
         run: |
           docker run --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
 
+  # The web UI used in a real browser: pyppeteer clicks and types its way through the pages (tests/UI/puppeteer)
+  puppeteer-UI-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ inputs.skip-pypuppeteer == false }}
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up the browser
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm dgtlmoon/sockpuppetbrowser:latest
+
+      - name: Puppeteer - UI tests in built container
+        run: |
+          # The browser reaches the test server as 'cdio'. Screenshots (those the tests take, and one of the page
+          # a failed test was on) are kept as an artifact below.
+          mkdir -p ui-test-screenshots
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e "UI_TEST_SCREENSHOT_DIR=/ui-test-screenshots" \
+            -v "${{ github.workspace }}/ui-test-screenshots:/ui-test-screenshots" --network changedet-network --hostname=cdio test-changedetectionio \
+            bash -c "cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/UI/puppeteer/"
+
+      - name: Store UI test screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: puppeteer-UI-tests-screenshots-py${{ env.PYTHON_VERSION }}
+          path: ui-test-screenshots
+          if-no-files-found: ignore
+
   nginx-reverse-proxy:
     runs-on: ubuntu-latest
     needs: build

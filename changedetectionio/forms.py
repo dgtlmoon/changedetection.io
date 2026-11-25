@@ -129,6 +129,18 @@ class StringTagUUID(StringField):
 
    # process_formdata(self, valuelist) handled manually in POST handler
 
+    def __call__(self, **kwargs):
+        # static/js/tag-chips.js turns the field into one "chip" per group with suggestions as you type.
+        # Without the script it stays what it is here: a text field of comma separated group names.
+        from flask import url_for
+        from flask_babel import gettext
+
+        css_class = kwargs.pop('class_', None) or kwargs.pop('class', None) or ''
+        kwargs['class'] = f"{css_class} tag-chips".strip()
+        kwargs.setdefault('data-autocomplete-url', url_for('tags.autocomplete'))
+        kwargs.setdefault('data-remove-label', gettext('Remove'))
+        return super().__call__(**kwargs)
+
     # Is what is shown when field <input> is rendered
     def _value(self):
         # Tag UUID to name, on submit it will convert it back (in the submit handler of init.py)
