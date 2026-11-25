@@ -967,3 +967,42 @@ def test_group_notification_dont_use_and_the_update_for_older_groups(client, liv
     assert group_notification_mode_for_older_data({}) == 'off'
 
     tags.clear()
+
+
+def test_delete_group_says_its_watches_are_kept(client, live_server, measure_memory_usage, datastore_path):
+    """Deleting a group takes the group away, not the watches in it. The question that is asked says so.
+
+    That question is put into the dialog as HTML. The group's name in it was not escaped for that: a group called
+    <img src=x onerror=...> had its script run when Delete (or Unlink) was clicked.
+    """
+    import html
+    import time
+    datastore = live_server.app.config['DATASTORE']
+    name = '<img src=x onerror="alert(1)"> & co'
+    tag_uuid = datastore.add_tag(name)
+    watch_uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True}, tag_uuids=[tag_uuid])
+
+    page = client.get(url_for("tags.tags_overview_page")).get_data(as_text=True)
+
+    def question(title):
+        # What the browser reads out of the attribute, which modal.js then uses as HTML
+        return html.unescape(re.search(r'data-confirm-title="%s"\s+data-confirm-message="([^"]*)"' % re.escape(title), page).group(1))
+
+    asked = question('Delete Group?')
+    assert 'This action cannot be undone.' in asked
+    assert 'Only the group is deleted, its watches are kept.' in asked
+    for asked in (asked, question('Unlink Group?')):
+        assert '<img' not in asked, "The name is not markup in the dialog"
+        shown = re.search(r'<strong>(.*?)</strong>', asked).group(1)
+        assert '<' not in shown and html.unescape(shown) == name, "It is shown as the text it is"
+
+    # And the watches are kept
+    client.post(url_for("tags.delete", uuid=tag_uuid), follow_redirects=True)
+    for _ in range(50):
+        if not datastore.data['watching'][watch_uuid]['tags']:
+            break
+        time.sleep(0.1)
+    assert tag_uuid not in datastore.data['settings']['application']['tags']
+    assert watch_uuid in datastore.data['watching'] and datastore.data['watching'][watch_uuid]['tags'] == []
+
+    delete_all_watches(client)

@@ -2267,6 +2267,10 @@ msgstr "Excluir Grupo?"
 msgid "<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
 msgstr "<p>Tem certeza que deseja excluir o grupo <strong>%(title)s</strong>?</p><p>Esta ação não pode ser desfeita.</p>"
 
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "<p>Only the group is deleted, its watches are kept.</p>"
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Delete"
