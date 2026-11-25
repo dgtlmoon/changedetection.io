@@ -565,10 +565,11 @@ def test_group_action_of_the_watch_list(client, live_server, measure_memory_usag
         await _add_groups(page, ['Audi'])
         edit_url = await _add_watch(page, 'chips-watch-list-action')
         await page.goto(site_url('watchlist.index'))
-        await page.evaluate("""() => {
-            const row = [...document.querySelectorAll('tr')].find((tr) => tr.innerText.includes('chips-watch-list-action') && tr.querySelector('input[name="uuids"]'));
+        # By its edit link: once it has been checked the row shows the page's title, not the address it was added by
+        await page.evaluate("""(uuid) => {
+            const row = [...document.querySelectorAll('tr')].find((tr) => tr.querySelector('a[href*="/edit/' + uuid + '"]') && tr.querySelector('input[name="uuids"]'));
             row.querySelector('input[name="uuids"]').click();
-        }""")
+        }""", edit_url.rstrip('/').split('/')[-1])
         await page.click('#checkbox-assign-tag')
         await page.waitForSelector(f'.modal-dialog {BOX}', visible=True)
 
