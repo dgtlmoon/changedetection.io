@@ -2702,7 +2702,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Organisational tag/group name used in the main listing page"
-msgstr "organizational tag/group name used in the main listing page"
+msgstr "Organizational tag/group name used in the main listing page"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Also automatically applied by URL pattern:"

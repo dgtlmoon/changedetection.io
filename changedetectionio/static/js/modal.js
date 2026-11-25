@@ -130,8 +130,13 @@ const ModalDialog = {
       // Show dialog
       dialog.showModal();
 
-      // Focus confirm button for accessibility
+      // Focus confirm button for accessibility - unless the dialog has a field of its own that has been given
+      // the focus meanwhile (the "Group" action's chips field): taking it away would end what is being typed there
       setTimeout(() => {
+        const focused = document.activeElement;
+        if (focused && focused !== dialog && dialog.contains(focused) && focused.matches('input, textarea, select')) {
+          return;
+        }
         dialog.querySelector('[data-action="confirm"]').focus();
       }, 100);
     });
