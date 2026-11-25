@@ -864,10 +864,6 @@ msgid "This will remove your saved AI provider, model, and API key."
 msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
-msgid "Remove"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove provider"
 msgstr ""
 
@@ -3692,6 +3688,10 @@ msgstr "必须指定至少一个时间间隔（周、天、小时、分钟或秒
 #: changedetectionio/forms.py
 msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
 msgstr "未使用全局设置时，必须指定至少一个时间间隔（周、天、小时、分钟或秒）。"
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html changedetectionio/forms.py
+msgid "Remove"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."

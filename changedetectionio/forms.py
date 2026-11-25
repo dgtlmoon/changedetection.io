@@ -148,6 +148,42 @@ class StringTagUUID(StringField):
 
         return 'error'
 
+class TagChipsWidget(widgets.TextInput):
+    """The text input of comma separated group names, followed by a <datalist> of every group there is
+    (templates/_tag_chips_field.html). static/js/tag-chips.js, which the template brings along, makes one "chip"
+    per group of it and offers the groups of the datalist while typing. Without the script it is the text input,
+    with the browser's own suggestions from the datalist."""
+
+    def __call__(self, field, **kwargs):
+        from flask import render_template
+        from flask_babel import gettext
+        from markupsafe import Markup
+
+        list_id = f"{field.id}-groups"
+        css_class = kwargs.pop('class_', None) or kwargs.pop('class', None) or ''
+        kwargs['class'] = f"{css_class} tag-chips".strip()
+        kwargs['list'] = list_id
+        kwargs.setdefault('data-remove-label', gettext('Remove'))
+        return Markup(render_template('_tag_chips_field.html',
+                                      text_input=super().__call__(field, **kwargs),
+                                      list_id=list_id,
+                                      groups=field.all_groups()))
+
+
+class StringTagUUIDAutocompleteChip(StringTagUUID):
+    """The groups of a watch as chips, with the existing groups to pick from, see TagChipsWidget"""
+    widget = TagChipsWidget()
+
+    def all_groups(self):
+        """Every group by name, with the colours of its label in the watch list"""
+        from flask import current_app
+        from changedetectionio.blueprint.tags.colour import tag_display_colours
+
+        tags = current_app.config['DATASTORE'].data['settings']['application']['tags']
+        groups = [{'title': (tag.get('title') or '').strip(), 'colours': tag_display_colours(tag)} for tag in tags.values()]
+        return sorted((group for group in groups if group['title']), key=lambda group: group['title'].lower())
+
+
 class LabelAfterInputTableWidget(widgets.TableWidget):
     """
     Variant of WTForms' TableWidget that renders the input cell before the label cell,
@@ -849,7 +885,7 @@ def visual_browser_choices():
 
 class quickWatchForm(Form):
     url = StringField('URL', validators=[validateURL()])
-    tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
+    tags = StringTagUUIDAutocompleteChip(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     # Only the Add-Watch page renders this; the watch-list quick-add posts nothing, which
@@ -958,7 +994,7 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
     link_to_open = StringField(_l('Open Link Override'), validators=[validators.Optional(), validateURL()], default='')
-    tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
+    tags = StringTagUUIDAutocompleteChip(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
         TimeBetweenCheckForm,
