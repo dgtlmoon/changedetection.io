@@ -905,7 +905,8 @@ def test_add_watch_from_inside_group(client, live_server, measure_memory_usage, 
     tags = datastore.data['settings']['application']['tags']
     wishes = next(uuid for uuid, tag in tags.items() if tag['title'] == 'Wishes')
     second = next(w for w in datastore.data['watching'].values() if w['url'].endswith('?second'))
-    assert second['tags'] == [tag_uuid, wishes]
+    # (a watch's groups are not kept in the order they were given)
+    assert sorted(second['tags']) == sorted([tag_uuid, wishes])
     assert len(tags) == 2, "The open group was not made a second time"
 
     delete_all_watches(client)
