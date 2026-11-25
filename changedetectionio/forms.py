@@ -146,7 +146,13 @@ class StringTagUUID(StringField):
         if not self.data:
             return ''
 
-        return 'error'
+        # The names as they were sent, when the form is shown again because another field has an error.
+        # (This said 'error' here: the field came back holding that word in place of the groups, and saving the
+        # corrected form then put the watch in one group called "error".)
+        if isinstance(self.data, str):
+            return ', '.join(name.strip() for name in self.data.split(',') if name.strip())
+
+        return ''
 
 class TagChipsWidget(widgets.TextInput):
     """The text input of comma separated group names, followed by a <datalist> of every group there is
@@ -163,6 +169,9 @@ class TagChipsWidget(widgets.TextInput):
         css_class = kwargs.pop('class_', None) or kwargs.pop('class', None) or ''
         kwargs['class'] = f"{css_class} tag-chips".strip()
         kwargs['list'] = list_id
+        # The browser must not put back what was in the box before (the Back button, a reload): the names are in
+        # the value this is rendered with
+        kwargs.setdefault('autocomplete', 'off')
         kwargs.setdefault('data-remove-label', gettext('Remove'))
         return Markup(render_template('_tag_chips_field.html',
                                       text_input=super().__call__(field, **kwargs),

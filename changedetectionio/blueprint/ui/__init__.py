@@ -146,8 +146,8 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         # One or more group names, comma separated like the "Group tag" field of a watch. A name that is not
         # a group yet becomes one.
         tag_uuids = []
-        for title in (extra_data or '').split(','):
-            tag_uuid = datastore.add_tag(title=title) if title.strip() else None
+        for title in datastore.group_names_in(extra_data):
+            tag_uuid = datastore.add_tag(title=title)
             if tag_uuid and tag_uuid not in tag_uuids:
                 tag_uuids.append(tag_uuid)
 

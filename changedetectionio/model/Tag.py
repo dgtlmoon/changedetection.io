@@ -89,3 +89,33 @@ class model(EntityPersistenceMixin, watch_base):
     # _save_to_disk() method provided by EntityPersistenceMixin
     # commit() and _get_commit_data() methods inherited from watch_base
     # Tag uses default _get_commit_data() (includes all keys)
+
+
+# Several groups are written as one text with this between them (the "Group tag" field of a watch, the "Group"
+# action of the watch list, the `tag` of the API), so a name cannot have it in it.
+GROUP_NAME_SEPARATOR = ','
+
+
+def group_name_has_separator(title) -> bool:
+    return GROUP_NAME_SEPARATOR in (title or '')
+
+
+def split_group_names(text, existing_titles=()):
+    """The group names in a comma separated text, in the order given, without the empty ones.
+
+    A group made before names with a comma were refused ("Sales, EU") is kept whole: where the pieces of such a
+    name stand next to each other they are that group, not a group for each piece. Otherwise saving a watch that
+    is in it would move the watch into new groups "Sales" and "EU".
+    """
+    parts = [part.strip() for part in (text or '').split(GROUP_NAME_SEPARATOR)]
+
+    # The longest first, so "A, B, C" wins over "A, B"
+    for title in sorted((t for t in existing_titles if group_name_has_separator(t)), key=len, reverse=True):
+        pieces = [piece.strip().lower() for piece in title.split(GROUP_NAME_SEPARATOR)]
+        i = 0
+        while i + len(pieces) <= len(parts):
+            if [part.lower() for part in parts[i:i + len(pieces)]] == pieces:
+                parts[i:i + len(pieces)] = [title.strip()]
+            i += 1
+
+    return [part for part in parts if part]
