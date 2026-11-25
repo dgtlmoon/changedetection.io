@@ -56,8 +56,9 @@ def test_proxy_noconnect_custom(client, live_server, measure_memory_usage, datas
     import time
     wait_for_all_checks(client)
 
-    # Requests default
-    check_string = b'Cannot connect to proxy'
+    # Requests default. The words every version has: urllib3 said "Cannot connect to proxy." and says "Unable to
+    # connect to proxy" now. This test had been failing on that since, unseen, see run_proxy_tests.sh
+    check_string = b'connect to proxy'
 
     if os.getenv('PLAYWRIGHT_DRIVER_URL') or strtobool(os.getenv('FAST_PUPPETEER_CHROME_FETCHER', 'False')) or os.getenv("WEBDRIVER_URL"):
         check_string = b'ERR_PROXY_CONNECTION_FAILED'
