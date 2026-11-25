@@ -4,14 +4,19 @@
 // Without the script none of this is on the page, the field is the plain text input.
 
 // Looks like the text inputs around it, the chips and the box to type in sit inside
+// As wide as a text input to start with, grows with the chips in it, and wraps to a new line of chips at the width
+// of what it is in - never wider, so nothing around it gets a scrollbar
 .tag-chips-field {
   position: relative;
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   box-sizing: border-box;
-  width: 100%;
+  width: auto;
+  min-width: min(24em, 100%);
+  max-width: 100%;
+  vertical-align: middle;
   padding: 0.25em 0.35em;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -43,9 +48,11 @@
     background: transparent !important;
   }
 
-  // On the coloured panel of the "Add a watch" page
+  // On the coloured panel of the "Add a watch" page: takes the room that is left in its row
   &.tag-chips-transparent {
+    display: flex;
     flex: 1;
+    min-width: 0;
     background-color: var(--color-background-new-watch-input-transparent);
     color: var(--color-white);
     border-color: rgba(255, 255, 255, 0.2);
