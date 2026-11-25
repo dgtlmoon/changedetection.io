@@ -256,6 +256,8 @@ def test_group_dialog_can_remove_existing_groups(client, live_server, measure_me
     """The watch list's "Group" dialog has "Also remove any existing group assigned", which is never ticked when
     the dialog opens."""
     tick = '.modal-dialog[open] input[name="bulk_groups_replace"]'
+    # The dialog's field: the watch list has another chips field, in the form that adds a watch
+    dialog_box = f'.modal-dialog[open] {BOX}'
 
     async def steps(page):
         await _add_groups(page, ['Was in this', 'Moved to this'])
@@ -292,21 +294,21 @@ def test_group_dialog_can_remove_existing_groups(client, live_server, measure_me
         # Ticked and then the dialog cancelled: nothing happens, and it is not ticked the next time
         await page.click('.modal-dialog[open] .bulk-group-replace')
         assert await page.evaluate(f"""() => document.querySelector('{tick}').checked""") is True
-        await page.type(BOX, 'Moved to this')
+        await page.type(dialog_box, 'Moved to this')
         await page.click('.modal-dialog[open] [data-action="cancel"]')
         assert await groups_of_the_watch(['Was in this']) == ['Was in this']
         await open_dialog()
         assert await page.evaluate(f"""() => document.querySelector('{tick}').checked""") is False
 
         # Left unticked: added to the group it is in
-        await page.type(BOX, 'Moved to this')
+        await page.type(dialog_box, 'Moved to this')
         await screenshot(page, 'group-dialog-remove-existing', '.modal-dialog[open]')
         await page.click('.modal-dialog[open] [data-action="confirm"]')
         assert sorted(await groups_of_the_watch(['Was in this', 'Moved to this'])) == ['Moved to this', 'Was in this']
 
         # Ticked: only the group named
         await open_dialog()
-        await page.type(BOX, 'moved to this')
+        await page.type(dialog_box, 'moved to this')
         await page.click(tick)
         await page.click('.modal-dialog[open] [data-action="confirm"]')
         assert await groups_of_the_watch(['Moved to this']) == ['Moved to this']

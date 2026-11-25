@@ -94,6 +94,7 @@ msgstr ""
 
 #: changedetectionio/blueprint/add_watch_ui/templates/add-watch-ui.html
 #: changedetectionio/blueprint/tags/templates/groups-overview.html
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Watch group / tag"
 msgstr "Grupo / Tag de monitoramento"
 
@@ -3368,6 +3369,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group"
+msgstr "Grupo"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Group name"
 msgstr "Nome do grupo"
 
@@ -3457,10 +3462,6 @@ msgstr "Reativar"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Add selected to group"
 msgstr "Adicionar selecionados ao grupo"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Group"
-msgstr "Grupo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"

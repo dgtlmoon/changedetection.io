@@ -858,17 +858,20 @@ def test_add_watch_from_inside_group(client, live_server, measure_memory_usage, 
     tag_uuid = datastore.add_tag('Shopping list')
     test_url = url_for('test_endpoint', _external=True)
 
-    # Outside a group, nothing is preselected
+    # Outside a group, nothing is preselected: the quick-add form has its group field, empty
     res = client.get(url_for("watchlist.index"))
-    assert b'type="hidden" name="tags"' not in res.data
+    quick_add = re.search(rb'<form[^>]*id="new-watch-form".*?</form>', res.data, re.S).group(0)
+    field = re.search(rb'<input[^>]*name="tags"[^>]*>', quick_add).group(0)
+    assert b'type="text"' in field and b'tag-chips' in field and b'value=""' in field
     assert f'href="{url_for("add_watch_ui.add_watch_ui_index")}"'.encode() in res.data
     # (the field itself: every group is also listed next to it, for its suggestions)
     res = client.get(url_for("add_watch_ui.add_watch_ui_index"))
     assert b'value="Shopping list"' not in re.search(rb'<input[^>]*name="tags"[^>]*>', res.data).group(0)
 
     res = client.get(url_for("watchlist.index", tag=tag_uuid))
-    # The quick-add form posts the open group, and returns to it afterwards
-    assert f'<input type="hidden" name="tags" value="{tag_uuid}">'.encode() in res.data
+    # The quick-add form starts with the open group in its group field, and returns to it afterwards
+    quick_add = re.search(rb'<form[^>]*id="new-watch-form".*?</form>', res.data, re.S).group(0)
+    assert b'value="Shopping list"' in re.search(rb'<input[^>]*name="tags"[^>]*>', quick_add).group(0)
     assert url_for("ui.ui_views.form_quick_watch_add", tag=tag_uuid).encode() in res.data
     # The sidebar "Add a page watch" link takes the open group along
     add_watch_ui_url = url_for("add_watch_ui.add_watch_ui_index", tag=tag_uuid)
@@ -890,6 +893,18 @@ def test_add_watch_from_inside_group(client, live_server, measure_memory_usage, 
     assert watch['tags'] == [tag_uuid]
     # No duplicate group was created from the UUID
     assert len(datastore.data['settings']['application']['tags']) == 1
+
+    # As the form sends it now: the names in its group field, the open group and one that is new
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add", tag=tag_uuid),
+        data={"url": test_url + "?second", "tags": "Shopping list, Wishes"},
+    )
+    assert res.status_code == 302
+    tags = datastore.data['settings']['application']['tags']
+    wishes = next(uuid for uuid, tag in tags.items() if tag['title'] == 'Wishes')
+    second = next(w for w in datastore.data['watching'].values() if w['url'].endswith('?second'))
+    assert second['tags'] == [tag_uuid, wishes]
+    assert len(tags) == 2, "The open group was not made a second time"
 
     delete_all_watches(client)
 

@@ -558,6 +558,26 @@ body.blueprint-watchlist {
     margin-top: $common-gap;
   }
 
+  // The groups for the new watch: the label and the chips field on one line
+  #quick-watch-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: $common-gap;
+
+    label {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .tag-chips-field,
+    > input[type=text] {
+      flex: 1 1 auto;
+      width: auto;
+      margin: 0;
+    }
+  }
+
   #quick-watch-processor-type {
     span.label {
       display: none;
@@ -619,12 +639,16 @@ body.blueprint-watchlist {
   // — pure CSS, no JS. :placeholder-shown is true while the box is empty (the
   // placeholder is visible); :has() lets the form react to the nested #url input.
   #quick-watch-llm-intent,
+  #quick-watch-group,
   #quick-watch-processor-type {
     display: none;
   }
   #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-llm-intent,
   #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-processor-type {
     display: block;
+  }
+  #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-group {
+    display: flex;
   }
 
   #add-watch-url-row {
