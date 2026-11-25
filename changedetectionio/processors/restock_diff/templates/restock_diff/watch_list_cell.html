@@ -1,6 +1,5 @@
-{#- The stock and price of a restock watch, in its "Restock & Price" cell of the watch list (td.restock-and-price).
-    Rendered with the list (watch-overview-single-row.html), and again by plugins/watch_list_cell.py every time the
-    watch is updated, for the pages that have the list open. Needs: watch -#}
+{#- The stock and price of a restock watch, in its "Restock & Price" cell of the watch list (td.restock-and-price),
+    part of the row (watch-overview-single-row.html). Needs: watch -#}
 <div class="restock-info-wrap">
         {%- if watch.has_restock_info -%}
             <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="{{ _('Detecting restock and price') }}">

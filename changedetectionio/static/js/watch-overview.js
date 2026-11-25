@@ -16,18 +16,28 @@ $(function () {
         normalizeUrl($('#url')[0]);
     });
 
+    // The rows of the list are put in again whenever the server sends them (realtime.js, "watch_row"), so what
+    // is done to rows is either delegated from the document or done again for the new row, below.
+
     // Remove unviewed status when normally clicked
-    $('.diff-link').click(function () {
+    $(document).on('click', '.diff-link', function () {
         $(this).closest('.unviewed').removeClass('unviewed');
     });
 
-    $('td[data-timestamp]').each(function () {
-        $(this).prop('title', new Intl.DateTimeFormat(undefined,
-            {
-                dateStyle: 'full',
-                timeStyle: 'long'
-            }).format($(this).data('timestamp') * 1000));
-    })
+    // The full date and time of "checked" and "changed" as their tooltip
+    function setDateTooltips(scope) {
+        $('td[data-timestamp]', scope).each(function () {
+            $(this).prop('title', new Intl.DateTimeFormat(undefined,
+                {
+                    dateStyle: 'full',
+                    timeStyle: 'long'
+                }).format($(this).data('timestamp') * 1000));
+        });
+    }
+    setDateTooltips(document);
+    document.addEventListener('cdio:watch-row-replaced', function (e) {
+        setDateTooltips(e.detail.row);
+    });
 
     // Bulk "Group" action: a modal with the chips field of a watch's "Group tag" (tag-chips.js), existing
     // groups are suggested while typing and a new name becomes a new group. The names go to the server as
@@ -99,7 +109,7 @@ $(function () {
     });
 
 
-    $('.history-link').click(function (e) {
+    $(document).on('click', '.history-link', function (e) {
         // Incase they click 'back' in the browser, it should be removed.
         $(this).closest('tr').removeClass('unviewed');
     });
@@ -187,7 +197,7 @@ $(function () {
         });
     });
 
-    $(".watch-table tr").click(function (event) {
+    $(document).on('click', '.watch-table tr', function (event) {
         var tagName = event.target.tagName.toLowerCase();
         if (tagName === 'tr' || tagName === 'td') {
             var cb = $('input[type=checkbox]', this)[0];
@@ -307,6 +317,14 @@ $(function () {
     // Exposed so realtime.js can refresh the UI after it mutates the selection
     // (e.g. clearing it once a delete operation removes the rows).
     sel.refreshUI = refreshSelectionUI;
+
+    // A row the server sent again: ticked if it is in the selection
+    document.addEventListener('cdio:watch-row-replaced', function (e) {
+        $('input[name="uuids"][type=checkbox]', e.detail.row).each(function () {
+            this.checked = sel.has(cbUuid(this));
+        });
+        refreshSelectionUI();
+    });
 
     // Download through a normal authenticated, CSRF-protected POST rather than
     // Socket.IO or a fetch Blob, so the browser can stream the attachment.

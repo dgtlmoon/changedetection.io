@@ -352,6 +352,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             flash(gettext("Updated watch - unpaused!") if request.args.get('unpause_on_save') else gettext("Updated watch."))
 
+            # The watch list in other tabs: its row there shows the new groups, title ... without a reload
+            from blinker import signal
+            signal('watches_changed').send(uuids=[uuid])
+
             # Cleanup any browsersteps session for this watch
             try:
                 from changedetectionio.blueprint.browser_steps import cleanup_session_for_watch

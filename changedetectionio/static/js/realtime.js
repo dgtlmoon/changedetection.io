@@ -10,7 +10,8 @@ $(document).ready(function () {
     }
 
     function bindSocketHandlerButtonsEvents(socket) {
-        $('.ajax-op').on('click.socketHandlerNamespace', function (e) {
+        // Delegated: the rows are put in again when the server sends them (watch_row), their buttons with them
+        $(document).on('click.socketHandlerNamespace', '.ajax-op', function (e) {
             e.preventDefault();
             const op = $(this).data('op');
             const uuid = $(this).closest('tr').data('watch-uuid');
@@ -132,7 +133,12 @@ $(document).ready(function () {
                 bindSocketHandlerButtonsEvents(socket);
                 // Per-watch events are only sent for the watches this page says it is showing. Sent on every
                 // (re)connect, the server forgets it when the connection drops.
-                socket.emit('watch-subscribe', {uuids: watchUuidsOnThisPage()});
+                // A watch list also asks for the rows themselves, as the list filtered by its group shows them
+                const subscription = {uuids: watchUuidsOnThisPage()};
+                if (document.querySelector('.watch-table tr[data-watch-uuid]')) {
+                    subscription.rows_for_tag = new URLSearchParams(window.location.search).get('tag') || '';
+                }
+                socket.emit('watch-subscribe', subscription);
             });
 
             socket.on('connect_error', function(error) {
@@ -149,7 +155,8 @@ $(document).ready(function () {
 
             socket.on('disconnect', function (reason) {
                 console.log('Socket.IO disconnected, reason:', reason);
-                $('.ajax-op').off('.socketHandlerNamespace');
+                $(document).off('click.socketHandlerNamespace', '.ajax-op');
+                $('#checkbox-operations button[name="op"]').off('.socketHandlerNamespace');
                 $('#realtime-conn-error').show();
             });
 
@@ -274,38 +281,48 @@ $(document).ready(function () {
                 $('.js-unread-count').text(unreadText).toggle(general_stats.unread_changes_count !== 0);
             });
 
+            // A watch was updated (a check started or ended, it was paused, put in a group ...): its row, as the
+            // server draws it for the watch list, takes the place of the one on the page. One renderer, so the
+            // page cannot drift from what a reload would show.
+            const rowsLastPutIn = {};
+            socket.on('watch_row', function (data) {
+                const current = document.querySelector('tr[data-watch-uuid="' + data.uuid + '"]');
+                if (!current || rowsLastPutIn[data.uuid] === data.html) {
+                    return;
+                }
+                const holder = document.createElement('tbody');
+                holder.innerHTML = data.html;
+                const fresh = holder.querySelector('tr');
+                // A row for a table with other columns than this page has (a first Restock & Price watch was
+                // added since the page loaded): a reload away, not something to put in this table
+                if (!fresh || fresh.children.length !== current.children.length) {
+                    return;
+                }
+                rowsLastPutIn[data.uuid] = data.html;
+                // What only the page knows goes over to the new row: the tick of its checkbox
+                const wasTicked = current.querySelector('input[name="uuids"]');
+                const tick = fresh.querySelector('input[name="uuids"]');
+                if (wasTicked && tick) {
+                    tick.checked = wasTicked.checked;
+                }
+                // The favicon that is already loaded, so it is not fetched again (and does not blink)
+                const oldIcon = current.querySelector('img.favicon');
+                const newIcon = fresh.querySelector('img.favicon');
+                if (oldIcon && newIcon && newIcon.getAttribute('data-src') && oldIcon.getAttribute('src') && !oldIcon.getAttribute('src').startsWith('data:')) {
+                    newIcon.setAttribute('src', oldIcon.getAttribute('src'));
+                    newIcon.classList.remove('lazy-favicon');
+                }
+                current.replaceWith(fresh);
+                if (window.feather) {
+                    feather.replace();
+                }
+                // For whatever sets rows up when the page loads (dates, favicons, the selection)
+                document.dispatchEvent(new CustomEvent('cdio:watch-row-replaced', {detail: {row: fresh, uuid: data.uuid}}));
+            });
+
+            // The page of one watch (edit, preview, history): whether that watch is being checked right now
             socket.on('watch_update', function (data) {
                 const watch = data.watch;
-
-                // Updating watch table rows
-                const $watchRow = $('tr[data-watch-uuid="' + watch.uuid + '"]');
-                console.log('Found watch row elements:', $watchRow.length);
-
-                if ($watchRow.length) {
-                    $($watchRow).toggleClass('checking-now', watch.checking_now);
-                    $($watchRow).toggleClass('queued', watch.queued);
-                    $($watchRow).toggleClass('unviewed', watch.unviewed);
-                    $($watchRow).toggleClass('has-error', watch.has_error);
-                    $($watchRow).toggleClass('has-favicon', watch.has_favicon);
-                    $($watchRow).toggleClass('notification_muted', watch.notification_muted);
-                    $($watchRow).toggleClass('paused', watch.paused);
-                    $($watchRow).toggleClass('single-history', watch.history_n === 1);
-                    $($watchRow).toggleClass('multiple-history', watch.history_n >= 2);
-
-                    $('td.title-col .error-text', $watchRow).html(watch.error_text)
-                    $('td.last-changed', $watchRow).text(watch.last_changed_text)
-                    $('td.last-checked .innertext', $watchRow).text(watch.last_checked_text)
-                    $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
-                    $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
-
-                    // Parts of the row that plugins draw themselves, e.g. the stock and price of a restock watch
-                    // (the watch_list_row_html plugin hook): {selector within the row: html}
-                    $.each(watch.row_html || {}, function (selector, html) {
-                        $(selector, $watchRow).html(html);
-                    });
-
-                    console.log('Updated UI for watch:', watch.uuid);
-                }
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));
             });
 
