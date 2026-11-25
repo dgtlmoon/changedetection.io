@@ -5,6 +5,17 @@
  */
 
 :root {
+  // Fonts: every font of the app comes from these, by the rules at the top of styles.scss (which take the place
+  // of the font rules of pure-min.css). Change one here to change it everywhere, and in the browser's inspector
+  // anything that does not trace back to one of these is an exception worth a look.
+  --font-family-base: Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+  // Twice, as pure-min.css has it: with "monospace" on its own browsers shrink the text to 13px
+  --font-family-mono: monospace, monospace;
+  // Inline code, relative to the text it is in: monospace reads larger than proportional text at the same size
+  --font-size-code: 0.875em;
+  // Monospace text areas (filters, headers, notification body ...). 13px, what browsers gave "monospace" on its
+  // own until now, said out loud
+  --font-size-mono-input: 0.8125rem;
   --body-main-text-size: 0.9rem;
   // A setting that is filled in but not in use (switched off, muted, left on the default). Also used from plugins.js
   --opacity-setting-not-in-use: 0.65;

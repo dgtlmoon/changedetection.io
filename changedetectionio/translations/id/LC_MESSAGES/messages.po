@@ -2239,6 +2239,13 @@ msgstr ""
 "Yang diatur di sini tidak digunakan sampai diaktifkan, sehingga dapat disiapkan lebih dulu. Monitor di beberapa grup "
 "memakai grup pertama yang diaktifkan."
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr "Interval/jangka waktu antara setiap pemeriksaan."
@@ -2425,6 +2432,10 @@ msgstr "Proksi yang dipilih tidak valid"
 #, python-brace-format
 msgid "{} watches were tagged"
 msgstr "{} monitor diberi tag"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Nama grup tidak diisi"
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
@@ -3411,6 +3422,10 @@ msgid "Web page URL"
 msgstr "URL halaman web"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Nama grup"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr "%(count)s rekaman dipilih"
@@ -3494,16 +3509,20 @@ msgid "UnMute"
 msgstr "Aktifkan kembali"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Tag"
+msgid "Add selected to group"
+msgstr "Tambahkan yang dipilih ke grup"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr "Atur metode browser / pengambilan untuk yang dipilih"
+msgid "Group"
+msgstr "Grup"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
 msgstr "Terapkan"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
+msgstr "Atur metode browser / pengambilan untuk yang dipilih"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set proxy for selected"
@@ -3821,6 +3840,10 @@ msgid "Remove"
 msgstr "Hapus"
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Tag grup"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Format waktu tidak valid. Gunakan JJ:MM."
 
@@ -3945,10 +3968,6 @@ msgstr "Nilai kosong tidak diizinkan."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Nilai tidak valid."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Tag grup"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

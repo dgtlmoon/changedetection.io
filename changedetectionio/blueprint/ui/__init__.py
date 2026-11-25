@@ -143,19 +143,32 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
             result_type = 'error'
 
     elif (op == 'assign-tag'):
-        op_extradata = extra_data
-        if op_extradata:
-            tag_uuid = datastore.add_tag(title=op_extradata)
-            if op_extradata and tag_uuid:
-                for uuid in uuids:
-                    if datastore.data['watching'].get(uuid):
-                        # Bug in old versions caused by bad edit page/tag handler
-                        if isinstance(datastore.data['watching'][uuid]['tags'], str):
-                            datastore.data['watching'][uuid]['tags'] = []
+        # One or more group names, comma separated like the "Group tag" field of a watch. A name that is not
+        # a group yet becomes one.
+        tag_uuids = []
+        for title in (extra_data or '').split(','):
+            tag_uuid = datastore.add_tag(title=title) if title.strip() else None
+            if tag_uuid and tag_uuid not in tag_uuids:
+                tag_uuids.append(tag_uuid)
 
-                        datastore.data['watching'][uuid]['tags'].append(tag_uuid)
-                        datastore.data['watching'][uuid].commit()
-        result_message = gettext("{} watches were tagged").format(len(uuids))
+        if tag_uuids:
+            for uuid in uuids:
+                watch = datastore.data['watching'].get(uuid)
+                if not watch:
+                    continue
+                # Bug in old versions caused by bad edit page/tag handler
+                if isinstance(watch['tags'], str):
+                    watch['tags'] = []
+                # A watch that is already in the group is left as it is
+                to_add = [tag_uuid for tag_uuid in tag_uuids if tag_uuid not in watch['tags']]
+                if to_add:
+                    watch['tags'].extend(to_add)
+                    watch.commit()
+            result_message = gettext("{} watches were tagged").format(len(uuids))
+        else:
+            # Used to say "N watches were tagged" here although nothing was done
+            result_message = gettext("No group name given")
+            result_type = 'error'
 
     # One signal for the whole selection, not one per watch. The recheck's batch put has already sent it.
     if uuids and op != 'recheck':

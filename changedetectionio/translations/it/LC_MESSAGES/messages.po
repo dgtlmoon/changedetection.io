@@ -2160,6 +2160,13 @@ msgstr ""
 "Ciò che è impostato qui non viene usato finché non viene attivato, così può essere preparato in anticipo. Un monitor "
 "in più gruppi usa il primo gruppo attivato."
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr ""
@@ -2342,6 +2349,10 @@ msgstr ""
 #, python-brace-format
 msgid "{} watches were tagged"
 msgstr ""
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Nessun nome di gruppo indicato"
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
@@ -3313,6 +3324,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Nome del gruppo"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3396,15 +3411,19 @@ msgid "UnMute"
 msgstr "Riattiva audio"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Tag"
+msgid "Add selected to group"
+msgstr "Aggiungi i selezionati al gruppo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr ""
+msgid "Group"
+msgstr "Gruppo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3726,6 +3745,10 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Gruppo / Etichetta"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Formato orario non valido. Usa HH:MM."
 
@@ -3850,10 +3873,6 @@ msgstr "Valore vuoto non consentito."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Valore non valido."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Gruppo / Etichetta"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

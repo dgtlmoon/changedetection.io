@@ -2109,6 +2109,13 @@ msgid ""
 "takes the first group that is switched on."
 msgstr "此處的設定在開啟之前不會被使用，因此可以預先設定。屬於多個群組的監測任務使用第一個已開啟的群組。"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr "每次檢查之間的間隔 / 時間量。"
@@ -2291,6 +2298,10 @@ msgstr "選擇了無效的代理伺服器"
 #, python-brace-format
 msgid "{} watches were tagged"
 msgstr "{} 個監測任務已加上標籤"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "未填寫群組名稱"
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
@@ -3263,6 +3274,10 @@ msgid "Web page URL"
 msgstr "網頁 URL"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "群組名稱"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr "已選取 %(count)s 筆記錄"
@@ -3346,16 +3361,20 @@ msgid "UnMute"
 msgstr "取消靜音"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "標籤"
+msgid "Add selected to group"
+msgstr "將所選項目加入群組"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr "為所選項目設定瀏覽器 / 抓取方式"
+msgid "Group"
+msgstr "群組"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
 msgstr "套用"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
+msgstr "為所選項目設定瀏覽器 / 抓取方式"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set proxy for selected"
@@ -3669,6 +3688,10 @@ msgid "Remove"
 msgstr "移除"
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "群組 / 標籤"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "時間格式無效。請使用 HH:MM。"
 
@@ -3793,10 +3816,6 @@ msgstr "不允許空值。"
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "數值無效。"
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "群組 / 標籤"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

@@ -107,6 +107,11 @@ def import_from_zip(zip_stream, datastore, include_groups, include_groups_replac
                 tag_data['uuid'] = uuid
                 tag_data['processor'] = 'restock_diff'
 
+                # A backup from before a group's notifications could be switched off: keep it notifying as it did
+                if 'notification_group_mode' not in tag_data:
+                    from changedetectionio.notification import group_notification_mode_for_older_data
+                    tag_data['notification_group_mode'] = group_notification_mode_for_older_data(tag_data)
+
                 # Copy the UUID directory so data_dir exists for commit()
                 dst_dir = os.path.join(datastore.datastore_path, uuid)
                 if os.path.exists(dst_dir):

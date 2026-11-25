@@ -46,6 +46,35 @@ hr.settings-divider {
   border-top: 1px solid var(--color-border-table-cell);
 }
 
+// Group edit, Proxy tab: a proxy provider's logo and a line about it, first thing on the tab
+.proxy-provider-tip {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  margin: 0 0 1.25em 0;
+  padding: 0.7em 0.9em;
+  border: 1px solid var(--color-border-table-cell);
+  border-radius: var(--common-round-border);
+  line-height: 1.3;
+
+  // A wordmark: its letters are about half its height, so twice the height of the text to read as the same size
+  img {
+    flex-shrink: 0;
+    height: 2em;
+    width: auto;
+  }
+
+  // monospace reads larger than the text it is in at the same size, as in the form hints
+  // (and no line height of its own: the taller line of the monospace font pushed the text up off the middle of
+  // the box)
+  code {
+    font-size: 0.875em;
+    line-height: 1;
+    padding: 0.2em 0.35em 0.1em;
+    border-radius: 3px;
+  }
+}
+
 // Group edit: the settings of something that is switched off ("Don't use", or muted), they can still be filled in
 .group-setting-off {
   opacity: var(--opacity-setting-not-in-use);

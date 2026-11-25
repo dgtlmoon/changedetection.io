@@ -899,3 +899,18 @@ class DatastoreUpdatesMixin:
         password = os.getenv("SALTED_PASS") or application.get('password')
         if password:
             application['password_marker_at_login_fingerprint_upgrade'] = password_marker(password)
+
+    def update_36(self):
+        """A group's notification settings can now be switched off ("Don't use"), and that is what a new group
+        starts with. Groups that exist already go on notifying exactly as they did: one with notification URLs
+        stays what it was (part of the watch > group > system lookup, or 'add' / 'replace' if it was set to that),
+        one without any becomes 'off', see group_notification_mode_for_older_data()."""
+        from ..notification import group_notification_mode_for_older_data
+
+        for tag_uuid, tag in self.data['settings']['application']['tags'].items():
+            mode = group_notification_mode_for_older_data(tag)
+            if tag.get('notification_group_mode') != mode:
+                logger.info(f"update_36: group '{tag.get('title')}' ({tag_uuid}) notification_group_mode "
+                            f"'{tag.get('notification_group_mode')}' -> '{mode}'")
+            tag['notification_group_mode'] = mode
+            tag.commit()

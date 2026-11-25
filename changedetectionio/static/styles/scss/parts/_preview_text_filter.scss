@@ -40,7 +40,7 @@ body.preview-text-enabled {
     border: 1px solid var(--color-grey-600);
     padding: 1rem;
     color: var(--color-text-input);
-    font-family: "Courier New", Courier, monospace; /* Sets the font to a monospace type */
+    font-family: var(--font-family-mono);
     font-size: 70%;
     word-break: break-word;
     white-space: pre-wrap; /* Preserves whitespace and line breaks like <pre> */
