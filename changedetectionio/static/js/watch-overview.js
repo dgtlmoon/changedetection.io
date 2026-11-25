@@ -59,9 +59,10 @@ $(function () {
                 $(replace ? '#op-assign-tag-replace' : '#op-assign-tag').trigger('click');
             }
         });
-        // The dialog is on the page now, after its own focus on the button put the cursor in the field
-        const $field = $('.modal-dialog input.tag-chips').tagChips();
-        setTimeout(() => $field.trigger('focus'), 150);
+        // The dialog is on the page now: the cursor goes in the field straight away, and the dialog leaves it
+        // there (modal.js). It used to arrive after the dialog's own focus on its button, and a name being typed
+        // in that moment was cut in two.
+        $('.modal-dialog input.tag-chips').tagChips().trigger('focus');
     });
 
     // Bulk "Browser" / "Proxy" actions: open a modal with the same radio choices as the

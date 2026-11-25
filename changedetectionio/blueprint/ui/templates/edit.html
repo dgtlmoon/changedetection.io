@@ -102,14 +102,18 @@
                     <div class="pure-control-group">
                         {{ render_field(form.tags) }}
                         <span class="pure-form-message-inline">{{ _('Organisational tag/group name used in the main listing page') }}</span>
-                        {% if auto_applied_tags %}
-                        <span class="pure-form-message-inline">
+                        {%- if auto_applied_tags %}
+                        {#- Groups this watch is in without being put in them: their "Auto-apply to watches with URLs
+                            matching" pattern matches its URL. In the group's colours, each a link to the group. -#}
+                        <div class="pure-form-message auto-applied-groups">
                             {{ _('Also automatically applied by URL pattern:') }}
-                            {% for tag_uuid, tag in auto_applied_tags.items() %}
-                            <a href="{{ url_for('tags.form_tag_edit', uuid=tag_uuid) }}" class="watch-tag-list tag-{{ tag.title|sanitize_tag_class }}">{{ tag.title }}</a>
-                            {% endfor %}
-                        </span>
-                        {% endif %}
+                            {%- for tag_uuid, tag in auto_applied_tags.items() %}
+                            {%- set colours = tag|tag_display_colours %}
+                            <a href="{{ url_for('tags.form_tag_edit', uuid=tag_uuid) }}" class="tag-chip" title="{{ tag.get('url_match_pattern') }}"
+                               style="--tag-chip-bg: {{ colours.light.bg }}; --tag-chip-color: {{ colours.light.color }}; --tag-chip-dark-bg: {{ colours.dark.bg }}; --tag-chip-dark-color: {{ colours.dark.color }};"><span class="tag-chip-text">{{ tag.title }}</span></a>
+                            {%- endfor %}
+                        </div>
+                        {%- endif %}
                     </div>
                     <div class="pure-control-group inline-radio">
                         {{ render_field(form.processor) }}
