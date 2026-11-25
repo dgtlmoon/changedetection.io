@@ -75,6 +75,13 @@ hr.settings-divider {
   }
 }
 
+// Group edit: the note at the bottom of the tabs whose settings a watch takes from one group only
+.first-group-note {
+  margin-top: 1.5em;
+  padding-top: 0.8em;
+  border-top: 1px solid var(--color-border-table-cell);
+}
+
 // Group edit: the settings of something that is switched off ("Don't use", or muted), they can still be filled in
 .group-setting-off {
   opacity: var(--opacity-setting-not-in-use);

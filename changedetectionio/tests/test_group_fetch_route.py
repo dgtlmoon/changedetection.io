@@ -268,3 +268,26 @@ def test_group_fetch_backend_is_what_the_check_uses(client, live_server, measure
     wait_for_all_checks(client)
     assert not watch.get('last_error'), "Fetched with the group's fetch method"
     assert watch.history_n >= 1
+
+
+def test_group_edit_says_which_group_a_watch_follows(client, live_server, measure_memory_usage, datastore_path, setup):
+    """Fetch method, proxy and recheck time come from one group only. The tabs that set them say which, at the bottom."""
+    import re
+    datastore = setup
+    group_uuid, group = _group(datastore, 'Shops')
+    note = 'Note: a watch in several groups follows the first group in its list that has this switched on.'
+
+    page = client.get(url_for("tags.form_tag_edit", uuid=group_uuid)).get_data(as_text=True)
+    for tab in ('request', 'proxy', 'recheck-time'):
+        pane = re.search(r'<div class="tab-pane-inner" id="%s">(.*?)</fieldset>' % tab, page, re.S).group(1)
+        assert note in pane, f"The {tab} tab has the note"
+        assert pane.rstrip().endswith('</div>') and note in pane[-400:], f"At the bottom of the {tab} tab"
+    assert page.count(note) == 3, "Not on the tabs whose settings every group of a watch adds to (filters, notifications ...)"
+
+    # And that is the rule: two groups switched on, the first in the watch's list is followed
+    second_uuid, second = _group(datastore, 'Second', fetch_backend='html_webdriver', fetch_backend_group_mode='replace')
+    group.update({'fetch_backend': 'html_requests', 'fetch_backend_group_mode': 'replace'})
+    watch_uuid, watch = _watch(datastore, tags=[group_uuid, second_uuid])
+    assert resolve_fetch_route(watch, datastore)['fetch_backend'] == 'html_requests'
+    watch['tags'] = [second_uuid, group_uuid]
+    assert resolve_fetch_route(watch, datastore)['fetch_backend'] == 'html_webdriver'
