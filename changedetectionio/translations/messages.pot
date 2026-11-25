@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.70.4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-25 21:39+0000\n"
+"POT-Creation-Date: 2026-11-25 22:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2061,6 +2061,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag-extra-form.html
 msgid "Used for watches in \"Restock & Price detection\" mode"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Note: a watch in several groups follows the first group in its list that has this switched on."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html

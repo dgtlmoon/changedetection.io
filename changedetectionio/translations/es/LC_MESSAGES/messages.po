@@ -2170,6 +2170,10 @@ msgstr "Nombre de la etiqueta"
 msgid "Used for watches in \"Restock & Price detection\" mode"
 msgstr ""
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Note: a watch in several groups follows the first group in its list that has this switched on."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "Filtros y activadores"
