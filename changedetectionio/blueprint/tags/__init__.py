@@ -3,7 +3,7 @@ from flask import Blueprint, request, render_template, flash, url_for, redirect
 from flask_babel import gettext
 from loguru import logger
 
-from changedetectionio.blueprint.tags.colour import safe_css_colour
+from changedetectionio.blueprint.tags.colour import safe_css_colour, tag_display_colours
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config, is_llm_features_disabled
@@ -14,6 +14,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
     # Used by any template that writes a tag colour into a <style> block
     tags_blueprint.add_app_template_filter(safe_css_colour, 'safe_css_colour')
+    # The colours of a group's label, for a template that shows a group outside the watch list
+    tags_blueprint.add_app_template_filter(tag_display_colours, 'tag_display_colours')
 
     @tags_blueprint.route("/list", methods=['GET'])
     @login_optionally_required

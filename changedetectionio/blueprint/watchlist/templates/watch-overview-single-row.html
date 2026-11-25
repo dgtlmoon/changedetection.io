@@ -3,6 +3,10 @@
     re-rendered on its own and pushed over Socket.IO (realtime row resync) - one renderer,
     so the row can never drift from the server-rendered list.
 
+    It is: every update of a watch sends this row to the pages listing it (realtime/socket_server.py
+    send_watch_list_row()), and realtime.js puts it in place of the row on the page. So nothing in here may
+    depend on what only the page knows - the tick of the checkbox is put back by the page.
+
     Rendered via {% include %} from the watch list loop, which inherits the full context:
       watch, loop, is_checking_now(), queued_uuids, has_proxies, datastore, active_tag_uuid,
       system_default_fetcher, ui_settings, favicons_enabled, fetcher_status_icons,
@@ -83,8 +87,13 @@
                                 <a class="external" target="_blank" rel="noopener" href="{{ open_link }}" title="{{ open_link }}"><i data-feather="external-link"></i></a>
                             </span>
 
+                            {#- Each label carries its group's colours itself: the rules for them in the page's <style> are
+                                from when the page was loaded, and this row is sent to open pages again later (a group
+                                made since then has no rule there). -#}
                             {%- for watch_tag_uuid, watch_tag in datastore.get_all_tags_for_watch(watch['uuid']).items() -%}
-                              <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}">{{ watch_tag.title }}</a>
+                              {%- set tag_colours = watch_tag|tag_display_colours -%}
+                              <a href="{{url_for('watchlist.index', tag=watch_tag_uuid) }}" class="watch-tag-list tag-{{ watch_tag.title|sanitize_tag_class }}"
+                                 style="--tag-chip-bg: {{ tag_colours.light.bg }}; --tag-chip-color: {{ tag_colours.light.color }}; --tag-chip-dark-bg: {{ tag_colours.dark.bg }}; --tag-chip-dark-color: {{ tag_colours.dark.color }};">{{ watch_tag.title }}</a>
                             {%- endfor -%}
                             <div class="error-text" style="display:none;">{{ error_texts|safe }}</div>
                             {%- for note in watch_list_extra_text(watch) %}
@@ -114,7 +123,6 @@
 {%- if any_has_restock_price_processor -%}
                 <td class="restock-and-price col-restock-price">
 {%- if watch['processor'] == 'restock_diff'  -%}
-    {#- The same template is sent to the open pages when the watch is updated, see plugins/watch_list_cell.py -#}
                     {% include 'restock_diff/watch_list_cell.html' %}
 {%- endif -%}
                 </td>

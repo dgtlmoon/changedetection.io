@@ -77,6 +77,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Fallback for older browsers: load all favicons immediately
         document.querySelectorAll('.lazy-favicon').forEach(loadFavicon);
     }
+
+    // A row the server sent again (realtime.js): it is on screen, so its favicon is loaded straight away
+    document.addEventListener('cdio:watch-row-replaced', function (e) {
+        e.detail.row.querySelectorAll('.lazy-favicon').forEach(loadFavicon);
+    });
 });
 </script>
 <style>
