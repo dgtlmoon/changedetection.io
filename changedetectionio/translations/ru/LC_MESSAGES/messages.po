@@ -2101,6 +2101,11 @@ msgstr "Все теги удалены, часы в фоновом режиме 
 msgid "Tag not found"
 msgstr "Тег не найден"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "Группа: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "Обновлено"

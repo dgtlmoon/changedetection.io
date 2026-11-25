@@ -1983,6 +1983,11 @@ msgstr "すべてのタグを削除しました。バックグラウンドでウ
 msgid "Tag not found"
 msgstr "タグが見つかりません"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "グループ: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "更新しました"
