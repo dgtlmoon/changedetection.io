@@ -163,12 +163,15 @@
 
 
 
+// How faded a setting is while it is not in use, one value for the whole UI (see :root in _variables.scss)
+const SETTING_NOT_IN_USE_OPACITY = 'var(--opacity-setting-not-in-use)';
+
 function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
     const checkbox = document.querySelector(checkboxSelector);
     const fields = document.querySelectorAll(fieldSelector);
 
     function updateOpacity() {
-        const opacityValue = !checkbox.checked ? (inverted ? 0.6 : 1) : (inverted ? 1 : 0.6);
+        const opacityValue = !checkbox.checked ? (inverted ? SETTING_NOT_IN_USE_OPACITY : 1) : (inverted ? 1 : SETTING_NOT_IN_USE_OPACITY);
         fields.forEach(field => {
             field.style.opacity = opacityValue;
         });
@@ -189,7 +192,7 @@ function toggleOpacityByRadioValue(radioName, activeValue, fieldSelector) {
     function updateOpacity() {
         const active = Array.from(radios).some(radio => radio.checked && radio.value === activeValue);
         fields.forEach(field => {
-            field.style.opacity = active ? 1 : 0.6;
+            field.style.opacity = active ? 1 : SETTING_NOT_IN_USE_OPACITY;
         });
     }
 

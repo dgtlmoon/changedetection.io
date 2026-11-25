@@ -2123,6 +2123,10 @@ msgid "Use this group's proxy"
 msgstr "Usar o proxy deste grupo"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's recheck time"
+msgstr "Usar o intervalo de verificação deste grupo"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -2172,6 +2176,14 @@ msgid ""
 msgstr ""
 "O que é definido aqui não é usado até ser ativado, então pode ser preparado com antecedência. Um monitoramento em "
 "vários grupos usa o primeiro grupo ativado."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "O intervalo/quantidade de tempo entre cada verificação."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave empty to keep the system default and only use the time schedule below."
+msgstr "Deixe vazio para manter o padrão do sistema e usar apenas o agendamento abaixo."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2435,6 +2447,10 @@ msgstr "Histórico insuficiente (são necessários 2 instantâneos) para mostrar
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
 msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
+msgstr "Limites de tempo de agendamento"
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
@@ -2780,10 +2796,6 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "O intervalo/quantidade de tempo entre cada verificação."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -4029,7 +4041,7 @@ msgstr ""
 msgid "Group Tag"
 msgstr ""
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/forms.py
 msgid "Time Between Check"
 msgstr "Tempo Entre Verificações"
 
@@ -5482,10 +5494,6 @@ msgstr "Verificar esta regra contra o instantâneo atual"
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
 msgstr "Definir um agendamento por hora/dia da semana"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Schedule time limits"
-msgstr "Limites de tempo de agendamento"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Business hours"

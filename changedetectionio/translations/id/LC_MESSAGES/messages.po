@@ -2183,6 +2183,10 @@ msgid "Use this group's proxy"
 msgstr "Gunakan proxy grup ini"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's recheck time"
+msgstr "Gunakan waktu pemeriksaan grup ini"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "Nama tag"
 
@@ -2234,6 +2238,14 @@ msgid ""
 msgstr ""
 "Yang diatur di sini tidak digunakan sampai diaktifkan, sehingga dapat disiapkan lebih dulu. Monitor di beberapa grup "
 "memakai grup pertama yang diaktifkan."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "Interval/jangka waktu antara setiap pemeriksaan."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave empty to keep the system default and only use the time schedule below."
+msgstr "Biarkan kosong untuk memakai default sistem dan hanya menggunakan jadwal di bawah."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2493,6 +2505,10 @@ msgstr "Riwayat tidak cukup (diperlukan 2 snapshot) untuk menampilkan halaman pe
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
 msgstr "Anggaran token AI bulanan sebesar %(budget)s token tercapai (%(used)s digunakan). Direset bulan depan."
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
+msgstr "Batas waktu jadwal"
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
@@ -2834,10 +2850,6 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "Interval/jangka waktu antara setiap pemeriksaan."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -4082,7 +4094,7 @@ msgstr ""
 msgid "Group Tag"
 msgstr "Tag Grup"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/forms.py
 msgid "Time Between Check"
 msgstr "Waktu Antar Pemeriksaan"
 
@@ -5541,10 +5553,6 @@ msgstr "Verifikasi aturan ini terhadap snapshot saat ini"
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
 msgstr "Atur jadwal jam/hari dalam seminggu"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Schedule time limits"
-msgstr "Batas waktu jadwal"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Business hours"

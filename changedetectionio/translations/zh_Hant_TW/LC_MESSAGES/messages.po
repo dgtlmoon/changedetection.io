@@ -2057,6 +2057,10 @@ msgid "Use this group's proxy"
 msgstr "使用此群組的代理"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's recheck time"
+msgstr "使用此群組的檢查間隔"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "標籤名稱"
 
@@ -2104,6 +2108,14 @@ msgid ""
 "What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
 "takes the first group that is switched on."
 msgstr "此處的設定在開啟之前不會被使用，因此可以預先設定。屬於多個群組的監測任務使用第一個已開啟的群組。"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "每次檢查之間的間隔 / 時間量。"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave empty to keep the system default and only use the time schedule below."
+msgstr "留空則維持系統預設間隔，僅使用下方的排程。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2359,6 +2371,10 @@ msgstr "歷史記錄不足（需要 2 個快照）以顯示此監測任務的差
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
 msgstr "已達到每月 %(budget)s 權杖的 AI 權杖配額（已使用 %(used)s）。將於下個月重設。"
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
+msgstr "排程時間限制"
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
@@ -2700,10 +2716,6 @@ msgstr "額外網頁標題與連結選項"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
 msgstr "選填 - 列表、歷史記錄與通知中的連結將改為開啟此 URL。這不會變更正在檢查的 URL。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "每次檢查之間的間隔 / 時間量。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -3930,7 +3942,7 @@ msgstr "開啟連結覆寫"
 msgid "Group Tag"
 msgstr "群組標籤"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/forms.py
 msgid "Time Between Check"
 msgstr "檢查間隔"
 
@@ -5383,10 +5395,6 @@ msgstr "針對目前快照驗證此規則"
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
 msgstr "設定每小時 / 平日排程"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Schedule time limits"
-msgstr "排程時間限制"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Business hours"

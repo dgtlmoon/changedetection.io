@@ -35,6 +35,33 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 decided['value_label'] = str(labels.get(route[setting]) or route[setting])
         return route
 
+    def _recheck_time_for_edit_page(watch, datastore):
+        """The group that decides this watch's recheck interval and time schedule, with a label of what it set,
+        None when they are the watch's own or the system's. Same lookup the scheduler uses."""
+        from flask import current_app
+        from changedetectionio.model.group_settings import (
+            group_time_schedule_limit,
+            groups_with_recheck_time,
+            recheck_time_group_choice,
+        )
+
+        choice = recheck_time_group_choice(watch, groups_with_recheck_time(datastore))
+        if not choice:
+            return None
+
+        parts = []
+        if choice.value:
+            parts.append(current_app.jinja_env.filters['format_duration'](choice.value))
+        if group_time_schedule_limit(choice.group):
+            parts.append(gettext('Schedule time limits'))
+
+        return {
+            'label': choice.group.get('title'),
+            'group_uuid': choice.group.get('uuid'),
+            'replaces_watch': choice.replaces_watch,
+            'value_label': ' + '.join(parts),
+        }
+
     def _resolve_llm_group_overrides(watch, datastore) -> dict:
         """
         For each LLM field (llm_intent, llm_change_summary): if the watch has no own
@@ -338,7 +365,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             is_in_schedule = True
             watch = datastore.data['watching'].get(uuid)
 
-            if watch.get('time_between_check_use_default'):
+            from changedetectionio.model.group_settings import (
+                group_time_schedule_limit,
+                groups_with_recheck_time,
+                recheck_time_group_choice,
+            )
+            group_recheck_time = recheck_time_group_choice(watch, groups_with_recheck_time(datastore))
+            if group_recheck_time:
+                time_schedule_limit = group_time_schedule_limit(group_recheck_time.group) or {}
+            elif watch.get('time_between_check_use_default'):
                 time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit') or {}
             else:
                 time_schedule_limit = watch.get('time_schedule_limit') or {}
@@ -443,6 +478,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 'llm_group_overrides': _resolve_llm_group_overrides(watch, datastore),
                 # Which fetch method and proxy the watch really uses, and who decided (a group, a plugin)
                 'fetch_route': _fetch_route_for_edit_page(watch, datastore, form),
+                # Same for the recheck interval and time schedule
+                'recheck_time_decided': _recheck_time_for_edit_page(watch, datastore),
             }
 
             included_content = None
