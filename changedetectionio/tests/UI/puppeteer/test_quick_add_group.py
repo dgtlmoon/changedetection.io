@@ -15,19 +15,24 @@ async def _form_chips(page):
     return await page.evaluate(f"""() => [...document.querySelectorAll('{FIELD} .tag-chip-text')].map((e) => e.textContent)""")
 
 
-async def _edit_url_of(page, marker):
-    url = await page.evaluate("""(marker) => {
-        const row = [...document.querySelectorAll('tr')].find((tr) => tr.innerText.includes(marker) && tr.querySelector('a[href*="/edit/"]'));
-        return row ? row.querySelector('a[href*="/edit/"]').href.split('#')[0] : null;
-    }""", marker)
-    assert url, f"The watch added for {marker} is in the list"
-    return url
+async def _edit_links(page):
+    """The edit pages of every watch there is, from the whole list"""
+    await page.goto(site_url('watchlist.index'))
+    return set(await page.evaluate("""() => [...document.querySelectorAll('tr[data-watch-uuid] a[href*="/edit/"]')].map((a) => a.href.split('#')[0].split('?')[0])"""))
+
+
+async def _the_new_watch(page, known):
+    """The edit page of the watch that was not there before. Not looked up by its address: once a watch has been
+    checked its row shows the page's title."""
+    new = await _edit_links(page) - known
+    assert len(new) == 1, f"One watch was added, found {len(new)}"
+    return new.pop()
 
 
 def test_quick_add_form_has_a_group_field(client, live_server, measure_memory_usage, datastore_path, running_app):
     async def steps(page):
         await _add_groups(page, ['Quick existing'])
-        await page.goto(site_url('watchlist.index'))
+        known = await _edit_links(page)
 
         # With the other options: there once a URL is typed
         assert await page.evaluate(f"""() => document.querySelector('#quick-watch-group').offsetParent === null"""), "Not shown before a URL is typed"
@@ -56,16 +61,15 @@ def test_quick_add_form_has_a_group_field(client, live_server, measure_memory_us
         # A third name still in the box when "Watch" is clicked counts too
         await page.type(BOX, 'Quick left in the box')
         await click_and_wait_for_new_page(page, '#add-watch-go')
-        edit_url = await _edit_url_of(page, 'quick-add-groups')
-        await _open_edit_page(page, edit_url)
+        await _open_edit_page(page, await _the_new_watch(page, known))
         # (a watch's groups are not kept in the order they were given)
         assert sorted(await _chips(page)) == ['Quick existing', 'Quick left in the box', 'Quick new']
 
         # No group named: the watch is in none
-        await page.goto(site_url('watchlist.index'))
+        known = await _edit_links(page)
         await page.type(f'{FORM} input[name="url"]', 'https://example.com/?quick-add-no-group')
         await click_and_wait_for_new_page(page, '#add-watch-go')
-        await _open_edit_page(page, await _edit_url_of(page, 'quick-add-no-group'))
+        await _open_edit_page(page, await _the_new_watch(page, known))
         assert await _chips(page) == []
 
     run_in_browser(steps, name='quick_add_group_field')
@@ -76,6 +80,7 @@ def test_quick_add_from_inside_a_group_starts_with_that_group(client, live_serve
         await _add_groups(page, ['Open group'])
         await page.goto(site_url('tags.tags_overview_page'))
         group_list = await page.evaluate("""() => [...document.querySelectorAll('.group-overview-table td.title-col a')].find((a) => a.textContent.trim() === 'Open group').href""")
+        known = await _edit_links(page)
         await page.goto(group_list)
 
         await page.type(f'{FORM} input[name="url"]', 'https://example.com/?quick-add-inside-group')
@@ -86,11 +91,11 @@ def test_quick_add_from_inside_a_group_starts_with_that_group(client, live_serve
         await click_and_wait_for_new_page(page, '#add-watch-go')
 
         assert 'tag=' in page.url, "Back in the list of that group"
-        edit_url = await _edit_url_of(page, 'quick-add-inside-group')
-        await _open_edit_page(page, edit_url)
+        await _open_edit_page(page, await _the_new_watch(page, known))
         assert sorted(await _chips(page)) == ['And another', 'Open group']
 
         # The open group can be taken out of the field: the new watch is then only where it was put
+        known = await _edit_links(page)
         await page.goto(group_list)
         await page.type(f'{FORM} input[name="url"]', 'https://example.com/?quick-add-not-in-open-group')
         await page.waitForSelector(BOX, visible=True)
@@ -98,8 +103,7 @@ def test_quick_add_from_inside_a_group_starts_with_that_group(client, live_serve
         await page.type(BOX, 'And another')
         await page.keyboard.press('Enter')
         await click_and_wait_for_new_page(page, '#add-watch-go')
-        await page.goto(site_url('watchlist.index'))
-        await _open_edit_page(page, await _edit_url_of(page, 'quick-add-not-in-open-group'))
+        await _open_edit_page(page, await _the_new_watch(page, known))
         assert await _chips(page) == ['And another']
 
     run_in_browser(steps, name='quick_add_inside_group')
