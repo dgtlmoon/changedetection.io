@@ -36,6 +36,10 @@
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
             {% endif %}
+            <li class="tab"><a href="#request">{{ _('Request') }}</a></li>
+            {% if form.proxy %}
+            <li class="tab"><a href="#proxy">{{ _('Proxy') }}</a></li>
+            {% endif %}
             <li class="tab"><a href="#notifications">{{ _('Notifications') }}</a></li>
         </ul>
     </div>
@@ -115,6 +119,39 @@
             {{ extra_form_content|safe }}
             </div>
         {% endif %}
+            {#- Off by default: what is chosen on these two tabs does nothing until it is switched on -#}
+            <div class="tab-pane-inner" id="request">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <span class="pure-form-message-inline">
+                            {{ _("What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups takes the first group that is switched on.") }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.fetch_backend_group_mode) }}
+                    </div>
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(form.fetch_backend) }}
+                    </div>
+                </fieldset>
+            </div>
+            {% if form.proxy %}
+            <div class="tab-pane-inner" id="proxy">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <span class="pure-form-message-inline">
+                            {{ _("What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups takes the first group that is switched on.") }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.proxy_group_mode) }}
+                    </div>
+                    <div class="pure-control-group inline-radio">
+                        {{ render_field(form.proxy) }}
+                    </div>
+                </fieldset>
+            </div>
+            {% endif %}
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">

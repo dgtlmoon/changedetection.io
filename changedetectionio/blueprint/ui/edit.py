@@ -20,6 +20,21 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         tags = datastore.data['settings']['application'].get('tags', {})
         return [(tag_uuid, tags[tag_uuid]) for tag_uuid in watch.get('tags', []) if tag_uuid in tags]
 
+    def _fetch_route_for_edit_page(watch, datastore, form) -> dict:
+        """The watch's fetch method and proxy after its groups (or a plugin) had their say, with the label of
+        each so the Request tab can say who decided and what. Same lookup the check uses."""
+        from changedetectionio.pluggy_interface import resolve_fetch_route
+
+        route = resolve_fetch_route(watch, datastore)
+        fetch_backend_labels = dict(form.fetch_backend.choices)
+        proxy_list = datastore.proxy_list or {}
+        for setting, labels in (('fetch_backend', fetch_backend_labels),
+                                ('proxy', {key: proxy.get('label') for key, proxy in proxy_list.items()})):
+            decided = route['changed_by'].get(setting)
+            if isinstance(decided, dict):
+                decided['value_label'] = str(labels.get(route[setting]) or route[setting])
+        return route
+
     def _resolve_llm_group_overrides(watch, datastore) -> dict:
         """
         For each LLM field (llm_intent, llm_change_summary): if the watch has no own
@@ -423,6 +438,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 # LLM intent context
                 'llm_configured': bool(_get_llm_config(datastore)),
                 'llm_group_overrides': _resolve_llm_group_overrides(watch, datastore),
+                # Which fetch method and proxy the watch really uses, and who decided (a group, a plugin)
+                'fetch_route': _fetch_route_for_edit_page(watch, datastore, form),
             }
 
             included_content = None

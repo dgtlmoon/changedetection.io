@@ -1984,6 +1984,18 @@ msgid "Updated"
 msgstr "已更新"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Don't use"
+msgstr "不使用"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch is left on the default"
+msgstr "僅當監測任務保留預設值時"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's choice"
+msgstr "取代監測任務的選擇"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr "是否為此標籤 / 群組中的個別監測任務啟用？"
 
@@ -2036,6 +2048,14 @@ msgid "Instead of the watch's own"
 msgstr "取代監測任務自己的通知"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's fetch method"
+msgstr "使用此群組的抓取方式"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's proxy"
+msgstr "使用此群組的代理"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "標籤名稱"
 
@@ -2046,6 +2066,10 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "過濾器與觸發器"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "請求"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
@@ -2073,6 +2097,12 @@ msgstr "這些設定會<strong><i>新增</i></strong>至任何現有的監測設
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "文字過濾"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
+msgstr "此處的設定在開啟之前不會被使用，因此可以預先設定。屬於多個群組的監測任務使用第一個已開啟的群組。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2603,8 +2633,19 @@ msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr "截圖需要啟用 Playwright / WebDriver"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Request"
-msgstr "請求"
+#, python-format
+msgid "Decided by group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "由群組 <a href=\"%(url)s\">%(name)s</a> 決定：<strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "From group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "來自群組 <a href=\"%(url)s\">%(name)s</a>：<strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Decided by %(name)s: %(value)s"
+msgstr "由 %(name)s 決定：%(value)s"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3827,7 +3868,7 @@ msgstr "應包含 1 秒或更多秒"
 msgid "Notification base URL override"
 msgstr "通知基礎 URL 覆寫"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/forms.py
 msgid "Not set"
 msgstr "未設定"
 
@@ -3997,6 +4038,7 @@ msgstr "當文字符合時，阻擋變更檢測"
 msgid "Execute JavaScript before change detection"
 msgstr "在變更檢測前執行 JavaScript"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "代理伺服器"
