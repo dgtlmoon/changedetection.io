@@ -5,8 +5,12 @@ name: ChangeDetection.io Container Build Test
 # This line doesnt work, even tho it is the documented one
 #on: [push, pull_request]
 
+# A pull request is built as a pull request, a push only on master: a commit on a pull request branch in this
+# repository was built twice otherwise (once as "push", once as "pull_request"), see test-only.yml
 on:
   push:
+    branches:
+      - master
     paths:
       - requirements.txt
       - Dockerfile
@@ -22,6 +26,11 @@ on:
 
   # Changes to requirements.txt packages and Dockerfile may or may not always be compatible with arm etc, so worth testing
   # @todo: some kind of path filter for requirements.txt and Dockerfile
+
+# A newer commit on the same pull request stops the build of the one before it. Never on master.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 permissions:
   contents: read
