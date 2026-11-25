@@ -147,7 +147,8 @@ class Watch(BaseWatch):
 
 def register_plugin_hooks(plugin_manager):
     """Called once at startup (processors.register_processor_plugin_hooks()): adds this processor's own
-    hooks (hookspecs.py) and the built-in charts that implement them (plugins/default_charts.py)."""
+    hooks (hookspecs.py), the built-in charts that implement them (plugins/default_charts.py), and what it
+    keeps current in the watch list (plugins/watch_list_cell.py)."""
     from . import hookspecs
     from .plugins import default_charts
 
@@ -157,3 +158,7 @@ def register_plugin_hooks(plugin_manager):
     # 'builtin_' names are hidden from the active plugins list
     if not plugin_manager.is_registered(default_charts):
         plugin_manager.register(default_charts, 'builtin_restock_default_charts')
+    # The stock and price in the watch list, sent to the open pages when the watch is updated
+    from .plugins import watch_list_cell
+    if not plugin_manager.is_registered(watch_list_cell):
+        plugin_manager.register(watch_list_cell, 'builtin_restock_watch_list_cell')
