@@ -53,6 +53,9 @@ class model(EntityPersistenceMixin, watch_base):
         self['url_match_pattern'] = kw.get('default', {}).get('url_match_pattern', '')
         # 'fallback' is how groups have always behaved, see notification_service.notification_senders()
         self['notification_group_mode'] = kw.get('default', {}).get('notification_group_mode', 'fallback')
+        # 'off' so a group's fetch method / proxy does nothing until it is switched on, see model/group_settings.py
+        self['fetch_backend_group_mode'] = kw.get('default', {}).get('fetch_backend_group_mode', 'off')
+        self['proxy_group_mode'] = kw.get('default', {}).get('proxy_group_mode', 'off')
 
         if kw.get('default'):
             self.update(kw['default'])

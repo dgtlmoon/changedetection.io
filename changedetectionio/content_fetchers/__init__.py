@@ -124,9 +124,9 @@ def resolve_content_fetcher(watch, datastore):
     """Single source of truth for resolving which content fetcher a watch should use.
 
     Resolution order (room to grow):
-      1. Watch-level `fetch_backend`
-      2. (future) group-level default
-      3. System/global default from application settings
+      1. Watch-level `fetch_backend`, or what its groups / a plugin decide for it
+         (pluggy_interface.resolve_fetch_route)
+      2. System/global default from application settings
 
     Also collapses the special backend forms into a concrete fetcher:
       - 'system'                    -> global application default
@@ -141,10 +141,11 @@ def resolve_content_fetcher(watch, datastore):
     """
     this_module = sys.modules[__name__]
 
-    # 1. Watch preference (later: watch -> group -> system)
-    prefer_fetch_backend = watch.get('fetch_backend', 'system')
+    # 1. The watch's own, or what its groups / a plugin decide for it
+    from changedetectionio.pluggy_interface import resolve_fetch_route
+    prefer_fetch_backend = resolve_fetch_route(watch, datastore)['fetch_backend']
 
-    # 2/3. Fall back to the global/system default
+    # 2. Fall back to the global/system default
     if not prefer_fetch_backend or prefer_fetch_backend == 'system':
         prefer_fetch_backend = datastore.data['settings']['application'].get('fetch_backend')
 

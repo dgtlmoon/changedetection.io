@@ -2115,6 +2115,18 @@ msgid "Updated"
 msgstr "Diperbarui"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Don't use"
+msgstr "Jangan gunakan"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch is left on the default"
+msgstr "Hanya jika monitor dibiarkan pada default"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's choice"
+msgstr "Sebagai ganti pilihan monitor"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr "Aktifkan untuk masing-masing monitor dalam tag/grup ini?"
 
@@ -2167,6 +2179,14 @@ msgid "Instead of the watch's own"
 msgstr "Sebagai ganti milik monitor"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's fetch method"
+msgstr "Gunakan metode pengambilan grup ini"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's proxy"
+msgstr "Gunakan proxy grup ini"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "Nama tag"
 
@@ -2177,6 +2197,10 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "Filter & Pemicu"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "Permintaan"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
@@ -2206,6 +2230,14 @@ msgstr "Pengaturan ini <strong><i>ditambahkan</i></strong> ke konfigurasi monito
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Pemfilteran teks"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
+msgstr ""
+"Yang diatur di sini tidak digunakan sampai diaktifkan, sehingga dapat disiapkan lebih dulu. Monitor di beberapa grup "
+"memakai grup pertama yang diaktifkan."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2740,8 +2772,19 @@ msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr "Tangkapan layar memerlukan Playwright/WebDriver yang diaktifkan"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Request"
-msgstr "Permintaan"
+#, python-format
+msgid "Decided by group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "Ditentukan oleh grup <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "From group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "Dari grup <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Decided by %(name)s: %(value)s"
+msgstr "Ditentukan oleh %(name)s: %(value)s"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3982,7 +4025,7 @@ msgstr "Harus berisi satu detik atau lebih"
 msgid "Notification base URL override"
 msgstr "Timpa URL dasar notifikasi"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/forms.py
 msgid "Not set"
 msgstr "Belum diatur"
 
@@ -4152,6 +4195,7 @@ msgstr "Blokir deteksi perubahan selama teks cocok"
 msgid "Execute JavaScript before change detection"
 msgstr "Jalankan JavaScript sebelum deteksi perubahan"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Proksi"

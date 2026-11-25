@@ -149,6 +149,28 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("All tags deleted, clearing from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
+    def _prepare_request_fields(form):
+        """Choices for the group's fetch method and proxy, the same ones a watch is offered."""
+        form.fetch_backend.choices = [c for c in form.fetch_backend.choices if c[0] != 'system']
+        for p in datastore.extra_browsers:
+            form.fetch_backend.choices.append(p)
+        form.fetch_backend.choices.append(("system", gettext('Not set')))
+        if not form.fetch_backend.data:
+            form.fetch_backend.data = 'system'
+
+        proxy_list = datastore.proxy_list
+        if proxy_list is None:
+            # No proxies configured, nothing to choose from. What the group has stored is left as it is.
+            del form.proxy
+            del form.proxy_group_mode
+        else:
+            form.proxy.choices = [('', gettext('Not set'))]
+            for key, proxy in proxy_list.items():
+                form.proxy.choices.append((key, proxy['label']))
+            # Radio needs '' not None, also when the chosen one no longer exists
+            if form.proxy.data not in proxy_list:
+                form.proxy.data = ''
+
     @tags_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
@@ -167,6 +189,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                        extra_notification_tokens=datastore.get_unique_notification_tokens_available(),
                                        default_system_settings = datastore.data['settings'],
                                        )
+
+        _prepare_request_fields(form)
 
         # Bridge API-stored processor_config_* values into the form's FormField sub-forms.
         # The API stores processor_config_restock_diff in the tag dict; find the matching
@@ -246,7 +270,14 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                 flash(message, 'error')
             return redirect(url_for('tags.form_tag_edit', uuid=uuid))
 
+        if datastore.proxy_list is None:
+            # Not on the page, keep what the group has stored
+            del form.proxy
+            del form.proxy_group_mode
+
         tag.update(form.data)
+        if 'proxy' in form.data and not form.data['proxy']:
+            tag['proxy'] = None
         tag['processor'] = 'restock_diff'
         tag.commit()
 

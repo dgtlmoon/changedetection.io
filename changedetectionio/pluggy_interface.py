@@ -91,6 +91,36 @@ class ChangeDetectionSpec:
         pass
 
     @hookspec
+    def fetch_route_alter(watch, datastore, route):
+        """Change which fetcher (browser) and which proxy a watch uses. Plugin API 0.8.0+.
+
+        Asked when a check is about to fetch, and also by pages that show what a watch uses (the edit page,
+        the watch list), so it must give the same answer every time for the same settings: stay in memory, no
+        disk, network or other slow work, and not `async def`. To swap the fetcher for one check only, or
+        after a failed fetch, use select_fetch_backend.
+
+        Core's own implementation applies the browser and proxy chosen by the watch's groups. Every
+        implementation runs, the last one to change a value wins.
+
+        Args:
+            watch: The watch
+            datastore: The application datastore
+            route: dict, change it in place:
+                'fetch_backend' - the fetcher name, e.g. 'html_requests', or 'system' for the system default.
+                                  Starts as the watch's own choice.
+                'proxy'         - a key of the configured proxy list, 'no-proxy' for a direct connection, or
+                                  None for the system default. Starts as the watch's own choice. Anything
+                                  else is ignored.
+                'changed_by'    - dict, say who decided so the edit page can tell the user:
+                                  route['changed_by']['fetch_backend'] = {'label': 'My plugin'}
+                                  (and the same under 'proxy')
+
+        Returns:
+            None, the route is changed in place
+        """
+        pass
+
+    @hookspec
     def fetch_request_alter(watch, datastore, request):
         """Change the request just before it is sent, for example to add an Authorization header. Plugin API 0.7.0+.
 
@@ -854,7 +884,7 @@ def register_builtin_restock_plugins():
 
 
 def register_builtin_api_plugins():
-    """Register the built-in get_api_watch_processor_state and register_mcp_tools implementations.
+    """Register the built-in get_api_watch_processor_state, register_mcp_tools and fetch_route_alter implementations.
 
     Called from flask_app.changedetection_app() where the API resources are set up, so it runs
     however the app is started. Can't happen at module load for the same circular import reason
@@ -867,6 +897,10 @@ def register_builtin_api_plugins():
     # The restock MCP tools (register_mcp_tools). Light to import: what they need is imported when they run
     if not plugin_manager.is_registered(mcp_tools):
         plugin_manager.register(mcp_tools, 'builtin_restock_mcp_tools')
+    # A group's browser and proxy for its watches (fetch_route_alter)
+    from changedetectionio.model import group_settings
+    if not plugin_manager.is_registered(group_settings):
+        plugin_manager.register(group_settings, 'builtin_group_fetch_route')
 
 def _require_login_before_request():
     from changedetectionio.auth_decorator import login_optionally_required
@@ -1118,8 +1152,8 @@ def get_fetcher_capabilities(watch, datastore):
                 'supports_xpath_element_data': bool
             }
     """
-    # Get the fetcher name from watch
-    fetcher_name = watch.get('fetch_backend', 'system')
+    # The watch's own fetcher, or the one its groups / a plugin decide for it
+    fetcher_name = resolve_fetch_route(watch, datastore)['fetch_backend']
 
     # Resolve 'system' to actual fetcher
     if fetcher_name == 'system':
@@ -1376,6 +1410,41 @@ async def select_fetch_backends(watch, datastore, backend_name, failed_fetch=Non
         if name not in names:
             names.append(name)
     return names
+
+
+def resolve_fetch_route(watch, datastore):
+    """Which fetcher and proxy this watch uses before the system defaults are applied: the watch's own choice,
+    then whatever the fetch_route_alter hook changed (core's own implementation there is the watch's groups, see
+    model/group_settings.py).
+
+    Used by the check and by the pages alike, so they always agree.
+
+    Returns:
+        dict: 'fetch_backend' (a fetcher name or 'system'), 'proxy' (a proxy key, 'no-proxy' or None for the
+        system default) and 'changed_by' (who decided each, empty when it is the watch's own)
+    """
+    from changedetectionio.model.group_settings import is_proxy_set
+
+    proxy_list = getattr(datastore, 'proxy_list', None)
+    own_fetch_backend = watch.get('fetch_backend') or 'system'
+    own_proxy = watch.get('proxy') if is_proxy_set(watch.get('proxy'), proxy_list) else None
+    route = {'fetch_backend': own_fetch_backend, 'proxy': own_proxy, 'changed_by': {}}
+
+    plugin_manager.hook.fetch_route_alter(watch=watch, datastore=datastore, route=route)
+
+    # Never trust what came back further than the watch's own settings are trusted
+    changed_by = route.get('changed_by') if isinstance(route.get('changed_by'), dict) else {}
+    fetch_backend = route.get('fetch_backend')
+    if not fetch_backend or not isinstance(fetch_backend, str):
+        fetch_backend = own_fetch_backend
+        changed_by.pop('fetch_backend', None)
+    proxy = route.get('proxy')
+    if proxy is not None and not is_proxy_set(proxy, proxy_list):
+        logger.warning(f"fetch_route_alter set proxy {proxy!r} for watch {watch.get('uuid')}, it is not a configured proxy, ignored")
+        proxy = own_proxy
+        changed_by.pop('proxy', None)
+
+    return {'fetch_backend': fetch_backend, 'proxy': proxy, 'changed_by': changed_by}
 
 
 def apply_recheck_seconds_override(watch, datastore, seconds):

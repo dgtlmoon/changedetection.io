@@ -2060,6 +2060,18 @@ msgid "Updated"
 msgstr "Aktualisiert"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Don't use"
+msgstr "Nicht verwenden"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch is left on the default"
+msgstr "Nur wenn die Überwachung auf dem Standard belassen ist"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's choice"
+msgstr "Anstelle der Auswahl der Überwachung"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr ""
 
@@ -2112,6 +2124,14 @@ msgid "Instead of the watch's own"
 msgstr "Anstelle derer der Überwachung"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's fetch method"
+msgstr "Fetch Methode dieser Gruppe verwenden"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's proxy"
+msgstr "Proxy dieser Gruppe verwenden"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -2122,6 +2142,10 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "Filter und Trigger"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "Anfrage"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
@@ -2149,6 +2173,14 @@ msgstr "Diese Einstellungen werden zu allen vorhandenen Überwachungskonfigurati
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Textfilterung"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
+msgstr ""
+"Was hier gesetzt ist, wird erst verwendet, wenn es eingeschaltet wird, und kann so im Voraus eingerichtet werden. "
+"Eine Überwachung in mehreren Gruppen nimmt die erste eingeschaltete Gruppe."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2693,8 +2725,19 @@ msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr "Für den Screenshot ist die Aktivierung von Playwright/WebDriver erforderlich"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Request"
-msgstr "Anfrage"
+#, python-format
+msgid "Decided by group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "Festgelegt von Gruppe <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "From group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "Von Gruppe <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Decided by %(name)s: %(value)s"
+msgstr "Festgelegt von %(name)s: %(value)s"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3948,9 +3991,9 @@ msgstr "Sollte eine oder mehrere Sekunden enthalten"
 msgid "Notification base URL override"
 msgstr "Benachrichtigungs-Basis-URL überschreiben"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/forms.py
 msgid "Not set"
-msgstr ""
+msgstr "Nicht gesetzt"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/blueprint/tags/form.py
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
@@ -4118,6 +4161,7 @@ msgstr "Blockieren Sie die Änderungserkennung, während der Text übereinstimmt
 msgid "Execute JavaScript before change detection"
 msgstr "Führen Sie JavaScript vor der Änderungserkennung aus"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Proxy"

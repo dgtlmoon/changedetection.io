@@ -1980,6 +1980,18 @@ msgid "Updated"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Don't use"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch is left on the default"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's choice"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr ""
 
@@ -2032,6 +2044,14 @@ msgid "Instead of the watch's own"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's fetch method"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's proxy"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -2041,6 +2061,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -2068,6 +2092,12 @@ msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -2600,7 +2630,18 @@ msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Request"
+#, python-format
+msgid "Decided by group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "From group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Decided by %(name)s: %(value)s"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -3829,7 +3870,7 @@ msgstr ""
 msgid "Notification base URL override"
 msgstr ""
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/forms.py
 msgid "Not set"
 msgstr ""
 
@@ -3999,6 +4040,7 @@ msgstr ""
 msgid "Execute JavaScript before change detection"
 msgstr ""
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr ""

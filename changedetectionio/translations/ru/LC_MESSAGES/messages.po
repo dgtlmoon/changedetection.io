@@ -2111,6 +2111,18 @@ msgid "Updated"
 msgstr "Обновлено"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Don't use"
+msgstr "Не использовать"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch is left on the default"
+msgstr "Только если монитор оставлен на значении по умолчанию"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's choice"
+msgstr "Вместо выбора монитора"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr "Активировать для отдельных часов в этом теге/группе?"
 
@@ -2163,6 +2175,14 @@ msgid "Instead of the watch's own"
 msgstr "Вместо уведомлений монитора"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's fetch method"
+msgstr "Использовать метод выборки этой группы"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's proxy"
+msgstr "Использовать прокси этой группы"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "Имя тега"
 
@@ -2173,6 +2193,10 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "Фильтры и триггеры"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "Запрос"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
@@ -2202,6 +2226,14 @@ msgstr "Эти настройки <strong><i>добавлены</i></strong> в�
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Фильтрация текста"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
+msgstr ""
+"Заданное здесь не используется, пока не включено, поэтому его можно настроить заранее. Монитор в нескольких группах "
+"берёт первую включённую группу."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2739,8 +2771,19 @@ msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr "Для создания снимка экрана требуется включенный Playwright/WebDriver."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Request"
-msgstr "Запрос"
+#, python-format
+msgid "Decided by group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "Определяет группа <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "From group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "Из группы <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Decided by %(name)s: %(value)s"
+msgstr "Определяет %(name)s: %(value)s"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3997,7 +4040,7 @@ msgstr "Должно содержать одну или несколько се�
 msgid "Notification base URL override"
 msgstr "Переопределение URL-адреса базы уведомлений"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/forms.py
 msgid "Not set"
 msgstr "Не установлено"
 
@@ -4167,6 +4210,7 @@ msgstr "Блокировать обнаружение изменений, пок
 msgid "Execute JavaScript before change detection"
 msgstr "Выполнять JavaScript перед обнаружением изменений"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Прокси"

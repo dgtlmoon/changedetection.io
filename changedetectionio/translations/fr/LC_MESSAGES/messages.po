@@ -2046,6 +2046,18 @@ msgid "Updated"
 msgstr "Muet"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Don't use"
+msgstr "Ne pas utiliser"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Only if the watch is left on the default"
+msgstr "Seulement si le moniteur est laissé sur la valeur par défaut"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Instead of the watch's choice"
+msgstr "À la place du choix du moniteur"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Activate for individual watches in this tag/group?"
 msgstr ""
 
@@ -2098,6 +2110,14 @@ msgid "Instead of the watch's own"
 msgstr "À la place de celles du moniteur"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's fetch method"
+msgstr "Utiliser la méthode de récupération de ce groupe"
+
+#: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's proxy"
+msgstr "Utiliser le proxy de ce groupe"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -2108,6 +2128,10 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "Filtres et déclencheurs"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "Request"
+msgstr "Demande"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid ""
@@ -2135,6 +2159,14 @@ msgstr ""
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Text filtering"
 msgstr "Filtrage de texte"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid ""
+"What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
+"takes the first group that is switched on."
+msgstr ""
+"Ce qui est défini ici n'est pas utilisé tant qu'il n'est pas activé, il peut donc être préparé à l'avance. Un "
+"moniteur dans plusieurs groupes prend le premier groupe activé."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2669,8 +2701,19 @@ msgid "Screenshot requires Playwright/WebDriver enabled"
 msgstr "La capture d'écran nécessite l'activation de Playwright/WebDriver"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
-msgid "Request"
-msgstr "Demande"
+#, python-format
+msgid "Decided by group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "Décidé par le groupe <a href=\"%(url)s\">%(name)s</a> : <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "From group <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
+msgstr "Du groupe <a href=\"%(url)s\">%(name)s</a> : <strong>%(value)s</strong>"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Decided by %(name)s: %(value)s"
+msgstr "Décidé par %(name)s : %(value)s"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3902,9 +3945,9 @@ msgstr "Doit contenir une ou plusieurs secondes"
 msgid "Notification base URL override"
 msgstr "URL de base pour les notifications"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/forms.py
 msgid "Not set"
-msgstr ""
+msgstr "Non défini"
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/blueprint/tags/form.py
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/forms.py
@@ -4072,6 +4115,7 @@ msgstr "Bloquer la détection des modifications lorsque le texte correspond"
 msgid "Execute JavaScript before change detection"
 msgstr "Exécuter JavaScript avant la détection des modifications"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/forms.py
 msgid "Proxy"
 msgstr "Proxy"

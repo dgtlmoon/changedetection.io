@@ -1,6 +1,7 @@
 from wtforms import (
     Form,
     RadioField,
+    SelectField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -23,6 +24,21 @@ from changedetectionio.llm.evaluator import (
     LLM_PROMPT_MODE_APPEND,
     LLM_PROMPT_MODE_REPLACE,
 )
+
+from changedetectionio.model.group_settings import (
+    GROUP_SETTING_MODE_FALLBACK,
+    GROUP_SETTING_MODE_OFF,
+    GROUP_SETTING_MODE_REPLACE,
+)
+
+# How a group's fetch method / proxy relates to the one its watches chose, see model/group_settings.py.
+# Worded apart from the notification choices on purpose: those are translated as "...the watch's own notifications".
+GROUP_SETTING_MODE_CHOICES = [
+    (GROUP_SETTING_MODE_OFF, _l("Don't use")),
+    (GROUP_SETTING_MODE_FALLBACK, _l("Only if the watch is left on the default")),
+    (GROUP_SETTING_MODE_REPLACE, _l("Instead of the watch's choice")),
+]
+
 
 class group_restock_settings_form(restock_settings_form):
     overrides_watch = BooleanField(_l('Activate for individual watches in this tag/group?'), default=False)
@@ -77,6 +93,19 @@ class group_restock_settings_form(restock_settings_form):
             (GROUP_NOTIFICATION_MODE_REPLACE, _l("Instead of the watch's own")),
         ],
         default=GROUP_NOTIFICATION_MODE_FALLBACK,
+    )
+
+    # fetch_backend and proxy themselves are the same fields a watch has. Off by default, so a group
+    # changes nothing for its watches until one of these is switched on.
+    fetch_backend_group_mode = SelectField(
+        _l("Use this group's fetch method"),
+        choices=GROUP_SETTING_MODE_CHOICES,
+        default=GROUP_SETTING_MODE_OFF,
+    )
+    proxy_group_mode = SelectField(
+        _l("Use this group's proxy"),
+        choices=GROUP_SETTING_MODE_CHOICES,
+        default=GROUP_SETTING_MODE_OFF,
     )
 
 class SingleTag(Form):
