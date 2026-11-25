@@ -137,6 +137,9 @@ $(document).ready(function () {
                 const subscription = {uuids: watchUuidsOnThisPage()};
                 if (document.querySelector('.watch-table tr[data-watch-uuid]')) {
                     subscription.rows_for_tag = new URLSearchParams(window.location.search).get('tag') || '';
+                    // And under which sub-path this page is served (example.com/our-changedetection/), so the
+                    // addresses in a row start as the ones in this page do. It is the start of this connection's path.
+                    subscription.rows_url_prefix = socketio_url.replace(/\/socket\.io$/, '');
                 }
                 socket.emit('watch-subscribe', subscription);
             });
