@@ -154,6 +154,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                                  'llm-configured' if llm_configured else '',
                                                  'has-any-unviewed' if datastore.unread_changes_count else ''])),
             form=form,
+            # The chips field of the "Group" action's modal
+            group_action_form=forms.WatchListGroupForm(),
             generate_tag_colors=processors.generate_processor_badge_colors,
             wcag_text_color=processors.wcag_text_color,
             guid=datastore.data['app_guid'],

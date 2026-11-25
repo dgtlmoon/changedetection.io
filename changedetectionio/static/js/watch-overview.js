@@ -29,8 +29,36 @@ $(function () {
             }).format($(this).data('timestamp') * 1000));
     })
 
+    // Bulk "Group" action: a modal with the chips field of a watch's "Group tag" (tag-chips.js), existing
+    // groups are suggested while typing and a new name becomes a new group. The names go to the server as
+    // #op_extradata, comma separated, through the (hidden) real operation button like Browser / Proxy below.
     $("#checkbox-assign-tag").click(function (e) {
-        $('#op_extradata').val(prompt("Enter a tag name"));
+        const $btn = $(this);
+        const tmpl = document.getElementById('bulk-group-options');
+        if (!tmpl || typeof ModalDialog === 'undefined') {
+            return;
+        }
+        ModalDialog.confirm({
+            type: 'info',
+            title: $btn.data('modal-title'),
+            message: '<div class="bulk-group-field">' + tmpl.innerHTML + '</div>',
+            confirmText: $btn.data('modal-apply'),
+            onConfirm: function () {
+                // What is in chips, plus a name that was typed but not turned into a chip yet
+                const names = [
+                    $('.modal-dialog input[type="hidden"][name="bulk_groups"]').val(),
+                    $('.modal-dialog input.tag-chips').val()
+                ].map((v) => (v || '').trim()).filter((v) => v !== '').join(', ');
+                if (!names) {
+                    return;
+                }
+                $('#op_extradata').val(names);
+                $('#op-assign-tag').trigger('click');
+            }
+        });
+        // The dialog is on the page now, after its own focus on the button put the cursor in the field
+        const $field = $('.modal-dialog input.tag-chips').tagChips();
+        setTimeout(() => $field.trigger('focus'), 150);
     });
 
     // Bulk "Browser" / "Proxy" actions: open a modal with the same radio choices as the

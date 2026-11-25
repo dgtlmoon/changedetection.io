@@ -2374,6 +2374,10 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "{} Überwachungen wurde markiert"
 
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Kein Gruppenname angegeben"
+
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Überwachung nicht gefunden"
@@ -3368,6 +3372,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Gruppenname"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3451,15 +3459,19 @@ msgid "UnMute"
 msgstr "Stummschaltung aufheben"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Tag"
+msgid "Add selected to group"
+msgstr "Ausgewählte zur Gruppe hinzufügen"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr ""
+msgid "Group"
+msgstr "Gruppe"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3787,6 +3799,10 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Gruppe / Label"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Ungültiges Format der Zeit. Verwenden Sie HH:MM."
 
@@ -3911,10 +3927,6 @@ msgstr "Leerer Wert nicht zulässig."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Ungültiger Wert."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Gruppe / Label"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

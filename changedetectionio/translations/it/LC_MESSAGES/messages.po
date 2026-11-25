@@ -2343,6 +2343,10 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr ""
 
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Nessun nome di gruppo indicato"
+
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Monitoraggio non trovato"
@@ -3313,6 +3317,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Nome del gruppo"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3396,15 +3404,19 @@ msgid "UnMute"
 msgstr "Riattiva audio"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Tag"
+msgid "Add selected to group"
+msgstr "Aggiungi i selezionati al gruppo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr ""
+msgid "Group"
+msgstr "Gruppo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3726,6 +3738,10 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Gruppo / Etichetta"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Formato orario non valido. Usa HH:MM."
 
@@ -3850,10 +3866,6 @@ msgstr "Valore vuoto non consentito."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Valore non valido."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Gruppo / Etichetta"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

@@ -2331,6 +2331,10 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "{} sledování otagováno"
 
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Nebyl zadán název skupiny"
+
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Sledujte tuto adresu URL!"
@@ -3302,6 +3306,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Název skupiny"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3385,15 +3393,19 @@ msgid "UnMute"
 msgstr "Zrušit ztlumení"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Štítek"
+msgid "Add selected to group"
+msgstr "Přidat vybrané do skupiny"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr ""
+msgid "Group"
+msgstr "Skupina"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3724,6 +3736,10 @@ msgid "Remove"
 msgstr "Odstranit"
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Skupina / Značka"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Neplatný formát času. Použijte HH:MM."
 
@@ -3848,10 +3864,6 @@ msgstr "Prázdná hodnota není povolena."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Neplatná hodnota."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Skupina / Značka"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

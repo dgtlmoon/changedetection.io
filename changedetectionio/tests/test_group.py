@@ -505,9 +505,9 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage, datastor
 
     assert b'Cloned' in res.data
     res = client.get(url_for("watchlist.index"))
-    # 2 times plus the top link to tag
-    assert res.data.count(b'test-tag') == 3
-    assert res.data.count(b'another-tag') == 3
+    # 2 times plus the top link to tag, plus the groups the "Group" action's modal suggests
+    assert res.data.count(b'test-tag') == 4
+    assert res.data.count(b'another-tag') == 4
     delete_all_watches(client)
 
 def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage, datastore_path):
@@ -532,9 +532,9 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     assert b'Cloned' in res.data
 
     res = client.get(url_for("watchlist.index"))
-    # 2 times plus the top link to tag
-    assert res.data.count(b'test-tag') == 3
-    assert res.data.count(b'another-tag') == 3
+    # 2 times plus the top link to tag, plus the groups the "Group" action's modal suggests
+    assert res.data.count(b'test-tag') == 4
+    assert res.data.count(b'another-tag') == 4
     delete_all_watches(client)
 
     res = client.post(url_for("tags.delete_all"), follow_redirects=True)

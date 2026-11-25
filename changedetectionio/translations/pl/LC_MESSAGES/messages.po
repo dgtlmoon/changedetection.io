@@ -2459,6 +2459,10 @@ msgstr "Wybrano nieprawidłowy serwer proxy"
 msgid "{} watches were tagged"
 msgstr "Oznaczono {} obserwacji"
 
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Nie podano nazwy grupy"
+
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Nie znaleziono obserwacji"
@@ -3453,6 +3457,10 @@ msgid "Web page URL"
 msgstr "Adres URL strony internetowej"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Nazwa grupy"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr "Wybrano %(count)s rekordów"
@@ -3536,16 +3544,20 @@ msgid "UnMute"
 msgstr "Włącz dźwięk"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Etykieta"
+msgid "Add selected to group"
+msgstr "Dodaj zaznaczone do grupy"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr "Ustaw przeglądarkę / metodę pobierania dla zaznaczonych obserwacji"
+msgid "Group"
+msgstr "Grupa"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
 msgstr "Zastosuj"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
+msgstr "Ustaw przeglądarkę / metodę pobierania dla zaznaczonych obserwacji"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set proxy for selected"
@@ -3877,6 +3889,10 @@ msgid "Remove"
 msgstr "Usuń"
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Etykieta grupy"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Nieprawidłowy format czasu. Należy użyć formatu HH:MM."
 
@@ -4001,10 +4017,6 @@ msgstr "Nie wolno podawać pustej wartości."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Nieprawidłowa wartość."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Etykieta grupy"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py
