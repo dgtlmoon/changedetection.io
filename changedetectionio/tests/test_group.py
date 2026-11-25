@@ -201,6 +201,8 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": 'text',
+                              # A new group's notifications are not used until it is switched on
+                              "notification_group_mode": "fallback",
                               "title": "test-tag"}
 
     res = client.post(
@@ -241,7 +243,11 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
 def test_group_notification_mode_senders(client, live_server, measure_memory_usage, datastore_path):
     """Which notifications a change sends, for each "Send this group's notifications" choice.
     The default choice has to give exactly what the watch > group > system lookup always gave."""
-    from changedetectionio.notification import USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH, default_notification_body
+    from changedetectionio.notification import (
+        USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
+        default_notification_body,
+        default_notification_title,
+    )
     from changedetectionio.notification_service import _check_cascading_vars, notification_senders
 
     delete_all_watches(client)
@@ -268,14 +274,27 @@ def test_group_notification_mode_senders(client, live_server, measure_memory_usa
     group_on_its_own = {'notification_urls': group_urls, 'notification_title': 'Group title',
                         'notification_body': 'Group body', 'notification_format': 'text'}
 
-    # A group that never had the setting, and one saved with the default: the lookup as it always was.
+    # "Don't use" is what a new group has: nothing of the group is used, not its URLs and not its title, body or
+    # format either. Same for anything that is not a mode.
+    assert tag['notification_group_mode'] == 'off'
+    for mode in ('off', None, 'not-a-mode'):
+        tag['notification_group_mode'] = mode
+        assert notification_senders(datastore, watch) == [], "No URLs anywhere, the group's are not used"
+        watch['notification_urls'] = watch_urls
+        assert notification_senders(datastore, watch) == [{
+            'notification_urls': watch_urls,
+            'notification_title': default_notification_title,
+            'notification_body': default_notification_body,
+            'notification_format': 'htmlcolor'}], "The group's title, body and format do not get into the watch's notification"
+        watch['notification_urls'] = []
+
+    # "Only if the watch has none of its own": the watch > group > system lookup as it always was.
     # The watch is on "System default", so the system format is used, not the group's
     assert watch.get('notification_format') == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
-    for mode in (None, 'fallback', 'not-a-mode'):
-        tag['notification_group_mode'] = mode
-        assert notification_senders(datastore, watch) == lookup_as_always()
-        assert notification_senders(datastore, watch) == [{'notification_urls': group_urls, 'notification_title': 'Group title',
-                                                            'notification_body': 'Group body', 'notification_format': 'htmlcolor'}]
+    tag['notification_group_mode'] = 'fallback'
+    assert notification_senders(datastore, watch) == lookup_as_always()
+    assert notification_senders(datastore, watch) == [{'notification_urls': group_urls, 'notification_title': 'Group title',
+                                                        'notification_body': 'Group body', 'notification_format': 'htmlcolor'}]
 
     # ..and the watch's own URLs are sent instead of the group's, still with the group's title and body
     watch['notification_urls'] = watch_urls
@@ -357,6 +376,7 @@ def test_group_notification_mode_sends_in_group_format(client, live_server, meas
                      "notification_title": "Group format",
                      "notification_body": "first line\nsecond line {{watch_url}}",
                      "notification_format": 'text',
+                     "notification_group_mode": "fallback",
                      "title": "format-tag"}
 
     def save_group_and_change_page(form_data, set_response):
@@ -414,8 +434,7 @@ def test_group_notification_mode_every_group_sends(client, live_server, measure_
                          "notification_body": f"Body of {name} for {{{{watch_url}}}}",
                          "notification_format": 'text',
                          "title": name}
-            if mode:
-                form_data['notification_group_mode'] = mode
+            form_data['notification_group_mode'] = mode or 'fallback'
             res = client.post(url_for("tags.form_tag_edit_submit", uuid=get_UUID_for_tag_name(client, name=name)),
                               data=form_data, follow_redirects=True)
             assert b"Updated" in res.data
@@ -889,3 +908,62 @@ def test_group_edit_page_says_which_group(client, live_server, measure_memory_us
     assert b'<b>&</b> more' not in res.data
 
     datastore.data['settings']['application']['tags'].clear()
+
+
+def test_group_notification_dont_use_and_the_update_for_older_groups(client, live_server, measure_memory_usage, datastore_path):
+    """A new group starts on "Don't use". Groups from before that choice existed go on notifying as they did:
+    update_36 gives each the mode it effectively had (and so does restoring one from an older backup)."""
+    from changedetectionio.notification import group_notification_mode_for_older_data
+
+    delete_all_watches(client)
+    datastore = live_server.app.config['DATASTORE']
+    tags = datastore.data['settings']['application']['tags']
+    tags.clear()
+    urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json')]
+
+    # The form: "Don't use" is offered first, and is what a new group has
+    new_uuid = datastore.add_tag(title='brand new')
+    assert tags[new_uuid]['notification_group_mode'] == 'off'
+    res = client.get(url_for("tags.form_tag_edit", uuid=new_uuid))
+    page = res.data.decode()
+    assert page.index('name="notification_group_mode" type="radio" value="off"') < page.index('name="notification_group_mode" type="radio" value="fallback"')
+    assert 'checked id="notification_group_mode-0" name="notification_group_mode" type="radio" value="off"' in page
+
+    # Groups as older versions left them: no mode stored at all, or the 'fallback' every group was saved with
+    def older(title, **settings):
+        uuid = datastore.add_tag(title=title)
+        tags[uuid].update(settings)
+        if 'notification_group_mode' not in settings:
+            # As it comes off the disk of an older version: the model fills in the default
+            tags[uuid]['notification_group_mode'] = 'off'
+        return uuid
+
+    with_urls_never_saved = older('urls, never had the setting', notification_urls=urls)
+    with_urls_fallback = older('urls, saved as fallback', notification_urls=urls, notification_group_mode='fallback')
+    with_urls_add = older('urls, add', notification_urls=urls, notification_group_mode='add')
+    with_urls_replace = older('urls, replace', notification_urls=urls, notification_group_mode='replace')
+    only_a_format = older('no urls, only a format', notification_format='text', notification_body='Group body',
+                          notification_group_mode='fallback')
+    nothing = older('nothing set')
+
+    datastore.update_36()
+
+    assert tags[with_urls_never_saved]['notification_group_mode'] == 'fallback', "Was notifying, goes on notifying"
+    assert tags[with_urls_fallback]['notification_group_mode'] == 'fallback'
+    assert tags[with_urls_add]['notification_group_mode'] == 'add'
+    assert tags[with_urls_replace]['notification_group_mode'] == 'replace'
+    assert tags[only_a_format]['notification_group_mode'] == 'off', "Could not send anything, only bled its format into its watches"
+    assert tags[nothing]['notification_group_mode'] == 'off'
+    assert tags[new_uuid]['notification_group_mode'] == 'off'
+
+    # Stored, not only in memory
+    import json
+    with open(os.path.join(datastore_path, with_urls_never_saved, 'tag.json')) as f:
+        assert json.load(f)['notification_group_mode'] == 'fallback'
+
+    # What a restore does for a group of an older backup, which has no mode in its tag.json
+    assert group_notification_mode_for_older_data({'notification_urls': urls}) == 'fallback'
+    assert group_notification_mode_for_older_data({'notification_format': 'text'}) == 'off'
+    assert group_notification_mode_for_older_data({}) == 'off'
+
+    tags.clear()
