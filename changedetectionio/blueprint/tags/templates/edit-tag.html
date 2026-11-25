@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 {% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_ternary_field, render_time_schedule_form %}
+{#- At the bottom of the tabs whose settings a watch takes from one group only (Request, Proxy, Time & Schedule) -#}
+{% macro first_group_note() %}
+<div class="pure-form-message first-group-note">
+    {{ _('Note: a watch in several groups follows the first group in its list that has this switched on.') }}
+</div>
+{% endmacro %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="group-settings")}}";
@@ -138,6 +144,7 @@
                     <div class="pure-control-group inline-radio {{ 'group-setting-off' if form.fetch_backend_group_mode.data == 'off' }}" data-dimmed-while-off="fetch_backend_group_mode">
                         {{ render_field(form.fetch_backend) }}
                     </div>
+                    {{ first_group_note() }}
                 </fieldset>
             </div>
             {% if form.proxy %}
@@ -159,6 +166,7 @@
                     <div class="pure-control-group inline-radio {{ 'group-setting-off' if form.proxy_group_mode.data == 'off' }}" data-dimmed-while-off="proxy_group_mode">
                         {{ render_field(form.proxy) }}
                     </div>
+                    {{ first_group_note() }}
                 </fieldset>
             </div>
             {% endif %}
@@ -187,6 +195,7 @@
                             </div>
                         </div>
                     </div>
+                    {{ first_group_note() }}
                 </fieldset>
             </div>
             <script>

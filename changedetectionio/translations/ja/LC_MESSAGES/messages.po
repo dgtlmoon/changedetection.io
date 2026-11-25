@@ -2076,6 +2076,10 @@ msgstr "タグ名"
 msgid "Used for watches in \"Restock & Price detection\" mode"
 msgstr "「再入荷＆価格検知」モードのウォッチで使用されます"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Note: a watch in several groups follows the first group in its list that has this switched on."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "Filters & Triggers"
 msgstr "フィルタとトリガー"
