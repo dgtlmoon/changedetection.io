@@ -1,7 +1,7 @@
 /**
- * The "Group tag" field of a watch (input.tag-chips, see StringTagUUID in forms.py): every group that is in
- * becomes a "chip" with an x, and the box to type in is only ever the ONE name being typed, with the
- * existing groups that match offered underneath (GET <data-autocomplete-url>?q=...).
+ * The "Group tag" field of a watch (input.tag-chips, rendered by TagChipsWidget in forms.py together with a
+ * <datalist> of every group there is): every group that is in becomes a "chip" with an x, and the box to type
+ * in is only ever the ONE name being typed, with the groups that match offered underneath.
  *
  * The field stays what the server always got, a comma separated list of group names:
  *
@@ -10,11 +10,12 @@
  *    field turns what is in it into a chip. A name that is not a group yet becomes one on save, as before
  *  - Backspace in the empty box takes the last chip off, the x of a chip takes that one off
  *
- * Without this script it is the plain text field.
+ * The groups come from the <datalist>, with their colours. The list shown here is our own and not the browser's
+ * (the field is taken off the datalist): the browser's cannot show the groups in their colours.
+ *
+ * Without this script it is the plain text field, with the browser's suggestions from the datalist.
  */
 (function ($) {
-    const SEARCH_DELAY_MS = 150;
-
     function splitNames(text) {
         return String(text || '').split(',').map((name) => name.trim()).filter((name) => name !== '');
     }
@@ -31,30 +32,42 @@
 
     function setup(input) {
         const $input = $(input);
-        const url = $input.attr('data-autocomplete-url');
-        if (!input.name || !url) {
+        const datalist = document.getElementById($input.attr('list') || '');
+        if (!input.name || $input.data('tag-chips-ready')) {
             return;
         }
+        $input.data('tag-chips-ready', true);
+
+        // Every group there is: {title, colours}
+        const groups = $(datalist).find('option').map(function () {
+            let colours = null;
+            try {
+                colours = JSON.parse(this.getAttribute('data-colours'));
+            } catch (e) {
+                // Shown in the default colour
+            }
+            return {title: this.value, colours: colours};
+        }).get();
+        const coloursOf = {};   // lower case group name -> its colours
+        groups.forEach((group) => {
+            coloursOf[group.title.toLowerCase()] = group.colours;
+        });
 
         const names = [];
-        const knownColours = {};   // lower case group name -> its colours, as the server sent them
         const placeholder = input.placeholder;
         let suggestions = [];
         let active = -1;
-        let latestSearch = 0;
-        let searchTimer = null;
 
         const $field = $('<div class="tag-chips-field"></div>').insertBefore($input);
         const $chips = $('<span class="tag-chips-list" aria-live="polite"></span>').appendTo($field);
         $field.append($input);
-        $('<span class="spinner tag-chips-spinner" aria-hidden="true"></span>').appendTo($field);
         const $suggestions = $('<ul class="tag-chips-suggestions" role="listbox"></ul>')
             .attr('id', (input.id || input.name) + '-suggestions').appendTo($field).hide();
         const $hidden = $('<input type="hidden">').attr('name', input.name).insertAfter($field);
 
         // The white-on-transparent look of the field on the "Add a watch" page
         $field.toggleClass('tag-chips-transparent', $input.hasClass('transparent-field'));
-        $input.removeAttr('name').attr({
+        $input.removeAttr('name').removeAttr('list').attr({
             'autocomplete': 'off',
             'role': 'combobox',
             'aria-autocomplete': 'list',
@@ -66,12 +79,6 @@
             return names.some((n) => n.toLowerCase() === name.toLowerCase());
         }
 
-        function remember(groups) {
-            groups.forEach((group) => {
-                knownColours[group.title.toLowerCase()] = group.colours;
-            });
-        }
-
         function render() {
             $chips.empty();
             names.forEach((name, i) => {
@@ -80,7 +87,7 @@
                     .append($('<button type="button" class="tag-chip-remove">&times;</button>')
                         .attr('aria-label', ($input.attr('data-remove-label') || 'Remove') + ' ' + name)
                         .attr('data-i', i));
-                setColours($chip[0], knownColours[name.toLowerCase()]);
+                setColours($chip[0], coloursOf[name.toLowerCase()]);
                 $chips.append($chip);
             });
             $hidden.val(names.join(', '));
@@ -91,43 +98,14 @@
             name = name.trim();
             if (name !== '' && !has(name)) {
                 names.push(name);
-                return true;
             }
-            return false;
-        }
-
-        // The groups among `wanted` that exist already get their own colours
-        function colourExisting(wanted) {
-            wanted = wanted.filter((name) => !(name.toLowerCase() in knownColours));
-            if (!wanted.length) {
-                return;
-            }
-            $.getJSON(url, $.param({title: wanted}, true)).done((groups) => {
-                remember(groups);
-                // The chips that are there are coloured as they are, not made again: a click on one of them
-                // could be on its way
-                $chips.children().each(function (i) {
-                    setColours(this, knownColours[(names[i] || '').toLowerCase()]);
-                });
-            });
         }
 
         // Everything in the box becomes chips
         function commit() {
-            const added = splitNames(input.value).filter(add);
+            splitNames(input.value).forEach(add);
             input.value = '';
             render();
-            colourExisting(added);
-        }
-
-        function closeSuggestions() {
-            latestSearch++;   // an answer still on its way is not shown
-            clearTimeout(searchTimer);
-            suggestions = [];
-            active = -1;
-            $suggestions.hide().empty();
-            $input.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
-            $field.removeClass('tag-chips-loading');
         }
 
         function renderSuggestions() {
@@ -151,27 +129,24 @@
             }
         }
 
-        function search() {
-            const mine = ++latestSearch;
-            $field.addClass('tag-chips-loading');
-            $.getJSON(url, {q: input.value.trim()}).done((groups) => {
-                if (mine !== latestSearch) {
-                    return;
-                }
-                remember(groups);
-                suggestions = groups.filter((group) => !has(group.title));
-                active = -1;
-                renderSuggestions();
-            }).always(() => {
-                if (mine === latestSearch) {
-                    $field.removeClass('tag-chips-loading');
-                }
-            });
+        function closeSuggestions() {
+            suggestions = [];
+            active = -1;
+            renderSuggestions();
         }
 
-        function searchSoon() {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(search, SEARCH_DELAY_MS);
+        // The groups with what is typed in their name that are not in the field yet, those that start with it first
+        function suggest() {
+            const typed = input.value.trim().toLowerCase();
+            suggestions = groups
+                .filter((group) => group.title.toLowerCase().indexOf(typed) !== -1 && !has(group.title))
+                .sort((a, b) => {
+                    const aStarts = a.title.toLowerCase().indexOf(typed) === 0;
+                    const bStarts = b.title.toLowerCase().indexOf(typed) === 0;
+                    return aStarts === bStarts ? a.title.toLowerCase().localeCompare(b.title.toLowerCase()) : (aStarts ? -1 : 1);
+                });
+            active = -1;
+            renderSuggestions();
         }
 
         function pick(group) {
@@ -211,16 +186,16 @@
                 commit();
                 input.value = rest.replace(/^\s+/, '');
             }
-            searchSoon();
+            suggest();
         });
 
-        $input.on('focus', searchSoon);
+        $input.on('focus click', suggest);
 
         $input.on('keydown', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (!suggestions.length) {
-                    search();
+                    suggest();
                     return;
                 }
                 const step = e.key === 'ArrowDown' ? 1 : -1;
@@ -238,7 +213,7 @@
                     commit();
                 }
             } else if (e.key === 'Escape') {
-                if ($suggestions.is(':visible')) {
+                if (suggestions.length) {
                     e.preventDefault();
                     e.stopPropagation();
                     closeSuggestions();
@@ -246,7 +221,7 @@
             } else if (e.key === 'Backspace' && input.value === '' && names.length) {
                 names.pop();
                 render();
-                searchSoon();
+                suggest();
             }
         });
 
@@ -268,7 +243,6 @@
         splitNames(input.value).forEach(add);
         input.value = '';
         render();
-        colourExisting(names.slice());
     }
 
     $(function () {

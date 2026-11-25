@@ -867,10 +867,6 @@ msgid "This will remove your saved AI provider, model, and API key."
 msgstr "저장된 AI 프로바이더, 모델, API 키가 제거됩니다."
 
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
-msgid "Remove"
-msgstr "제거"
-
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html
 msgid "Remove provider"
 msgstr ""
 
@@ -3692,6 +3688,10 @@ msgstr "최소 하나 이상의 시간 간격(주, 일, 시, 분 또는 초)을 
 #: changedetectionio/forms.py
 msgid "At least one time interval (weeks, days, hours, minutes, or seconds) must be specified when not using global settings."
 msgstr "전역 설정을 사용하지 않을 때는 최소 하나 이상의 시간 간격(주, 일, 시, 분 또는 초)을 지정해야 합니다."
+
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_llm.html changedetectionio/forms.py
+msgid "Remove"
+msgstr "제거"
 
 #: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."

@@ -1,16 +1,12 @@
 import threading
-from flask import Blueprint, request, render_template, flash, url_for, redirect, jsonify
+from flask import Blueprint, request, render_template, flash, url_for, redirect
 from flask_babel import gettext
 from loguru import logger
 
-from changedetectionio.blueprint.tags.colour import safe_css_colour, tag_display_colours
+from changedetectionio.blueprint.tags.colour import safe_css_colour
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config, is_llm_features_disabled
-
-
-# How many groups the 'Group tag' field is offered at once, typing more narrows it down
-AUTOCOMPLETE_MAX_RESULTS = 20
 
 
 def construct_blueprint(datastore: ChangeDetectionStore):
@@ -42,35 +38,6 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  )
 
         return output
-
-    @tags_blueprint.route("/autocomplete", methods=['GET'])
-    @login_optionally_required
-    def autocomplete():
-        """Group names for the 'Group tag' field of a watch (static/js/tag-chips.js).
-
-        ?q=text         the groups with that in their name, those that start with it first
-        ?title=a&title=b  exactly those groups (to colour the names a field already holds)
-        """
-        tags = datastore.data['settings']['application']['tags']
-        wanted_titles = {t.strip().lower() for t in request.args.getlist('title') if t.strip()}
-        q = (request.args.get('q') or '').strip().lower()
-
-        found = []
-        for uuid, tag in tags.items():
-            title = (tag.get('title') or '').strip()
-            if not title:
-                continue
-            if wanted_titles:
-                if title.lower() not in wanted_titles:
-                    continue
-            elif q not in title.lower():
-                continue
-            found.append({'uuid': uuid, 'title': title, 'colours': tag_display_colours(tag)})
-
-        found.sort(key=lambda t: (not t['title'].lower().startswith(q), t['title'].lower()))
-        if not wanted_titles:
-            found = found[:AUTOCOMPLETE_MAX_RESULTS]
-        return jsonify(found)
 
     @tags_blueprint.route("/add", methods=['POST'])
     @login_optionally_required

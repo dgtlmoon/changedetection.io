@@ -12,7 +12,7 @@
   gap: 4px;
   box-sizing: border-box;
   width: 100%;
-  padding: 0.25em 2em 0.25em 0.35em; // the spinner is on the right
+  padding: 0.25em 0.35em;
   border: 1px solid #ccc;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px var(--color-shadow-input);
@@ -43,18 +43,6 @@
     background: transparent !important;
   }
 
-  .tag-chips-spinner {
-    display: none;
-    position: absolute;
-    right: 0.6em;
-    top: 50%;
-    margin-top: -6px;
-  }
-
-  &.tag-chips-loading .tag-chips-spinner {
-    display: inline-block;
-  }
-
   // On the coloured panel of the "Add a watch" page
   &.tag-chips-transparent {
     flex: 1;
@@ -62,11 +50,6 @@
     color: var(--color-white);
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: none;
-
-    .tag-chips-spinner {
-      border-color: rgba(255, 255, 255, 0.25);
-      border-left-color: var(--color-white);
-    }
   }
 }
 

@@ -87,20 +87,20 @@ async def _chip_colours(page):
 
 
 async def _expected_colours(page, mode):
-    """{name: [background, text colour]} of every group as the server gives them for light or dark, painted by the browser"""
-    return await page.evaluate('''async (url, mode) => {
-        const groups = await (await fetch(url)).json();
+    """{name: [background, text colour]} of every group as the page was given them for light or dark, painted by the browser"""
+    return await page.evaluate('''(mode) => {
         const probe = document.body.appendChild(document.createElement('span'));
         const painted = {};
-        for (const group of groups) {
-            probe.style.backgroundColor = group.colours[mode].bg;
-            probe.style.color = group.colours[mode].color;
+        for (const option of document.querySelectorAll('datalist#tags-groups option')) {
+            const colours = JSON.parse(option.getAttribute('data-colours'));
+            probe.style.backgroundColor = colours[mode].bg;
+            probe.style.color = colours[mode].color;
             const style = getComputedStyle(probe);
-            painted[group.title] = [style.backgroundColor, style.color];
+            painted[option.value] = [style.backgroundColor, style.color];
         }
         probe.remove();
         return painted;
-    }''', site_url('tags.autocomplete'), mode)
+    }''', mode)
 
 
 def test_groups_as_chips_with_suggestions(client, live_server, measure_memory_usage, datastore_path, running_app):
@@ -110,22 +110,10 @@ def test_groups_as_chips_with_suggestions(client, live_server, measure_memory_us
         await _open_edit_page(page, edit_url)
         assert await _chips(page) == [] and await _sent_value(page) == ''
 
-        # The spinner shows while the groups are being fetched
-        await page.evaluate(f'''() => {{
-            const field = document.querySelector('{FIELD}');
-            window.spinnerWasShown = false;
-            new MutationObserver(() => {{
-                if (field.classList.contains('tag-chips-loading') && getComputedStyle(field.querySelector('.tag-chips-spinner')).display !== 'none') {{
-                    window.spinnerWasShown = true;
-                }}
-            }}).observe(field, {{attributes: true, attributeFilter: ['class']}});
-        }}''')
-
         # Typing part of a name offers the groups with that in their name, a click on one makes it a chip
         await page.type(BOX, 'alp')
         await _wait_for_suggestions(page, ['Alpha news', 'Alphabet'])
-        assert await page.evaluate('() => window.spinnerWasShown'), "The spinner was shown while fetching the suggestions"
-        assert not await page.evaluate(f'''() => document.querySelector('{FIELD}').classList.contains('tag-chips-loading')'''), "And is gone once they are there"
+        assert await page.evaluate(f'''() => !document.querySelector('{BOX}').hasAttribute('list')'''), "Our list, not the browser's own from the datalist as well"
         await screenshot(page, 'group-chips-suggestions', FIELD, room_below=110)
         await page.click(f'{SUGGESTIONS} li:first-child')
         assert await _chips(page) == ['Alpha news']
@@ -277,6 +265,7 @@ def test_group_field_without_javascript(client, live_server, measure_memory_usag
         await page.goto(edit_url + '#general', waitUntil='domcontentloaded')
         assert await page.querySelector(FIELD) is None, "No chips without the script"
         plain_field = 'input[type="text"][name="tags"]'
+        assert await page.evaluate(f'''() => document.querySelector('{plain_field}').list.options.length''') >= 1, "The browser's own suggestions, from the datalist"
         await page.type(plain_field, 'Plain one, Plain two')
         await screenshot(page, 'group-field-without-javascript', plain_field)
         await _save(page)
