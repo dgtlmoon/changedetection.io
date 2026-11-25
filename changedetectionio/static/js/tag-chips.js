@@ -16,8 +16,25 @@
  * Without this script it is the plain text field, with the browser's suggestions from the datalist.
  */
 (function ($) {
-    function splitNames(text) {
-        return String(text || '').split(',').map((name) => name.trim()).filter((name) => name !== '');
+    // The names in a comma separated text. A group made before names with a comma were refused ("Sales, EU") is
+    // kept whole where its pieces stand next to each other, like model/Tag.py split_group_names() on the server:
+    // otherwise saving a watch that is in it would move the watch into new groups "Sales" and "EU".
+    function splitNames(text, existingTitles) {
+        const parts = String(text || '').split(',').map((name) => name.trim());
+        (existingTitles || []).filter((title) => title.indexOf(',') !== -1).sort((a, b) => b.length - a.length).forEach((title) => {
+            const pieces = title.split(',').map((piece) => piece.trim().toLowerCase());
+            for (let i = 0; i + pieces.length <= parts.length; i++) {
+                if (pieces.every((piece, n) => parts[i + n].toLowerCase() === piece)) {
+                    parts.splice(i, pieces.length, title.trim());
+                }
+            }
+        });
+        return parts.filter((name) => name !== '');
+    }
+
+    // For finding a group by what is typed: no capitals, and no accents ("uber" finds "Über", "eclair" "Éclair")
+    function fold(text) {
+        return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     }
 
     // MD5 of a text (as UTF-8), in hex. Only for generatedColours() below, which has to come out the same as the
@@ -164,7 +181,7 @@
 
         // Everything in the box becomes chips
         function commit() {
-            splitNames(input.value).forEach(add);
+            splitNames(input.value, groups.map((group) => group.title)).forEach(add);
             input.value = '';
             render();
         }
@@ -198,12 +215,12 @@
 
         // The groups with what is typed in their name that are not in the field yet, those that start with it first
         function suggest() {
-            const typed = input.value.trim().toLowerCase();
+            const typed = fold(input.value.trim());
             suggestions = groups
-                .filter((group) => group.title.toLowerCase().indexOf(typed) !== -1 && !has(group.title))
+                .filter((group) => fold(group.title).indexOf(typed) !== -1 && !has(group.title))
                 .sort((a, b) => {
-                    const aStarts = a.title.toLowerCase().indexOf(typed) === 0;
-                    const bStarts = b.title.toLowerCase().indexOf(typed) === 0;
+                    const aStarts = fold(a.title).indexOf(typed) === 0;
+                    const bStarts = fold(b.title).indexOf(typed) === 0;
                     return aStarts === bStarts ? a.title.toLowerCase().localeCompare(b.title.toLowerCase()) : (aStarts ? -1 : 1);
                 });
             active = -1;
@@ -310,7 +327,7 @@
             }
         });
 
-        splitNames(input.value).forEach(add);
+        splitNames(input.value, groups.map((group) => group.title)).forEach(add);
         input.value = '';
         render();
     }

@@ -2048,6 +2048,10 @@ msgid "No plugins active"
 msgstr "No hay complementos activos"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "A group name cannot have a comma in it, commas are what goes between several groups."
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 #, python-brace-format
 msgid "The tag \"{}\" already exists"
 msgstr "La etiqueta \"{} \"ya existe"

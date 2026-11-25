@@ -662,3 +662,225 @@ def test_groups_by_url_pattern_are_listed_under_the_field(client, live_server, m
         assert await page.querySelector('.auto-applied-groups') is None
 
     run_in_browser(steps, name='groups_by_url_pattern')
+
+
+def test_group_name_with_a_comma_is_refused_and_an_old_one_is_kept_whole(client, live_server, measure_memory_usage, datastore_path, running_app):
+    async def steps(page):
+        # Not as a new name on the groups page
+        await page.goto(site_url('tags.tags_overview_page'))
+        await page.focus('form#new-watch-form input[name="name"]')
+        await page.evaluate("""() => { document.querySelector('form#new-watch-form input[name="name"]').value = 'Comma, Group'; }""")
+        await press_enter_and_wait_for_new_page(page)
+        assert 'cannot have a comma' in await page.evaluate("""() => document.body.textContent""")
+        assert 'Comma, Group' not in await _groups_listed(page)
+
+        # Nor by renaming a group
+        await _add_groups(page, ['To be renamed'])
+        await page.goto(await _group_edit_url(page, 'To be renamed'))
+        await page.evaluate("""() => { document.querySelector('input[name="title"]').value = 'Renamed, with a comma'; }""")
+        await _save(page)
+        assert 'cannot have a comma' in await page.evaluate("""() => document.body.textContent""")
+        listed = await _groups_listed(page)
+        assert 'To be renamed' in listed and 'Renamed, with a comma' not in listed
+
+        # A group that has a comma in its name from before cannot be made here any more, so the field is given one
+        # the way the page would: a field of its own with that group in its list and in its value.
+        edit_url = await _add_watch(page, 'chips-comma')
+        await _open_edit_page(page, edit_url)
+        result = await page.evaluate("""() => {
+            const form = document.querySelector('input[name="url"]').form;
+            form.insertAdjacentHTML('beforeend', `<div id="old-comma-group">
+                <input type="text" name="old_groups" id="old_groups" class="tag-chips" list="old_groups-groups" value="First, Sales, EU, sales ,eu, Sales, Last">
+                <datalist id="old_groups-groups">
+                    <option value="Sales, EU" data-colours='{"light":{"bg":"rgb(1, 2, 3)","color":"rgb(4, 5, 6)"},"dark":{"bg":"rgb(1, 2, 3)","color":"rgb(4, 5, 6)"}}'></option>
+                    <option value="Sales" data-colours='{"light":{"bg":"rgb(7, 8, 9)","color":"rgb(4, 5, 6)"},"dark":{"bg":"rgb(7, 8, 9)","color":"rgb(4, 5, 6)"}}'></option>
+                </datalist></div>`);
+            $('#old_groups').tagChips();
+            const chips = [...document.querySelectorAll('#old-comma-group .tag-chip')];
+            return {chips: chips.map((chip) => chip.querySelector('.tag-chip-text').textContent),
+                    backgrounds: chips.map((chip) => getComputedStyle(chip).backgroundColor),
+                    sent: document.querySelector('input[type="hidden"][name="old_groups"]').value};
+        }""")
+        assert result['chips'] == ['First', 'Sales, EU', 'Sales', 'Last'], "One chip for the group with the comma, not one for each piece"
+        assert result['backgrounds'][1] == 'rgb(1, 2, 3)' and result['backgrounds'][2] == 'rgb(7, 8, 9)'
+        assert result['sent'] == 'First, Sales, EU, Sales, Last'
+
+    run_in_browser(steps, name='group_name_with_a_comma')
+
+
+def test_groups_are_found_without_their_accents(client, live_server, measure_memory_usage, datastore_path, running_app):
+    async def steps(page):
+        await _add_groups(page, ['Überwachung', 'Crème brûlée', 'Señal Ñandú', 'Zażółć'])
+        edit_url = await _add_watch(page, 'chips-accents')
+        await _open_edit_page(page, edit_url)
+        for typed, found in (('uberw', 'Überwachung'), ('ÜBERW', 'Überwachung'), ('creme brulee', 'Crème brûlée'),
+                             ('nandu', 'Señal Ñandú'), ('zazolc', 'Zażółć'), ('brûl', 'Crème brûlée')):
+            await page.type(BOX, typed)
+            if found == 'Zażółć':
+                # "ł" is a letter of its own, not an "l" with an accent: typed with its accents it is found
+                await _wait_for_suggestions(page, [])
+                for _ in typed:
+                    await page.keyboard.press('Backspace')
+                await _type_names(page)   # nothing
+                await page.evaluate(f"""() => {{
+                    const box = document.querySelector('{BOX}');
+                    box.value = 'zazół';
+                    box.dispatchEvent(new Event('input', {{bubbles: true}}));
+                }}""")
+                await _wait_for_suggestions(page, ['Zażółć'])
+                await page.evaluate(f"""() => {{
+                    const box = document.querySelector('{BOX}');
+                    box.value = '';
+                    box.dispatchEvent(new Event('input', {{bubbles: true}}));
+                }}""")
+                continue
+            await _wait_for_suggestions(page, [found])
+            for _ in typed:
+                await page.keyboard.press('Backspace')
+
+        # Picked, it is the group as it is written
+        await page.type(BOX, 'creme')
+        await _wait_for_suggestions(page, ['Crème brûlée'])
+        await page.keyboard.press('ArrowDown')
+        await page.keyboard.press('Enter')
+        assert await _chips(page) == ['Crème brûlée']
+        # Typed out without its accents and entered it is a name of its own: for the server that is another group
+        await _type_names(page, 'Uberwachung')
+        assert await _chips(page) == ['Crème brûlée', 'Uberwachung']
+
+    run_in_browser(steps, name='groups_found_without_accents')
+
+
+def test_back_button_and_reload_show_what_is_saved(client, live_server, measure_memory_usage, datastore_path, running_app):
+    """Browsers put back what was typed in a form when a page is come back to. Here that would be the field's own
+    text from before the script took the names out of it."""
+    async def steps(page):
+        await _add_groups(page, ['Saved one', 'Saved two'])
+        edit_url = await _add_watch(page, 'chips-back-button')
+        await _open_edit_page(page, edit_url)
+        await _type_names(page, 'Saved one', 'Saved two')
+        await _save(page)
+        await _open_edit_page(page, edit_url)
+        assert await _chips(page) == ['Saved one', 'Saved two']
+
+        # Changed but not saved, then away and back
+        await page.click(f'{FIELD} .tag-chip:nth-child(1) .tag-chip-remove')
+        await _type_names(page, 'Never saved')
+        await page.type(BOX, 'half typed')
+        await page.goto(site_url('watchlist.index'))
+        await page.goBack()
+        await page.waitForSelector(BOX, visible=True)
+
+        async def consistent():
+            chips, sent, box = await _chips(page), await _sent_value(page), await _box_value(page)
+            assert sent == ', '.join(chips), "What is shown is what would be sent"
+            assert 'Saved one, Saved two' not in box, "The field's text from before the chips is not put back in the box"
+            assert len(chips) == len(set(chips))
+            return chips
+
+        chips = await consistent()
+        # Either the page as it was left or the page as it is saved, never a mix of the two
+        assert chips in (['Saved two', 'Never saved'], ['Saved two', 'Never saved', 'half typed'], ['Saved one', 'Saved two'])
+
+        await page.reload()
+        await page.waitForSelector(BOX, visible=True)
+        assert await consistent() == ['Saved one', 'Saved two'], "Reloaded: what is saved"
+        assert await _box_value(page) == ''
+        assert await page.evaluate(f"""() => document.querySelector('{BOX}').getAttribute('autocomplete')""") == 'off'
+
+    run_in_browser(steps, name='back_button_and_reload')
+
+
+def test_chips_by_touch(client, live_server, measure_memory_usage, datastore_path, running_app):
+    """A phone: no mouse and no keyboard shortcuts, everything by tapping."""
+    async def steps(page):
+        await _add_groups(page, ['Touch one', 'Touch two'])
+        edit_url = await _add_watch(page, 'chips-touch')
+        await page.emulate(viewport={'width': 390, 'height': 800, 'isMobile': True, 'hasTouch': True, 'deviceScaleFactor': 2},
+                           userAgent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36')
+        await _open_edit_page(page, edit_url)
+
+        # Tapping the field offers the groups, tapping one takes it and keeps the keyboard up for the next
+        await page.tap(BOX)
+        await page.type(BOX, 'touch')
+        await _wait_for_suggestions(page, ['Touch one', 'Touch two'])
+        await page.tap(f'{SUGGESTIONS} li:nth-child(2)')
+        assert await _chips(page) == ['Touch two']
+        assert await page.evaluate(f"""() => document.activeElement === document.querySelector('{BOX}')""")
+
+        await page.type(BOX, 'touch')
+        await _wait_for_suggestions(page, ['Touch one'])
+        await page.tap(f'{SUGGESTIONS} li:first-child')
+        assert await _chips(page) == ['Touch two', 'Touch one']
+
+        # The x of a chip is big enough for a finger, and takes that chip off
+        size = await page.evaluate(f"""() => {{ const r = document.querySelector('{FIELD} .tag-chip-remove').getBoundingClientRect(); return [r.width, r.height]; }}""")
+        assert size[0] >= 24 and size[1] >= 24, f"The x is {size} pixels"
+        await page.tap(f'{FIELD} .tag-chip:nth-child(1) .tag-chip-remove')
+        assert await _chips(page) == ['Touch one']
+
+        # Tapping somewhere else with a name typed makes it a chip (there is no Enter to rely on)
+        await page.tap(BOX)
+        await page.type(BOX, 'Typed on a phone')
+        await page.tap('input[name="url"]')
+        assert await _chips(page) == ['Touch one', 'Typed on a phone']
+        # Nothing sticks out of the screen
+        assert await page.evaluate(f"""() => document.querySelector('{FIELD}').getBoundingClientRect().right <= window.innerWidth""")
+        await screenshot(page, 'group-chips-phone', FIELD)
+
+    run_in_browser(steps, name='chips_by_touch')
+
+
+def test_what_a_screen_reader_is_told(client, live_server, measure_memory_usage, datastore_path, running_app):
+    """Not a screen reader test (there is none here): the names, roles and states it would read are in the page."""
+    async def steps(page):
+        await _add_groups(page, ['Read aloud one', 'Read aloud two'])
+        edit_url = await _add_watch(page, 'chips-screen-reader')
+        await _open_edit_page(page, edit_url)
+
+        def about_the_box():
+            return page.evaluate(f"""() => {{
+                const box = document.querySelector('{BOX}');
+                const list = document.getElementById(box.getAttribute('aria-controls'));
+                const active = box.getAttribute('aria-activedescendant');
+                return {{role: box.getAttribute('role'), expanded: box.getAttribute('aria-expanded'), autocomplete: box.getAttribute('aria-autocomplete'),
+                        label: (document.querySelector('label[for="' + box.id + '"]') || {{}}).textContent,
+                        listRole: list && list.getAttribute('role'), options: list ? [...list.querySelectorAll('[role="option"]')].map((o) => o.textContent) : null,
+                        selected: list ? [...list.querySelectorAll('[aria-selected="true"]')].map((o) => o.textContent) : null,
+                        active: active && document.getElementById(active) && document.getElementById(active).textContent}};
+            }}""")
+
+        box = await about_the_box()
+        assert box['role'] == 'combobox' and box['autocomplete'] == 'list' and box['expanded'] == 'false'
+        assert box['label'] and box['label'].strip(), "The box has a label that is read with it"
+        assert box['listRole'] == 'listbox'
+
+        await page.type(BOX, 'read aloud')
+        await _wait_for_suggestions(page, ['Read aloud one', 'Read aloud two'])
+        box = await about_the_box()
+        assert box['expanded'] == 'true' and box['options'] == ['Read aloud one', 'Read aloud two'] and box['selected'] == []
+
+        # The arrow keys say which one is on
+        await page.keyboard.press('ArrowDown')
+        await page.keyboard.press('ArrowDown')
+        box = await about_the_box()
+        assert box['active'] == 'Read aloud two' and box['selected'] == ['Read aloud two']
+        await page.keyboard.press('Enter')
+        box = await about_the_box()
+        assert box['expanded'] == 'false' and box['active'] is None
+
+        # A chip's x says what it takes off, and changes to the chips are announced
+        await _type_names(page, 'Read aloud one')
+        chips = await page.evaluate(f"""() => ({{
+            live: document.querySelector('{FIELD} .tag-chips-list').getAttribute('aria-live'),
+            buttons: [...document.querySelectorAll('{FIELD} .tag-chip-remove')].map((b) => [b.tagName, b.getAttribute('type'), b.getAttribute('aria-label')])}})""")
+        assert chips['live'] == 'polite'
+        assert chips['buttons'] == [['BUTTON', 'button', 'Remove Read aloud two'], ['BUTTON', 'button', 'Remove Read aloud one']]
+
+        # All of it by keyboard: Tab reaches the x of each chip, Enter on it takes the chip off
+        await page.focus(f'{FIELD} .tag-chip:nth-child(1) .tag-chip-remove')
+        await page.keyboard.press('Enter')
+        assert await _chips(page) == ['Read aloud one']
+        assert page.url.split('#')[0] == edit_url, "Enter on the x does not save the form"
+
+    run_in_browser(steps, name='what_a_screen_reader_is_told')
