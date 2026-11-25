@@ -125,27 +125,36 @@ def test_the_request_to_the_service(monkeypatch):
 
 
 def test_a_failing_check_shows_it(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
-    """Through a real check: the watch's error is the one from the lookup, and without the setting it is not"""
+    """Through real checks of one watch: its error is the one from the lookup, and without the setting it is not"""
     datastore = client.application.config.get('DATASTORE')
     asked = _answers(monkeypatch, NO_SUCH_DOMAIN)
 
-    # A name that cannot resolve, so the check fails with the fetcher's own "could not resolve"
+    def recheck(uuid):
+        checks = datastore.data['watching'][uuid]['check_count']
+        res = client.post(url_for("ui.form_watch_checknow", uuid=uuid), follow_redirects=True)
+        assert res.status_code == 200
+        wait_for_all_checks(client)
+        assert datastore.data['watching'][uuid]['check_count'] > checks, "It was checked again"
+        return datastore.data['watching'][uuid]['last_error']
+
+    # A name that cannot resolve, so the check fails with the fetcher's own "could not resolve".
+    # Paused: only checked when asked here, not by the scheduler in between.
     monkeypatch.delenv(lookup.REGEX_SETTING, raising=False)
-    without = datastore.add_watch(url='https://shop.does-not-exist-cdio.invalid/deals')
-    client.get(url_for("ui.form_watch_checknow", uuid=without), follow_redirects=True)
-    wait_for_all_checks(client)
-    plain = datastore.data['watching'][without]['last_error']
+    uuid = datastore.add_watch(url='https://shop.does-not-exist-cdio.invalid/deals', extras={'paused': True})
+    plain = recheck(uuid)
     assert plain and plain.startswith('Exception: ') and 'not found' not in plain
     assert asked == [], "Nothing was looked up"
 
     monkeypatch.setenv(lookup.REGEX_SETTING, r"(NameResolutionError|Failed to resolve|Name or service not known)")
-    uuid = datastore.add_watch(url='https://other.does-not-exist-cdio.invalid/deals')
-    client.get(url_for("ui.form_watch_checknow", uuid=uuid), follow_redirects=True)
-    wait_for_all_checks(client)
-    error = datastore.data['watching'][uuid]['last_error']
-    assert error.startswith("Domain not found - 'other.does-not-exist-cdio.invalid' does not exist"), error
-    assert asked == [('other.does-not-exist-cdio.invalid', 'A')]
+    error = recheck(uuid)
+    assert error.startswith("Domain not found - 'shop.does-not-exist-cdio.invalid' does not exist"), error
+    assert plain in error, "What the fetcher said is kept after it"
+    assert asked == [('shop.does-not-exist-cdio.invalid', 'A')]
     # And it is what the watch list shows
     assert b'Domain not found' in client.get(url_for("watchlist.index")).data
+
+    # Switched off again: the next check has the plain error back
+    monkeypatch.delenv(lookup.REGEX_SETTING)
+    assert recheck(uuid) == plain
 
     delete_all_watches(client)
