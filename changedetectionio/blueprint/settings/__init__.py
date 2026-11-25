@@ -143,6 +143,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                     datastore.commit()
                     flash(gettext("Password protection enabled."), 'notice')
                     flask_login.logout_user()
+                    # Realtime connections opened before this password must log in too
+                    from flask import current_app
+                    from changedetectionio.realtime.socket_server import disconnect_all_clients
+                    disconnect_all_clients(current_app)
                     return redirect(url_for('watchlist.index'))
 
                 # Also save plugin settings from the same form submission

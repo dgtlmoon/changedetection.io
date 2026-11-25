@@ -292,6 +292,52 @@ class SignalHandler:
 
 
 
+def socket_client_is_allowed(datastore):
+    """The same rule as the pages: with a password set, only a logged in browser. Called for the connection and
+    again for every event - a connection that was let in before a password was set, or with a password that has
+    since been changed, is not a login any more (see User.get_id() for how the login follows the password)."""
+    from flask_login import current_user
+
+    has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+    return not has_password_enabled or current_user.is_authenticated
+
+
+def login_optionally_required_for_event(datastore):
+    """For Socket.IO event handlers, what @login_optionally_required is for the pages. A connection that is no
+    longer allowed is dropped; the browser reconnects by itself and is then checked by the 'connect' handler."""
+    from functools import wraps
+
+    def decorator(handler):
+        @wraps(handler)
+        def checked_handler(*args, **kwargs):
+            from flask_socketio import disconnect
+
+            if not socket_client_is_allowed(datastore):
+                logger.warning("Socket.IO: Dropping a connection that is not logged in for the current password")
+                disconnect()
+                return None
+            return handler(*args, **kwargs)
+        return checked_handler
+    return decorator
+
+
+def disconnect_all_clients(app):
+    """Drops every open connection, for when the password is set or changed: those connections were let in under
+    the old rules and would keep receiving watch updates. Each browser reconnects and is checked again."""
+    socketio = app.extensions.get('socketio')
+    if not socketio:
+        return
+    try:
+        sids = [sid for sid, _eio_sid in socketio.server.manager.get_participants('/', None)]
+    except AttributeError:
+        return
+    for sid in sids:
+        try:
+            socketio.server.disconnect(sid)
+        except Exception as e:
+            logger.error(f"Socket.IO error disconnecting a client after a password change: {str(e)}")
+
+
 def has_connected_clients(socketio):
     """True when at least one client has completed the Socket.IO connect on the default namespace.
 
@@ -434,6 +480,7 @@ def init_socketio(app, datastore):
     logger.info("Socket.IO: Registering connect event handler")
 
     @socketio.on('checkbox-operation')
+    @login_optionally_required_for_event(datastore)
     def event_checkbox_operations(data):
         from changedetectionio.blueprint.ui import _handle_operations
         from changedetectionio import queuedWatchMetaData
@@ -474,6 +521,7 @@ def init_socketio(app, datastore):
         thread.start()
 
     @socketio.on('watch-subscribe')
+    @login_optionally_required_for_event(datastore)
     def event_watch_subscribe(data):
         """The page lists the watches it is showing, from then on it gets the per-watch events for those only."""
         from flask_socketio import join_room
@@ -491,7 +539,6 @@ def init_socketio(app, datastore):
         """Handle client connection"""
         #        logger.info("Socket.IO: CONNECT HANDLER CALLED - Starting connection process")
         from flask import request
-        from flask_login import current_user
         from changedetectionio.flask_app import update_q
         from changedetectionio import worker_pool
 
@@ -499,10 +546,7 @@ def init_socketio(app, datastore):
         datastore = socketio.datastore
         #        logger.info(f"Socket.IO: Current user authenticated: {current_user.is_authenticated if hasattr(current_user, 'is_authenticated') else 'No current_user'}")
 
-        # Check if authentication is required and user is not authenticated
-        has_password_enabled = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
-        #        logger.info(f"Socket.IO: Password enabled: {has_password_enabled}")
-        if has_password_enabled and not current_user.is_authenticated:
+        if not socket_client_is_allowed(datastore):
             logger.warning("Socket.IO: Rejecting unauthenticated connection")
             return False  # Reject the connection
 
