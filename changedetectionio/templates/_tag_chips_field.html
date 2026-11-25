@@ -1,0 +1,9 @@
+{#- The "Group tag" field of a watch, rendered by TagChipsWidget (forms.py): the text input, every group there is
+    for it to suggest, and the script that turns the names into chips (static/js/tag-chips.js). -#}
+{{ text_input }}
+<datalist id="{{ list_id }}">
+{%- for group in groups %}
+<option value="{{ group.title }}" data-colours="{{ group.colours|tojson|forceescape }}"></option>
+{%- endfor %}
+</datalist>
+<script src="{{ url_for('static_content', group='js', filename='tag-chips.js') }}" defer></script>
