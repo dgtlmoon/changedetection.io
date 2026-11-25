@@ -150,10 +150,12 @@ def group_changes(watches, from_ts, to_ts, mode='net_change', context=1, max_lin
     watches = list(watches)
     deadline = time.monotonic() + time_budget if time_budget else None
     incomplete = False
+    checked = 0
     for watch in watches:
         if deadline and time.monotonic() > deadline:
             incomplete = True
             break
+        checked += 1
         time.sleep(0)
         # last_changed only uses the cached newest history key (0 when it isn't known yet), so this rules out
         # watches that haven't changed since `from` without reading anything. The rest read their history once.
@@ -172,7 +174,7 @@ def group_changes(watches, from_ts, to_ts, mode='net_change', context=1, max_lin
         'total': len(changed),
         'offset': offset,
         'limit': limit,
-        'monitors_checked': len(watches),
+        'monitors_checked': checked,
         'changes_total': sum(r['changes'] for r in changed),
         'incomplete': incomplete,
         'watches': changed[offset:offset + limit] if limit else changed[offset:],
