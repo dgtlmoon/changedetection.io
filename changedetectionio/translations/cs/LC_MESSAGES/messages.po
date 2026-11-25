@@ -3747,6 +3747,10 @@ msgid "Group tag"
 msgstr "Skupina / Značka"
 
 #: changedetectionio/forms.py
+msgid "Also remove any existing group assigned"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Neplatný formát času. Použijte HH:MM."
 

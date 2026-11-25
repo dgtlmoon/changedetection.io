@@ -3844,6 +3844,10 @@ msgid "Group tag"
 msgstr "Tag grup"
 
 #: changedetectionio/forms.py
+msgid "Also remove any existing group assigned"
+msgstr ""
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Format waktu tidak valid. Gunakan JJ:MM."
 
