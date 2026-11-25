@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.70.4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-25 19:36+0000\n"
+"POT-Creation-Date: 2026-11-25 19:56+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1938,6 +1938,10 @@ msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/settings.html
 msgid "No plugins active"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
+msgid "A group name cannot have a comma in it, commas are what goes between several groups."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py
