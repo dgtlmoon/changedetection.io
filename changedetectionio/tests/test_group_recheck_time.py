@@ -192,6 +192,7 @@ def test_group_recheck_time_tab_and_watch_edit_note(client, live_server, measure
     assert b'name="time_between_check_group_mode"' in res.data
     assert b'name="time_between_check-hours"' in res.data
     assert b'id="time_schedule_limit-enabled"' in res.data
+    assert b'border-fieldset group-setting-off' in res.data, "Dimmed while the mode is off"
 
     res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
     assert b'decided-elsewhere-note' not in res.data
@@ -205,6 +206,8 @@ def test_group_recheck_time_tab_and_watch_edit_note(client, live_server, measure
     assert b"Updated" in res.data
     assert group['time_between_check_group_mode'] == 'replace'
     assert (group['time_between_check']['hours'], group['time_between_check']['minutes']) == (2, 30)
+    res = client.get(url_for("tags.form_tag_edit", uuid=group_uuid))
+    assert b'group-setting-off"' not in res.data, "Not dimmed once it is switched on"
 
     res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
     group_link = url_for('tags.form_tag_edit', uuid=group_uuid).encode()

@@ -167,7 +167,8 @@
                     <div class="pure-control-group">
                         {{ render_field(form.time_between_check_group_mode) }}
                     </div>
-                    <div class="pure-control-group time-between-check border-fieldset">
+                    {#- Dimmed while the mode above is "Don't use", still editable so it can be set up ahead of time -#}
+                    <div class="pure-control-group time-between-check border-fieldset {{ 'group-setting-off' if form.time_between_check_group_mode.data == 'off' }}" id="group-recheck-time-settings">
                         <div id="time-check-widget-wrapper">
                             {{ render_field(form.time_between_check, class="time-check-widget") }}
                             <span class="pure-form-message-inline">
@@ -183,6 +184,15 @@
                     </div>
                 </fieldset>
             </div>
+            <script>
+            (function () {
+                var mode = document.getElementById('time_between_check_group_mode');
+                var settings = document.getElementById('group-recheck-time-settings');
+                mode.addEventListener('change', function () {
+                    settings.classList.toggle('group-setting-off', this.value === 'off');
+                });
+            })();
+            </script>
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">

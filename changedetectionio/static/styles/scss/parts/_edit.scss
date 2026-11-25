@@ -38,6 +38,11 @@ ul#conditions_match_logic {
   }
 }
 
+// Group edit: the settings of something that is switched off ("Don't use"), they can still be filled in
+.group-setting-off {
+  opacity: 0.65;
+}
+
 .decided-elsewhere-note {
   margin: 0 0 0.5em 0;
   padding: 0.5em 0.8em;
