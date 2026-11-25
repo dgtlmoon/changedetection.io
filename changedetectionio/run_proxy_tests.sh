@@ -91,6 +91,33 @@ for c in $(echo "squid-one squid-two squid-custom"); do
   fi
 done
 
+# Test the proxy scanner of a watch ("Check/Scan all" on its edit page): its page fetched through every proxy.
+# The page is the test's own server, which the squids (and the browser) reach as "cdio", so the test can make it
+# refuse the second scan. proxies.json-scanner: the two squids and a proxy with nothing listening.
+set -e
+# Requests
+docker run --network changedet-network --hostname cdio -e "FLASK_SERVER_NAME=cdio" \
+  -v `pwd`/tests/proxy_list/proxies.json-scanner:/tmp/proxies.json \
+  test-changedetectionio \
+  bash -c 'cd changedetectionio && pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/proxy_list/test_proxy_scanner.py --datastore-path /tmp'
+
+# Puppeteer fast: a scan with a browser fetcher
+docker run --network changedet-network --hostname cdio -e "FLASK_SERVER_NAME=cdio" \
+  -v `pwd`/tests/proxy_list/proxies.json-scanner:/tmp/proxies.json \
+  test-changedetectionio \
+  bash -c 'cd changedetectionio && FAST_PUPPETEER_CHROME_FETCHER=1 PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000 pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/proxy_list/test_proxy_scanner.py --datastore-path /tmp'
+
+# Give squid proxies a moment to flush their logs
+sleep 2
+
+# Each squid was scanned through: it saw the page fetched (first scan) and refused (second scan).
+# squid leaves the query string out of its log, so this goes by the address and the status.
+for c in squid-one squid-two; do
+  echo "- Looking for the proxy scanner's two scans in $c"
+  docker logs $c 2>/dev/null | grep "/200 .*cdio:5004/test-endpoint"
+  docker logs $c 2>/dev/null | grep "/403 .*cdio:5004/test-endpoint"
+done
+
 echo "docker ps output"
 docker ps
 
