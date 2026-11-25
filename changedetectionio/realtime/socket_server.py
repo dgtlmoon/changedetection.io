@@ -40,17 +40,27 @@ def watch_row_room(watch_uuid, tag_uuid='', url_prefix=''):
     return f"{WATCH_ROW_ROOM_PREFIX}{watch_uuid}:{tag_uuid or ''}:{url_prefix or ''}"
 
 
-def connection_url_prefix():
-    """The sub-path the browser of this Socket.IO connection reaches the app under, '' when there is none. Read
-    from the request the connection was made with: the script root that ProxyFix made of X-Forwarded-Prefix, or
-    the header itself where the connection's request did not pass through ProxyFix. Only the rows sent to pages
-    under the same sub-path are rendered with it (see watch_row_room), so it reaches nobody else's page."""
+def connection_url_prefix(page_says=None):
+    """The sub-path the browser of this Socket.IO connection reaches the app under, '' when there is none.
+
+    page_says: the sub-path the page gives when it asks for rows, the one its own addresses were made with (it
+    is in the page as the path of this very connection, see get_socketio_path()). That is the one to match, so
+    it is used when given. Without it, from the request the connection was made with: the script root that
+    ProxyFix made of X-Forwarded-Prefix, or the header itself where that request did not pass through ProxyFix.
+    This second way depends on the reverse proxy sending the header for the Socket.IO address too, which a
+    separate "location" for the websocket can leave out.
+
+    Either way only with USE_X_SETTINGS, only a plain path, and only the rows sent to pages under the same
+    sub-path are rendered with it (see watch_row_room), so it reaches nobody else's page."""
     import os
     import re
     from flask import request
-    prefix = request.script_root or ''
-    if not prefix and os.getenv('USE_X_SETTINGS'):
-        prefix = request.headers.get('X-Forwarded-Prefix', '')
+    if not os.getenv('USE_X_SETTINGS'):
+        return ''
+    if isinstance(page_says, str):
+        prefix = page_says
+    else:
+        prefix = request.script_root or request.headers.get('X-Forwarded-Prefix', '')
     prefix = prefix.rstrip('/')
     # A path and nothing else
     if not prefix or len(prefix) > 200 or not re.fullmatch(r'(/[A-Za-z0-9._~-]+)+', prefix):
@@ -605,7 +615,7 @@ def init_socketio(app, datastore):
         rows_for = (data or {}).get('rows_for_tag')
         if rows_for is not None and not (isinstance(rows_for, str) and (rows_for == '' or rows_for in socketio.datastore.data['settings']['application']['tags'])):
             rows_for = None
-        url_prefix = connection_url_prefix() if rows_for is not None else ''
+        url_prefix = connection_url_prefix((data or {}).get('rows_url_prefix')) if rows_for is not None else ''
         for uuid in uuids[:MAX_WATCH_SUBSCRIPTIONS]:
             if isinstance(uuid, str) and uuid in watching:
                 join_room(watch_room(uuid))
