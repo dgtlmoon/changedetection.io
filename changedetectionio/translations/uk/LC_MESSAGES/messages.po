@@ -2115,6 +2115,10 @@ msgid "Use this group's proxy"
 msgstr "Використовувати проксі цієї групи"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's recheck time"
+msgstr "Використовувати інтервал перевірки цієї групи"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -2164,6 +2168,14 @@ msgid ""
 msgstr ""
 "Задане тут не використовується, доки його не ввімкнено, тож його можна налаштувати заздалегідь. Завдання в кількох "
 "групах бере першу ввімкнену групу."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "Інтервал часу між перевірками."
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave empty to keep the system default and only use the time schedule below."
+msgstr "Залиште порожнім, щоб зберегти системний інтервал і використовувати лише розклад нижче."
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2426,6 +2438,10 @@ msgstr "Недостатньо історії (потрібно 2 знімки) 
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
 msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
+msgstr "Обмеження часу розкладу"
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
@@ -2767,10 +2783,6 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "Інтервал часу між перевірками."
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -4017,7 +4029,7 @@ msgstr ""
 msgid "Group Tag"
 msgstr ""
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/forms.py
 msgid "Time Between Check"
 msgstr "Час між перевірками"
 
@@ -5470,10 +5482,6 @@ msgstr "Перевірити це правило на поточному зні�
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
 msgstr "Встановити розклад по годинах/днях тижня"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Schedule time limits"
-msgstr "Обмеження часу розкладу"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Business hours"

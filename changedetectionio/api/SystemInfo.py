@@ -13,13 +13,20 @@ def overdue_watch_uuids(datastore, now=None):
     if datastore.data['settings']['application'].get('all_paused'):
         return []
 
+    from changedetectionio.model.group_settings import groups_with_recheck_time, recheck_time_group_choice
+    recheck_time_groups = groups_with_recheck_time(datastore)
+
     overdue = []
     for uuid, watch in datastore.data.get('watching', {}).items():
         if watch.get('paused'):
             continue
         # see if now - last_checked is greater than the time that should have been
         # this is not super accurate (maybe they just edited it) but better than nothing
-        threshold = watch.threshold_seconds() or datastore.threshold_seconds
+        group_recheck_time = recheck_time_group_choice(watch, recheck_time_groups) if recheck_time_groups else None
+        if group_recheck_time:
+            threshold = group_recheck_time.value or datastore.threshold_seconds
+        else:
+            threshold = watch.threshold_seconds() or datastore.threshold_seconds
         # Same as the scheduler, a plugin may have the last word
         threshold = apply_recheck_seconds_override(watch, datastore, threshold)
         # Allow 5 minutes of grace time before we decide it's overdue

@@ -135,8 +135,8 @@
 
                     </div>
 
-                    <div class="pure-control-group time-between-check border-fieldset">
-
+                    <div class="pure-control-group time-between-check border-fieldset {{ 'decided-elsewhere' if recheck_time_decided and recheck_time_decided.replaces_watch }}">
+                        {{ decided_elsewhere_note(recheck_time_decided, 'recheck-time') }}
                         {{ render_checkbox_field(form.time_between_check_use_default, class="use-default-timecheck") }}
                         <br>
                         <div id="time-check-widget-wrapper">
