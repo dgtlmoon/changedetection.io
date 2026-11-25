@@ -256,6 +256,8 @@ $(function () {
         } else {
             $b.hide().empty();
         }
+        // For the space under the operations bar: the banner takes its place when it is there (_watch_table.scss)
+        $('body').toggleClass('select-all-banner-shown', $b.is(':visible'));
     }
 
     function refreshSelectionUI() {
