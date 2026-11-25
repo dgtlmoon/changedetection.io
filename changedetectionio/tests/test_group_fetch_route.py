@@ -255,7 +255,10 @@ def test_group_fetch_backend_is_what_the_check_uses(client, live_server, measure
     datastore.data['settings']['requests']['extra_proxies'] = []
     # The watch asks for a browser that is not there, its group says use the plain fetcher instead
     group_uuid, group = _group(datastore, 'Shops', fetch_backend='html_requests', fetch_backend_group_mode='replace')
-    watch_uuid, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_webdriver', paused=False)
+    # Paused until it is in its group: a watch that can be checked is picked up straight away, and one checked
+    # before its group was attached went to the browser that is not there
+    watch_uuid, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_webdriver')
+    watch['paused'] = False
 
     client.get(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
     wait_for_all_checks(client)
