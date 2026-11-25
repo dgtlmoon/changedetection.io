@@ -835,6 +835,56 @@ def test_mcp_recheck_wait(client, live_server, measure_memory_usage, datastore_p
     delete_all_watches(client)
 
 
+def test_mcp_recheck_wait_for_a_check_that_was_already_running(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """A check of the monitor is already going when the recheck is asked for, so nothing is queued and that check is
+    the one to wait for. When it had already counted itself (it was finishing), nothing told the tool that a
+    check had happened: it answered "not queued ... 0 of 1 checked, the rest are still going" after its wait."""
+    from flask import url_for
+    from changedetectionio import worker_pool
+    datastore = client.application.config['DATASTORE']
+    api_key = new_mcp_token(client)
+    with open(os.path.join(datastore_path, 'endpoint-content.txt'), 'w') as f:
+        f.write('<html><body>Hello there</body></html>')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'title': 'Endpoint', 'paused': True})
+
+    # One check done, so the monitor has counted it
+    datastore.data['watching'][uuid]['paused'] = False
+    result = _call(client, api_key, 'recheck_watches', watches=[uuid], wait=True, wait_seconds=30)
+    assert result['structuredContent']['checks'][0]['state'] == 'checked', result['content'][0]['text']
+    datastore.data['watching'][uuid]['paused'] = True
+    count = datastore.data['watching'][uuid]['check_count']
+
+    # As the workers say it while a check is finishing: still running when asked and for a moment after, then not.
+    # By the clock, not by how often it is asked: the scheduler and the realtime code ask too.
+    import time
+    real_running = worker_pool.get_running_uuids
+    busy = {'uuid': uuid, 'until': time.monotonic() + 2}
+
+    def running_for_a_moment():
+        return [busy['uuid']] if time.monotonic() < busy['until'] else real_running()
+
+    monkeypatch.setattr(worker_pool, 'get_running_uuids', running_for_a_moment)
+
+    result = _call(client, api_key, 'recheck_watches', watches=[uuid], wait=True, wait_seconds=10)
+    text = result['content'][0]['text']
+    assert not result['isError'], result
+    assert result['structuredContent']['queued'] == 0 and result['structuredContent']['skipped'] == 1, "Nothing was queued on top of it"
+    assert datastore.data['watching'][uuid]['check_count'] == count
+    check = result['structuredContent']['checks'][0]
+    assert check['state'] == 'checked', text
+    assert '1 of 1 checked' in text and 'still going' not in text
+    assert check['last_checked']
+
+    # A monitor that was never checked: a check that was "going" and left nothing behind is not claimed as done
+    never = datastore.add_watch(url=url_for('test_endpoint', _external=True) + '?never', extras={'title': 'Never', 'paused': True})
+    busy.update(uuid=never, until=time.monotonic() + 2)
+    result = _call(client, api_key, 'recheck_watches', watches=[never], wait=True, wait_seconds=5)
+    assert result['structuredContent']['queued'] == 0
+    assert result['structuredContent']['checks'][0]['state'] == 'not queued', result['content'][0]['text']
+
+    delete_all_watches(client)
+
+
 def test_mcp_network_log(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
     """recheck_watches record_network=true records that one check, get_network_log reads it back."""
     from flask import url_for

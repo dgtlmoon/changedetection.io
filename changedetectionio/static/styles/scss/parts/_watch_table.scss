@@ -655,3 +655,16 @@ body.blueprint-watchlist {
 
   }
 }
+
+// A group's label that carries its colours itself (the labels of a watch list row do, so that a row kept current
+// in an open page has the right colours for a group that was made after the page was loaded). The same four
+// variables as the chips of the "Group tag" field.
+.watch-tag-list[style*="--tag-chip-bg"] {
+  background: var(--tag-chip-bg);
+  color: var(--tag-chip-color);
+
+  @include dark-mode {
+    background: var(--tag-chip-dark-bg);
+    color: var(--tag-chip-dark-color);
+  }
+}

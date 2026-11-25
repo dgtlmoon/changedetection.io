@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import time
 from flask import url_for
 from .util import (
@@ -141,9 +142,8 @@ def test_everything(live_server, client, measure_memory_usage, datastore_path):
     run_socketio_watch_update_test(password_mode="should be like normal", live_server=live_server, client=client, datastore_path=datastore_path)
 
 
-# The parts of a watch's row that plugins draw themselves go with its realtime update (watch_list_row_html hook)
-RESTOCK_CELL = 'td.restock-and-price'
-
+# The watch list is kept current with whole rows: every update of a watch sends its row as the list's own template
+# draws it ("watch_row"), and the page puts it in place of the one it has.
 
 def _set_restock_product(datastore_path, price, in_stock=True):
     availability = 'InStock' if in_stock else 'OutOfStock'
@@ -155,24 +155,30 @@ def _set_restock_product(datastore_path, price, in_stock=True):
         </script></head><body>Product page</body></html>""")
 
 
-def _latest_row_update(socketio_client, uuid, seconds=5):
-    """The newest watch_update for this watch among what arrives over the next few seconds"""
+def _latest_row(socketio_client, uuid, seconds=5):
+    """The newest row sent for this watch among what arrives over the next few seconds (its html), or None"""
     latest = None
     for _ in range(seconds * 4):
         for event in socketio_client.get_received():
-            if event['name'] == 'watch_update' and event['args'][0]['watch']['uuid'] == uuid:
-                latest = event['args'][0]['watch']
+            if event['name'] == 'watch_row' and event['args'][0]['uuid'] == uuid:
+                latest = event['args'][0]['html']
         time.sleep(0.25)
     return latest
 
 
-def test_restock_stock_and_price_are_sent_with_the_row_update(client, live_server, measure_memory_usage, datastore_path):
-    """The "Restock & Price" cell of the watch list is drawn with the list. A watch that was just added has
-    "No information" there, and the price and stock of its first check (or any later change) only showed after a
-    reload: the realtime update of the row did not carry them. The cell's template now goes with every update of
-    the watch, through the watch_list_row_html plugin hook (processors/restock_diff/plugins/watch_list_cell.py)."""
+def _list_page(app, client, uuids, tag=''):
+    """A browser with the watch list open, filtered by the group `tag` (or not)"""
+    page = app.extensions['socketio'].test_client(app, flask_test_client=client)
+    assert page.is_connected()
+    page.emit('watch-subscribe', {'uuids': uuids, 'rows_for_tag': tag})
+    page.get_received()
+    return page
+
+
+def test_watch_list_row_is_sent_with_stock_and_price(client, live_server, measure_memory_usage, datastore_path):
+    """A restock watch that was just added has "No information" in its row. The price and stock of its first check
+    (or any later change) only showed after a reload: the realtime update did not carry them."""
     from changedetectionio.flask_app import app
-    socketio = app.extensions['socketio']
     datastore = client.application.config.get('DATASTORE')
 
     _set_restock_product(datastore_path, price='10.00')
@@ -183,22 +189,18 @@ def test_restock_stock_and_price_are_sent_with_the_row_update(client, live_serve
     res = client.get(url_for("watchlist.index"))
     assert b'restock-info-wrap' in res.data and b'No information' in res.data
 
-    page_showing_the_list = socketio.test_client(app, flask_test_client=client)
-    assert page_showing_the_list.is_connected()
-    page_showing_the_list.emit('watch-subscribe', {'uuids': [uuid]})
-    page_showing_the_list.get_received()
+    page = _list_page(app, client, [uuid])
 
     # The first check
     datastore.data['watching'][uuid]['paused'] = False
     client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    row = _latest_row_update(page_showing_the_list, uuid)
-    assert row, "The page showing the watch got its update"
-    cell = row['row_html'][RESTOCK_CELL]
-    assert 'restock-info-wrap' in cell
-    assert 'In stock' in cell and 'No information' not in cell
-    assert '10.00' in cell
+    row = _latest_row(page, uuid)
+    assert row, "The page showing the watch was sent its row"
+    assert row.count('<tr') == 1 and f'data-watch-uuid="{uuid}"' in row
+    assert 'In stock' in row and '10.00' in row and 'No information' not in row
+    assert 'has-restock-info' in row and 'checking-now' not in row, "With its state as the list draws it"
 
     # What was sent is what a reload of the list shows
     res = client.get(url_for("watchlist.index"))
@@ -209,47 +211,102 @@ def test_restock_stock_and_price_are_sent_with_the_row_update(client, live_serve
     client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
-    cell = _latest_row_update(page_showing_the_list, uuid)['row_html'][RESTOCK_CELL]
-    assert 'Not in stock' in cell and '7.50' in cell and '10.00' not in cell.split('title=')[0]
-    assert 'price-change down' in cell, "With the change since the previous price, as in the list"
+    row = _latest_row(page, uuid)
+    assert 'Not in stock' in row and '7.50' in row
+    assert 'price-change down' in row, "With the change since the previous price, as in the list"
 
-    page_showing_the_list.disconnect()
+    page.disconnect()
     delete_all_watches(client)
 
 
-def test_row_update_parts_from_plugins(client, live_server, measure_memory_usage, datastore_path):
+def test_watch_list_row_is_sent_with_groups_and_title(client, live_server, measure_memory_usage, datastore_path):
+    """A group given to a watch after the page was loaded (the "Group" action, its edit page in another tab) was
+    not shown until a reload."""
     from changedetectionio.flask_app import app
-    from changedetectionio.pluggy_interface import plugin_manager, collect_watch_list_row_html
-    from changedetectionio.plugin_api import hookimpl
-
+    from changedetectionio.blueprint.tags.colour import tag_display_colours
     datastore = client.application.config.get('DATASTORE')
+    tags = datastore.data['settings']['application']['tags']
+
     uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True})
-    watch = datastore.data['watching'][uuid]
+    other = datastore.add_watch(url=url_for('test_endpoint', _external=True) + '?other', extras={'paused': True})
+    page = _list_page(app, client, [uuid, other])
 
-    with app.test_request_context():
-        assert collect_watch_list_row_html(watch) == {}, "A text watch has no part of its row drawn by a plugin"
+    # The "Group" action of the watch list, with a group that did not exist when the page was loaded
+    client.post(url_for("ui.form_watch_list_checkbox_operations"),
+                data={"op": "assign-tag", "uuids": [uuid], "op_extradata": "Made after the page loaded"}, follow_redirects=True)
+    received = page.get_received()
+    rows = {event['args'][0]['uuid']: event['args'][0]['html'] for event in received if event['name'] == 'watch_row'}
+    assert other not in rows, "Only the watch that changed"
+    row = rows[uuid]
 
-        class OneThatAddsAPart:
-            @hookimpl
-            def watch_list_row_html(self, watch):
-                return {'.my-plugin-cell': f"<b>{watch.get('uuid')}</b>"}
+    tag_uuid = next(iter(tags))
+    assert 'Made after the page loaded' in row
+    assert url_for('watchlist.index', tag=tag_uuid) in row, "A link to the group's watches"
+    # In the group's colours by itself: the page's own colour rules are from before the group existed
+    colours = tag_display_colours(tags[tag_uuid])
+    assert f"--tag-chip-bg: {colours['light']['bg']}" in row and f"--tag-chip-dark-bg: {colours['dark']['bg']}" in row
 
-        class OneThatBreaks:
-            @hookimpl
-            def watch_list_row_html(self, watch):
-                raise RuntimeError("broken plugin")
+    # Saved on its edit page (another tab): a second group, and a title
+    res = client.post(
+        url_for("ui.ui_edit.edit_page", uuid=uuid),
+        data={"url": url_for('test_endpoint', _external=True), "tags": "Made after the page loaded, From the edit page",
+              "title": "A <b>title</b> of its own", "fetch_backend": "html_requests", "time_between_check_use_default": "y"},
+        follow_redirects=True
+    )
+    assert b"Updated watch." in res.data
+    row = _latest_row(page, uuid, seconds=2)
+    assert 'Made after the page loaded' in row and 'From the edit page' in row
+    assert 'A &lt;b&gt;title&lt;/b&gt; of its own' in row and '<b>title</b>' not in row, "As text"
 
-        adds, breaks = OneThatAddsAPart(), OneThatBreaks()
-        plugin_manager.register(adds, 'test_adds_a_row_part')
-        try:
-            assert collect_watch_list_row_html(watch) == {'.my-plugin-cell': f"<b>{uuid}</b>"}
-            # A plugin that fails does not stop the row update from going out
-            plugin_manager.register(breaks, 'test_breaks')
-            try:
-                assert isinstance(collect_watch_list_row_html(watch), dict)
-            finally:
-                plugin_manager.unregister(breaks)
-        finally:
-            plugin_manager.unregister(adds)
+    # Paused: the state of the row comes with it, there is nothing for the page to work out
+    client.post(url_for("ui.form_watch_list_checkbox_operations"), data={"op": "pause", "uuids": [uuid]}, follow_redirects=True)
+    row = _latest_row(page, uuid, seconds=2)
+    assert re.search(r'<tr[^>]*class="[^"]*\bpaused\b', row)
 
+    page.disconnect()
+    tags.clear()
+    delete_all_watches(client)
+
+
+def test_watch_list_row_is_sent_as_the_filtered_list_shows_it(client, live_server, measure_memory_usage, datastore_path):
+    """The buttons of a row come back to the list as it is filtered (Edit, Recheck, pause carry the group), so a
+    list filtered by a group is sent rows rendered for that group, and only if it asked for rows at all."""
+    from changedetectionio.flask_app import app
+    datastore = client.application.config.get('DATASTORE')
+    tags = datastore.data['settings']['application']['tags']
+    tag_uuid = datastore.add_tag(title='Filtered by this')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True}, tag_uuids=[tag_uuid])
+
+    whole_list = _list_page(app, client, [uuid])
+    filtered_list = _list_page(app, client, [uuid], tag=tag_uuid)
+    # The page of the watch itself (edit, preview ...) follows the watch but has no list to put a row in
+    not_a_list = app.extensions['socketio'].test_client(app, flask_test_client=client)
+    not_a_list.emit('watch-subscribe', {'uuids': [uuid]})
+    # A group that does not exist is not a room to be let into
+    made_up = app.extensions['socketio'].test_client(app, flask_test_client=client)
+    made_up.emit('watch-subscribe', {'uuids': [uuid], 'rows_for_tag': 'no-such-group'})
+    for page in (not_a_list, made_up):
+        page.get_received()
+
+    client.post(url_for("ui.form_watch_list_checkbox_operations"), data={"op": "mute", "uuids": [uuid]}, follow_redirects=True)
+
+    plain = _latest_row(whole_list, uuid, seconds=2)
+    filtered = _latest_row(filtered_list, uuid, seconds=1)
+    assert plain and filtered and 'notification_muted' in plain
+
+    edit_link = url_for('ui.ui_edit.edit_page', uuid=uuid)
+    assert f'{edit_link}#general' in plain or f'href="{edit_link}"' in plain
+    assert f'tag={tag_uuid}' not in plain.replace(url_for('watchlist.index', tag=tag_uuid), ''), "No group in the buttons of the whole list"
+    assert url_for('ui.ui_edit.edit_page', uuid=uuid, tag=tag_uuid) in filtered, "Edit comes back to the filtered list"
+    import html
+    assert url_for('ui.form_watch_checknow', uuid=uuid, tag=tag_uuid) in html.unescape(filtered), "And so does Recheck"
+
+    for page, what in ((not_a_list, "A page that is not a list"), (made_up, "A page asking for a group that is not there")):
+        events = [event['name'] for event in page.get_received()]
+        assert 'watch_row' not in events, f"{what} is not sent rows"
+        assert 'watch_update' in events, "But still hears about the watch"
+
+    for page in (whole_list, filtered_list, not_a_list, made_up):
+        page.disconnect()
+    tags.clear()
     delete_all_watches(client)

@@ -1392,9 +1392,12 @@ def _check_marks(watches):
     return {w.get('uuid'): (w.get('check_count', 0), w.last_changed) for w in watches}
 
 
-def _check_states(ctx, watches, before):
+def _check_states(ctx, watches, before, in_flight=()):
     """Where each check is: 'checked' (with whether it changed and any error), 'checking' or 'queued' (position).
-    before: _check_marks() from before they were queued."""
+    before: _check_marks() from before they were queued.
+    in_flight: the monitors that were not queued because a check of them was already queued or running. That
+    check is the one being waited for, and it can be past the point where it counts itself (check_count) when
+    `before` is read: when it is over there is then no higher count to tell by, only that it is no longer going."""
     import time
     from changedetectionio import worker_pool
     positions = ctx.update_q.get_queue_positions() if ctx.update_q is not None and hasattr(ctx.update_q, 'get_queue_positions') else {}
@@ -1409,7 +1412,7 @@ def _check_states(ctx, watches, before):
             state.update(state='checking', running_seconds=round(time.time() - started) if started else None)
         elif uuid in positions:
             state.update(state='queued', position=positions[uuid], queued_total=queued_total)
-        elif w.get('check_count', 0) > before[uuid][0]:
+        elif w.get('check_count', 0) > before[uuid][0] or (uuid in in_flight and w.get('last_checked')):
             state.update(state='checked', last_checked=_iso(w['last_checked']),
                          changed=bool(w.last_changed and w.last_changed != before[uuid][1]), error=w.get('last_error') or None)
         else:
@@ -1464,6 +1467,13 @@ def recheck_watches(ctx, args):
                 notes.append(f"through the proxy {ctx.datastore.proxy_list[key].get('label')}")
     if metadata and (not refs or len(watches) > ONE_SHOT_MAX_MONITORS):
         raise ToolError(f"record_network and proxy are for monitors named in 'watches', at most {ONE_SHOT_MAX_MONITORS} at a time")
+    # The ones a check is already queued or running for are not queued again (queue_rechecks leaves them out,
+    # unless there are options for this one check): for those, that check is the one to wait for
+    in_flight = set()
+    if not metadata:
+        from changedetectionio import worker_pool
+        busy = set(ctx.update_q.get_queued_uuids()) | set(worker_pool.get_running_uuids())
+        in_flight = {w.get('uuid') for w in watches if w.get('uuid') in busy}
     queued, skipped = queue_rechecks(ctx.update_q, [w.get('uuid') for w in watches], metadata=metadata or None)
     text = f"Queued {queued} monitors for a recheck" + (f" ({skipped} already queued or running)" if skipped else '')
     if notes:
@@ -1479,7 +1489,7 @@ def recheck_watches(ctx, args):
     # (and greenlets, in gevent mode) run in the meantime
     deadline = time.monotonic() + _int(args, 'wait_seconds', 30, 1, RECHECK_WAIT_MAX_SECONDS)
     while True:
-        states = _check_states(ctx, watches, before)
+        states = _check_states(ctx, watches, before, in_flight=in_flight)
         # 'not queued' right after queueing can be a worker that has taken it but not yet marked it running, so it
         # only counts as settled after a few seconds
         settled = ('checked', 'not queued') if time.time() - started > 3 else ('checked',)
