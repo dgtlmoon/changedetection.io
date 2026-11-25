@@ -82,13 +82,16 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                 <td>
                     <button formaction="{{ url_for('ui.form_watch_checknow', tag=uuid) }}" type="submit" class="cdio-btn"><i data-feather="refresh-cw"></i>{{ _('Recheck') }}</button>
                     <a class="cdio-btn" href="{{ url_for('tags.form_tag_edit', uuid=uuid) }}">{{ _('Edit') }}</a>
+                    {#- The question of these two is put into the dialog as HTML (modal.js), after the browser has
+                        read it out of the attribute. So the group's name is escaped here for the HTML, and by the
+                        template once more for the attribute: without the first a name with markup in it was run. -#}
                     <a class="cdio-btn cdio-btn--danger"
                        href="{{ url_for('tags.delete', uuid=uuid) }}"
                        data-method="POST"
                        data-requires-confirm
                        data-confirm-type="danger"
                        data-confirm-title="{{ _('Delete Group?') }}"
-                       data-confirm-message="{{ _('<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>', title=tag.title) }}"
+                       data-confirm-message="{{ _('<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>', title=tag.title|e) ~ _('<p>Only the group is deleted, its watches are kept.</p>') }}"
                        data-confirm-button="{{ _('Delete') }}"
                        title="{{ _('Deletes and removes tag') }}">{{ _('Delete') }}</a>
                     <a class="cdio-btn cdio-btn--warning"
@@ -97,7 +100,7 @@ html[data-darkmode="true"] .watch-tag-list.tag-{{ class_name }} {
                        data-requires-confirm
                        data-confirm-type="warning"
                        data-confirm-title="{{ _('Unlink Group?') }}"
-                       data-confirm-message="{{ _('<p>Are you sure you want to unlink all watches from group <strong>%(title)s</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>', title=tag.title) }}"
+                       data-confirm-message="{{ _('<p>Are you sure you want to unlink all watches from group <strong>%(title)s</strong>?</p><p>The tag will be kept but watches will be removed from it.</p>', title=tag.title|e) }}"
                        data-confirm-button="{{ _('Unlink') }}"
                        title="{{ _('Keep the tag but unlink any watches') }}">{{ _('Unlink') }}</a>
                     <a href="{{ url_for('rss.rss_tag_feed', tag_uuid=uuid, token=app_rss_token)}}"><img alt="{{ _('RSS Feed for this watch') }}" style="padding-left: 1em;" src="{{url_for('static_content', group='images', filename='generic_feed-icon.svg')}}" height="15"></a>

@@ -255,6 +255,70 @@ def test_group_chips_on_add_watch_page(client, live_server, measure_memory_usage
     run_in_browser(steps, name='group_chips_on_add_watch_page')
 
 
+def test_group_dialog_can_remove_existing_groups(client, live_server, measure_memory_usage, datastore_path, running_app):
+    """The watch list's "Group" dialog has "Also remove any existing group assigned", which is never ticked when
+    the dialog opens."""
+    tick = '.modal-dialog[open] input[name="bulk_groups_replace"]'
+
+    async def steps(page):
+        await _add_groups(page, ['Was in this', 'Moved to this'])
+        edit_url = await _add_watch(page, 'chips-dialog-remove-existing')
+        await _open_edit_page(page, edit_url)
+        await page.type(BOX, 'Was in this')
+        await page.keyboard.press('Enter')
+        await _save(page)
+
+        async def open_dialog():
+            await page.goto(site_url('watchlist.index'))
+            # By its edit link: once it has been checked the row shows the page's title, not the address it was added by
+            await page.evaluate("""(uuid) => {
+                const row = [...document.querySelectorAll('tr')].find((tr) => tr.querySelector('a[href*="/edit/' + uuid + '"]') && tr.querySelector('input[name="uuids"]'));
+                const box = row.querySelector('input[name="uuids"]');
+                if (!box.checked) box.click();
+            }""", edit_url.rstrip('/').split('/')[-1])
+            await page.click('#checkbox-assign-tag')
+            await page.waitForSelector(f'.modal-dialog[open] {BOX}', visible=True)
+
+        async def groups_of_the_watch(expected):
+            for _ in range(20):
+                await _open_edit_page(page, edit_url)
+                chips = await _chips(page)
+                if sorted(chips) == sorted(expected):
+                    return chips
+            return chips
+
+        # Not ticked to begin with, and its label is what is clicked
+        await open_dialog()
+        assert await page.evaluate(f"""() => document.querySelector('{tick}').checked""") is False
+        assert 'Also remove any existing group assigned' in await page.evaluate("""() => document.querySelector('.modal-dialog[open] .bulk-group-replace').innerText""")
+
+        # Ticked and then the dialog cancelled: nothing happens, and it is not ticked the next time
+        await page.click('.modal-dialog[open] .bulk-group-replace')
+        assert await page.evaluate(f"""() => document.querySelector('{tick}').checked""") is True
+        await page.type(BOX, 'Moved to this')
+        await page.click('.modal-dialog[open] [data-action="cancel"]')
+        assert await groups_of_the_watch(['Was in this']) == ['Was in this']
+        await open_dialog()
+        assert await page.evaluate(f"""() => document.querySelector('{tick}').checked""") is False
+
+        # Left unticked: added to the group it is in
+        await page.type(BOX, 'Moved to this')
+        await screenshot(page, 'group-dialog-remove-existing', '.modal-dialog[open]')
+        await page.click('.modal-dialog[open] [data-action="confirm"]')
+        assert sorted(await groups_of_the_watch(['Was in this', 'Moved to this'])) == ['Moved to this', 'Was in this']
+
+        # Ticked: only the group named
+        await open_dialog()
+        await page.type(BOX, 'moved to this')
+        await page.click(tick)
+        await page.click('.modal-dialog[open] [data-action="confirm"]')
+        assert await groups_of_the_watch(['Moved to this']) == ['Moved to this']
+        await page.goto(site_url('tags.tags_overview_page'))
+        assert 'Was in this' in await page.evaluate("""() => document.querySelector('.group-overview-table').innerText"""), "The group itself is still there"
+
+    run_in_browser(steps, name='group_dialog_remove_existing')
+
+
 def test_group_field_without_javascript(client, live_server, measure_memory_usage, datastore_path, running_app):
     """Without the script it is the text field of comma separated group names, and saves the same."""
     async def steps(page):

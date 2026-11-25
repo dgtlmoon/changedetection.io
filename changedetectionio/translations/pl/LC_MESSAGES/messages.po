@@ -2363,6 +2363,10 @@ msgstr "Usunąć grupę?"
 msgid "<p>Are you sure you want to delete group <strong>%(title)s</strong>?</p><p>This action cannot be undone.</p>"
 msgstr "<p>Czy na pewno chcesz usunąć grupę <strong>%(title)s</strong>?</p><p>Tej czynności nie można cofnąć.</p>"
 
+#: changedetectionio/blueprint/tags/templates/groups-overview.html
+msgid "<p>Only the group is deleted, its watches are kept.</p>"
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/groups-overview.html changedetectionio/blueprint/ui/templates/edit.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html changedetectionio/templates/base.html
 msgid "Delete"
@@ -3902,6 +3906,10 @@ msgstr "Usuń"
 #: changedetectionio/forms.py
 msgid "Group tag"
 msgstr "Etykieta grupy"
+
+#: changedetectionio/forms.py
+msgid "Also remove any existing group assigned"
+msgstr ""
 
 #: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."

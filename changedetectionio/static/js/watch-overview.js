@@ -53,7 +53,10 @@ $(function () {
                     return;
                 }
                 $('#op_extradata').val(names);
-                $('#op-assign-tag').trigger('click');
+                // "Also remove any existing group assigned": the groups named take the place of the ones the
+                // watches are in, a different operation for the server
+                const replace = $('.modal-dialog input[name="bulk_groups_replace"]').is(':checked');
+                $(replace ? '#op-assign-tag-replace' : '#op-assign-tag').trigger('click');
             }
         });
         // The dialog is on the page now: the cursor goes in the field straight away, and the dialog leaves it
