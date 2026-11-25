@@ -278,6 +278,9 @@ jobs:
     timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
+      # For the test containers: where a failed test leaves the screenshots and error text of its watches
+      # (tests/conftest.py keep_failure_artifacts), kept as an artifact by the last step
+      FAILURE_ARTIFACTS: -e TEST_FAILURE_ARTIFACTS_DIR=/test-failure-artifacts -v ${{ github.workspace }}/test-failure-artifacts:/test-failure-artifacts
     steps:
       - uses: actions/checkout@v7
         with:
@@ -307,7 +310,7 @@ jobs:
           # otherwise easy to misread as "the whole browser suite broke".
           for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py tests/fetchers/test_pdf_browser.py tests/fetchers/test_screenshot_animated_page.py tests/fetchers/test_busy_page.py; do
             echo "::group::pytest $t"
-            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+            if ! docker run $FAILURE_ARTIFACTS --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
               echo "::endgroup::"
               echo "::error::$t FAILED - stopping here. Any later test file and the remaining steps of this job were SKIPPED, not failed."
@@ -320,7 +323,7 @@ jobs:
         run: |
           # HAR_UUID_RECORD network recording - print what the browser recorded rather than only pass/fail.
           # The rest of the -s output is noise, so only the block the test prints is shown unless it fails.
-          if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+          if ! docker run $FAILURE_ARTIFACTS --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
                bash -c "cd changedetectionio;pytest -s --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_renavigation.py -k test_har_record_env_writes_har_zip" > /tmp/har-test.log 2>&1; then
             cat /tmp/har-test.log
             echo "::error::HAR recording test FAILED"
@@ -333,13 +336,22 @@ jobs:
 
       - name: Playwright - Headers and requests
         run: |
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py; pwd;find .'
+          docker run $FAILURE_ARTIFACTS --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py; pwd;find .'
 
       - name: Playwright - Restock detection
         run: |
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+          docker run $FAILURE_ARTIFACTS --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
 
   # Pyppeteer tests
+
+      - name: Store screenshots and errors of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-tests-failure-artifacts-py${{ env.PYTHON_VERSION }}
+          path: test-failure-artifacts
+          if-no-files-found: ignore
+
   pyppeteer-tests:
     runs-on: ubuntu-latest
     needs: build
@@ -347,6 +359,9 @@ jobs:
     timeout-minutes: 15
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
+      # For the test containers: where a failed test leaves the screenshots and error text of its watches
+      # (tests/conftest.py keep_failure_artifacts), kept as an artifact by the last step
+      FAILURE_ARTIFACTS: -e TEST_FAILURE_ARTIFACTS_DIR=/test-failure-artifacts -v ${{ github.workspace }}/test-failure-artifacts:/test-failure-artifacts
     steps:
       - uses: actions/checkout@v7
         with:
@@ -372,7 +387,7 @@ jobs:
           # Fail fast, but name the file that failed - see the note in the playwright job above
           for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py tests/fetchers/test_pdf_browser.py tests/fetchers/test_screenshot_animated_page.py tests/fetchers/test_busy_page.py; do
             echo "::group::pytest $t"
-            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+            if ! docker run $FAILURE_ARTIFACTS --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
               echo "::endgroup::"
               echo "::error::$t FAILED - stopping here. Any later test file and the remaining steps of this job were SKIPPED, not failed."
@@ -385,7 +400,7 @@ jobs:
         run: |
           # HAR_UUID_RECORD network recording - print what the browser recorded rather than only pass/fail.
           # The rest of the -s output is noise, so only the block the test prints is shown unless it fails.
-          if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+          if ! docker run $FAILURE_ARTIFACTS --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
                bash -c "cd changedetectionio;pytest -s --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_renavigation.py -k test_har_record_env_writes_har_zip" > /tmp/har-test.log 2>&1; then
             cat /tmp/har-test.log
             echo "::error::HAR recording test FAILED"
@@ -398,11 +413,19 @@ jobs:
 
       - name: Pyppeteer - Headers and requests checks
         run: |
-          docker run --name "changedet" --hostname changedet --rm -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
+          docker run $FAILURE_ARTIFACTS --name "changedet" --hostname changedet --rm -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
 
       - name: Pyppeteer - Restock detection
         run: |
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+          docker run $FAILURE_ARTIFACTS --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+
+      - name: Store screenshots and errors of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pyppeteer-tests-failure-artifacts-py${{ env.PYTHON_VERSION }}
+          path: test-failure-artifacts
+          if-no-files-found: ignore
 
   # Selenium tests
   selenium-tests:

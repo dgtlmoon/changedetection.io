@@ -1,7 +1,23 @@
 name: ChangeDetection.io App Test
 
-# Triggers the workflow on push or pull request events
-on: [push, pull_request]
+# A pull request is tested as a pull request, master and tags when they are pushed.
+# A push to any other branch is not tested on its own: with a pull request open for it (the usual case, the
+# branches are in this repository) every commit was tested twice, once as "push" and once as "pull_request".
+# A branch without a pull request can be run by hand (Actions > this workflow > Run workflow).
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+
+# A newer commit on the same pull request (or branch) stops the run of the one before it. Never on master,
+# where every commit keeps its own result.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 permissions:
   contents: read
