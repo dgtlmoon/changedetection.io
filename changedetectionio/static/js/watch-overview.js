@@ -256,6 +256,8 @@ $(function () {
         } else {
             $b.hide().empty();
         }
+        // For the space under the operations bar: the banner takes its place when it is there (_watch_table.scss)
+        $('body').toggleClass('select-all-banner-shown', $b.is(':visible'));
     }
 
     function refreshSelectionUI() {
@@ -342,35 +344,48 @@ $(function () {
         refreshSelectionUI();
     });
 
-    // Cancel: clear the whole cross-page selection (incl. the stored browser data)
-    // and dismiss the operations bar.
-    $("#check-cancel").click(function () {
+    // The request of "Select all N matching" that is still on its way. With a very long list it takes a while,
+    // and its answer must not select everything again after the selection was cleared in the meantime.
+    let selectAllMatchingRequest = null;
+
+    function clearSelection() {
+        if (selectAllMatchingRequest) {
+            const request = selectAllMatchingRequest;
+            selectAllMatchingRequest = null;
+            if (request.abort) request.abort();
+        }
         sel.clear();
         applySelectionToDom();
         refreshSelectionUI();
-    });
+    }
+
+    // Cancel: clear the whole cross-page selection (incl. the stored browser data)
+    // and dismiss the operations bar.
+    $("#check-cancel").click(clearSelection);
 
     // "Select all N matching" — pull the full matching id list from the server.
     $(document).on('click', '#select-all-matching', function () {
         if (!selCfg.uuidsUrl) return;
         const $btn = $(this).prop('disabled', true);
-        $.getJSON(selCfg.uuidsUrl + location.search)
+        const request = selectAllMatchingRequest = $.getJSON(selCfg.uuidsUrl + location.search);
+        request
             .done(function (data) {
+                // Cleared (or asked for again) while this was loading: not what is wanted any more
+                if (request !== selectAllMatchingRequest) return;
                 if (data && Array.isArray(data.uuids)) {
                     sel.addMany(data.uuids.map((u) => ('' + u).trim()));
                     applySelectionToDom();
                     refreshSelectionUI();
                 }
             })
-            .always(function () { $btn.prop('disabled', false); });
+            .always(function () {
+                if (request === selectAllMatchingRequest) selectAllMatchingRequest = null;
+                $btn.prop('disabled', false);
+            });
     });
 
     // "Clear selection" link inside the banner.
-    $(document).on('click', '#select-all-clear', function () {
-        sel.clear();
-        applySelectionToDom();
-        refreshSelectionUI();
-    });
+    $(document).on('click', '#select-all-clear', clearSelection);
 
     const time_check_step_size_seconds=1;
 
