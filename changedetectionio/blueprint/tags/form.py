@@ -14,6 +14,7 @@ from changedetectionio.blueprint.tags.colour import CSS_HEX_COLOUR_REGEX
 from changedetectionio.notification import (
     GROUP_NOTIFICATION_MODE_ADD,
     GROUP_NOTIFICATION_MODE_FALLBACK,
+    GROUP_NOTIFICATION_MODE_OFF,
     GROUP_NOTIFICATION_MODE_REPLACE,
 )
 from changedetectionio.widgets.ternary_boolean import TernaryNoneBooleanField
@@ -83,16 +84,17 @@ class group_restock_settings_form(restock_settings_form):
         default=LLM_PROMPT_MODE_REPLACE,
     )
 
-    # The first choice is how groups have always worked, the other two send the group's
-    # notification on its own - see notification_service.notification_senders()
+    # Off for a new group. 'fallback' is how groups worked before there was a choice, the last two send the
+    # group's notification on its own - see notification_service.notification_senders()
     notification_group_mode = RadioField(
         _l("Send this group's notifications"),
         choices=[
+            (GROUP_NOTIFICATION_MODE_OFF, _l("Don't use")),
             (GROUP_NOTIFICATION_MODE_FALLBACK, _l("Only if the watch has none of its own")),
             (GROUP_NOTIFICATION_MODE_ADD, _l("As well as the watch's own")),
             (GROUP_NOTIFICATION_MODE_REPLACE, _l("Instead of the watch's own")),
         ],
-        default=GROUP_NOTIFICATION_MODE_FALLBACK,
+        default=GROUP_NOTIFICATION_MODE_OFF,
     )
 
     # fetch_backend and proxy themselves are the same fields a watch has. Off by default, so a group

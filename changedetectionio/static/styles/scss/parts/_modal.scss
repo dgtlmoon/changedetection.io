@@ -225,6 +225,23 @@
   }
 }
 
+/* The chips field of the watch list's "Group" action (see watch-overview.js): full width, and room under it for
+   the list of suggested groups, which would otherwise be cut off at the edge of the dialog */
+.bulk-group-field {
+  text-align: left;
+  min-height: 9em;
+
+  // The only thing in the dialog, so the full width of it
+  .tag-chips-field {
+    display: flex;
+    width: 100%;
+  }
+
+  .tag-chips-suggestions {
+    max-height: 7em;
+  }
+}
+
 /* Bulk "Browser" / "Proxy" choice list rendered inside the watch-list action modal
    (see watch-overview.js showBulkChoiceModal + the <template> option lists). */
 .bulk-choice-list {

@@ -2360,6 +2360,10 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "{} завдань було позначено тегами"
 
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Назву групи не вказано"
+
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Завдання не знайдено"
@@ -3343,6 +3347,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Назва групи"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3426,15 +3434,19 @@ msgid "UnMute"
 msgstr "Увімкнути звук"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Тег"
+msgid "Add selected to group"
+msgstr "Додати вибрані до групи"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr ""
+msgid "Group"
+msgstr "Група"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3763,6 +3775,10 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Тег групи"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Невірний формат часу. Використовуйте ГГ:ХХ."
 
@@ -3887,10 +3903,6 @@ msgstr "Порожнє значення неприпустиме."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Неприпустиме значення."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Тег групи"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

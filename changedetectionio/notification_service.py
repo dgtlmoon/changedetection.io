@@ -15,15 +15,19 @@ from changedetectionio.notification import default_notification_format, valid_no
 
 
 def _group_notification_mode(tag):
-    """How this group's notification settings are used, see GROUP_NOTIFICATION_MODE_* - anything
-    unknown or unset is the lookup groups have always been part of."""
+    """How this group's notification settings are used, see GROUP_NOTIFICATION_MODE_* - anything unknown or
+    unset is 'off', the group's notification settings are not used. (Groups saved before 'off' existed were given
+    their mode by the datastore update, see group_notification_mode_for_older_data())"""
     from changedetectionio.notification import (
         GROUP_NOTIFICATION_MODE_ADD,
         GROUP_NOTIFICATION_MODE_FALLBACK,
+        GROUP_NOTIFICATION_MODE_OFF,
         GROUP_NOTIFICATION_MODE_REPLACE,
     )
     mode = tag.get('notification_group_mode')
-    return mode if mode in (GROUP_NOTIFICATION_MODE_ADD, GROUP_NOTIFICATION_MODE_REPLACE) else GROUP_NOTIFICATION_MODE_FALLBACK
+    if mode in (GROUP_NOTIFICATION_MODE_FALLBACK, GROUP_NOTIFICATION_MODE_ADD, GROUP_NOTIFICATION_MODE_REPLACE):
+        return mode
+    return GROUP_NOTIFICATION_MODE_OFF
 
 
 def _check_cascading_vars(datastore, var_name, watch, system_fallback=True):
@@ -87,7 +91,7 @@ def notification_senders(datastore, watch):
     notifications leaves the first one out altogether.
     """
     from changedetectionio.notification import (
-        GROUP_NOTIFICATION_MODE_FALLBACK,
+        GROUP_NOTIFICATION_MODE_ADD,
         GROUP_NOTIFICATION_MODE_REPLACE,
         USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
         default_notification_body,
@@ -101,7 +105,8 @@ def notification_senders(datastore, watch):
     replaces_watch = False
     for tag in (datastore.get_all_tags_for_watch(uuid=watch.get('uuid')) or {}).values():
         mode = _group_notification_mode(tag)
-        if mode == GROUP_NOTIFICATION_MODE_FALLBACK or tag.get('notification_muted') or not tag.get('notification_urls'):
+        # Only the groups that send on their own: not one that is off, nor one that is part of the lookup below
+        if mode not in (GROUP_NOTIFICATION_MODE_ADD, GROUP_NOTIFICATION_MODE_REPLACE) or tag.get('notification_muted') or not tag.get('notification_urls'):
             continue
         n_format = tag.get('notification_format')
         if not n_format or n_format == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH:

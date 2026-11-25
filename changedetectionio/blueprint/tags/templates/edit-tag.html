@@ -203,8 +203,6 @@
                     <div  class="pure-control-group inline-radio">
                       {{ render_ternary_field(form.notification_muted, BooleanField=True) }}
                     </div>
-                    {#- Dimmed while this group's notifications are muted, nothing below is sent then -#}
-                    <div id="group-notification-settings" class="{{ 'group-setting-off' if form.notification_muted.data }}">
                     <div class="pure-control-group inline-radio">
                       {{ render_field(form.notification_group_mode) }}
                       <span class="pure-form-message-inline">
@@ -212,6 +210,8 @@
                       </span>
                     </div>
                     <hr class="settings-divider">
+                    {#- Dimmed while muted, not used, and while they are only what a watch with none of its own falls back on -#}
+                    <div id="group-notification-settings" class="{{ 'group-setting-off' if form.notification_muted.data or form.notification_group_mode.data in ('off', 'fallback') }}">
                     {% if 1 %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
@@ -233,12 +233,21 @@
                     </div>
                     </div>
                     <script>
-                    document.querySelectorAll('input[name="notification_muted"]').forEach(function (radio) {
-                        radio.addEventListener('change', function () {
-                            document.getElementById('group-notification-settings')
-                                .classList.toggle('group-setting-off', this.checked && this.value === 'true');
+                    (function () {
+                        var controls = document.querySelectorAll('input[name="notification_muted"], input[name="notification_group_mode"]');
+                        function checked(name) {
+                            var radio = document.querySelector('input[name="' + name + '"]:checked');
+                            return radio ? radio.value : '';
+                        }
+                        controls.forEach(function (radio) {
+                            radio.addEventListener('change', function () {
+                                document.getElementById('group-notification-settings').classList.toggle(
+                                    'group-setting-off',
+                                    checked('notification_muted') === 'true' || ['off', 'fallback'].indexOf(checked('notification_group_mode')) !== -1
+                                );
+                            });
                         });
-                    });
+                    })();
                     </script>
                 </fieldset>
             </div>

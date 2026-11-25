@@ -2407,6 +2407,10 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "Se etiquetaron {} monitores"
 
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "No se indicó ningún nombre de grupo"
+
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "Monitor no encontrado"
@@ -3397,6 +3401,10 @@ msgid "Web page URL"
 msgstr "URL de la página web"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Nombre del grupo"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr "Se ha(n) seleccionado %(count)s registro(s)"
@@ -3480,16 +3488,20 @@ msgid "UnMute"
 msgstr "Dejar de silenciar"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Etiqueta"
+msgid "Add selected to group"
+msgstr "Añadir seleccionados al grupo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr "Establecer el navegador / método de obtención para los elementos seleccionados"
+msgid "Group"
+msgstr "Grupo"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
 msgstr "Aplicar"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
+msgstr "Establecer el navegador / método de obtención para los elementos seleccionados"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set proxy for selected"
@@ -3816,6 +3828,10 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Etiqueta de grupo"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Formato de hora no válido. Utilice HH:MM."
 
@@ -3940,10 +3956,6 @@ msgstr "Valor vacío no permitido."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Valor no válido."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Etiqueta de grupo"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

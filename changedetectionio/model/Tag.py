@@ -51,8 +51,9 @@ class model(EntityPersistenceMixin, watch_base):
         # See llm/evaluator.py:tag_llm_decision().
         self['llm_backend_profile'] = kw.get('default', {}).get('llm_backend_profile', None)
         self['url_match_pattern'] = kw.get('default', {}).get('url_match_pattern', '')
-        # 'fallback' is how groups have always behaved, see notification_service.notification_senders()
-        self['notification_group_mode'] = kw.get('default', {}).get('notification_group_mode', 'fallback')
+        # 'off' so a new group's notification settings do nothing until switched on. Groups from before 'off'
+        # existed got their mode from update_36, see notification.group_notification_mode_for_older_data()
+        self['notification_group_mode'] = kw.get('default', {}).get('notification_group_mode', 'off')
         # 'off' so a group's fetch method / proxy / recheck time does nothing until it is switched on, see model/group_settings.py
         self['fetch_backend_group_mode'] = kw.get('default', {}).get('fetch_backend_group_mode', 'off')
         self['proxy_group_mode'] = kw.get('default', {}).get('proxy_group_mode', 'off')

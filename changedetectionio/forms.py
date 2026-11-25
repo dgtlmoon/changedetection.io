@@ -184,6 +184,11 @@ class StringTagUUIDAutocompleteChip(StringTagUUID):
         return sorted((group for group in groups if group['title']), key=lambda group: group['title'].lower())
 
 
+class WatchListGroupForm(Form):
+    """The "Group" action of the watch list: the groups (as chips) to add the selected watches to"""
+    bulk_groups = StringTagUUIDAutocompleteChip(_l('Group tag'), [validators.Optional()], default='')
+
+
 class LabelAfterInputTableWidget(widgets.TableWidget):
     """
     Variant of WTForms' TableWidget that renders the input cell before the label cell,

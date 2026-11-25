@@ -2381,6 +2381,10 @@ msgstr ""
 msgid "{} watches were tagged"
 msgstr "{} izleyici etiketlendi"
 
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Grup adı girilmedi"
+
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
 msgstr "İzleyici bulunamadı"
@@ -3364,6 +3368,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Grup adı"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3447,15 +3455,19 @@ msgid "UnMute"
 msgstr "Sesi Aç"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Etiket"
+msgid "Add selected to group"
+msgstr "Seçilenleri gruba ekle"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr ""
+msgid "Group"
+msgstr "Grup"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3770,6 +3782,10 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Grup etiketi"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Geçersiz saat biçimi. SS:DD kullanın."
 
@@ -3894,10 +3910,6 @@ msgstr "Boş değere izin verilmez."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Geçersiz değer."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Grup etiketi"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py
