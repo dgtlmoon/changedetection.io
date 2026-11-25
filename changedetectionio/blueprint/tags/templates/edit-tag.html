@@ -151,6 +151,11 @@
                     <div class="pure-control-group">
                         {{ render_field(form.proxy_group_mode) }}
                     </div>
+                    {#- Outside the part that is dimmed while the group's proxy is switched off -#}
+                    <div class="pure-control-group proxy-provider-tip">
+                        <img src="{{ url_for('static_content', group='images', filename='brightdata.svg') }}" alt="Bright Data">
+                        {{ _('Getting <code>403 Access Denied</code>? Set up the <a href="%(url)s">Web Unlocker proxy with Bright Data</a>, choose it below, and put those watches in this group.', url=url_for('settings.settings_page') ~ '#proxies')|safe }}
+                    </div>
                     <div class="pure-control-group inline-radio {{ 'group-setting-off' if form.proxy_group_mode.data == 'off' }}" data-dimmed-while-off="proxy_group_mode">
                         {{ render_field(form.proxy) }}
                     </div>

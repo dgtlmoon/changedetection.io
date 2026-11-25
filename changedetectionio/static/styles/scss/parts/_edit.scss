@@ -46,6 +46,18 @@ hr.settings-divider {
   border-top: 1px solid var(--color-border-table-cell);
 }
 
+// Group edit, Proxy tab: a proxy provider's logo, the height of the text it is in a line with
+.proxy-provider-tip {
+  color: var(--color-text-input-description);
+
+  img {
+    height: 1em;
+    width: auto;
+    margin-right: 0.35em;
+    vertical-align: -0.12em;
+  }
+}
+
 // Group edit: the settings of something that is switched off ("Don't use", or muted), they can still be filled in
 .group-setting-off {
   opacity: var(--opacity-setting-not-in-use);

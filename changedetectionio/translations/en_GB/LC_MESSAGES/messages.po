@@ -2100,6 +2100,13 @@ msgid ""
 "takes the first group that is switched on."
 msgstr ""
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr ""

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.70.4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-25 13:37+0000\n"
+"POT-Creation-Date: 2026-11-25 16:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2097,6 +2097,13 @@ msgstr ""
 msgid ""
 "What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
 "takes the first group that is switched on."
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
