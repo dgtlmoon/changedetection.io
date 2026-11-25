@@ -298,6 +298,12 @@ $(document).ready(function () {
                     $('td.last-checked', $watchRow).data('timestamp', watch.last_checked).data('fetchduration', watch.fetch_time);
                     $('td.last-checked', $watchRow).data('eta_complete', watch.last_checked + watch.fetch_time);
 
+                    // Parts of the row that plugins draw themselves, e.g. the stock and price of a restock watch
+                    // (the watch_list_row_html plugin hook): {selector within the row: html}
+                    $.each(watch.row_html || {}, function (selector, html) {
+                        $(selector, $watchRow).html(html);
+                    });
+
                     console.log('Updated UI for watch:', watch.uuid);
                 }
                 $('body').toggleClass('checking-now', watch.checking_now && window.location.href.includes(watch.uuid));

@@ -508,6 +508,28 @@ class ChangeDetectionSpec:
         """
         pass
 
+    @hookspec
+    def watch_list_row_html(watch):
+        """Parts of this watch's row in the watch list to redraw in the pages that have the list open.
+
+        The list is drawn once, when the page loads. Whenever the watch is updated (a check starts or ends, it is
+        paused, ...) its row state is sent to those pages over Socket.IO, and what this returns goes with it: each
+        HTML is put in place of the contents of the element its selector finds inside the row. So a plugin that
+        draws something of its own in the row (the restock processor: stock and price) can keep it current
+        without a reload. An element that is not in the row is skipped.
+
+        Called with an application and request context, so render_template() and url_for() work. It runs on
+        every update of a watch somebody is looking at, so stay in memory: no disk, network or other slow work.
+
+        Args:
+            watch: The Watch model instance
+
+        Returns:
+            dict of {CSS selector within the row (e.g. 'td.restock-and-price'): HTML}, or None.
+            The HTML is used as it is: escape anything that came from a web page (a Jinja2 template does).
+        """
+        pass
+
     @hookspec(firstresult=True)
     def get_api_watch_processor_state(watch, processor_name, context):
         """Return the current processor state of a watch for the REST API.
@@ -1003,6 +1025,18 @@ def collect_watch_list_extra_text(watch):
     except Exception as e:
         logger.error(f"watch_list_extra_text failed: {e}")
     return notes
+
+
+def collect_watch_list_row_html(watch):
+    """All plugins' parts of this watch's row to redraw, as {selector: html}. See watch_list_row_html."""
+    parts = {}
+    try:
+        for result in reversed(plugin_manager.hook.watch_list_row_html(watch=watch)):
+            if isinstance(result, dict):
+                parts.update({str(selector): str(html) for selector, html in result.items() if selector})
+    except Exception as e:
+        logger.error(f"watch_list_row_html failed: {e}")
+    return parts
 
 
 # Helper function to collect UI stats extras from all plugins

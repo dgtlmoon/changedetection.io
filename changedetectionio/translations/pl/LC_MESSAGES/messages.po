@@ -3393,36 +3393,6 @@ msgstr ""
 msgid "Create a link to share watch config with others"
 msgstr "Utwórz link, aby udostępnić innym konfigurację obserwacji"
 
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Detecting restock and price"
-msgstr "Wykrywanie uzupełnienia zapasów i ceny"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Not in stock"
-msgstr "Brak na stanie"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "In stock"
-msgstr "W magazynie"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/restock_diff/difference.py
-#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
-msgid "Price"
-msgstr "Cena"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#, python-format
-msgid "Price change since previous price (%(prev)s)"
-msgstr "Zmiana ceny w stosunku do poprzedniej ceny (%(prev)s)"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "No information"
-msgstr "Brak informacji"
-
 #. 'Checked' labels the last-checked time column in the watch overview list, not a checkbox state
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -4981,6 +4951,19 @@ msgid "Currency"
 msgstr "Waluta"
 
 #: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/watch_list_cell.html
+msgid "Price"
+msgstr "Cena"
+
+#: changedetectionio/processors/restock_diff/difference.py
+#: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
+#: changedetectionio/processors/restock_diff/templates/restock_diff/watch_list_cell.html
+msgid "In stock"
+msgstr "W magazynie"
+
+#: changedetectionio/processors/restock_diff/difference.py
 #: changedetectionio/processors/restock_diff/templates/restock_diff/chart_default.html
 #: changedetectionio/processors/restock_diff/templates/restock_diff/difference.html
 msgid "Out of stock"
@@ -5146,6 +5129,23 @@ msgid ""
 "For example, if the previous check saw the product at $1,000 USD, <strong>2%</strong> would mean it has to change "
 "more than $20 since then."
 msgstr ""
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/watch_list_cell.html
+msgid "Detecting restock and price"
+msgstr "Wykrywanie uzupełnienia zapasów i ceny"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/watch_list_cell.html
+msgid "Not in stock"
+msgstr "Brak na stanie"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/watch_list_cell.html
+#, python-format
+msgid "Price change since previous price (%(prev)s)"
+msgstr "Zmiana ceny w stosunku do poprzedniej ceny (%(prev)s)"
+
+#: changedetectionio/processors/restock_diff/templates/restock_diff/watch_list_cell.html
+msgid "No information"
+msgstr "Brak informacji"
 
 #: changedetectionio/processors/templates/extract.html
 msgid "This tool will extract text data from all of the watch history."

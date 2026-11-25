@@ -353,6 +353,21 @@ def has_connected_clients(socketio):
         return True
 
 
+def _plugin_row_html(watch):
+    """The parts of the watch's row that plugins draw themselves (the watch_list_row_html hook), {selector: html}.
+    They render templates, and this is mostly called from a worker thread at the end of a check, where there is
+    no application or request to render one in."""
+    from flask import has_request_context
+    from changedetectionio.pluggy_interface import collect_watch_list_row_html
+
+    if has_request_context():
+        return collect_watch_list_row_html(watch)
+
+    from changedetectionio.flask_app import app
+    with app.test_request_context():
+        return collect_watch_list_row_html(watch)
+
+
 def handle_watch_update(socketio, **kwargs):
     """Send one watch's row state to the browsers that are showing it (see watch_room)"""
     try:
@@ -391,6 +406,8 @@ def handle_watch_update(socketio, **kwargs):
             'notification_muted': True if watch.get('notification_muted') else False,
             'paused': True if watch.get('paused') else False,
             'queued': True if watch.get('uuid') in queue_list else False,
+            # Parts of the row that plugins draw themselves (stock and price of a restock watch), {selector: html}
+            'row_html': _plugin_row_html(watch),
             'unviewed': watch.has_unviewed,
             'uuid': watch.get('uuid'),
         }

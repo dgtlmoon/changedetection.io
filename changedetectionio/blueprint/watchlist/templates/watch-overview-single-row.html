@@ -114,44 +114,8 @@
 {%- if any_has_restock_price_processor -%}
                 <td class="restock-and-price col-restock-price">
 {%- if watch['processor'] == 'restock_diff'  -%}
-    {#-  @todo - this could be injected somehow watch.extra_row_info or something -#}
-                    <div class="restock-info-wrap">
-                            {%- if watch.has_restock_info -%}
-                                <span class="restock-label {{'in-stock' if watch['restock']['in_stock'] else 'not-in-stock' }}" title="{{ _('Detecting restock and price') }}">
-                                    <!-- maybe some object watch['processor'][restock_diff] or.. -->
-                                     {%- if watch['restock']['in_stock']-%}  {{ _('In stock') }} {%- else-%}  {{ _('Not in stock') }} {%- endif -%}
-                                </span>
-                            {%- endif -%}
-
-                            {%- if watch.get('restock') and watch['restock'].get('price') -%}
-                                {%- set restock = watch['restock'] -%}
-                                {%- set price = restock.get('price') -%}
-                                {%- set currency = restock.get('currency') if restock.get('currency','') else '' -%}
-
-                                {%- if price is not none and (price|string)|regex_search('\d') -%}
-                                  <span class="restock-label price" title="{{ _('Price') }}">
-                                  {# @todo: make parse_currency/parse_decimal aware of the locale of the actual web page and use that instead changedetectionio/processors/restock_diff/__init__.py #}
-                                    {%- if price is number -%}{# A number, so in their language with the currency's decimal places #}
-                                      {{ price|format_price(currency) }}<!-- as number -->
-                                    {%- else -%}{# It's totally fine if it arrives as something else, the website might be something weird in this field #}
-                                      {{ price }} {{ currency }}<!-- as string -->
-                                    {%- endif -%}
-                                  </span>
-                                  {%- set price_change_pct = restock.get_price_change_percent() -%}
-                                  {%- if price_change_pct is not none -%}
-                                    {%- set prev_price = restock.get('last_price') -%}
-                                    {%- set prev_disp = prev_price|format_price(currency) if prev_price is number else prev_price -%}
-                                    {%- if price_change_pct < 0 -%}
-                                      <span class="price-change down" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▼ {{ '%g'|format(price_change_pct) }}%</span>
-                                    {%- else -%}
-                                      <span class="price-change up" title="{{ _('Price change since previous price (%(prev)s)', prev=prev_disp) }}">▲ +{{ '%g'|format(price_change_pct) }}%</span>
-                                    {%- endif -%}
-                                  {%- endif -%}
-                                {%- endif -%}
-                            {%- elif not watch.has_restock_info -%}
-                                <span class="restock-label error">{{ _('No information') }}</span>
-                            {%- endif -%}
-                    </div>
+    {#- The same template is sent to the open pages when the watch is updated, see plugins/watch_list_cell.py -#}
+                    {% include 'restock_diff/watch_list_cell.html' %}
 {%- endif -%}
                 </td>
 {%- endif -%}
