@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: changedetection.io 0.70.4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-24 18:28+0100\n"
+"POT-Creation-Date: 2026-11-25 12:14+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2046,6 +2046,10 @@ msgid "Use this group's proxy"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's recheck time"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -2092,6 +2096,14 @@ msgstr ""
 msgid ""
 "What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
 "takes the first group that is switched on."
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr ""
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave empty to keep the system default and only use the time schedule below."
 msgstr ""
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
@@ -2348,6 +2360,10 @@ msgstr ""
 #: changedetectionio/blueprint/ui/diff.py
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
+msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/edit.py
@@ -2689,10 +2705,6 @@ msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
@@ -3921,7 +3933,7 @@ msgstr ""
 msgid "Group Tag"
 msgstr ""
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/forms.py
 msgid "Time Between Check"
 msgstr ""
 
@@ -5373,10 +5385,6 @@ msgstr ""
 
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
-msgstr ""
-
-#: changedetectionio/templates/_helpers.html
-msgid "Schedule time limits"
 msgstr ""
 
 #: changedetectionio/templates/_helpers.html

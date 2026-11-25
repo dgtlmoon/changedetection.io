@@ -2052,6 +2052,10 @@ msgid "Use this group's proxy"
 msgstr "使用此分组的代理"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's recheck time"
+msgstr "使用此分组的检查间隔"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr ""
 
@@ -2099,6 +2103,14 @@ msgid ""
 "What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
 "takes the first group that is switched on."
 msgstr "此处的设置在开启之前不会被使用，因此可以提前配置。属于多个分组的监控项使用第一个已开启的分组。"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "每次检查之间的时间间隔。"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave empty to keep the system default and only use the time schedule below."
+msgstr "留空则保持系统默认间隔，仅使用下方的时间计划。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2354,6 +2366,10 @@ msgstr "历史记录不足（需要 2 个快照），无法显示该监控项的
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
 msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
+msgstr "计划时间限制"
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
@@ -2695,10 +2711,6 @@ msgstr ""
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
 msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "每次检查之间的时间间隔。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -3920,7 +3932,7 @@ msgstr ""
 msgid "Group Tag"
 msgstr ""
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/forms.py
 msgid "Time Between Check"
 msgstr "检查间隔"
 
@@ -5375,10 +5387,6 @@ msgstr "使用当前快照验证此规则"
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
 msgstr "设置按小时/工作日计划"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Schedule time limits"
-msgstr "计划时间限制"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Business hours"

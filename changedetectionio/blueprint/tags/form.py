@@ -31,7 +31,7 @@ from changedetectionio.model.group_settings import (
     GROUP_SETTING_MODE_REPLACE,
 )
 
-# How a group's fetch method / proxy relates to the one its watches chose, see model/group_settings.py.
+# How a group's fetch method / proxy / recheck time relates to the one its watches chose, see model/group_settings.py.
 # Worded apart from the notification choices on purpose: those are translated as "...the watch's own notifications".
 GROUP_SETTING_MODE_CHOICES = [
     (GROUP_SETTING_MODE_OFF, _l("Don't use")),
@@ -104,6 +104,12 @@ class group_restock_settings_form(restock_settings_form):
     )
     proxy_group_mode = SelectField(
         _l("Use this group's proxy"),
+        choices=GROUP_SETTING_MODE_CHOICES,
+        default=GROUP_SETTING_MODE_OFF,
+    )
+    # Covers time_between_check and time_schedule_limit together
+    time_between_check_group_mode = SelectField(
+        _l("Use this group's recheck time"),
         choices=GROUP_SETTING_MODE_CHOICES,
         default=GROUP_SETTING_MODE_OFF,
     )

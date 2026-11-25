@@ -62,6 +62,11 @@ from changedetectionio.api.Search import Search
 from changedetectionio.api.Changes import Changes
 from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.favicon_utils import get_favicon_mime_type
+from changedetectionio.model.group_settings import (
+    group_time_schedule_limit,
+    groups_with_recheck_time,
+    recheck_time_group_choice,
+)
 from changedetectionio.languages import (
     get_available_languages,
     get_flag_for_locale,
@@ -1869,6 +1874,8 @@ def ticker_thread_check_time_launch_checks():
                 break
 
         recheck_time_system_seconds = int(datastore.threshold_seconds)
+        # Usually empty. Worked out once per pass, not per watch, see model/group_settings.py
+        recheck_time_groups = groups_with_recheck_time(datastore)
 
         # Check for watches outside of the time threshold to put in the thread queue.
         for watch_index, uuid in enumerate(watch_uuid_list):
@@ -1896,10 +1903,19 @@ def ticker_thread_check_time_launch_checks():
             if watch['paused']:
                 continue
 
+            # A group that is switched on for recheck time decides both the interval and the schedule
+            group_recheck_time = (
+                recheck_time_group_choice(watch, recheck_time_groups) if recheck_time_groups else None
+            )
+
             # @todo - Maybe make this a hook?
-            # Time schedule limit - Decide between watch or global settings
+            # Time schedule limit - Decide between group, watch or global settings
             scheduler_source = None
-            if watch.get('time_between_check_use_default'):
+            if group_recheck_time:
+                time_schedule_limit = group_time_schedule_limit(group_recheck_time.group)
+                scheduler_source = f"group '{group_recheck_time.group.get('title')}'"
+
+            elif watch.get('time_between_check_use_default'):
                 time_schedule_limit = datastore.data['settings']['requests'].get(
                     'time_schedule_limit', {}
                 )
@@ -1938,11 +1954,15 @@ def ticker_thread_check_time_launch_checks():
             # A watch that opted out of the defaults but has no interval of its own (all None/0, e.g. from
             # an import, restore or hand-edited watch.json) must fall back to the system default,
             # otherwise threshold is 0 and it is rechecked on every scheduler pass.
-            threshold = (
-                recheck_time_system_seconds
-                if watch.get('time_between_check_use_default')
-                else watch.threshold_seconds() or recheck_time_system_seconds
-            )
+            if group_recheck_time:
+                # A group with only a time schedule leaves the interval to the system default
+                threshold = group_recheck_time.value or recheck_time_system_seconds
+            else:
+                threshold = (
+                    recheck_time_system_seconds
+                    if watch.get('time_between_check_use_default')
+                    else watch.threshold_seconds() or recheck_time_system_seconds
+                )
             # A plugin that has the watch under its control has the last word
             threshold = apply_recheck_seconds_override(watch, datastore, threshold)
 

@@ -2060,6 +2060,10 @@ msgid "Use this group's proxy"
 msgstr "このグループのプロキシを使用"
 
 #: changedetectionio/blueprint/tags/form.py
+msgid "Use this group's recheck time"
+msgstr "このグループのチェック間隔を使用"
+
+#: changedetectionio/blueprint/tags/form.py
 msgid "Tag name"
 msgstr "タグ名"
 
@@ -2108,6 +2112,14 @@ msgid ""
 "What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups "
 "takes the first group that is switched on."
 msgstr "ここで設定した内容は、有効にするまで使用されないため、事前に準備できます。複数のグループに属するウォッチは、有効になっている最初のグループを使用します。"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
+msgid "The interval/amount of time between each check."
+msgstr "各チェック間の間隔/時間。"
+
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+msgid "Leave empty to keep the system default and only use the time schedule below."
+msgstr "空欄にするとシステム既定の間隔のまま、下のスケジュールのみを使用します。"
 
 #: changedetectionio/blueprint/tags/templates/edit-tag.html
 msgid "The last two send this group's notification separately, with the title, body and format set here."
@@ -2363,6 +2375,10 @@ msgstr "このウォッチの差分ページを表示するための履歴が不
 #, python-format
 msgid "Monthly AI token budget of %(budget)s tokens reached (%(used)s used). Resets next month."
 msgstr ""
+
+#: changedetectionio/blueprint/ui/edit.py changedetectionio/templates/_helpers.html
+msgid "Schedule time limits"
+msgstr "スケジュールの時間制限"
 
 #: changedetectionio/blueprint/ui/edit.py
 #, python-brace-format
@@ -2707,10 +2723,6 @@ msgstr "ページタイトルとリンクの追加オプション"
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Optional - links in the list, history and notifications open this URL instead. Does not change the URL being checked."
 msgstr "任意 - 一覧・履歴・通知内のリンクは、チェック対象のURLではなくこのURLを開きます。チェック対象のURLは変更されません。"
-
-#: changedetectionio/blueprint/ui/templates/edit.html
-msgid "The interval/amount of time between each check."
-msgstr "各チェック間の間隔/時間。"
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Set to empty to use system settings default"
@@ -3939,7 +3951,7 @@ msgstr "リンク先URLの上書き"
 msgid "Group Tag"
 msgstr "グループタグ"
 
-#: changedetectionio/forms.py
+#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/forms.py
 msgid "Time Between Check"
 msgstr "チェック間隔"
 
@@ -5409,10 +5421,6 @@ msgstr "現在のスナップショットに対してこのルールを検証"
 #: changedetectionio/templates/_helpers.html
 msgid "Set a hourly/week day schedule"
 msgstr "時間/曜日スケジュールを設定"
-
-#: changedetectionio/templates/_helpers.html
-msgid "Schedule time limits"
-msgstr "スケジュールの時間制限"
 
 #: changedetectionio/templates/_helpers.html
 msgid "Business hours"

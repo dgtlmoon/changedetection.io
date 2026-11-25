@@ -207,7 +207,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                             sub_field.data = sub_value
                     break
 
+        from zoneinfo import available_timezones
         template_args = {
+            'available_timezones': sorted(available_timezones()),
+            'timezone_default_config': datastore.data['settings']['application'].get('scheduler_timezone_default'),
             'data': default,
             'form': form,
             'watch': default,

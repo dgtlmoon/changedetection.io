@@ -914,6 +914,17 @@ components:
               description: |
                 How this group's `proxy` relates to the one its watches chose. Same values as
                 `fetch_backend_group_mode`.
+            time_between_check_group_mode:
+              type: string
+              enum: ['off', fallback, replace]
+              default: 'off'
+              description: |
+                How this group's `time_between_check` and `time_schedule_limit` relate to the watch's own.
+                - off: Not used, the group's recheck time has no effect (default)
+                - fallback: Used only when the watch has `time_between_check_use_default` set
+                - replace: Used instead of the watch's own
+                A group with only a time schedule leaves the interval to the system default.
+                A watch in several groups takes the first group that is switched on and has a value.
             tag_colour:
               type: string
               pattern: '^(#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$'
