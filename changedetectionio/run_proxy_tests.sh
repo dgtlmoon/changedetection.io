@@ -94,6 +94,10 @@ done
 # Test the proxy scanner of a watch ("Check/Scan all" on its edit page): its page fetched through every proxy.
 # The page is the test's own server, which the squids (and the browser) reach as "cdio", so the test can make it
 # refuse the second scan. proxies.json-scanner: the two squids and a proxy with nothing listening.
+#
+# "set -e" again from here to the end of the script. It was switched off above for the greps that are expected
+# to find nothing and never switched back on, so a test that failed after that point did not fail the run
+# (tests/proxy_list/test_proxy_noconnect.py did, for some time).
 set -e
 # Requests
 docker run --network changedet-network --hostname cdio -e "FLASK_SERVER_NAME=cdio" \

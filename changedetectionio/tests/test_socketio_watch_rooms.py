@@ -87,6 +87,9 @@ def test_counters_are_rate_limited():
     assert len(runs) == 2, "The burst collapsed into one more, so the last state still lands"
     assert runs[1] - runs[0] >= 0.3
 
+    # Well past the interval since that one: at 0.6 seconds it was right on it (the burst's one more runs 0.3
+    # after the first), and a moment of delay on a busy machine made this call wait instead
+    time.sleep(0.5)
     emit()
     assert len(runs) == 3, "Quiet again, so the next one is immediate"
 
