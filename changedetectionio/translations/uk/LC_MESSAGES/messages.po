@@ -2165,6 +2165,13 @@ msgstr ""
 "Задане тут не використовується, доки його не ввімкнено, тож його можна налаштувати заздалегідь. Завдання в кількох "
 "групах бере першу ввімкнену групу."
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr "Інтервал часу між перевірками."
@@ -2352,6 +2359,10 @@ msgstr ""
 #, python-brace-format
 msgid "{} watches were tagged"
 msgstr "{} завдань було позначено тегами"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "Назву групи не вказано"
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
@@ -3336,6 +3347,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "Назва групи"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3419,15 +3434,19 @@ msgid "UnMute"
 msgstr "Увімкнути звук"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "Тег"
+msgid "Add selected to group"
+msgstr "Додати вибрані до групи"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr ""
+msgid "Group"
+msgstr "Група"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3756,6 +3775,10 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "Тег групи"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "Невірний формат часу. Використовуйте ГГ:ХХ."
 
@@ -3880,10 +3903,6 @@ msgstr "Порожнє значення неприпустиме."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "Неприпустиме значення."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "Тег групи"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

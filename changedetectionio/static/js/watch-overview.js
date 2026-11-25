@@ -29,8 +29,36 @@ $(function () {
             }).format($(this).data('timestamp') * 1000));
     })
 
+    // Bulk "Group" action: a modal with the chips field of a watch's "Group tag" (tag-chips.js), existing
+    // groups are suggested while typing and a new name becomes a new group. The names go to the server as
+    // #op_extradata, comma separated, through the (hidden) real operation button like Browser / Proxy below.
     $("#checkbox-assign-tag").click(function (e) {
-        $('#op_extradata').val(prompt("Enter a tag name"));
+        const $btn = $(this);
+        const tmpl = document.getElementById('bulk-group-options');
+        if (!tmpl || typeof ModalDialog === 'undefined') {
+            return;
+        }
+        ModalDialog.confirm({
+            type: 'info',
+            title: $btn.data('modal-title'),
+            message: '<div class="bulk-group-field">' + tmpl.innerHTML + '</div>',
+            confirmText: $btn.data('modal-apply'),
+            onConfirm: function () {
+                // What is in chips, plus a name that was typed but not turned into a chip yet
+                const names = [
+                    $('.modal-dialog input[type="hidden"][name="bulk_groups"]').val(),
+                    $('.modal-dialog input.tag-chips').val()
+                ].map((v) => (v || '').trim()).filter((v) => v !== '').join(', ');
+                if (!names) {
+                    return;
+                }
+                $('#op_extradata').val(names);
+                $('#op-assign-tag').trigger('click');
+            }
+        });
+        // The dialog is on the page now, after its own focus on the button put the cursor in the field
+        const $field = $('.modal-dialog input.tag-chips').tagChips();
+        setTimeout(() => $field.trigger('focus'), 150);
     });
 
     // Bulk "Browser" / "Proxy" actions: open a modal with the same radio choices as the
@@ -256,6 +284,8 @@ $(function () {
         } else {
             $b.hide().empty();
         }
+        // For the space under the operations bar: the banner takes its place when it is there (_watch_table.scss)
+        $('body').toggleClass('select-all-banner-shown', $b.is(':visible'));
     }
 
     function refreshSelectionUI() {
@@ -342,35 +372,48 @@ $(function () {
         refreshSelectionUI();
     });
 
-    // Cancel: clear the whole cross-page selection (incl. the stored browser data)
-    // and dismiss the operations bar.
-    $("#check-cancel").click(function () {
+    // The request of "Select all N matching" that is still on its way. With a very long list it takes a while,
+    // and its answer must not select everything again after the selection was cleared in the meantime.
+    let selectAllMatchingRequest = null;
+
+    function clearSelection() {
+        if (selectAllMatchingRequest) {
+            const request = selectAllMatchingRequest;
+            selectAllMatchingRequest = null;
+            if (request.abort) request.abort();
+        }
         sel.clear();
         applySelectionToDom();
         refreshSelectionUI();
-    });
+    }
+
+    // Cancel: clear the whole cross-page selection (incl. the stored browser data)
+    // and dismiss the operations bar.
+    $("#check-cancel").click(clearSelection);
 
     // "Select all N matching" — pull the full matching id list from the server.
     $(document).on('click', '#select-all-matching', function () {
         if (!selCfg.uuidsUrl) return;
         const $btn = $(this).prop('disabled', true);
-        $.getJSON(selCfg.uuidsUrl + location.search)
+        const request = selectAllMatchingRequest = $.getJSON(selCfg.uuidsUrl + location.search);
+        request
             .done(function (data) {
+                // Cleared (or asked for again) while this was loading: not what is wanted any more
+                if (request !== selectAllMatchingRequest) return;
                 if (data && Array.isArray(data.uuids)) {
                     sel.addMany(data.uuids.map((u) => ('' + u).trim()));
                     applySelectionToDom();
                     refreshSelectionUI();
                 }
             })
-            .always(function () { $btn.prop('disabled', false); });
+            .always(function () {
+                if (request === selectAllMatchingRequest) selectAllMatchingRequest = null;
+                $btn.prop('disabled', false);
+            });
     });
 
     // "Clear selection" link inside the banner.
-    $(document).on('click', '#select-all-clear', function () {
-        sel.clear();
-        applySelectionToDom();
-        refreshSelectionUI();
-    });
+    $(document).on('click', '#select-all-clear', clearSelection);
 
     const time_check_step_size_seconds=1;
 

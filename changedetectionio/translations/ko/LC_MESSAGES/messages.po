@@ -2116,6 +2116,13 @@ msgid ""
 "takes the first group that is switched on."
 msgstr "여기에 설정한 내용은 켜기 전까지 사용되지 않으므로 미리 준비해 둘 수 있습니다. 여러 그룹에 속한 모니터링은 켜져 있는 첫 번째 그룹을 사용합니다."
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr "각 확인 사이의 간격/시간입니다."
@@ -2300,6 +2307,10 @@ msgstr ""
 #, python-brace-format
 msgid "{} watches were tagged"
 msgstr "{}개 모니터링에 태그를 추가했습니다."
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "그룹 이름이 입력되지 않았습니다"
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
@@ -3270,6 +3281,10 @@ msgid "Web page URL"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "그룹 이름"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr ""
@@ -3353,15 +3368,19 @@ msgid "UnMute"
 msgstr "음소거 해제"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "태그"
+msgid "Add selected to group"
+msgstr "선택 항목을 그룹에 추가"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr ""
+msgid "Group"
+msgstr "그룹"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
+msgstr ""
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
@@ -3676,6 +3695,10 @@ msgid "Remove"
 msgstr "제거"
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "그룹 / 태그"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "시간 형식이 올바르지 않습니다. HH:MM 형식을 사용하세요."
 
@@ -3800,10 +3823,6 @@ msgstr "빈 값은 허용되지 않습니다."
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "값이 잘못되었습니다."
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "그룹 / 태그"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

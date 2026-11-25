@@ -2114,6 +2114,13 @@ msgid ""
 "takes the first group that is switched on."
 msgstr "ここで設定した内容は、有効にするまで使用されないため、事前に準備できます。複数のグループに属するウォッチは、有効になっている最初のグループを使用します。"
 
+#: changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid ""
+"Getting <code>403 Access Denied</code>? Set up the <a href=\"%(url)s\">Web Unlocker proxy with Bright Data</a>, "
+"choose it below, and put those watches in this group."
+msgstr ""
+
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "The interval/amount of time between each check."
 msgstr "各チェック間の間隔/時間。"
@@ -2296,6 +2303,10 @@ msgstr ""
 #, python-brace-format
 msgid "{} watches were tagged"
 msgstr "{} 件のウォッチにタグを付けました"
+
+#: changedetectionio/blueprint/ui/__init__.py
+msgid "No group name given"
+msgstr "グループ名が入力されていません"
 
 #: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/__init__.py
 msgid "Watch not found"
@@ -3277,6 +3288,10 @@ msgid "Web page URL"
 msgstr "ウェブページURL"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Group name"
+msgstr "グループ名"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #, python-format
 msgid "%(count)s records selected"
 msgstr "%(count)s 件選択中"
@@ -3360,16 +3375,20 @@ msgid "UnMute"
 msgstr "ミュート解除"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Tag"
-msgstr "タグ"
+msgid "Add selected to group"
+msgstr "選択項目をグループに追加"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Set browser / fetch method for selected"
-msgstr "選択項目のブラウザ／取得方式を設定"
+msgid "Group"
+msgstr "グループ"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Apply"
 msgstr "適用"
+
+#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Set browser / fetch method for selected"
+msgstr "選択項目のブラウザ／取得方式を設定"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Set proxy for selected"
@@ -3683,6 +3702,10 @@ msgid "Remove"
 msgstr ""
 
 #: changedetectionio/forms.py
+msgid "Group tag"
+msgstr "グループタグ"
+
+#: changedetectionio/forms.py
 msgid "Invalid time format. Use HH:MM."
 msgstr "無効な時刻形式です。HH:MM形式を使用してください。"
 
@@ -3807,10 +3830,6 @@ msgstr "空の値は許可されていません。"
 #: changedetectionio/forms.py
 msgid "Invalid value."
 msgstr "無効な値です。"
-
-#: changedetectionio/forms.py
-msgid "Group tag"
-msgstr "グループタグ"
 
 #: changedetectionio/blueprint/ui/templates/queue.html changedetectionio/blueprint/watchlist/templates/watch-overview.html
 #: changedetectionio/forms.py

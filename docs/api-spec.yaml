@@ -889,11 +889,14 @@ components:
                 Leave empty to disable auto-matching.
             notification_group_mode:
               type: string
-              enum: [fallback, add, replace]
-              default: fallback
+              enum: ['off', fallback, add, replace]
+              default: 'off'
               description: |
                 How this group's notification settings relate to the notifications of its watches.
-                - fallback: Used only when the watch has no notification URLs of its own (how groups have always worked)
+                - off: Not used (default for a new group). Set one of the others for the group's
+                  `notification_urls` to be used.
+                - fallback: Used only when the watch has no notification URLs of its own (how groups worked
+                  before there was a choice, and what existing groups with notification URLs were given)
                 - add: Sent as a separate notification, as well as the watch's own
                 - replace: Sent as a separate notification, instead of the watch's own
                 With add and replace the group's notification uses the group's own title, body and format.

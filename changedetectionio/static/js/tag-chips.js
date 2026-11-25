@@ -245,9 +245,14 @@
         render();
     }
 
-    $(function () {
-        $('input.tag-chips').each(function () {
+    // For a field that is put on the page later, like the one in the watch list's "Group" modal
+    $.fn.tagChips = function () {
+        return this.each(function () {
             setup(this);
         });
+    };
+
+    $(function () {
+        $('input.tag-chips').tagChips();
     });
 })(jQuery);
