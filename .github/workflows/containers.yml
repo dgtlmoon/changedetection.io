@@ -19,6 +19,12 @@ on:
 permissions:
   contents: read
 
+# A newer push on master stops the :dev build of the one before it, only the newest commit is worth publishing.
+# A release is in its own group (its ref is the tag) and is never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   metadata:
     runs-on: ubuntu-latest
