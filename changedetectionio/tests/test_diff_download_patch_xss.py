@@ -18,6 +18,7 @@ CVE-2026-29038 (/rss/tag/).
 
 import os
 from flask import url_for
+from ..guard import guard_enabled
 from .util import wait_for_all_checks
 
 XSS_PAYLOADS = [
@@ -57,7 +58,8 @@ def test_download_patch_does_not_reflect_unknown_timestamp(client, live_server, 
                 f"{param}={payload!r} was reflected into the response body"
 
             # An unknown timestamp is a client error, not a 500 from an unhandled KeyError
-            assert res.status_code == 404, \
+            # (with flaskapi-guard enabled it refuses the payload itself with a 400)
+            assert res.status_code in ((404, 400) if guard_enabled() else (404,)), \
                 f"{param}={payload!r} should be rejected up front, got {res.status_code}"
 
             # Even if a future refactor lets the exception path run again, the body must

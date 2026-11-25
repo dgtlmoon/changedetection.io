@@ -269,6 +269,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  llm_features_disabled=is_llm_features_disabled(),
                                  matching_watches=matching_watches,
                                  settings_application=datastore.data['settings']['application'],
+                                 # Same wording as the heading above the tabs
+                                 extra_title=f" - {gettext('Group: %(name)s', name=default.get('title', ''))}",
                                  **template_args
                                  )
 

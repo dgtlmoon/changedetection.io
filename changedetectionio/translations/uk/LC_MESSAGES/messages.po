@@ -2033,6 +2033,11 @@ msgstr "Усі теги видалено, очищення завдань вик
 msgid "Tag not found"
 msgstr "Тег не знайдено"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "Група: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "Оновлено"

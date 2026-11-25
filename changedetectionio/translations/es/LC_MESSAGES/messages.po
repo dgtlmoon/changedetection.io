@@ -2076,6 +2076,11 @@ msgstr "Todas las etiquetas eliminadas, borradas de los monitores en segundo pla
 msgid "Tag not found"
 msgstr "Etiqueta no encontrada"
 
+#: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#, python-format
+msgid "Group: %(name)s"
+msgstr "Grupo: %(name)s"
+
 #: changedetectionio/blueprint/tags/__init__.py
 msgid "Updated"
 msgstr "Actualizado"
