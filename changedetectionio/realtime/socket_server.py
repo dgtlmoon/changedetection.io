@@ -25,15 +25,37 @@ def watch_room(watch_uuid):
 
 
 # The rendered row of a watch goes to the pages listing it. A list filtered by a group has that group in the row's
-# links (Edit, Recheck, pause ... come back to the filtered list), so there is one room per watch and group: a
-# page joins the one for the group it is filtered by ('' for none) and is sent the row rendered for that.
+# links (Edit, Recheck, pause ... come back to the filtered list), and an app served under a sub-path
+# (USE_X_SETTINGS with X-Forwarded-Prefix, e.g. example.com/changedetection/) has that path at the start of every
+# address in the row. So there is one room per watch, group and sub-path: a page joins the one for the group it is
+# filtered by ('' for none) and the sub-path it was reached under ('' for none), and is sent the row rendered for
+# those. The row is rendered from a worker thread, outside any request, so nothing else says which sub-path the
+# page's addresses need.
 WATCH_ROW_ROOM_PREFIX = 'watch-row:'
-# watch uuid -> the group filters ('' for none) of the pages that have asked for its row
+# watch uuid -> the (group filter, sub-path) pairs of the pages that have asked for its row
 _row_filters_shown = {}
 
 
-def watch_row_room(watch_uuid, tag_uuid=''):
-    return f"{WATCH_ROW_ROOM_PREFIX}{watch_uuid}:{tag_uuid or ''}"
+def watch_row_room(watch_uuid, tag_uuid='', url_prefix=''):
+    return f"{WATCH_ROW_ROOM_PREFIX}{watch_uuid}:{tag_uuid or ''}:{url_prefix or ''}"
+
+
+def connection_url_prefix():
+    """The sub-path the browser of this Socket.IO connection reaches the app under, '' when there is none. Read
+    from the request the connection was made with: the script root that ProxyFix made of X-Forwarded-Prefix, or
+    the header itself where the connection's request did not pass through ProxyFix. Only the rows sent to pages
+    under the same sub-path are rendered with it (see watch_row_room), so it reaches nobody else's page."""
+    import os
+    import re
+    from flask import request
+    prefix = request.script_root or ''
+    if not prefix and os.getenv('USE_X_SETTINGS'):
+        prefix = request.headers.get('X-Forwarded-Prefix', '')
+    prefix = prefix.rstrip('/')
+    # A path and nothing else
+    if not prefix or len(prefix) > 200 or not re.fullmatch(r'(/[A-Za-z0-9._~-]+)+', prefix):
+        return ''
+    return prefix
 
 
 def watch_has_viewers(socketio, watch_uuid):
@@ -364,10 +386,12 @@ def has_connected_clients(socketio):
         return True
 
 
-def render_watch_list_row(watch, datastore, tag_uuid='', queued_uuids=None):
+def render_watch_list_row(watch, datastore, tag_uuid='', queued_uuids=None, url_prefix=''):
     """The watch's row of the watch list, from the template the page itself is made with
     (watch-overview-single-row.html with blueprint/watchlist/row_context.py), as the list filtered by `tag_uuid`
-    shows it. Mostly called from a worker thread at the end of a check, where there is no request to render in."""
+    shows it. Mostly called from a worker thread at the end of a check, where there is no request to render in.
+    url_prefix: the sub-path the page is served under, so the row's addresses (links, images, form actions) start
+    with it as they do in the page."""
     from flask import render_template
     from changedetectionio.blueprint.watchlist.row_context import watch_row_context
 
@@ -377,27 +401,29 @@ def render_watch_list_row(watch, datastore, tag_uuid='', queued_uuids=None):
 
     # The row reads the group from the request too (the Recheck button), so always in a request of that list
     from changedetectionio.flask_app import app
-    with app.test_request_context(query_string={'tag': tag_uuid} if tag_uuid else None):
+    with app.test_request_context(query_string={'tag': tag_uuid} if tag_uuid else None,
+                                  environ_overrides={'SCRIPT_NAME': url_prefix} if url_prefix else None):
         return render()
 
 
 def send_watch_list_row(socketio, watch, datastore, queued_uuids=None):
     """Send the watch's rendered row to the pages that list it, once for each group filter among them."""
     uuid = watch.get('uuid')
-    for tag_uuid in list(_row_filters_shown.get(uuid, ())):
-        room = watch_row_room(uuid, tag_uuid)
+    for shown in list(_row_filters_shown.get(uuid, ())):
+        tag_uuid, url_prefix = shown
+        room = watch_row_room(uuid, tag_uuid, url_prefix)
         try:
             has_pages = next(iter(socketio.server.manager.get_participants('/', room)), None) is not None
         except AttributeError:
             has_pages = True
         if not has_pages:
             # The pages that asked have gone
-            _row_filters_shown[uuid].discard(tag_uuid)
+            _row_filters_shown[uuid].discard(shown)
             if not _row_filters_shown[uuid]:
                 del _row_filters_shown[uuid]
             continue
         try:
-            html = render_watch_list_row(watch, datastore, tag_uuid=tag_uuid, queued_uuids=queued_uuids)
+            html = render_watch_list_row(watch, datastore, tag_uuid=tag_uuid, queued_uuids=queued_uuids, url_prefix=url_prefix)
         except Exception as e:
             logger.error(f"Socket.IO: could not render the watch list row of {uuid}: {str(e)}")
             continue
@@ -579,12 +605,13 @@ def init_socketio(app, datastore):
         rows_for = (data or {}).get('rows_for_tag')
         if rows_for is not None and not (isinstance(rows_for, str) and (rows_for == '' or rows_for in socketio.datastore.data['settings']['application']['tags'])):
             rows_for = None
+        url_prefix = connection_url_prefix() if rows_for is not None else ''
         for uuid in uuids[:MAX_WATCH_SUBSCRIPTIONS]:
             if isinstance(uuid, str) and uuid in watching:
                 join_room(watch_room(uuid))
                 if rows_for is not None:
-                    join_room(watch_row_room(uuid, rows_for))
-                    _row_filters_shown.setdefault(uuid, set()).add(rows_for)
+                    join_room(watch_row_room(uuid, rows_for, url_prefix))
+                    _row_filters_shown.setdefault(uuid, set()).add((rows_for, url_prefix))
 
     @socketio.on('connect')
     def handle_connect():
