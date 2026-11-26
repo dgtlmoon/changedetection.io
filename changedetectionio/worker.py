@@ -418,6 +418,8 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     err_text = "Page request from server didnt respond correctly"
                     if e.message:
                         err_text = "{} - {}".format(err_text, e.message)
+                        from changedetectionio.fetch_error_dns_lookup import explain_fetch_error
+                        err_text = await asyncio.get_running_loop().run_in_executor(None, explain_fetch_error, err_text, watch.link) or err_text
 
                     if e.screenshot:
                         watch.save_screenshot(screenshot=e.screenshot, as_error=True)
@@ -441,7 +443,12 @@ async def async_update_worker(worker_id, q, notification_q, app, datastore, exec
                     else:
                         logger.error(f"Worker {worker_id} exception processing watch UUID: {uuid}")
                         logger.exception(f"Worker {worker_id} full exception details:")
-                        datastore.update_watch(uuid=uuid, update_obj={'last_error': "Exception: " + str(e)})
+                        err_text = "Exception: " + str(e)
+                        # Off unless FETCH_ERROR_DNS_LOOKUP_REGEX is set: an error that could be a DNS problem
+                        # (a proxy's "connection failed") is looked up, and reported as that if it is one
+                        from changedetectionio.fetch_error_dns_lookup import explain_fetch_error
+                        explained = await asyncio.get_running_loop().run_in_executor(None, explain_fetch_error, err_text, watch.link)
+                        datastore.update_watch(uuid=uuid, update_obj={'last_error': explained or err_text})
                     process_changedetection_results = False
 
                 else:
