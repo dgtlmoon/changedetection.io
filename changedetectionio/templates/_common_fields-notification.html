@@ -1,7 +1,12 @@
 {# Setup widget, builds an Apprise URL from a few fields and appends it to the
    textarea below (which stays the source of truth). Its inputs have no name=
-   so nothing here is submitted with the form. See notification-setup.js #}
-<div id="notification-setup" class="notification-setup"
+   so nothing here is submitted with the form. See notification-setup.js
+
+   A page can have a second one for another list of URLs: include it with ns_suffix (added to the ids, so they
+   stay unique) and ns_target (a selector for the textarea its "Add to list" appends to), see apprise.html. #}
+{%- set ns_suffix = ns_suffix|default('') %}
+<div id="notification-setup{{ ns_suffix }}" class="notification-setup"
+     {%- if ns_target|default('') %} data-target="{{ ns_target }}"{% endif %}
      data-services-url="{{ url_for('settings.notifications.apprise_services') }}"
      data-service-url="{{ url_for('settings.notifications.apprise_service', schema='__SCHEMA__') }}"
      data-build-url="{{ url_for('settings.notifications.apprise_build') }}"
@@ -16,7 +21,7 @@
         'added': _('Added to the list below'),
         'sending': _('Processing..'),
      }|tojson|forceescape }}">
-    <label for="ns-search">{{ _('Add a notification service:') }}</label>
+    <label for="ns-search{{ ns_suffix }}">{{ _('Add a notification service:') }}</label>
     <div class="ns-search-wrap">
         {# The most used services, one click opens their form. Apprise isn't imported to count the
            rest (it's loaded lazily), 152 are listed at the time of writing, so "over 140" holds.
@@ -42,10 +47,10 @@
             </button>
             {%- endfor %}
         </div>
-        <input type="search" id="ns-search" autocomplete="off" spellcheck="false"
+        <input type="search" id="ns-search{{ ns_suffix }}" class="ns-search-input" autocomplete="off" spellcheck="false"
                placeholder="{{ _('+ Search over %(count)d other services', count=140) }}"
-               role="combobox" aria-expanded="false" aria-controls="ns-results" aria-autocomplete="list">
-        <ul id="ns-results" class="ns-results" role="listbox" hidden></ul>
+               role="combobox" aria-expanded="false" aria-controls="ns-results{{ ns_suffix }}" aria-autocomplete="list">
+        <ul id="ns-results{{ ns_suffix }}" class="ns-results" role="listbox" hidden></ul>
         <details class="ns-all">
             <summary>{{ _('List all') }}</summary>
             <ul class="ns-all-list"></ul>
@@ -71,4 +76,7 @@
         </div>
     </div>
 </div>
+{#- Once per page, the script sets up every .notification-setup it finds #}
+{%- if not ns_suffix %}
 <script src="{{ url_for('static_content', group='js', filename='notification-setup.js') }}" defer></script>
+{%- endif %}

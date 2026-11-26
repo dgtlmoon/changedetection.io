@@ -1505,6 +1505,20 @@ msgstr "デフォルト通知"
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr "これらの通知はすべてのウェブページウォッチに適用されます。グループやウォッチごとに個別設定もできます。"
 
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Where to send errors?"
+msgstr "エラーの送信先"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid ""
+"Alerts about a watch that needs attention (a filter that is no longer on the page, a browser step that could not be "
+"run) are sent here."
+msgstr "対応が必要なウォッチに関するアラート(ページに存在しなくなったフィルター、実行できなかったブラウザステップ)はここに送信されます。"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Leave empty to send them wherever the notifications of that watch go."
+msgstr "空のままにすると、そのウォッチの通知と同じ宛先に送信されます。"
+
 # 訳注: "Base URL used for the {{base_url}} token in notification links."
 # → 「通知リンクの {{base_url}} トークンに使用するベースURL。」
 # 修飾語と被修飾語の訳を入れ替えた

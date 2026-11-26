@@ -987,7 +987,7 @@ class globalSettingsAppriseNotificationForm(commonNotificationSettingsForm):
                            validators=[validators.Optional()],
                            render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))})
     # Error alerts (filter not found, browser step failed), see notification_service.error_notification_senders()
-    notification_errors_urls = StringListField(_l('Where to send errors?'),
+    notification_errors_urls = StringListField(_l('Notification URL List'),
                                                validators=[validators.Optional(), ValidateAppRiseServers()])
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 

@@ -2,12 +2,16 @@
 // fields, and the server builds the URL (blueprint/settings/notifications, notification/apprise_form.py).
 // "Add to list" appends it to the notification URLs textarea via appendNotificationUrl() from
 // notifications.js, the textarea stays the source of truth.
+//
+// A page can have several (.notification-setup), each with its own state. One with data-target="selector"
+// adds to that textarea instead of the main notification URL list.
 $(function () {
-    var $w = $('#notification-setup');
-    if (!$w.length) return;
+    $('.notification-setup').each(function () { setupNotificationWidget($(this)); });
+});
 
+function setupNotificationWidget($w) {
     var t = $w.data('i18n') || {};
-    var $search = $('#ns-search'), $results = $('#ns-results'), $card = $w.find('.ns-card');
+    var $search = $w.find('.ns-search-input'), $results = $w.find('.ns-results'), $card = $w.find('.ns-card');
     var $url = $card.find('.ns-url'), $add = $card.find('.ns-add'), $test = $card.find('.ns-test');
     var $msg = $card.find('.ns-message');
     var services = null, current = null, builtUrl = null, buildTimer = null, buildSeq = 0, active = -1;
@@ -131,7 +135,8 @@ $(function () {
     function fieldInput(f) {
         var $wrap = $('<div class="ns-field"></div>').attr('data-key', f.key).attr('data-type', f.type)
             .toggleClass('ns-new-row', !!f.new_row);
-        var id = 'ns-f-' + f.key;
+        // Unique on a page with several widgets
+        var id = ($w.attr('id') || 'notification-setup') + '-f-' + f.key;
 
         if (f.type === 'checkbox') {
             var $cb = $('<input type="checkbox">').attr('id', id).prop('checked', !!f.default);
@@ -277,7 +282,7 @@ $(function () {
 
     $add.on('click', function () {
         if (!builtUrl) return;
-        appendNotificationUrl(builtUrl);
+        appendNotificationUrl(builtUrl, $w.data('target'));
         $card.prop('hidden', true);
         $search.val('');
         current = builtUrl = null;
@@ -304,4 +309,4 @@ $(function () {
         });
     }
     $quick.on('click', function () { pick($(this).data('schema')); });
-});
+}

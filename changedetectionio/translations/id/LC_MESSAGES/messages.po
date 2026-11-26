@@ -1604,6 +1604,22 @@ msgstr ""
 "Notifikasi ini berlaku untuk semua monitor halaman web, atau Anda dapat mengonfigurasinya secara terpisah per grup "
 "atau per monitor."
 
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Where to send errors?"
+msgstr "Ke mana kesalahan dikirim?"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid ""
+"Alerts about a watch that needs attention (a filter that is no longer on the page, a browser step that could not be "
+"run) are sent here."
+msgstr ""
+"Peringatan tentang monitor yang perlu diperhatikan (filter yang tidak lagi ada di halaman, langkah browser yang tidak"
+" dapat dijalankan) dikirim ke sini."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Leave empty to send them wherever the notifications of that watch go."
+msgstr "Biarkan kosong untuk mengirimnya ke tujuan notifikasi monitor tersebut."
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"

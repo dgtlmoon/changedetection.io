@@ -91,6 +91,11 @@ def test_where_to_send_errors_setting(client, live_server, measure_memory_usage,
     # Saved from the notification settings page, with what was there kept
     res = client.get(url_for('settings.notifications.apprise'))
     assert b'name="notification_errors_urls"' in res.data and b'Where to send errors?' in res.data
+    # Folded away, with its own "Add a notification service" that adds to this list and not to the main one
+    assert b'<details class="form-wrapper" id="notification-errors-urls">' in res.data
+    assert b'id="notification-setup-errors" class="notification-setup" data-target="textarea.notification-errors-urls"' in res.data
+    assert b'id="notification-setup" class="notification-setup"' in res.data
+    assert res.data.count(b'notification-setup.js') == 1, "One script sets up both"
     res = client.post(url_for('settings.notifications.apprise'), data={
         'notification_urls': '',
         'notification_title': 'Title',
@@ -101,7 +106,9 @@ def test_where_to_send_errors_setting(client, live_server, measure_memory_usage,
     }, follow_redirects=True)
     assert b'Settings updated.' in res.data
     assert app['notification_errors_urls'] == ['json://errors-one', 'json://errors-two']
-    assert b'json://errors-one' in client.get(url_for('settings.notifications.apprise')).data
+    res = client.get(url_for('settings.notifications.apprise'))
+    assert b'json://errors-one' in res.data
+    assert b'<details class="form-wrapper" id="notification-errors-urls" open>' in res.data, "Open when it has something"
 
     # Every error goes there and only there, in the system's format
     for uuid in (own, in_group, nothing_set):

@@ -1504,6 +1504,20 @@ msgstr "預設通知"
 msgid "These notifications apply to all web page watches, or you can configure them per group or per watch separately."
 msgstr "這些通知套用至所有網頁監測任務，或者您也可以個別針對每個群組或每個監測任務進行設定。"
 
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Where to send errors?"
+msgstr "錯誤要傳送到哪裡?"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid ""
+"Alerts about a watch that needs attention (a filter that is no longer on the page, a browser step that could not be "
+"run) are sent here."
+msgstr "需要注意的監測任務的警示(頁面上已不存在的篩選器、無法執行的瀏覽器步驟)會傳送到這裡。"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Leave empty to send them wherever the notifications of that watch go."
+msgstr "留空則傳送到該監測任務通知的目的地。"
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"

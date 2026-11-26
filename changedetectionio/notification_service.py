@@ -91,13 +91,18 @@ def error_notification_senders(datastore, watch):
     app_settings = datastore.data['settings']['application']
     error_urls = app_settings.get('notification_errors_urls')
     if error_urls:
+        logger.info(f"Using the custom error notification destination ('Where to send errors?', {len(error_urls)} URL(s)) "
+                    f"for the error alert of watch {watch.get('uuid')}")
         return [{
             'notification_urls': error_urls,
             'notification_format': app_settings.get('notification_format') or default_notification_format,
         }]
 
+    senders = notification_senders(datastore, watch)
+    logger.info(f"No custom error notification destination set, the error alert of watch {watch.get('uuid')} goes where "
+                f"its notifications go ({len(senders)} destination(s))")
     return [{'notification_urls': sender['notification_urls'], 'notification_format': sender['notification_format']}
-            for sender in notification_senders(datastore, watch)]
+            for sender in senders]
 
 
 def notification_senders(datastore, watch):

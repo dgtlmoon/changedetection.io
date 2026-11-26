@@ -1569,6 +1569,22 @@ msgstr ""
 "Estas notificaciones se aplican a todos los monitores de página, o bien puede configurarlas por grupo o por monitor "
 "de forma individual."
 
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Where to send errors?"
+msgstr "¿Dónde enviar los errores?"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid ""
+"Alerts about a watch that needs attention (a filter that is no longer on the page, a browser step that could not be "
+"run) are sent here."
+msgstr ""
+"Las alertas sobre un monitor que necesita atención (un filtro que ya no está en la página, un paso del navegador que "
+"no se pudo ejecutar) se envían aquí."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Leave empty to send them wherever the notifications of that watch go."
+msgstr "Déjelo vacío para enviarlas adonde van las notificaciones de ese monitor."
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
