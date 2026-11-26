@@ -1027,3 +1027,36 @@ def test_delete_group_says_its_watches_are_kept(client, live_server, measure_mem
     assert watch_uuid in datastore.data['watching'] and datastore.data['watching'][watch_uuid]['tags'] == []
 
     delete_all_watches(client)
+
+
+def test_group_edit_refuses_what_is_not_valid(client, live_server, measure_memory_usage, datastore_path):
+    """The group's page validates what it is sent, an invalid value is refused and nothing of that save is kept"""
+    datastore = client.application.config.get('DATASTORE')
+    tag_uuid = datastore.add_tag(title="Shops")
+    tag = datastore.data['settings']['application']['tags'][tag_uuid]
+    good_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    edit_url = url_for("tags.form_tag_edit_submit", uuid=tag_uuid)
+
+    # Something valid is saved
+    res = client.post(edit_url, data={'title': 'Shops', 'notification_urls': good_url, 'notification_group_mode': 'add',
+                                      'notification_body': 'Changed {{ watch_url }}', 'fetch_backend': 'system'},
+                      follow_redirects=True)
+    assert b'Updated' in res.data
+    assert tag['notification_urls'] == [good_url] and tag['notification_group_mode'] == 'add'
+
+    for field, bad_value, kept in (
+            ('notification_urls', 'this-is-not-a-notification-url', [good_url]),
+            ('notification_body', 'Changed {{ not_a_real_token }}', 'Changed {{ watch_url }}'),
+            ('notification_group_mode', 'not-a-mode', 'add'),
+            ('fetch_backend', 'html_no_such_fetcher', 'system'),
+            ('tag_colour', 'red; } body { display: none', tag.get('tag_colour')),
+    ):
+        data = {'title': 'Renamed while saving something invalid', 'notification_urls': good_url,
+                'notification_group_mode': 'add', 'notification_body': 'Changed {{ watch_url }}', 'fetch_backend': 'system'}
+        data[field] = bad_value
+        res = client.post(edit_url, data=data, follow_redirects=True)
+        assert b'Updated' not in res.data, field
+        assert tag.get(field) == kept, f"{field} was not saved"
+        assert tag['title'] == 'Shops', f"{field}: nothing else of that save was kept either"
+
+    datastore.data['settings']['application']['tags'].clear()
