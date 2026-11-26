@@ -88,8 +88,9 @@ function renderNotificationRecipients() {
     });
 }
 
-function appendNotificationUrl(url) {
-    var $ta = $('textarea.notification-urls');
+// `target`: a selector for another textarea of notification URLs, the main list when left out
+function appendNotificationUrl(url, target) {
+    var $ta = $(target || 'textarea.notification-urls');
     var cur = $.trim($ta.val() || '');
     $ta.val(cur ? cur + '\n' + url : url);
     $ta.trigger('input');

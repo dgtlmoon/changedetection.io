@@ -74,6 +74,7 @@ def construct_notifications_blueprint(datastore: ChangeDetectionStore):
             'notification_body': app_settings.get('notification_body') or '',
             'notification_format': app_settings.get('notification_format') or '',
             'base_url': app_settings.get('base_url') or '',
+            'notification_errors_urls': app_settings.get('notification_errors_urls') or [],
         }
 
         form = forms.globalSettingsAppriseNotificationForm(
@@ -84,7 +85,7 @@ def construct_notifications_blueprint(datastore: ChangeDetectionStore):
 
         if request.method == 'POST' and form.validate():
             for field in ('notification_urls', 'notification_title', 'notification_body',
-                          'notification_format', 'base_url'):
+                          'notification_format', 'base_url', 'notification_errors_urls'):
                 app_settings[field] = form.data.get(field)
             datastore.commit()
             flash(gettext("Settings updated."))

@@ -79,6 +79,32 @@ def _check_cascading_vars(datastore, var_name, watch, system_fallback=True):
     return None
 
 
+def error_notification_senders(datastore, watch):
+    """Where an error alert about this watch goes (a filter that is no longer on the page, a browser step that
+    could not be run), as a list of dicts holding notification_urls and notification_format.
+
+    The system-wide "Where to send errors?" list (notification_errors_urls) when it has something, in the system's
+    format. Otherwise wherever a change on this watch is sent, watch > group > system (notification_senders())."""
+    if not watch or watch.get('notification_muted'):
+        return []
+
+    app_settings = datastore.data['settings']['application']
+    error_urls = app_settings.get('notification_errors_urls')
+    if error_urls:
+        logger.info(f"Using the custom error notification destination ('Where to send errors?', {len(error_urls)} URL(s)) "
+                    f"for the error alert of watch {watch.get('uuid')}")
+        return [{
+            'notification_urls': error_urls,
+            'notification_format': app_settings.get('notification_format') or default_notification_format,
+        }]
+
+    senders = notification_senders(datastore, watch)
+    logger.info(f"No custom error notification destination set, the error alert of watch {watch.get('uuid')} goes where "
+                f"its notifications go ({len(senders)} destination(s))")
+    return [{'notification_urls': sender['notification_urls'], 'notification_format': sender['notification_format']}
+            for sender in senders]
+
+
 def notification_senders(datastore, watch):
     """Every notification a change on this watch sends, as a list of dicts holding
     notification_urls, notification_title, notification_body and notification_format.
@@ -574,31 +600,35 @@ Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
 Thanks - Your omniscient changedetection.io installation.
 """
 
-        n_object = NotificationContextData({
-            'notification_title': 'Changedetection.io - Alert - CSS/xPath filter was not present in the page',
-            'notification_body': body,
-            'notification_format': _check_cascading_vars(self.datastore, 'notification_format', watch),
-        })
-        n_object['markup_text_links_to_html_links'] = (n_object.get('notification_format') or '').startswith('html')
+        if self._queue_error_notification(
+                watch,
+                title='Changedetection.io - Alert - CSS/xPath filter was not present in the page',
+                body=body,
+                extra={'screenshot': None}):
+            logger.debug(f"Sent filter not found notification for {watch_uuid}")
+        else:
+            logger.debug(f"NOT sending filter not found notification for {watch_uuid} - muted, or no notification URLs")
 
-        if len(watch['notification_urls']):
-            n_object['notification_urls'] = watch['notification_urls']
-
-        elif len(self.datastore.data['settings']['application']['notification_urls']):
-            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-
-        # Only prepare to notify if the rules above matched
-        if 'notification_urls' in n_object:
+    def _queue_error_notification(self, watch, title, body, extra=None):
+        """Queue an error alert about this watch to everywhere error_notification_senders() says, True when
+        anything was queued."""
+        senders = error_notification_senders(self.datastore, watch)
+        for sender in senders:
+            n_object = NotificationContextData({
+                'notification_title': title,
+                'notification_body': body,
+                'notification_format': sender['notification_format'],
+                'notification_urls': sender['notification_urls'],
+            })
+            n_object['markup_text_links_to_html_links'] = (n_object.get('notification_format') or '').startswith('html')
             n_object.update({
                 'watch_url': watch['url'],
                 'watch_open_url': watch.open_link_override or watch['url'],
-                'uuid': watch_uuid,
-                'screenshot': None
+                'uuid': watch.get('uuid'),
             })
+            n_object.update(extra or {})
             self.notification_q.put(n_object)
-            logger.debug(f"Sent filter not found notification for {watch_uuid}")
-        else:
-            logger.debug(f"NOT sending filter not found notification for {watch_uuid} - no notification URLs")
+        return bool(senders)
 
     def send_step_failure_notification(self, watch_uuid, step_n):
         """
@@ -624,27 +654,10 @@ Edit link: {{{{base_url}}}}/edit/{{{{watch_uuid}}}}
 Thanks - Your omniscient changedetection.io installation.
 """
 
-        n_object = NotificationContextData({
-            'notification_title': f"Changedetection.io - Alert - Browser step at position {step} could not be run",
-            'notification_body': body,
-            'notification_format': _check_cascading_vars(self.datastore, 'notification_format', watch),
-        })
-        n_object['markup_text_links_to_html_links'] = (n_object.get('notification_format') or '').startswith('html')
-
-        if len(watch['notification_urls']):
-            n_object['notification_urls'] = watch['notification_urls']
-
-        elif len(self.datastore.data['settings']['application']['notification_urls']):
-            n_object['notification_urls'] = self.datastore.data['settings']['application']['notification_urls']
-
-        # Only prepare to notify if the rules above matched
-        if 'notification_urls' in n_object:
-            n_object.update({
-                'watch_url': watch['url'],
-                'watch_open_url': watch.open_link_override or watch['url'],
-                'uuid': watch_uuid
-            })
-            self.notification_q.put(n_object)
+        if self._queue_error_notification(
+                watch,
+                title=f"Changedetection.io - Alert - Browser step at position {step} could not be run",
+                body=body):
             logger.error(f"Sent step not found notification for {watch_uuid}")
 
 

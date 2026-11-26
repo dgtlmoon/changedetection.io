@@ -1633,6 +1633,22 @@ msgstr ""
 "Powiadomienia te dotyczą wszystkich obserwowanych stron internetowych; można je jednak skonfigurować osobno dla "
 "poszczególnych grup lub obserwowanych stron."
 
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Where to send errors?"
+msgstr "Gdzie wysyłać błędy?"
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid ""
+"Alerts about a watch that needs attention (a filter that is no longer on the page, a browser step that could not be "
+"run) are sent here."
+msgstr ""
+"Alerty o obserwacji wymagającej uwagi (filtr, którego nie ma już na stronie, krok przeglądarki, którego nie udało się"
+" wykonać) są wysyłane tutaj."
+
+#: changedetectionio/blueprint/settings/notifications/templates/apprise.html
+msgid "Leave empty to send them wherever the notifications of that watch go."
+msgstr "Pozostaw puste, aby wysyłać je tam, gdzie trafiają powiadomienia tej obserwacji."
+
 #. FIXME: fragment msgids (#4074)
 #: changedetectionio/blueprint/settings/notifications/templates/apprise.html
 msgid "Base URL used for the"
