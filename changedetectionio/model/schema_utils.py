@@ -29,6 +29,7 @@ SYSTEM_MANAGED_NON_SPEC_FIELDS = frozenset({
     'llm_evaluation_cache',
     'llm_last_tokens_used',
     'llm_tokens_used_cumulative',
+    'ui_prefs',                    # Per-watch UI-only preferences, e.g. ui_prefs['diff_display']
 })
 
 
