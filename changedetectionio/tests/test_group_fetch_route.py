@@ -369,3 +369,35 @@ def test_fetch_method_options_show_the_fetcher_icon(client, live_server, measure
     dialog = re.search(r'<template id="bulk-browser-options">.*?</template>', html, re.DOTALL).group(0)
     assert re.search(r'value="html_requests"> <span class="fetcher-option-icon"><img[^>]*basic-fetcher\.svg', dialog)
     assert re.search(r'value="system" checked> [^<]', dialog), "No icon, no space for one"
+
+
+def test_group_fetch_backend_that_was_removed_is_not_set(client, live_server, measure_memory_usage, datastore_path, setup):
+    datastore = setup
+    datastore.data['settings']['requests']['extra_browsers'] = [{'browser_name': 'mine', 'browser_connection_url': 'ws://127.0.0.1:9999'}]
+
+    # A group that is used instead of the watch's own, set to a fetcher whose plugin is no longer installed and
+    # to a custom browser that was deleted: the watch keeps its own, it is not put on the basic fetcher
+    for removed in ('html_plugin_that_was_uninstalled', 'extra_browser_deleted'):
+        group_uuid, group = _group(datastore, f'Group {removed}', fetch_backend=removed, fetch_backend_group_mode='replace')
+        _, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_webdriver')
+        route = resolve_fetch_route(watch, datastore)
+        assert route['fetch_backend'] == 'html_webdriver' and not route['changed_by'], removed
+        assert resolve_content_fetcher(watch, datastore)[1] == 'html_webdriver', removed
+
+        # ..and the next group of the watch that does have one decides
+        other_uuid, other = _group(datastore, f'Other {removed}', fetch_backend='html_requests', fetch_backend_group_mode='replace')
+        watch['tags'] = [group_uuid, other_uuid]
+        assert resolve_fetch_route(watch, datastore)['changed_by']['fetch_backend']['group_uuid'] == other_uuid, removed
+
+    # A custom browser that does exist is a choice like any other
+    group_uuid, group = _group(datastore, 'Custom browser', fetch_backend='extra_browser_mine', fetch_backend_group_mode='replace')
+    _, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_requests')
+    assert resolve_fetch_route(watch, datastore)['fetch_backend'] == 'extra_browser_mine'
+    assert resolve_content_fetcher(watch, datastore)[1:] == ('html_webdriver', 'ws://127.0.0.1:9999')
+
+    # A watch whose own fetcher was removed has none of its own, so a group that is only a fallback is used
+    fallback_uuid, _ = _group(datastore, 'Fallback', fetch_backend='html_webdriver', fetch_backend_group_mode='fallback')
+    _, watch = _watch(datastore, tags=[fallback_uuid], fetch_backend='html_plugin_that_was_uninstalled')
+    assert resolve_fetch_route(watch, datastore)['changed_by']['fetch_backend']['group_uuid'] == fallback_uuid
+
+    datastore.data['settings']['requests']['extra_browsers'] = []
