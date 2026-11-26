@@ -117,6 +117,25 @@ def _group_choice(watch, datastore, field, mode_field, is_set) -> Optional[Group
     return choice
 
 
+def group_with_proxy_that_is_gone(watch, datastore) -> Optional[GroupChoice]:
+    """The group that is switched on to decide this watch's proxy with one that no longer exists (.value is the
+    key it has stored), None when there is no such group. For telling the user, see processors/base.py: the lookup
+    itself (fetch_route_alter below) passes such a group over."""
+    proxy_list = getattr(datastore, 'proxy_list', None)
+    # Same lookup as for the proxy that is used, with a key that is stored but gone still counting as a choice
+    candidates = _switched_on_groups(datastore, PROXY_GROUP_MODE_FIELD,
+                                     has_value=lambda group: bool(group.get('proxy')),
+                                     value_of=lambda group: group.get('proxy'))
+    if not candidates:
+        return None
+    choice = _first_choice(watch, candidates)
+    if not choice or choice.value == 'no-proxy' or is_proxy_set(choice.value, proxy_list):
+        return None
+    if not choice.replaces_watch and is_proxy_set(watch.get('proxy'), proxy_list):
+        return None
+    return choice
+
+
 def group_recheck_seconds(group) -> int:
     from changedetectionio.model.Watch import time_between_check_to_seconds
     return time_between_check_to_seconds(group.get('time_between_check'))

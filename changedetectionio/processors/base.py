@@ -188,6 +188,17 @@ class difference_detection_processor():
                 logger.info(f"[{self.watch_uuid}] Using proxy '{one_shot}' for this check only")
                 return one_shot
             logger.warning(f"[{self.watch_uuid}] Ignoring one-shot proxy '{one_shot}', it is not a configured proxy")
+
+        # A group that decides the proxy with one that is gone: say so on the watch, never fetch through another
+        # proxy (or none) without saying
+        from changedetectionio.model.group_settings import group_with_proxy_that_is_gone
+        gone = group_with_proxy_that_is_gone(self.watch, self.datastore)
+        if gone:
+            from changedetectionio.processors.exceptions import ProcessorException
+            raise ProcessorException(
+                message=f"Group '{gone.group.get('title')}' tried to use proxy key '{gone.value}' "
+                        f"but it doesn't exist anymore, please fix the group",
+                url=self.watch.link)
         return self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
 
     async def call_browser(self, preferred_proxy_id=None):
@@ -201,6 +212,19 @@ class difference_detection_processor():
 
         # Proxy ID "key"
         preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self._proxy_for_this_check()
+
+        # A group that decides the fetch method with one that is gone (its plugin is no longer installed, the
+        # custom browser was deleted): say so on the watch, never fetch with something else without saying
+        from changedetectionio.content_fetchers import fetch_backend_exists
+        from changedetectionio.pluggy_interface import resolve_fetch_route
+        route = resolve_fetch_route(self.watch, self.datastore)
+        decided_by = route['changed_by'].get('fetch_backend') or {}
+        if decided_by.get('group_uuid') and not fetch_backend_exists(route['fetch_backend'], self.datastore):
+            from changedetectionio.processors.exceptions import ProcessorException
+            raise ProcessorException(
+                message=f"Group '{decided_by.get('label')}' tried to use fetch method '{route['fetch_backend']}' "
+                        f"but it doesn't exist, please fix the group",
+                url=url)
 
         # Resolve which content fetcher this watch should use. This is the single source of
         # truth (watch -> group -> system, extra_browser_/pdf/browser_steps overrides etc);

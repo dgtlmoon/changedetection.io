@@ -369,3 +369,89 @@ def test_fetch_method_options_show_the_fetcher_icon(client, live_server, measure
     dialog = re.search(r'<template id="bulk-browser-options">.*?</template>', html, re.DOTALL).group(0)
     assert re.search(r'value="html_requests"> <span class="fetcher-option-icon"><img[^>]*basic-fetcher\.svg', dialog)
     assert re.search(r'value="system" checked> [^<]', dialog), "No icon, no space for one"
+
+
+def test_group_fetch_backend_that_was_removed_is_an_error_on_the_watch(client, live_server, measure_memory_usage, datastore_path, setup):
+    datastore = setup
+    set_original_response(datastore_path=datastore_path)
+    datastore.data['settings']['requests']['extra_proxies'] = []
+
+    # A fetcher whose plugin is no longer installed, and a custom browser endpoint that was deleted
+    for removed in ('html_plugin_that_was_uninstalled', 'extra_browser_deleted'):
+        group_uuid, group = _group(datastore, f'Shops {removed}', fetch_backend=removed, fetch_backend_group_mode='replace')
+        watch_uuid, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_requests')
+        watch['paused'] = False
+
+        client.post(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
+        wait_for_all_checks(client)
+        expected = f"Group 'Shops {removed}' tried to use fetch method '{removed}' but it doesn't exist, please fix the group"
+        assert watch.get('last_error') == expected
+        assert watch.history_n == 0, "Not fetched with some other fetcher"
+        # ..where it is seen, in the watch list
+        assert expected.replace("'", "&#39;").encode() in client.get(url_for("watchlist.index")).data
+
+        # The group fixed, the next check goes through
+        group['fetch_backend'] = 'html_requests'
+        client.post(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
+        wait_for_all_checks(client)
+        assert not watch.get('last_error') and watch.history_n == 1
+        watch['paused'] = True
+
+    # A watch's own fetch method that is gone is not a group's doing, it is fetched as it always was
+    watch_uuid, watch = _watch(datastore, fetch_backend='html_plugin_that_was_uninstalled')
+    watch['paused'] = False
+    client.post(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert not watch.get('last_error') and watch.history_n == 1
+
+
+def test_group_proxy_that_was_removed_is_an_error_on_the_watch(client, live_server, measure_memory_usage, datastore_path, setup):
+    from changedetectionio.model.group_settings import group_with_proxy_that_is_gone
+    datastore = setup
+    set_original_response(datastore_path=datastore_path)
+    proxy_one = _proxy_key(datastore, 'one')
+
+    group_uuid, group = _group(datastore, 'Shops', proxy='ui-0gone', proxy_group_mode='replace')
+    off_uuid, _ = _group(datastore, 'Off', proxy='ui-0gone')
+    not_set_uuid, _ = _group(datastore, 'Nothing chosen', proxy=None, proxy_group_mode='replace')
+    direct_uuid, _ = _group(datastore, 'Direct', proxy='no-proxy', proxy_group_mode='replace')
+
+    def gone(tags=(), **settings):
+        choice = group_with_proxy_that_is_gone(_watch(datastore, tags=tags, **settings)[1], datastore)
+        return choice.group['uuid'] if choice else None
+
+    assert gone(tags=[group_uuid]) == group_uuid
+    assert gone(tags=[group_uuid], proxy=proxy_one) == group_uuid, "Used instead of the watch's own"
+    # Not a group that is not used, has nothing chosen, or says no proxy
+    assert gone(tags=[off_uuid, not_set_uuid, direct_uuid]) is None
+    assert gone() is None
+    # Only a fallback: the watch that has its own is not this group's
+    group['proxy_group_mode'] = 'fallback'
+    assert gone(tags=[group_uuid], proxy=proxy_one) is None
+    assert gone(tags=[group_uuid]) == group_uuid
+    group['proxy_group_mode'] = 'replace'
+
+    # The check says so on the watch and fetches nothing
+    # (no proxy that works here, so the watch is only checked while its group is the problem)
+    watch_uuid, watch = _watch(datastore, tags=[group_uuid])
+    watch['paused'] = False
+    client.post(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
+    wait_for_all_checks(client)
+    expected = "Group 'Shops' tried to use proxy key 'ui-0gone' but it doesn't exist anymore, please fix the group"
+    assert watch.get('last_error') == expected
+    assert watch.history_n == 0
+    assert expected.replace("'", "&#39;").encode() in client.get(url_for("watchlist.index")).data
+    watch['paused'] = True
+
+    # A proxy for this one check only (the proxy checker, a recheck through another proxy) is not the group's
+    from changedetectionio.processors.base import difference_detection_processor
+    processor = difference_detection_processor(datastore, watch_uuid)
+    processor.queued_metadata = {'proxy': proxy_one}
+    assert processor._proxy_for_this_check() == proxy_one
+    processor.queued_metadata = {'proxy': 'no-proxy'}
+    assert processor._proxy_for_this_check() is None
+
+    # The group fixed
+    group['proxy'] = proxy_one
+    processor.queued_metadata = {}
+    assert processor._proxy_for_this_check() == proxy_one
