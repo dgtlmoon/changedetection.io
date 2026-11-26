@@ -102,6 +102,7 @@ def render(watch, datastore, request, url_for, render_template, flash, redirect)
     # This significantly reduces memory usage by not embedding large images in HTML
     return render_template(
         'image_ssim_diff/preview.html',
+        extra_title=f" - {gettext('Preview')} - {watch.label}",
         watch=watch,
         uuid=watch.get('uuid'),
         versions=versions,

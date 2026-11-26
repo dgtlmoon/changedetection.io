@@ -907,6 +907,9 @@ def test_group_edit_page_says_which_group(client, live_server, measure_memory_us
     assert b'<title>Change Detection - Group: ' + escaped + b'</title>' in res.data
     assert b'<b>&</b> more' not in res.data
 
+    # And the list of groups
+    assert b'<title>Change Detection - Groups</title>' in client.get(url_for("tags.tags_overview_page")).data
+
     datastore.data['settings']['application']['tags'].clear()
 
 

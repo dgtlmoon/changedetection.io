@@ -1192,7 +1192,7 @@ def changedetection_app(config=None, datastore_o=None):
                 flash(gettext("Already logged in"))
                 return redirect(validated_redirect)
             flash(gettext("You must be logged in, please log in."), 'error')
-            output = render_template("login.html", redirect_url=validated_redirect)
+            output = render_template("login.html", extra_title=f" - {gettext('Login')}", redirect_url=validated_redirect)
             return output
 
         user = User()

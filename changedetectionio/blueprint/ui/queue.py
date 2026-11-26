@@ -117,6 +117,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q):
         )
         return render_template(
             "queue.html",
+            extra_title=f" - {gettext('Check queue')}",
             snapshot=snapshot,
             pagination=pagination,
             extra_classes="queue-full-width",

@@ -138,6 +138,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         output = render_template(
             "watch-overview.html",
+            # The whole list is the home page, a group's list says which group
+            extra_title=f" - {_('Group: %(name)s', name=active_tag.get('title', ''))}" if active_tag else '',
             **row_ctx,
             active_tag=active_tag,
             active_processor=active_processor,

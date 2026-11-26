@@ -76,7 +76,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         # Could be some remaining, or we could be on GET
         form = forms.importForm(formdata=request.form if request.method == 'POST' else None)
+        from flask_babel import gettext
         output = render_template("import.html",
+                                extra_title=f" - {gettext('Import')}",
                                 form=form,
                                 import_url_list_remaining="\n".join(remaining_urls),
                                 original_distill_json=''

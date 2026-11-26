@@ -346,3 +346,37 @@ def test_watch_edit_page_says_which_watch(client, live_server, measure_memory_us
     assert heading() == b'Watch: Shops &lt;b&gt;&amp;&lt;/b&gt; more'
 
     delete_all_watches(client)
+
+
+def test_pages_say_what_they_are_in_the_browser_title(client, live_server, measure_memory_usage, datastore_path):
+    import re
+    datastore = client.application.config.get('DATASTORE')
+    tag_uuid = datastore.add_tag(title="Shops")
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True, 'title': 'My shop'})
+
+    def title(url):
+        res = client.get(url, follow_redirects=True)
+        assert res.status_code == 200, url
+        return re.search(r'<title>(.*?)</title>', res.data.decode()).group(1)
+
+    for url, expected in (
+            (url_for("watchlist.index"), ''),
+            (url_for("watchlist.index", tag=tag_uuid), ' - Group: Shops'),
+            (url_for("tags.tags_overview_page"), ' - Groups'),
+            (url_for("tags.form_tag_edit", uuid=tag_uuid), ' - Group: Shops'),
+            (url_for("ui.ui_edit.edit_page", uuid=uuid), ' - Edit - My shop'),
+            (url_for("imports.import_page"), ' - Import'),
+            (url_for("settings.settings_page"), ' - Settings'),
+            (url_for("settings.notification_logs"), ' - Notification debug log'),
+            (url_for("settings.notifications.apprise"), ' - Settings - Notifications'),
+            (url_for("settings.llm.llm_settings_page"), ' - Settings - AI / LLM / MCP'),
+            (url_for("settings.llm.mcp_settings_page"), ' - Settings - AI / LLM / MCP'),
+            (url_for("backups.create"), ' - Backups'),
+            (url_for("backups.restore.restore"), ' - Backups - Restore'),
+            (url_for("ui.clear_all_history"), ' - Clear Histories'),
+            (url_for("ui.ui_queue.queue_page"), ' - Check queue'),
+    ):
+        assert title(url) == 'Change Detection' + expected, url
+
+    datastore.data['settings']['application']['tags'].clear()
+    delete_all_watches(client)
