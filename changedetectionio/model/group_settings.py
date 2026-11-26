@@ -38,20 +38,8 @@ class GroupChoice(NamedTuple):
     replaces_watch: bool
 
 
-def is_fetch_backend_set(value, datastore=None):
-    """A fetch method that exists. 'system' (none chosen) is not set, and neither is one that was removed: a
-    fetcher whose plugin is no longer installed, a custom browser endpoint that was deleted. Same as a proxy that
-    was removed, see is_proxy_set()."""
-    if not value or value == 'system':
-        return False
-    if value.startswith('extra_browser_'):
-        if datastore is None:
-            return True
-        name = value[len('extra_browser_'):]
-        extra_browsers = datastore.data['settings']['requests'].get('extra_browsers') or []
-        return any(browser.get('browser_name') == name for browser in extra_browsers)
-    from changedetectionio import content_fetchers
-    return content_fetchers.get_fetcher_by_name(value) is not None
+def is_fetch_backend_set(value):
+    return bool(value) and value != 'system'
 
 
 def is_proxy_set(value, proxy_list):
@@ -175,8 +163,7 @@ def _changed_by(choice: GroupChoice):
 
 @hookimpl
 def fetch_route_alter(watch, datastore, route):
-    choice = _group_choice(watch, datastore, 'fetch_backend', FETCH_BACKEND_GROUP_MODE_FIELD,
-                           lambda value: is_fetch_backend_set(value, datastore))
+    choice = _group_choice(watch, datastore, 'fetch_backend', FETCH_BACKEND_GROUP_MODE_FIELD, is_fetch_backend_set)
     if choice:
         route['fetch_backend'] = choice.value
         route['changed_by']['fetch_backend'] = _changed_by(choice)

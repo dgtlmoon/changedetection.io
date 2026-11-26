@@ -120,6 +120,18 @@ def get_fetcher_by_name(backend_name, watch=None):
     return fetcher_obj
 
 
+def fetch_backend_exists(backend_name, datastore):
+    """False for a fetch method that was removed: a fetcher whose plugin is no longer installed, a custom browser
+    endpoint (extra_browser_<name>) that was deleted. 'system' and empty are not a fetch method, so they exist."""
+    if not backend_name or backend_name == 'system':
+        return True
+    if backend_name.startswith('extra_browser_'):
+        name = backend_name[len('extra_browser_'):]
+        extra_browsers = datastore.data['settings']['requests'].get('extra_browsers') or []
+        return any(browser.get('browser_name') == name for browser in extra_browsers)
+    return get_fetcher_by_name(backend_name) is not None
+
+
 def resolve_content_fetcher(watch, datastore):
     """Single source of truth for resolving which content fetcher a watch should use.
 

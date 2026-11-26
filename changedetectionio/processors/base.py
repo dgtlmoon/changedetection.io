@@ -202,6 +202,19 @@ class difference_detection_processor():
         # Proxy ID "key"
         preferred_proxy_id = preferred_proxy_id if preferred_proxy_id else self._proxy_for_this_check()
 
+        # A group that decides the fetch method with one that is gone (its plugin is no longer installed, the
+        # custom browser was deleted): say so on the watch, never fetch with something else without saying
+        from changedetectionio.content_fetchers import fetch_backend_exists
+        from changedetectionio.pluggy_interface import resolve_fetch_route
+        route = resolve_fetch_route(self.watch, self.datastore)
+        decided_by = route['changed_by'].get('fetch_backend') or {}
+        if decided_by.get('group_uuid') and not fetch_backend_exists(route['fetch_backend'], self.datastore):
+            from changedetectionio.processors.exceptions import ProcessorException
+            raise ProcessorException(
+                message=f"Group '{decided_by.get('label')}' tried to use fetch method '{route['fetch_backend']}' "
+                        f"but it doesn't exist, please fix the group",
+                url=url)
+
         # Resolve which content fetcher this watch should use. This is the single source of
         # truth (watch -> group -> system, extra_browser_/pdf/browser_steps overrides etc);
         # the resolved backend name is stamped onto the fetcher instance below.

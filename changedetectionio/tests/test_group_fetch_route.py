@@ -371,33 +371,35 @@ def test_fetch_method_options_show_the_fetcher_icon(client, live_server, measure
     assert re.search(r'value="system" checked> [^<]', dialog), "No icon, no space for one"
 
 
-def test_group_fetch_backend_that_was_removed_is_not_set(client, live_server, measure_memory_usage, datastore_path, setup):
+def test_group_fetch_backend_that_was_removed_is_an_error_on_the_watch(client, live_server, measure_memory_usage, datastore_path, setup):
     datastore = setup
-    datastore.data['settings']['requests']['extra_browsers'] = [{'browser_name': 'mine', 'browser_connection_url': 'ws://127.0.0.1:9999'}]
+    set_original_response(datastore_path=datastore_path)
+    datastore.data['settings']['requests']['extra_proxies'] = []
 
-    # A group that is used instead of the watch's own, set to a fetcher whose plugin is no longer installed and
-    # to a custom browser that was deleted: the watch keeps its own, it is not put on the basic fetcher
+    # A fetcher whose plugin is no longer installed, and a custom browser endpoint that was deleted
     for removed in ('html_plugin_that_was_uninstalled', 'extra_browser_deleted'):
-        group_uuid, group = _group(datastore, f'Group {removed}', fetch_backend=removed, fetch_backend_group_mode='replace')
-        _, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_webdriver')
-        route = resolve_fetch_route(watch, datastore)
-        assert route['fetch_backend'] == 'html_webdriver' and not route['changed_by'], removed
-        assert resolve_content_fetcher(watch, datastore)[1] == 'html_webdriver', removed
+        group_uuid, group = _group(datastore, f'Shops {removed}', fetch_backend=removed, fetch_backend_group_mode='replace')
+        watch_uuid, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_requests')
+        watch['paused'] = False
 
-        # ..and the next group of the watch that does have one decides
-        other_uuid, other = _group(datastore, f'Other {removed}', fetch_backend='html_requests', fetch_backend_group_mode='replace')
-        watch['tags'] = [group_uuid, other_uuid]
-        assert resolve_fetch_route(watch, datastore)['changed_by']['fetch_backend']['group_uuid'] == other_uuid, removed
+        client.post(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
+        wait_for_all_checks(client)
+        expected = f"Group 'Shops {removed}' tried to use fetch method '{removed}' but it doesn't exist, please fix the group"
+        assert watch.get('last_error') == expected
+        assert watch.history_n == 0, "Not fetched with some other fetcher"
+        # ..where it is seen, in the watch list
+        assert expected.replace("'", "&#39;").encode() in client.get(url_for("watchlist.index")).data
 
-    # A custom browser that does exist is a choice like any other
-    group_uuid, group = _group(datastore, 'Custom browser', fetch_backend='extra_browser_mine', fetch_backend_group_mode='replace')
-    _, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_requests')
-    assert resolve_fetch_route(watch, datastore)['fetch_backend'] == 'extra_browser_mine'
-    assert resolve_content_fetcher(watch, datastore)[1:] == ('html_webdriver', 'ws://127.0.0.1:9999')
+        # The group fixed, the next check goes through
+        group['fetch_backend'] = 'html_requests'
+        client.post(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
+        wait_for_all_checks(client)
+        assert not watch.get('last_error') and watch.history_n == 1
+        watch['paused'] = True
 
-    # A watch whose own fetcher was removed has none of its own, so a group that is only a fallback is used
-    fallback_uuid, _ = _group(datastore, 'Fallback', fetch_backend='html_webdriver', fetch_backend_group_mode='fallback')
-    _, watch = _watch(datastore, tags=[fallback_uuid], fetch_backend='html_plugin_that_was_uninstalled')
-    assert resolve_fetch_route(watch, datastore)['changed_by']['fetch_backend']['group_uuid'] == fallback_uuid
-
-    datastore.data['settings']['requests']['extra_browsers'] = []
+    # A watch's own fetch method that is gone is not a group's doing, it is fetched as it always was
+    watch_uuid, watch = _watch(datastore, fetch_backend='html_plugin_that_was_uninstalled')
+    watch['paused'] = False
+    client.post(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
+    wait_for_all_checks(client)
+    assert not watch.get('last_error') and watch.history_n == 1
