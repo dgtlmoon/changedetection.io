@@ -153,8 +153,6 @@ window.watchOverviewI18n = {
     <form class="pure-form" action="{{ url_for('ui.ui_views.form_quick_watch_add', tag=active_tag_uuid) }}" method="POST" id="new-watch-form">
         <div id="add-watch-url-row">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            {# Adding from inside a group puts the new watch in that group #}
-            {% if active_tag_uuid %}<input type="hidden" name="tags" value="{{ active_tag_uuid }}">{% endif %}
             <label for="url"><strong>{{ _('Web page URL') }}</strong></label>
             {{ render_nolabel_field(form.url, placeholder="www.website.com/page.html", required=true, class="pure-input-1", span_wrap=false) }}
             <button type="submit"  id="add-watch-go" class="pure-button pure-button-primary">{{ _('Watch') }}</button>
@@ -169,6 +167,12 @@ window.watchOverviewI18n = {
                       placeholder="{{ _('e.g. Notify me when products go in/out of stock, lead times change by more than a week, or new product variants appear. Skip review additions.') }}"></textarea>
         </div>
         {% endif %}
+        {#- The groups for the new watch, the same field as a watch's "Group tag" (chips, existing groups suggested).
+            Adding from inside a group starts with that group in it. #}
+        <div class="add-watch-option-group" id="quick-watch-group">
+            <label for="{{ form.tags.id }}"><strong>{{ _('Group') }}</strong></label>
+            {{ form.tags(value=(active_tag.title if active_tag else ''), placeholder=_("Watch group / tag")) }}
+        </div>
         <div class="add-watch-option-group" id="quick-watch-processor-type">
             {{ render_simple_field(form.processor) }}
         </div>

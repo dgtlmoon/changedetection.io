@@ -310,3 +310,74 @@ def test_watch_list_row_is_sent_as_the_filtered_list_shows_it(client, live_serve
         page.disconnect()
     tags.clear()
     delete_all_watches(client)
+
+
+def test_watch_list_row_is_sent_with_the_sub_path_of_the_page(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """The app served under a sub-path (USE_X_SETTINGS and X-Forwarded-Prefix, example.com/our-changedetection/):
+    every address in a page starts with that path. A row is rendered from a worker thread, outside any request, so
+    it has to be told: it was sent with addresses from the root ("/static/images/..."), which are not the app's."""
+    import re
+    from changedetectionio.flask_app import app
+    monkeypatch.setenv('USE_X_SETTINGS', 'true')
+    datastore = client.application.config.get('DATASTORE')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True, 'fetch_backend': 'html_webdriver'})
+    prefix = '/our-changedetection'
+
+    def page_under(forwarded_prefix, page_says=None):
+        """A watch list reached under `forwarded_prefix`. page_says: the sub-path the page gives itself when it
+        asks for rows, as the page does; None for a page that does not say (the connection is asked then)."""
+        page = app.extensions['socketio'].test_client(app, flask_test_client=client,
+                                                      headers={'X-Forwarded-Prefix': forwarded_prefix} if forwarded_prefix is not None else None)
+        assert page.is_connected()
+        asks = {'uuids': [uuid], 'rows_for_tag': ''}
+        if page_says is not None:
+            asks['rows_url_prefix'] = page_says
+        page.emit('watch-subscribe', asks)
+        page.get_received()
+        return page
+
+    under_sub_path = page_under(prefix)
+    at_the_root = page_under(None)
+    # Not a path: taken as no sub-path, never put into the row
+    not_a_path = page_under('/x"><script>alert(1)</script>')
+    elsewhere = page_under('//evil.example.com')
+    # The page says its sub-path itself and the proxy sends no header for the Socket.IO address (a "location" of
+    # its own for the websocket): what the page says is what its addresses were made with
+    page_says_it = page_under(None, page_says=prefix)
+    # And what the page says is checked the same way
+    page_says_markup = page_under(None, page_says='/x"><script>alert(1)</script>')
+
+    client.post(url_for("ui.form_watch_list_checkbox_operations"), data={"op": "mute", "uuids": [uuid]}, follow_redirects=True)
+
+    def addresses(row):
+        """Every address of the app in the row: links, images, form actions"""
+        found = re.findall(r'(?:href|src|action|formaction)="([^"]*)"', row)
+        return [a for a in found if a.startswith('/')]
+
+    row = _latest_row(under_sub_path, uuid, seconds=2)
+    assert row and 'notification_muted' in row
+    local = addresses(row)
+    assert len(local) > 5, "The row has its links, buttons and images"
+    assert all(a.startswith(prefix + '/') for a in local), [a for a in local if not a.startswith(prefix + '/')]
+    # The one from the report: the icon of the browser the watch is fetched with
+    assert f'src="{prefix}/static/images/google-chrome-icon.png' in row
+
+    row = _latest_row(page_says_it, uuid, seconds=1)
+    assert row and f'src="{prefix}/static/images/google-chrome-icon.png' in row, "The sub-path the page gave is used"
+
+    for page, what in ((at_the_root, "A page at the root"), (not_a_path, "A prefix that is not a path"), (elsewhere, "A prefix that is another site"),
+                       (page_says_markup, "A page giving markup as its sub-path")):
+        row = _latest_row(page, uuid, seconds=1)
+        assert row, what
+        assert prefix not in row and 'evil.example.com' not in row and '<script>alert' not in row, what
+        assert 'src="/static/images/google-chrome-icon.png' in row, f"{what}: addresses from the root"
+
+    # Without USE_X_SETTINGS the header is anybody's to send and means nothing
+    monkeypatch.delenv('USE_X_SETTINGS')
+    not_trusted = page_under(prefix, page_says=prefix)
+    client.post(url_for("ui.form_watch_list_checkbox_operations"), data={"op": "unmute", "uuids": [uuid]}, follow_redirects=True)
+    row = _latest_row(not_trusted, uuid, seconds=2)
+    assert row and prefix not in row
+
+    for page in (under_sub_path, at_the_root, not_a_path, elsewhere, page_says_it, page_says_markup, not_trusted):
+        page.disconnect()
