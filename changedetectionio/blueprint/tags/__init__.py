@@ -275,24 +275,24 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             flash(gettext("A group name cannot have a comma in it, commas are what goes between several groups."), "error")
             return redirect(url_for('tags.form_tag_edit', uuid=uuid))
 
-        # @todo subclass form so validation works
-        #if not form.validate():
-#            for widget, l in form.errors.items():
-#                flash(','.join(l), 'error')
-#           return redirect(url_for('tags.form_tag_edit_submit', uuid=uuid))
-
-        # Until then, validate the fields that must not be taken on trust - tag_colour is
-        # rendered into a <style> block, where anything but a hex colour is CSS injection
-        if not form.tag_colour.validate(form):
-            for message in form.tag_colour.errors:
-                flash(message, 'error')
+        # The form is a watch's form with the group's fields added, so validating all of it would fail on fields
+        # a group's page does not have (the URL..). Validate what was sent: nothing is saved on trust - an
+        # invalid notification URL or template is refused here and not found out when a notification is sent,
+        # and tag_colour is rendered into a <style> block, where anything but a hex colour is CSS injection.
+        # The choices of the fetch method and proxy are the ones the page offered.
+        _prepare_request_fields(form)
+        invalid = False
+        for name, field in form._fields.items():
+            if name in request.form and not field.validate(form):
+                invalid = True
+                # (A message can be a lazy translation, not a str)
+                for message in field.errors:
+                    flash(f"{field.label.text}: {message}", 'error')
+        if invalid:
             return redirect(url_for('tags.form_tag_edit', uuid=uuid))
 
-        if datastore.proxy_list is None:
-            # Not on the page, keep what the group has stored
-            del form.proxy
-            del form.proxy_group_mode
-
+        # (With no proxies configured the proxy fields are not on the page and were taken off the form above, what
+        # the group has stored is kept)
         tag.update(form.data)
         if 'proxy' in form.data and not form.data['proxy']:
             tag['proxy'] = None
