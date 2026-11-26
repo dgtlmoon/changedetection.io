@@ -162,7 +162,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         form.fetch_backend.choices = [c for c in form.fetch_backend.choices if c[0] != 'system']
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
-        form.fetch_backend.choices.append(("system", gettext('Not set')))
+        form.fetch_backend.choices.append(("system", gettext('Not set - Use system settings default')))
         if not form.fetch_backend.data:
             form.fetch_backend.data = 'system'
 

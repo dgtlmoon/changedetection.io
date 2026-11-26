@@ -17,6 +17,14 @@ class fetcher(Fetcher):
     fetcher_description = _l("Basic fast Plaintext/HTTP Client")
     supports_pdf = True
 
+    @classmethod
+    def get_status_icon_data(cls):
+        return {
+            'filename': 'basic-fetcher.svg',
+            'alt': 'Using basic HTTP fetcher',
+            'title': 'Using basic HTTP fetcher'
+        }
+
     def __init__(self, proxy_override=None, custom_browser_connection_url=None, **kwargs):
         super().__init__(**kwargs)
         self.proxy_override = proxy_override

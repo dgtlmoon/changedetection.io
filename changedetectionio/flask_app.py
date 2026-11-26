@@ -674,6 +674,10 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
 
     icon_data = None
 
+    # A custom browser endpoint is the webdriver fetcher with its own connection URL
+    if fetcher_name and fetcher_name.startswith('extra_browser_'):
+        fetcher_name = 'html_webdriver'
+
     # First check if it's a plugin fetcher (plugins have priority)
     plugin_icon_data = collect_fetcher_status_icons(fetcher_name)
     if plugin_icon_data:

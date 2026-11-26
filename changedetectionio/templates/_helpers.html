@@ -1,3 +1,10 @@
+{#- The fetcher's icon at the start of a 'Fetch Method' option, the same one the watch list shows. Nothing at all for
+    an option without an icon ('System settings default', 'Not set'). Used by forms.py FetcherRadioWidget too. -#}
+{% macro fetcher_option_icon(fetcher_name) -%}
+{%- set icon = fetcher_name|fetcher_status_icons -%}
+{%- if icon %}<span class="fetcher-option-icon">{{ icon }}</span>{% endif -%}
+{%- endmacro %}
+
 {% macro render_field(field) %}
     <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field.label }}</div>
     <div {% if field.errors or field.top_errors %} class="error" {% endif %}>{{ field(**kwargs)|safe }}
