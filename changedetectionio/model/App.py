@@ -56,6 +56,9 @@ class model(dict):
                     'notification_format': default_notification_format,
                     'notification_title': default_notification_title,
                     'notification_urls': [], # Apprise URL list
+                    # Where error alerts go (filter not found, browser step failed), empty for wherever the
+                    # watch's own notifications go
+                    'notification_errors_urls': [],
                     'pager_size': 50,
                     'password': False,
                     'render_anchor_tag_content': False,

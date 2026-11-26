@@ -28,6 +28,13 @@
                 <fieldset>
                     {{ notification_part_render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                 </fieldset>
+                <div class="pure-control-group" id="notification-errors-urls">
+                    {{ render_field(form.notification_errors_urls, rows=3, class="notification-errors-urls m-d", placeholder=_('Use AppRise Notification URLs, one per line')) }}
+                    <span class="pure-form-message-inline">
+                        {{ _('Alerts about a watch that needs attention (a filter that is no longer on the page, a browser step that could not be run) are sent here.') }}<br>
+                        {{ _('Leave empty to send them wherever the notifications of that watch go.') }}
+                    </span>
+                </div>
                 <div class="pure-control-group" id="notification-base-url">
                     {{ render_field(form.base_url, class="m-d") }}
                     <span class="pure-form-message-inline">
