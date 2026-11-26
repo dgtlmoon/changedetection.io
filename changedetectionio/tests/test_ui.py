@@ -380,3 +380,45 @@ def test_pages_say_what_they_are_in_the_browser_title(client, live_server, measu
 
     datastore.data['settings']['application']['tags'].clear()
     delete_all_watches(client)
+
+
+def test_page_title_in_list_is_the_watch_s_own_choice_then_the_system_s(client, live_server, measure_memory_usage, datastore_path):
+    """A watch on Yes or No is shown that way whatever the system setting is, only one left on "Default" follows it"""
+    datastore = client.application.config.get('DATASTORE')
+    ui_settings = datastore.data['settings']['application']['ui']
+    test_url = url_for('test_endpoint', _external=True)
+
+    uuids = {}
+    for own in (None, True, False):
+        uuid = datastore.add_watch(url=test_url + f"?own={own}", extras={'paused': True})
+        watch = datastore.data['watching'][uuid]
+        watch['page_title'] = f"Page title of {own}"
+        watch['use_page_title_in_list'] = own
+        uuids[own] = uuid
+
+    def shown(system):
+        ui_settings['use_page_title_in_list'] = system
+        html = client.get(url_for("watchlist.index")).data.decode()
+        return {own: f"Page title of {own}" in html for own in uuids}
+
+    assert shown(system=True) == {None: True, True: True, False: False}, "A watch on No is not shown with its page title"
+    assert shown(system=False) == {None: False, True: True, False: False}
+
+    # The same answer for the RSS feeds' label
+    from changedetectionio.blueprint.rss._util import get_watch_label
+    ui_settings['use_page_title_in_list'] = True
+    watch = datastore.data['watching'][uuids[False]]
+    assert get_watch_label(datastore, watch) == watch.get('url')
+    assert get_watch_label(datastore, datastore.data['watching'][uuids[None]]) == "Page title of None"
+
+    # Chosen on the watch's edit page
+    res = client.post(url_for("ui.ui_edit.edit_page", uuid=uuids[None]),
+                      data={"url": test_url + "?own=None", "fetch_backend": "html_requests",
+                            "time_between_check_use_default": "y", "use_page_title_in_list": "false"},
+                      follow_redirects=True)
+    assert b"Updated watch." in res.data
+    assert datastore.data['watching'][uuids[None]]['use_page_title_in_list'] is False
+    assert shown(system=True)[None] is False
+
+    ui_settings['use_page_title_in_list'] = True
+    delete_all_watches(client)
