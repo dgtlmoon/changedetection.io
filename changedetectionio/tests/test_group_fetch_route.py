@@ -291,3 +291,81 @@ def test_group_edit_says_which_group_a_watch_follows(client, live_server, measur
     assert resolve_fetch_route(watch, datastore)['fetch_backend'] == 'html_requests'
     watch['tags'] = [second_uuid, group_uuid]
     assert resolve_fetch_route(watch, datastore)['fetch_backend'] == 'html_webdriver'
+
+
+def test_watch_list_fetcher_icon_follows_watch_then_group_then_system(client, live_server, measure_memory_usage, datastore_path, setup):
+    import re
+    datastore = setup
+    basic, browser = 'basic-fetcher.svg', 'google-chrome-icon.png'
+    fallback_uuid, fallback_group = _group(datastore, 'Fallback', fetch_backend='html_webdriver', fetch_backend_group_mode='fallback')
+    replace_uuid, replace_group = _group(datastore, 'Replace', fetch_backend='html_requests', fetch_backend_group_mode='replace')
+
+    on_system, _ = _watch(datastore)
+    own_basic, _ = _watch(datastore, fetch_backend='html_requests')
+    own_browser, _ = _watch(datastore, fetch_backend='html_webdriver')
+    group_fallback, _ = _watch(datastore, tags=[fallback_uuid])
+    own_beats_fallback, _ = _watch(datastore, tags=[fallback_uuid], fetch_backend='html_requests')
+    group_replaces_own, _ = _watch(datastore, tags=[replace_uuid], fetch_backend='html_webdriver')
+
+    def icons():
+        html = client.get(url_for("watchlist.index")).data.decode()
+        rows = {}
+        for uuid in datastore.data['watching']:
+            row = re.search(rf'<tr id="{uuid}".*?</tr>', html, re.DOTALL).group(0)
+            rows[uuid] = (basic in row, browser in row)
+        return rows
+
+    rows = icons()
+    assert rows[on_system] == (True, False), "Nothing set anywhere, the system default"
+    assert rows[own_basic] == (True, False)
+    assert rows[own_browser] == (False, True)
+    assert rows[group_fallback] == (False, True), "None of its own, its group decides"
+    assert rows[own_beats_fallback] == (True, False), "A fallback group leaves the watch's own choice"
+    assert rows[group_replaces_own] == (True, False), "The group is used instead of the watch's own"
+    assert b'title="Using basic HTTP fetcher"' in client.get(url_for("watchlist.index")).data
+
+    # The system default changes, only the watches left on it follow
+    datastore.data['settings']['application']['fetch_backend'] = 'html_webdriver'
+    rows = icons()
+    assert rows[on_system] == (False, True)
+    assert rows[own_basic] == (True, False)
+    assert rows[group_replaces_own] == (True, False)
+
+    # Groups switched off, back to the watch's own and then the system default
+    fallback_group['fetch_backend_group_mode'] = 'off'
+    replace_group['fetch_backend_group_mode'] = 'off'
+    rows = icons()
+    assert rows[group_fallback] == (False, True), "System default, a browser now"
+    assert rows[group_replaces_own] == (False, True), "Its own choice again"
+    datastore.data['settings']['application']['fetch_backend'] = 'html_requests'
+    assert icons()[group_fallback] == (True, False)
+
+
+def test_fetch_method_options_show_the_fetcher_icon(client, live_server, measure_memory_usage, datastore_path, setup):
+    import re
+    datastore = setup
+    group_uuid, _ = _group(datastore, 'Shops')
+    watch_uuid, _ = _watch(datastore)
+
+    def option_icons(url, field_id='fetch_backend'):
+        html = client.get(url).data.decode()
+        field = re.search(rf'<ul[^>]*id="{field_id}".*?</ul>', html, re.DOTALL).group(0)
+        # value -> its label, an option without an icon is the text alone (no empty space left for one)
+        return dict(re.findall(r'value="([^"]+)">\s*<label[^>]*>(.*?)</label>', field))
+
+    for url, field_id, unset in ((url_for("ui.ui_edit.edit_page", uuid=watch_uuid), 'fetch_backend', 'system'),
+                                 (url_for("tags.form_tag_edit", uuid=group_uuid), 'fetch_backend', 'system'),
+                                 (url_for("settings.settings_page"), 'application-fetch_backend', None)):
+        icons = option_icons(url, field_id)
+        assert '<span class="fetcher-option-icon"><img' in icons['html_requests'], url
+        assert 'basic-fetcher.svg' in icons['html_requests'], url
+        assert 'title="Using basic HTTP fetcher"' in icons['html_requests'], url
+        assert 'google-chrome-icon.png' in icons['html_webdriver'], url
+        if unset:
+            assert 'fetcher-option-icon' not in icons[unset] and '<img' not in icons[unset], url
+
+    # The same list in the watch list's 'Browser' dialog
+    html = client.get(url_for("watchlist.index")).data.decode()
+    dialog = re.search(r'<template id="bulk-browser-options">.*?</template>', html, re.DOTALL).group(0)
+    assert re.search(r'value="html_requests"> <span class="fetcher-option-icon"><img[^>]*basic-fetcher\.svg', dialog)
+    assert re.search(r'value="system" checked> [^<]', dialog), "No icon, no space for one"

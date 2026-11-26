@@ -267,7 +267,8 @@
   text-align: left;
 
   .bulk-choice-row {
-    display: block;
+    display: flex;
+    align-items: center;
     padding: 0.5rem 0.625rem;
     border: 1px solid transparent;
     border-radius: 8px;
@@ -275,7 +276,7 @@
 
     input[type="radio"] {
       margin: 0 0.625rem 0 0;
-      vertical-align: -0.1em;
+      flex: 0 0 auto;
       accent-color: var(--color-background-button-primary);
     }
 

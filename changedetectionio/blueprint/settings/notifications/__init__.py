@@ -94,6 +94,7 @@ def construct_notifications_blueprint(datastore: ChangeDetectionStore):
 
         return render_template(
             "apprise.html",
+            extra_title=f" - {gettext('Settings')} - {gettext('Notifications')}",
             form=form,
             emailprefix=os.getenv('NOTIFICATION_MAIL_BUTTON_PREFIX', False),
             extra_notification_token_placeholder_info=datastore.get_unique_notification_token_placeholders_available(),

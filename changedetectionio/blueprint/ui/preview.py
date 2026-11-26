@@ -108,7 +108,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  current_diff_url=watch.open_link,
                                  current_version=timestamp,
                                  extra_stylesheets=extra_stylesheets,
-                                 extra_title=f" - {gettext('Diff')} - {watch.label} @ {timestamp}",
+                                 extra_title=f" - {gettext('Preview')} - {watch.label} @ {timestamp}",
                                  highlight_ignored_line_numbers=ignored_line_numbers,
                                  highlight_triggered_line_numbers=triggered_line_numbers,
                                  highlight_blocked_line_numbers=blocked_line_numbers,

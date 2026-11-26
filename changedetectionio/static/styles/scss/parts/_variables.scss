@@ -5,6 +5,9 @@
  */
 
 :root {
+  // Small row icons: the fetcher/PDF/steps icons of the watch list and of the 'Fetch Method' options
+  --status-icon-size: 1.4rem;
+
   // Fonts: every font of the app comes from these, by the rules at the top of styles.scss (which take the place
   // of the font rules of pure-min.css). Change one here to change it everywhere, and in the browser's inspector
   // anything that does not trace back to one of these is an exception worth a look.

@@ -59,6 +59,10 @@
 
 <div class="edit-form monospaced-textarea">
 
+    {#- Which watch this is, the tabs alone don't say (same heading as a group's edit page) #}
+    {#- One line, a long URL fades out at the edge and never makes the page wider. The whole of it is in the tooltip. #}
+    <h2 class="edit-form-heading edit-form-heading-oneline" title="{{ watch.label }}">{{ _('Watch: %(name)s', name=watch.label) }}</h2>
+
     <div class="tabs collapsable">
         <ul>
             <li class="tab"><a href="#general">{{ _('General') }}</a></li>

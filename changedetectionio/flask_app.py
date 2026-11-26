@@ -674,6 +674,10 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
 
     icon_data = None
 
+    # A custom browser endpoint is the webdriver fetcher with its own connection URL
+    if fetcher_name and fetcher_name.startswith('extra_browser_'):
+        fetcher_name = 'html_webdriver'
+
     # First check if it's a plugin fetcher (plugins have priority)
     plugin_icon_data = collect_fetcher_status_icons(fetcher_name)
     if plugin_icon_data:
@@ -1188,7 +1192,7 @@ def changedetection_app(config=None, datastore_o=None):
                 flash(gettext("Already logged in"))
                 return redirect(validated_redirect)
             flash(gettext("You must be logged in, please log in."), 'error')
-            output = render_template("login.html", redirect_url=validated_redirect)
+            output = render_template("login.html", extra_title=f" - {gettext('Login')}", redirect_url=validated_redirect)
             return output
 
         user = User()
