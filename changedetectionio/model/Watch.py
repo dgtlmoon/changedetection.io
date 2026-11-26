@@ -572,6 +572,15 @@ class model(EntityPersistenceMixin, watch_base):
         return self.get('title') or self.get('page_title') or self.link
 
     @property
+    def shows_page_title_in_list(self):
+        """The page's <title> is shown for this watch in the watch list and the RSS feeds: the watch's own Yes or
+        No, the system setting when the watch leaves it on "Default" (None)."""
+        own = self.get('use_page_title_in_list')
+        if own is not None:
+            return bool(own)
+        return bool(self._datastore['settings']['application'].get('ui', {}).get('use_page_title_in_list'))
+
+    @property
     def last_changed(self):
         # last_changed will be the newest snapshot, but when we have just one snapshot, it should be 0
         if self.__history_n <= 1:
