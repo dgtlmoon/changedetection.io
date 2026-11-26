@@ -264,7 +264,7 @@ def test_group_fetch_backend_is_what_the_check_uses(client, live_server, measure
     watch_uuid, watch = _watch(datastore, tags=[group_uuid], fetch_backend='html_webdriver')
     watch['paused'] = False
 
-    client.get(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow", uuid=watch_uuid), follow_redirects=True)
     wait_for_all_checks(client)
     assert not watch.get('last_error'), "Fetched with the group's fetch method"
     assert watch.history_n >= 1

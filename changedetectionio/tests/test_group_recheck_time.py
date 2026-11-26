@@ -154,7 +154,7 @@ def test_scheduler_uses_the_group_recheck_time(client, live_server, measure_memo
     uuid, watch = _watch(datastore, tags=[group_uuid], time_between_check_use_default=False,
                          time_between_check={'weeks': 4})
     watch['paused'] = False
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     last_checked = watch['last_checked']
     assert last_checked

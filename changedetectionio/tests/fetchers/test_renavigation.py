@@ -77,7 +77,7 @@ def test_redirect_from_the_load_event_is_followed(client, live_server, measure_m
 
     datastore = live_server.app.config['DATASTORE']
     uuid = datastore.add_watch(url=_cdio(url_for('test_onload_redirect', _external=True)))
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     watch = datastore.data['watching'][uuid]
@@ -114,7 +114,7 @@ def test_har_record_env_writes_har_zip(client, live_server, measure_memory_usage
     # Upper-cased and with a neighbour in the list, the match is case insensitive
     monkeypatch.setenv('HAR_UUID_RECORD', f"not-a-real-uuid, {recorded.upper()}")
 
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
 
     watch = datastore.data['watching'][recorded]

@@ -24,7 +24,7 @@ def test_delete_watch_while_it_is_being_checked(client, live_server, measure_mem
 
     slow_url = url_for('test_endpoint', _external=True) + "?delay=6"
     uuid = datastore.add_watch(url=slow_url, extras={'processor': 'restock_diff'})
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     assert _wait_until(lambda: worker_pool.is_watch_running(uuid)), "The slow check should have started"
     time.sleep(1)  # Let it get into the fetch
 
@@ -38,7 +38,7 @@ def test_delete_watch_while_it_is_being_checked(client, live_server, measure_mem
 
     # The replacement worker picks up the next check
     uuid2 = datastore.add_watch(url=url_for('test_endpoint', _external=True))
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     assert datastore.data['watching'][uuid2].get('last_checked'), "Checks should still run after the delete"
     assert not datastore.data['watching'][uuid2].get('last_error')
