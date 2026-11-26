@@ -325,3 +325,24 @@ def test_watchlist_healthy_filter(client, live_server, measure_memory_usage, dat
     assert b'post-list-with-errors' in res.data
 
     delete_all_watches(client)
+
+
+def test_watch_edit_page_says_which_watch(client, live_server, measure_memory_usage, datastore_path):
+    datastore = client.application.config.get('DATASTORE')
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = datastore.add_watch(url=test_url, extras={'paused': True})
+    watch = datastore.data['watching'][uuid]
+
+    def heading():
+        res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+        assert res.status_code == 200
+        return res.data.split(b'<h2 class="edit-form-heading edit-form-heading-oneline"')[1].split(b'>', 1)[1].split(b'</h2>')[0]
+
+    # No title of its own, the URL
+    assert heading() == b'Watch: ' + test_url.encode()
+
+    # Its own title, above the tabs, text and never markup
+    watch['title'] = "Shops <b>&</b> more"
+    assert heading() == b'Watch: Shops &lt;b&gt;&amp;&lt;/b&gt; more'
+
+    delete_all_watches(client)

@@ -29,6 +29,20 @@ ul#conditions_match_logic {
   overflow-wrap: anywhere;
 }
 
+// A heading kept to one line: what does not fit is cut at the edge and fades out over its last part, it never
+// wraps and never makes the page wider. A name that fits is nowhere near the fade.
+.edit-form-heading-oneline {
+  --heading-fade: 3.5em;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--heading-fade)), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - var(--heading-fade)), transparent);
+}
+
 // A group (or plugin) decides this setting, so the watch's own choice has no effect. Still submitted with the
 // form, the watch keeps it for when the group stops deciding.
 .decided-elsewhere {
