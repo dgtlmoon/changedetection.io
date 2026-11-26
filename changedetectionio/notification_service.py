@@ -79,6 +79,17 @@ def _check_cascading_vars(datastore, var_name, watch, system_fallback=True):
     return None
 
 
+def notifications_muted(datastore, watch):
+    """Muted on the watch itself, or by any group it is in (its own groups and the ones applied by URL pattern).
+    A muted group silences its watches whether or not the group has notification settings of its own."""
+    if not watch:
+        return True
+    if watch.get('notification_muted'):
+        return True
+    groups = datastore.get_all_tags_for_watch(uuid=watch.get('uuid')) or {}
+    return any(group.get('notification_muted') for group in groups.values())
+
+
 def notification_senders(datastore, watch):
     """Every notification a change on this watch sends, as a list of dicts holding
     notification_urls, notification_title, notification_body and notification_format.
@@ -97,7 +108,7 @@ def notification_senders(datastore, watch):
         default_notification_body,
         default_notification_title,
     )
-    if not watch:
+    if not watch or notifications_muted(datastore, watch):
         return []
 
     app_settings = datastore.data['settings']['application']
@@ -558,7 +569,7 @@ class NotificationService:
         """
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
         watch = self.datastore.data['watching'].get(watch_uuid)
-        if not watch:
+        if not watch or notifications_muted(self.datastore, watch):
             return
 
         filter_list = ", ".join(watch['include_filters'])
@@ -605,7 +616,7 @@ Thanks - Your omniscient changedetection.io installation.
         Send notification when browser steps fail consecutively
         """
         watch = self.datastore.data['watching'].get(watch_uuid, False)
-        if not watch:
+        if not watch or notifications_muted(self.datastore, watch):
             return
         threshold = self.datastore.data['settings']['application'].get('filter_failure_notification_threshold_attempts')
 

@@ -332,9 +332,9 @@ def test_group_notification_mode_senders(client, live_server, measure_memory_usa
     watch['tags'].remove(second_tag_uuid)
     tag['notification_group_mode'] = 'replace'
 
-    # A muted group sends nothing, the watch's own carries on
+    # A muted group mutes its watches, the watch's own is not sent either (tests/test_group_notification_mute.py)
     tag['notification_muted'] = True
-    assert [s['notification_urls'] for s in notification_senders(datastore, watch)] == [watch_urls]
+    assert notification_senders(datastore, watch) == []
     tag['notification_muted'] = False
 
     # The system-wide URLs are only for when nothing else is sent
