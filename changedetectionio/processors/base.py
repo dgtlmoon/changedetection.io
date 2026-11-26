@@ -188,6 +188,17 @@ class difference_detection_processor():
                 logger.info(f"[{self.watch_uuid}] Using proxy '{one_shot}' for this check only")
                 return one_shot
             logger.warning(f"[{self.watch_uuid}] Ignoring one-shot proxy '{one_shot}', it is not a configured proxy")
+
+        # A group that decides the proxy with one that is gone: say so on the watch, never fetch through another
+        # proxy (or none) without saying
+        from changedetectionio.model.group_settings import group_with_proxy_that_is_gone
+        gone = group_with_proxy_that_is_gone(self.watch, self.datastore)
+        if gone:
+            from changedetectionio.processors.exceptions import ProcessorException
+            raise ProcessorException(
+                message=f"Group '{gone.group.get('title')}' tried to use proxy key '{gone.value}' "
+                        f"but it doesn't exist anymore, please fix the group",
+                url=self.watch.link)
         return self.datastore.get_preferred_proxy_for_watch(uuid=self.watch.get('uuid'))
 
     async def call_browser(self, preferred_proxy_id=None):
