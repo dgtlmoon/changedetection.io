@@ -200,6 +200,28 @@ class WatchListGroupForm(Form):
     bulk_groups_replace = BooleanField(_l('Also remove any existing group assigned'), default=False)
 
 
+class FetcherRadioWidget:
+    """The 'Fetch Method' radio list (<ul><li><input> <label>) with the fetcher's status icon at the start of each
+    label, the same icon the watch list shows for it (the fetcher_option_icon macro of _helpers.html). An option
+    without one ('System settings default', 'Not set') is the text alone."""
+
+    def __call__(self, field, **kwargs):
+        from flask import get_template_attribute
+        from markupsafe import Markup, escape
+        from wtforms.widgets import html_params
+
+        icon_for = get_template_attribute('_helpers.html', 'fetcher_option_icon')
+        kwargs.setdefault("id", field.id)
+        html = [f"<ul {html_params(**kwargs)}>"]
+        for subfield in field:
+            html.append(
+                f'<li>{subfield()} <label for="{escape(subfield.id)}">'
+                f'{icon_for(subfield.data)}{escape(subfield.label.text)}</label></li>'
+            )
+        html.append("</ul>")
+        return Markup("".join(html))
+
+
 class LabelAfterInputTableWidget(widgets.TableWidget):
     """
     Variant of WTForms' TableWidget that renders the input cell before the label cell,
@@ -952,7 +974,7 @@ class commonSettingsForm(Form):
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
 
-    fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), widget=FetcherRadioWidget(), validators=[ValidateContentFetcherIsReady()])
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
@@ -1219,7 +1241,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
 
     api_access_token_enabled = BooleanField(_l('API access token security check enabled'), default=True, validators=[validators.Optional()])
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
-    fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), widget=FetcherRadioWidget(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
     global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField(_l('Ignore whitespace'))

@@ -40,6 +40,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
 
         return render_template(
             "add-watch-ui.html",
+            extra_title=f" - {gettext('Add watch')}",
             browser_backend_disabled=strtobool(os.getenv('ADD_WATCH_UI_BROWSER_BACKEND_DISABLED', 'False')),
             active_tag_title=active_tag_title,
             form=form,

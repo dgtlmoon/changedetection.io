@@ -194,6 +194,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             plugin_forms[plugin_id] = form_class(data=settings)
 
         output = render_template("settings.html",
+                                extra_title=f" - {gettext('Settings')}",
                                 active_plugins=active_plugins,
                                 api_key=datastore.data['settings']['application'].get('api_access_token'),
                                 python_version=python_version,
@@ -229,6 +230,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def notification_logs():
         from changedetectionio.flask_app import notification_debug_log
         output = render_template("notification-log.html",
+                               extra_title=f" - {gettext('Notification debug log')}",
                                logs=notification_debug_log if len(notification_debug_log) else ["Notification logs are empty - no notifications sent yet."])
         return output
 

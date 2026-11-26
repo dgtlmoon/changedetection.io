@@ -199,6 +199,7 @@ def construct_restore_blueprint(datastore):
     def restore():
         form = RestoreForm()
         return render_template("backup_restore.html",
+                               extra_title=f" - {gettext('Backups')} - {gettext('Restore')}",
                                form=form,
                                restore_running=any(t.is_alive() for t in restore_threads),
                                max_upload_mb=_MAX_UPLOAD_BYTES // (1024 * 1024),

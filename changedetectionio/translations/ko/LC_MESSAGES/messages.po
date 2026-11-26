@@ -22,6 +22,10 @@ msgstr ""
 msgid "Adding a watch with a browser needs an interactive browser (screenshots + element data) - none is configured."
 msgstr ""
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Add watch"
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
@@ -117,6 +121,11 @@ msgstr "백업 가능 개수를 초과했습니다. 일부를 삭제해 주세�
 msgid "Backup building in background, check back in a few minutes."
 msgstr "백업을 백그라운드에서 생성하고 있습니다. 잠시 후 다시 확인해 주세요."
 
+#: changedetectionio/blueprint/backups/__init__.py changedetectionio/blueprint/backups/restore.py
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "Backups"
+msgstr "백업"
+
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
 msgstr "백업이 삭제되었습니다."
@@ -149,6 +158,11 @@ msgstr "같은 UUID의 기존 모니터링 덮어쓰기"
 msgid "Restore backup"
 msgstr "백업 복원"
 
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr "복원"
+
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
 msgstr "이미 복원이 실행 중입니다. 잠시 후 다시 확인해 주세요."
@@ -178,11 +192,6 @@ msgstr "복원이 백그라운드에서 시작되었습니다. 잠시 후 다시
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
 msgstr "생성"
-
-#: changedetectionio/blueprint/backups/templates/backup_create.html
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
-msgid "Restore"
-msgstr "복원"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
@@ -240,6 +249,11 @@ msgstr "백업에서 찾은 모든 모니터링을 포함하시겠습니까?"
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing watches of the same UUID?"
 msgstr "같은 UUID의 기존 모니터링을 덮어쓰시겠습니까?"
+
+#: changedetectionio/blueprint/imports/__init__.py changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import"
+msgstr "가져오기"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
@@ -379,10 +393,6 @@ msgstr "그룹 / 태그 이름"
 msgid "Recheck time (minutes)"
 msgstr "재확인 시간(분)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
-msgid "Import"
-msgstr "가져오기"
-
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid "Sign-in failed"
 msgstr "로그인 실패"
@@ -508,9 +518,19 @@ msgstr "설정이 업데이트되었습니다."
 msgid "An error occurred, please see below."
 msgstr "오류가 발생했습니다. 아래 내용을 확인해 주세요."
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "설정"
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
 msgstr "API 키가 재생성되었습니다."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "Notification debug log"
+msgstr "알림 디버그 로그"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
@@ -527,6 +547,12 @@ msgstr "모든 알림이 음소거되었습니다."
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications unmuted."
 msgstr "모든 알림의 음소거가 해제되었습니다."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP settings saved."
@@ -1141,10 +1167,6 @@ msgstr "연결: %(method)s"
 msgid "Token"
 msgstr "토큰"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "설정"
-
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1478,11 +1500,6 @@ msgid "Done"
 msgstr "완료"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "AI / LLM / MCP"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr "AI / LLM"
@@ -1534,10 +1551,6 @@ msgid "Back to settings"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
-msgid "Notification debug log"
-msgstr "알림 디버그 로그"
-
-#: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
 msgstr ""
 
@@ -1557,10 +1570,6 @@ msgstr "전역 필터"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "UI 옵션"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "Backups"
-msgstr "백업"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
@@ -1959,6 +1968,10 @@ msgid "No plugins active"
 msgstr "활성화된 플러그인이 없습니다."
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Groups"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "A group name cannot have a comma in it, commas are what goes between several groups."
 msgstr ""
 
@@ -1984,10 +1997,15 @@ msgid "All tags deleted, clearing from watches in background"
 msgstr "모든 태그가 삭제되었습니다. 백그라운드에서 모니터링에서 제거하고 있습니다."
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Not set - Use system settings default"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag not found"
 msgstr "태그를 찾을 수 없습니다."
 
 #: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/watchlist/__init__.py
 #, python-format
 msgid "Group: %(name)s"
 msgstr "그룹: %(name)s"
@@ -2346,6 +2364,10 @@ msgstr "기록 지우기가 백그라운드에서 시작되었습니다."
 msgid "Incorrect confirmation text."
 msgstr "잘못된 확인 텍스트."
 
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear Histories"
+msgstr "기록 지우기"
+
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "The watch by UUID {} does not exist."
@@ -2458,9 +2480,10 @@ msgstr "모니터링 설정이 업데이트되었습니다."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "미리보기를 사용할 수 없습니다. 아직 가져오기/확인이 완료되지 않았거나 트리거 조건에 도달하지 않았습니다."
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr "비교"
+#: changedetectionio/blueprint/ui/preview.py changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/image_ssim_diff/preview.py
+msgid "Preview"
+msgstr "미리보기"
 
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
@@ -2469,6 +2492,10 @@ msgstr "총 <b>{total}</b>개 중 <b>{start} - {end}</b>개 {record_name} 표시
 
 #: changedetectionio/blueprint/ui/queue.py
 msgid "queued items"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/ui/templates/queue.html
+msgid "Check queue"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/queue.py
@@ -2696,6 +2723,11 @@ msgstr "그룹 <a href=\"%(url)s\">%(name)s</a>에서: <strong>%(value)s</strong
 #, python-format
 msgid "Decided by %(name)s: %(value)s"
 msgstr "%(name)s에서 결정: %(value)s"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Watch: %(name)s"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3125,10 +3157,6 @@ msgid "Nothing running"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Check queue"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Live view of what the workers are doing right now and what is waiting in line."
 msgstr ""
 
@@ -3254,13 +3282,9 @@ msgid "Summary"
 msgstr "요약"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/text_json_diff/difference.py
+#: changedetectionio/processors/image_ssim_diff/difference.py changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "기록"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Preview"
-msgstr "미리보기"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
@@ -3419,10 +3443,6 @@ msgstr "기본 알림 사용"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear errors"
 msgstr "오류 지우기"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear Histories"
-msgstr "기록 지우기"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
@@ -3689,6 +3709,10 @@ msgstr "이미 로그인되어 있습니다."
 #: changedetectionio/flask_app.py
 msgid "You must be logged in, please log in."
 msgstr "로그인해야 합니다. 로그인해 주세요."
+
+#: changedetectionio/flask_app.py changedetectionio/templates/login.html
+msgid "Login"
+msgstr "로그인"
 
 #: changedetectionio/flask_app.py
 msgid "Incorrect password"
@@ -4082,8 +4106,9 @@ msgstr "켜짐"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "알림"
 
@@ -5984,10 +6009,6 @@ msgstr "예시 - 키워드가 포함된 줄 일치"
 #: changedetectionio/templates/edit/text-options.html
 msgid "One line per regular-expression/string match"
 msgstr "정규식/문자열 조건은 한 줄에 하나씩 입력하세요"
-
-#: changedetectionio/templates/login.html
-msgid "Login"
-msgstr "로그인"
 
 #: changedetectionio/templates/menu.html
 msgid "Resume automatic scheduling"

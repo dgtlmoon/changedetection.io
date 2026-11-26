@@ -259,7 +259,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
             return redirect(url_for('watchlist.index'))
 
-        output = render_template("clear_all_history.html")
+        output = render_template("clear_all_history.html", extra_title=f" - {gettext('Clear Histories')}")
         return output
 
     # Clear all statuses, so we do not see the 'unviewed' class

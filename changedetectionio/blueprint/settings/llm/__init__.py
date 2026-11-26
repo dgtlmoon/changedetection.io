@@ -191,6 +191,10 @@ def mcp_tokens_context(datastore):
 NO_KEY_PLACEHOLDER = 'no-key'
 
 
+def _settings_page_title():
+    return f" - {gettext('Settings')} - {gettext('AI / LLM / MCP')}"
+
+
 def construct_llm_blueprint(datastore: ChangeDetectionStore):
     llm_blueprint = Blueprint('llm', __name__, template_folder="templates")
 
@@ -237,7 +241,8 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
                 return redirect(url_for('settings.llm.llm_settings_page'))
             flash(gettext("An error occurred, please see below."), "error")
 
-        return render_template("llm-settings.html", form=form, active_tab='llm', plugin_tabs=get_plugin_settings_tabs(),
+        return render_template("llm-settings.html", form=form, active_tab='llm', extra_title=_settings_page_title(),
+                               plugin_tabs=get_plugin_settings_tabs(),
                                **llm_template_context(datastore))
 
     @llm_blueprint.route("/mcp", methods=['GET', 'POST'])
@@ -276,7 +281,8 @@ def construct_llm_blueprint(datastore: ChangeDetectionStore):
             if address_changed and (app_settings.get('mcp_oauth') or {}).get('grants'):
                 flash(gettext("The public MCP address changed: assistants connected with sign-in (OAuth) need to connect again."), 'notice')
             return redirect(url_for('settings.llm.mcp_settings_page'))
-        return render_template("llm-settings.html", form=form, active_tab='mcp', plugin_tabs=get_plugin_settings_tabs(),
+        return render_template("llm-settings.html", form=form, active_tab='mcp', extra_title=_settings_page_title(),
+                               plugin_tabs=get_plugin_settings_tabs(),
                                **mcp_template_context(datastore))
 
     # The access tokens, managed from the overlay on the "Access tokens" sub-tab with ajax. Every change answers with

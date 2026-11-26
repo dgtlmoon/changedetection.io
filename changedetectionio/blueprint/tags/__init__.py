@@ -35,6 +35,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         output = render_template("groups-overview.html",
                                  app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
                                  available_tags=sorted_tags,
+                                 extra_title=f" - {gettext('Groups')}",
                                  form=add_form,
                                  generate_tag_colors=processors.generate_processor_badge_colors,
                                  tag_count=tag_count,
@@ -162,7 +163,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         form.fetch_backend.choices = [c for c in form.fetch_backend.choices if c[0] != 'system']
         for p in datastore.extra_browsers:
             form.fetch_backend.choices.append(p)
-        form.fetch_backend.choices.append(("system", gettext('Not set')))
+        form.fetch_backend.choices.append(("system", gettext('Not set - Use system settings default')))
         if not form.fetch_backend.data:
             form.fetch_backend.data = 'system'
 

@@ -172,6 +172,37 @@ samp {
   vertical-align: middle;
 }
 
+// The icon at the start of a 'Fetch Method' option (fetcher_option_icon macro), an option without an icon has no
+// slot at all. Centred on the text by the flex row, not by a baseline.
+label:has(> .fetcher-option-icon) {
+  display: inline-flex;
+  align-items: center;
+}
+
+// Every option of such a list is as tall as one with an icon, so the rows are evenly spaced
+ul:has(.fetcher-option-icon) > li > label {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--status-icon-size);
+}
+
+.fetcher-option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 var(--status-icon-size);
+  width: var(--status-icon-size);
+  height: var(--status-icon-size);
+  margin-right: 0.45em;
+
+  .status-icon {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
 /*.pure-table-even {
   background: var(--color-background);
 }*/

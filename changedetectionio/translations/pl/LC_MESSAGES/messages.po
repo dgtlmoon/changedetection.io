@@ -18,6 +18,10 @@ msgstr ""
 msgid "Adding a watch with a browser needs an interactive browser (screenshots + element data) - none is configured."
 msgstr ""
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Add watch"
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
@@ -115,6 +119,11 @@ msgstr "Osiągnięto maksymalną liczbę kopii zapasowych. Proszę usunąć czę
 msgid "Backup building in background, check back in a few minutes."
 msgstr "Tworzenie kopii zapasowej przebiega w tle – spróbuj ponownie za kilka minut."
 
+#: changedetectionio/blueprint/backups/__init__.py changedetectionio/blueprint/backups/restore.py
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "Backups"
+msgstr "Kopie zapasowe"
+
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
 msgstr "Kopie zapasowe zostały usunięte."
@@ -147,6 +156,11 @@ msgstr "Zastąp istniejące obserwacje o tym samym identyfikatorze UUID"
 msgid "Restore backup"
 msgstr "Przywróć kopię zapasową"
 
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr "Przywróć"
+
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
 msgstr "Trwa już przywracanie danych, spróbuj ponownie za kilka minut"
@@ -176,11 +190,6 @@ msgstr "Przywracanie uruchomiono w tle. Sprawdź ponownie za kilka minut."
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
 msgstr "Utwórz"
-
-#: changedetectionio/blueprint/backups/templates/backup_create.html
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
-msgid "Restore"
-msgstr "Przywróć"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
@@ -242,6 +251,11 @@ msgstr "Czy uwzględnić wszystkie obserwacje znalezione w kopii zapasowej?"
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing watches of the same UUID?"
 msgstr "Czy zastąpić wszystkie istniejące obserwacje o tym samym identyfikatorze UUID?"
+
+#: changedetectionio/blueprint/imports/__init__.py changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import"
+msgstr "Importuj"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
@@ -387,10 +401,6 @@ msgstr "Nazwa grupy / nazwy tagów"
 msgid "Recheck time (minutes)"
 msgstr "Czas ponownej kontroli (w minutach)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
-msgid "Import"
-msgstr "Importuj"
-
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid "Sign-in failed"
 msgstr "Logowanie nie powiodło się"
@@ -522,9 +532,19 @@ msgstr "Ustawienia zostały zaktualizowane."
 msgid "An error occurred, please see below."
 msgstr "Wystąpił błąd – proszę zapoznać się z poniższą informacją."
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "Ustawienia"
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
 msgstr "Klucz API został wygenerowany ponownie."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "Notification debug log"
+msgstr "Dziennik debugowania powiadomień"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
@@ -541,6 +561,12 @@ msgstr "Wszystkie powiadomienia wyciszone."
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications unmuted."
 msgstr "Wyłączono wyciszenie wszystkich powiadomień."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr "SI / LLM / MCP"
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP settings saved."
@@ -1210,10 +1236,6 @@ msgstr "Połącz: %(method)s"
 msgid "Token"
 msgstr "Token"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "Ustawienia"
-
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1581,11 +1603,6 @@ msgid "Done"
 msgstr "Gotowe"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "AI / LLM / MCP"
-msgstr "SI / LLM / MCP"
-
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr "Sztuczna inteligencja / Wielkie modele językowe"
@@ -1639,10 +1656,6 @@ msgid "Back to settings"
 msgstr "Powrót do ustawień"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
-msgid "Notification debug log"
-msgstr "Dziennik debugowania powiadomień"
-
-#: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
 msgstr "Ze względów bezpieczeństwa dziennik ten jest czyszczony przy ponownym uruchomieniu."
 
@@ -1662,10 +1675,6 @@ msgstr "Filtry globalne"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "Opcje interfejsu użytkownika"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "Backups"
-msgstr "Kopie zapasowe"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
@@ -2108,6 +2117,10 @@ msgid "No plugins active"
 msgstr "Żadne wtyczki nie są aktywne"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Groups"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "A group name cannot have a comma in it, commas are what goes between several groups."
 msgstr ""
 
@@ -2133,10 +2146,15 @@ msgid "All tags deleted, clearing from watches in background"
 msgstr "Wszystkie tagi zostały usunięte; są usuwane z obserwacji w tle"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Not set - Use system settings default"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag not found"
 msgstr "Nie znaleziono tagu"
 
 #: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/watchlist/__init__.py
 #, python-format
 msgid "Group: %(name)s"
 msgstr "Grupa: %(name)s"
@@ -2504,6 +2522,10 @@ msgstr "Czyszczenie historii rozpoczęto w tle"
 msgid "Incorrect confirmation text."
 msgstr "Nieprawidłowy tekst potwierdzenia."
 
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear Histories"
+msgstr "Wyczyść historię"
+
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "The watch by UUID {} does not exist."
@@ -2620,9 +2642,10 @@ msgstr "Zaktualizowano obserwację."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Podgląd niedostępny — nie zakończono pobierania/sprawdzania lub nie osiągnięto wyzwalaczy"
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr "Różnice"
+#: changedetectionio/blueprint/ui/preview.py changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/image_ssim_diff/preview.py
+msgid "Preview"
+msgstr "Podgląd"
 
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
@@ -2632,6 +2655,10 @@ msgstr "wyświetlanie <b>{start} – {end}</b> łącznie {record_name} <b>{total
 #: changedetectionio/blueprint/ui/queue.py
 msgid "queued items"
 msgstr "pozycje w kolejce"
+
+#: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/ui/templates/queue.html
+msgid "Check queue"
+msgstr "Sprawdź kolejkę"
 
 #: changedetectionio/blueprint/ui/queue.py
 #, python-brace-format
@@ -2860,6 +2887,11 @@ msgstr "Z grupy <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
 #, python-format
 msgid "Decided by %(name)s: %(value)s"
 msgstr "Decyduje %(name)s: %(value)s"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Watch: %(name)s"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3308,10 +3340,6 @@ msgid "Nothing running"
 msgstr "Nic nie działa"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Check queue"
-msgstr "Sprawdź kolejkę"
-
-#: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Live view of what the workers are doing right now and what is waiting in line."
 msgstr "Podgląd na żywo tego, czym właśnie zajmują się procesy robocze i co czeka w kolejce."
 
@@ -3437,13 +3465,9 @@ msgid "Summary"
 msgstr "Podsumowanie"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/text_json_diff/difference.py
+#: changedetectionio/processors/image_ssim_diff/difference.py changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "Historia"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Preview"
-msgstr "Podgląd"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
@@ -3602,10 +3626,6 @@ msgstr "Użyj domyślnego powiadomienia"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear errors"
 msgstr "Wyraźne błędy"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear Histories"
-msgstr "Wyczyść historię"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
@@ -3888,6 +3908,10 @@ msgstr "Jesteś już zalogowany"
 #: changedetectionio/flask_app.py
 msgid "You must be logged in, please log in."
 msgstr "Musisz być zalogowany – zaloguj się."
+
+#: changedetectionio/flask_app.py changedetectionio/templates/login.html
+msgid "Login"
+msgstr "Zaloguj się"
 
 #: changedetectionio/flask_app.py
 msgid "Incorrect password"
@@ -4283,8 +4307,9 @@ msgstr "W dniu"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Powiadomienia"
 
@@ -6239,10 +6264,6 @@ msgstr "Przykład – wyszukiwanie wierszy zawierających słowo kluczowe"
 #: changedetectionio/templates/edit/text-options.html
 msgid "One line per regular-expression/string match"
 msgstr "Jedna linia na każde dopasowanie wyrażenia regularnego do ciągu znaków"
-
-#: changedetectionio/templates/login.html
-msgid "Login"
-msgstr "Zaloguj się"
 
 #: changedetectionio/templates/menu.html
 msgid "Resume automatic scheduling"
