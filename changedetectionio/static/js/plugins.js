@@ -166,8 +166,11 @@
 // How faded a setting is while it is not in use, one value for the whole UI (see :root in _variables.scss)
 const SETTING_NOT_IN_USE_OPACITY = 'var(--opacity-setting-not-in-use)';
 
+// (A page that shares the script but does not have the checkbox is left alone: watch-settings.js is on the
+// group edit page too, which has no "use global settings" checkbox. It used to stop the rest of that script.)
 function toggleOpacity(checkboxSelector, fieldSelector, inverted) {
     const checkbox = document.querySelector(checkboxSelector);
+    if (!checkbox) return;
     const fields = document.querySelectorAll(fieldSelector);
 
     function updateOpacity() {
@@ -203,6 +206,7 @@ function toggleOpacityByRadioValue(radioName, activeValue, fieldSelector) {
 
 function toggleVisibility(checkboxSelector, fieldSelector, inverted) {
     const checkbox = document.querySelector(checkboxSelector);
+    if (!checkbox) return;
     const fields = document.querySelectorAll(fieldSelector);
 
     function updateOpacity() {
