@@ -25,7 +25,7 @@ def test_one_shot_record_har_from_queue_item(client, live_server, measure_memory
     har_zip = os.path.join(datastore.data['watching'][uuid].data_dir, 'har-record.zip')
 
     # An ordinary check records nothing
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     assert not os.path.isfile(har_zip)
 
@@ -42,7 +42,7 @@ def test_one_shot_record_har_from_queue_item(client, live_server, measure_memory
     # One shot: nothing was stored on the watch, so the next ordinary check does not record again
     assert 'record_har' not in datastore.data['watching'][uuid]
     os.unlink(har_zip)
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     assert not os.path.isfile(har_zip)
 

@@ -71,7 +71,7 @@ def test_api_key_header_plugin(client, live_server, measure_memory_usage, datast
     assert 'secret-123' not in json.dumps(dict(datastore.data['watching'][uuid]), default=str)
 
     # Sent with the check (fetch_request_alter), the test endpoint echoes the request headers back
-    client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+    client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
     wait_for_all_checks(client)
     res = client.get(url_for("ui.ui_preview.preview_page", uuid=uuid), follow_redirects=True)
     assert b'X-Api-Key:secret-123' in res.data
@@ -126,7 +126,7 @@ def test_fetch_request_alter_exception_fails_the_check(client, live_server, meas
     try:
         datastore = client.application.config.get('DATASTORE')
         uuid = datastore.add_watch(url=url_for('test_headers', _external=True))
-        client.get(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
         wait_for_all_checks(client)
         # Not sent without what the plugin meant to add: the check failed with the plugin's message
         assert 'Token endpoint said no' in (datastore.data['watching'][uuid].get('last_error') or '')
