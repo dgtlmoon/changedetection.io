@@ -22,6 +22,10 @@ msgstr ""
 msgid "Adding a watch with a browser needs an interactive browser (screenshots + element data) - none is configured."
 msgstr "使用瀏覽器新增監測任務需要互動式瀏覽器（螢幕截圖 + 元素資料）— 目前未設定任何瀏覽器。"
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Add watch"
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
@@ -117,6 +121,11 @@ msgstr "已達備份數量上限，請移除部分備份"
 msgid "Backup building in background, check back in a few minutes."
 msgstr "正在背景建立備份，請稍後再回來查看。"
 
+#: changedetectionio/blueprint/backups/__init__.py changedetectionio/blueprint/backups/restore.py
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "Backups"
+msgstr "備份"
+
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
 msgstr "備份已刪除。"
@@ -149,6 +158,11 @@ msgstr "取代相同 UUID 的現有監測任務"
 msgid "Restore backup"
 msgstr "還原備份"
 
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr "還原"
+
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
 msgstr "還原正在執行中，請稍後再回來查看"
@@ -178,11 +192,6 @@ msgstr "已在背景開始還原，請稍後再回來查看。"
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
 msgstr "建立"
-
-#: changedetectionio/blueprint/backups/templates/backup_create.html
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
-msgid "Restore"
-msgstr "還原"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
@@ -240,6 +249,11 @@ msgstr "包含備份中找到的所有監測任務？"
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing watches of the same UUID?"
 msgstr "是否取代任何相同 UUID 的現有監測任務？"
+
+#: changedetectionio/blueprint/imports/__init__.py changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import"
+msgstr "匯入"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
@@ -381,10 +395,6 @@ msgstr "群組 / 標籤名稱"
 msgid "Recheck time (minutes)"
 msgstr "複查時間（分鐘）"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
-msgid "Import"
-msgstr "匯入"
-
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid "Sign-in failed"
 msgstr "登入失敗"
@@ -510,9 +520,19 @@ msgstr "設定已更新。"
 msgid "An error occurred, please see below."
 msgstr "發生錯誤，請參見下方。"
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "設定"
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
 msgstr "API 金鑰已重新產生。"
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "Notification debug log"
+msgstr "通知除錯記錄"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
@@ -529,6 +549,12 @@ msgstr "所有通知已靜音。"
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications unmuted."
 msgstr "所有通知已取消靜音。"
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP settings saved."
@@ -1142,10 +1168,6 @@ msgstr "連線：%(method)s"
 msgid "Token"
 msgstr "權杖"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "設定"
-
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1471,11 +1493,6 @@ msgid "Done"
 msgstr "完成"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "AI / LLM / MCP"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr "AI / LLM"
@@ -1541,10 +1558,6 @@ msgid "Back to settings"
 msgstr "返回設定"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
-msgid "Notification debug log"
-msgstr "通知除錯記錄"
-
-#: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
 msgstr "基於安全考量，此記錄在重啟時會被清空。"
 
@@ -1564,10 +1577,6 @@ msgstr "全域過濾器"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "介面選項"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "Backups"
-msgstr "備份"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
@@ -1966,6 +1975,10 @@ msgid "No plugins active"
 msgstr "無啟用的外掛"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Groups"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "A group name cannot have a comma in it, commas are what goes between several groups."
 msgstr ""
 
@@ -1991,10 +2004,15 @@ msgid "All tags deleted, clearing from watches in background"
 msgstr "所有標籤已刪除，正在背景從監測任務中清除"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Not set - Use system settings default"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag not found"
 msgstr "找不到標籤"
 
 #: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/watchlist/__init__.py
 #, python-format
 msgid "Group: %(name)s"
 msgstr "群組：%(name)s"
@@ -2351,6 +2369,10 @@ msgstr "已在背景開始清除歷史記錄"
 msgid "Incorrect confirmation text."
 msgstr "確認文字不正確。"
 
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear Histories"
+msgstr "清除歷史記錄"
+
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "The watch by UUID {} does not exist."
@@ -2463,9 +2485,10 @@ msgstr "已更新監測任務。"
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "預覽無法使用 - 未完成抓取 / 檢查或未達到觸發條件"
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr "差異"
+#: changedetectionio/blueprint/ui/preview.py changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/image_ssim_diff/preview.py
+msgid "Preview"
+msgstr "預覽"
 
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
@@ -2475,6 +2498,10 @@ msgstr "顯示第 <b>{start} - {end}</b> 筆 {record_name}，共 <b>{total}</b> 
 #: changedetectionio/blueprint/ui/queue.py
 msgid "queued items"
 msgstr "個排程項目"
+
+#: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/ui/templates/queue.html
+msgid "Check queue"
+msgstr "檢查佇列"
 
 #: changedetectionio/blueprint/ui/queue.py
 #, python-brace-format
@@ -2701,6 +2728,11 @@ msgstr "來自群組 <a href=\"%(url)s\">%(name)s</a>：<strong>%(value)s</stron
 #, python-format
 msgid "Decided by %(name)s: %(value)s"
 msgstr "由 %(name)s 決定：%(value)s"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Watch: %(name)s"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3132,10 +3164,6 @@ msgid "Nothing running"
 msgstr "無執行中的項目"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Check queue"
-msgstr "檢查佇列"
-
-#: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Live view of what the workers are doing right now and what is waiting in line."
 msgstr "即時查看工作程序目前正在執行的操作以及正在排隊等候的項目。"
 
@@ -3261,13 +3289,9 @@ msgid "Summary"
 msgstr "摘要"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/text_json_diff/difference.py
+#: changedetectionio/processors/image_ssim_diff/difference.py changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "歷史記錄"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Preview"
-msgstr "預覽"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
@@ -3426,10 +3450,6 @@ msgstr "使用預設通知"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear errors"
 msgstr "清除錯誤"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear Histories"
-msgstr "清除歷史記錄"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
@@ -3696,6 +3716,10 @@ msgstr "已經登入"
 #: changedetectionio/flask_app.py
 msgid "You must be logged in, please log in."
 msgstr "您必須先登入，請登入。"
+
+#: changedetectionio/flask_app.py changedetectionio/templates/login.html
+msgid "Login"
+msgstr "登入"
 
 #: changedetectionio/flask_app.py
 msgid "Incorrect password"
@@ -4089,8 +4113,9 @@ msgstr "開啟"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "通知"
 
@@ -5990,10 +6015,6 @@ msgstr "範例 - 符合包含關鍵字的行"
 #: changedetectionio/templates/edit/text-options.html
 msgid "One line per regular-expression/string match"
 msgstr "每個正規表示式 / 字串符合佔用一行"
-
-#: changedetectionio/templates/login.html
-msgid "Login"
-msgstr "登入"
 
 #: changedetectionio/templates/menu.html
 msgid "Resume automatic scheduling"

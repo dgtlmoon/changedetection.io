@@ -23,6 +23,10 @@ msgstr ""
 msgid "Adding a watch with a browser needs an interactive browser (screenshots + element data) - none is configured."
 msgstr ""
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Add watch"
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
@@ -118,6 +122,11 @@ msgstr "Maksimum yedekleme sayısına ulaşıldı, lütfen bazılarını kaldır
 msgid "Backup building in background, check back in a few minutes."
 msgstr "Yedekleme arka planda oluşturuluyor, birkaç dakika sonra tekrar kontrol edin."
 
+#: changedetectionio/blueprint/backups/__init__.py changedetectionio/blueprint/backups/restore.py
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "Backups"
+msgstr "Yedeklemeler"
+
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
 msgstr "Yedeklemeler silindi."
@@ -150,6 +159,11 @@ msgstr "Aynı UUID'li mevcut izleyicileri değiştir"
 msgid "Restore backup"
 msgstr "Yedeği geri yükle"
 
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr "Geri Yükle"
+
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
 msgstr "Zaten bir geri yükleme çalışıyor, birkaç dakika sonra tekrar kontrol edin"
@@ -179,11 +193,6 @@ msgstr "Geri yükleme arka planda başladı, birkaç dakika sonra tekrar kontrol
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
 msgstr "Oluştur"
-
-#: changedetectionio/blueprint/backups/templates/backup_create.html
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
-msgid "Restore"
-msgstr "Geri Yükle"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
@@ -245,6 +254,11 @@ msgstr "Yedekte bulunan tüm izleyiciler dahil edilsin mi?"
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing watches of the same UUID?"
 msgstr "Aynı UUID'ye sahip mevcut izleyiciler değiştirilsin mi?"
+
+#: changedetectionio/blueprint/imports/__init__.py changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import"
+msgstr "İçe Aktar"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
@@ -386,10 +400,6 @@ msgstr "Grup / Etiket adları"
 msgid "Recheck time (minutes)"
 msgstr "Yeniden kontrol süresi (dakika)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
-msgid "Import"
-msgstr "İçe Aktar"
-
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid "Sign-in failed"
 msgstr "Giriş başarısız"
@@ -519,9 +529,19 @@ msgstr "Ayarlar güncellendi."
 msgid "An error occurred, please see below."
 msgstr "Bir hata oluştu, lütfen aşağıya bakın."
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "Ayarlar"
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
 msgstr "API Anahtarı yeniden oluşturuldu."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "Notification debug log"
+msgstr "Bildirim hata ayıklama günlüğü"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
@@ -538,6 +558,12 @@ msgstr "Tüm bildirimler sessize alındı."
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications unmuted."
 msgstr "Tüm bildirimlerin sesi açıldı."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP settings saved."
@@ -1146,10 +1172,6 @@ msgstr "Bağlan: %(method)s"
 msgid "Token"
 msgstr "Belirteç"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "Ayarlar"
-
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1521,11 +1543,6 @@ msgid "Done"
 msgstr "Tamam"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "AI / LLM / MCP"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr ""
@@ -1593,10 +1610,6 @@ msgid "Back to settings"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
-msgid "Notification debug log"
-msgstr "Bildirim hata ayıklama günlüğü"
-
-#: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
 msgstr ""
 
@@ -1616,10 +1629,6 @@ msgstr "Genel Filtreler"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "Arayüz Seçenekleri"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "Backups"
-msgstr "Yedeklemeler"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
@@ -2044,6 +2053,10 @@ msgid "No plugins active"
 msgstr "Aktif eklenti yok"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Groups"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "A group name cannot have a comma in it, commas are what goes between several groups."
 msgstr ""
 
@@ -2069,10 +2082,15 @@ msgid "All tags deleted, clearing from watches in background"
 msgstr "Tüm etiketler silindi, arka planda izleyicilerden temizleniyor"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Not set - Use system settings default"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag not found"
 msgstr "Etiket bulunamadı"
 
 #: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/watchlist/__init__.py
 #, python-format
 msgid "Group: %(name)s"
 msgstr "Grup: %(name)s"
@@ -2435,6 +2453,10 @@ msgstr "Geçmiş temizleme arka planda başladı"
 msgid "Incorrect confirmation text."
 msgstr "Hatalı onay metni."
 
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear Histories"
+msgstr "Geçmişleri Temizle"
+
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "The watch by UUID {} does not exist."
@@ -2547,9 +2569,10 @@ msgstr "İzleyici güncellendi."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Önizleme kullanılamıyor - Getirme/kontrol tamamlanmadı veya tetikleyicilere ulaşılamadı"
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr ""
+#: changedetectionio/blueprint/ui/preview.py changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/image_ssim_diff/preview.py
+msgid "Preview"
+msgstr "Önizleme"
 
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
@@ -2558,6 +2581,10 @@ msgstr "toplam <b>{total}</b> içinde <b>{start} - {end}</b> {record_name} göst
 
 #: changedetectionio/blueprint/ui/queue.py
 msgid "queued items"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/ui/templates/queue.html
+msgid "Check queue"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/queue.py
@@ -2785,6 +2812,11 @@ msgstr "<a href=\"%(url)s\">%(name)s</a> grubundan: <strong>%(value)s</strong>"
 #, python-format
 msgid "Decided by %(name)s: %(value)s"
 msgstr "%(name)s belirliyor: %(value)s"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Watch: %(name)s"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3228,10 +3260,6 @@ msgid "Nothing running"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Check queue"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Live view of what the workers are doing right now and what is waiting in line."
 msgstr ""
 
@@ -3357,13 +3385,9 @@ msgid "Summary"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/text_json_diff/difference.py
+#: changedetectionio/processors/image_ssim_diff/difference.py changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "Geçmiş"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Preview"
-msgstr "Önizleme"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
@@ -3522,10 +3546,6 @@ msgstr "Varsayılan bildirimi kullan"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear errors"
 msgstr "Hataları temizle"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear Histories"
-msgstr "Geçmişleri Temizle"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
@@ -3792,6 +3812,10 @@ msgstr "Zaten giriş yapılmış"
 #: changedetectionio/flask_app.py
 msgid "You must be logged in, please log in."
 msgstr "Giriş yapmış olmalısınız, lütfen giriş yapın."
+
+#: changedetectionio/flask_app.py changedetectionio/templates/login.html
+msgid "Login"
+msgstr "Giriş Yap"
 
 #: changedetectionio/flask_app.py
 msgid "Incorrect password"
@@ -4185,8 +4209,9 @@ msgstr "Açık"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Bildirimler"
 
@@ -6085,10 +6110,6 @@ msgstr "Örnek - bir anahtar kelime içeren satırları eşleştir"
 #: changedetectionio/templates/edit/text-options.html
 msgid "One line per regular-expression/string match"
 msgstr "Düzenli ifade/dize eşleşmesi başına bir satır"
-
-#: changedetectionio/templates/login.html
-msgid "Login"
-msgstr "Giriş Yap"
 
 #: changedetectionio/templates/menu.html
 msgid "Resume automatic scheduling"

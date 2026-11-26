@@ -22,6 +22,10 @@ msgstr ""
 msgid "Adding a watch with a browser needs an interactive browser (screenshots + element data) - none is configured."
 msgstr ""
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Add watch"
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
@@ -117,6 +121,11 @@ msgstr "Maximální počet souborů záloh dosažen, některé prosím smažte"
 msgid "Backup building in background, check back in a few minutes."
 msgstr "Tvorba souboru zálohy běží na pozadí, vraťte se za pár minut."
 
+#: changedetectionio/blueprint/backups/__init__.py changedetectionio/blueprint/backups/restore.py
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "Backups"
+msgstr "Zálohy"
+
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
 msgstr "Zálohy byly smazány"
@@ -149,6 +158,11 @@ msgstr "Nahradit existující sledování obsahující stejne UUID"
 msgid "Restore backup"
 msgstr "Obnovit zálohu"
 
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr "Obnovit"
+
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
 msgstr "Obnova již probíhá, vraťte se za pár minut"
@@ -178,11 +192,6 @@ msgstr "Obnova běží na pozadí, vraťte se za pár minut."
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
 msgstr "Vytvořit"
-
-#: changedetectionio/blueprint/backups/templates/backup_create.html
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
-msgid "Restore"
-msgstr "Obnovit"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
@@ -240,6 +249,11 @@ msgstr "Zahrnout všechna sledování nalezená v záloze?"
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing watches of the same UUID?"
 msgstr "Nahradit všechna existující sledování se stejným UUID?"
+
+#: changedetectionio/blueprint/imports/__init__.py changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import"
+msgstr "Importovat"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
@@ -379,10 +393,6 @@ msgstr "Skupina / tag"
 msgid "Recheck time (minutes)"
 msgstr "Znovu zkontrolovat po (minuty)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
-msgid "Import"
-msgstr "Importovat"
-
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid "Sign-in failed"
 msgstr "Přihlášení selhalo"
@@ -512,9 +522,19 @@ msgstr "Nastavení upraveno."
 msgid "An error occurred, please see below."
 msgstr "Došlo k chybě, více informací níže."
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "Nastavení"
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
 msgstr "API klíč byl znovu vygenerován."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "Notification debug log"
+msgstr "Protokol ladění oznámení"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
@@ -531,6 +551,12 @@ msgstr "Všechna oznámení ztlumena."
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications unmuted."
 msgstr "Všechna oznámení odtlumena."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP settings saved."
@@ -1139,10 +1165,6 @@ msgstr "Připojit: %(method)s"
 msgid "Token"
 msgstr "Token"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "Nastavení"
-
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1504,11 +1526,6 @@ msgid "Done"
 msgstr "Hotovo"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "AI / LLM / MCP"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr "AI / LLM"
@@ -1576,10 +1593,6 @@ msgid "Back to settings"
 msgstr ""
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
-msgid "Notification debug log"
-msgstr "Protokol ladění oznámení"
-
-#: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
 msgstr ""
 
@@ -1599,10 +1612,6 @@ msgstr "Globální filtry"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "Možnosti uživatelského rozhraní"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "Backups"
-msgstr "Zálohy"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
@@ -2001,6 +2010,10 @@ msgid "No plugins active"
 msgstr "Nejsou aktivní žádné pluginy"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Groups"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "A group name cannot have a comma in it, commas are what goes between several groups."
 msgstr ""
 
@@ -2026,10 +2039,15 @@ msgid "All tags deleted, clearing from watches in background"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Not set - Use system settings default"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag not found"
 msgstr ""
 
 #: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/watchlist/__init__.py
 #, python-format
 msgid "Group: %(name)s"
 msgstr "Skupina: %(name)s"
@@ -2392,6 +2410,10 @@ msgstr "Čištění historie spuštěno na pozadí"
 msgid "Incorrect confirmation text."
 msgstr "Žádné informace"
 
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear Histories"
+msgstr "Vymazat historie"
+
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "The watch by UUID {} does not exist."
@@ -2506,9 +2528,10 @@ msgstr "Sledování aktualizováno."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Náhled nedostupný - stažení/kontrola nedokončena nebo nebyly splněny podmínky kontroly"
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr "Rozdíly"
+#: changedetectionio/blueprint/ui/preview.py changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/image_ssim_diff/preview.py
+msgid "Preview"
+msgstr "Náhled"
 
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
@@ -2517,6 +2540,10 @@ msgstr "zobrazeno <b>{start} - {end}</b> {record_name} z celkem <b>{total}</b>"
 
 #: changedetectionio/blueprint/ui/queue.py
 msgid "queued items"
+msgstr ""
+
+#: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/ui/templates/queue.html
+msgid "Check queue"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/queue.py
@@ -2744,6 +2771,11 @@ msgstr "Ze skupiny <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
 #, python-format
 msgid "Decided by %(name)s: %(value)s"
 msgstr "Určuje %(name)s: %(value)s"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Watch: %(name)s"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3173,10 +3205,6 @@ msgid "Nothing running"
 msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Check queue"
-msgstr ""
-
-#: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Live view of what the workers are doing right now and what is waiting in line."
 msgstr ""
 
@@ -3302,13 +3330,9 @@ msgid "Summary"
 msgstr ""
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/text_json_diff/difference.py
+#: changedetectionio/processors/image_ssim_diff/difference.py changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "Historie"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Preview"
-msgstr "Náhled"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
@@ -3467,10 +3491,6 @@ msgstr "Použít výchozí oznámení"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear errors"
 msgstr "Vymazat chyby"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear Histories"
-msgstr "Vymazat historie"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
@@ -3751,6 +3771,10 @@ msgstr "Již přihlášen(a)"
 #: changedetectionio/flask_app.py
 msgid "You must be logged in, please log in."
 msgstr "Je třeba být přihlášen(a), přihlas se."
+
+#: changedetectionio/flask_app.py changedetectionio/templates/login.html
+msgid "Login"
+msgstr "Přihlášení"
 
 #: changedetectionio/flask_app.py
 msgid "Incorrect password"
@@ -4146,8 +4170,9 @@ msgstr "Zapnuto"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Oznámení"
 
@@ -6038,10 +6063,6 @@ msgstr ""
 #: changedetectionio/templates/edit/text-options.html
 msgid "One line per regular-expression/string match"
 msgstr ""
-
-#: changedetectionio/templates/login.html
-msgid "Login"
-msgstr "Přihlášení"
 
 #: changedetectionio/templates/menu.html
 msgid "Resume automatic scheduling"

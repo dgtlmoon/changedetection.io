@@ -25,6 +25,10 @@ msgstr ""
 "Menambahkan monitor dengan browser memerlukan browser interaktif (tangkapan layar + data elemen) - belum ada yang "
 "dikonfigurasi."
 
+#: changedetectionio/blueprint/add_watch_ui/__init__.py
+msgid "Add watch"
+msgstr ""
+
 #: changedetectionio/blueprint/add_watch_ui/browser_config.py
 #, python-format
 msgid "System settings default (%(browser)s)"
@@ -122,6 +126,11 @@ msgstr "Jumlah maksimum cadangan tercapai, silakan hapus beberapa"
 msgid "Backup building in background, check back in a few minutes."
 msgstr "Cadangan sedang dibuat di latar belakang, periksa kembali beberapa menit lagi."
 
+#: changedetectionio/blueprint/backups/__init__.py changedetectionio/blueprint/backups/restore.py
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "Backups"
+msgstr "Cadangan"
+
 #: changedetectionio/blueprint/backups/__init__.py
 msgid "Backups were deleted."
 msgstr "Cadangan telah dihapus."
@@ -154,6 +163,11 @@ msgstr "Ganti monitor yang ada dengan UUID yang sama"
 msgid "Restore backup"
 msgstr "Pulihkan cadangan"
 
+#: changedetectionio/blueprint/backups/restore.py changedetectionio/blueprint/backups/templates/backup_create.html
+#: changedetectionio/blueprint/backups/templates/backup_restore.html
+msgid "Restore"
+msgstr "Pulihkan"
+
 #: changedetectionio/blueprint/backups/restore.py
 msgid "A restore is already running, check back in a few minutes"
 msgstr "Pemulihan sedang berjalan, periksa kembali beberapa menit lagi"
@@ -183,11 +197,6 @@ msgstr "Pemulihan dimulai di latar belakang, periksa kembali beberapa menit lagi
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Create"
 msgstr "Buat"
-
-#: changedetectionio/blueprint/backups/templates/backup_create.html
-#: changedetectionio/blueprint/backups/templates/backup_restore.html
-msgid "Restore"
-msgstr "Pulihkan"
 
 #: changedetectionio/blueprint/backups/templates/backup_create.html
 msgid "A backup is running!"
@@ -245,6 +254,11 @@ msgstr "Sertakan semua monitor yang ditemukan dalam cadangan?"
 #: changedetectionio/blueprint/backups/templates/backup_restore.html
 msgid "Replace any existing watches of the same UUID?"
 msgstr "Ganti monitor yang sudah ada dengan UUID yang sama?"
+
+#: changedetectionio/blueprint/imports/__init__.py changedetectionio/blueprint/imports/templates/import.html
+#: changedetectionio/templates/sidebar-nav.html
+msgid "Import"
+msgstr "Impor"
 
 #: changedetectionio/blueprint/imports/importer.py
 msgid "Importing 5,000 of the first URLs from your list, the rest can be imported again."
@@ -384,10 +398,6 @@ msgstr "Nama grup / tag"
 msgid "Recheck time (minutes)"
 msgstr "Waktu periksa ulang (menit)"
 
-#: changedetectionio/blueprint/imports/templates/import.html changedetectionio/templates/sidebar-nav.html
-msgid "Import"
-msgstr "Impor"
-
 #: changedetectionio/blueprint/mcp/oauth/templates/mcp-oauth-consent.html
 msgid "Sign-in failed"
 msgstr "Masuk gagal"
@@ -517,9 +527,19 @@ msgstr "Pengaturan diperbarui."
 msgid "An error occurred, please see below."
 msgstr "Terjadi kesalahan, silakan lihat di bawah."
 
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/templates/menu.html
+msgid "Settings"
+msgstr "Pengaturan"
+
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "API Key was regenerated."
 msgstr "Kunci API dibuat ulang."
+
+#: changedetectionio/blueprint/settings/__init__.py changedetectionio/blueprint/settings/templates/notification-log.html
+msgid "Notification debug log"
+msgstr "Log debug notifikasi"
 
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "Automatic scheduling paused - checks will not be queued."
@@ -536,6 +556,12 @@ msgstr "Semua notifikasi dibisukan."
 #: changedetectionio/blueprint/settings/__init__.py
 msgid "All notifications unmuted."
 msgstr "Semua notifikasi diaktifkan kembali."
+
+#: changedetectionio/blueprint/settings/llm/__init__.py
+#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
+#: changedetectionio/blueprint/settings/templates/settings-tabs.html
+msgid "AI / LLM / MCP"
+msgstr ""
 
 #: changedetectionio/blueprint/settings/llm/__init__.py
 msgid "MCP settings saved."
@@ -1192,10 +1218,6 @@ msgstr "Hubungkan: %(method)s"
 msgid "Token"
 msgstr "Token"
 
-#: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html changedetectionio/templates/menu.html
-msgid "Settings"
-msgstr "Pengaturan"
-
 #: changedetectionio/blueprint/settings/llm/templates/llm-settings_mcp.html
 msgid ""
 "MCP (Model Context Protocol) is an open standard that lets AI assistants such as Claude, ChatGPT, Cursor and VS Code "
@@ -1569,11 +1591,6 @@ msgid "Done"
 msgstr "Selesai"
 
 #: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "AI / LLM / MCP"
-msgstr ""
-
-#: changedetectionio/blueprint/settings/llm/templates/settings-ai-tabs.html
 #: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
 msgid "AI / LLM"
 msgstr "AI / LLM"
@@ -1643,10 +1660,6 @@ msgid "Back to settings"
 msgstr "Kembali ke pengaturan"
 
 #: changedetectionio/blueprint/settings/templates/notification-log.html
-msgid "Notification debug log"
-msgstr "Log debug notifikasi"
-
-#: changedetectionio/blueprint/settings/templates/notification-log.html
 msgid "For security this log is emptied on restart."
 msgstr "Demi keamanan, log ini dikosongkan saat aplikasi dimulai ulang."
 
@@ -1666,10 +1679,6 @@ msgstr "Filter Global"
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "UI Options"
 msgstr "Opsi UI"
-
-#: changedetectionio/blueprint/settings/templates/settings-tabs.html
-msgid "Backups"
-msgstr "Cadangan"
 
 #: changedetectionio/blueprint/settings/templates/settings-tabs.html
 msgid "Time & Date"
@@ -2094,6 +2103,10 @@ msgid "No plugins active"
 msgstr "Tidak ada plugin aktif"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Groups"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "A group name cannot have a comma in it, commas are what goes between several groups."
 msgstr ""
 
@@ -2119,10 +2132,15 @@ msgid "All tags deleted, clearing from watches in background"
 msgstr "Semua tag dihapus, sedang dibersihkan dari monitor di latar belakang"
 
 #: changedetectionio/blueprint/tags/__init__.py
+msgid "Not set - Use system settings default"
+msgstr ""
+
+#: changedetectionio/blueprint/tags/__init__.py
 msgid "Tag not found"
 msgstr "Tag tidak ditemukan"
 
 #: changedetectionio/blueprint/tags/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/watchlist/__init__.py
 #, python-format
 msgid "Group: %(name)s"
 msgstr "Grup: %(name)s"
@@ -2487,6 +2505,10 @@ msgstr "Pembersihan riwayat dimulai di latar belakang"
 msgid "Incorrect confirmation text."
 msgstr "Teks konfirmasi salah."
 
+#: changedetectionio/blueprint/ui/__init__.py changedetectionio/blueprint/watchlist/templates/watch-overview.html
+msgid "Clear Histories"
+msgstr "Hapus Riwayat"
+
 #: changedetectionio/blueprint/ui/__init__.py
 #, python-brace-format
 msgid "The watch by UUID {} does not exist."
@@ -2599,9 +2621,10 @@ msgstr "Monitor diperbarui."
 msgid "Preview unavailable - No fetch/check completed or triggers not reached"
 msgstr "Pratinjau tidak tersedia - Belum ada pengambilan/pemeriksaan selesai atau pemicu belum tercapai"
 
-#: changedetectionio/blueprint/ui/preview.py
-msgid "Diff"
-msgstr "Perbedaan"
+#: changedetectionio/blueprint/ui/preview.py changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
+#: changedetectionio/processors/image_ssim_diff/preview.py
+msgid "Preview"
+msgstr "Pratinjau"
 
 #: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/watchlist/__init__.py
 #, python-brace-format
@@ -2611,6 +2634,10 @@ msgstr "menampilkan <b>{start} - {end}</b> {record_name} dari total <b>{total}</
 #: changedetectionio/blueprint/ui/queue.py
 msgid "queued items"
 msgstr "item dalam antrean"
+
+#: changedetectionio/blueprint/ui/queue.py changedetectionio/blueprint/ui/templates/queue.html
+msgid "Check queue"
+msgstr "Antrean pemeriksaan"
 
 #: changedetectionio/blueprint/ui/queue.py
 #, python-brace-format
@@ -2837,6 +2864,11 @@ msgstr "Dari grup <a href=\"%(url)s\">%(name)s</a>: <strong>%(value)s</strong>"
 #, python-format
 msgid "Decided by %(name)s: %(value)s"
 msgstr "Ditentukan oleh %(name)s: %(value)s"
+
+#: changedetectionio/blueprint/ui/templates/edit.html
+#, python-format
+msgid "Watch: %(name)s"
+msgstr ""
 
 #: changedetectionio/blueprint/ui/templates/edit.html
 msgid "Browser Steps"
@@ -3280,10 +3312,6 @@ msgid "Nothing running"
 msgstr "Tidak ada yang berjalan"
 
 #: changedetectionio/blueprint/ui/templates/queue.html
-msgid "Check queue"
-msgstr "Antrean pemeriksaan"
-
-#: changedetectionio/blueprint/ui/templates/queue.html
 msgid "Live view of what the workers are doing right now and what is waiting in line."
 msgstr "Tampilan langsung tentang apa yang sedang dilakukan worker dan apa yang menunggu dalam antrean."
 
@@ -3411,13 +3439,9 @@ msgid "Summary"
 msgstr "Ringkasan"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-#: changedetectionio/processors/text_json_diff/difference.py
+#: changedetectionio/processors/image_ssim_diff/difference.py changedetectionio/processors/text_json_diff/difference.py
 msgid "History"
 msgstr "Riwayat"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview-single-row.html
-msgid "Preview"
-msgstr "Pratinjau"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Changedetection.io can monitor more than just web-pages! See our plugins!"
@@ -3576,10 +3600,6 @@ msgstr "Gunakan notifikasi default"
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "Clear errors"
 msgstr "Bersihkan kesalahan"
-
-#: changedetectionio/blueprint/watchlist/templates/watch-overview.html
-msgid "Clear Histories"
-msgstr "Hapus Riwayat"
 
 #: changedetectionio/blueprint/watchlist/templates/watch-overview.html
 msgid "<p>Are you sure you want to clear history for the selected items?</p><p>This action cannot be undone.</p>"
@@ -3848,6 +3868,10 @@ msgstr "Sudah masuk"
 #: changedetectionio/flask_app.py
 msgid "You must be logged in, please log in."
 msgstr "Anda harus masuk, silakan masuk."
+
+#: changedetectionio/flask_app.py changedetectionio/templates/login.html
+msgid "Login"
+msgstr "Masuk"
 
 #: changedetectionio/flask_app.py
 msgid "Incorrect password"
@@ -4243,8 +4267,9 @@ msgstr "Aktif"
 
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-oauth-grants.html
 #: changedetectionio/blueprint/settings/llm/templates/_mcp-tokens.html
-#: changedetectionio/blueprint/tags/templates/edit-tag.html changedetectionio/blueprint/ui/templates/edit.html
-#: changedetectionio/forms.py changedetectionio/templates/sidebar-nav.html
+#: changedetectionio/blueprint/settings/notifications/__init__.py changedetectionio/blueprint/tags/templates/edit-tag.html
+#: changedetectionio/blueprint/ui/templates/edit.html changedetectionio/forms.py
+#: changedetectionio/templates/sidebar-nav.html
 msgid "Notifications"
 msgstr "Notifikasi"
 
@@ -6176,10 +6201,6 @@ msgstr "Contoh - cocokkan baris yang mengandung kata kunci"
 #: changedetectionio/templates/edit/text-options.html
 msgid "One line per regular-expression/string match"
 msgstr "Satu baris per regular-expression/pencocokan string"
-
-#: changedetectionio/templates/login.html
-msgid "Login"
-msgstr "Masuk"
 
 #: changedetectionio/templates/menu.html
 msgid "Resume automatic scheduling"
