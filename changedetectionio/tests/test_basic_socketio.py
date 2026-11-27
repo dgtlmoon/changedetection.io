@@ -166,11 +166,22 @@ def _latest_row(socketio_client, uuid, seconds=5):
     return latest
 
 
-def _list_page(app, client, uuids, tag=''):
-    """A browser with the watch list open, filtered by the group `tag` (or not)"""
+def _processor_cell(html_text, uuid):
+    """The watch-processor <td> of the watch's row in html_text (a pushed row or the whole list page)"""
+    row_start = html_text.index(f'data-watch-uuid="{uuid}"')
+    m = re.search(r'<td class="watch-processor">(.*?)</td>', html_text[row_start:], re.DOTALL)
+    assert m, "The row has its processor cell"
+    return m.group(1).strip()
+
+
+def _list_page(app, client, uuids, tag='', processor=None):
+    """A browser with the watch list open, filtered by the group `tag` (or not) and the `processor` (or not)"""
     page = app.extensions['socketio'].test_client(app, flask_test_client=client)
     assert page.is_connected()
-    page.emit('watch-subscribe', {'uuids': uuids, 'rows_for_tag': tag})
+    asks = {'uuids': uuids, 'rows_for_tag': tag}
+    if processor is not None:
+        asks['rows_for_processor'] = processor
+    page.emit('watch-subscribe', asks)
     page.get_received()
     return page
 
@@ -205,6 +216,11 @@ def test_watch_list_row_is_sent_with_stock_and_price(client, live_server, measur
     # What was sent is what a reload of the list shows
     res = client.get(url_for("watchlist.index"))
     assert b'In stock' in res.data and b'10.00' in res.data and b'No information' not in res.data
+    # The processor badge too: the row is rendered without the page's own context, so what the row needs must
+    # come from row_context.py (an undefined name there is empty, not an error)
+    cell = _processor_cell(row, uuid)
+    assert 'processor-badge-restock_diff' in cell
+    assert cell == _processor_cell(res.data.decode(), uuid)
 
     # A new price and out of stock arrive the same way
     _set_restock_product(datastore_path, price='7.50', in_stock=False)
@@ -242,6 +258,9 @@ def test_watch_list_row_is_sent_with_groups_and_title(client, live_server, measu
     tag_uuid = next(iter(tags))
     assert 'Made after the page loaded' in row
     assert url_for('watchlist.index', tag=tag_uuid) in row, "A link to the group's watches"
+    cell = _processor_cell(row, uuid)
+    assert 'processor-badge-text_json_diff' in cell, "The processor badge is in the row"
+    assert cell == _processor_cell(client.get(url_for("watchlist.index")).data.decode(), uuid)
     # In the group's colours by itself: the page's own colour rules are from before the group existed
     colours = tag_display_colours(tags[tag_uuid])
     assert f"--tag-chip-bg: {colours['light']['bg']}" in row and f"--tag-chip-dark-bg: {colours['dark']['bg']}" in row
@@ -309,6 +328,33 @@ def test_watch_list_row_is_sent_as_the_filtered_list_shows_it(client, live_serve
     for page in (whole_list, filtered_list, not_a_list, made_up):
         page.disconnect()
     tags.clear()
+    delete_all_watches(client)
+
+
+def test_watch_list_row_is_sent_as_the_processor_filtered_list_shows_it(client, live_server, measure_memory_usage, datastore_path):
+    """A list filtered by a processor (?processor=) shows that processor's badge active, and so does a row sent to it"""
+    from changedetectionio.flask_app import app
+    datastore = client.application.config.get('DATASTORE')
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True})
+
+    plain = _list_page(app, client, [uuid])
+    filtered = _list_page(app, client, [uuid], processor='text_json_diff')
+    made_up = _list_page(app, client, [uuid], processor='<b>no-such-processor')
+
+    client.post(url_for("ui.form_watch_list_checkbox_operations"), data={"op": "mute", "uuids": [uuid]}, follow_redirects=True)
+    plain_row, filtered_row, made_up_row = (_latest_row(p, uuid, seconds=2) for p in (plain, filtered, made_up))
+    assert plain_row and filtered_row and made_up_row
+
+    assert 'processor-badge-text_json_diff active' not in _processor_cell(plain_row, uuid)
+    assert 'processor-badge-text_json_diff active' in _processor_cell(filtered_row, uuid)
+    assert _processor_cell(made_up_row, uuid) == _processor_cell(plain_row, uuid), "Not a processor: no filter"
+    # As a reload of each list shows it
+    for row, args in ((plain_row, {}), (filtered_row, {'processor': 'text_json_diff'})):
+        res = client.get(url_for("watchlist.index", **args))
+        assert _processor_cell(row, uuid) == _processor_cell(res.data.decode(), uuid)
+
+    for p in (plain, filtered, made_up):
+        p.disconnect()
     delete_all_watches(client)
 
 

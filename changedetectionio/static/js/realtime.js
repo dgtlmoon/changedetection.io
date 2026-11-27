@@ -136,7 +136,10 @@ $(document).ready(function () {
                 // A watch list also asks for the rows themselves, as the list filtered by its group shows them
                 const subscription = {uuids: watchUuidsOnThisPage()};
                 if (document.querySelector('.watch-table tr[data-watch-uuid]')) {
-                    subscription.rows_for_tag = new URLSearchParams(window.location.search).get('tag') || '';
+                    const pageParams = new URLSearchParams(window.location.search);
+                    subscription.rows_for_tag = pageParams.get('tag') || '';
+                    // And the processor it is filtered by, whose badge is shown active
+                    subscription.rows_for_processor = (pageParams.get('processor') || '').trim();
                     // And under which sub-path this page is served (example.com/our-changedetection/), so the
                     // addresses in a row start as the ones in this page do. It is the start of this connection's path.
                     subscription.rows_url_prefix = socketio_url.replace(/\/socket\.io$/, '');
