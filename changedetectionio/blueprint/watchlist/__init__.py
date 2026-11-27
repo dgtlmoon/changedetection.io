@@ -135,6 +135,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         processor_badge_texts = processors.get_processor_badge_texts()
         row_ctx = watch_row_context(datastore,
                                     active_tag_uuid=active_tag_uuid,
+                                    active_processor=active_processor,
                                     queued_uuids=update_q.get_queued_uuids(),
                                     processor_badge_texts_by_watch=processor_badge_texts_for_watches(
                                         datastore, sorted_watches, processor_badge_texts))
@@ -145,7 +146,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             extra_title=f" - {_('Group: %(name)s', name=active_tag.get('title', ''))}" if active_tag else '',
             **row_ctx,
             active_tag=active_tag,
-            active_processor=active_processor,
             checking_now_size=len(worker_pool.get_running_uuids()),
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             errored_count=errored_count,
@@ -170,7 +170,6 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             now_time_server=round(time.time()),
             pagination=pagination,
             processor_badge_css=processors.get_processor_badge_css(),
-            processor_badge_texts=processor_badge_texts,
             queue_size=update_q.qsize(),
             # Active view filters (tag/processor/q/unread/...) so links (e.g. column sorting)
             # can re-apply them and not drop the operator's current filtered view.

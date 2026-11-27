@@ -27,17 +27,17 @@ def watch_room(watch_uuid):
 # The rendered row of a watch goes to the pages listing it. A list filtered by a group has that group in the row's
 # links (Edit, Recheck, pause ... come back to the filtered list), and an app served under a sub-path
 # (USE_X_SETTINGS with X-Forwarded-Prefix, e.g. example.com/changedetection/) has that path at the start of every
-# address in the row. So there is one room per watch, group and sub-path: a page joins the one for the group it is
-# filtered by ('' for none) and the sub-path it was reached under ('' for none), and is sent the row rendered for
-# those. The row is rendered from a worker thread, outside any request, so nothing else says which sub-path the
+# address in the row. A list filtered by a processor shows that processor's badge active. So there is one room per
+# watch, group, processor and sub-path: a page joins the one for the group and processor it is filtered by ('' for
+# none) and the sub-path it was reached under ('' for none), and is sent the row rendered for those. The row is rendered from a worker thread, outside any request, so nothing else says which sub-path the
 # page's addresses need.
 WATCH_ROW_ROOM_PREFIX = 'watch-row:'
-# watch uuid -> the (group filter, sub-path) pairs of the pages that have asked for its row
+# watch uuid -> the (group filter, sub-path, processor filter) of the pages that have asked for its row
 _row_filters_shown = {}
 
 
-def watch_row_room(watch_uuid, tag_uuid='', url_prefix=''):
-    return f"{WATCH_ROW_ROOM_PREFIX}{watch_uuid}:{tag_uuid or ''}:{url_prefix or ''}"
+def watch_row_room(watch_uuid, tag_uuid='', url_prefix='', processor=''):
+    return f"{WATCH_ROW_ROOM_PREFIX}{watch_uuid}:{tag_uuid or ''}:{processor or ''}:{url_prefix or ''}"
 
 
 def connection_url_prefix(page_says=None):
@@ -396,32 +396,35 @@ def has_connected_clients(socketio):
         return True
 
 
-def render_watch_list_row(watch, datastore, tag_uuid='', queued_uuids=None, url_prefix=''):
+def render_watch_list_row(watch, datastore, tag_uuid='', queued_uuids=None, url_prefix='', processor=''):
     """The watch's row of the watch list, from the template the page itself is made with
     (watch-overview-single-row.html with blueprint/watchlist/row_context.py), as the list filtered by `tag_uuid`
     shows it. Mostly called from a worker thread at the end of a check, where there is no request to render in.
     url_prefix: the sub-path the page is served under, so the row's addresses (links, images, form actions) start
-    with it as they do in the page."""
+    with it as they do in the page.
+    processor: the processor the list is filtered by, its badge is shown active."""
     from flask import render_template
     from changedetectionio.blueprint.watchlist.row_context import watch_row_context
 
     def render():
         return render_template('watch-overview-single-row.html', watch=watch,
-                               **watch_row_context(datastore, active_tag_uuid=tag_uuid or None, queued_uuids=queued_uuids))
+                               **watch_row_context(datastore, active_tag_uuid=tag_uuid or None, queued_uuids=queued_uuids,
+                                                   active_processor=processor))
 
     # The row reads the group from the request too (the Recheck button), so always in a request of that list
     from changedetectionio.flask_app import app
-    with app.test_request_context(query_string={'tag': tag_uuid} if tag_uuid else None,
+    query = {k: v for k, v in (('tag', tag_uuid), ('processor', processor)) if v}
+    with app.test_request_context(query_string=query or None,
                                   environ_overrides={'SCRIPT_NAME': url_prefix} if url_prefix else None):
         return render()
 
 
 def send_watch_list_row(socketio, watch, datastore, queued_uuids=None):
-    """Send the watch's rendered row to the pages that list it, once for each group filter among them."""
+    """Send the watch's rendered row to the pages that list it, once for each filter and sub-path among them."""
     uuid = watch.get('uuid')
     for shown in list(_row_filters_shown.get(uuid, ())):
-        tag_uuid, url_prefix = shown
-        room = watch_row_room(uuid, tag_uuid, url_prefix)
+        tag_uuid, url_prefix, processor = shown
+        room = watch_row_room(uuid, tag_uuid, url_prefix, processor)
         try:
             has_pages = next(iter(socketio.server.manager.get_participants('/', room)), None) is not None
         except AttributeError:
@@ -433,7 +436,8 @@ def send_watch_list_row(socketio, watch, datastore, queued_uuids=None):
                 del _row_filters_shown[uuid]
             continue
         try:
-            html = render_watch_list_row(watch, datastore, tag_uuid=tag_uuid, queued_uuids=queued_uuids, url_prefix=url_prefix)
+            html = render_watch_list_row(watch, datastore, tag_uuid=tag_uuid, queued_uuids=queued_uuids,
+                                         url_prefix=url_prefix, processor=processor)
         except Exception as e:
             logger.error(f"Socket.IO: could not render the watch list row of {uuid}: {str(e)}")
             continue
@@ -616,12 +620,19 @@ def init_socketio(app, datastore):
         if rows_for is not None and not (isinstance(rows_for, str) and (rows_for == '' or rows_for in socketio.datastore.data['settings']['application']['tags'])):
             rows_for = None
         url_prefix = connection_url_prefix((data or {}).get('rows_url_prefix')) if rows_for is not None else ''
+        # And by which processor ('' for none, or one that is not a processor: the list then has no badge active)
+        rows_processor = (data or {}).get('rows_for_processor')
+        rows_processor = rows_processor.strip() if isinstance(rows_processor, str) else ''
+        if rows_processor:
+            from changedetectionio import processors
+            if rows_processor not in processors.get_processor_badge_texts():
+                rows_processor = ''
         for uuid in uuids[:MAX_WATCH_SUBSCRIPTIONS]:
             if isinstance(uuid, str) and uuid in watching:
                 join_room(watch_room(uuid))
                 if rows_for is not None:
-                    join_room(watch_row_room(uuid, rows_for, url_prefix))
-                    _row_filters_shown.setdefault(uuid, set()).add((rows_for, url_prefix))
+                    join_room(watch_row_room(uuid, rows_for, url_prefix, rows_processor))
+                    _row_filters_shown.setdefault(uuid, set()).add((rows_for, url_prefix, rows_processor))
 
     @socketio.on('connect')
     def handle_connect():
