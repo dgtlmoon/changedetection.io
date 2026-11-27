@@ -78,13 +78,20 @@ def watch_row_context(datastore, active_tag_uuid=None, queued_uuids=None, active
     queued_uuids is accepted so a caller rendering many rows can fetch the queue once instead
     of per row; omit it and the live queue is read for you.
 
-    processor_badge_texts_by_watch allows a list page to provide the effective
-    per-watch badge label without making the row template read configuration files.
+    processor_badge_texts_by_watch is the effective per-watch badge label (a restock watch that
+    only follows the price says Price). The list page passes it for the watches it lists; omit it,
+    as a row pushed over Socket.IO does, and it is built here from all watches so the pushed row
+    says what the page says. Either way only the rows rendered read their settings.
     """
     if queued_uuids is None:
         # Local import: flask_app imports blueprints, so a module-level import would cycle.
         from changedetectionio.flask_app import update_q
         queued_uuids = update_q.get_queued_uuids()
+
+    processor_badge_texts = processors.get_processor_badge_texts()
+    if processor_badge_texts_by_watch is None:
+        processor_badge_texts_by_watch = processor_badge_texts_for_watches(
+            datastore, datastore.data['watching'].values(), processor_badge_texts)
 
     return {
         'active_processor': active_processor or '',
@@ -95,9 +102,9 @@ def watch_row_context(datastore, active_tag_uuid=None, queued_uuids=None, active
         'any_has_restock_price_processor': datastore.any_watches_have_processor_by_name("restock_diff"),
         'datastore': datastore,
         'has_proxies': datastore.proxy_list,
-        'processor_badge_texts': processors.get_processor_badge_texts(),
+        'processor_badge_texts': processor_badge_texts,
         'processor_descriptions': processors.get_processor_descriptions(),
-        'processor_badge_texts_by_watch': processor_badge_texts_by_watch or {},
+        'processor_badge_texts_by_watch': processor_badge_texts_by_watch,
         'queued_uuids': queued_uuids,
         'system_default_fetcher': datastore.data['settings']['application'].get('fetch_backend'),
         'ui_settings': datastore.data['settings']['application']['ui'],

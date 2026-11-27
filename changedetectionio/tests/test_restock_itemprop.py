@@ -120,6 +120,13 @@ def test_restock_badge_uses_price_when_availability_detection_is_off(
         badges = page.select('.processor-badge-restock_diff')
         assert len(badges) == 1
         assert page.select_one('td.watch-processor .processor-badge-restock_diff').get_text(strip=True) == 'Price'
+
+        # A row pushed over Socket.IO is rendered without the page's own context, it must show the same badge
+        from changedetectionio.realtime.socket_server import render_watch_list_row
+        datastore = client.application.config.get('DATASTORE')
+        uuid = next(iter(datastore.data['watching']))
+        pushed = BeautifulSoup(render_watch_list_row(datastore.data['watching'][uuid], datastore), 'html.parser')
+        assert pushed.select_one('td.watch-processor .processor-badge-restock_diff').get_text(strip=True) == 'Price'
     finally:
         delete_all_watches(client)
 
