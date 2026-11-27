@@ -13,12 +13,14 @@ already available in any render and is deliberately NOT listed.
 from changedetectionio import processors
 
 
-def watch_row_context(datastore, active_tag_uuid=None, queued_uuids=None):
+def watch_row_context(datastore, active_tag_uuid=None, queued_uuids=None, active_processor=''):
     """Context for one (or many) watch list rows.
 
     active_tag_uuid matters: the row's Edit/Recheck links carry the tag so the operator lands
     back on the filtered view they came from. A pushed row must therefore be rendered with the
     tag of the page that will receive it, not a global one.
+
+    active_processor: the processor the list is filtered by ('' for none), its badge in the row is shown active.
 
     queued_uuids is accepted so a caller rendering many rows can fetch the queue once instead
     of per row; omit it and the live queue is read for you.
@@ -29,6 +31,7 @@ def watch_row_context(datastore, active_tag_uuid=None, queued_uuids=None):
         queued_uuids = update_q.get_queued_uuids()
 
     return {
+        'active_processor': active_processor or '',
         'active_tag_uuid': active_tag_uuid,
         # Also decides cols_required on the page, so page and row must agree or a pushed row
         # ends up with a different <td> count than the table header — which is why it is
@@ -36,6 +39,7 @@ def watch_row_context(datastore, active_tag_uuid=None, queued_uuids=None):
         'any_has_restock_price_processor': datastore.any_watches_have_processor_by_name("restock_diff"),
         'datastore': datastore,
         'has_proxies': datastore.proxy_list,
+        'processor_badge_texts': processors.get_processor_badge_texts(),
         'processor_descriptions': processors.get_processor_descriptions(),
         'queued_uuids': queued_uuids,
         'system_default_fetcher': datastore.data['settings']['application'].get('fetch_backend'),
