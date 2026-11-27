@@ -1,0 +1,176 @@
+@use "../settings" as *;
+
+// The "Group tag" field of a watch as chips with suggestions (static/js/tag-chips.js).
+// Without the script none of this is on the page, the field is the plain text input.
+
+// Looks like the text inputs around it, the chips and the box to type in sit inside
+// As wide as a text input to start with, grows with the chips in it, and wraps to a new line of chips at the width
+// of what it is in - never wider, so nothing around it gets a scrollbar
+.tag-chips-field {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  width: auto;
+  min-width: min(24em, 100%);
+  max-width: 100%;
+  vertical-align: middle;
+  padding: 0.25em 0.35em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px var(--color-shadow-input);
+  background-color: var(--color-background-input);
+  color: var(--color-text-input);
+  cursor: text;
+
+  &:focus-within {
+    border-color: #129fea;
+  }
+
+  .tag-chips-list {
+    display: contents;
+  }
+
+  // The box to type in: no look of its own
+  input[type=text].tag-chips,
+  input[type=text].tag-chips:focus {
+    flex: 1 1 7em;
+    width: auto;
+    min-width: 7em;
+    margin: 0;
+    padding: 0.2em 0.25em;
+    border: 0 !important;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  // On the coloured panel of the "Add a watch" page: takes the room that is left in its row
+  &.tag-chips-transparent {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    background-color: var(--color-background-new-watch-input-transparent);
+    color: var(--color-white);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+  }
+}
+
+// A group's name in its own colours (the ones of its label in the watch list, light and dark), or the
+// default label colour for a name that is not a group yet
+.tag-chip {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  border-radius: 5px;
+  overflow: hidden;
+  font-size: 0.9em;
+  line-height: 1.2;
+  background: var(--tag-chip-bg, var(--color-text-watch-tag-list));
+  color: var(--tag-chip-color, var(--color-white));
+
+  @include dark-mode {
+    background: var(--tag-chip-dark-bg, var(--color-text-watch-tag-list));
+    color: var(--tag-chip-dark-color, var(--color-white));
+  }
+
+  .tag-chip-text {
+    padding: 3px 7px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tag-chip-remove {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0 7px;
+    border: 0;
+    border-radius: 0;
+    // a shade of the chip's own colour, so the x reads as its own button
+    background: rgba(0, 0, 0, 0.12);
+    color: inherit;
+    font: bold 1.15em/1 Arial, sans-serif;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(0, 0, 0, 0.3);
+      outline: none;
+    }
+  }
+}
+
+
+.tag-chips-suggestions {
+  position: absolute;
+  z-index: 30;
+  top: 100%;
+  left: -1px;
+  min-width: calc(100% + 2px);
+  box-sizing: border-box;
+  max-height: 15em;
+  overflow-y: auto;
+  margin: 3px 0 0 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--color-border-input);
+  border-radius: 4px;
+  background: var(--color-background);
+  color: var(--color-text);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  cursor: default;
+
+  li {
+    display: flex;
+    margin: 0;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover,
+    &.active {
+      // a shade that reads on the light and the dark list alike
+      background: rgba(128, 128, 128, 0.25);
+    }
+  }
+}
+
+// fingers
+@media (pointer: coarse) {
+  .tag-chip {
+    .tag-chip-text {
+      padding: 6px 9px;
+    }
+
+    .tag-chip-remove {
+      padding: 0 11px;
+    }
+  }
+
+  .tag-chips-suggestions li {
+    padding: 8px;
+  }
+}
+
+// Watch edit page: the groups the watch is in by their URL pattern, under the field. The same labels as the
+// chips, each a link to its group.
+.auto-applied-groups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 0.4em;
+
+  a.tag-chip {
+    text-decoration: none;
+
+    &:hover {
+      filter: brightness(0.95);
+    }
+  }
+}

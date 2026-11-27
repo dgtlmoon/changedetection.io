@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% from '_mcp-permissions-grid.html' import permissions_grid %}
+{#
+  The OAuth consent screen, /oauth/authorize (blueprint/mcp/oauth), behind the instance's login. Shown as the app's
+  own modal dialog (the same look as the token overlay and Revoke), opened over the normal page.
+  Requires template context: error, or form (forms.MCPTokenForm), client (oauth/server.Client), redirect_host,
+  localhost_only, mcp_url.
+  A client's name is whatever it says about itself, so the dialog shows what is real next to it: a CIMD client's
+  hostname (its client_id URL), and where the browser will be sent back to.
+  Escape and clicking outside don't close it, that would leave an empty page: Cancel is the way out (it denies).
+#}
+{% block content %}
+{% set level_labels = {'none': _('None'), 'read': _('Read'), 'write': _('Write')} %}
+<dialog id="mcp-oauth-dialog" class="modal-dialog mcp-token-dialog mcp-oauth-consent" aria-labelledby="mcp-oauth-title">
+  <div class="modal-header">
+    <span class="modal-icon mcp-oauth-lock{% if error %} failed{% endif %}" aria-hidden="true"><i data-feather="{{ 'alert-triangle' if error else 'lock' }}"></i></span>
+    <h2 class="modal-title" id="mcp-oauth-title">
+      {% if error %}{{ _('Sign-in failed') }}{% else %}{{ _('OAuth authentication request needs your permission') }}{% endif %}
+    </h2>
+  </div>
+  {% if error %}
+  <div class="modal-body">
+    <p>{{ error }}</p>
+  </div>
+  {% else %}
+  {# url_for, not request.full_path: behind a proxy at a sub-path (/big-balls/) full_path leaves the prefix out, and
+     the answer would go to the host root. The OAuth request rides along as its parameters, re-encoded by url_for #}
+  <form class="pure-form pure-form-stacked" method="POST" action="{{ url_for('mcp_oauth.authorize', **request.args) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="modal-body">
+      <p class="mcp-oauth-who">
+        <strong>{{ _('%(name)s wants to use your changedetection.io', name=client.client_name) }}</strong>
+        {% if client.host %}
+        <span class="mcp-hint">{{ _('from %(host)s', host=client.host) }}</span>
+        {% else %}
+        <span class="mcp-hint">{{ _('The name is what the assistant says about itself, it is not verified.') }}</span>
+        {% endif %}
+      </p>
+      {% if localhost_only %}
+      <div class="stab-overview-disclaimer">
+        <div class="stab-disclaimer-icon"><i data-feather="alert-triangle"></i></div>
+        <div class="stab-disclaimer-body">
+          <p>{{ _('This assistant only sends you back to this computer (localhost). Only allow it if you started this sign-in yourself, from an app on this computer.') }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <p class="stab-section-title">{{ _('It will be able to') }}</p>
+      {# Follows the grid below as it's changed (script at the end) #}
+      <div class="mcp-perm-summary" id="mcp-oauth-summary">
+        {% for field in [form.perm_monitors, form.perm_tags, form.perm_notifications, form.perm_browser, form.perm_system] + (form.plugin_rows|default([]))|map('first')|list %}
+        <span class="mcp-chip level-{{ field.data }}" data-area="{{ field.name }}">{{ field.label.text }} <strong>{{ level_labels[field.data] }}</strong></span>
+        {% endfor %}
+      </div>
+
+      <details class="mcp-oauth-change"{% if form.errors %} open{% endif %}>
+        <summary>{{ _('Change what it can do') }}</summary>
+        <div class="pure-control-group">
+          {{ form.name.label }}
+          {{ form.name(class='pure-input-1') }}
+          <p class="mcp-hint">{{ _('Shown on the OAuth sub-tab of the MCP Server settings, where it can be revoked.') }}</p>
+          {% if form.errors %}<ul class="errors">{% for errors in form.errors.values() %}{% for e in errors %}<li>{{ e }}</li>{% endfor %}{% endfor %}</ul>{% endif %}
+        </div>
+        {{ permissions_grid(form) }}
+        {% if form.tags.choices %}
+        <fieldset class="mcp-token-groups">
+          <legend>{{ form.tags.label.text }}</legend>
+          {{ form.tags(class='mcp-token-group-list') }}
+          <span class="pure-form-message-inline">{{ _('None ticked: every monitor. Ticked: only the monitors in those groups, for example one group per case or customer.') }}</span>
+        </fieldset>
+        {% endif %}
+      </details>
+
+      <p class="mcp-hint">{{ _('Connects to') }} <code>{{ mcp_url }}</code>. {{ _('You will be sent back to %(host)s.', host=redirect_host) }}</p>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" name="decision" value="deny" formnovalidate class="modal-btn-cancel pure-button">{{ _('Cancel') }}</button>
+      <button type="submit" name="decision" value="approve" class="pure-button pure-button-primary">{{ _('Allow') }}</button>
+    </div>
+  </form>
+  {% endif %}
+</dialog>
+
+<script>
+(function () {
+  var dialog = document.getElementById('mcp-oauth-dialog');
+  dialog.showModal();
+  // Closing it would leave an empty page, Cancel is the way out
+  dialog.addEventListener('cancel', function (e) { e.preventDefault(); });
+
+  // The summary follows the grid
+  var labels = {{ level_labels|tojson }};
+  dialog.querySelectorAll('input[type="radio"][name^="perm_"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      var chip = document.querySelector('#mcp-oauth-summary [data-area="' + radio.name + '"]');
+      if (!chip) return;
+      chip.className = 'mcp-chip level-' + radio.value;
+      chip.querySelector('strong').textContent = labels[radio.value];
+    });
+  });
+})();
+</script>
+{% endblock %}

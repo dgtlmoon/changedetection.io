@@ -28,21 +28,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      # No setup-python / host pip cache here, everything is installed inside the Docker build
 
-      - name: Cache pip packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-py${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-pip-
-
-      - name: Get current date for cache key
+      - name: Get current date for the daily dependency refresh
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
@@ -57,10 +45,15 @@ jobs:
           build-args: |
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             LOGGER_LEVEL=TRACE
+            DEPS_REFRESH_DATE=${{ steps.date.outputs.date }}
           tags: test-changedetectionio
           load: true
-          cache-from: type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
-          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'Dockerfile') }}-${{ steps.date.outputs.date }}
+          # The date is a build-arg rather than part of the scope, so only the deps layer refreshes daily.
+          # A PR's first push (and anything with changed requirements/Dockerfile) falls back to master's cache.
+          cache-from: |
+            type=gha,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}
+            type=gha,scope=build-master-py${{ env.PYTHON_VERSION }}
+          cache-to: type=gha,mode=max,scope=build-${{ github.ref_name }}-py${{ env.PYTHON_VERSION }}
 
       - name: Verify build
         run: |
@@ -78,6 +71,45 @@ jobs:
             pip-licenses --partial-match \
               --fail-on="GPL-2.0;GPL-3.0;AGPL;GNU General Public License;GNU Affero General Public License"
           '
+
+      - name: License compliance - docs/THIRD-PARTY-LICENSES.md is up to date (warning only)
+        run: |
+          # Only the image built with the Dockerfile's default Python is the one that ships;
+          # other matrix versions pull in different backports and would always differ.
+          SHIPPED_PYTHON=$(sed -n 's/^ARG PYTHON_VERSION=//p' Dockerfile | head -n1)
+          if [ "${{ env.PYTHON_VERSION }}" != "$SHIPPED_PYTHON" ]; then
+            echo "Skipping, the shipped image is built with Python $SHIPPED_PYTHON"
+            exit 0
+          fi
+
+          if ! git ls-files --error-unmatch docs/THIRD-PARTY-LICENSES.md >/dev/null 2>&1; then
+            echo "::error file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md is missing from the repository. Generate it with ./.github/scripts/generate-third-party-licenses.sh and commit it."
+            exit 1
+          fi
+
+          # Compare package names and licences only. Most requirements are unpinned and the
+          # deps layer refreshes daily, so comparing versions (or the "Generated" date) would
+          # fail unrelated PRs whenever an upstream package publishes a release.
+          normalise() {
+            grep '^| ' "$1" | grep -v -e '^| Package |' -e '^|---' \
+              | sed 's/\[\([^]]*\)\]([^)]*)/\1/' \
+              | awk -F' [|] ' '{print $1 " | " $3}' | sort
+          }
+
+          cp docs/THIRD-PARTY-LICENSES.md /tmp/THIRD-PARTY-LICENSES.committed.md
+          ./.github/scripts/generate-third-party-licenses.sh test-changedetectionio
+
+          if ! diff -u <(normalise /tmp/THIRD-PARTY-LICENSES.committed.md) <(normalise docs/THIRD-PARTY-LICENSES.md); then
+            echo ""
+            # A warning, not a failure: requirements are unpinned, so an upstream release (not this PR) is the usual
+            # cause, and a local rebuild can resolve differently from this one. third-party-licenses.yml regenerates the
+            # file weekly and on every release, and opens a PR. The copyleft gate above is what fails a build.
+            echo "::warning file=docs/THIRD-PARTY-LICENSES.md::docs/THIRD-PARTY-LICENSES.md has drifted - a bundled package was added, removed, or changed its licence (see the diff above, '-' is committed, '+' is what the image actually ships). The weekly and release runs of third-party-licenses.yml open a PR to update it."
+            echo ""
+            echo "If a new package is multi-licensed, record which licence we elect in NOTICE."
+            exit 0
+          fi
+          echo "docs/THIRD-PARTY-LICENSES.md matches the packages and licences in the shipped image"
 
       - name: We should be Python ${{ env.PYTHON_VERSION }} ...
         run: |
@@ -195,12 +227,60 @@ jobs:
           path: cli-opts-output.txt
 
   # Playwright tests
+  # The basic test suite again with flaskapi-guard installed and enabled, in its own job so each run keeps its own time budget
+  basic-tests-guard:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 35
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Test built container with Pytest, flaskapi-guard installed and enabled
+        # The MCP tests send more than 300 MCP calls a minute when they land on the same pytest worker, so the MCP
+        # budget gets the same margin as the general one (the default stays 300, test_guard.py covers the limit itself).
+        # tests/test_mcp_oauth.py calls /oauth/authorize 34 times and /oauth/token 23 times from 127.0.0.1 on one worker,
+        # past the sign-in budget of 30 per 5 minutes, so that gets a margin too (the default stays 30)
+        run: |
+          docker network inspect changedet-network >/dev/null 2>&1 || docker network create changedet-network
+          docker run --name test-cdio-basic-tests-guard --network changedet-network -e EXTRA_PACKAGES=flaskapi-guard==4.4.0 -e FLASKAPI_GUARD_ENABLED=true -e FLASKAPI_GUARD_RATE_LIMIT=600 -e FLASKAPI_GUARD_MCP_RATE_LIMIT=600 -e FLASKAPI_GUARD_LOGIN_RATE_LIMIT=100 -e FLASKAPI_GUARD_TRUSTED_PROXIES=127.0.0.1,::1 test-changedetectionio bash -c 'cd changedetectionio && ./run_basic_tests.sh'
+
+      - name: Extract memory report and logs
+        if: always()
+        uses: ./.github/actions/extract-memory-report
+        with:
+          container-name: test-cdio-basic-tests-guard
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Store test artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-cdio-basic-tests-guard-output-py${{ env.PYTHON_VERSION }}
+          path: output-logs
+
   playwright-tests:
     runs-on: ubuntu-latest
     needs: build
     timeout-minutes: 10
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
+      # For the test containers: where a failed test leaves the screenshots and error text of its watches
+      # (tests/conftest.py keep_failure_artifacts), kept as an artifact by the last step
+      FAILURE_ARTIFACTS: -e TEST_FAILURE_ARTIFACTS_DIR=/test-failure-artifacts -v ${{ github.workspace }}/test-failure-artifacts:/test-failure-artifacts
     steps:
       - uses: actions/checkout@v7
         with:
@@ -228,9 +308,9 @@ jobs:
           # keeps the run short. Each file is wrapped in its own log group and the failing one is
           # named explicitly, because everything after it is SKIPPED rather than run, and that is
           # otherwise easy to misread as "the whole browser suite broke".
-          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py tests/fetchers/test_pdf_browser.py; do
+          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py tests/fetchers/test_pdf_browser.py tests/fetchers/test_screenshot_animated_page.py tests/fetchers/test_busy_page.py; do
             echo "::group::pytest $t"
-            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+            if ! docker run $FAILURE_ARTIFACTS --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest -vv --capture=tee-sys --showlocals --tb=long --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
               echo "::endgroup::"
               echo "::error::$t FAILED - stopping here. Any later test file and the remaining steps of this job were SKIPPED, not failed."
@@ -239,22 +319,49 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Playwright - HAR TEST OUTPUT
+        run: |
+          # HAR_UUID_RECORD network recording - print what the browser recorded rather than only pass/fail.
+          # The rest of the -s output is noise, so only the block the test prints is shown unless it fails.
+          if ! docker run $FAILURE_ARTIFACTS --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+               bash -c "cd changedetectionio;pytest -s --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_renavigation.py -k test_har_record_env_writes_har_zip" > /tmp/har-test.log 2>&1; then
+            cat /tmp/har-test.log
+            echo "::error::HAR recording test FAILED"
+            exit 1
+          fi
+          if ! sed -n '/^=== HAR TEST OUTPUT ===/,/^=== END HAR TEST OUTPUT ===/p' /tmp/har-test.log | grep .; then
+            echo "::error::HAR recording test passed but printed no HAR TEST OUTPUT block (was it skipped?)"
+            exit 1
+          fi
+
       - name: Playwright - Headers and requests
         run: |
-          docker run --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py; pwd;find .'
+          docker run $FAILURE_ARTIFACTS --name "changedet" --hostname changedet --rm -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'find .; cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py; pwd;find .'
 
       - name: Playwright - Restock detection
         run: |
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+          docker run $FAILURE_ARTIFACTS --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
 
   # Pyppeteer tests
+
+      - name: Store screenshots and errors of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-tests-failure-artifacts-py${{ env.PYTHON_VERSION }}
+          path: test-failure-artifacts
+          if-no-files-found: ignore
+
   pyppeteer-tests:
     runs-on: ubuntu-latest
     needs: build
     if: ${{ inputs.skip-pypuppeteer == false }}
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       PYTHON_VERSION: ${{ inputs.python-version }}
+      # For the test containers: where a failed test leaves the screenshots and error text of its watches
+      # (tests/conftest.py keep_failure_artifacts), kept as an artifact by the last step
+      FAILURE_ARTIFACTS: -e TEST_FAILURE_ARTIFACTS_DIR=/test-failure-artifacts -v ${{ github.workspace }}/test-failure-artifacts:/test-failure-artifacts
     steps:
       - uses: actions/checkout@v7
         with:
@@ -278,9 +385,9 @@ jobs:
       - name: Pyppeteer - Specific tests in built container
         run: |
           # Fail fast, but name the file that failed - see the note in the playwright job above
-          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py tests/fetchers/test_pdf_browser.py; do
+          for t in tests/fetchers/test_content.py tests/test_errorhandling.py tests/visualselector/test_fetch_data.py tests/fetchers/test_custom_js_before_content.py tests/fetchers/test_renavigation.py tests/fetchers/test_pdf_browser.py tests/fetchers/test_screenshot_animated_page.py tests/fetchers/test_busy_page.py; do
             echo "::group::pytest $t"
-            if ! docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+            if ! docker run $FAILURE_ARTIFACTS --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
                  bash -c "cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 $t"; then
               echo "::endgroup::"
               echo "::error::$t FAILED - stopping here. Any later test file and the remaining steps of this job were SKIPPED, not failed."
@@ -289,13 +396,36 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Pyppeteer - HAR TEST OUTPUT
+        run: |
+          # HAR_UUID_RECORD network recording - print what the browser recorded rather than only pass/fail.
+          # The rest of the -s output is noise, so only the block the test prints is shown unless it fails.
+          if ! docker run $FAILURE_ARTIFACTS --rm -e "FLASK_SERVER_NAME=cdio" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network --hostname=cdio test-changedetectionio \
+               bash -c "cd changedetectionio;pytest -s --live-server-host=0.0.0.0 --live-server-port=5004 tests/fetchers/test_renavigation.py -k test_har_record_env_writes_har_zip" > /tmp/har-test.log 2>&1; then
+            cat /tmp/har-test.log
+            echo "::error::HAR recording test FAILED"
+            exit 1
+          fi
+          if ! sed -n '/^=== HAR TEST OUTPUT ===/,/^=== END HAR TEST OUTPUT ===/p' /tmp/har-test.log | grep .; then
+            echo "::error::HAR recording test passed but printed no HAR TEST OUTPUT block (was it skipped?)"
+            exit 1
+          fi
+
       - name: Pyppeteer - Headers and requests checks
         run: |
-          docker run --name "changedet" --hostname changedet --rm -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
+          docker run $FAILURE_ARTIFACTS --name "changedet" --hostname changedet --rm -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "FLASK_SERVER_NAME=changedet" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000?dumpio=true" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio; pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/test_request.py'
 
       - name: Pyppeteer - Restock detection
         run: |
-          docker run --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+          docker run $FAILURE_ARTIFACTS --rm --name "changedet" -e "FLASK_SERVER_NAME=changedet" -e "FAST_PUPPETEER_CHROME_FETCHER=True" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest --live-server-port=5004 --live-server-host=0.0.0.0 tests/restock/test_restock.py'
+
+      - name: Store screenshots and errors of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pyppeteer-tests-failure-artifacts-py${{ env.PYTHON_VERSION }}
+          path: test-failure-artifacts
+          if-no-files-found: ignore
 
   # Selenium tests
   selenium-tests:
@@ -365,6 +495,51 @@ jobs:
       - name: Test SMTP notification mime types
         run: |
           docker run --rm --network changedet-network test-changedetectionio bash -c 'cd changedetectionio;pytest tests/smtp/test_notification_smtp.py'
+
+  # The web UI used in a real browser: pyppeteer clicks and types its way through the pages (tests/UI/puppeteer)
+  puppeteer-UI-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ inputs.skip-pypuppeteer == false }}
+    timeout-minutes: 10
+    env:
+      PYTHON_VERSION: ${{ inputs.python-version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: test-changedetectionio-${{ env.PYTHON_VERSION }}
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/test-changedetectionio.tar
+
+      - name: Spin up the browser
+        run: |
+          docker network create changedet-network
+          docker run --network changedet-network -d --cap-add=SYS_ADMIN --name sockpuppetbrowser --hostname sockpuppetbrowser --rm dgtlmoon/sockpuppetbrowser:latest
+
+      - name: Puppeteer - UI tests in built container
+        run: |
+          # The browser reaches the test server as 'cdio'. Screenshots (those the tests take, and one of the page
+          # a failed test was on) are kept as an artifact below.
+          mkdir -p ui-test-screenshots
+          docker run --rm -e "FLASK_SERVER_NAME=cdio" -e "PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000" -e "UI_TEST_SCREENSHOT_DIR=/ui-test-screenshots" \
+            -v "${{ github.workspace }}/ui-test-screenshots:/ui-test-screenshots" --network changedet-network --hostname=cdio test-changedetectionio \
+            bash -c "cd changedetectionio;pytest --live-server-host=0.0.0.0 --live-server-port=5004 tests/UI/puppeteer/"
+
+      - name: Store UI test screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: puppeteer-UI-tests-screenshots-py${{ env.PYTHON_VERSION }}
+          path: ui-test-screenshots
+          if-no-files-found: ignore
 
   nginx-reverse-proxy:
     runs-on: ubuntu-latest
@@ -527,6 +702,66 @@ jobs:
 
           echo "✓ API tests through nginx subpath completed successfully"
 
+      - name: Test MCP OAuth discovery through reverse proxy, at root and subpath
+        run: |
+          echo "=== MCP OAuth discovery at / and /changedet-sub/ ==="
+          # OAuth is only offered with MCP switched on and a password set: set both in the datastore, then restart
+          docker stop changedet-app
+          docker cp changedet-app:/datastore/changedetection.json /tmp/changedetection.json
+          python3 - <<'PYEOF'
+          import base64, hashlib, json, os
+          path = '/tmp/changedetection.json'
+          data = json.load(open(path))
+          app = data['settings']['application']
+          app['mcp_enabled'] = True
+          salt = os.urandom(32)
+          app['password'] = base64.b64encode(salt + hashlib.pbkdf2_hmac('sha256', b'test', salt, 100000)).decode()
+          json.dump(data, open(path, 'w'))
+          PYEOF
+          docker cp /tmp/changedetection.json changedet-app:/datastore/changedetection.json
+          docker start changedet-app
+          sleep 3
+
+          fail() { echo "ERROR: $1"; exit 1; }
+
+          for PREFIX in "" "/changedet-sub"; do
+            BASE="http://localhost:8080${PREFIX}"
+            echo "--- ${BASE} ---"
+            # A request without a token is told where the sign-in is (RFC 9728), under the same prefix
+            curl --retry-connrefused --retry 6 -s -o /dev/null -D /tmp/mcp-401.txt -X POST "${BASE}/mcp/v1" \
+              -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"ping"}'
+            grep -q '^HTTP/[0-9.]* 401' /tmp/mcp-401.txt || fail "no 401 from ${PREFIX}/mcp/v1"
+            grep -i '^WWW-Authenticate:' /tmp/mcp-401.txt | grep -q "${PREFIX}/.well-known/oauth-protected-resource/mcp/v1\"" \
+              || fail "WWW-Authenticate doesn't point at ${PREFIX}/.well-known/oauth-protected-resource/mcp/v1"
+            echo "✓ 401 with resource_metadata under '${PREFIX:-/}'"
+
+            curl -s -o /tmp/mcp-resource.json "${BASE}/.well-known/oauth-protected-resource/mcp/v1"
+            jq -e --arg p "$PREFIX" '.resource | endswith($p + "/mcp/v1")' /tmp/mcp-resource.json >/dev/null \
+              || fail "resource metadata doesn't name ${PREFIX}/mcp/v1"
+            ISSUER=$(jq -r '.authorization_servers[0]' /tmp/mcp-resource.json)
+            [[ "$ISSUER" == *"localhost${PREFIX}" ]] || fail "issuer '${ISSUER}' doesn't end in localhost${PREFIX}"
+            echo "✓ resource metadata, issuer ${ISSUER}"
+
+            # {issuer}/.well-known/openid-configuration is where clients look for a sub-path issuer (RFC 8414's
+            # host-root address never reaches an instance behind a prefix); at / the RFC 8414 address works too
+            for WELL_KNOWN in openid-configuration oauth-authorization-server; do
+              curl -s -o /tmp/mcp-meta.json "${BASE}/.well-known/${WELL_KNOWN}"
+              jq -e --arg i "$ISSUER" --arg p "$PREFIX" \
+                '.issuer == $i and (.registration_endpoint | endswith($p + "/oauth/register")) and .code_challenge_methods_supported == ["S256"]' \
+                /tmp/mcp-meta.json >/dev/null || fail "${PREFIX}/.well-known/${WELL_KNOWN}: $(head -c 300 /tmp/mcp-meta.json)"
+              echo "✓ ${PREFIX}/.well-known/${WELL_KNOWN}"
+            done
+
+            # DCR, the way claude.ai registers
+            STATUS=$(curl -s -o /tmp/mcp-register.json -w '%{http_code}' -X POST "${BASE}/oauth/register" \
+              -H 'Content-Type: application/json' \
+              -d '{"client_name":"CI","redirect_uris":["https://claude.ai/api/mcp/auth_callback"],"token_endpoint_auth_method":"none"}')
+            [ "$STATUS" = 201 ] && jq -e .client_id /tmp/mcp-register.json >/dev/null \
+              || fail "${PREFIX}/oauth/register gave ${STATUS}: $(head -c 300 /tmp/mcp-register.json)"
+            echo "✓ ${PREFIX}/oauth/register"
+          done
+          echo "✓ MCP OAuth discovery works at root and through the subpath"
+
       - name: Cleanup nginx test
         if: always()
         run: |
@@ -637,9 +872,21 @@ jobs:
         run: |
           docker run  -e EXTRA_PACKAGES=changedetection.io-osint-processor test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s  tests/plugins/test_processor.py::test_check_plugin_processor'
 
+      - name: Optional flaskapi-guard integration (installed through EXTRA_PACKAGES, not in requirements.txt)
+        run: |
+          docker run -e EXTRA_PACKAGES=flaskapi-guard==4.4.0 -e FLASKAPI_GUARD_ENABLED=true -e FLASKAPI_GUARD_RATE_LIMIT=600 -e FLASKAPI_GUARD_TRUSTED_PROXIES=127.0.0.1,::1 test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/test_guard.py'
+
       - name: Plugin get_html_head_extras hook injects into base.html
         run: |
           docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_html_head_extras.py'
+
+      - name: Plugin register_blueprints hook mounts plugin routes
+        run: |
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_register_blueprints.py'
+
+      - name: Plugin register_sidebar_items hook adds left sidebar links
+        run: |
+          docker run test-changedetectionio bash -c 'cd changedetectionio;pytest -vvv -s tests/plugins/test_sidebar_items.py'
 
   # Container startup tests
   container-tests:
@@ -746,7 +993,8 @@ jobs:
 
   # Upgrade path test
   upgrade-path-test:
-    runs-on: ubuntu-latest
+    # Pinned: 0.49.1 needs lxml<6, which has no Python 3.14 wheel and its source build fails on ubuntu-26.04 (libxml2 2.15)
+    runs-on: ubuntu-24.04
     needs: build
     timeout-minutes: 25
     env:

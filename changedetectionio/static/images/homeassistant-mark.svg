@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><title>Home Assistant</title>
+<rect width="48" height="48" rx="11" fill="#18bcf2"/>
+<path d="M10 25L24 11l14 14M14 21v15h20V21" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="24" cy="27" r="3" fill="#fff"/>
+</svg>

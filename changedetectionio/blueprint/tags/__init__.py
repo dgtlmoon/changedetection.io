@@ -3,17 +3,21 @@ from flask import Blueprint, request, render_template, flash, url_for, redirect
 from flask_babel import gettext
 from loguru import logger
 
-from changedetectionio.blueprint.tags.colour import safe_css_colour
+from changedetectionio.blueprint.tags.colour import safe_css_colour, tag_display_colours
 from changedetectionio.store import ChangeDetectionStore
 from changedetectionio.flask_app import login_optionally_required
 from changedetectionio.llm.evaluator import get_llm_config as _get_llm_config, is_llm_features_disabled
 
+
+from changedetectionio.model.Tag import group_name_has_separator
 
 def construct_blueprint(datastore: ChangeDetectionStore):
     tags_blueprint = Blueprint('tags', __name__, template_folder="templates")
 
     # Used by any template that writes a tag colour into a <style> block
     tags_blueprint.add_app_template_filter(safe_css_colour, 'safe_css_colour')
+    # The colours of a group's label, for a template that shows a group outside the watch list
+    tags_blueprint.add_app_template_filter(tag_display_colours, 'tag_display_colours')
 
     @tags_blueprint.route("/list", methods=['GET'])
     @login_optionally_required
@@ -31,6 +35,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         output = render_template("groups-overview.html",
                                  app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
                                  available_tags=sorted_tags,
+                                 extra_title=f" - {gettext('Groups')}",
                                  form=add_form,
                                  generate_tag_colors=processors.generate_processor_badge_colors,
                                  tag_count=tag_count,
@@ -51,6 +56,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             return redirect(url_for('tags.tags_overview_page'))
 
         title = request.form.get('name').strip()
+
+        if group_name_has_separator(title):
+            flash(gettext("A group name cannot have a comma in it, commas are what goes between several groups."), "error")
+            return redirect(url_for('tags.tags_overview_page'))
 
         if datastore.tag_exists_by_name(title):
             flash(gettext('The tag "{}" already exists').format(title), "error")
@@ -149,6 +158,28 @@ def construct_blueprint(datastore: ChangeDetectionStore):
         flash(gettext("All tags deleted, clearing from watches in background"))
         return redirect(url_for('tags.tags_overview_page'))
 
+    def _prepare_request_fields(form):
+        """Choices for the group's fetch method and proxy, the same ones a watch is offered."""
+        form.fetch_backend.choices = [c for c in form.fetch_backend.choices if c[0] != 'system']
+        for p in datastore.extra_browsers:
+            form.fetch_backend.choices.append(p)
+        form.fetch_backend.choices.append(("system", gettext('Not set - Use system settings default')))
+        if not form.fetch_backend.data:
+            form.fetch_backend.data = 'system'
+
+        proxy_list = datastore.proxy_list
+        if proxy_list is None:
+            # No proxies configured, nothing to choose from. What the group has stored is left as it is.
+            del form.proxy
+            del form.proxy_group_mode
+        else:
+            form.proxy.choices = [('', gettext('Not set'))]
+            for key, proxy in proxy_list.items():
+                form.proxy.choices.append((key, proxy['label']))
+            # Radio needs '' not None, also when the chosen one no longer exists
+            if form.proxy.data not in proxy_list:
+                form.proxy.data = ''
+
     @tags_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET'])
     @login_optionally_required
     def form_tag_edit(uuid):
@@ -168,6 +199,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                        default_system_settings = datastore.data['settings'],
                                        )
 
+        _prepare_request_fields(form)
+
         # Bridge API-stored processor_config_* values into the form's FormField sub-forms.
         # The API stores processor_config_restock_diff in the tag dict; find the matching
         # FormField by checking which one's sub-fields cover the config keys.
@@ -183,7 +216,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                             sub_field.data = sub_value
                     break
 
+        from zoneinfo import available_timezones
         template_args = {
+            'available_timezones': sorted(available_timezones()),
+            'timezone_default_config': datastore.data['settings']['application'].get('scheduler_timezone_default'),
             'data': default,
             'form': form,
             'watch': default,
@@ -194,31 +230,10 @@ def construct_blueprint(datastore: ChangeDetectionStore):
             'llm_group_edit': True,
         }
 
-        included_content = {}
-        if form.extra_form_content():
-            # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
-            # And then render the code from the module
-            from jinja2 import Environment, FileSystemLoader
-            import importlib.resources
-            templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
-            env = Environment(loader=FileSystemLoader(templates_dir))
-            template_str = """{% from '_helpers.html' import render_field, render_checkbox_field, render_button %}
-        <script>        
-            $(document).ready(function () {
-                toggleOpacity('#overrides_watch', '#restock-fieldset-price-group', true);
-            });
-        </script>            
-                <fieldset>
-                    <div class="pure-control-group">
-                        <fieldset class="pure-group">
-                        {{ render_checkbox_field(form.overrides_watch) }}
-                        <span class="pure-form-message-inline">Used for watches in "Restock & Price detection" mode</span>
-                        </fieldset>
-                </fieldset>
-                """
-            template_str += form.extra_form_content()
-            template = env.from_string(template_str)
-            included_content = template.render(**template_args)
+        # The group form is always the restock form, rendered as real template files so its text is translatable (#4612)
+        included_content = render_template("edit-tag-extra-form.html",
+                                           extra_form_template=form.extra_form_template(),
+                                           **template_args)
 
         # Watches whose URL currently matches this tag's pattern
         matching_watches = {
@@ -233,6 +248,8 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                  llm_features_disabled=is_llm_features_disabled(),
                                  matching_watches=matching_watches,
                                  settings_application=datastore.data['settings']['application'],
+                                 # Same wording as the heading above the tabs
+                                 extra_title=f" - {gettext('Group: %(name)s', name=default.get('title', ''))}",
                                  **template_args
                                  )
 
@@ -252,20 +269,33 @@ def construct_blueprint(datastore: ChangeDetectionStore):
                                data=tag,
                                extra_notification_tokens=datastore.get_unique_notification_tokens_available()
                                )
-        # @todo subclass form so validation works
-        #if not form.validate():
-#            for widget, l in form.errors.items():
-#                flash(','.join(l), 'error')
-#           return redirect(url_for('tags.form_tag_edit_submit', uuid=uuid))
-
-        # Until then, validate the fields that must not be taken on trust - tag_colour is
-        # rendered into a <style> block, where anything but a hex colour is CSS injection
-        if not form.tag_colour.validate(form):
-            for message in form.tag_colour.errors:
-                flash(message, 'error')
+        # A name with a comma in it: not as a new name. A group that has one from before can keep it.
+        new_title = (request.form.get('title') or '').strip()
+        if tag and group_name_has_separator(new_title) and new_title != (tag.get('title') or '').strip():
+            flash(gettext("A group name cannot have a comma in it, commas are what goes between several groups."), "error")
             return redirect(url_for('tags.form_tag_edit', uuid=uuid))
 
+        # The form is a watch's form with the group's fields added, so validating all of it would fail on fields
+        # a group's page does not have (the URL..). Validate what was sent: nothing is saved on trust - an
+        # invalid notification URL or template is refused here and not found out when a notification is sent,
+        # and tag_colour is rendered into a <style> block, where anything but a hex colour is CSS injection.
+        # The choices of the fetch method and proxy are the ones the page offered.
+        _prepare_request_fields(form)
+        invalid = False
+        for name, field in form._fields.items():
+            if name in request.form and not field.validate(form):
+                invalid = True
+                # (A message can be a lazy translation, not a str)
+                for message in field.errors:
+                    flash(f"{field.label.text}: {message}", 'error')
+        if invalid:
+            return redirect(url_for('tags.form_tag_edit', uuid=uuid))
+
+        # (With no proxies configured the proxy fields are not on the page and were taken off the form above, what
+        # the group has stored is kept)
         tag.update(form.data)
+        if 'proxy' in form.data and not form.data['proxy']:
+            tag['proxy'] = None
         tag['processor'] = 'restock_diff'
         tag.commit()
 

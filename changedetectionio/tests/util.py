@@ -13,6 +13,29 @@ import threading
 _test_endpoint_content_lock = threading.Lock()
 _test_endpoint_content = {}
 
+def import_example_plugin(example_dir, package):
+    """Import an example_plugins/<example_dir> package as its own top-level package, the way
+    `pip install .` makes it importable, e.g. import_example_plugin('processor/wordcounter', 'cdio_example_wordcounter')"""
+    import importlib
+    import sys
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'example_plugins', example_dir))
+    sys.path.insert(0, path)
+    try:
+        return importlib.import_module(package)
+    finally:
+        sys.path.remove(path)
+
+
+def clear_plugin_discovery_caches():
+    """Processor discovery and the merged API spec are cached at first use, a plugin registered
+    afterwards (like in a test) is only seen once these are cleared."""
+    from changedetectionio import processors, api
+    for f in (processors.find_processors, processors.get_plugin_processor_metadata, processors._available_processors_cached,
+              api.build_merged_spec_dict, api.get_openapi_spec, api.get_openapi_schema_dict,
+              api._resolve_schema_properties, api.get_watch_schema_properties, api.get_tag_schema_properties):
+        f.cache_clear()
+
+
 def write_test_file_and_sync(filepath, content, mode='w'):
     """
     Write test data to file and ensure it's synced to disk.
@@ -216,6 +239,26 @@ def wait_for_all_checks(client=None):
     """
     from changedetectionio.flask_app import update_q as global_update_q
     from changedetectionio import worker_pool
+    done = worker_pool.wait_for_all_checks(global_update_q, timeout=150)
+    if client is None:
+        return done
+
+    # A monitor that was just added (an import, the API) isn't queued by that request, the scheduler finds it on its
+    # next pass, up to a second later. Until then the queue is empty and the workers idle, so the wait above can return
+    # before its first check has even started, and the test changes the page under it. Wait for the scheduler to pick
+    # up every unpaused monitor that was never checked, a few seconds at most (a time schedule may keep one waiting).
+    datastore = client.application.config.get('DATASTORE')
+    if not datastore or datastore.data['settings']['application'].get('all_paused'):
+        return done
+    deadline = time.time() + 5
+    while time.time() < deadline:
+        unchecked = [w for w in list(datastore.data['watching'].values())
+                     if not w.get('paused') and not w.get('last_checked')]
+        if not unchecked:
+            break
+        time.sleep(0.2)
+    else:
+        return done
     return worker_pool.wait_for_all_checks(global_update_q, timeout=150)
 
 
@@ -286,6 +329,17 @@ def new_live_server_setup(live_server):
     # not seen recently (reported against fotokoch.de, which answers 503 + meta refresh and then
     # serves a 200). The browser follows the refresh, so the fetch has to be judged on the
     # document we actually end up extracting rather than on the interstitial.
+    # What a parked domain serves: an empty document that sends the browser on from its load event
+    @live_server.app.route('/test-onload-redirect')
+    def test_onload_redirect():
+        landing = url_for('test_onload_redirect_landing')
+        return ('<!DOCTYPE html><html><head><script>window.onload=function(){window.location.href="'
+                + landing + '"}</script></head></html>')
+
+    @live_server.app.route('/test-onload-redirect-landing')
+    def test_onload_redirect_landing():
+        return '<html><body><h1>This domain is for sale</h1></body></html>'
+
     # Keyed on last-seen time rather than a hit count, so EVERY fresh check starts out gated -
     # a counter would serve a clean 200 to the second check and let the test pass without the fix.
     _interstitial_last_seen = {}
@@ -305,6 +359,80 @@ def new_live_server_setup(live_server):
                 '<html><body><h1>The real page content is here</h1></body></html>', 200)
         resp.headers['Content-Type'] = 'text/html'
         return resp
+
+    # A page whose icon the browser may load for itself, but page script may not read - what a browser
+    # that enforces cross-origin rules does with an icon on another host. Told apart by the Accept
+    # header: the browser's own icon request asks for images ('image/avif,image/webp,...'), a fetch()
+    # from page script asks for '*/*'. (Sec-Fetch-Dest would say it too, but is not sent over plain http)
+    @live_server.app.route('/test-favicon-page')
+    def test_favicon_page():
+        icon = url_for('test_favicon_browser_only', key=request.args.get('key', 'default'))
+        return (f'<html><head><title>favicon</title><link rel="icon" type="image/png" href="{icon}"></head>'
+                f'<body>A page with an icon only the browser itself may fetch</body></html>')
+
+    # A page that never leaves the browser's main thread alone for long, the way an animation drawn
+    # without a GPU does: anything the fetcher asks the page has to wait for a gap. Its icon is one
+    # only the browser itself may fetch.
+    @live_server.app.route('/test-busy-page')
+    def test_busy_page():
+        icon = url_for('test_favicon_browser_only', key=request.args.get('key', 'default'))
+        return (f'<html><head><title>busy</title><link rel="icon" type="image/png" href="{icon}"></head>'
+                '<body><p>The busy page text is here</p><script>'
+                # On an interval so that stopping the script that is running does not end it, the next one starts
+                'setInterval(() => { const until = performance.now() + 8000; while (performance.now() < until) {} }, 0);'
+                '</script></body></html>')
+
+    _favicon_requests = {}
+
+    @live_server.app.route('/test-favicon-browser-only.png')
+    def test_favicon_browser_only():
+        import base64
+        by = 'browser' if request.headers.get('Accept', '').startswith('image/') else 'script'
+        _favicon_requests.setdefault(request.args.get('key', 'default'), []).append(by)
+        if by != 'browser':
+            return make_response('Not for scripts', 403)
+        png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
+        resp = make_response(png, 200)
+        resp.headers['Content-Type'] = 'image/png'
+        return resp
+
+    @live_server.app.route('/test-favicon-requests')
+    def test_favicon_requests():
+        return {'requested_by': _favicon_requests.get(request.args.get('key', 'default'), [])}
+
+    # A tall page that never stops animating, with the things a taller viewport or a scroll changes:
+    # a hero the height of the viewport (green), a fixed header (blue) and a band far down (magenta).
+    # And three canvases: a very large one on the first screen (cyan), a very large one below it
+    # (red) and one the size of a graph far down (orange).
+    @live_server.app.route('/test-animated-tall-page')
+    def test_animated_tall_page():
+        return """<html><head><style>
+            body { margin: 0; height: 15000px; }
+            #hero, #header, #far-down { left: 0; width: 100%; }
+            #hero { position: absolute; top: 0; height: 100vh; background: rgb(0, 160, 0); }
+            #header { position: fixed; top: 0; height: 40px; background: rgb(0, 0, 255); }
+            #far-down { position: absolute; top: 12000px; height: 400px; background: rgb(255, 0, 255); }
+            p { position: absolute; top: 110vh; }
+            canvas { position: absolute; left: 0; width: 100%; height: 200px; }
+        </style></head><body>
+        <div id="hero"></div><div id="header"></div><div id="far-down"></div>
+        <p>The animated page text is here</p>
+        <canvas id="large-first-screen" width="3000" height="2000" style="top: 100px"></canvas>
+        <canvas id="large-below" width="3000" height="2000" style="top: 6000px"></canvas>
+        <canvas id="graph" width="600" height="300" style="top: 13000px"></canvas>
+        <script>
+            for (const [id, colour] of [['large-first-screen', 'rgb(0, 255, 255)'], ['large-below', 'rgb(255, 0, 0)'], ['graph', 'rgb(255, 165, 0)']]) {
+                const canvas = document.getElementById(id), context = canvas.getContext('2d');
+                context.fillStyle = colour;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            // Keeps the renderer busy on every frame, the way a large animation does
+            (function animate() {
+                const until = performance.now() + 30;
+                while (performance.now() < until) {}
+                requestAnimationFrame(animate);
+            })();
+        </script></body></html>"""
 
     @live_server.app.route('/test-endpoint2')
     def test_endpoint2():
@@ -401,7 +529,9 @@ def new_live_server_setup(live_server):
     def test_notification_endpoint():
         datastore_path = current_app.config.get('TEST_DATASTORE_PATH', 'test-datastore')
 
-        with open(os.path.join(datastore_path, "notification.txt"), "wb") as f:
+        # ?outputfilename= lets a test tell several notifications apart, the name only, never a path
+        notification_filename = os.path.basename(request.args.get('outputfilename') or '') or "notification.txt"
+        with open(os.path.join(datastore_path, notification_filename), "wb") as f:
             # Debug method, dump all POST to file also, used to prove #65
             data = request.stream.read()
             if data != None:
@@ -435,6 +565,19 @@ def new_live_server_setup(live_server):
     @live_server.app.route('/test-return-query', methods=['GET'])
     def test_return_query():
         return request.query_string
+
+    # A stand-in scraping API with the JSON contract of example_plugins/fetcher/fallback_fetcher
+    @live_server.app.route('/test-scrape-api', methods=['POST'])
+    def test_scrape_api():
+        body = request.get_json()
+        one_pixel_png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        return {
+            'status_code': int(request.args.get('status_code', 200)),
+            'content': f"<html><body><p>Fetched by the scraping API</p><p>url:{body.get('url')}</p>"
+                       f"<p>key:{request.headers.get('X-Api-Key')}</p></body></html>",
+            'content_type': 'text/html',
+            'screenshot': one_pixel_png if body.get('screenshot') else None,
+        }
 
 
     @live_server.app.route('/endpoint-test.pdf')
@@ -490,3 +633,12 @@ def new_live_server_setup(live_server):
         return resp
 
     live_server.start()
+
+
+def new_mcp_token(client, name='test', tags=None, **permissions):
+    """A new MCP access token (blueprint/mcp/tokens.py), every row at write unless given, e.g. notifications='read'.
+    tags: the tag uuids it's limited to, None for every monitor."""
+    from changedetectionio.blueprint.mcp.tokens import add_token
+    settings = client.application.config['DATASTORE'].data['settings']['application']
+    levels = {'monitors': 'write', 'tags': 'write', 'notifications': 'write', 'browser': 'write', 'system': 'read', **permissions}
+    return add_token(settings, name, levels, tags)[1]

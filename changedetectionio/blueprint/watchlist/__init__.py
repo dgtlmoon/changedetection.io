@@ -29,14 +29,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         if not watch:
             flash(_('Watch not found'), 'error')
-        else:
-            if op == 'pause':
-                watch.toggle_pause()
-            elif op == 'mute':
-                watch.toggle_mute()
-            watch.commit()
+            return redirect(url_for('watchlist.index', tag=request.args.get('tag')))
 
-        return redirect(url_for('watchlist.index', tag=request.args.get('tag')))
+        if op == 'pause':
+            watch.toggle_pause()
+        elif op == 'mute':
+            watch.toggle_mute()
+        watch.commit()
+
+        # Each watch row has id="<uuid>", so the anchor brings the browser back to the
+        # row that was toggled instead of the top of a long list
+        return redirect(url_for('watchlist.index', tag=request.args.get('tag'), _anchor=uuid))
 
     @watchlist_blueprint.route("/", methods=['GET'])
     @login_optionally_required
@@ -61,8 +64,9 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         active_processor = request.args.get('processor', '').strip()
         # Toolbar facet counts are tallied over the tag/processor/search context but
         # independently of the active status toggle, so the .seg numbers stay stable
-        # as you switch between All / Unread / Deals / With errors.
+        # as you switch between All / Unread / Deals / With errors / Healthy.
         errored_count = 0
+        healthy_count = 0
         deals_count = 0
         unread_count = 0
         processor_counts = {}
@@ -84,6 +88,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 continue
             if watch.get('last_error'):
                 errored_count += 1
+            else:
+                healthy_count += 1
             if wl_filters.watch_is_deal(watch):
                 deals_count += 1
             # Unread = changed and not yet viewed — same test the 'unread' status
@@ -135,12 +141,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
         output = render_template(
             "watch-overview.html",
+            # The whole list is the home page, a group's list says which group
+            extra_title=f" - {_('Group: %(name)s', name=active_tag.get('title', ''))}" if active_tag else '',
             **row_ctx,
             active_tag=active_tag,
             active_processor=active_processor,
             checking_now_size=len(worker_pool.get_running_uuids()),
             app_rss_token=datastore.data['settings']['application'].get('rss_access_token'),
             errored_count=errored_count,
+            healthy_count=healthy_count,
             deals_count=deals_count,
             unread_count=unread_count,
             processor_counts=processor_counts,
@@ -150,6 +159,8 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                                                  'llm-configured' if llm_configured else '',
                                                  'has-any-unviewed' if datastore.unread_changes_count else ''])),
             form=form,
+            # The chips field of the "Group" action's modal
+            group_action_form=forms.WatchListGroupForm(),
             generate_tag_colors=processors.generate_processor_badge_colors,
             wcag_text_color=processors.wcag_text_color,
             guid=datastore.data['app_guid'],

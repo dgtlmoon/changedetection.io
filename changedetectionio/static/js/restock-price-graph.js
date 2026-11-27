@@ -1,10 +1,13 @@
 // Restock price/stock timeline - a hand-rolled smoothed SVG line graph.
 // Line segments are green where the item was in stock and red where it was out of stock.
 //
-// Two consumers:
-//   * the restock diff page (#restock-graph), which fetches window.restock_data_url and also
-//     builds the data table below it; and
-//   * the watchlist inline roll-down, which calls window.renderRestockGraph(el, series, currency, i18n).
+// This is the built-in chart. The chart HTML comes from /diff/<uuid>/processor-chart, where a plugin can
+// replace it (restock_diff hooks restock_diff_watch_history_page_chart / restock_diff_watchlist_overview_chart).
+// The built-in one is a .restock-graph-default element carrying its data, drawn by
+// window.initRestockGraphs(root) after the HTML is inserted:
+//   * the restock diff page (#restock-graph) loads window.restock_chart_url, and builds the data table
+//     below it from window.restock_data_url; and
+//   * the watchlist inline roll-down (watch-overview.js) loads the row's chart URL.
 //
 // Series shape (oldest -> newest): [{timestamp: <epoch sec>, price: <float|null>, in_stock: <bool|null>}]
 
@@ -57,9 +60,37 @@
         });
     }
 
+    // Prices in the page's language with the currency's own decimal places (ISO 4217, e.g. JPY 0, USD 2), the
+    // same as the server-side format_price filter (flask_app.py) so the watch list, history page and graph agree.
+    // Without a known currency code: the number with two decimals, then whatever currency text there was.
+    const PAGE_LANG = document.documentElement.lang || undefined;
+    const priceFormats = {};
+
+    function priceFormat(currency) {
+        if (!(currency in priceFormats)) {
+            const code = (currency || '').trim().toUpperCase();
+            let fmt = null;
+            try {
+                fmt = code ? new Intl.NumberFormat(PAGE_LANG, {style: 'currency', currency: code}) : null;
+            } catch (e) {
+                fmt = null;  // Not an ISO 4217 code
+            }
+            if (!fmt) {
+                try {
+                    fmt = new Intl.NumberFormat(PAGE_LANG, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                } catch (e) {
+                    fmt = new Intl.NumberFormat(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
+                fmt.suffix = currency ? ' ' + currency : '';
+            }
+            priceFormats[currency] = fmt;
+        }
+        return priceFormats[currency];
+    }
+
     function fmtPrice(v, currency) {
-        const n = Math.round(v * 100) / 100;
-        return (currency || '') + (Number.isInteger(n) ? n : n.toFixed(2));
+        const fmt = priceFormat(currency || '');
+        return fmt.format(Number(v)) + (fmt.suffix || '');
     }
 
     // Thin a large price series down to ~target points for drawing (you can't perceive more
@@ -354,18 +385,36 @@
         }
     };
 
-    // Diff page bootstrap: fetch the timeline, render the graph + the data table.
+    // Draw every built-in chart (.restock-graph-default, from templates/restock_diff/chart_default.html)
+    // inside root that isn't drawn yet. Call it after inserting chart HTML from /processor-chart.
+    window.initRestockGraphs = function (root) {
+        $(root || document).find('.restock-graph-default').not('.js-restock-graph').each(function () {
+            const $c = $(this);
+            // jQuery's .data() parses the JSON attributes
+            window.renderRestockGraph($c, $c.data('series') || [], $c.data('currency') || '', $c.data('i18n') || {},
+                $c.data('summary') || null, parseInt($c.data('height'), 10) || HEIGHT);
+        });
+    };
+
+    // Diff page bootstrap: load the chart HTML (built-in or a plugin's), and build the data table.
     $(function () {
         const $container = $('#restock-graph');
-        if (!$container.length || !window.restock_data_url) return;
+        if (!$container.length) return;
         const i18n = $.extend({}, DEFAULT_I18N, window.restock_i18n || {});
-        $.getJSON(window.restock_data_url).done(function (data) {
-            const series = (data && data.series) || [];
-            window.renderRestockGraph($container, series, (data && data.currency) || '', i18n, (data && data.summary) || null);
-            buildTable($('#restock-history-table'), series, (data && data.currency) || '', i18n);
-        }).fail(function () {
+        const showError = function () {
             $container.html($('<p class="pure-form-message-inline"></p>').text(i18n.load_error));
-        });
+        };
+        if (window.restock_chart_url) {
+            $.get(window.restock_chart_url).done(function (html) {
+                $container.html(html);
+                window.initRestockGraphs($container);
+            }).fail(showError);
+        }
+        if (window.restock_data_url) {
+            $.getJSON(window.restock_data_url).done(function (data) {
+                buildTable($('#restock-history-table'), (data && data.series) || [], (data && data.currency) || '', i18n);
+            });
+        }
     });
 
 })(jQuery);

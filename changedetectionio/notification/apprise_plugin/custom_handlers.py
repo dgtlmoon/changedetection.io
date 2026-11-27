@@ -85,6 +85,12 @@ def _register_http_handler(schema, send_func):
         service_name = f"Custom HTTP - {schema.upper()}"
         _base_args = base_args
 
+        @staticmethod
+        def parse_url(url):
+            # Plain parse only - the query string belongs to the remote endpoint, so ?user= / ?pass= etc
+            # must be sent on as-is and never be lifted out of it and treated as login credentials.
+            return apprise_parse_url(url, verify_host=False, simple=True)
+
         def __init__(self, **kwargs):
             # Extract format from qsd and set it as a top-level kwarg
             # This allows NotifyBase.__init__ to properly set notify_format
@@ -114,7 +120,9 @@ def _register_http_handler(schema, send_func):
                 )
                 return True if result is None else bool(result)
             except Exception as e:
-                self.logger.warning(f"Exception in custom HTTP handler: {e}")
+                # Short line for the notification error shown in the UI, full traceback only with LOGGER_LEVEL=TRACE
+                self.logger.warning(f"Exception in custom HTTP handler: {type(e).__name__}: {e}")
+                logger.opt(exception=True).trace(f"Custom HTTP handler {self.secure_protocol}:// failed")
                 return False
 
     # Register the plugin
@@ -133,9 +141,7 @@ def _get_auth(parsed_url: dict) -> str | tuple[str, str]:
     if user is not None and password is not None:
         return (unquote_plus(user), unquote_plus(password))
 
-    if user is not None:
-        return unquote_plus(user)
-
+    # A username without a password is not a login (requests would also reject a bare string here)
     return ""
 
 
@@ -159,12 +165,16 @@ def _get_params(parsed_url: dict) -> CaseInsensitiveDict:
     # https://github.com/caronc/apprise/wiki/Notify_Custom_JSON#get-parameter-manipulation
     # In Apprise, it relies on prefixing each request arg with "-", because it uses say &method=update as a flag for apprise
     # but here we are making straight requests, so we need todo convert this against apprise's logic
+    # Apprise lowercases the keys in "qsd" but keeps the case in "qsd+"/"qsd-", so compare lowercased,
+    # otherwise a header like ?+X-Key=secret is also sent as a query parameter (and lands in server logs)
+    header_keys = {k.lower() for k in parsed_url["qsd+"]}
+    ignored_keys = {k.lower() for k in parsed_url["qsd-"]}
     params = CaseInsensitiveDict(
         {
             unquote_plus(k): unquote_plus(v)
             for k, v in parsed_url["qsd"].items()
-            if k.strip("-") not in parsed_url["qsd-"]
-            and k.strip("+") not in parsed_url["qsd+"]
+            if k.strip("-").lower() not in ignored_keys
+            and k.strip("+").lower() not in header_keys
         }
     )
 

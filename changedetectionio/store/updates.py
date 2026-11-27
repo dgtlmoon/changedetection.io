@@ -17,6 +17,12 @@ from loguru import logger
 from copy import deepcopy
 
 
+def password_marker(password):
+    """Identifies a stored (already salted and hashed) password without keeping a second copy of it."""
+    import hashlib
+    return hashlib.sha256(str(password).encode('utf-8')).hexdigest()
+
+
 # Try to import orjson for faster JSON serialization
 try:
     import orjson
@@ -871,4 +877,40 @@ class DatastoreUpdatesMixin:
             restock.pop('prev_price', None)
             watch.commit()
 
+    def update_34(self):
+        """MCP sign-in (OAuth) took its issuer from the notification Base URL (settings.application.base_url, else
+        the BASE_URL env var) in 0.70.1. It has its own setting now, mcp_base_url ("Public MCP address", MCP Server > Settings), and the
+        notification one only does notifications. Grants are bound to {issuer}/mcp/v1, so when existing sign-ins were
+        made through the Base URL, carry it over once to keep them connected. Nothing else ties the two together."""
+        application = self.data['settings']['application']
+        base = (application.get('base_url') or os.getenv('BASE_URL') or '').strip().rstrip('/')
+        grants = (application.get('mcp_oauth') or {}).get('grants') or {}
+        if application.get('mcp_base_url') or not base:
+            return
+        if any(isinstance(g, dict) and g.get('resource') == base + '/mcp/v1' for g in grants.values()):
+            application['mcp_base_url'] = base
+            logger.info(f"update_34: kept existing MCP sign-ins working, Public MCP address set to {base}")
 
+    def update_35(self):
+        """Logins are now tied to the password that is currently set, so cookies issued before that carry no
+        password fingerprint. Record which password was set at upgrade time: with KEEP_OLD_SESSIONS=true those
+        older cookies stay logged in for as long as this is still the password, and stop at the first change."""
+        application = self.data['settings']['application']
+        password = os.getenv("SALTED_PASS") or application.get('password')
+        if password:
+            application['password_marker_at_login_fingerprint_upgrade'] = password_marker(password)
+
+    def update_36(self):
+        """A group's notification settings can now be switched off ("Don't use"), and that is what a new group
+        starts with. Groups that exist already go on notifying exactly as they did: one with notification URLs
+        stays what it was (part of the watch > group > system lookup, or 'add' / 'replace' if it was set to that),
+        one without any becomes 'off', see group_notification_mode_for_older_data()."""
+        from ..notification import group_notification_mode_for_older_data
+
+        for tag_uuid, tag in self.data['settings']['application']['tags'].items():
+            mode = group_notification_mode_for_older_data(tag)
+            if tag.get('notification_group_mode') != mode:
+                logger.info(f"update_36: group '{tag.get('title')}' ({tag_uuid}) notification_group_mode "
+                            f"'{tag.get('notification_group_mode')}' -> '{mode}'")
+            tag['notification_group_mode'] = mode
+            tag.commit()

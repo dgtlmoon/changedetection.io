@@ -45,12 +45,15 @@ const ModalDialog = {
 
       const config = { ...defaults, ...options };
 
-      // Icon mapping
-      const icons = {
-        danger: '⚠️',
-        warning: '⚠️',
-        info: 'ℹ️'
+      // The icon of each kind of dialog, from the Feather set the rest of the app uses (base.html loads it).
+      // Drawn in the kind's colour on a soft tint of it, see .modal-icon in _modal.scss
+      const iconNames = {
+        danger: 'alert-triangle',
+        warning: 'alert-triangle',
+        info: 'info'
       };
+      const iconName = iconNames[config.type] || iconNames.info;
+      const icon = (window.feather && window.feather.icons[iconName]) ? window.feather.icons[iconName].toSvg({'aria-hidden': 'true'}) : '';
 
       // Create dialog element
       const dialog = document.createElement('dialog');
@@ -61,7 +64,7 @@ const ModalDialog = {
       // Build dialog content
       dialog.innerHTML = `
         <div class="modal-header">
-          <span class="modal-icon ${config.type}">${icons[config.type] || icons.info}</span>
+          <span class="modal-icon ${config.type}">${icon}</span>
           <h2 class="modal-title" id="modal-title">${config.title}</h2>
         </div>
         <div class="modal-body" id="modal-body">
@@ -127,8 +130,13 @@ const ModalDialog = {
       // Show dialog
       dialog.showModal();
 
-      // Focus confirm button for accessibility
+      // Focus confirm button for accessibility - unless the dialog has a field of its own that has been given
+      // the focus meanwhile (the "Group" action's chips field): taking it away would end what is being typed there
       setTimeout(() => {
+        const focused = document.activeElement;
+        if (focused && focused !== dialog && dialog.contains(focused) && focused.matches('input, textarea, select')) {
+          return;
+        }
         dialog.querySelector('[data-action="confirm"]').focus();
       }, 100);
     });

@@ -289,3 +289,136 @@ def test_ui_viewed_unread_flag(client, live_server, measure_memory_usage, datast
     res = client.get(url_for("watchlist.index"))
     assert b'unread-tab-counter' not in res.data, "Unread filter chip should disappear when there are no unread changes"
     delete_all_watches(client)
+
+
+def test_watchlist_healthy_filter(client, live_server, measure_memory_usage, datastore_path):
+    """#4245 - the 'Healthy' chip is the inverse of 'With errors' and both only appear when there is a mix."""
+    datastore = client.application.config.get('DATASTORE')
+    ok_uuid = datastore.add_watch(url='https://example.com/ok', extras={'paused': True})
+    err_uuid = datastore.add_watch(url='https://example.com/err', extras={'paused': True})
+
+    # Nothing failing - 'Healthy' would just equal 'All', so no chip
+    res = client.get(url_for("watchlist.index"))
+    assert b'post-list-healthy' not in res.data
+    assert b'post-list-with-errors' not in res.data
+
+    datastore.data['watching'][err_uuid]['last_error'] = 'Something went wrong'
+    res = client.get(url_for("watchlist.index"))
+    assert b'id="healthy-tab-counter">1<' in res.data
+    assert b'id="with-errors-tab-counter">1<' in res.data
+    assert res.data.count(b'data-watch-uuid') == 2
+
+    res = client.get(url_for("watchlist.index", healthy=1))
+    assert res.data.count(b'data-watch-uuid') == 1
+    assert ok_uuid.encode() in res.data
+    assert err_uuid.encode() not in res.data
+
+    res = client.get(url_for("watchlist.index", with_errors=1))
+    assert res.data.count(b'data-watch-uuid') == 1
+    assert err_uuid.encode() in res.data
+    assert ok_uuid.encode() not in res.data
+
+    # Every watch failing - no healthy watches left to offer
+    datastore.data['watching'][ok_uuid]['last_error'] = 'Also broken'
+    res = client.get(url_for("watchlist.index"))
+    assert b'post-list-healthy' not in res.data
+    assert b'post-list-with-errors' in res.data
+
+    delete_all_watches(client)
+
+
+def test_watch_edit_page_says_which_watch(client, live_server, measure_memory_usage, datastore_path):
+    datastore = client.application.config.get('DATASTORE')
+    test_url = url_for('test_endpoint', _external=True)
+    uuid = datastore.add_watch(url=test_url, extras={'paused': True})
+    watch = datastore.data['watching'][uuid]
+
+    def heading():
+        res = client.get(url_for("ui.ui_edit.edit_page", uuid=uuid))
+        assert res.status_code == 200
+        return res.data.split(b'<h2 class="edit-form-heading edit-form-heading-oneline"')[1].split(b'>', 1)[1].split(b'</h2>')[0]
+
+    # No title of its own, the URL
+    assert heading() == b'Watch: ' + test_url.encode()
+
+    # Its own title, above the tabs, text and never markup
+    watch['title'] = "Shops <b>&</b> more"
+    assert heading() == b'Watch: Shops &lt;b&gt;&amp;&lt;/b&gt; more'
+
+    delete_all_watches(client)
+
+
+def test_pages_say_what_they_are_in_the_browser_title(client, live_server, measure_memory_usage, datastore_path):
+    import re
+    datastore = client.application.config.get('DATASTORE')
+    tag_uuid = datastore.add_tag(title="Shops")
+    uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True, 'title': 'My shop'})
+
+    def title(url):
+        res = client.get(url, follow_redirects=True)
+        assert res.status_code == 200, url
+        return re.search(r'<title>(.*?)</title>', res.data.decode()).group(1)
+
+    for url, expected in (
+            (url_for("watchlist.index"), ''),
+            (url_for("watchlist.index", tag=tag_uuid), ' - Group: Shops'),
+            (url_for("tags.tags_overview_page"), ' - Groups'),
+            (url_for("tags.form_tag_edit", uuid=tag_uuid), ' - Group: Shops'),
+            (url_for("ui.ui_edit.edit_page", uuid=uuid), ' - Edit - My shop'),
+            (url_for("imports.import_page"), ' - Import'),
+            (url_for("settings.settings_page"), ' - Settings'),
+            (url_for("settings.notification_logs"), ' - Notification debug log'),
+            (url_for("settings.notifications.apprise"), ' - Settings - Notifications'),
+            (url_for("settings.llm.llm_settings_page"), ' - Settings - AI / LLM / MCP'),
+            (url_for("settings.llm.mcp_settings_page"), ' - Settings - AI / LLM / MCP'),
+            (url_for("backups.create"), ' - Backups'),
+            (url_for("backups.restore.restore"), ' - Backups - Restore'),
+            (url_for("ui.clear_all_history"), ' - Clear Histories'),
+            (url_for("ui.ui_queue.queue_page"), ' - Check queue'),
+    ):
+        assert title(url) == 'Change Detection' + expected, url
+
+    datastore.data['settings']['application']['tags'].clear()
+    delete_all_watches(client)
+
+
+def test_page_title_in_list_is_the_watch_s_own_choice_then_the_system_s(client, live_server, measure_memory_usage, datastore_path):
+    """A watch on Yes or No is shown that way whatever the system setting is, only one left on "Default" follows it"""
+    datastore = client.application.config.get('DATASTORE')
+    ui_settings = datastore.data['settings']['application']['ui']
+    test_url = url_for('test_endpoint', _external=True)
+
+    uuids = {}
+    for own in (None, True, False):
+        uuid = datastore.add_watch(url=test_url + f"?own={own}", extras={'paused': True})
+        watch = datastore.data['watching'][uuid]
+        watch['page_title'] = f"Page title of {own}"
+        watch['use_page_title_in_list'] = own
+        uuids[own] = uuid
+
+    def shown(system):
+        ui_settings['use_page_title_in_list'] = system
+        html = client.get(url_for("watchlist.index")).data.decode()
+        return {own: f"Page title of {own}" in html for own in uuids}
+
+    assert shown(system=True) == {None: True, True: True, False: False}, "A watch on No is not shown with its page title"
+    assert shown(system=False) == {None: False, True: True, False: False}
+
+    # The same answer for the RSS feeds' label
+    from changedetectionio.blueprint.rss._util import get_watch_label
+    ui_settings['use_page_title_in_list'] = True
+    watch = datastore.data['watching'][uuids[False]]
+    assert get_watch_label(datastore, watch) == watch.get('url')
+    assert get_watch_label(datastore, datastore.data['watching'][uuids[None]]) == "Page title of None"
+
+    # Chosen on the watch's edit page
+    res = client.post(url_for("ui.ui_edit.edit_page", uuid=uuids[None]),
+                      data={"url": test_url + "?own=None", "fetch_backend": "html_requests",
+                            "time_between_check_use_default": "y", "use_page_title_in_list": "false"},
+                      follow_redirects=True)
+    assert b"Updated watch." in res.data
+    assert datastore.data['watching'][uuids[None]]['use_page_title_in_list'] is False
+    assert shown(system=True)[None] is False
+
+    ui_settings['use_page_title_in_list'] = True
+    delete_all_watches(client)

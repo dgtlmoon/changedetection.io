@@ -29,7 +29,9 @@
 .stab-nav {
   display: flex;
   flex-direction: column;
-  width: 11rem;
+  // As wide as the longest label (they never wrap), at least 11rem
+  min-width: 11rem;
+  width: max-content;
   flex-shrink: 0;
   padding: 0.75rem 0;
   gap: 1px;
@@ -55,6 +57,7 @@
   font: inherit;
   color: var(--color-text);
   text-align: left;
+  white-space: nowrap;
   transition: background 0.12s ease, opacity 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 
   &:hover {

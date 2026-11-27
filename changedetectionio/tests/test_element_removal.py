@@ -206,7 +206,7 @@ def test_element_removal_full(client, live_server, measure_memory_usage, datasto
 
     # There should not be an unviewed change, as changes should be removed
     res = client.get(url_for("watchlist.index"))
-    assert b"unviewed" not in res.data
+    assert b'has-unread-changes' not in res.data
 
 # Re #2752
 def test_element_removal_nth_offset_no_shift(client, live_server, measure_memory_usage, datastore_path):

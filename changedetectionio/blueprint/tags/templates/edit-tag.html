@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
-{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_ternary_field %}
+{% from '_helpers.html' import render_field, render_checkbox_field, render_button, render_ternary_field, render_time_schedule_form %}
+{#- At the bottom of the tabs whose settings a watch takes from one group only (Request, Proxy, Time & Schedule) -#}
+{% macro first_group_note() %}
+<div class="pure-form-message first-group-note">
+    {{ _('Note: a watch in several groups follows the first group in its list that has this switched on.') }}
+</div>
+{% endmacro %}
 {% from '_common_fields.html' import render_common_settings_form %}
 <script>
     const notification_base_url="{{url_for('ui.ui_notification.ajax_callback_send_notification_test', mode="group-settings")}}";
@@ -21,8 +27,12 @@
 <script src="{{url_for('static_content', group='js', filename='global-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='watch-settings.js')}}" defer></script>
 <script src="{{url_for('static_content', group='js', filename='notifications.js')}}" defer></script>
+<script src="{{url_for('static_content', group='js', filename='scheduler.js')}}" defer></script>
 
 <div class="edit-form monospaced-textarea">
+
+    {#- Which group this is, the tabs alone don't say #}
+    <h2 class="edit-form-heading">{{ _('Group: %(name)s', name=data.title) }}</h2>
 
     <div class="tabs collapsable">
         <ul>
@@ -36,6 +46,11 @@
             {% if extra_tab_content %}
             <li class="tab"><a href="#extras_tab">{{ extra_tab_content }}</a></li>
             {% endif %}
+            <li class="tab"><a href="#request">{{ _('Request') }}</a></li>
+            {% if form.proxy %}
+            <li class="tab"><a href="#proxy">{{ _('Proxy') }}</a></li>
+            {% endif %}
+            <li class="tab"><a href="#recheck-time">{{ _('Time Between Check') }}</a></li>
             <li class="tab"><a href="#notifications">{{ _('Notifications') }}</a></li>
         </ul>
     </div>
@@ -115,11 +130,97 @@
             {{ extra_form_content|safe }}
             </div>
         {% endif %}
+            {#- Off by default: what is chosen on these tabs (and on Time Between Check) does nothing until it is switched on -#}
+            <div class="tab-pane-inner" id="request">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <span class="pure-form-message-inline">
+                            {{ _("What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups takes the first group that is switched on.") }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.fetch_backend_group_mode) }}
+                    </div>
+                    <div class="pure-control-group inline-radio {{ 'group-setting-off' if form.fetch_backend_group_mode.data == 'off' }}" data-dimmed-while-off="fetch_backend_group_mode">
+                        {{ render_field(form.fetch_backend) }}
+                    </div>
+                    {{ first_group_note() }}
+                </fieldset>
+            </div>
+            {% if form.proxy %}
+            <div class="tab-pane-inner" id="proxy">
+                <fieldset>
+                    {#- First on the tab, and outside the part that is dimmed while the group's proxy is switched off -#}
+                    <div class="proxy-provider-tip">
+                        <img src="{{ url_for('static_content', group='images', filename='brightdata.svg') }}" alt="Bright Data">
+                        <span>{{ _('Getting <code>403 Access Denied</code>? Set up the <a href="%(url)s">Web Unlocker proxy with Bright Data</a>, choose it below, and put those watches in this group.', url=url_for('settings.settings_page') ~ '#proxies')|safe }}</span>
+                    </div>
+                    <div class="pure-control-group">
+                        <span class="pure-form-message-inline">
+                            {{ _("What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups takes the first group that is switched on.") }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.proxy_group_mode) }}
+                    </div>
+                    <div class="pure-control-group inline-radio {{ 'group-setting-off' if form.proxy_group_mode.data == 'off' }}" data-dimmed-while-off="proxy_group_mode">
+                        {{ render_field(form.proxy) }}
+                    </div>
+                    {{ first_group_note() }}
+                </fieldset>
+            </div>
+            {% endif %}
+            <div class="tab-pane-inner" id="recheck-time">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <span class="pure-form-message-inline">
+                            {{ _("What is set here is not used until it is switched on, so it can be set up ahead of time. A watch in several groups takes the first group that is switched on.") }}
+                        </span>
+                    </div>
+                    <div class="pure-control-group">
+                        {{ render_field(form.time_between_check_group_mode) }}
+                    </div>
+                    {#- Dimmed while the mode above is "Don't use" (same on Request and Proxy), still editable so it can be set up ahead of time -#}
+                    <div class="pure-control-group time-between-check border-fieldset {{ 'group-setting-off' if form.time_between_check_group_mode.data == 'off' }}" data-dimmed-while-off="time_between_check_group_mode">
+                        <div id="time-check-widget-wrapper">
+                            {{ render_field(form.time_between_check, class="time-check-widget") }}
+                            <span class="pure-form-message-inline">
+                             {{ _('The interval/amount of time between each check.') }}
+                             {{ _('Leave empty to keep the system default and only use the time schedule below.') }}
+                            </span>
+                        </div>
+                        <div id="time-between-check-schedule">
+                            <div id="limit-between-time">
+                                {{ render_time_schedule_form(form, available_timezones, timezone_default_config) }}
+                            </div>
+                        </div>
+                    </div>
+                    {{ first_group_note() }}
+                </fieldset>
+            </div>
+            <script>
+            // The settings of a mode dropdown are dimmed while it is on "Don't use"
+            document.querySelectorAll('[data-dimmed-while-off]').forEach(function (settings) {
+                var mode = document.getElementById(settings.dataset.dimmedWhileOff);
+                mode.addEventListener('change', function () {
+                    settings.classList.toggle('group-setting-off', this.value === 'off');
+                });
+            });
+            </script>
             <div class="tab-pane-inner" id="notifications">
                 <fieldset>
                     <div  class="pure-control-group inline-radio">
                       {{ render_ternary_field(form.notification_muted, BooleanField=True) }}
                     </div>
+                    <div class="pure-control-group inline-radio">
+                      {{ render_field(form.notification_group_mode) }}
+                      <span class="pure-form-message-inline">
+                          {{ _("The last two send this group's notification separately, with the title, body and format set here.") }}
+                      </span>
+                    </div>
+                    <hr class="settings-divider">
+                    {#- Dimmed while muted, not used, and while they are only what a watch with none of its own falls back on -#}
+                    <div id="group-notification-settings" class="{{ 'group-setting-off' if form.notification_muted.data or form.notification_group_mode.data in ('off', 'fallback') }}">
                     {% if 1 %}
                     <div class="pure-control-group inline-radio">
                       {{ render_checkbox_field(form.notification_screenshot) }}
@@ -139,6 +240,24 @@
 
                         {{ render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                     </div>
+                    </div>
+                    <script>
+                    (function () {
+                        var controls = document.querySelectorAll('input[name="notification_muted"], input[name="notification_group_mode"]');
+                        function checked(name) {
+                            var radio = document.querySelector('input[name="' + name + '"]:checked');
+                            return radio ? radio.value : '';
+                        }
+                        controls.forEach(function (radio) {
+                            radio.addEventListener('change', function () {
+                                document.getElementById('group-notification-settings').classList.toggle(
+                                    'group-setting-off',
+                                    checked('notification_muted') === 'true' || ['off', 'fallback'].indexOf(checked('notification_group_mode')) !== -1
+                                );
+                            });
+                        });
+                    })();
+                    </script>
                 </fieldset>
             </div>
 

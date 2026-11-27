@@ -125,6 +125,39 @@ def pytest_runtest_makereport(item, call):
     # Store report on the test node for access in fixtures
     setattr(item, f"rep_{rep.when}", rep)
 
+    # Right when the test fails, before its fixtures clear the watches away
+    if rep.when == 'call' and rep.failed:
+        keep_failure_artifacts(item)
+
+
+# What a browser fetch saves next to a watch, worth seeing when a test of it fails
+FAILURE_ARTIFACT_FILES = ('last-screenshot.png', 'last-error-screenshot.png', 'last-error.txt')
+
+
+def keep_failure_artifacts(item):
+    """With TEST_FAILURE_ARTIFACTS_DIR set (the browser jobs in CI, which keep that directory as an artifact): a
+    failed test's watches leave their last screenshot, error screenshot and error text there, with the test's
+    own log, in a directory named after the test. Never fails the test run itself."""
+    import re
+    import shutil
+
+    artifacts_dir = os.getenv('TEST_FAILURE_ARTIFACTS_DIR')
+    datastore_path = item.funcargs.get('datastore_path') if hasattr(item, 'funcargs') else None
+    if not artifacts_dir or not datastore_path:
+        return
+    try:
+        test_dir = os.path.join(artifacts_dir, re.sub(r'[^\w\-.]', '_', item.name)[:150])
+        os.makedirs(test_dir, exist_ok=True)
+        with open(os.path.join(test_dir, 'failure.txt'), 'w') as f:
+            f.write(f"{item.nodeid}\n\n{getattr(item.rep_call, 'longreprtext', '')}\n")
+        for watch_dir in sorted(os.listdir(datastore_path)):
+            for filename in FAILURE_ARTIFACT_FILES:
+                source = os.path.join(datastore_path, watch_dir, filename)
+                if os.path.isfile(source):
+                    shutil.copy(source, os.path.join(test_dir, f"{watch_dir}-{filename}"))
+    except Exception as e:
+        logger.warning(f"Could not keep the failure artifacts of {item.name}: {e}")
+
 
 @pytest.fixture
 def environment(mocker):
@@ -430,6 +463,12 @@ def app(request, datastore_path):
 
     datastore = store.ChangeDetectionStore(datastore_path=app_config['datastore_path'], include_default_watches=False)
     app = changedetection_app(app_config, datastore)
+
+    # pytest-flask falls back to 'localhost.localdomain' for the live_server, nothing in a container
+    # resolves that locally so every test fetch then depends on the upstream DNS answering for it.
+    # 'localhost' is always in /etc/hosts. (FLASK_SERVER_NAME still wins, set in flask_app.py)
+    if not app.config.get('SERVER_NAME'):
+        app.config['SERVER_NAME'] = 'localhost'
 
     # Disable CSRF while running tests
     app.config['WTF_CSRF_ENABLED'] = False

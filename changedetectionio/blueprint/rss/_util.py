@@ -84,7 +84,7 @@ def get_rss_template(datastore, watch, rss_content_format, default_html, default
 
 def get_watch_label(datastore, watch):
     """Get the label for a watch based on settings."""
-    if datastore.data['settings']['application']['ui'].get('use_page_title_in_list') or watch.get('use_page_title_in_list'):
+    if watch.shows_page_title_in_list:
         return watch.label
     else:
         return watch.get('url')

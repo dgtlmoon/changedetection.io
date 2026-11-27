@@ -20,9 +20,9 @@ from ..base import difference_detection_processor, SCREENSHOT_FORMAT_PNG
 def _(x): return x
 name = _('Visual / Image screenshot change detection')
 description = _('Compares screenshots using fast OpenCV algorithm, 10-100x faster than SSIM')
+list_badge_text = _('Visual')
 del _
 processor_weight = 2
-list_badge_text = "Visual"
 
 class perform_site_check(difference_detection_processor):
     """Fast screenshot comparison processor using OpenCV."""

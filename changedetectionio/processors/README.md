@@ -18,6 +18,13 @@ The fully merged spec is served live at `/api/v1/full-spec`.
 
 See `restock_diff/api.yaml` for a working example.
 
+## Processor plugin hooks (`register_plugin_hooks`)
+
+A processor can add its own plugin hooks: define `register_plugin_hooks(plugin_manager)` in its `__init__.py`
+and it's called once at startup. Add your hookspecs there, and register built-in implementations with
+`trylast=True` so any other plugin's implementation wins. `restock_diff` does this for its two price charts,
+see `restock_diff/hookspecs.py` and `restock_diff/plugins/default_charts.py`.
+
 ## Todo
 
 - Make each processor return a extra list of sub-processed (so you could configure a single processor in different ways)

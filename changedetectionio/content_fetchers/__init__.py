@@ -106,13 +106,39 @@ def _log_fetcher_capabilities(fetcher_class, backend_name, uuid=None):
     return caps
 
 
+def get_fetcher_by_name(backend_name, watch=None):
+    """The fetcher class registered as `backend_name` ('html_requests', a plugin's 'html_...'), or None when
+    there isn't one, or when `watch` is a PDF watch and this fetcher can't supply the original PDF."""
+    import inspect
+    if not backend_name or not backend_name.startswith('html_'):
+        return None
+    fetcher_obj = getattr(sys.modules[__name__], backend_name, None)
+    if not inspect.isclass(fetcher_obj):
+        return None
+    if watch is not None and getattr(watch, 'is_pdf', False) and not getattr(fetcher_obj, 'supports_pdf', False):
+        return None
+    return fetcher_obj
+
+
+def fetch_backend_exists(backend_name, datastore):
+    """False for a fetch method that was removed: a fetcher whose plugin is no longer installed, a custom browser
+    endpoint (extra_browser_<name>) that was deleted. 'system' and empty are not a fetch method, so they exist."""
+    if not backend_name or backend_name == 'system':
+        return True
+    if backend_name.startswith('extra_browser_'):
+        name = backend_name[len('extra_browser_'):]
+        extra_browsers = datastore.data['settings']['requests'].get('extra_browsers') or []
+        return any(browser.get('browser_name') == name for browser in extra_browsers)
+    return get_fetcher_by_name(backend_name) is not None
+
+
 def resolve_content_fetcher(watch, datastore):
     """Single source of truth for resolving which content fetcher a watch should use.
 
     Resolution order (room to grow):
-      1. Watch-level `fetch_backend`
-      2. (future) group-level default
-      3. System/global default from application settings
+      1. Watch-level `fetch_backend`, or what its groups / a plugin decide for it
+         (pluggy_interface.resolve_fetch_route)
+      2. System/global default from application settings
 
     Also collapses the special backend forms into a concrete fetcher:
       - 'system'                    -> global application default
@@ -127,10 +153,11 @@ def resolve_content_fetcher(watch, datastore):
     """
     this_module = sys.modules[__name__]
 
-    # 1. Watch preference (later: watch -> group -> system)
-    prefer_fetch_backend = watch.get('fetch_backend', 'system')
+    # 1. The watch's own, or what its groups / a plugin decide for it
+    from changedetectionio.pluggy_interface import resolve_fetch_route
+    prefer_fetch_backend = resolve_fetch_route(watch, datastore)['fetch_backend']
 
-    # 2/3. Fall back to the global/system default
+    # 2. Fall back to the global/system default
     if not prefer_fetch_backend or prefer_fetch_backend == 'system':
         prefer_fetch_backend = datastore.data['settings']['application'].get('fetch_backend')
 

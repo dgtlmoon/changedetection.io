@@ -377,7 +377,8 @@ $(function () {
   }
 
   function attach(socket) {
-    socket.on('watch_update', refresh);
+    // A check starting or finishing changes these two; 'watch_update' is only sent for rows a page lists
+    socket.on('checking_now', refresh);
     socket.on('queue_size', refresh);
     socket.on('watch_deleted', refresh);
   }

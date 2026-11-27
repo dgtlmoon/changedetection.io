@@ -87,3 +87,384 @@
   border-radius: 5px;
   overflow-wrap: break-word;
 }
+
+// Notification setup widget (templates/_common_fields-notification.html, js/notification-setup.js)
+$ns-quick-size: 2.1rem;
+
+.notification-setup {
+  padding-bottom: $common-gap;
+
+  > label {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  // Popular services as one-click icons, above the search box
+  .ns-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.45rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .ns-quick-btn {
+    width: $ns-quick-size;
+    height: $ns-quick-size;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: var(--color-background);
+    // Transparent so hover/active can colour it without the row shifting
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    animation: ns-quick-in 0.25s ease-out both;
+
+    img {
+      width: 1.5rem;
+      height: 1.5rem;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: var(--color-background-button-primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-background-button-primary);
+      outline-offset: 2px;
+    }
+
+    // The service whose form is open below
+    &.is-active {
+      border-color: var(--color-background-button-primary);
+      box-shadow: inset 0 0 0 1px var(--color-background-button-primary);
+    }
+  }
+
+  .ns-search-wrap {
+    position: relative;
+    max-width: 28rem;
+    display: inline-block;
+    width: 100%;
+
+    input[type="search"] {
+      width: 100%;
+      margin: 0;
+      box-sizing: border-box;
+    }
+  }
+
+  .ns-all {
+    margin-top: 0.3rem;
+
+    summary {
+      cursor: pointer;
+      font-size: 0.85em;
+      opacity: 0.75;
+      &:hover { opacity: 1; }
+    }
+  }
+
+  .ns-all-list {
+    max-height: 18rem;
+    overflow-y: auto;
+    margin: 0.3rem 0 0;
+    padding: 0.25rem;
+    list-style: none;
+    border: 1px solid var(--color-border-notification);
+    border-radius: var(--common-round-border);
+
+    a {
+      display: grid;
+      grid-template-columns: 9rem 1fr;
+      gap: 0.6rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      text-decoration: none;
+      color: inherit;
+
+      &:hover,
+      &:focus-visible {
+        background: var(--color-background-button-primary);
+        color: var(--color-white);
+        code { color: inherit; opacity: 0.85; }
+      }
+    }
+
+    code {
+      background: none;
+      font-size: 0.85em;
+      opacity: 0.65;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    // "  -  " between the prefix and the name
+    span::before {
+      content: "-";
+      margin-right: 0.6rem;
+      opacity: 0.4;
+    }
+  }
+
+  .ns-results {
+    position: absolute;
+    z-index: 20;
+    left: 0;
+    right: 0;
+    margin: 0.2rem 0 0;
+    padding: 0.25rem;
+    list-style: none;
+    background: var(--color-background);
+    border: 1px solid var(--color-border-notification);
+    border-radius: var(--common-round-border);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 5px;
+      cursor: pointer;
+
+      code {
+        background: none;
+        font-size: 0.8em;
+        opacity: 0.55;
+      }
+
+      &.active {
+        background: var(--color-background-button-primary);
+        color: var(--color-white);
+        code { color: inherit; opacity: 0.8; }
+      }
+
+      &.ns-empty {
+        cursor: default;
+        opacity: 0.6;
+      }
+    }
+  }
+
+  .ns-added {
+    margin-left: 0.6rem;
+    font-size: 0.85em;
+    color: var(--color-background-button-success);
+  }
+
+  .ns-card {
+    margin-top: 0.6rem;
+    max-width: 44rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--color-border-notification);
+    border-left: 3px solid var(--color-background-button-primary);
+    border-radius: var(--common-round-border);
+    animation: ns-card-in 0.18s ease-out;
+
+    &[hidden] { display: none; }
+  }
+
+  .ns-card-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.7rem;
+
+    .ns-schema {
+      font-size: 0.8em;
+      opacity: 0.6;
+      background: none;
+    }
+
+    .ns-help {
+      margin-left: auto;
+      font-size: 0.85em;
+    }
+
+    .ns-close {
+      text-decoration: none;
+      opacity: 0.5;
+      &:hover { opacity: 1; }
+    }
+  }
+
+  .ns-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: 0.55rem 0.9rem;
+  }
+
+  .ns-field {
+    label {
+      display: block;
+      font-size: 0.85em;
+      margin-bottom: 0.15rem;
+
+      &.ns-required::after {
+        content: " *";
+        color: var(--color-menu-accent);
+      }
+    }
+
+    input, select, textarea {
+      width: 100%;
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    &.ns-check {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+
+      input { width: auto; }
+      label { margin: 0; font-size: 0.9em; }
+    }
+
+    &[data-type="headers"] { grid-column: 1 / -1; }
+
+    // Starts a new line in the grid, e.g. username/password after the URL and method
+    &.ns-new-row { grid-column-start: 1; }
+  }
+
+  .ns-options {
+    margin-top: 0.7rem;
+
+    summary {
+      cursor: pointer;
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+
+    .ns-options-body { margin-top: 0.55rem; }
+  }
+
+  .ns-preview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.8rem;
+
+    .ns-url {
+      flex: 1 1 14rem;
+      min-width: 0;
+      min-height: 1.2em;
+      padding: 0.3rem 0.55rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.85em;
+      background: var(--color-background-code);
+      border-radius: 5px;
+    }
+
+    // Only one of the two is filled at a time: the built URL, or the hint/error in its place
+    .ns-url:empty,
+    .ns-message:empty {
+      display: none;
+    }
+
+    // Push the buttons right when there's only a short message, or nothing, next to them
+    .ns-test {
+      margin-left: auto;
+    }
+  }
+
+  .ns-message {
+    flex: 1 1 14rem;
+    min-width: 0;
+    font-size: 0.85em;
+    opacity: 0.75;
+
+    &.error {
+      color: var(--color-text-notification-setup-error);
+      opacity: 1;
+    }
+
+    &.ok {
+      color: var(--color-background-button-success);
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes ns-quick-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ns-card-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-setup .ns-card,
+  .notification-setup .ns-quick-btn { animation: none; transition: none; }
+}
+
+// The e-mail quick-add and the setup widget share one grid, labels | inputs | button or message, so their
+// inputs line up. Each row is display: contents, which makes its label and input cells of this grid.
+// On narrow screens it's left as the stacked layout above.
+.notification-add-grid {
+  @media only screen and (min-width: 761px) {
+    display: grid;
+    grid-template-columns: max-content minmax(16rem, 28rem) 1fr;
+    align-items: center;
+    gap: 0.5rem 0.7rem;
+    padding: $common-gap 0;
+
+    > #notification-add-email-preset,
+    > #notification-add-email-preset .add-destination-inline,
+    > .notification-setup {
+      display: contents;
+    }
+
+    // The grid gap does the spacing (only the two row labels, not the fields inside the card)
+    > #notification-add-email-preset > label,
+    > .notification-setup > label {
+      margin: 0;
+    }
+
+    // The search cell is several rows (popular icons, the input, "List all"), so the label sits at
+    // the top, centred on the icon row
+    > .notification-setup > label {
+      align-self: start;
+      line-height: $ns-quick-size;
+    }
+
+    #add-email-input {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    #add-email-go {
+      justify-self: start;
+    }
+
+    .notification-setup {
+      .ns-search-wrap { max-width: none; }
+      .ns-added { margin-left: 0; }
+      .ns-card { grid-column: 1 / -1; margin-top: 0; }
+    }
+  }
+}
+
+// One notification URL per line: keep each URL on its own line and scroll sideways instead of wrapping
+textarea.notification-urls {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}

@@ -2,15 +2,12 @@
 Levenshtein distance and similarity plugin for text change detection.
 Provides metrics for measuring text similarity between snapshots.
 """
-import pluggy
 from loguru import logger
 from flask_babel import gettext as _, lazy_gettext as _l
 
 LEVENSHTEIN_MAX_LEN_FOR_EDIT_STATS=100000
 
-# Support both plugin systems
-conditions_hookimpl = pluggy.HookimplMarker("changedetectionio_conditions")
-global_hookimpl = pluggy.HookimplMarker("changedetectionio")
+from changedetectionio.plugin_api import hookimpl
 
 def levenshtein_ratio_recent_history(watch, incoming_text=None):
     try:
@@ -46,23 +43,23 @@ def levenshtein_ratio_recent_history(watch, incoming_text=None):
 
     return ''
 
-@conditions_hookimpl
+@hookimpl
 def register_operators():
     pass
 
-@conditions_hookimpl
+@hookimpl
 def register_operator_choices():
     pass
 
 
-@conditions_hookimpl
+@hookimpl
 def register_field_choices():
     return [
         ("levenshtein_ratio", _l("Levenshtein - Text similarity ratio")),
         ("levenshtein_distance", _l("Levenshtein - Text change distance")),
     ]
 
-@conditions_hookimpl
+@hookimpl
 def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
     res = {}
     watch = application_datastruct['watching'].get(current_watch_uuid)
@@ -77,7 +74,7 @@ def add_data(current_watch_uuid, application_datastruct, ephemeral_data):
 
     return res
 
-@global_hookimpl
+@hookimpl
 def ui_edit_stats_extras(watch):
     """Add Levenshtein stats to the UI using the global plugin system"""
     """Generate the HTML for Levenshtein stats - shared by both plugin systems"""

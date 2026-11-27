@@ -28,6 +28,25 @@
                 <fieldset>
                     {{ notification_part_render_common_settings_form(form, emailprefix, settings_application, extra_notification_token_placeholder_info) }}
                 </fieldset>
+                {#- Error alerts, folded away like "Customise notifications". The same "Add a notification service"
+                    as above, adding to this list instead. #}
+                <details class="form-wrapper" id="notification-errors-urls"{% if form.notification_errors_urls.data or form.notification_errors_urls.errors %} open{% endif %}>
+                    <summary>{{ _('Where to send errors?') }}</summary>
+                    <div class="pure-control-group grey-form-border">
+                        <span class="pure-form-message-inline">
+                            {{ _('Alerts about a watch that needs attention (a filter that is no longer on the page, a browser step that could not be run) are sent here.') }}<br>
+                            {{ _('Leave empty to send them wherever the notifications of that watch go.') }}
+                        </span>
+                        <div class="pure-control-group">
+                            <div class="notification-add-grid">
+                                {% with ns_suffix='-errors', ns_target='textarea.notification-errors-urls' %}
+                                {% include '_common_fields-notification.html' %}
+                                {% endwith %}
+                            </div>
+                            {{ render_field(form.notification_errors_urls, rows=3, class="notification-errors-urls") }}
+                        </div>
+                    </div>
+                </details>
                 <div class="pure-control-group" id="notification-base-url">
                     {{ render_field(form.base_url, class="m-d") }}
                     <span class="pure-form-message-inline">

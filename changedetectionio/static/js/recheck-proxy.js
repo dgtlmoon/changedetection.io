@@ -77,7 +77,7 @@ $(function () {
             url: recheck_proxy_start_url,
         }).done(function (data) {
             $.each(data, function (proxy_key, state) {
-                set_proxy_check_status(proxy_key, state['status'])
+                set_proxy_check_status(proxy_key, state)
             });
             isActive = true;
             pollServer();

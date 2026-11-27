@@ -4,6 +4,7 @@ import re
 from loguru import logger
 from urllib.parse import urlparse
 from .email_helpers import as_monospaced_html_email
+from .masking import notification_url_for_logs
 from ..diff import HTML_REMOVED_STYLE, REMOVED_PLACEMARKER_OPEN, REMOVED_PLACEMARKER_CLOSED, ADDED_PLACEMARKER_OPEN, HTML_ADDED_STYLE, \
     ADDED_PLACEMARKER_CLOSED, CHANGED_INTO_PLACEMARKER_OPEN, CHANGED_INTO_PLACEMARKER_CLOSED, CHANGED_PLACEMARKER_OPEN, \
     CHANGED_PLACEMARKER_CLOSED, HTML_CHANGED_STYLE, HTML_CHANGED_INTO_STYLE
@@ -148,6 +149,18 @@ def apply_standard_markdown_to_body(n_body):
     return n_body
 
 
+# Red / yellow / green circles: Unicode, so they show the same in Slack's apps, e-mail digests and exports
+SLACK_REMOVED_MARK = '\U0001F534'
+SLACK_CHANGED_MARK = '\U0001F7E1'
+SLACK_ADDED_MARK = '\U0001F7E2'
+
+
+def is_slack_url(url):
+    """slack:// and anything addressed to a Slack webhook (https://, or our post:// posts:// handlers)."""
+    url = (url or '').strip().lower()
+    return url.startswith('slack://') or '://hooks.slack.com/' in url or '://hooks.slack-gov.com/' in url
+
+
 def replace_placemarkers_in_text(text, url, requested_output_format):
     """
     Replace diff placemarkers in text based on the URL service type and requested output format.
@@ -177,6 +190,19 @@ def replace_placemarkers_in_text(text, url, requested_output_format):
           or url.startswith('https://discord.com/api')) and requested_output_format == 'html':
         # Discord doesn't support HTML, use Discord markdown
         text = apply_discord_markdown_to_body(n_body=text)
+    elif is_slack_url(url):
+        # Slack renders neither HTML nor colours (the "HTML Color" spans would simply be stripped and
+        # the reader could no longer tell what was removed from what was added), so mark each line
+        # with a coloured emoji and a word. Same for every format, also for a JSON body posted
+        # straight to a Slack webhook, where HTML attributes would break the JSON.
+        text = text.replace(REMOVED_PLACEMARKER_OPEN, f'{SLACK_REMOVED_MARK} (removed) ')
+        text = text.replace(REMOVED_PLACEMARKER_CLOSED, '')
+        text = text.replace(ADDED_PLACEMARKER_OPEN, f'{SLACK_ADDED_MARK} (added) ')
+        text = text.replace(ADDED_PLACEMARKER_CLOSED, '')
+        text = text.replace(CHANGED_PLACEMARKER_OPEN, f'{SLACK_CHANGED_MARK} (changed) ')
+        text = text.replace(CHANGED_PLACEMARKER_CLOSED, '')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_OPEN, f'{SLACK_ADDED_MARK} (into) ')
+        text = text.replace(CHANGED_INTO_PLACEMARKER_CLOSED, '')
     elif requested_output_format == 'htmlcolor':
         # https://github.com/dgtlmoon/changedetection.io/issues/821#issuecomment-1241837050
         text = text.replace(REMOVED_PLACEMARKER_OPEN, f'<span style="{HTML_REMOVED_STYLE}" role="deletion" aria-label="Removed text" title="Removed text">')
@@ -348,8 +374,6 @@ def process_notification(n_object: NotificationContextData, datastore):
     if 'as_async' in n_object:
         apprise_asset.async_mode = n_object.get('as_async')
 
-    apobj = apprise.Apprise(debug=True, asset=apprise_asset)
-
     # Override Apprise's built-in Discord plugin with our custom one
     # This allows us to use colored embeds for diff content
     # First remove the built-in discord plugin, then add our custom one
@@ -426,11 +450,12 @@ def process_notification(n_object: NotificationContextData, datastore):
 
             url = url.strip()
             if not url or url.startswith('#'):
-                logger.debug(f"Skipping commented out or empty notification URL - '{url}'")
+                logger.debug("Skipping commented out or empty notification URL")
                 continue
 
-            logger.info(f">> Process Notification: AppRise start notifying '{url}'")
             url = jinja_render(template_str=url, **notification_parameters)
+            # Never the URL itself, its password or token would be in the logs with it
+            logger.info(f">> Process Notification: AppRise start notifying '{notification_url_for_logs(url)}'")
 
             if 'html' in requested_output_format:
                 # Since the n_body is always some kind of text from the 'diff' engine, attempt to preserve whitespaces that get sent to the HTML output
@@ -440,27 +465,30 @@ def process_notification(n_object: NotificationContextData, datastore):
             (url, n_body, n_title) = apply_service_tweaks(url=url, n_body=n_body, n_title=n_title, requested_output_format=requested_output_format_original)
 
             apprise_input_format = "NO-THANKS-WE-WILL-MANAGE-ALL-OF-THIS"
+            # Per URL. Markdown-to-HTML (or an explicit ?format= on this URL) must
+            # not change the format used for the next notification URL (#4619).
+            url_output_format = requested_output_format
 
             if not 'format=' in url:
                 parsed_url = urlparse(url)
                 prefix_add_to_url = '?' if not parsed_url.query else '&'
 
                 # THIS IS THE TRICK HOW TO DISABLE APPRISE DOING WEIRD AUTO-CONVERSION WITH BREAKING BR TAGS ETC
-                if 'html' in requested_output_format:
+                if 'html' in url_output_format:
                     url = f"{url}{prefix_add_to_url}format={NotifyFormat.HTML.value}"
                     apprise_input_format = NotifyFormat.HTML.value
-                elif 'text' in requested_output_format:
+                elif 'text' in url_output_format:
                     url = f"{url}{prefix_add_to_url}format={NotifyFormat.TEXT.value}"
                     apprise_input_format = NotifyFormat.TEXT.value
 
-                elif requested_output_format == NotifyFormat.MARKDOWN.value:
+                elif url_output_format == NotifyFormat.MARKDOWN.value:
                     # Convert markdown to HTML ourselves since not all plugins do this
                     from apprise.conversion import markdown_to_html
                     # Make sure there are paragraph breaks around horizontal rules
                     n_body = n_body.replace('---', '\n\n---\n\n')
                     n_body = markdown_to_html(n_body)
                     url = f"{url}{prefix_add_to_url}format={NotifyFormat.HTML.value}"
-                    requested_output_format = NotifyFormat.HTML.value
+                    url_output_format = NotifyFormat.HTML.value
                     apprise_input_format = NotifyFormat.HTML.value  # Changed from MARKDOWN to HTML
 
             else:
@@ -469,10 +497,10 @@ def process_notification(n_object: NotificationContextData, datastore):
                     n_body = newline_re.sub('<br>\r\n', n_body)
                     # This will also prevent apprise from doing conversion
                     apprise_input_format = NotifyFormat.HTML.value
-                    requested_output_format = NotifyFormat.HTML.value
+                    url_output_format = NotifyFormat.HTML.value
                 elif 'format=text' in url:
                     apprise_input_format = NotifyFormat.TEXT.value
-                    requested_output_format = NotifyFormat.TEXT.value
+                    url_output_format = NotifyFormat.TEXT.value
 
 #@todo on null:// (only if its a 1 url with null) probably doesnt need to actually .add/setup/etc
             sent_objs.append({'title': n_title,
@@ -481,25 +509,31 @@ def process_notification(n_object: NotificationContextData, datastore):
                               # So that we can do a null:// call and get back exactly what would have been sent
                               'original_context': n_object })
 
-            if not url.startswith('null://'):
-                apobj.add(url)
-
             # Since the output is always based on the plaintext of the 'diff' engine, wrap it nicely.
             # It should always be similar to the 'history' part of the UI.
-            if url.startswith('mail') and 'html' in requested_output_format:
-                if not '<pre' in n_body and not '<body' in n_body: # No custom HTML-ish body was setup already
-                    n_body = as_monospaced_html_email(content=n_body, title=n_title)
+            # Wrap a copy: sent_objs keeps the rendered body, and only this mail URL is wrapped (#4619).
+            notify_body = n_body
+            if url.startswith('mail') and 'html' in url_output_format:
+                if not '<pre' in notify_body and not '<body' in notify_body: # No custom HTML-ish body was setup already
+                    notify_body = as_monospaced_html_email(content=notify_body, title=n_title)
 
-        if not url.startswith('null://'):
-            apobj.notify(
-                title=n_title,
-                body=n_body,
-                # `body_format` Tell apprise what format the INPUT is in, specify a wrong/bad type and it will force skip conversion in apprise
-                # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
-                body_format=apprise_input_format,
-                # False is not an option for AppRise, must be type None
-                attach=n_object.get('screenshot', None)
-            )
+            if not url.startswith('null://'):
+                # One Apprise instance per URL. A single notify() after the loop sent
+                # only the last URL's body and format to every service (#4619).
+                url_apobj = apprise.Apprise(debug=True, asset=apprise_asset)
+                # add() already logs an ERROR for a URL it cannot load (picked up by LogCapture below),
+                # calling notify() on the empty instance would only add a misleading
+                # "There are no service(s) to notify" warning.
+                if url_apobj.add(url):
+                    url_apobj.notify(
+                        title=n_title,
+                        body=notify_body,
+                        # `body_format` Tell apprise what format the INPUT is in, specify a wrong/bad type and it will force skip conversion in apprise
+                        # &format= in URL Tell apprise what format the OUTPUT should be in (it can convert between)
+                        body_format=apprise_input_format,
+                        # False is not an option for AppRise, must be type None
+                        attach=n_object.get('screenshot', None)
+                    )
 
         # Returns empty string if nothing found, multi-line string otherwise
         log_value = logs.getvalue()

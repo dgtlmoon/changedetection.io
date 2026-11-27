@@ -45,6 +45,11 @@ jobs:
 
   build-push-containers:
     runs-on: ubuntu-latest
+    # A newer push on master stops the :dev build and push of the one before it, only the newest commit is worth publishing.
+    # A release is in its own group (its ref is the tag) and is never cancelled.
+    concurrency:
+      group: build-push-containers-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'push' }}
     permissions:
       contents: read
       # The ghcr push authenticates with the workflow token.
@@ -88,14 +93,14 @@ jobs:
           platforms: all
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}

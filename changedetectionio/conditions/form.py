@@ -3,20 +3,21 @@ from wtforms import Form, SelectField, StringField, validators
 from wtforms import validators
 from flask_babel import lazy_gettext as _l
 
+from changedetectionio.conditions import get_field_choices, get_operator_choices
+
+
 class ConditionFormRow(Form):
 
-    # ✅ Ensure Plugins Are Loaded BEFORE Importing Choices
-    from changedetectionio.conditions import plugin_manager
-    from changedetectionio.conditions import operator_choices, field_choices
+    # Callables, so the plugin-provided choices are collected each time a form is built
     field = SelectField(
         _l("Field"),
-        choices=field_choices,
+        choices=get_field_choices,
         validators=[validators.Optional()]
     )
 
     operator = SelectField(
         _l("Operator"),
-        choices=operator_choices,
+        choices=get_operator_choices,
         validators=[validators.Optional()]
     )
 

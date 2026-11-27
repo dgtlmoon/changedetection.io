@@ -109,6 +109,43 @@ class RecheckPriorityQueue:
             # Item should have been cleaned up in the inner try/except if notification failed
             return False
     
+    def put_many(self, items) -> int:
+        """Queue a whole batch under one lock, then signal once for the lot ('watches_changed' with every UUID and
+        one 'queue_length') where put() signals per item. Returns how many were queued."""
+        import time as _t
+        items = list(items)
+        if not items:
+            return 0
+
+        now = _t.time()
+        queued_uuids = []
+        queued_count = 0
+        try:
+            with self._lock:
+                for item in items:
+                    if hasattr(item, 'item') and isinstance(item.item, dict):
+                        item.item.setdefault('enqueued_at', now)
+                    heapq.heappush(self._priority_items, item)
+                    # One notification per item, the same pairing put() keeps for get(). Never blocks, it is unbounded.
+                    self._notification_queue.put(True)
+                    queued_count += 1
+                    if hasattr(item, 'item') and isinstance(item.item, dict) and 'uuid' in item.item:
+                        queued_uuids.append(item.item['uuid'])
+        except Exception as e:
+            # Whatever was queued before this stays queued and is still announced below
+            logger.critical(f"CRITICAL: Batch put stopped after {queued_count} of {len(items)} items: {type(e).__name__}: {str(e)}")
+
+        try:
+            if queued_uuids:
+                signal('watches_changed').send(uuids=queued_uuids)
+            if self.queue_length_signal:
+                self.queue_length_signal.send(length=self.qsize())
+        except Exception as signal_e:
+            logger.error(f"Failed to emit batch put signals but {queued_count} items queued successfully: {signal_e}")
+
+        logger.debug(f"Queued a batch of {queued_count} items")
+        return queued_count
+
     def get(self, block: bool = True, timeout: Optional[float] = None):
         """Thread-safe sync get with priority ordering"""
         logger.trace(f"RecheckQueue.get() called, block={block}, timeout={timeout}")
@@ -224,6 +261,31 @@ class RecheckPriorityQueue:
     def empty(self) -> bool:
         """Check if queue is empty"""
         return self.qsize() == 0
+
+    def get_queue_positions(self) -> dict:
+        """{uuid: 1-based position} in the order the workers will take them (lowest priority value first). Items of
+        the same priority have no fixed order between them, so this is close, not exact."""
+        try:
+            with self._lock:
+                ordered = sorted(self._priority_items)
+            return {item.item['uuid']: n for n, item in enumerate(
+                (i for i in ordered if hasattr(i, 'item') and 'uuid' in i.item), start=1)}
+        except Exception as e:
+            logger.error(f"Failed to get queue positions: {str(e)}")
+            return {}
+
+    def update_queued_metadata(self, uuid: str, metadata: dict) -> bool:
+        """Merge metadata into the item already queued for uuid, False when it isn't queued (any more).
+
+        For one-shot options of a check (the worker hands the item to the processor and fetcher as
+        queued_metadata) asked for while that monitor is already waiting in the queue.
+        """
+        with self._lock:
+            for item in self._priority_items:
+                if hasattr(item, 'item') and isinstance(item.item, dict) and item.item.get('uuid') == uuid:
+                    item.item.update(metadata)
+                    return True
+        return False
 
     def get_queued_uuids(self) -> list:
         """Get list of all queued UUIDs efficiently with single lock"""

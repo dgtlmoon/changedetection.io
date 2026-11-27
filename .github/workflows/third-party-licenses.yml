@@ -1,0 +1,92 @@
+name: Third-party licences
+
+# Keeps docs/THIRD-PARTY-LICENSES.md current: builds the image that ships, regenerates the file, and opens (or
+# updates) a PR when it changed. Most requirements are unpinned, so the packages in the image change with upstream
+# releases at any time; the test workflow only warns when the file has drifted, so unrelated PRs aren't failed.
+# The copyleft gate in test-stack-reusable-workflow.yml still fails any build that ships GPL/AGPL.
+#
+# - Weekly: a PR only when a package was added or removed, or changed its licence (versions alone are noise).
+# - On a release: a PR when anything changed, versions included, so the file matches what was released.
+#
+# Needs "Allow GitHub Actions to create and approve pull requests" in the repository's Actions settings. PRs opened
+# with the workflow token don't trigger other workflows; this one only touches a docs file.
+
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: third-party-licenses
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # push the update branch
+      pull-requests: write   # open the PR
+    env:
+      BRANCH: auto/third-party-licenses
+      FILE: docs/THIRD-PARTY-LICENSES.md
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: master
+
+      - name: Build the image that ships
+        run: docker build . -t test-changedetectionio
+
+      - name: Regenerate
+        run: |
+          cp "$FILE" /tmp/committed.md
+          ./.github/scripts/generate-third-party-licenses.sh test-changedetectionio
+
+      - name: Open or update a PR when it changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          # Package names and licences only, as the test workflow compares them
+          names_and_licences() {
+            grep '^| ' "$1" | grep -v -e '^| Package |' -e '^|---' \
+              | sed 's/\[\([^]]*\)\]([^)]*)/\1/' \
+              | awk -F' [|] ' '{print $1 " | " $3}' | sort
+          }
+          # Everything but the "Generated <date>" line
+          without_date() { grep -v '^Generated ' "$1"; }
+
+          if [ "$EVENT" = "release" ]; then
+            if diff -q <(without_date /tmp/committed.md) <(without_date "$FILE") >/dev/null; then
+              echo "$FILE already matches the released image"; exit 0
+            fi
+            reason="the packages in the ${RELEASE_TAG} release image"
+          else
+            if diff -u <(names_and_licences /tmp/committed.md) <(names_and_licences "$FILE"); then
+              echo "No package was added, removed or changed its licence"; exit 0
+            fi
+            reason="a package was added, removed or changed its licence (weekly check)"
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add "$FILE"
+          git commit -m "Third-party licences - regenerate docs/THIRD-PARTY-LICENSES.md: ${reason}"
+          git push --force origin "$BRANCH"
+
+          open=$(gh api "repos/${GITHUB_REPOSITORY}/pulls?head=${GITHUB_REPOSITORY_OWNER}:${BRANCH}&state=open" --jq 'length')
+          if [ "$open" != "0" ]; then
+            echo "Updated the open PR from ${BRANCH}"; exit 0
+          fi
+          body="Regenerated from the built image by \`.github/workflows/third-party-licenses.yml\`: ${reason}.
+
+          Check the diff for new packages. If one is multi-licensed, record which licence we elect in \`NOTICE\`. The copyleft gate in the test workflow fails any build that would ship GPL/AGPL."
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/pulls" -f title="Third-party licences - update docs/THIRD-PARTY-LICENSES.md" \
+            -f head="$BRANCH" -f base=master -f body="$body" --jq .html_url

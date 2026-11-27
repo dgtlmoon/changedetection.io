@@ -99,3 +99,34 @@ def test_api_search(client, live_server, measure_memory_usage, datastore_path):
     assert len(res.json) == 1
     assert list(res.json.values())[0]['url'] == urls[2]
 
+
+
+def test_api_list_and_search_paused_muted(client, live_server, measure_memory_usage, datastore_path):
+    """#4685 - the watch list and search show each watch's own paused/notification_muted, never the global ones."""
+    datastore = live_server.app.config['DATASTORE']
+    api_key = datastore.data['settings']['application'].get('api_access_token')
+    headers = {'x-api-key': api_key}
+
+    uuids = {}
+    for name in ('paused', 'muted', 'plain'):
+        uuids[name] = datastore.add_watch(url=url_for('test_endpoint', _external=True) + f"?{name}=1",
+                                          extras={'paused': True})
+    client.get(url_for("watch", uuid=uuids['muted'], paused='unpaused'), headers=headers)
+    client.get(url_for("watch", uuid=uuids['plain'], paused='unpaused'), headers=headers)
+    client.get(url_for("watch", uuid=uuids['muted'], muted='muted'), headers=headers)
+    # Neither must leak into the per-watch values
+    datastore.data['settings']['application']['all_paused'] = True
+    datastore.data['settings']['application']['all_muted'] = True
+
+    expected = {'paused': (True, False), 'muted': (False, True), 'plain': (False, False)}
+
+    listing = client.get(url_for("createwatch"), headers=headers).json
+    for name, (paused, muted) in expected.items():
+        assert listing[uuids[name]]['paused'] is paused
+        assert listing[uuids[name]]['notification_muted'] is muted
+
+    res = client.get(url_for("search") + "?q=test-endpoint&partial=true", headers=headers).json
+    assert set(uuids.values()) <= set(res.keys())
+    for name, (paused, muted) in expected.items():
+        assert res[uuids[name]]['paused'] is paused
+        assert res[uuids[name]]['notification_muted'] is muted

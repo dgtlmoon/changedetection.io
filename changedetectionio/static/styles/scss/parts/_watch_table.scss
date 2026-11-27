@@ -79,6 +79,9 @@ body.has-queue {
   max-width: 100%;
   position: sticky;
   top: 20px;
+  // Not hard against the list under it. With the "select all matching" banner showing the banner is what is
+  // under it, see below
+  margin-bottom: 1rem;
   // Hidden until watches are selected; shown via body.watch-selection-active (toggled in
   // watch-overview.js, replaces the old jQuery slideUp/slideDown).
   display: none;
@@ -101,6 +104,12 @@ body.has-queue {
 
 body.watch-selection-active #checkbox-operations {
   display: block;
+}
+
+// The "select all matching" banner follows the bar and belongs to it (body.select-all-banner-shown is set by
+// updateSelectAllBanner() in watch-overview.js, which shows and hides the banner)
+body.select-all-banner-shown #checkbox-operations {
+  margin-bottom: 0;
 }
 
 // Watch-list-specific styling layered on top of the shared .cdio-table base.
@@ -262,6 +271,13 @@ body.watch-selection-active #checkbox-operations {
       }
     }
 
+    /* notes from plugins (hook watch_list_extra_text) */
+    .extra-watch-text {
+      color: var(--color-text-input-description);
+      font-size: 0.8em;
+      margin-top: 0.15em;
+    }
+
     &.has-error {
       .error-text {
         display: block !important;
@@ -370,7 +386,7 @@ body.watch-selection-active #checkbox-operations {
     gap: 4px; /* Space between image and text */
     > * {
       vertical-align: middle;
-      height: 1.4rem;
+      height: var(--status-icon-size);
     }
   }
 
@@ -542,6 +558,26 @@ body.blueprint-watchlist {
     margin-top: $common-gap;
   }
 
+  // The groups for the new watch: the label and the chips field on one line
+  #quick-watch-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: $common-gap;
+
+    label {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .tag-chips-field,
+    > input[type=text] {
+      flex: 1 1 auto;
+      width: auto;
+      margin: 0;
+    }
+  }
+
   #quick-watch-processor-type {
     span.label {
       display: none;
@@ -603,6 +639,7 @@ body.blueprint-watchlist {
   // — pure CSS, no JS. :placeholder-shown is true while the box is empty (the
   // placeholder is visible); :has() lets the form react to the nested #url input.
   #quick-watch-llm-intent,
+  #quick-watch-group,
   #quick-watch-processor-type {
     display: none;
   }
@@ -610,8 +647,24 @@ body.blueprint-watchlist {
   #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-processor-type {
     display: block;
   }
+  #new-watch-form:has(#url:not(:placeholder-shown)) #quick-watch-group {
+    display: flex;
+  }
 
   #add-watch-url-row {
 
+  }
+}
+
+// A group's label that carries its colours itself (the labels of a watch list row do, so that a row kept current
+// in an open page has the right colours for a group that was made after the page was loaded). The same four
+// variables as the chips of the "Group tag" field.
+.watch-tag-list[style*="--tag-chip-bg"] {
+  background: var(--tag-chip-bg);
+  color: var(--tag-chip-color);
+
+  @include dark-mode {
+    background: var(--tag-chip-dark-bg);
+    color: var(--tag-chip-dark-color);
   }
 }

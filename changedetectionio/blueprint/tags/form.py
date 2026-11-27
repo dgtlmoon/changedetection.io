@@ -1,6 +1,7 @@
 from wtforms import (
     Form,
     RadioField,
+    SelectField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -10,6 +11,12 @@ from wtforms.fields.simple import BooleanField
 from flask_babel import lazy_gettext as _l
 
 from changedetectionio.blueprint.tags.colour import CSS_HEX_COLOUR_REGEX
+from changedetectionio.notification import (
+    GROUP_NOTIFICATION_MODE_ADD,
+    GROUP_NOTIFICATION_MODE_FALLBACK,
+    GROUP_NOTIFICATION_MODE_OFF,
+    GROUP_NOTIFICATION_MODE_REPLACE,
+)
 from changedetectionio.widgets.ternary_boolean import TernaryNoneBooleanField
 from changedetectionio.processors.restock_diff.forms import processor_settings_form as restock_settings_form
 from changedetectionio.llm.ui_strings import LLM_INTENT_TAG_PLACEHOLDER
@@ -18,6 +25,21 @@ from changedetectionio.llm.evaluator import (
     LLM_PROMPT_MODE_APPEND,
     LLM_PROMPT_MODE_REPLACE,
 )
+
+from changedetectionio.model.group_settings import (
+    GROUP_SETTING_MODE_FALLBACK,
+    GROUP_SETTING_MODE_OFF,
+    GROUP_SETTING_MODE_REPLACE,
+)
+
+# How a group's fetch method / proxy / recheck time relates to the one its watches chose, see model/group_settings.py.
+# Worded apart from the notification choices on purpose: those are translated as "...the watch's own notifications".
+GROUP_SETTING_MODE_CHOICES = [
+    (GROUP_SETTING_MODE_OFF, _l("Don't use")),
+    (GROUP_SETTING_MODE_FALLBACK, _l("Only if the watch is left on the default")),
+    (GROUP_SETTING_MODE_REPLACE, _l("Instead of the watch's choice")),
+]
+
 
 class group_restock_settings_form(restock_settings_form):
     overrides_watch = BooleanField(_l('Activate for individual watches in this tag/group?'), default=False)
@@ -60,6 +82,38 @@ class group_restock_settings_form(restock_settings_form):
             (LLM_PROMPT_MODE_APPEND,  _l('Append to the inherited prompt')),
         ],
         default=LLM_PROMPT_MODE_REPLACE,
+    )
+
+    # Off for a new group. 'fallback' is how groups worked before there was a choice, the last two send the
+    # group's notification on its own - see notification_service.notification_senders()
+    notification_group_mode = RadioField(
+        _l("Send this group's notifications"),
+        choices=[
+            (GROUP_NOTIFICATION_MODE_OFF, _l("Don't use")),
+            (GROUP_NOTIFICATION_MODE_FALLBACK, _l("Only if the watch has none of its own")),
+            (GROUP_NOTIFICATION_MODE_ADD, _l("As well as the watch's own")),
+            (GROUP_NOTIFICATION_MODE_REPLACE, _l("Instead of the watch's own")),
+        ],
+        default=GROUP_NOTIFICATION_MODE_OFF,
+    )
+
+    # fetch_backend and proxy themselves are the same fields a watch has. Off by default, so a group
+    # changes nothing for its watches until one of these is switched on.
+    fetch_backend_group_mode = SelectField(
+        _l("Use this group's fetch method"),
+        choices=GROUP_SETTING_MODE_CHOICES,
+        default=GROUP_SETTING_MODE_OFF,
+    )
+    proxy_group_mode = SelectField(
+        _l("Use this group's proxy"),
+        choices=GROUP_SETTING_MODE_CHOICES,
+        default=GROUP_SETTING_MODE_OFF,
+    )
+    # Covers time_between_check and time_schedule_limit together
+    time_between_check_group_mode = SelectField(
+        _l("Use this group's recheck time"),
+        choices=GROUP_SETTING_MODE_CHOICES,
+        default=GROUP_SETTING_MODE_OFF,
     )
 
 class SingleTag(Form):

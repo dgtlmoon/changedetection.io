@@ -20,6 +20,48 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         tags = datastore.data['settings']['application'].get('tags', {})
         return [(tag_uuid, tags[tag_uuid]) for tag_uuid in watch.get('tags', []) if tag_uuid in tags]
 
+    def _fetch_route_for_edit_page(watch, datastore, form) -> dict:
+        """The watch's fetch method and proxy after its groups (or a plugin) had their say, with the label of
+        each so the Request tab can say who decided and what. Same lookup the check uses."""
+        from changedetectionio.pluggy_interface import resolve_fetch_route
+
+        route = resolve_fetch_route(watch, datastore)
+        fetch_backend_labels = dict(form.fetch_backend.choices)
+        proxy_list = datastore.proxy_list or {}
+        for setting, labels in (('fetch_backend', fetch_backend_labels),
+                                ('proxy', {key: proxy.get('label') for key, proxy in proxy_list.items()})):
+            decided = route['changed_by'].get(setting)
+            if isinstance(decided, dict):
+                decided['value_label'] = str(labels.get(route[setting]) or route[setting])
+        return route
+
+    def _recheck_time_for_edit_page(watch, datastore):
+        """The group that decides this watch's recheck interval and time schedule, with a label of what it set,
+        None when they are the watch's own or the system's. Same lookup the scheduler uses."""
+        from flask import current_app
+        from changedetectionio.model.group_settings import (
+            group_time_schedule_limit,
+            groups_with_recheck_time,
+            recheck_time_group_choice,
+        )
+
+        choice = recheck_time_group_choice(watch, groups_with_recheck_time(datastore))
+        if not choice:
+            return None
+
+        parts = []
+        if choice.value:
+            parts.append(current_app.jinja_env.filters['format_duration'](choice.value))
+        if group_time_schedule_limit(choice.group):
+            parts.append(gettext('Schedule time limits'))
+
+        return {
+            'label': choice.group.get('title'),
+            'group_uuid': choice.group.get('uuid'),
+            'replaces_watch': choice.replaces_watch,
+            'value_label': ' + '.join(parts),
+        }
+
     def _resolve_llm_group_overrides(watch, datastore) -> dict:
         """
         For each LLM field (llm_intent, llm_change_summary): if the watch has no own
@@ -68,6 +110,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         for tag_uuid, tag in datastore.data['settings']['application'].get('tags', {}).items():
             if tag_uuid in watch.get('tags', []) and (tag.get('include_filters') or tag.get('subtractive_selectors')):
                 return True
+
+    def _save_plugin_request_settings(watch, section, data):
+        from changedetectionio.pluggy_interface import load_watch_plugin_settings, save_watch_plugin_settings
+        plugin_id = section['plugin_id']
+        try:
+            if section.get('on_save'):
+                data = section['on_save'](watch, data, load_watch_plugin_settings(watch, plugin_id))
+            save_watch_plugin_settings(watch, plugin_id, data or {})
+        except Exception as e:
+            logger.exception(f"Saving '{plugin_id}' settings for watch {watch.get('uuid')} failed: {e}")
+            flash(gettext("Could not save the '{}' settings, see the log.").format(plugin_id), 'error')
 
     @edit_blueprint.route("/edit/<uuid_str:uuid>", methods=['GET', 'POST'])
     @login_optionally_required
@@ -141,6 +194,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
         except AttributeError as e:
             # .forms exists but no useful form
             form_class = forms.processor_text_json_diff_form
+
+        # Plugins' own per-watch settings in the Request tab (ui_edit_request_settings hook), nested forms kept
+        # in the watch's data dir, never in the watch itself
+        from changedetectionio.pluggy_interface import get_ui_edit_request_settings, load_watch_plugin_settings
+        plugin_request_settings = get_ui_edit_request_settings(datastore.data['watching'][uuid], datastore)
+        if plugin_request_settings:
+            from wtforms.fields.form import FormField
+            form_class = type(form_class.__name__, (form_class,),
+                              {section['field_name']: FormField(section['form_class']) for section in plugin_request_settings})
+            for section in plugin_request_settings:
+                default[section['field_name']] = load_watch_plugin_settings(datastore.data['watching'][uuid], section['plugin_id'])
 
         form = form_class(formdata=request.form if request.method == 'POST' else None,
                           data=default,
@@ -221,6 +285,14 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             processor_config_data = processors.extract_processor_config_from_form_data(form.data)
             processors.save_processor_config(datastore, uuid, processor_config_data)
 
+            # Only the sections that were on the page, the Request tab isn't shown for every fetcher and an
+            # absent section must not save as empty
+            shown_sections = request.form.getlist('plugin_request_settings_shown')
+            for section in plugin_request_settings:
+                if section['plugin_id'] not in shown_sections:
+                    continue
+                _save_plugin_request_settings(datastore.data['watching'][uuid], section, form[section['field_name']].data)
+
             # Ignore text
             form_ignore_text = form.ignore_text.data
             datastore.data['watching'][uuid]['ignore_text'] = form_ignore_text
@@ -255,11 +327,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 if type(form.data.get('tags')) == list:
                     extra_update_obj['tags'] = form.data.get('tags')
                 else:
-                    for t in form.data.get('tags').split(','):
-                        tag_uuids.append(datastore.add_tag(title=t))
+                    for t in datastore.group_names_in(form.data.get('tags')):
+                        # An empty name ("a, , b" or a comma at the end) is not a group
+                        tag_uuid = datastore.add_tag(title=t)
+                        if tag_uuid and tag_uuid not in tag_uuids:
+                            tag_uuids.append(tag_uuid)
                     extra_update_obj['tags'] = tag_uuids
 
-            datastore.data['watching'][uuid].update(form.data)
+            plugin_field_names = {section['field_name'] for section in plugin_request_settings}
+            datastore.data['watching'][uuid].update({k: v for k, v in form.data.items() if k not in plugin_field_names})
             datastore.data['watching'][uuid].update(extra_update_obj)
 
             if not datastore.data['watching'][uuid].get('tags'):
@@ -276,6 +352,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
 
             flash(gettext("Updated watch - unpaused!") if request.args.get('unpause_on_save') else gettext("Updated watch."))
 
+            # The watch list in other tabs: its row there shows the new groups, title ... without a reload
+            from blinker import signal
+            signal('watches_changed').send(uuids=[uuid])
+
             # Cleanup any browsersteps session for this watch
             try:
                 from changedetectionio.blueprint.browser_steps import cleanup_session_for_watch
@@ -289,7 +369,15 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             is_in_schedule = True
             watch = datastore.data['watching'].get(uuid)
 
-            if watch.get('time_between_check_use_default'):
+            from changedetectionio.model.group_settings import (
+                group_time_schedule_limit,
+                groups_with_recheck_time,
+                recheck_time_group_choice,
+            )
+            group_recheck_time = recheck_time_group_choice(watch, groups_with_recheck_time(datastore))
+            if group_recheck_time:
+                time_schedule_limit = group_time_schedule_limit(group_recheck_time.group) or {}
+            elif watch.get('time_between_check_use_default'):
                 time_schedule_limit = datastore.data['settings']['requests'].get('time_schedule_limit') or {}
             else:
                 time_schedule_limit = watch.get('time_schedule_limit') or {}
@@ -392,10 +480,19 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
                 # LLM intent context
                 'llm_configured': bool(_get_llm_config(datastore)),
                 'llm_group_overrides': _resolve_llm_group_overrides(watch, datastore),
+                # Which fetch method and proxy the watch really uses, and who decided (a group, a plugin)
+                'fetch_route': _fetch_route_for_edit_page(watch, datastore, form),
+                # Same for the recheck interval and time schedule
+                'recheck_time_decided': _recheck_time_for_edit_page(watch, datastore),
             }
 
             included_content = None
-            if form.extra_form_content():
+            extra_form_template = getattr(form, 'extra_form_template', lambda: None)()
+            if extra_form_template:
+                # Real template file on the Flask loader, so its text gets extracted for translation (#4612)
+                included_content = render_template(extra_form_template, **template_args)
+            elif form.extra_form_content():
+                # Legacy raw Jinja2 string from a third-party processor plugin
                 # So that the extra panels can access _helpers.html etc, we set the environment to load from templates/
                 # And then render the code from the module
                 templates_dir = str(importlib.resources.files("changedetectionio").joinpath('templates'))
@@ -406,6 +503,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, queuedWatchMe
             output = render_template("edit.html",
                                      extra_tab_content=form.extra_tab_content() if form.extra_tab_content() else None,
                                      extra_form_content=included_content,
+                                     plugin_request_settings=plugin_request_settings,
                                      **template_args
                                      )
 

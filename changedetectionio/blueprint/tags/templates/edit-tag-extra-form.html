@@ -1,0 +1,15 @@
+{% from '_helpers.html' import render_checkbox_field %}
+<script>
+    $(document).ready(function () {
+        toggleOpacity('#overrides_watch', '#restock-fieldset-price-group', true);
+    });
+</script>
+<fieldset>
+    <div class="pure-control-group">
+        <fieldset class="pure-group">
+            {{ render_checkbox_field(form.overrides_watch) }}
+            <span class="pure-form-message-inline">{{ _('Used for watches in "Restock & Price detection" mode') }}</span>
+        </fieldset>
+    </div>
+</fieldset>
+{% include extra_form_template %}

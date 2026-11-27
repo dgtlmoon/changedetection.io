@@ -10,7 +10,7 @@
 set -e
 
 # Failing fast is deliberate here (the first failure is usually the real problem, and it keeps
-# the run short) - but this script runs 8 independent pytest groups, so make it obvious that the
+# the run short) - but this script runs several independent pytest groups, so make it obvious that the
 # groups after the failure were SKIPPED rather than passed. Otherwise one failing test reads as
 # "the whole basic suite is broken".
 trap 'rc=$?; echo "::error::run_basic_tests.sh aborted at line $LINENO (exit $rc) - the test groups after this point were SKIPPED, not run"' ERR
@@ -74,6 +74,7 @@ echo "-------------------- Running rest of tests in parallel -------------------
 FETCH_WORKERS=2 REMOVE_REQUESTS_OLD_SCREENSHOTS=false \
 pytest tests/test_*.py \
   -n 8 \
+  --durations=25 \
   --dist=load \
   -vvv \
   -s \
@@ -84,7 +85,10 @@ pytest tests/test_*.py \
 
 echo "---------------------------- DONE parallel test ---------------------------------------"
 
-FETCH_WORKERS=20 pytest -vvv -s tests/test_queue_handler.py
+FETCH_WORKERS=20 pytest --durations=25 -vvv -s tests/test_queue_handler.py
+
+# Custom notification handlers (post://, get:// etc)
+pytest --durations=25 -vv -s tests/apprise/
 
 echo "RUNNING WITH BASE_URL SET"
 
@@ -94,24 +98,24 @@ export BASE_URL="https://really-unique-domain.io"
 
 # Re-run with HIDE_REFERER set - could affect login
 export HIDE_REFERER=True
-REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 tests/test_notification.py tests/test_access_control.py
+REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest --durations=25 -vv -s --maxfail=1 tests/test_notification.py tests/test_access_control.py
 
 
 # Re #4309 - RSS pubDate/timestamps must be correct on containers that don't run UTC
 # (Europe/Athens is UTC+2/+3, so any naive local->UTC relabelling shows up as a shifted date)
-TZ=Europe/Athens pytest -vv -s --maxfail=1 tests/test_rss.py
+TZ=Europe/Athens pytest --durations=25 -vv -s --maxfail=1 tests/test_rss.py
 
 # Re-run a few tests that will trigger brotli based storage
 # And again with brotli+screenshot attachment
-SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py tests/test_notification.py  tests/test_access_control.py
+SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=5 REMOVE_REQUESTS_OLD_SCREENSHOTS=false pytest --durations=25 -vv -s --maxfail=1 --dist=load tests/test_backend.py tests/test_rss.py tests/test_unique_lines.py tests/test_notification.py  tests/test_access_control.py
 
 # Try high concurrency with aggressive worker restarts
-FETCH_WORKERS=50 WORKER_MAX_RUNTIME=2 WORKER_MAX_JOBS=1 pytest  tests/test_history_consistency.py -vv -l -s
+FETCH_WORKERS=50 WORKER_MAX_RUNTIME=2 WORKER_MAX_JOBS=1 pytest --durations=25 tests/test_history_consistency.py -vv -l -s
 
 # Check file:// will pickup a file when enabled
 echo "Hello world" > /tmp/test-file.txt
-ALLOW_FILE_URI=yes pytest -vv -s  tests/test_security.py
+ALLOW_FILE_URI=yes pytest --durations=25 -vv -s  tests/test_security.py
 
 
 # Run it again so that brotli kicks in
-TEST_WITH_BROTLI=1 SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=100 FETCH_WORKERS=20 pytest tests/test_history_consistency.py -vv -l -s
+TEST_WITH_BROTLI=1 SNAPSHOT_BROTLI_COMPRESSION_THRESHOLD=100 FETCH_WORKERS=20 pytest tests/test_history_consistency.py -vv -l -s --durations=25

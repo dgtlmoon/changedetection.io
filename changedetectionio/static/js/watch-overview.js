@@ -16,21 +16,63 @@ $(function () {
         normalizeUrl($('#url')[0]);
     });
 
+    // The rows of the list are put in again whenever the server sends them (realtime.js, "watch_row"), so what
+    // is done to rows is either delegated from the document or done again for the new row, below.
+
     // Remove unviewed status when normally clicked
-    $('.diff-link').click(function () {
+    $(document).on('click', '.diff-link', function () {
         $(this).closest('.unviewed').removeClass('unviewed');
     });
 
-    $('td[data-timestamp]').each(function () {
-        $(this).prop('title', new Intl.DateTimeFormat(undefined,
-            {
-                dateStyle: 'full',
-                timeStyle: 'long'
-            }).format($(this).data('timestamp') * 1000));
-    })
+    // The full date and time of "checked" and "changed" as their tooltip
+    function setDateTooltips(scope) {
+        $('td[data-timestamp]', scope).each(function () {
+            $(this).prop('title', new Intl.DateTimeFormat(undefined,
+                {
+                    dateStyle: 'full',
+                    timeStyle: 'long'
+                }).format($(this).data('timestamp') * 1000));
+        });
+    }
+    setDateTooltips(document);
+    document.addEventListener('cdio:watch-row-replaced', function (e) {
+        setDateTooltips(e.detail.row);
+    });
 
+    // Bulk "Group" action: a modal with the chips field of a watch's "Group tag" (tag-chips.js), existing
+    // groups are suggested while typing and a new name becomes a new group. The names go to the server as
+    // #op_extradata, comma separated, through the (hidden) real operation button like Browser / Proxy below.
     $("#checkbox-assign-tag").click(function (e) {
-        $('#op_extradata').val(prompt("Enter a tag name"));
+        const $btn = $(this);
+        const tmpl = document.getElementById('bulk-group-options');
+        if (!tmpl || typeof ModalDialog === 'undefined') {
+            return;
+        }
+        ModalDialog.confirm({
+            type: 'info',
+            title: $btn.data('modal-title'),
+            message: '<div class="bulk-group-field">' + tmpl.innerHTML + '</div>',
+            confirmText: $btn.data('modal-apply'),
+            onConfirm: function () {
+                // What is in chips, plus a name that was typed but not turned into a chip yet
+                const names = [
+                    $('.modal-dialog input[type="hidden"][name="bulk_groups"]').val(),
+                    $('.modal-dialog input.tag-chips').val()
+                ].map((v) => (v || '').trim()).filter((v) => v !== '').join(', ');
+                if (!names) {
+                    return;
+                }
+                $('#op_extradata').val(names);
+                // "Also remove any existing group assigned": the groups named take the place of the ones the
+                // watches are in, a different operation for the server
+                const replace = $('.modal-dialog input[name="bulk_groups_replace"]').is(':checked');
+                $(replace ? '#op-assign-tag-replace' : '#op-assign-tag').trigger('click');
+            }
+        });
+        // The dialog is on the page now: the cursor goes in the field straight away, and the dialog leaves it
+        // there (modal.js). It used to arrive after the dialog's own focus on its button, and a name being typed
+        // in that moment was cut in two.
+        $('.modal-dialog input.tag-chips').tagChips().trigger('focus');
     });
 
     // Bulk "Browser" / "Proxy" actions: open a modal with the same radio choices as the
@@ -67,7 +109,7 @@ $(function () {
     });
 
 
-    $('.history-link').click(function (e) {
+    $(document).on('click', '.history-link', function (e) {
         // Incase they click 'back' in the browser, it should be removed.
         $(this).closest('tr').removeClass('unviewed');
     });
@@ -82,7 +124,7 @@ $(function () {
         var i18n       = window.watchOverviewI18n || {};
         var $btn       = $(this);
         var uuid       = $btn.data('uuid');
-        var dataUrl    = $btn.data('processor-data-url');
+        var chartUrl   = $btn.data('processor-chart-url');
         var historyUrl = $btn.attr('href');
         var $row       = $btn.closest('tr');
         var rowId      = 'restock-graph-row-' + uuid;
@@ -125,21 +167,15 @@ $(function () {
             );
         }
 
-        if (!dataUrl) { showError(); return; }
+        if (!chartUrl) { showError(); return; }
 
-        $.getJSON(dataUrl).done(function (data) {
-            var series = (data && data.series) || [];
-            var graphI18n = {
-                in_stock: i18n.inStock, out_of_stock: i18n.outOfStock,
-                no_data: i18n.noPriceData, load_error: i18n.priceHistoryError,
-                changes: i18n.changes, avg_price: i18n.avgPrice,
-                price_low: i18n.priceLow, price_typical: i18n.priceTypical, price_high: i18n.priceHigh,
-                cheaper_than: i18n.cheaperThan, pricier_than: i18n.pricierThan,
-                typical_note: i18n.typicalNote, avg_label: i18n.avgLabel
-            };
-            if (window.renderRestockGraph) {
-                // Shorter graph inline in the watchlist roll-down than on the full /diff page.
-                window.renderRestockGraph($r.find('.restock-inline-graph')[0], series, (data && data.currency) || '', graphI18n, (data && data.summary) || null, 230);
+        // The chart HTML is the built-in chart or a plugin's (restock_diff hook
+        // restock_diff_watchlist_overview_chart), the built-in one is drawn by initRestockGraphs()
+        $.get(chartUrl).done(function (html) {
+            var $graph = $r.find('.restock-inline-graph');
+            $graph.html(html);
+            if (window.initRestockGraphs) {
+                window.initRestockGraphs($graph);
             }
         }).fail(showError);
     });
@@ -161,7 +197,7 @@ $(function () {
         });
     });
 
-    $(".watch-table tr").click(function (event) {
+    $(document).on('click', '.watch-table tr', function (event) {
         var tagName = event.target.tagName.toLowerCase();
         if (tagName === 'tr' || tagName === 'td') {
             var cb = $('input[type=checkbox]', this)[0];
@@ -262,6 +298,8 @@ $(function () {
         } else {
             $b.hide().empty();
         }
+        // For the space under the operations bar: the banner takes its place when it is there (_watch_table.scss)
+        $('body').toggleClass('select-all-banner-shown', $b.is(':visible'));
     }
 
     function refreshSelectionUI() {
@@ -279,6 +317,38 @@ $(function () {
     // Exposed so realtime.js can refresh the UI after it mutates the selection
     // (e.g. clearing it once a delete operation removes the rows).
     sel.refreshUI = refreshSelectionUI;
+
+    // A row the server sent again: ticked if it is in the selection
+    document.addEventListener('cdio:watch-row-replaced', function (e) {
+        $('input[name="uuids"][type=checkbox]', e.detail.row).each(function () {
+            this.checked = sel.has(cbUuid(this));
+        });
+        refreshSelectionUI();
+    });
+
+    // Download through a normal authenticated, CSRF-protected POST rather than
+    // Socket.IO or a fetch Blob, so the browser can stream the attachment.
+    $('#checkbox-export').on('click', function (event) {
+        event.preventDefault();
+        const uuids = sel.all();
+        if (!uuids.length) return;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = this.formAction;
+        form.hidden = true;
+        const addField = (name, value) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        };
+        addField('csrf_token', $('#watch-list-form input[name="csrf_token"]').val());
+        uuids.forEach((uuid) => addField('uuids', uuid));
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
+    });
 
     // Shift-click to (de)select a contiguous range, anchored on the last checkbox
     // clicked — the usual "select many at once" gesture. Runs on 'click' (which
@@ -324,35 +394,48 @@ $(function () {
         refreshSelectionUI();
     });
 
-    // Cancel: clear the whole cross-page selection (incl. the stored browser data)
-    // and dismiss the operations bar.
-    $("#check-cancel").click(function () {
+    // The request of "Select all N matching" that is still on its way. With a very long list it takes a while,
+    // and its answer must not select everything again after the selection was cleared in the meantime.
+    let selectAllMatchingRequest = null;
+
+    function clearSelection() {
+        if (selectAllMatchingRequest) {
+            const request = selectAllMatchingRequest;
+            selectAllMatchingRequest = null;
+            if (request.abort) request.abort();
+        }
         sel.clear();
         applySelectionToDom();
         refreshSelectionUI();
-    });
+    }
+
+    // Cancel: clear the whole cross-page selection (incl. the stored browser data)
+    // and dismiss the operations bar.
+    $("#check-cancel").click(clearSelection);
 
     // "Select all N matching" — pull the full matching id list from the server.
     $(document).on('click', '#select-all-matching', function () {
         if (!selCfg.uuidsUrl) return;
         const $btn = $(this).prop('disabled', true);
-        $.getJSON(selCfg.uuidsUrl + location.search)
+        const request = selectAllMatchingRequest = $.getJSON(selCfg.uuidsUrl + location.search);
+        request
             .done(function (data) {
+                // Cleared (or asked for again) while this was loading: not what is wanted any more
+                if (request !== selectAllMatchingRequest) return;
                 if (data && Array.isArray(data.uuids)) {
                     sel.addMany(data.uuids.map((u) => ('' + u).trim()));
                     applySelectionToDom();
                     refreshSelectionUI();
                 }
             })
-            .always(function () { $btn.prop('disabled', false); });
+            .always(function () {
+                if (request === selectAllMatchingRequest) selectAllMatchingRequest = null;
+                $btn.prop('disabled', false);
+            });
     });
 
     // "Clear selection" link inside the banner.
-    $(document).on('click', '#select-all-clear', function () {
-        sel.clear();
-        applySelectionToDom();
-        refreshSelectionUI();
-    });
+    $(document).on('click', '#select-all-clear', clearSelection);
 
     const time_check_step_size_seconds=1;
 

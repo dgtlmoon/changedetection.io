@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    /* Scoped to this page, the app's theme variables keep it right in light and dark mode */
+    #fallback-fetch-stats .usage { display: flex; gap: 2em; flex-wrap: wrap; align-items: baseline; margin-bottom: 1em; }
+    #fallback-fetch-stats .usage strong { font-size: 2em; }
+    #fallback-fetch-stats .hours { display: flex; align-items: flex-end; gap: 2px; height: 80px; margin: 1em 0 0.3em; }
+    #fallback-fetch-stats .hours span { flex: 1; min-height: 2px; background: var(--color-menu-accent); opacity: 0.8; border-radius: 2px 2px 0 0; }
+    #fallback-fetch-stats .hours-axis { display: flex; justify-content: space-between; font-size: 0.8em; opacity: 0.7; }
+    #fallback-fetch-stats .limit-reached { color: var(--color-light-red); }
+</style>
+<div class="edit-form">
+    <div class="box-wrap inner">
+        <div id="fallback-fetch-stats">
+            <h2>Fallback fetcher - fetch stats</h2>
+            {% if not configured %}
+                <p class="limit-reached">Not set up yet, add the scraping API URL in the settings.</p>
+            {% endif %}
+
+            <div class="usage">
+                <div><strong>{{ calls }}</strong>{% if limit %} / {{ limit }}{% endif %} successful calls in the last 24 hours</div>
+                {% if free_in %}
+                    <div class="limit-reached">Limit reached, the next call is possible in {{ free_in }}</div>
+                {% elif not limit %}
+                    <div>No daily limit</div>
+                {% endif %}
+            </div>
+
+            <div class="hours" title="Successful calls per hour, last 24 hours">
+                {% for n in per_hour %}<span style="height: {{ (n / peak * 100)|round }}%" title="{{ n }}"></span>{% endfor %}
+            </div>
+            <div class="hours-axis"><span>24h ago</span><span>now</span></div>
+
+            <h3>Watches it has taken over</h3>
+            {% if controlled %}
+            <table class="pure-table pure-table-striped">
+                <thead><tr><th>Watch</th><th>Blocked with</th><th>Checked no more often than every</th><th>For another</th></tr></thead>
+                <tbody>
+                {% for w in controlled %}
+                    <tr>
+                        <td><a href="{{ url_for('ui.ui_edit.edit_page', uuid=w.uuid) }}">{{ w.label }}</a></td>
+                        <td>HTTP {{ w.status_code }}</td>
+                        <td>{{ w.recheck or 'its normal recheck time' }}</td>
+                        <td>{{ w.left }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p>None right now.{% if status_codes %} Watches are taken over when they get HTTP {{ status_codes }}.{% else %} Set "Fall back on these status codes" to let it take over blocked watches.{% endif %}</p>
+            {% endif %}
+
+            <p><a href="{{ url_for('settings.settings_page') }}#plugin-{{ plugin_id }}" class="pure-button pure-button-primary">Settings</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

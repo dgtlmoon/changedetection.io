@@ -18,3 +18,93 @@ ul#conditions_match_logic {
     padding-right: 1em;
   }
 }
+
+// Says what is being edited, sits on the page background above the tabs
+.edit-form-heading {
+  margin: 0 0 0.7em 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text-tab);
+  overflow-wrap: anywhere;
+}
+
+// A heading kept to one line: what does not fit is cut at the edge and fades out over its last part, it never
+// wraps and never makes the page wider. A name that fits is nowhere near the fade.
+.edit-form-heading-oneline {
+  --heading-fade: 3.5em;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--heading-fade)), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - var(--heading-fade)), transparent);
+}
+
+// A group (or plugin) decides this setting, so the watch's own choice has no effect. Still submitted with the
+// form, the watch keeps it for when the group stops deciding.
+.decided-elsewhere {
+  ul, input, label, select {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+// A thin line between two sets of settings on a form
+hr.settings-divider {
+  height: 0;
+  margin: 0 0 1em 0;
+  border: 0;
+  border-top: 1px solid var(--color-border-table-cell);
+}
+
+// Group edit, Proxy tab: a proxy provider's logo and a line about it, first thing on the tab
+.proxy-provider-tip {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  margin: 0 0 1.25em 0;
+  padding: 0.7em 0.9em;
+  border: 1px solid var(--color-border-table-cell);
+  border-radius: var(--common-round-border);
+  line-height: 1.3;
+
+  // A wordmark: its letters are about half its height, so twice the height of the text to read as the same size
+  img {
+    flex-shrink: 0;
+    height: 2em;
+    width: auto;
+  }
+
+  // monospace reads larger than the text it is in at the same size, as in the form hints
+  // (and no line height of its own: the taller line of the monospace font pushed the text up off the middle of
+  // the box)
+  code {
+    font-size: 0.875em;
+    line-height: 1;
+    padding: 0.2em 0.35em 0.1em;
+    border-radius: 3px;
+  }
+}
+
+// Group edit: the note at the bottom of the tabs whose settings a watch takes from one group only
+.first-group-note {
+  margin-top: 1.5em;
+  padding-top: 0.8em;
+  border-top: 1px solid var(--color-border-table-cell);
+}
+
+// Group edit: the settings of something that is switched off ("Don't use", or muted), they can still be filled in
+.group-setting-off {
+  opacity: var(--opacity-setting-not-in-use);
+}
+
+.decided-elsewhere-note {
+  margin: 0 0 0.5em 0;
+  padding: 0.5em 0.8em;
+  border-left: 3px solid var(--color-link);
+  background: var(--color-background-code);
+  border-radius: 0 3px 3px 0;
+}

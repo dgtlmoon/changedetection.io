@@ -1,69 +1,92 @@
 @use "../settings" as *;
 
 /**
- * Modal dialog styles using HTML5 <dialog> element
- * Provides modern, accessible confirmation dialogs
+ * The app's dialogs, on the HTML5 <dialog> element: the confirmations of static/js/modal.js and the dialogs
+ * written out in the templates (search, language, the MCP ones) share these classes.
+ *
+ * A card on a dimmed, blurred page: a hairline border and a soft shadow, no lines between its three parts, the
+ * kind of dialog (info / warning / danger) carried by a small tinted icon and by the button that confirms it.
  */
 
 .modal-dialog {
-  border: none;
-  border-radius: 10px;
+  --modal-pad: 1.5rem;
+  --modal-accent: var(--color-background-button-primary);
+  // Amber that white text reads on, the lighter one is for the icon
+  --modal-warning: #b45309;
+  --modal-warning-icon: #d68a00;
+
+  box-sizing: border-box;
+  width: calc(100% - 2rem);
+  max-width: 460px;
   padding: 0;
+  border: 1px solid var(--color-border-table-cell);
+  border-radius: 14px;
   background: var(--color-background);
   color: var(--color-text);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-  max-width: 500px;
-  width: 90%;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.28), 0 8px 16px -8px rgba(15, 23, 42, 0.18);
 
   &::backdrop {
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(3px);
-    animation: fadeIn 0.2s ease-out;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    animation: modal-backdrop-in 0.15s ease-out;
   }
 
   &[open] {
-    animation: slideIn 0.25s ease-out;
+    animation: modal-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .modal-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--color-border-table-cell);
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.875rem;
+    padding: var(--modal-pad) var(--modal-pad) 0;
 
+    // The kind of dialog: an icon on a soft tint of its own colour
     .modal-icon {
-      font-size: 2rem;
-      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 10px;
+      color: var(--modal-accent);
+      background: color-mix(in srgb, currentColor 13%, transparent);
+      line-height: 1;
+
+      svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        stroke: currentColor;
+        fill: none;
+      }
 
       &.warning {
-        color: var(--color-warning);
+        color: var(--modal-warning-icon);
       }
 
       &.danger {
         color: var(--color-background-button-error);
       }
-
-      &.info {
-        color: var(--color-background-button-primary);
-      }
     }
 
     .modal-title {
-      font-size: 1.3rem;
-      font-weight: bold;
       margin: 0;
+      font-size: 1.0625rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
       color: var(--color-text);
     }
   }
 
   .modal-body {
-    padding: 1.5rem;
-    line-height: 1.6;
+    padding: 0.875rem var(--modal-pad) var(--modal-pad);
+    font-size: 0.9375rem;
+    line-height: 1.55;
 
     p {
-      margin: 0 0 1rem 0;
+      margin: 0 0 0.75rem 0;
 
       &:last-child {
         margin-bottom: 0;
@@ -77,83 +100,85 @@
   }
 
   .modal-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--color-border-table-cell);
     display: flex;
-    gap: 0.75rem;
     justify-content: flex-end;
-    background: var(--color-grey-900);
+    gap: 0.5rem;
+    padding: 0 var(--modal-pad) var(--modal-pad);
 
-    button {
-      padding: 0.6rem 1.5rem;
-      border: none;
-      border-radius: 4px;
+    // Every button of a dialog: the quiet outline one (Cancel, Close) unless it is the one that confirms
+    button,
+    .pure-button {
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 2.25rem;
+      margin: 0;
+      padding: 0 0.875rem;
+      border: 1px solid var(--color-border-table-cell);
+      border-radius: 8px;
+      background: var(--color-background);
+      background-image: none;
+      color: var(--color-text);
+      box-shadow: none;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+      text-decoration: none;
       cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      font-size: 0.95rem;
+      transition: border-color 0.12s ease, background-color 0.12s ease, filter 0.12s ease;
 
       &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        border-color: var(--color-border-input);
+        background-color: rgba(127, 127, 127, 0.1);
       }
 
-      &:active {
-        transform: translateY(0);
+      &:focus-visible {
+        outline: 2px solid var(--color-link);
+        outline-offset: 2px;
       }
 
-      &.modal-btn-cancel {
-        background: var(--color-background-button-cancel);
-        color: var(--color-grey-200);
-
-        &:hover {
-          background: var(--color-grey-700);
-        }
-      }
-
-      &.modal-btn-confirm {
-        background: var(--color-background-button-primary);
-        color: var(--color-white);
-
-        &:hover {
-          opacity: 0.9;
-        }
-      }
-
+      // The one that confirms: solid, in the colour of the kind of dialog
+      &.modal-btn-info,
+      &.modal-btn-confirm,
+      &.pure-button-primary,
+      &.modal-btn-warning,
       &.modal-btn-danger {
-        background: var(--color-background-button-error);
+        border-color: transparent;
+        background-color: var(--color-background-button-primary);
         color: var(--color-white);
 
         &:hover {
-          background: var(--color-dark-red);
+          border-color: transparent;
+          filter: brightness(1.08);
         }
       }
 
       &.modal-btn-warning {
-        background: var(--color-background-button-warning);
-        color: var(--color-white);
+        background-color: var(--modal-warning);
+      }
 
-        &:hover {
-          opacity: 0.9;
-        }
+      &.modal-btn-danger {
+        background-color: var(--color-background-button-error);
       }
     }
   }
 }
 
-// Dark mode adjustments
 @include dark-mode {
   .modal-dialog {
-    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.7);
+    --modal-warning-icon: #f5a524;
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.7), 0 8px 16px -8px rgba(0, 0, 0, 0.5);
 
-    .modal-footer {
-      background: var(--color-grey-200);
+    &::backdrop {
+      background: rgba(0, 0, 0, 0.6);
     }
   }
 }
 
-// Animations
-@keyframes fadeIn {
+@keyframes modal-backdrop-in {
   from {
     opacity: 0;
   }
@@ -162,10 +187,10 @@
   }
 }
 
-@keyframes slideIn {
+@keyframes modal-in {
   from {
     opacity: 0;
-    transform: translateY(-20px) scale(0.95);
+    transform: translateY(8px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -173,34 +198,61 @@
   }
 }
 
-// Mobile responsive
+@media (prefers-reduced-motion: reduce) {
+  .modal-dialog,
+  .modal-dialog::backdrop {
+    animation: none !important;
+  }
+}
+
+// Small screens: nearly the width of the screen, the buttons share the bottom row
 @media only screen and (max-width: 760px) {
   .modal-dialog {
-    width: 95%;
+    --modal-pad: 1.125rem;
+    width: calc(100% - 1.5rem);
     max-width: none;
 
-    .modal-header {
-      padding: 1rem;
-
-      .modal-title {
-        font-size: 1.1rem;
-      }
-    }
-
-    .modal-body {
-      padding: 1rem;
-      font-size: 0.95rem;
-    }
-
     .modal-footer {
-      padding: 0.75rem 1rem;
       flex-wrap: wrap;
 
-      button {
+      button,
+      .pure-button {
         flex: 1;
-        min-width: 120px;
+        min-width: 7rem;
+        height: 2.5rem;
       }
     }
+  }
+}
+
+/* The chips field of the watch list's "Group" action (see watch-overview.js): full width, and room under it for
+   the list of suggested groups, which would otherwise be cut off at the edge of the dialog */
+.bulk-group-field {
+  text-align: left;
+
+  // "Also remove any existing group assigned", above the field (the suggestions drop down under it)
+  .bulk-group-replace {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin: 0 0 0.9em 0;
+    font-size: 0.875rem;
+    cursor: pointer;
+
+    input {
+      margin: 0;
+    }
+  }
+  min-height: 9em;
+
+  // The only thing in the dialog, so the full width of it
+  .tag-chips-field {
+    display: flex;
+    width: 100%;
+  }
+
+  .tag-chips-suggestions {
+    max-height: 7em;
   }
 }
 
@@ -209,23 +261,33 @@
 .bulk-choice-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   max-height: 50vh;
   overflow-y: auto;
   text-align: left;
 
   .bulk-choice-row {
-    display: block;
-    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.625rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
     cursor: pointer;
-    border-radius: 4px;
 
     input[type="radio"] {
-      margin-right: 8px;
+      margin: 0 0.625rem 0 0;
+      flex: 0 0 auto;
+      accent-color: var(--color-background-button-primary);
     }
 
     &:hover {
-      background: rgba(127, 127, 127, 0.15);
+      background: rgba(127, 127, 127, 0.1);
+    }
+
+    // The one that is picked
+    &:has(input:checked) {
+      border-color: color-mix(in srgb, var(--color-background-button-primary) 45%, transparent);
+      background: color-mix(in srgb, var(--color-background-button-primary) 9%, transparent);
     }
 
     em {

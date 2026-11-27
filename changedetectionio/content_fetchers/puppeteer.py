@@ -12,7 +12,7 @@ from changedetectionio.content_fetchers import SCREENSHOT_MAX_HEIGHT_DEFAULT, vi
     SCREENSHOT_SIZE_STITCH_THRESHOLD, SCREENSHOT_DEFAULT_QUALITY, XPATH_ELEMENT_JS, INSTOCK_DATA_JS, \
     SCREENSHOT_MAX_TOTAL_HEIGHT, FAVICON_FETCHER_JS
 from changedetectionio import gc_debounce
-from changedetectionio.content_fetchers.base import Fetcher, get_playwright_bypass_csp, manage_user_agent
+from changedetectionio.content_fetchers.base import Fetcher, browser_address_for_logs, get_playwright_bypass_csp, manage_user_agent
 from changedetectionio.proxy_url import proxy_credentials
 from changedetectionio.content_fetchers.exceptions import PageUnloadable, Non200ErrorCodeReceived, EmptyReply, BrowserFetchTimedOut, \
     BrowserConnectError
@@ -24,114 +24,197 @@ async def _configure_puppeteer_csp(page):
         await page.setBypassCSP(True)
 
 
+# Resuming happens on the way out, also of a capture that failed or ran out of time on a browser that
+# has stopped answering - waiting on it there would hold up the worker long after the fetch was given up on
+RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS = 5
+
+
+async def _set_page_scripts_paused(page, paused):
+    """Stop (or resume) the page's own scripts. What is already rendered stays and a plain
+    evaluate() still answers, but timers and frames stop too: an evaluate() that waits on one never
+    returns, so nothing is extracted while paused. Returns False when the browser would not do it."""
+    try:
+        request = page._client.send('Emulation.setScriptExecutionDisabled', {'value': paused})
+        if paused:
+            await request
+        else:
+            await asyncio.wait_for(request, timeout=RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS)
+        return True
+    except Exception as e:
+        logger.debug(f"Could not {'pause' if paused else 'resume'} the page's scripts: {type(e).__name__} {e}")
+        return False
+
+
+# A large canvas below the first screen is what makes a capture beyond the viewport slow, or keeps it
+# from ever returning. Measured on a browser without a GPU: a 2600x2600 WebGL canvas far down a page
+# hung the capture (the page with it hidden took 3s), a 2300x800 one made its band take 27s against
+# 7s. Canvases with more pixels than this - a little more than a whole 1280x1024 screen - are left
+# blank, except on the first screen: when one is there the first screen is captured the ordinary
+# way, with everything on it. A graph is smaller than a screen (the ones measured: 1.2 million
+# pixels at most).
+SCREENSHOT_MAX_CANVAS_PIXELS = int(os.getenv("SCREENSHOT_MAX_CANVAS_PIXELS", 1_500_000))
+
+# How many canvases are over the limit, and whether one of them is (partly) on the first screen. The
+# height of the screen is passed in, window.innerHeight is not to be trusted with stealth scripts loaded.
+FIND_LARGE_CANVASES_JS = """(maxPixels, screenHeight) => {
+    let count = 0, onFirstScreen = false;
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.width * canvas.height > maxPixels) {
+            count++;
+            const box = canvas.getBoundingClientRect();
+            if (box.width && box.height && box.bottom > 0 && box.top < screenHeight) onFirstScreen = true;
+        }
+    }
+    return {count, onFirstScreen};
+}"""
+
+# Hidden, not removed: the space it takes up stays, so nothing below it moves
+HIDE_LARGE_CANVASES_JS = """(maxPixels) => {
+    let hidden = 0;
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.width * canvas.height > maxPixels) {
+            canvas.__screenshotVisibility = [canvas.style.getPropertyValue('visibility'), canvas.style.getPropertyPriority('visibility')];
+            canvas.style.setProperty('visibility', 'hidden', 'important');
+            hidden++;
+        }
+    }
+    return hidden;
+}"""
+
+RESTORE_LARGE_CANVASES_JS = """() => {
+    for (const canvas of document.querySelectorAll('canvas')) {
+        if (canvas.__screenshotVisibility) {
+            canvas.style.setProperty('visibility', canvas.__screenshotVisibility[0], canvas.__screenshotVisibility[1]);
+            delete canvas.__screenshotVisibility;
+        }
+    }
+}"""
+
+
+async def _capture_chunk_beyond_viewport(page, y, width, height, screenshot_type, screenshot_quality):
+    """One horizontal band of the page, from y down, as image bytes. The viewport is left as it is."""
+    params = {
+        'format': screenshot_type,
+        'captureBeyondViewport': True,
+        'clip': {'x': 0, 'y': y, 'width': width, 'height': height, 'scale': 1},
+    }
+    if screenshot_type == 'jpeg':
+        params['quality'] = screenshot_quality
+    result = await page._client.send('Page.captureScreenshot', params)
+    return base64.b64decode(result['data'])
+
+
 # Bug 3 in Playwright screenshot handling
 # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
 
 # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
 # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
 # acceptable screenshot quality here
-async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False):
-    import os
+async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, lock_viewport_elements=False, pause_scripts=True):
+    """The whole page as one image, up to SCREENSHOT_MAX_HEIGHT.
+
+    The page is captured as it stands, in bands "beyond the viewport" (one band for a page shorter
+    than SCREENSHOT_CHUNK_HEIGHT, so nothing to stitch). The viewport is never made
+    taller and the page is never scrolled, both of which change what a page looks like and costs:
+    anything sized to the viewport (a 100vh hero, a full-window canvas or video) grew to the height
+    of a whole band, a fixed header was drawn once per band, and a page that animates repainted all
+    of that on every frame - on a busy browser that alone used up the whole fetch. So the page looks
+    the way the element positions of the Visual Selector were measured, and
+    lock_viewport_elements has nothing left to do here (kept for the callers that pass it).
+    pause_scripts=False is for a caller that is already holding the page's scripts still.
+    """
     import time
 
     start = time.time()
     watch_info = f"[{watch_uuid}] " if watch_uuid else ""
 
-    setup_start = time.time()
     page_height = await page.evaluate("document.documentElement.scrollHeight")
     page_width = await page.evaluate("document.documentElement.scrollWidth")
-    original_viewport = page.viewport
-    dimensions_time = time.time() - setup_start
-
-    logger.debug(f"{watch_info}Puppeteer viewport size {page.viewport} page height {page_height} page width {page_width} (got dimensions in {dimensions_time:.2f}s)")
-
-    # Bug 3 in Playwright screenshot handling
-    # Some bug where it gives the wrong screenshot size, but making a request with the clip set first seems to solve it
-    # JPEG is better here because the screenshots can be very very large
-
-    # Screenshots also travel via the ws:// (websocket) meaning that the binary data is base64 encoded
-    # which will significantly increase the IO size between the server and client, it's recommended to use the lowest
-    # acceptable screenshot quality here
+    viewport = page.viewport
+    logger.debug(f"{watch_info}Puppeteer viewport size {viewport} page height {page_height} page width {page_width} "
+                 f"(got dimensions in {time.time() - start:.2f}s)")
 
     # Use PNG for better quality (no compression artifacts), JPEG for smaller size
     screenshot_type = screenshot_format.lower() if screenshot_format else 'jpeg'
     # PNG should use quality 100, JPEG uses configurable quality
     screenshot_quality = 100 if screenshot_type == 'png' else int(os.getenv("SCREENSHOT_QUALITY", 72))
 
-    step_size = SCREENSHOT_SIZE_STITCH_THRESHOLD # Something that will not cause the GPU to overflow when taking the screenshot
+    capture_height = min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT)
     screenshot_chunks = []
-    y = 0
-    elements_locked = False
-
-    # Only lock viewport elements if explicitly enabled (for image_ssim_diff processor)
-    # This prevents headers/ads from resizing when viewport changes
-    if lock_viewport_elements and page_height > page.viewport['height']:
-        lock_start = time.time()
-        lock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'lock-elements-sizing.js')
-        file_read_start = time.time()
-        with open(lock_elements_js_path, 'r') as f:
-            lock_elements_js = f.read()
-        file_read_time = time.time() - file_read_start
-
-        evaluate_start = time.time()
-        await page.evaluate(lock_elements_js)
-        evaluate_time = time.time() - evaluate_start
-
-        elements_locked = True
-        lock_time = time.time() - lock_start
-        logger.debug(f"{watch_info}Viewport element locking enabled - File read: {file_read_time:.3f}s, Browser evaluate: {evaluate_time:.2f}s, Total: {lock_time:.2f}s")
-
-    if page_height > page.viewport['height']:
-        if page_height < step_size:
-            step_size = page_height # Incase page is bigger than default viewport but smaller than proposed step size
-        # Never set viewport taller than our max capture height - otherwise one screenshot chunk
-        # captures the whole page even when SCREENSHOT_MAX_HEIGHT is set smaller
-        step_size = min(step_size, SCREENSHOT_MAX_TOTAL_HEIGHT)
-        viewport_start = time.time()
-        await page.setViewport({'width': page.viewport['width'], 'height': step_size})
-        viewport_time = time.time() - viewport_start
-        logger.debug(f"{watch_info}Viewport changed to {page.viewport['width']}x{step_size} (took {viewport_time:.2f}s)")
-
-    capture_start = time.time()
     chunk_times = []
-    while y < min(page_height, SCREENSHOT_MAX_TOTAL_HEIGHT):
-        # better than scrollTo incase they override it in the page
-        await page.evaluate(
-            """(y) => {
-                const el = document.scrollingElement;
-                if (el) el.scrollTop = y;
-            }""",
-            y
-        )
+    canvases_hidden = 0
 
-        screenshot_kwargs = {
-            'type_': screenshot_type,
-            'fullPage': False
-        }
+    # The page's own scripts are held still for as long as it is being captured: an animating page
+    # otherwise keeps every capture waiting behind its repaints (15s a band against 0.3s). Nothing
+    # here asks the page to react to anything, so there is nothing for it to miss meanwhile.
+    scripts_paused = pause_scripts and await _set_page_scripts_paused(page, True)
+    capture_start = time.time()
+    try:
+        viewport_screenshot_kwargs = {'type_': screenshot_type, 'fullPage': False}
         # PNG doesn't support quality parameter in Puppeteer
         if screenshot_type == 'jpeg':
-            screenshot_kwargs['quality'] = screenshot_quality
+            viewport_screenshot_kwargs['quality'] = screenshot_quality
 
-        chunk_start = time.time()
-        screenshot_chunks.append(await page.screenshot(**screenshot_kwargs))
-        chunk_time = time.time() - chunk_start
-        chunk_times.append(chunk_time)
-        logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} captured in {chunk_time:.2f}s")
-        y += step_size
+        if page_height <= viewport['height']:
+            # Fits the viewport as it is
+            screenshot_chunks.append(await page.screenshot(**viewport_screenshot_kwargs))
+            chunk_times.append(time.time() - capture_start)
+        else:
+            y = 0
+            try:
+                large_canvases = await page.evaluate(FIND_LARGE_CANVASES_JS, SCREENSHOT_MAX_CANVAS_PIXELS, viewport['height']) or {}
+                at_the_top = not await page.evaluate("window.scrollX || window.scrollY")
+            except Exception as e:
+                logger.debug(f"{watch_info}Could not look for very large canvases: {e}")
+                large_canvases, at_the_top = {}, False
 
-    await page.setViewport({'width': original_viewport['width'], 'height': original_viewport['height']})
+            if large_canvases.get('onFirstScreen') and at_the_top:
+                # A large canvas on the first screen would be left blank with the others. The first
+                # screen is taken the ordinary way instead, with everything on it (that one always
+                # answers), and only what is below it comes from beyond the viewport. Not done for
+                # every page: two chunks have to be stitched, in a subprocess of its own, where a
+                # page shorter than a band is otherwise a single capture.
+                chunk_start = time.time()
+                screenshot_chunks.append(await page.screenshot(**viewport_screenshot_kwargs))
+                chunk_times.append(time.time() - chunk_start)
+                logger.debug(f"{watch_info}Chunk 1 (the first screen, {viewport['height']}px) captured in {chunk_times[-1]:.2f}s")
+                y = viewport['height']
+            else:
+                try:
+                    # As page.screenshot() does, a tab in the background is not painted
+                    await page._client.send('Target.activateTarget', {'targetId': page._target._targetId})
+                except Exception as e:
+                    logger.debug(f"{watch_info}Could not bring the page to the front before capturing: {e}")
 
-    # Unlock element dimensions if they were locked
-    if elements_locked:
-        unlock_elements_js_path = os.path.join(os.path.dirname(__file__), 'res', 'unlock-elements-sizing.js')
-        with open(unlock_elements_js_path, 'r') as f:
-            unlock_elements_js = f.read()
-        await page.evaluate(unlock_elements_js)
-        logger.debug(f"{watch_info}Element dimensions unlocked after screenshot capture")
+            if large_canvases.get('count'):
+                try:
+                    canvases_hidden = await page.evaluate(HIDE_LARGE_CANVASES_JS, SCREENSHOT_MAX_CANVAS_PIXELS)
+                    logger.debug(f"{watch_info}{canvases_hidden} canvas(es) of more than {SCREENSHOT_MAX_CANVAS_PIXELS} pixels "
+                                 f"left blank{' below the first screen' if y else ''}")
+                except Exception as e:
+                    logger.debug(f"{watch_info}Could not hide the very large canvases: {e}")
+
+            # In bands, something that will not cause the GPU to overflow when taking the screenshot
+            while y < capture_height:
+                chunk_start = time.time()
+                chunk_height = min(SCREENSHOT_SIZE_STITCH_THRESHOLD, capture_height - y)
+                screenshot_chunks.append(await _capture_chunk_beyond_viewport(
+                    page, y, viewport['width'], chunk_height, screenshot_type, screenshot_quality))
+                chunk_times.append(time.time() - chunk_start)
+                logger.debug(f"{watch_info}Chunk {len(screenshot_chunks)} ({chunk_height}px from {y}) captured in {chunk_times[-1]:.2f}s")
+                y += chunk_height
+    finally:
+        # Always handed back, everything extracted after the screenshot is for a page as it was
+        if canvases_hidden:
+            try:
+                await asyncio.wait_for(page.evaluate(RESTORE_LARGE_CANVASES_JS), timeout=RESUME_PAGE_SCRIPTS_TIMEOUT_SECONDS)
+            except Exception as e:
+                logger.debug(f"{watch_info}Could not show the hidden canvases again: {type(e).__name__} {e}")
+        if scripts_paused:
+            await _set_page_scripts_paused(page, False)
 
     capture_time = time.time() - capture_start
-    total_capture_time = sum(chunk_times)
-    logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {total_capture_time:.2f}s)")
+    logger.debug(f"{watch_info}All {len(screenshot_chunks)} chunks captured in {capture_time:.2f}s (total chunk time: {sum(chunk_times):.2f}s)")
 
     if len(screenshot_chunks) > 1:
         stitch_start = time.time()
@@ -177,6 +260,85 @@ async def capture_full_page(page, screenshot_format='JPEG', watch_uuid=None, loc
     return screenshot_chunks[0]
 
 
+# The icons a page declares, in the order the browser would consider them, plus the /favicon.ico every browser tries
+FAVICON_CANDIDATE_URLS_JS = """() => Array.from(document.querySelectorAll('link[rel~="icon"], link[rel~="apple-touch-icon"]'))
+    .map(l => l.href).filter(h => h && !h.startsWith('data:')).concat([location.origin + '/favicon.ico'])"""
+# Same limit as the in-page fetcher and bump_favicon()
+FAVICON_MAX_BYTES = 1 * 1024 * 1024
+
+
+# The in-page favicon fetcher gives itself 3s, but it counts them with the page's own timers. On a
+# page that keeps the browser's main thread busy those hardly fire and it took 100s+, so the wait
+# for it is bounded from here as well.
+FAVICON_FETCH_TIMEOUT_SECONDS = 10
+
+
+async def favicon_from_browser_requests(page, browser_fetched, watch_uuid=None):
+    """The favicon the browser downloaded for itself, as {'url', 'mime_type', 'base64'}, or None.
+
+    Fallback for when the in-page fetcher (FAVICON_FETCHER_JS) comes back empty: page script may not
+    read an icon on another host unless that host allows it, but the browser's own icon request is not
+    page script and is not held to that. browser_fetched is {url: (requestId, mimeType)} of the
+    responses seen during the fetch; only a URL the page declares as its icon is ever used.
+    """
+    if not browser_fetched:
+        return None
+    try:
+        candidates = await page.evaluate(FAVICON_CANDIDATE_URLS_JS)
+        for url in candidates or []:
+            if url not in browser_fetched:
+                continue
+            request_id, mime_type = browser_fetched[url]
+            try:
+                r = await page._client.send('Network.getResponseBody', {'requestId': request_id})
+            except Exception as e:
+                logger.debug(f"[{watch_uuid}] Favicon {url} was requested by the browser but its body is gone: {e}")
+                continue
+            body = r.get('body') or ''
+            icon = body if r.get('base64Encoded') else base64.b64encode(body.encode('utf-8')).decode('ascii')
+            if not icon or len(icon) * 0.75 > FAVICON_MAX_BYTES:
+                continue
+            logger.debug(f"[{watch_uuid}] Favicon taken from the browser's own request for {url}")
+            return {'url': url, 'mime_type': mime_type, 'base64': icon}
+    except Exception as e:
+        logger.debug(f"[{watch_uuid}] No favicon from the browser's own requests: {e}")
+    return None
+
+
+async def fetch_favicon_last(page, browser_fetched, watch_uuid=None, scripts_paused=False):
+    """The page's favicon as {'url', 'mime_type', 'base64'} or None, for the end of a fetch: it lets the
+    page's scripts run again and may leave a request to the page unanswered.
+
+    The in-page fetcher needs the page's timers and fetch(), so the page has to run for it, and on a
+    page that keeps the browser busy it may not come back in any reasonable time. The browser's own
+    copy of the icon is looked up first, while the page is still held, so there is something to fall
+    back on that does not depend on the page.
+    """
+    browser_copy = await favicon_from_browser_requests(page, browser_fetched, watch_uuid)
+    if scripts_paused:
+        await _set_page_scripts_paused(page, False)
+
+    favicon = None
+    in_page = asyncio.ensure_future(page.evaluate(FAVICON_FETCHER_JS))
+    # Not cancelled when it is late: cancelling a pyppeteer request mid-flight leaves the connection
+    # unusable, and the page is about to be closed anyway
+    in_page.add_done_callback(lambda task: task.cancelled() or task.exception())
+    done, _pending = await asyncio.wait({in_page}, timeout=FAVICON_FETCH_TIMEOUT_SECONDS)
+    if done:
+        try:
+            favicon = in_page.result()
+        except Exception as e:
+            logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+    else:
+        logger.warning(f"[{watch_uuid}] The page did not let the favicon fetcher finish in {FAVICON_FETCH_TIMEOUT_SECONDS}s, continuing without it")
+
+    # The in-page fetch can't read an icon another host doesn't share with page script, the browser's
+    # own copy of it can still be used
+    if not (favicon and favicon.get('base64')):
+        favicon = browser_copy
+    return favicon
+
+
 class fetcher(Fetcher):
     fetcher_description = "Puppeteer/direct {}/Javascript".format(
         os.getenv("PLAYWRIGHT_BROWSER_TYPE", 'chromium').capitalize()
@@ -210,6 +372,8 @@ class fetcher(Fetcher):
         # Renderer crashes recorded during the fetch, see the 'error' handler in fetch_page().
         # Set up here so run()'s finally can always report, even if we never got as far as a page.
         self.page_errors = []
+        # Only set while this fetch's network traffic is being recorded
+        self.har_recorder = None
 
         if custom_browser_connection_url:
             self.browser_connection_is_custom = True
@@ -308,7 +472,7 @@ class fetcher(Fetcher):
         # Connect directly using the specified browser_ws_endpoint
         # @todo timeout
         try:
-            logger.debug(f"[{watch_uuid}] Connecting to browser at {self.browser_connection_url}")
+            logger.debug(f"[{watch_uuid}] Connecting to browser at {browser_address_for_logs(self.browser_connection_url)}")
             self.browser = await pyppeteer_instance.connect(browserWSEndpoint=self.browser_connection_url,
                                                             ignoreHTTPSErrors=True
                                                             )
@@ -352,6 +516,14 @@ class fetcher(Fetcher):
             logger.error(f"[{watch_uuid}] Page error (the renderer likely crashed, often OOM): {e}")
 
         self.page.on('error', _handle_page_error)
+
+        # Opt-in network recording for debugging a single watch, see Fetcher.har_record_wanted()
+        # Attached before anything is requested so the very first document is in there too
+        if self.har_record_wanted(watch_uuid):
+            from changedetectionio.content_fetchers.har_recorder import HarRecorder
+            logger.info(f"[{watch_uuid}] Recording network traffic (HAR) of this fetch")
+            self.har_recorder = HarRecorder(self.page._client, title=url)
+            self.har_recorder.start()
 
         # Add console handler to capture console.log from favicon fetcher
         #self.page.on('console', lambda msg: logger.debug(f"Browser console [{msg.type}]: {msg.text}"))
@@ -412,6 +584,22 @@ class fetcher(Fetcher):
 
         # Enable Network domain to detect when first bytes arrive
         await self.page._client.send('Network.enable')
+
+        # Remember which responses the browser got, so favicon_from_browser_requests() can find the icon
+        # the browser fetched for itself. Only when a favicon is wanted on this check.
+        browser_fetched = {}
+
+        def _note_response(event):
+            # Must never raise, an exception escaping a CDP listener can take the connection down
+            try:
+                response = event.get('response') or {}
+                if 200 <= response.get('status', 0) < 300 and event.get('type') in ('Other', 'Image'):
+                    browser_fetched[response.get('url')] = (event.get('requestId'), response.get('mimeType'))
+            except Exception:
+                pass
+
+        if fetch_favicon:
+            self.page._client.on('Network.responseReceived', _note_response)
 
         # Navigate (bounded), then wait the configured "wait n seconds before extracting text"
         # delay, then stop whatever is still loading, then extract. The delay is measured from
@@ -605,6 +793,15 @@ class fetcher(Fetcher):
                     if goto_task in done:
                         try:
                             response = goto_task.result()
+                            if response is None and navigation_response.get('response'):
+                                # goto() hands back nothing when the page starts its next navigation
+                                # from its own load event (a parked domain: an empty document whose
+                                # onload sets location.href). That is not "the page did not fetch" -
+                                # retrying gets the same answer three times in a row and ends as an
+                                # EmptyReply, on a page that goes on to load perfectly well.
+                                response = navigation_response['response']
+                                logger.debug(f"goto() returned no response (the page navigated again as it loaded), "
+                                             f"continuing with the one seen for {response.url} - status {response.status}")
                         except Exception as e:
                             if 'ERR_HTTP_RESPONSE_CODE_FAILURE' not in str(e) or not navigation_response:
                                 raise
@@ -678,14 +875,17 @@ class fetcher(Fetcher):
             logger.critical(response)
             raise PageUnloadable(url=url, status_code=None, message=str(e))
 
-        if fetch_favicon:
-            try:
-                self.favicon_blob = await self.page.evaluate(FAVICON_FETCHER_JS)
-            except Exception as e:
-                logger.error(f"Error fetching FavIcon info {str(e)}, continuing.")
+        # From here on the page's own scripts are held still. Everything below reads the page as it
+        # stands and none of it needs the page to do anything - but a page that keeps the browser's
+        # main thread busy (an animation drawn without a GPU) makes every one of those reads queue
+        # behind it: measured, a plain evaluate did not answer in 40s and the fetch ran out of time
+        # before it got to the screenshot, with the page's scripts paused each read took 0.0s.
+        # terminateExecution above only stops the script running at that moment, the next frame
+        # starts it again.
+        scripts_paused = await _set_page_scripts_paused(self.page, True)
 
         if self.status_code != 200 and not ignore_status_codes:
-            screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
+            screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements, pause_scripts=not scripts_paused)
 
             raise Non200ErrorCodeReceived(url=url, status_code=self.status_code, screenshot=screenshot)
 
@@ -721,7 +921,7 @@ class fetcher(Fetcher):
 
         # Now take screenshot (scrolling may trigger layout changes, but measurements are already captured)
         logger.debug(f"Screenshot format {self.screenshot_format}")
-        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements)
+        self.screenshot = await capture_full_page(page=self.page, screenshot_format=self.screenshot_format, watch_uuid=watch_uuid, lock_viewport_elements=self.lock_viewport_elements, pause_scripts=not scripts_paused)
 
         # Force garbage collection - pyppeteer base64 decode creates temporary buffers
         gc_debounce.collect('puppeteer.after_screenshot')
@@ -735,11 +935,28 @@ class fetcher(Fetcher):
 
         self.instock_data = await self.page.evaluate(INSTOCK_DATA_JS)
 
+        if fetch_favicon:
+            self.page._client.remove_listener('Network.responseReceived', _note_response)
+            self.favicon_blob = await fetch_favicon_last(self.page, browser_fetched, watch_uuid, scripts_paused)
+
         # It's good to log here in the case that the browser crashes on shutting down but we still get the data we need
         logger.success(f"Fetching '{url}' complete, exiting puppeteer fetch.")
 
     async def main(self, **kwargs):
         await self.fetch_page(**kwargs)
+
+    async def save_har_record(self, watch_uuid):
+        """Write the recorded traffic to {watch dir}/har-record.zip, must run while the page is still open."""
+        recorder, self.har_recorder = self.har_recorder, None
+        if not recorder:
+            return
+        try:
+            await recorder.stop()
+            os.makedirs(self.watch_data_dir, exist_ok=True)
+            destination, n = await asyncio.to_thread(recorder.save, self.watch_data_dir)
+            logger.info(f"[{watch_uuid}] HAR record with {n} requests saved to {destination}")
+        except Exception as e:
+            logger.error(f"[{watch_uuid}] Could not save the HAR record: {e}")
 
     async def run(self,
                   fetch_favicon=True,
@@ -787,6 +1004,10 @@ class fetcher(Fetcher):
                     f"[{watch_uuid}] {len(self.page_errors)} page error(s) during this fetch of '{url}', "
                     f"content may be incomplete: {'; '.join(str(e) for e in self.page_errors)}"
                 )
+
+            # Saved here rather than at the end of fetch_page() so a failed fetch is recorded too,
+            # a blocked or broken page is exactly when the recording is wanted
+            await self.save_har_record(watch_uuid)
 
             # Internal cleanup on any exception/timeout - call quit() immediately
             # This prevents connection leaks during exception bursts

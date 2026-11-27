@@ -38,11 +38,12 @@ from changedetectionio.strtobool import strtobool
 # Create specific signals for application events
 # Make this a global singleton to avoid multiple signal objects
 watch_check_update = signal('watch_check_update', doc='Signal sent when a watch check is completed')
-from flask_babel import Babel, get_locale, gettext
+from flask_babel import get_locale, gettext, ngettext
 from flask_wtf import CSRFProtect
 from loguru import logger
 
 from changedetectionio import __version__, queuedWatchMetaData
+from changedetectionio.flask_babel_backport import BabelWithPluralBackport
 from changedetectionio.api import (
     CreateWatch,
     Import,
@@ -58,8 +59,14 @@ from changedetectionio.api import (
     WatchSingleHistory,
 )
 from changedetectionio.api.Search import Search
+from changedetectionio.api.Changes import Changes
 from changedetectionio.blueprint.menu_modes import MENU_SIDEBAR_ACTIONMODES, MENU_SIDEBAR_ACTIONMODES_DEFAULT
 from changedetectionio.favicon_utils import get_favicon_mime_type
+from changedetectionio.model.group_settings import (
+    group_time_schedule_limit,
+    groups_with_recheck_time,
+    recheck_time_group_choice,
+)
 from changedetectionio.languages import (
     get_available_languages,
     get_flag_for_locale,
@@ -184,6 +191,10 @@ app.config['BABEL_DEFAULT_LOCALE'] = 'en_GB'
 from datetime import timedelta
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)  # ~10 years (effectively unlimited)
+# Say it rather than rely on each browser's default: the login cookies are not sent on requests made by other sites
+# (a link someone follows to here still carries them).
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 
 # app.config["EXPLAIN_TEMPLATE_LOADING"] = True
 
@@ -482,12 +493,21 @@ def _get_html_head_extras():
     return collect_html_head_extras()
 
 
-@app.template_filter('format_number_locale')
-def _jinja2_filter_format_number_locale(value: float) -> str:
-    "Formats for example 4000.10 to the local locale default of 4,000.10"
-    # Format the number with two decimal places (locale format string will return 6 decimal)
-    formatted_value = locale.format_string("%.2f", value, grouping=True)
-    return formatted_value
+@app.template_filter('format_price')
+def _jinja2_filter_format_price(value: float, currency: str = '') -> str:
+    """A price in the visitor's language with the currency's own decimal places (ISO 4217, #4615),
+    e.g. 12345 JPY -> ¥12,345, 1234.5 USD -> $1,234.50, 1234.5 EUR in German -> 1.234,50 €.
+
+    The visitor's UI language, not the server's locale, which is one setting for everyone on the instance.
+    Without a known ISO 4217 code (empty, or something odd the page had) it's the number with two decimals,
+    followed by whatever currency text there was. static/js/restock-price-graph.js fmtPrice() does the same."""
+    from babel.numbers import format_currency, format_decimal, is_currency
+    ui_locale = get_locale() or app.config['BABEL_DEFAULT_LOCALE']
+    code = (currency or '').strip().upper()
+    if code and is_currency(code):
+        return format_currency(value, code, locale=ui_locale)
+    number = format_decimal(value, format='#,##0.00', locale=ui_locale)
+    return f"{number} {currency}" if currency else number
 
 
 @app.template_filter('format_int_locale')
@@ -610,21 +630,28 @@ def _jinja2_filter_format_duration(seconds):
     # Build parts list
     parts = []
     if years > 0:
-        parts.append(f"{years} {gettext('year') if years == 1 else gettext('years')}")
+        parts.append(f"{years} {ngettext('year', 'years', years)}")
     if months > 0:
-        parts.append(f"{months} {gettext('month') if months == 1 else gettext('months')}")
+        parts.append(f"{months} {ngettext('month', 'months', months)}")
     if weeks > 0:
-        parts.append(f"{weeks} {gettext('week') if weeks == 1 else gettext('weeks')}")
+        parts.append(f"{weeks} {ngettext('week', 'weeks', weeks)}")
     if days > 0:
-        parts.append(f"{days} {gettext('day') if days == 1 else gettext('days')}")
+        parts.append(f"{days} {ngettext('day', 'days', days)}")
     if hours > 0:
-        parts.append(f"{hours} {gettext('hour') if hours == 1 else gettext('hours')}")
+        parts.append(f"{hours} {ngettext('hour', 'hours', hours)}")
     if minutes > 0:
-        parts.append(f"{minutes} {gettext('minute') if minutes == 1 else gettext('minutes')}")
+        parts.append(f"{minutes} {ngettext('minute', 'minutes', minutes)}")
     if secs > 0 or not parts:
-        parts.append(f"{secs} {gettext('second') if secs == 1 else gettext('seconds')}")
+        parts.append(f"{secs} {ngettext('second', 'seconds', secs)}")
 
     return ", ".join(parts)
+
+
+@app.template_global('watch_list_extra_text')
+def _watch_list_extra_text(watch):
+    from changedetectionio.pluggy_interface import collect_watch_list_extra_text
+
+    return collect_watch_list_extra_text(watch)
 
 
 @app.template_filter('fetcher_status_icons')
@@ -646,6 +673,10 @@ def _jinja2_filter_fetcher_status_icons(fetcher_name):
     from changedetectionio.pluggy_interface import collect_fetcher_status_icons
 
     icon_data = None
+
+    # A custom browser endpoint is the webdriver fetcher with its own connection URL
+    if fetcher_name and fetcher_name.startswith('extra_browser_'):
+        fetcher_name = 'html_webdriver'
 
     # First check if it's a plugin fetcher (plugins have priority)
     plugin_icon_data = collect_fetcher_status_icons(fetcher_name)
@@ -699,6 +730,18 @@ from changedetectionio.auth_decorator import (
 )
 
 
+USER_ID_FINGERPRINT_SEPARATOR = '|'
+
+
+def password_fingerprint():
+    """Identifies the password that is set right now, without revealing anything about it (cookies are
+    signed, not encrypted). Changes whenever the password is changed, removed or set again."""
+    import hmac
+
+    current_password = os.getenv("SALTED_PASS") or datastore.data['settings']['application'].get('password') or ''
+    return hmac.new(str(app.secret_key).encode('utf-8'), str(current_password).encode('utf-8'), hashlib.sha256).hexdigest()
+
+
 # When nobody is logged in Flask-Login's current_user is set to an AnonymousUser object.
 class User(flask_login.UserMixin):
     id = None
@@ -719,7 +762,9 @@ class User(flask_login.UserMixin):
         return False
 
     def get_id(self):
-        return str(self.id)
+        # Stored in the session and "remember me" cookies. Carrying the password's fingerprint means
+        # every cookie issued for an earlier password stops working when the password changes.
+        return f"{self.id}{USER_ID_FINGERPRINT_SEPARATOR}{password_fingerprint()}"
 
     # Compare given password against JSON store or Env var
     def check_password(self, password):
@@ -744,7 +789,9 @@ class User(flask_login.UserMixin):
         )
         new_key = salt_from_storage + new_key
 
-        return new_key == raw_salt_pass
+        # Constant-time, so how long the comparison takes says nothing about how much of it matched
+        import hmac
+        return hmac.compare_digest(new_key, raw_salt_pass)
 
     pass
 
@@ -827,10 +874,14 @@ def changedetection_app(config=None, datastore_o=None):
         # 2. Fall back to Accept-Language header
         browser_locale = request.accept_languages.best_match(_locale_match_list)
         # 3. Map browser locale to our internal locale if needed
-        return _locale_aliases.get(browser_locale, browser_locale)
+        # 4. Nothing matched: the default, which Babel would use anyway. Never None, templates print this
+        #    (<html lang="None">, the language flag) and the price formatting reads it
+        return _locale_aliases.get(browser_locale, browser_locale) or app.config['BABEL_DEFAULT_LOCALE']
 
     # Initialize Babel with locale selector
-    babel = Babel(app, locale_selector=get_locale)
+    # NOTE: uses the backported Flask-Babel plural fix; see
+    # changedetectionio/flask_babel_backport.py.
+    babel = BabelWithPluralBackport(app, locale_selector=get_locale)
 
     # Make i18n functions available to templates
     app.jinja_env.globals.update(
@@ -847,6 +898,13 @@ def changedetection_app(config=None, datastore_o=None):
         return dict(llm_features_disabled=is_llm_features_disabled())
 
     @app.context_processor
+    def inject_sidebar_items():
+        # Links plugins add to the left sidebar (register_sidebar_items hook), see sidebar-nav.html
+        from changedetectionio.pluggy_interface import collect_sidebar_items
+
+        return dict(plugin_sidebar_items=collect_sidebar_items(datastore))
+
+    @app.context_processor
     def inject_has_visual_browser():
         # Whether any installed content fetcher can render the Add-Watch live preview -
         # sidebar-nav.html hides the Add-Watch link without one. Same capability lookup the
@@ -854,6 +912,12 @@ def changedetection_app(config=None, datastore_o=None):
         from changedetectionio.blueprint.add_watch_ui import browser_config
 
         return dict(has_visual_browser=browser_config.has_visual_browser(datastore))
+
+    # Registered before check_authentication so rate limiting/filtering also covers /login and the API
+    from changedetectionio.guard import guard_enabled
+    if guard_enabled():
+        from changedetectionio.guard import init_guard
+        init_guard(app)
 
     # Set up a request hook to check authentication for all routes
     @app.before_request
@@ -908,6 +972,13 @@ def changedetection_app(config=None, datastore_o=None):
                 return None
             # API routes - use their own auth mechanism (@auth.check_token)
             elif request.path.startswith('/api/'):
+                return None
+            # MCP server - its own access token (blueprint/mcp/__init__.py)
+            elif request.blueprint == 'mcp':
+                return None
+            # MCP OAuth - discovery and the token endpoint are called by the assistant's server, not a browser with a
+            # session; the authorize endpoint is the one that needs the login (blueprint/mcp/oauth)
+            elif request.blueprint == 'mcp_oauth' and request.endpoint != 'mcp_oauth.authorize':
                 return None
             else:
                 return login_manager.unauthorized()
@@ -990,16 +1061,58 @@ def changedetection_app(config=None, datastore_o=None):
 
     watch_api.add_resource(Search, '/api/v1/search', resource_class_kwargs={'datastore': datastore})
 
+    watch_api.add_resource(Changes, '/api/v1/changes', resource_class_kwargs={'datastore': datastore})
+
     watch_api.add_resource(
         Notifications, '/api/v1/notifications', resource_class_kwargs={'datastore': datastore}
     )
 
     watch_api.add_resource(Spec, '/api/v1/full-spec')
 
+    # processor_state_{name} providers for the watch API GET/list
+    from changedetectionio.pluggy_interface import register_builtin_api_plugins
+    register_builtin_api_plugins()
+
+    # Processors' own plugin hooks and their built-in implementations (e.g. the restock charts)
+    from changedetectionio.processors import register_processor_plugin_hooks
+    register_processor_plugin_hooks()
+
     @login_manager.user_loader
-    def user_loader(email):
+    def user_loader(user_id):
+        import hmac
+
+        # Only a cookie issued for the password that is set right now is a login, see User.get_id()
+        email, _, fingerprint = str(user_id).rpartition(USER_ID_FINGERPRINT_SEPARATOR)
+        if not email and strtobool(os.getenv('KEEP_OLD_SESSIONS', 'no')):
+            return load_user_from_cookie_without_fingerprint(user_id)
+
+        if not email or not hmac.compare_digest(fingerprint, password_fingerprint()):
+            return None
+
         user = User()
-        user.get_user(email)
+        user.id = email
+        return user
+
+    def load_user_from_cookie_without_fingerprint(user_id):
+        """KEEP_OLD_SESSIONS: cookies issued before logins carried the password's fingerprint hold only the
+        user id. Keep those logged in, but only while the password is still the one that was set when this
+        installation was upgraded (recorded by update_35) - the first password change or removal ends them."""
+        import hmac
+        from changedetectionio.store.updates import password_marker
+
+        application = datastore.data['settings']['application']
+        marker_at_upgrade = application.get('password_marker_at_login_fingerprint_upgrade')
+        current_password = os.getenv("SALTED_PASS") or application.get('password')
+        if not marker_at_upgrade or not current_password:
+            return None
+        if not hmac.compare_digest(str(marker_at_upgrade), password_marker(current_password)):
+            return None
+
+        user = User()
+        user.id = str(user_id)
+        # Swap the browser over to cookies that carry the fingerprint
+        session['_user_id'] = user.get_id()
+        session['_remember'] = 'set'
         return user
 
     @login_manager.unauthorized_handler
@@ -1079,7 +1192,7 @@ def changedetection_app(config=None, datastore_o=None):
                 flash(gettext("Already logged in"))
                 return redirect(validated_redirect)
             flash(gettext("You must be logged in, please log in."), 'error')
-            output = render_template("login.html", redirect_url=validated_redirect)
+            output = render_template("login.html", extra_title=f" - {gettext('Login')}", redirect_url=validated_redirect)
             return output
 
         user = User()
@@ -1157,10 +1270,14 @@ def changedetection_app(config=None, datastore_o=None):
         if not group or not filename:
             abort(404)
 
+        # The password can be kept in the settings or given in the environment, a watch's own files
+        # (screenshot, favicon, selector data) need a login either way
+        password_is_set = datastore.data['settings']['application'].get('password') or os.getenv("SALTED_PASS", False)
+
         if group == 'screenshot':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 if not datastore.data['settings']['application'].get('shared_diff_access'):
@@ -1192,7 +1309,7 @@ def changedetection_app(config=None, datastore_o=None):
         if group == 'favicon':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 abort(403)
@@ -1223,7 +1340,7 @@ def changedetection_app(config=None, datastore_o=None):
         if group == 'visual_selector_data':
             # Could be sensitive, follow password requirements
             if (
-                datastore.data['settings']['application']['password']
+                password_is_set
                 and not flask_login.current_user.is_authenticated
             ):
                 abort(403)
@@ -1377,6 +1494,24 @@ def changedetection_app(config=None, datastore_o=None):
         )
     )
 
+    # MCP server for AI assistants, JSON-RPC with its own access token, so no CSRF token.
+    # Not registered at all with LLM_FEATURES_DISABLED or DISABLE_MCP=true.
+    import changedetectionio.blueprint.mcp as mcp
+
+    if not mcp.is_mcp_disabled():
+        mcp_blueprint = mcp.construct_blueprint(datastore, update_q)
+        csrf.exempt(mcp_blueprint)
+        # /mcp/v1 versions our tool contract (names, arguments, results), not the MCP protocol, which is negotiated
+        # per session. Additive changes stay in v1; only a breaking change would get a /mcp/v2.
+        app.register_blueprint(mcp_blueprint, url_prefix='/mcp/v1')
+        # OAuth sign-in for it (blueprint/mcp/oauth): /.well-known/oauth-* and /oauth/*, 404 unless offered. Only the
+        # routes register here, nothing of Authlib loads until a sign-in happens
+        import changedetectionio.blueprint.mcp.oauth as mcp_oauth
+        app.register_blueprint(mcp_oauth.construct_blueprint(datastore))
+        # Called by the assistant's server, not from a page with a form; /oauth/authorize keeps its CSRF token
+        csrf.exempt('changedetectionio.blueprint.mcp.oauth.token')
+        csrf.exempt('changedetectionio.blueprint.mcp.oauth.register')
+
     import changedetectionio.blueprint.pwa as pwa
 
     # url_prefix='' is required, not cosmetic - see the blueprint docstring
@@ -1390,6 +1525,11 @@ def changedetection_app(config=None, datastore_o=None):
         ),
         url_prefix='',
     )
+
+    # After the built-in blueprints, so a plugin can't take over a core blueprint name
+    from changedetectionio.pluggy_interface import register_plugin_blueprints
+
+    register_plugin_blueprints(app, datastore)
 
     # Initialize Socket.IO server conditionally based on settings
     socket_io_enabled = (
@@ -1517,6 +1657,14 @@ def changedetection_app(config=None, datastore_o=None):
     n_workers = int(os.getenv("FETCH_WORKERS", datastore.data['settings']['requests']['workers']))
     logger.info(f"Starting {n_workers} workers during app initialization")
     worker_pool.start_workers(n_workers, update_q, notification_q, app, datastore)
+
+    # Deleting a watch that is being checked stops that check, the worker is replaced
+    def stop_check_of_deleted_watch(sender=None, watch_uuid=None, **kwargs):
+        if watch_uuid and worker_pool.is_watch_running(watch_uuid):
+            worker_pool.cancel_running_uuid(watch_uuid, update_q=update_q, notification_q=notification_q,
+                                            app=app, datastore=datastore)
+
+    signal('watch_deleted').connect(stop_check_of_deleted_watch, weak=False)
 
     # Skip background threads in batch mode (just process queue and exit)
     batch_mode = app.config.get('batch_mode', False)
@@ -1662,8 +1810,10 @@ def notification_runner(worker_id=0):
                         )
 
                 # Process notifications
+                # Shown on the notification log page, without the passwords and tokens of the notification URLs
+                from changedetectionio.notification.masking import mask_sent_notifications
                 notification_debug_log += [
-                    "{} - SENDING - {}".format(now.strftime("%c"), json.dumps(sent_obj))
+                    "{} - SENDING - {}".format(now.strftime("%c"), json.dumps(mask_sent_notifications(sent_obj)))
                 ]
                 # Trim the log length
                 notification_debug_log = notification_debug_log[-100:]
@@ -1672,6 +1822,7 @@ def notification_runner(worker_id=0):
 # Threaded runner, look for new watches to feed into the Queue.
 def ticker_thread_check_time_launch_checks():
     import random
+    from changedetectionio.pluggy_interface import apply_recheck_seconds_override
 
     proxy_last_called_time = {}
     last_health_check = 0
@@ -1733,6 +1884,8 @@ def ticker_thread_check_time_launch_checks():
                 break
 
         recheck_time_system_seconds = int(datastore.threshold_seconds)
+        # Usually empty. Worked out once per pass, not per watch, see model/group_settings.py
+        recheck_time_groups = groups_with_recheck_time(datastore)
 
         # Check for watches outside of the time threshold to put in the thread queue.
         for watch_index, uuid in enumerate(watch_uuid_list):
@@ -1760,10 +1913,19 @@ def ticker_thread_check_time_launch_checks():
             if watch['paused']:
                 continue
 
+            # A group that is switched on for recheck time decides both the interval and the schedule
+            group_recheck_time = (
+                recheck_time_group_choice(watch, recheck_time_groups) if recheck_time_groups else None
+            )
+
             # @todo - Maybe make this a hook?
-            # Time schedule limit - Decide between watch or global settings
+            # Time schedule limit - Decide between group, watch or global settings
             scheduler_source = None
-            if watch.get('time_between_check_use_default'):
+            if group_recheck_time:
+                time_schedule_limit = group_time_schedule_limit(group_recheck_time.group)
+                scheduler_source = f"group '{group_recheck_time.group.get('title')}'"
+
+            elif watch.get('time_between_check_use_default'):
                 time_schedule_limit = datastore.data['settings']['requests'].get(
                     'time_schedule_limit', {}
                 )
@@ -1799,11 +1961,20 @@ def ticker_thread_check_time_launch_checks():
                     continue
 
             # If they supplied an individual entry minutes to threshold.
-            threshold = (
-                recheck_time_system_seconds
-                if watch.get('time_between_check_use_default')
-                else watch.threshold_seconds()
-            )
+            # A watch that opted out of the defaults but has no interval of its own (all None/0, e.g. from
+            # an import, restore or hand-edited watch.json) must fall back to the system default,
+            # otherwise threshold is 0 and it is rechecked on every scheduler pass.
+            if group_recheck_time:
+                # A group with only a time schedule leaves the interval to the system default
+                threshold = group_recheck_time.value or recheck_time_system_seconds
+            else:
+                threshold = (
+                    recheck_time_system_seconds
+                    if watch.get('time_between_check_use_default')
+                    else watch.threshold_seconds() or recheck_time_system_seconds
+                )
+            # A plugin that has the watch under its control has the last word
+            threshold = apply_recheck_seconds_override(watch, datastore, threshold)
 
             # #580 - Jitter plus/minus amount of time to make the check seem more random to the server
             jitter = datastore.data['settings']['requests'].get('jitter_seconds', 0)
@@ -1841,13 +2012,18 @@ def ticker_thread_check_time_launch_checks():
                                 # Record the last used time
                                 proxy_last_called_time[watch_proxy] = int(time.time())
 
+                    # running_uuids / queued_uuids are from the start of this pass: a worker may have taken it since
+                    if worker_pool.is_watch_running(uuid) or uuid in update_q.get_queued_uuids():
+                        continue
+
                     # Use Epoch time as priority, so we get a "sorted" PriorityQueue, but we can still push a priority 1 into it.
                     priority = int(time.time())
 
-                    # Into the queue with you
+                    # Into the queue with you. scheduled_at lets a worker drop it when the watch was checked since
+                    # (a worker between taking it off the queue and claiming it is in neither list above)
                     queued_successfully = worker_pool.queue_item_async_safe(
                         update_q,
-                        queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid}),
+                        queuedWatchMetaData.PrioritizedItem(priority=priority, item={'uuid': uuid, 'scheduled_at': now}),
                     )
                     if queued_successfully:
                         logger.debug(

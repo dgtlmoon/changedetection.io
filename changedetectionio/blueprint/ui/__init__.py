@@ -2,10 +2,11 @@ import time
 import threading
 from blinker import signal
 from flask import Blueprint, request, redirect, url_for, flash, render_template, session, current_app, abort
-from flask_babel import gettext
+from flask_babel import gettext, ngettext
 from loguru import logger
 
 from changedetectionio.store import ChangeDetectionStore
+from changedetectionio.pluggy_interface import set_watch_last_viewed
 from changedetectionio.blueprint.ui.edit import construct_blueprint as construct_edit_blueprint
 from changedetectionio.blueprint.ui.notification import construct_blueprint as construct_notification_blueprint
 from changedetectionio.blueprint.ui.views import construct_blueprint as construct_views_blueprint
@@ -48,8 +49,21 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
     elif (op == 'mark-viewed'):
         for uuid in uuids:
             if datastore.data['watching'].get(uuid):
-                datastore.set_last_viewed(uuid, int(time.time()))
+                set_watch_last_viewed(datastore, uuid, time.time(), source='mark_viewed')
         result_message = gettext("{} watches updated").format(len(uuids))
+
+    elif (op == 'mark-unviewed'):
+        # Re #4382 - wind last_viewed back to the second-newest snapshot, so the row is unviewed
+        # again and [diff] still opens on the latest change (see get_from_version_based_on_last_viewed).
+        # With fewer than two snapshots there is no change to un-view, so those are skipped.
+        updated = 0
+        for uuid in uuids:
+            watch = datastore.data['watching'].get(uuid)
+            if watch and watch.history_n >= 2:
+                sorted_keys = sorted(watch.history.keys(), key=lambda x: int(x))
+                set_watch_last_viewed(datastore, uuid, sorted_keys[-2], source='mark_unviewed')
+                updated += 1
+        result_message = gettext("{} watches updated").format(updated)
 
     elif (op == 'mute'):
         for uuid in uuids:
@@ -66,11 +80,13 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
         result_message = gettext("{} watches un-muted").format(len(uuids))
 
     elif (op == 'recheck'):
-        for uuid in uuids:
-            if datastore.data['watching'].get(uuid):
-                # Recheck and require a full reprocessing
-                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-        result_message = gettext("{} watches queued for rechecking").format(len(uuids))
+        # Skip what is already queued or being checked, and anything selected twice
+        already_waiting = set(update_q.get_queued_uuids()) | set(worker_pool.get_running_uuids())
+        watching = datastore.data['watching']
+        to_queue = [uuid for uuid in dict.fromkeys(uuids) if uuid not in already_waiting and uuid in watching]
+        # One batch, so a selection of any size is queued (and reported back) straight away
+        queued_count = update_q.put_many(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}) for uuid in to_queue)
+        result_message = gettext("{} watches queued for rechecking").format(queued_count)
 
     elif (op == 'clear-errors'):
         for uuid in uuids:
@@ -126,24 +142,44 @@ def _handle_operations(op, uuids, datastore, worker_pool, update_q, queuedWatchM
             result_message = gettext("Invalid proxy selected")
             result_type = 'error'
 
-    elif (op == 'assign-tag'):
-        op_extradata = extra_data
-        if op_extradata:
-            tag_uuid = datastore.add_tag(title=op_extradata)
-            if op_extradata and tag_uuid:
-                for uuid in uuids:
-                    if datastore.data['watching'].get(uuid):
-                        # Bug in old versions caused by bad edit page/tag handler
-                        if isinstance(datastore.data['watching'][uuid]['tags'], str):
-                            datastore.data['watching'][uuid]['tags'] = []
+    elif op in ('assign-tag', 'assign-tag-replace'):
+        # One or more group names, comma separated like the "Group tag" field of a watch. A name that is not
+        # a group yet becomes one.
+        tag_uuids = []
+        for title in datastore.group_names_in(extra_data):
+            tag_uuid = datastore.add_tag(title=title)
+            if tag_uuid and tag_uuid not in tag_uuids:
+                tag_uuids.append(tag_uuid)
 
-                        datastore.data['watching'][uuid]['tags'].append(tag_uuid)
-                        datastore.data['watching'][uuid].commit()
-        result_message = gettext("{} watches were tagged").format(len(uuids))
+        if tag_uuids:
+            for uuid in uuids:
+                watch = datastore.data['watching'].get(uuid)
+                if not watch:
+                    continue
+                # Bug in old versions caused by bad edit page/tag handler
+                if isinstance(watch['tags'], str):
+                    watch['tags'] = []
+                if op == 'assign-tag-replace':
+                    # "Also remove any existing group assigned": only the groups named, in the order given.
+                    # (Never reached without a name, so this cannot be used to take every group off by accident.)
+                    if watch['tags'] != tag_uuids:
+                        watch['tags'] = list(tag_uuids)
+                        watch.commit()
+                    continue
+                # A watch that is already in the group is left as it is
+                to_add = [tag_uuid for tag_uuid in tag_uuids if tag_uuid not in watch['tags']]
+                if to_add:
+                    watch['tags'].extend(to_add)
+                    watch.commit()
+            result_message = gettext("{} watches were tagged").format(len(uuids))
+        else:
+            # Used to say "N watches were tagged" here although nothing was done
+            result_message = gettext("No group name given")
+            result_type = 'error'
 
-    if uuids:
-        for uuid in uuids:
-            watch_check_update.send(watch_uuid=uuid)
+    # One signal for the whole selection, not one per watch. The recheck's batch put has already sent it.
+    if uuids and op != 'recheck':
+        signal('watches_changed').send(uuids=uuids)
 
     # Classic form-POST path flashes (shown after the redirect); the socket path uses the returned value
     if result_message and emit_flash:
@@ -223,7 +259,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
             return redirect(url_for('watchlist.index'))
 
-        output = render_template("clear_all_history.html")
+        output = render_template("clear_all_history.html", extra_title=f" - {gettext('Clear Histories')}")
         return output
 
     # Clear all statuses, so we do not see the 'unviewed' class
@@ -251,7 +287,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 if not wl_filters.watch_matches_filters(datastore, watch, list_filters):
                     continue
 
-                datastore.set_last_viewed(watch_uuid, now, send_signal=False)
+                set_watch_last_viewed(datastore, watch_uuid, now, source='mark_all_viewed', send_signal=False)
                 marked_count += 1
 
             logger.info(f"Marking complete: {marked_count} watches marked as viewed")
@@ -317,7 +353,7 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 flash(gettext("Watch is already queued or being checked."))
             else:
                 worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': uuid}))
-                flash(gettext("Queued 1 watch for rechecking."))
+                flash(ngettext("Queued %(count)s watch for rechecking", "Queued %(count)s watches for rechecking", 1, count=1) + gettext("."))
         else:
             # Multiple watches - operate on the SAME set the watch list is showing
             # (tag/processor/status/search) via the shared filter, skipping paused.
@@ -347,14 +383,17 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
 
                 # Provide feedback about skipped watches
                 skipped_count = len(watches_to_queue) - len(watches_to_queue_filtered)
+                queued_count = len(watches_to_queue_filtered)
+                msg = ngettext(
+                    "Queued %(count)s watch for rechecking",
+                    "Queued %(count)s watches for rechecking",
+                    queued_count, count=queued_count)
                 if skipped_count > 0:
-                    flash(gettext("Queued {count} watches for rechecking ({skipped_count} already queued or running).").format(
-                        count=len(watches_to_queue_filtered), skipped_count=skipped_count))
-                else:
-                    if len(watches_to_queue_filtered) == 1:
-                        flash(gettext("Queued 1 watch for rechecking."))
-                    else:
-                        flash(gettext("Queued {} watches for rechecking.").format(len(watches_to_queue_filtered)))
+                    msg += gettext(" (%(skipped_count)s already queued or running)",
+                                   skipped_count=skipped_count)
+                # TRANSLATORS: sentence-final full stop
+                msg += gettext(".")
+                flash(msg)
             else:
                 # 20+ watches - queue in background thread to avoid blocking HTTP response
                 # Capture queued/running state before background thread
@@ -364,15 +403,10 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 def queue_watches_background():
                     """Background thread to queue watches - discarded after completion."""
                     try:
-                        queued_count = 0
-                        skipped_count = 0
-                        for watch_uuid in watches_to_queue:
-                            # Check if already queued or running (state captured at start)
-                            if watch_uuid not in queued_uuids and watch_uuid not in running_uuids:
-                                worker_pool.queue_item_async_safe(update_q, queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': watch_uuid}))
-                                queued_count += 1
-                            else:
-                                skipped_count += 1
+                        # Skip anything already queued or running (state captured at start)
+                        to_queue = [u for u in watches_to_queue if u not in queued_uuids and u not in running_uuids]
+                        skipped_count = len(watches_to_queue) - len(to_queue)
+                        queued_count = update_q.put_many(queuedWatchMetaData.PrioritizedItem(priority=1, item={'uuid': u}) for u in to_queue)
 
                         logger.info(f"Background queueing complete: {queued_count} watches queued, {skipped_count} skipped (already queued/running)")
                     except Exception as e:
@@ -386,6 +420,16 @@ def construct_blueprint(datastore: ChangeDetectionStore, update_q, worker_pool, 
                 flash(gettext("Queueing watches for rechecking in background..."))
 
         return redirect(url_for('watchlist.index', **wl_filters.filter_query_args(request.args)))
+
+    @ui_blueprint.route("/form/export-selected-watches", methods=['POST'])
+    @login_optionally_required
+    def export_selected_watches():
+        from changedetectionio.blueprint.watchlist.export import selected_watches_csv
+
+        uuids = list(dict.fromkeys(u.strip() for u in request.form.getlist('uuids') if u.strip()))
+        if not uuids:
+            abort(400)
+        return selected_watches_csv(datastore, uuids)
 
     @ui_blueprint.route("/form/checkbox-operations", methods=['POST'])
     @login_optionally_required

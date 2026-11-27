@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import time
 from flask import url_for
 from .util import live_server_setup, wait_for_all_checks, extract_rss_token_from_UI, get_UUID_for_tag_name, extract_UUID_from_client, delete_all_watches
@@ -200,6 +201,8 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
                                                    ":-)",
                               "notification_screenshot": True,
                               "notification_format": 'text',
+                              # A new group's notifications are not used until it is switched on
+                              "notification_group_mode": "fallback",
                               "title": "test-tag"}
 
     res = client.post(
@@ -236,6 +239,232 @@ def test_group_tag_notification(client, live_server, measure_memory_usage, datas
     #@todo Test that multiple notifications fired
     #@todo Test that each of multiple notifications with different settings
     delete_all_watches(client)
+
+def test_group_notification_mode_senders(client, live_server, measure_memory_usage, datastore_path):
+    """Which notifications a change sends, for each "Send this group's notifications" choice.
+    The default choice has to give exactly what the watch > group > system lookup always gave."""
+    from changedetectionio.notification import (
+        USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH,
+        default_notification_body,
+        default_notification_title,
+    )
+    from changedetectionio.notification_service import _check_cascading_vars, notification_senders
+
+    delete_all_watches(client)
+    datastore = live_server.app.config['DATASTORE']
+    app_settings = datastore.data['settings']['application']
+    app_settings['notification_urls'] = []
+    app_settings['notification_format'] = 'htmlcolor'
+
+    test_url = url_for('test_endpoint', _external=True)
+    watch_uuid = datastore.add_watch(url=test_url, tag='mode-tag')
+    watch = datastore.data['watching'][watch_uuid]
+    tag = app_settings['tags'][get_UUID_for_tag_name(client, name="mode-tag")]
+
+    group_urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json') + '?from=group']
+    watch_urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json') + '?from=watch']
+    system_urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json') + '?from=system']
+    tag.update({'notification_urls': group_urls, 'notification_title': 'Group title', 'notification_body': 'Group body',
+                'notification_format': 'text'})
+
+    def lookup_as_always():
+        return [{k: _check_cascading_vars(datastore, k, watch)
+                 for k in ('notification_urls', 'notification_title', 'notification_body', 'notification_format')}]
+
+    group_on_its_own = {'notification_urls': group_urls, 'notification_title': 'Group title',
+                        'notification_body': 'Group body', 'notification_format': 'text'}
+
+    # "Don't use" is what a new group has: nothing of the group is used, not its URLs and not its title, body or
+    # format either. Same for anything that is not a mode.
+    assert tag['notification_group_mode'] == 'off'
+    for mode in ('off', None, 'not-a-mode'):
+        tag['notification_group_mode'] = mode
+        assert notification_senders(datastore, watch) == [], "No URLs anywhere, the group's are not used"
+        watch['notification_urls'] = watch_urls
+        assert notification_senders(datastore, watch) == [{
+            'notification_urls': watch_urls,
+            'notification_title': default_notification_title,
+            'notification_body': default_notification_body,
+            'notification_format': 'htmlcolor'}], "The group's title, body and format do not get into the watch's notification"
+        watch['notification_urls'] = []
+
+    # "Only if the watch has none of its own": the watch > group > system lookup as it always was.
+    # The watch is on "System default", so the system format is used, not the group's
+    assert watch.get('notification_format') == USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+    tag['notification_group_mode'] = 'fallback'
+    assert notification_senders(datastore, watch) == lookup_as_always()
+    assert notification_senders(datastore, watch) == [{'notification_urls': group_urls, 'notification_title': 'Group title',
+                                                        'notification_body': 'Group body', 'notification_format': 'htmlcolor'}]
+
+    # ..and the watch's own URLs are sent instead of the group's, still with the group's title and body
+    watch['notification_urls'] = watch_urls
+    assert notification_senders(datastore, watch) == lookup_as_always()
+    assert notification_senders(datastore, watch) == [{'notification_urls': watch_urls, 'notification_title': 'Group title',
+                                                        'notification_body': 'Group body', 'notification_format': 'htmlcolor'}]
+
+    # "As well as the watch's own": the watch's, then the group's with everything set on the group
+    tag['notification_group_mode'] = 'add'
+    senders = notification_senders(datastore, watch)
+    assert len(senders) == 2
+    assert senders[0]['notification_urls'] == watch_urls
+    assert senders[0]['notification_body'] == default_notification_body, "The group is not part of the watch's lookup any more"
+    assert senders[1] == group_on_its_own
+
+    # "Instead of the watch's own"
+    tag['notification_group_mode'] = 'replace'
+    assert notification_senders(datastore, watch) == [group_on_its_own]
+
+    # Two groups that each send on their own: both are sent, each with its own settings (#3959)
+    second_tag_uuid = datastore.add_tag(title='second-mode-tag')
+    second_tag = app_settings['tags'][second_tag_uuid]
+    second_group_urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json') + '?from=second-group']
+    second_tag.update({'notification_urls': second_group_urls, 'notification_title': 'Second title', 'notification_body': 'Second body',
+                       'notification_format': 'markdown', 'notification_group_mode': 'add'})
+    watch['tags'].append(second_tag_uuid)
+    tag['notification_group_mode'] = 'add'
+    assert notification_senders(datastore, watch)[1:] == [
+        group_on_its_own,
+        {'notification_urls': second_group_urls, 'notification_title': 'Second title', 'notification_body': 'Second body',
+         'notification_format': 'markdown'}]
+    # ..and when one of them replaces the watch's own, both groups are still sent, only the watch's is left out
+    second_tag['notification_group_mode'] = 'replace'
+    assert [s['notification_urls'] for s in notification_senders(datastore, watch)] == [group_urls, second_group_urls]
+    watch['tags'].remove(second_tag_uuid)
+    tag['notification_group_mode'] = 'replace'
+
+    # A muted group sends nothing, the watch's own carries on
+    tag['notification_muted'] = True
+    assert [s['notification_urls'] for s in notification_senders(datastore, watch)] == [watch_urls]
+    tag['notification_muted'] = False
+
+    # The system-wide URLs are only for when nothing else is sent
+    watch['notification_urls'] = []
+    app_settings['notification_urls'] = system_urls
+    tag['notification_group_mode'] = 'add'
+    assert notification_senders(datastore, watch) == [group_on_its_own]
+    # The group leaves its format to the system
+    tag['notification_format'] = USE_SYSTEM_DEFAULT_NOTIFICATION_FORMAT_FOR_WATCH
+    assert notification_senders(datastore, watch)[0]['notification_format'] == 'htmlcolor'
+    # No URLs on a group that sends on its own: nothing from it, the system-wide ones as always
+    tag['notification_urls'] = []
+    assert [s['notification_urls'] for s in notification_senders(datastore, watch)] == [system_urls]
+    assert notification_senders(datastore, watch) == lookup_as_always()
+
+    app_settings['notification_urls'] = []
+    delete_all_watches(client)
+
+
+def test_group_notification_mode_sends_in_group_format(client, live_server, measure_memory_usage, datastore_path):
+    """End to end: by default a group's notification goes out in the system format (as always),
+    set to send as well as the watch's own it goes out in the format chosen on the group."""
+    delete_all_watches(client)
+    set_original_response(datastore_path=datastore_path)
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": 'format-tag'},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+    wait_for_all_checks(client)
+
+    notification_file = os.path.join(datastore_path, "notification.txt")
+    notification_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    tag_uuid = get_UUID_for_tag_name(client, name="format-tag")
+    tag_form_data = {"notification_urls": notification_url,
+                     "notification_title": "Group format",
+                     "notification_body": "first line\nsecond line {{watch_url}}",
+                     "notification_format": 'text',
+                     "notification_group_mode": "fallback",
+                     "title": "format-tag"}
+
+    def save_group_and_change_page(form_data, set_response):
+        res = client.post(url_for("tags.form_tag_edit_submit", uuid=tag_uuid), data=form_data, follow_redirects=True)
+        assert b"Updated" in res.data
+        set_response(datastore_path=datastore_path)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+        time.sleep(3)
+        assert os.path.isfile(notification_file)
+        with open(notification_file, "r") as f:
+            notification_submission = f.read()
+        os.unlink(notification_file)
+        assert test_url in notification_submission
+        return notification_submission
+
+    # The form was posted without the new field, like any group saved before it existed
+    assert '<br' in save_group_and_change_page(tag_form_data, set_modified_response), \
+        "By default the system format (HTML) is used, the line break became <br>"
+    assert live_server.app.config['DATASTORE'].data['settings']['application']['tags'][tag_uuid]['notification_group_mode'] == 'fallback'
+
+    tag_form_data['notification_group_mode'] = 'add'
+    assert '<br' not in save_group_and_change_page(tag_form_data, set_original_response), \
+        "Sent on its own the group's notification is plain text"
+
+    res = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid))
+    assert b"As well as the watch" in res.data
+
+    delete_all_watches(client)
+
+
+def test_group_notification_mode_every_group_sends(client, live_server, measure_memory_usage, datastore_path):
+    """End to end, a watch in two groups that each have their own notification (#3959): by default
+    one notification is sent, as always. With both groups set to send as well as the watch's own,
+    each group's notification arrives with that group's own body."""
+    delete_all_watches(client)
+    set_original_response(datastore_path=datastore_path)
+
+    test_url = url_for('test_endpoint', _external=True)
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add"),
+        data={"url": test_url, "tags": 'first-group, second-group'},
+        follow_redirects=True
+    )
+    assert b"Watch added" in res.data
+    wait_for_all_checks(client)
+
+    notification_url_endpoint = url_for('test_notification_endpoint', _external=True).replace('http', 'post')
+    received = {name: os.path.join(datastore_path, f"{name}.txt") for name in ('first-group', 'second-group')}
+
+    def save_groups(mode=None):
+        for name in received:
+            form_data = {"notification_urls": f"{notification_url_endpoint}?outputfilename={name}.txt",
+                         "notification_title": f"Title of {name}",
+                         "notification_body": f"Body of {name} for {{{{watch_url}}}}",
+                         "notification_format": 'text',
+                         "title": name}
+            form_data['notification_group_mode'] = mode or 'fallback'
+            res = client.post(url_for("tags.form_tag_edit_submit", uuid=get_UUID_for_tag_name(client, name=name)),
+                              data=form_data, follow_redirects=True)
+            assert b"Updated" in res.data
+
+    def change_page_and_collect(set_response):
+        set_response(datastore_path=datastore_path)
+        client.post(url_for("ui.form_watch_checknow"), follow_redirects=True)
+        wait_for_all_checks(client)
+        time.sleep(3)
+        bodies = {}
+        for name, path in received.items():
+            if os.path.isfile(path):
+                with open(path, "r") as f:
+                    bodies[name] = f.read()
+                os.unlink(path)
+        return bodies
+
+    # As it has always been: one notification, from the first group that has one
+    save_groups()
+    assert len(change_page_and_collect(set_modified_response)) == 1
+
+    # Both groups send on their own
+    save_groups(mode='add')
+    bodies = change_page_and_collect(set_original_response)
+    assert set(bodies) == set(received)
+    for name, body in bodies.items():
+        assert f"Body of {name} for {test_url}" in body
+
+    delete_all_watches(client)
+
 
 def test_limit_tag_ui(client, live_server, measure_memory_usage, datastore_path):
 
@@ -295,9 +524,10 @@ def test_clone_tag_on_import(client, live_server, measure_memory_usage, datastor
 
     assert b'Cloned' in res.data
     res = client.get(url_for("watchlist.index"))
-    # 2 times plus the top link to tag
-    assert res.data.count(b'test-tag') == 3
-    assert res.data.count(b'another-tag') == 3
+    # 2 times plus the top link to tag, plus the groups the "Group" action's modal suggests, plus the ones the
+    # group field of the form that adds a watch suggests
+    assert res.data.count(b'test-tag') == 5
+    assert res.data.count(b'another-tag') == 5
     delete_all_watches(client)
 
 def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usage, datastore_path):
@@ -322,9 +552,10 @@ def test_clone_tag_on_quickwatchform_add(client, live_server, measure_memory_usa
     assert b'Cloned' in res.data
 
     res = client.get(url_for("watchlist.index"))
-    # 2 times plus the top link to tag
-    assert res.data.count(b'test-tag') == 3
-    assert res.data.count(b'another-tag') == 3
+    # 2 times plus the top link to tag, plus the groups the "Group" action's modal suggests, plus the ones the
+    # group field of the form that adds a watch suggests
+    assert res.data.count(b'test-tag') == 5
+    assert res.data.count(b'another-tag') == 5
     delete_all_watches(client)
 
     res = client.post(url_for("tags.delete_all"), follow_redirects=True)
@@ -616,3 +847,216 @@ def test_tag_json_migration_update_27(client, live_server, measure_memory_usage,
         assert not os.path.exists(tag_json_path), f"tag.json should be deleted for {tag_uuid}"
 
     delete_all_watches(client)
+
+
+def test_add_watch_from_inside_group(client, live_server, measure_memory_usage, datastore_path, monkeypatch):
+    """Adding a watch while a group is open on the watch list puts it in that group (#4749)"""
+    from changedetectionio.blueprint.add_watch_ui import browser_config
+    # The sidebar "Add a page watch" link is only offered with a browser that can render a live preview
+    monkeypatch.setattr(browser_config, 'list_visual_browser_choices',
+                        lambda datastore: [('html_webdriver', 'WebDriver Chrome/Javascript')])
+
+    datastore = live_server.app.config['DATASTORE']
+    tag_uuid = datastore.add_tag('Shopping list')
+    test_url = url_for('test_endpoint', _external=True)
+
+    # Outside a group, nothing is preselected: the quick-add form has its group field, empty
+    res = client.get(url_for("watchlist.index"))
+    quick_add = re.search(rb'<form[^>]*id="new-watch-form".*?</form>', res.data, re.S).group(0)
+    field = re.search(rb'<input[^>]*name="tags"[^>]*>', quick_add).group(0)
+    assert b'type="text"' in field and b'tag-chips' in field and b'value=""' in field
+    assert f'href="{url_for("add_watch_ui.add_watch_ui_index")}"'.encode() in res.data
+    # (the field itself: every group is also listed next to it, for its suggestions)
+    res = client.get(url_for("add_watch_ui.add_watch_ui_index"))
+    assert b'value="Shopping list"' not in re.search(rb'<input[^>]*name="tags"[^>]*>', res.data).group(0)
+
+    res = client.get(url_for("watchlist.index", tag=tag_uuid))
+    # The quick-add form starts with the open group in its group field, and returns to it afterwards
+    quick_add = re.search(rb'<form[^>]*id="new-watch-form".*?</form>', res.data, re.S).group(0)
+    assert b'value="Shopping list"' in re.search(rb'<input[^>]*name="tags"[^>]*>', quick_add).group(0)
+    assert url_for("ui.ui_views.form_quick_watch_add", tag=tag_uuid).encode() in res.data
+    # The sidebar "Add a page watch" link takes the open group along
+    add_watch_ui_url = url_for("add_watch_ui.add_watch_ui_index", tag=tag_uuid)
+    assert f'href="{add_watch_ui_url}"'.encode() in res.data
+
+    # and the Add-Watch page starts with that group filled in
+    res = client.get(add_watch_ui_url)
+    assert b'value="Shopping list"' in re.search(rb'<input[^>]*name="tags"[^>]*>', res.data).group(0)
+
+    # Same as submitting the quick-add form from inside the group
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add", tag=tag_uuid),
+        data={"url": test_url, "tags": tag_uuid},
+    )
+    assert res.status_code == 302
+    assert res.location.endswith(url_for("watchlist.index", tag=tag_uuid))
+
+    watch = next(iter(datastore.data['watching'].values()))
+    assert watch['tags'] == [tag_uuid]
+    # No duplicate group was created from the UUID
+    assert len(datastore.data['settings']['application']['tags']) == 1
+
+    # As the form sends it now: the names in its group field, the open group and one that is new
+    res = client.post(
+        url_for("ui.ui_views.form_quick_watch_add", tag=tag_uuid),
+        data={"url": test_url + "?second", "tags": "Shopping list, Wishes"},
+    )
+    assert res.status_code == 302
+    tags = datastore.data['settings']['application']['tags']
+    wishes = next(uuid for uuid, tag in tags.items() if tag['title'] == 'Wishes')
+    second = next(w for w in datastore.data['watching'].values() if w['url'].endswith('?second'))
+    # (a watch's groups are not kept in the order they were given)
+    assert sorted(second['tags']) == sorted([tag_uuid, wishes])
+    assert len(tags) == 2, "The open group was not made a second time"
+
+    delete_all_watches(client)
+
+
+def test_group_edit_page_says_which_group(client, live_server, measure_memory_usage, datastore_path):
+    datastore = client.application.config.get('DATASTORE')
+    tag_uuid = datastore.add_tag(title="Shops <b>&</b> more")
+    title = datastore.data['settings']['application']['tags'][tag_uuid]['title']
+
+    res = client.get(url_for("tags.form_tag_edit", uuid=tag_uuid))
+    assert res.status_code == 200
+    escaped = title.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').encode()
+    # Above the tabs and in the browser tab's title, the name is text and never markup
+    assert b'<h2 class="edit-form-heading">Group: ' + escaped + b'</h2>' in res.data
+    assert b'<title>Change Detection - Group: ' + escaped + b'</title>' in res.data
+    assert b'<b>&</b> more' not in res.data
+
+    # And the list of groups
+    assert b'<title>Change Detection - Groups</title>' in client.get(url_for("tags.tags_overview_page")).data
+
+    datastore.data['settings']['application']['tags'].clear()
+
+
+def test_group_notification_dont_use_and_the_update_for_older_groups(client, live_server, measure_memory_usage, datastore_path):
+    """A new group starts on "Don't use". Groups from before that choice existed go on notifying as they did:
+    update_36 gives each the mode it effectively had (and so does restoring one from an older backup)."""
+    from changedetectionio.notification import group_notification_mode_for_older_data
+
+    delete_all_watches(client)
+    datastore = live_server.app.config['DATASTORE']
+    tags = datastore.data['settings']['application']['tags']
+    tags.clear()
+    urls = [url_for('test_notification_endpoint', _external=True).replace('http', 'json')]
+
+    # The form: "Don't use" is offered first, and is what a new group has
+    new_uuid = datastore.add_tag(title='brand new')
+    assert tags[new_uuid]['notification_group_mode'] == 'off'
+    res = client.get(url_for("tags.form_tag_edit", uuid=new_uuid))
+    page = res.data.decode()
+    assert page.index('name="notification_group_mode" type="radio" value="off"') < page.index('name="notification_group_mode" type="radio" value="fallback"')
+    assert 'checked id="notification_group_mode-0" name="notification_group_mode" type="radio" value="off"' in page
+
+    # Groups as older versions left them: no mode stored at all, or the 'fallback' every group was saved with
+    def older(title, **settings):
+        uuid = datastore.add_tag(title=title)
+        tags[uuid].update(settings)
+        if 'notification_group_mode' not in settings:
+            # As it comes off the disk of an older version: the model fills in the default
+            tags[uuid]['notification_group_mode'] = 'off'
+        return uuid
+
+    with_urls_never_saved = older('urls, never had the setting', notification_urls=urls)
+    with_urls_fallback = older('urls, saved as fallback', notification_urls=urls, notification_group_mode='fallback')
+    with_urls_add = older('urls, add', notification_urls=urls, notification_group_mode='add')
+    with_urls_replace = older('urls, replace', notification_urls=urls, notification_group_mode='replace')
+    only_a_format = older('no urls, only a format', notification_format='text', notification_body='Group body',
+                          notification_group_mode='fallback')
+    nothing = older('nothing set')
+
+    datastore.update_36()
+
+    assert tags[with_urls_never_saved]['notification_group_mode'] == 'fallback', "Was notifying, goes on notifying"
+    assert tags[with_urls_fallback]['notification_group_mode'] == 'fallback'
+    assert tags[with_urls_add]['notification_group_mode'] == 'add'
+    assert tags[with_urls_replace]['notification_group_mode'] == 'replace'
+    assert tags[only_a_format]['notification_group_mode'] == 'off', "Could not send anything, only bled its format into its watches"
+    assert tags[nothing]['notification_group_mode'] == 'off'
+    assert tags[new_uuid]['notification_group_mode'] == 'off'
+
+    # Stored, not only in memory
+    import json
+    with open(os.path.join(datastore_path, with_urls_never_saved, 'tag.json')) as f:
+        assert json.load(f)['notification_group_mode'] == 'fallback'
+
+    # What a restore does for a group of an older backup, which has no mode in its tag.json
+    assert group_notification_mode_for_older_data({'notification_urls': urls}) == 'fallback'
+    assert group_notification_mode_for_older_data({'notification_format': 'text'}) == 'off'
+    assert group_notification_mode_for_older_data({}) == 'off'
+
+    tags.clear()
+
+
+def test_delete_group_says_its_watches_are_kept(client, live_server, measure_memory_usage, datastore_path):
+    """Deleting a group takes the group away, not the watches in it. The question that is asked says so.
+
+    That question is put into the dialog as HTML. The group's name in it was not escaped for that: a group called
+    <img src=x onerror=...> had its script run when Delete (or Unlink) was clicked.
+    """
+    import html
+    import time
+    datastore = live_server.app.config['DATASTORE']
+    name = '<img src=x onerror="alert(1)"> & co'
+    tag_uuid = datastore.add_tag(name)
+    watch_uuid = datastore.add_watch(url=url_for('test_endpoint', _external=True), extras={'paused': True}, tag_uuids=[tag_uuid])
+
+    page = client.get(url_for("tags.tags_overview_page")).get_data(as_text=True)
+
+    def question(title):
+        # What the browser reads out of the attribute, which modal.js then uses as HTML
+        return html.unescape(re.search(r'data-confirm-title="%s"\s+data-confirm-message="([^"]*)"' % re.escape(title), page).group(1))
+
+    asked = question('Delete Group?')
+    assert 'This action cannot be undone.' in asked
+    assert 'Only the group is deleted, its watches are kept.' in asked
+    for asked in (asked, question('Unlink Group?')):
+        assert '<img' not in asked, "The name is not markup in the dialog"
+        shown = re.search(r'<strong>(.*?)</strong>', asked).group(1)
+        assert '<' not in shown and html.unescape(shown) == name, "It is shown as the text it is"
+
+    # And the watches are kept
+    client.post(url_for("tags.delete", uuid=tag_uuid), follow_redirects=True)
+    for _ in range(50):
+        if not datastore.data['watching'][watch_uuid]['tags']:
+            break
+        time.sleep(0.1)
+    assert tag_uuid not in datastore.data['settings']['application']['tags']
+    assert watch_uuid in datastore.data['watching'] and datastore.data['watching'][watch_uuid]['tags'] == []
+
+    delete_all_watches(client)
+
+
+def test_group_edit_refuses_what_is_not_valid(client, live_server, measure_memory_usage, datastore_path):
+    """The group's page validates what it is sent, an invalid value is refused and nothing of that save is kept"""
+    datastore = client.application.config.get('DATASTORE')
+    tag_uuid = datastore.add_tag(title="Shops")
+    tag = datastore.data['settings']['application']['tags'][tag_uuid]
+    good_url = url_for('test_notification_endpoint', _external=True).replace('http', 'json')
+    edit_url = url_for("tags.form_tag_edit_submit", uuid=tag_uuid)
+
+    # Something valid is saved
+    res = client.post(edit_url, data={'title': 'Shops', 'notification_urls': good_url, 'notification_group_mode': 'add',
+                                      'notification_body': 'Changed {{ watch_url }}', 'fetch_backend': 'system'},
+                      follow_redirects=True)
+    assert b'Updated' in res.data
+    assert tag['notification_urls'] == [good_url] and tag['notification_group_mode'] == 'add'
+
+    for field, bad_value, kept in (
+            ('notification_urls', 'this-is-not-a-notification-url', [good_url]),
+            ('notification_body', 'Changed {{ not_a_real_token }}', 'Changed {{ watch_url }}'),
+            ('notification_group_mode', 'not-a-mode', 'add'),
+            ('fetch_backend', 'html_no_such_fetcher', 'system'),
+            ('tag_colour', 'red; } body { display: none', tag.get('tag_colour')),
+    ):
+        data = {'title': 'Renamed while saving something invalid', 'notification_urls': good_url,
+                'notification_group_mode': 'add', 'notification_body': 'Changed {{ watch_url }}', 'fetch_backend': 'system'}
+        data[field] = bad_value
+        res = client.post(edit_url, data=data, follow_redirects=True)
+        assert b'Updated' not in res.data, field
+        assert tag.get(field) == kept, f"{field} was not saved"
+        assert tag['title'] == 'Shops', f"{field}: nothing else of that save was kept either"
+
+    datastore.data['settings']['application']['tags'].clear()

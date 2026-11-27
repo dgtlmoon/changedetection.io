@@ -34,3 +34,15 @@ def safe_css_colour(value) -> str:
     instead of being written into the stylesheet.
     """
     return value.strip() if is_safe_css_colour(value) else ''
+
+
+def tag_display_colours(tag) -> dict:
+    """The colours a group is shown in, the same as its label in the watch list: its own colour when it has
+    one, or the pair generated from its name. {'light': {'bg', 'color'}, 'dark': {'bg', 'color'}}"""
+    from changedetectionio import processors
+
+    own_colour = safe_css_colour(tag.get('tag_colour'))
+    if own_colour:
+        colours = {'bg': own_colour, 'color': processors.wcag_text_color(own_colour)}
+        return {'light': colours, 'dark': colours}
+    return processors.generate_processor_badge_colors(tag.get('title') or '')

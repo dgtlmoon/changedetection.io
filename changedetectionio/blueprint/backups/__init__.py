@@ -171,6 +171,7 @@ def construct_blueprint(datastore: ChangeDetectionStore):
     def create():
         backups = find_backups()
         output = render_template("backup_create.html",
+                                 extra_title=f" - {gettext('Backups')}",
                                  available_backups=backups,
                                  backup_running=any(thread.is_alive() for thread in backup_threads)
                                  )

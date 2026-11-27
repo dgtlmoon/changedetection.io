@@ -29,6 +29,7 @@ from wtforms import (
     PasswordField,
     RadioField,
     SelectField,
+    SelectMultipleField,
     StringField,
     SubmitField,
     TextAreaField,
@@ -145,7 +146,81 @@ class StringTagUUID(StringField):
         if not self.data:
             return ''
 
-        return 'error'
+        # The names as they were sent, when the form is shown again because another field has an error.
+        # (This said 'error' here: the field came back holding that word in place of the groups, and saving the
+        # corrected form then put the watch in one group called "error".)
+        if isinstance(self.data, str):
+            return ', '.join(name.strip() for name in self.data.split(',') if name.strip())
+
+        return ''
+
+class TagChipsWidget(widgets.TextInput):
+    """The text input of comma separated group names, followed by a <datalist> of every group there is
+    (templates/_tag_chips_field.html). static/js/tag-chips.js, which the template brings along, makes one "chip"
+    per group of it and offers the groups of the datalist while typing. Without the script it is the text input,
+    with the browser's own suggestions from the datalist."""
+
+    def __call__(self, field, **kwargs):
+        from flask import render_template
+        from flask_babel import gettext
+        from markupsafe import Markup
+
+        list_id = f"{field.id}-groups"
+        css_class = kwargs.pop('class_', None) or kwargs.pop('class', None) or ''
+        kwargs['class'] = f"{css_class} tag-chips".strip()
+        kwargs['list'] = list_id
+        # The browser must not put back what was in the box before (the Back button, a reload): the names are in
+        # the value this is rendered with
+        kwargs.setdefault('autocomplete', 'off')
+        kwargs.setdefault('data-remove-label', gettext('Remove'))
+        return Markup(render_template('_tag_chips_field.html',
+                                      text_input=super().__call__(field, **kwargs),
+                                      list_id=list_id,
+                                      groups=field.all_groups()))
+
+
+class StringTagUUIDAutocompleteChip(StringTagUUID):
+    """The groups of a watch as chips, with the existing groups to pick from, see TagChipsWidget"""
+    widget = TagChipsWidget()
+
+    def all_groups(self):
+        """Every group by name, with the colours of its label in the watch list"""
+        from flask import current_app
+        from changedetectionio.blueprint.tags.colour import tag_display_colours
+
+        tags = current_app.config['DATASTORE'].data['settings']['application']['tags']
+        groups = [{'title': (tag.get('title') or '').strip(), 'colours': tag_display_colours(tag)} for tag in tags.values()]
+        return sorted((group for group in groups if group['title']), key=lambda group: group['title'].lower())
+
+
+class WatchListGroupForm(Form):
+    """The "Group" action of the watch list: the groups (as chips) to add the selected watches to"""
+    bulk_groups = StringTagUUIDAutocompleteChip(_l('Group tag'), [validators.Optional()], default='')
+    # Off unless ticked: the groups named are added to the ones a watch is in. Ticked, they take their place.
+    bulk_groups_replace = BooleanField(_l('Also remove any existing group assigned'), default=False)
+
+
+class FetcherRadioWidget:
+    """The 'Fetch Method' radio list (<ul><li><input> <label>) with the fetcher's status icon at the start of each
+    label, the same icon the watch list shows for it (the fetcher_option_icon macro of _helpers.html). An option
+    without one ('System settings default', 'Not set') is the text alone."""
+
+    def __call__(self, field, **kwargs):
+        from flask import get_template_attribute
+        from markupsafe import Markup, escape
+        from wtforms.widgets import html_params
+
+        icon_for = get_template_attribute('_helpers.html', 'fetcher_option_icon')
+        kwargs.setdefault("id", field.id)
+        html = [f"<ul {html_params(**kwargs)}>"]
+        for subfield in field:
+            html.append(
+                f'<li>{subfield()} <label for="{escape(subfield.id)}">'
+                f'{icon_for(subfield.data)}{escape(subfield.label.text)}</label></li>'
+            )
+        html.append("</ul>")
+        return Markup("".join(html))
+
 
 class LabelAfterInputTableWidget(widgets.TableWidget):
     """
@@ -643,9 +718,17 @@ class ValidateSinglePythonRegexString(object):
         self.message = message
 
     def __call__(self, form, field):
+        # Same engine and length limit as where it is run, see Watch.extract_regex_from_all_history()
+        import regex as regex_lib
+        from changedetectionio.model.Watch import model as watch_model
+
+        pattern = field.data or ''
+        if len(pattern) > watch_model.FIND_CHANGE_MAX_PATTERN:
+            raise ValidationError(gettext('RegEx is too long, at most %(max)s characters.', max=watch_model.FIND_CHANGE_MAX_PATTERN))
+
         try:
-            re.compile(field.data)
-        except re.error:
+            regex_lib.compile(pattern)
+        except regex_lib.error:
             message = field.gettext('RegEx \'%s\' is not a valid regular expression.')
             raise ValidationError(message % (field.data))
 
@@ -840,7 +923,7 @@ def visual_browser_choices():
 
 class quickWatchForm(Form):
     url = StringField('URL', validators=[validateURL()])
-    tags = StringTagUUID(_l('Group tag'), validators=[validators.Optional()])
+    tags = StringTagUUIDAutocompleteChip(_l('Group tag'), validators=[validators.Optional()])
     watch_submit_button = SubmitField(_l('Watch'), render_kw={"class": "pure-button pure-button-primary"})
     processor = RadioField(_l('Processor'), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     # Only the Add-Watch page renders this; the watch-list quick-add posts nothing, which
@@ -891,7 +974,7 @@ class commonSettingsForm(Form):
     def __init__(self, formdata=None, obj=None, prefix="", data=None, meta=None, **kwargs):
         super().__init__(formdata, obj, prefix, data, meta, **kwargs)
 
-    fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField(_l('Fetch Method'), choices=content_fetchers.available_fetchers(), widget=FetcherRadioWidget(), validators=[ValidateContentFetcherIsReady()])
     processor = RadioField( label=_l("Processor - What do you want to achieve?"), choices=lambda: processors.available_processors(), default=processors.get_default_processor)
     scheduler_timezone_default = StringField(_l("Default timezone for watch check scheduler"), render_kw={"list": "timezones"}, validators=[validateTimeZoneName()])
     webdriver_delay = IntegerField(_l('Wait seconds before extracting text'), validators=[validators.Optional(), validators.NumberRange(min=1, message=_l("Should contain one or more seconds"))])
@@ -925,6 +1008,9 @@ class globalSettingsAppriseNotificationForm(commonNotificationSettingsForm):
     base_url = StringField(_l('Notification base URL override'),
                            validators=[validators.Optional()],
                            render_kw={"placeholder": os.getenv('BASE_URL', _l('Not set'))})
+    # Error alerts (filter not found, browser step failed), see notification_service.error_notification_senders()
+    notification_errors_urls = StringListField(_l('Notification URL List'),
+                                               validators=[validators.Optional(), ValidateAppRiseServers()])
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
 
 
@@ -949,7 +1035,7 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
 
     url = StringField(_l('Web Page URL'), validators=[validateURL()])
     link_to_open = StringField(_l('Open Link Override'), validators=[validators.Optional(), validateURL()], default='')
-    tags = StringTagUUID(_l('Group Tag'), [validators.Optional()], default='')
+    tags = StringTagUUIDAutocompleteChip(_l('Group Tag'), [validators.Optional()], default='')
 
     time_between_check = EnhancedFormField(
         TimeBetweenCheckForm,
@@ -1029,7 +1115,14 @@ class processor_text_json_diff_form(commonSettingsForm, commonNotificationSettin
     def extra_tab_content(self):
         return None
 
+    def extra_form_template(self):
+        # Template name (on the Flask loader) for the processor's extra tab, rendered with render_template()
+        # so its text is translatable. Preferred over extra_form_content().
+        return None
+
     def extra_form_content(self):
+        # Legacy: raw Jinja2 source for the extra tab, kept for third-party processor plugins.
+        # Text in a Python string is never extracted by Babel, use extra_form_template() instead.
         return None
 
     def validate(self, **kwargs):
@@ -1151,7 +1244,7 @@ class globalSettingsApplicationForm(commonSettingsForm):
 
     api_access_token_enabled = BooleanField(_l('API access token security check enabled'), default=True, validators=[validators.Optional()])
     empty_pages_are_a_change =  BooleanField(_l('Treat empty pages as a change?'), default=False)
-    fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), validators=[ValidateContentFetcherIsReady()])
+    fetch_backend = RadioField(_l('Fetch Method'), default="html_requests", choices=content_fetchers.available_fetchers(), widget=FetcherRadioWidget(), validators=[ValidateContentFetcherIsReady()])
     global_ignore_text = StringListField(_l('Ignore Text'), [ValidateListRegex()])
     global_subtractive_selectors = StringListField(_l('Remove elements'), [ValidateCSSJSONXPATHInput(allow_json=False)])
     ignore_whitespace = BooleanField(_l('Ignore whitespace'))
@@ -1269,6 +1362,11 @@ class globalSettingsLLMForm(Form):
         default=5,
         render_kw={"placeholder": "5", "style": "width: 6em;"},
     )
+    # Ollama / OpenAI-compatible endpoints only, off by default so the server's own thinking default applies (#4638)
+    local_thinking_off = BooleanField(
+        _l('Switch thinking off'),
+        default=False,
+    )
     change_summary_default = TextAreaField(
         _l('Default AI Change Summary prompt'),
         validators=[validators.Optional(), validators.Length(max=2000)],
@@ -1374,8 +1472,65 @@ class globalSettingsForm(Form):
 
     requests = FormField(globalSettingsRequestForm)
     application = FormField(globalSettingsApplicationForm)
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class globalLLMSettingsPageForm(Form):
+    """The /settings/llm page. Still stored under datastore['settings']['application']['llm'], the
+    sub-form keeps the `llm-` field prefix so settings/llm/templates/llm-settings_llm.html renders it unchanged."""
     llm = FormField(globalSettingsLLMForm)
     save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+def normalise_mcp_public_url(value):
+    """The "Public MCP address" as stored (settings.application.mcp_base_url): no trailing slash, and the instance's
+    address rather than its MCP endpoint when someone pastes .../mcp/v1."""
+    value = (value or '').strip().rstrip('/')
+    if value.endswith('/mcp/v1'):
+        value = value[:-len('/mcp/v1')].rstrip('/')
+    return value
+
+
+def validate_mcp_public_url(form, field):
+    from urllib.parse import urlsplit
+    value = normalise_mcp_public_url(field.data)
+    if not value:
+        return
+    parts = urlsplit(value)
+    if parts.scheme not in ('http', 'https') or not parts.hostname or parts.query or parts.fragment or parts.username:
+        raise ValidationError(_l('Use a full http:// or https:// address, without ?query or #fragment.'))
+
+
+class globalMCPSettingsPageForm(Form):
+    """The /settings/ai/mcp page ("MCP Server" tab), stored in datastore['settings']['application']['mcp_enabled']. The
+    access tokens have their own form, MCPTokenForm."""
+    # Also the switch for the OAuth endpoints once they exist (MCP-config.md, point 3)
+    enabled = BooleanField(_l('Switch on the MCP and OAuth endpoints'), default=False)
+    # Empty for the built-in note (blueprint/mcp INSTRUCTIONS, shown as the placeholder), stored as mcp_note
+    note = TextAreaField(_l('MCP Note'), validators=[validators.Optional(), validators.Length(max=4000)])
+    # Stored as mcp_anonymous_read: a request with no credentials gets read-only access (blueprint/mcp
+    # ANONYMOUS_PERMISSIONS) instead of a 401
+    anonymous_read = BooleanField(_l('Allow read-only access without sign-in'), default=False)
+    # Empty to build it from each request, stored as mcp_base_url (blueprint/mcp/oauth issuer()). Not the notification
+    # Base URL: that one is only for links in notifications
+    public_url = StringField(_l('Public MCP address'), validators=[validators.Optional(), validators.Length(max=500),
+                                                                   validate_mcp_public_url])
+    save_button = SubmitField(_l('Save'), render_kw={"class": "pure-button pure-button-primary"})
+
+
+class MCPTokenForm(Form):
+    """Add or edit one MCP access token (the overlay on the "Access tokens" sub-tab, sent with ajax): its name and its
+    None / Read / Write grid, one perm_<area> field per row (see blueprint/mcp/tools.py)."""
+    name = StringField(_l('Name'), validators=[validators.DataRequired(), validators.Length(max=64)],
+                       render_kw={'placeholder': _l('e.g. Claude Code, laptop'), 'maxlength': 64})
+    perm_monitors = RadioField(_l('Monitors'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_tags = RadioField(_l('Groups (tags)'), default='write', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_notifications = RadioField(_l('Notifications'), default='read', choices=[('none', _l('None')), ('read', _l('Read')), ('write', _l('Write'))])
+    perm_browser = RadioField(_l('Browser steps & JavaScript'), default='none', choices=[('none', _l('None')), ('write', _l('Write'))])
+    perm_system = RadioField(_l('System info'), default='read', choices=[('none', _l('None')), ('read', _l('Read'))])
+    # The groups (tags) the token is limited to, none ticked for every monitor. Choices are the tags, set by the routes
+    tags = SelectMultipleField(_l('Only these groups'), choices=[], validate_choice=True,
+                               widget=widgets.ListWidget(prefix_label=False), option_widget=widgets.CheckboxInput())
 
 
 class extractDataForm(Form):

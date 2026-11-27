@@ -65,8 +65,8 @@ def test_include_filters_output():
     html_blob = include_filters(include_filters=".parts", html_content=content)
     text = get_text(html_blob)
 
-    # Divs are converted to 4 whitespaces by inscriptis
-    assert text == "    Block A\n    Block B"
+    # Divs are indented by 2 spaces by inscriptis (>=2.7.6 no longer adds a phantom wrapper div for multi-element fragments)
+    assert text == "  Block A\n  Block B"
 
 
 # Tests the whole stack works with the CSS Filter

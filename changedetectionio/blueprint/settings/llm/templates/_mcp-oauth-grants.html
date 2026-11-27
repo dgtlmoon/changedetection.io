@@ -1,0 +1,33 @@
+{#
+  The assistants signed in with OAuth, on the "OAuth" sub-tab of /settings/ai/mcp. Included by llm-settings_mcp.html,
+  and rendered on its own after a revoke (mcp-tokens.js swaps it in).
+  Requires template context: mcp_oauth_grants (see mcp_oauth_context()).
+#}
+{% set level_labels = {'none': _('None'), 'read': _('Read'), 'write': _('Write')} %}
+{% set area_labels = {'monitors': _('Monitors'), 'tags': _('Groups (tags)'), 'notifications': _('Notifications'), 'system': _('System info')} %}
+{% if mcp_oauth_grants %}
+<ul class="mcp-token-list">
+  {% for grant in mcp_oauth_grants %}
+  <li class="mcp-token" data-name="{{ grant.name }}"
+      data-revoke-url="{{ url_for('settings.llm.mcp_oauth_revoke', grant_id=grant.id) }}">
+    <div class="mcp-token-main">
+      <span class="mcp-token-name">{{ grant.name }}</span>
+      <span class="mcp-token-used">{{ grant.client_host or grant.client_name }}</span>
+      <span class="mcp-token-used">
+        {%- if grant.last_used %}{{ _('Last used %(when)s', when=grant.last_used|format_timestamp_timeago) }}{% else %}{{ _('Never used') }}{% endif -%}
+        {%- if grant.last_client %} &middot; {{ grant.last_client }}{% endif -%}
+      </span>
+    </div>
+    <div class="mcp-token-levels">
+      {% for area, level in grant.levels.items() %}<span class="mcp-chip level-{{ level }}">{{ area_labels[area] }} <strong>{{ level_labels[level] }}</strong></span>{% endfor %}
+      {% for group in grant.group_names %}<span class="mcp-chip">{{ group }}</span>{% endfor %}
+    </div>
+    <div class="mcp-token-actions">
+      <button type="button" class="cdio-btn button-small button-cancel" data-mcp-oauth-revoke>{{ _('Revoke') }}</button>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="mcp-hint">{{ _('No assistant has signed in yet.') }}</p>
+{% endif %}

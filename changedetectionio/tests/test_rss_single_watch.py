@@ -340,7 +340,10 @@ def test_rss_single_watch_follow_notification_body(client, live_server, measure_
     ## Edit the tag notification_body, it should cascade up and become the RSS output
     res = client.post(
         url_for("tags.form_tag_edit_submit", uuid="first"),
+        # A new group's notification settings are off ("Don't use") until switched on. "Only if the watch has
+        # none of its own" puts the group into the watch > group > system lookup the feed's body comes from
         data={"name": "rss-custom",
+              "notification_group_mode": "fallback",
               "notification_body": 'Hello from the group/tag level'},
         follow_redirects=True
     )

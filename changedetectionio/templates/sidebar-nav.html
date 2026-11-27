@@ -22,7 +22,8 @@
        blueprint's browser_config) - without one the page can only fail, so don't offer it #}
     {%- if has_visual_browser -%}
     <li class="action-sidebar-li">
-        <a href="{{ url_for('add_watch_ui.add_watch_ui_index') }}"
+        {# From inside a group on the watch list, the Add-Watch page starts with that group filled in #}
+        <a href="{{ url_for('add_watch_ui.add_watch_ui_index', tag=active_tag_uuid if ep == 'watchlist.index' else None) }}"
            class="action-sidebar-item {% if ep.startswith('add_watch_ui.') %}active{% endif %}"
            title="{{ _('Add a page watch') }}">
             {# Inverted "add" glyph: a solid (currentColor) rounded square with the
@@ -98,21 +99,44 @@
            title="{{ _('Queue') }}">
             <i data-feather="list" class="action-icon"></i>
             <span class="action-label">{{ _('Queue') }}</span>
-
-
             <span class="action-badge action-badge--count  queue-size-int">{{ queue_size }}</span>
-
-
         </a>
     </li>
     <li class="action-sidebar-li">
         <a href="{{ url_for('settings.notifications.apprise') }}"
-           class="action-sidebar-item"
+           class="action-sidebar-item {% if ep.startswith('settings.notifications') %}active{% endif %}"
            title="{{ _('Notifications') }}">
             <i data-feather="bell" class="action-icon"></i>
             <span class="action-label">{{ _('Notifications') }}</span>
         </a>
     </li>
+    {# Links added by plugins and built-in plugins (register_sidebar_items hook) #}
+    {%- for item in plugin_sidebar_items|default([]) %}
+    <!-- blueprint:{{ item.source }} -->
+    <li class="action-sidebar-li">
+        {%- if item.disabled %}
+        <a href="#"
+           class="action-sidebar-item is-disabled"
+           title="{{ item.title }}"
+           aria-disabled="true"
+           tabindex="-1">
+        {%- else %}
+        <a href="{{ item.url }}"
+           class="action-sidebar-item {% if item.active %}active{% endif %}"
+           title="{{ item.title }}">
+        {%- endif %}
+            {%- if item.svg %}
+            {{ item.svg }}
+            {%- else %}
+            <i data-feather="{{ item.icon }}" class="action-icon"></i>
+            {%- endif %}
+            <span class="action-label">{{ item.label }}</span>
+            {%- if item.badge %}
+            <span class="action-badge">{{ item.badge }}</span>
+            {%- endif %}
+        </a>
+    </li>
+    {%- endfor %}
 </ul>
 
 {# Footer group — pushed to the bottom of the rail via `margin-top: auto`
